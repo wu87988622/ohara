@@ -24,7 +24,7 @@ export const createActions = context => {
       if (state.isFetching || state.lastUpdated || state.error) return;
       try {
         dispatch(routine.request());
-        const data = await streamApi.getAll();
+        const data = await streamApi.fetchAll();
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));

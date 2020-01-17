@@ -35,7 +35,6 @@ import Divider from '@material-ui/core/Divider';
 
 import EditNodeDialog from './EditNodeDialog';
 import * as context from 'context';
-import * as streamApi from '../../api/streamApi';
 import { MODE } from 'const';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Button } from 'components/common/Form';
@@ -120,6 +119,8 @@ const ViewNodeDialog = props => {
   const { data: zookeepers } = context.useZookeeperState();
   const { data: brokers } = context.useBrokerState();
   const { data: workers } = context.useWorkerState();
+  const { data: streams } = context.useStreamState();
+  const { workspaceName } = context.useWorkspace();
 
   const [services, setServices] = useState([]);
 
@@ -133,8 +134,7 @@ const ViewNodeDialog = props => {
             key: clusterKey,
             name: clusterKey.name,
             type: service.name,
-            // workspace name will as same as the service name (zk, bk, wk)
-            workspace: clusterKey.name,
+            workspace: workspaceName,
           };
         }),
       )
@@ -173,12 +173,14 @@ const ViewNodeDialog = props => {
               ),
             });
           case 'stream':
-            const d = await streamApi.get(service.key).data;
-            Object.assign(service, {
-              status: d.state,
-              workspace: d.brokerClusterKey.name,
-            });
             delete service.key;
+            Object.assign(service, {
+              status: get(
+                streams.find(stream => stream.name === service.name),
+                'state',
+                'Unknown',
+              ),
+            });
             return service;
           default:
             throw Error('Unknown service type');
@@ -186,7 +188,7 @@ const ViewNodeDialog = props => {
       }),
     );
     setServices(result);
-  }, [zookeepers, brokers, workers, nodeData]);
+  }, [workspaceName, zookeepers, brokers, workers, streams, nodeData]);
 
   useEffect(() => {
     if (isEmpty(nodeData) || isEmpty(nodeData.services)) return;

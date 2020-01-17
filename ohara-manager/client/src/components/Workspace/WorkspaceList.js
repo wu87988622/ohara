@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
-import { get, toNumber, size, find, isEqual } from 'lodash';
+import { get, toNumber, size, filter, isEqual } from 'lodash';
 import moment from 'moment';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
@@ -29,8 +29,10 @@ import Button from '@material-ui/core/Button';
 import InputIcon from '@material-ui/icons/Input';
 import Typography from '@material-ui/core/Typography';
 
+import { KIND } from 'const';
+import { usePrevious } from 'utils/hooks';
 import * as topicApi from 'api/topicApi';
-import { useListWorkspacesDialog, useWorkspace } from 'context';
+import * as context from 'context';
 import { Dialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import { Wrapper } from './WorkspaceListStyles';
@@ -59,19 +61,25 @@ Statistic.propTypes = {
 
 function WorkspaceList() {
   const history = useHistory();
-  const { isOpen, close } = useListWorkspacesDialog();
-  const { workspaces, currentWorkspace } = useWorkspace();
-  const currWorkspaceName = get(currentWorkspace, 'name');
-  const [topics, setTopics] = useState(null);
+  const { isOpen, close } = context.useListWorkspacesDialog();
+  const { workspaces, workspaceName } = context.useWorkspace();
+  const { data: currentTopics } = context.useTopicState();
+  const [topics, setTopics] = React.useState(null);
 
-  useEffect(() => {
+  const prevTopics = usePrevious(currentTopics);
+
+  // we need to fetch all topic across all workspaces directly here
+  React.useEffect(() => {
     const fetchTopics = async () => {
       const result = await topicApi.getAll();
       setTopics(result.errors ? [] : result.data);
     };
-    if (topics !== null) return;
-    fetchTopics();
-  }, [topics]);
+    // if we add some topic into current workspace
+    // re-fetch all topics again
+    if (topics === null || prevTopics !== currentTopics) {
+      fetchTopics();
+    }
+  }, [currentTopics, prevTopics, topics]);
 
   const handleClick = name => () => {
     history.push(`/${name}`);
@@ -110,13 +118,13 @@ function WorkspaceList() {
               const avatarText = name.substring(0, 2).toUpperCase();
               const updatedText = moment(toNumber(lastModified)).fromNow();
 
-              const isActive = name === currWorkspaceName;
-              const brokerKey = pickBrokerKey(workspace);
+              const isActive = name === workspaceName;
+              const brokerKey = { name, group: KIND.broker };
               const count = {
                 nodes: size(nodeNames),
                 pipelines: 0, // TODO: See the issue (https://github.com/oharastream/ohara/issues/3506)
                 topics: size(
-                  find(topics, topic =>
+                  filter(topics, topic =>
                     isEqual(pickBrokerKey(topic), brokerKey),
                   ),
                 ),

@@ -37,7 +37,6 @@ const WorkspaceProvider = ({ children }) => {
   const { data: zookeepers } = context.useZookeeperState();
   const { data: pipelines } = context.usePipelineState();
   const { workspaceApi } = context.useApi();
-
   /**
    * Abbreviations:
    * workspace => ws

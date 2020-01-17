@@ -53,7 +53,7 @@ export const createApi = context => {
           return generateClusterResponse({
             values: stream,
             stageValues: stageRes.data,
-            inspectInfo: infoRes.data.settingDefinitions,
+            inspectInfo: infoRes.data,
           });
         }),
       );
@@ -75,7 +75,7 @@ export const createApi = context => {
       return generateClusterResponse({
         values: res.data,
         stageValues: stageRes.data,
-        inspectInfo: infoRes.data.settingDefinitions,
+        inspectInfo: infoRes.data,
       });
     },
     create: async values => {
@@ -102,7 +102,7 @@ export const createApi = context => {
         const data = generateClusterResponse({
           values: res.data,
           stageValues: stageRes.data,
-          inspectInfo: infoRes.data.settingDefinitions,
+          inspectInfo: infoRes.data,
         });
         showMessage(res.title);
         return data;

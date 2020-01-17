@@ -135,7 +135,7 @@ const WorkspaceQuick = props => {
     }
   };
 
-  // TODO: remove this in https://github.com/oharastream/ohara/issues/3609
+  // TODO: refactor this in https://github.com/oharastream/ohara/issues/3851
   const GROUP = {
     workspace: 'workspace',
     zookeeper: 'zookeeper',

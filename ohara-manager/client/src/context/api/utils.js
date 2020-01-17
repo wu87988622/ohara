@@ -38,7 +38,6 @@ export const generateClusterResponse = params => {
       ...inspectInfo,
     };
   }
-
   const definitions = getDefinition(inspectInfo);
   const definitionKeys = keys(definitions);
   // Flatten settings, remove them when appropriate
