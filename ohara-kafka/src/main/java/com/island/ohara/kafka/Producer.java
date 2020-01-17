@@ -21,7 +21,11 @@ import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -191,15 +195,7 @@ public interface Producer<Key, Value> extends Releasable {
                       completableFuture.completeExceptionally(
                           new IllegalStateException(
                               "Both meta and exception from kafka producer...It should be impossible"));
-                    if (metadata != null)
-                      completableFuture.complete(
-                          new RecordMetadata(
-                              metadata.topic(),
-                              metadata.partition(),
-                              metadata.offset(),
-                              metadata.timestamp(),
-                              metadata.serializedKeySize(),
-                              metadata.serializedValueSize()));
+                    if (metadata != null) completableFuture.complete(RecordMetadata.of(metadata));
                     if (exception != null) completableFuture.completeExceptionally(exception);
                   });
               return completableFuture;
@@ -314,54 +310,5 @@ public interface Producer<Key, Value> extends Releasable {
     }
 
     protected abstract CompletableFuture<RecordMetadata> doSend();
-  }
-
-  /** wrap from kafka RecordMetadata; */
-  class RecordMetadata {
-    private final String topicName;
-    private final int partition;
-    private final long offset;
-    private final long timestamp;
-    private final int serializedKeySize;
-    private final int serializedValueSize;
-
-    private RecordMetadata(
-        String topicName,
-        int partition,
-        long offset,
-        long timestamp,
-        int serializedKeySize,
-        int serializedValueSize) {
-      this.topicName = topicName;
-      this.partition = partition;
-      this.offset = offset;
-      this.timestamp = timestamp;
-      this.serializedKeySize = serializedKeySize;
-      this.serializedValueSize = serializedValueSize;
-    }
-
-    public String topicName() {
-      return topicName;
-    }
-
-    public int partition() {
-      return partition;
-    }
-
-    public long offset() {
-      return offset;
-    }
-
-    public long timestamp() {
-      return timestamp;
-    }
-
-    public int serializedKeySize() {
-      return serializedKeySize;
-    }
-
-    public int serializedValueSize() {
-      return serializedValueSize;
-    }
   }
 }

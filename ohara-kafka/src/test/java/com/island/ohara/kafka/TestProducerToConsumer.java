@@ -180,7 +180,7 @@ public class TestProducerToConsumer extends WithBroker {
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
-      Producer.RecordMetadata metadata =
+      RecordMetadata metadata =
           producer.sender().key("a").value("b").topicName(topicName).send().get();
       Assert.assertEquals(metadata.topicName(), topicName);
       try (Consumer<String, String> consumer =

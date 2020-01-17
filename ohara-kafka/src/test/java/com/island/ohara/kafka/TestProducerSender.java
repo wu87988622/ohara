@@ -25,7 +25,7 @@ public class TestProducerSender extends OharaTest {
 
   private static class FakeSender<K, V> extends Producer.Sender<K, V> {
     @Override
-    public CompletableFuture<Producer.RecordMetadata> doSend() {
+    public CompletableFuture<RecordMetadata> doSend() {
       return null;
     }
   }

@@ -26,6 +26,7 @@ import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.Header;
+import com.island.ohara.kafka.RecordMetadata;
 import com.island.ohara.metrics.basic.Counter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -70,8 +71,9 @@ public abstract class RowSourceTask extends SourceTask {
    * systems that also need to store offsets internally in their own system.
    *
    * @param record RowSourceRecord that was successfully sent via the producer.
+   * @param metadata the metadata of committed data
    */
-  protected void _commitRecord(RowSourceRecord record) {
+  protected void commitRecord(RowSourceRecord record, RecordMetadata metadata) {
     // do nothing
   }
 
@@ -224,7 +226,8 @@ public abstract class RowSourceTask extends SourceTask {
 
   // TODO: We do a extra conversion here (bytes => Row)... by chia
   @Override
-  public final void commitRecord(SourceRecord record) {
+  public final void commitRecord(
+      SourceRecord record, org.apache.kafka.clients.producer.RecordMetadata metadata) {
     RowSourceRecord r = cachedRecords.remove(record);
     // It is impossible to observer the null since we cache all records in #poll method.
     // However, we all hate the null so the workaround is to create a new record :(
@@ -238,7 +241,7 @@ public abstract class RowSourceTask extends SourceTask {
       builder.row(Serializer.ROW.from((byte[]) record.key()));
       r = builder.build();
     }
-    _commitRecord(r);
+    commitRecord(r, RecordMetadata.of(metadata));
   }
 
   @Override

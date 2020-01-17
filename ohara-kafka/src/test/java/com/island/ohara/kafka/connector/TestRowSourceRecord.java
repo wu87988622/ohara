@@ -16,7 +16,9 @@
 
 package com.island.ohara.kafka.connector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Row;
@@ -145,9 +147,12 @@ public class TestRowSourceRecord extends OharaTest {
             .raw());
     Assert.assertEquals(1, task.poll().size());
     Assert.assertEquals(1, task.cachedRecords.size());
+    org.apache.kafka.clients.producer.RecordMetadata meta =
+        new org.apache.kafka.clients.producer.RecordMetadata(
+            new org.apache.kafka.common.TopicPartition("A", 1), 1, 2, 3, 4L, 5, 6);
     // this loop will remove the elements in the cache so we have to clone another list to prevent
     // ConcurrentModificationException
-    new ArrayList<>(task.cachedRecords.keySet()).forEach(task::commitRecord);
+    new ArrayList<>(task.cachedRecords.keySet()).forEach(r -> task.commitRecord(r, meta));
     Assert.assertEquals(0, task.cachedRecords.size());
   }
 }

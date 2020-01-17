@@ -22,8 +22,7 @@ import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.{Done, NotUsed}
 import com.island.ohara.common.data.{Cell, Row}
 import com.island.ohara.common.util.Releasable
-import com.island.ohara.kafka.Consumer
-import com.island.ohara.kafka.Producer.RecordMetadata
+import com.island.ohara.kafka.{Consumer, RecordMetadata}
 import org.junit.Test
 
 import scala.collection.immutable
