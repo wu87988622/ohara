@@ -36,16 +36,22 @@ export const Wrapper = styled.div(
     .MuiInputBase-input {
       margin-right: ${theme.spacing(3)}px;
     }
+
+    .MuiIconButton-root {
+      padding: ${props =>
+        props.size === 'sm' ? theme.spacing(0.75, 1.5) : theme.spacing(1.5)};
+    }
   `,
 );
 
 const QuickSearch = ({
-  data = [],
-  keys = ['name'],
-  placeholder = 'Search',
-  isDebounce = true,
-  wait = 500,
-  setResults = noop,
+  data,
+  isDebounce,
+  keys,
+  placeholder,
+  setResults,
+  size,
+  wait,
 }) => {
   const prevData = usePrevious(data);
   const [searchText, setSearchText] = useState('');
@@ -65,7 +71,7 @@ const QuickSearch = ({
   );
 
   return (
-    <Wrapper>
+    <Wrapper size={size}>
       <Paper component="form">
         <IconButton aria-label="search">
           <SearchIcon />
@@ -82,12 +88,23 @@ const QuickSearch = ({
 };
 
 QuickSearch.propTypes = {
-  data: PropTypes.array.isRequired,
-  keys: PropTypes.array, // default ['name']
-  placeholder: PropTypes.string, // default 'Search'
-  isDebounce: PropTypes.bool, // default true
-  wait: PropTypes.number, // default 500, the number of milliseconds to delay
-  setResults: PropTypes.func, // noop
+  data: PropTypes.array,
+  keys: PropTypes.array,
+  placeholder: PropTypes.string,
+  isDebounce: PropTypes.bool,
+  wait: PropTypes.number, // the number of milliseconds to delay
+  setResults: PropTypes.func,
+  size: PropTypes.oneOf(['sm', 'lg']),
+};
+
+QuickSearch.defaultProps = {
+  data: [],
+  isDebounce: true,
+  keys: ['name'],
+  placeholder: 'Search',
+  setResults: noop,
+  size: 'lg',
+  wait: 500,
 };
 
 export default QuickSearch;

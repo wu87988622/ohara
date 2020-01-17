@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import localForage from 'localforage';
 import { createActions } from './eventLogActions';
 import { reducer, initialState } from './eventLogReducer';
 
@@ -24,6 +25,11 @@ const EventLogDispatchContext = React.createContext();
 
 const EventLogProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+
+  localForage.config({
+    name: 'ohara',
+    storeName: 'event_logs',
+  });
 
   return (
     <EventLogStateContext.Provider value={state}>

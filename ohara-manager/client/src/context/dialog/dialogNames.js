@@ -23,6 +23,7 @@ export const EDIT_NODE_DIALOG = 'editNode';
 export const ADD_NODE_DIALOG = 'addNode';
 export const DEV_TOOL_DIALOG = 'devTool';
 export const EVENT_LOG_DIALOG = 'eventLog';
+export const EVENT_LOG_CONTENT_DIALOG = 'eventLogContent';
 export const GRAPH_SETTING_DIALOG = 'graphSetting';
 export const LIST_WORKSPACES_DIALOG = 'listWorkspace';
 export const ADD_PLUGIN_DIALOG = 'addPlugin';

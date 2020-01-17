@@ -15,6 +15,8 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
+import { noop } from 'lodash';
 
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -25,6 +27,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import DeleteSweepIcon from '@material-ui/icons/DeleteSweep';
 import SettingsIcon from '@material-ui/icons/Settings';
 
+import { QuickSearch } from 'components/common/Search';
 import { Tooltip } from 'components/common/Tooltip';
 import {
   useEventLogActions,
@@ -33,7 +36,7 @@ import {
 } from 'context';
 import Wrapper from './EventLogHeaderStyles';
 
-const EventLogHeader = () => {
+const EventLogHeader = ({ onFilter }) => {
   const { clearEventLogs } = useEventLogActions();
   const { data: logs } = useEventLogState();
   const { close } = useEventLogDialog();
@@ -45,6 +48,13 @@ const EventLogHeader = () => {
           <Typography variant="h6" noWrap className="title">
             Event Logs
           </Typography>
+          <QuickSearch
+            className="search"
+            data={logs}
+            keys={['title']}
+            setResults={onFilter}
+            size="sm"
+          />
           <Tooltip title="Clear event logs">
             <IconButton
               color="default"
@@ -68,6 +78,14 @@ const EventLogHeader = () => {
       </AppBar>
     </Wrapper>
   );
+};
+
+EventLogHeader.propTypes = {
+  onFilter: PropTypes.func,
+};
+
+EventLogHeader.defaultProps = {
+  onFilter: noop,
 };
 
 export default EventLogHeader;

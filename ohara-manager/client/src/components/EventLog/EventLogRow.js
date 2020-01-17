@@ -18,21 +18,29 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
 import clx from 'classnames';
-
+import Link from '@material-ui/core/Link';
 import { getDateFromTimestamp } from 'utils/date';
 
 import Row from './EventLogRowStyles';
 
-const EventLogRow = ({ rowData: log, style }) => {
+const EventLogRow = ({ onClick, rowData: log, style }) => {
+  const title = get(log, 'title');
+  const isError = get(log, 'type') === 'error';
+
   return (
-    <Row style={style} className={clx({ error: get(log, 'type') === 'error' })}>
-      <div>{get(log, 'title')}</div>
+    <Row style={style} className={clx({ error: isError })}>
+      {(isError && (
+        <Link color="error" href="#" onClick={onClick}>
+          {title}
+        </Link>
+      )) || <div>{title}</div>}
       <div className="date">{getDateFromTimestamp(get(log, 'createAt'))}</div>
     </Row>
   );
 };
 
 EventLogRow.propTypes = {
+  onClick: PropTypes.func,
   rowData: PropTypes.object.isRequired,
   style: PropTypes.object.isRequired,
 };

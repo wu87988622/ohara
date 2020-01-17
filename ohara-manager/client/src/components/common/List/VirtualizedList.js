@@ -16,7 +16,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty } from 'lodash';
+import { isEmpty, noop } from 'lodash';
 
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { List } from 'react-virtualized/dist/commonjs/List';
@@ -25,7 +25,13 @@ import { CellMeasurer } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { TableLoader } from 'components/common/Loader';
 
 const VirtualizedList = props => {
-  const { isLoading, data, rowRenderer, autoScrollToBottom } = props;
+  const {
+    isLoading,
+    data,
+    onRowClick,
+    rowRenderer,
+    autoScrollToBottom,
+  } = props;
   const listRef = useRef(null);
   const cache = new CellMeasurerCache({
     defaultHeight: 20,
@@ -61,6 +67,7 @@ const VirtualizedList = props => {
         isVisible,
         key,
         parent,
+        onClick: () => onRowClick && onRowClick(data[index], index),
         rowData: data[index],
         style,
       })}
@@ -100,12 +107,14 @@ VirtualizedList.propTypes = {
   autoScrollToBottom: PropTypes.bool,
   data: PropTypes.array.isRequired,
   isLoading: PropTypes.bool,
+  onRowClick: PropTypes.func,
   rowRenderer: PropTypes.func.isRequired,
 };
 
 VirtualizedList.defaultProps = {
   autoScrollBottom: false,
   data: [],
+  onRowClick: noop,
   isLoading: false,
 };
 

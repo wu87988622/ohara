@@ -107,6 +107,9 @@ const useEditNodeDialog = createUseDialogActions(dialogNames.EDIT_NODE_DIALOG);
 const useAddNodeDialog = createUseDialogActions(dialogNames.ADD_NODE_DIALOG);
 const useDevToolDialog = createUseDialogActions(dialogNames.DEV_TOOL_DIALOG);
 const useEventLogDialog = createUseDialogActions(dialogNames.EVENT_LOG_DIALOG);
+const useEventLogContentDialog = createUseDialogActions(
+  dialogNames.EVENT_LOG_CONTENT_DIALOG,
+);
 const useGraphSettingDialog = createUseDialogActions(
   dialogNames.GRAPH_SETTING_DIALOG,
 );
@@ -132,6 +135,7 @@ export {
   useAddNodeDialog,
   // Others
   useEventLogDialog,
+  useEventLogContentDialog,
   useDevToolDialog,
   useGraphSettingDialog,
   useAddPluginDialog,

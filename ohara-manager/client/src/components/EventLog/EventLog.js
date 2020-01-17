@@ -14,23 +14,34 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { size } from 'lodash';
 
-import { useEventLogActions, useEventLogState } from 'context';
+import {
+  useEventLogActions,
+  useEventLogState,
+  useEventLogContentDialog,
+} from 'context';
 import { VirtualizedList } from 'components/common/List';
 import StatusBar from 'components/DevTool/StatusBar';
 import EventLogRow from './EventLogRow';
 import Header from './EventLogHeader';
+import EventLogContentDialog from './EventLogContentDialog';
 import Wrapper from './EventLogStyles';
 
 const EventLog = () => {
-  const { data: logs, isFetching } = useEventLogState();
+  const [logs, setLogs] = useState([]);
+  const { isFetching } = useEventLogState();
   const { fetchEventLogs } = useEventLogActions();
+  const { open: openEventLogContentDialog } = useEventLogContentDialog();
 
   useEffect(() => {
     fetchEventLogs();
   }, [fetchEventLogs]);
+
+  const handleRowClick = rowData => openEventLogContentDialog(rowData);
+
+  const handleFilter = filteredLogs => setLogs(filteredLogs);
 
   const getStatusText = () => {
     if (isFetching) return 'Loading...';
@@ -40,14 +51,16 @@ const EventLog = () => {
 
   return (
     <Wrapper>
-      <Header />
+      <Header onFilter={handleFilter} />
       <div className="logs">
         <VirtualizedList
-          data={logs}
-          rowRenderer={EventLogRow}
           autoScrollToBottom
+          data={logs}
           isLoading={isFetching}
+          onRowClick={handleRowClick}
+          rowRenderer={EventLogRow}
         />
+        <EventLogContentDialog />
       </div>
       <div className="status-bar">
         <StatusBar statusText={getStatusText()} />
