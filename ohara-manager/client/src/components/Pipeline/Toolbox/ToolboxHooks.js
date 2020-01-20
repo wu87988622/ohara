@@ -54,23 +54,33 @@ export const useFiles = () => {
   useEffect(() => {
     const loadFiles = async () => {
       await fetchFiles();
-
-      const streamClasses = files
-        .map(file => file.classInfos)
-        .flat()
-        .filter(cls => cls.classType === KIND.stream);
-
+      const streamClasses = files.map(file => {
+        return {
+          name: file.name,
+          group: file.group,
+          classInfos: file.classInfos.filter(
+            classInfo => classInfo.classType === KIND.stream,
+          ),
+        };
+      });
       if (streamClasses.length > 0) {
         const results = streamClasses
-          .map(({ className, classType }) => {
-            const name = className.split('.').pop();
-            return {
-              name,
-              classType,
-              className,
-            };
+          .map(streamClass => {
+            return streamClass.classInfos.map(calssInfo => {
+              const name = calssInfo.className.split('.').pop();
+              return {
+                name,
+                classType: calssInfo.classType,
+                className: calssInfo.className,
+                jarKey: {
+                  name: streamClass.name,
+                  group: streamClass.group,
+                },
+              };
+            });
           })
-          .sort((a, b) => a.className.localeCompare(b.className));
+          .sort((a, b) => a.className.localeCompare(b.className))
+          .flat();
         setStreams(results);
       }
     };

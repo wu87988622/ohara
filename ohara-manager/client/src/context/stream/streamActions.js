@@ -15,6 +15,7 @@
  */
 
 import * as routines from './streamRoutines';
+import * as action from 'utils/action';
 
 export const createActions = context => {
   const { state, dispatch, streamApi } = context;
@@ -26,6 +27,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.fetchAll();
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
@@ -37,6 +39,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.create(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
@@ -48,6 +51,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.update(values);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
@@ -59,6 +63,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.delete(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
@@ -70,6 +75,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.start(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
@@ -81,6 +87,7 @@ export const createActions = context => {
         dispatch(routine.request());
         const data = await streamApi.stop(name);
         dispatch(routine.success(data));
+        return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
       }
