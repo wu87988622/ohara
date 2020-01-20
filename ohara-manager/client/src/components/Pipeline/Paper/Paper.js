@@ -39,6 +39,9 @@ const Paper = React.forwardRef((props, ref) => {
 
   const graphRef = React.useRef(null);
   const paperRef = React.useRef(null);
+  const cellRef = React.useRef({});
+  // sometime onCellEvent props do not immediate updates
+  const onCellEvnetRef = React.useRef({});
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
 
   React.useEffect(() => {
@@ -88,6 +91,16 @@ const Paper = React.forwardRef((props, ref) => {
   }, [palette.common.white, palette.grey, palette.primary.main]);
 
   React.useEffect(() => {
+    onCellEvnetRef.current = {
+      onCellStart,
+      onCellStop,
+      onCellRemove,
+      onElementAdd,
+    };
+  }, [onCellRemove, onCellStart, onCellStop, onElementAdd]);
+
+  React.useEffect(() => {
+    //Prevent event from repeating
     const graph = graphRef.current;
     const paper = paperRef.current;
 
@@ -110,7 +123,14 @@ const Paper = React.forwardRef((props, ref) => {
     // Binding handlers
     const paperApi = ref.current;
     graph.on('add', cell => {
-      if (_.isFunction(onElementAdd)) onElementAdd(cell, paperApi);
+      if (
+        _.isFunction(onElementAdd) &&
+        !_.isEqual(cellRef.current, cell) &&
+        _.get(paperApi, 'state.isReady', false)
+      ) {
+        cellRef.current = cell;
+        onCellEvnetRef.current.onElementAdd(cell, paperApi);
+      }
     });
 
     paper.on('cell:pointerclick', cellView => {
@@ -144,7 +164,16 @@ const Paper = React.forwardRef((props, ref) => {
       paper.off('blank:pointerdown');
       paper.off('blank:pointerclick');
     };
-  }, [dragStartPosition, onCellDeselect, onCellSelect, onElementAdd, ref]);
+  }, [
+    dragStartPosition,
+    onCellDeselect,
+    onCellRemove,
+    onCellSelect,
+    onCellStart,
+    onCellStop,
+    onElementAdd,
+    ref,
+  ]);
 
   React.useImperativeHandle(ref, () => {
     const graph = graphRef.current;
@@ -160,6 +189,7 @@ const Paper = React.forwardRef((props, ref) => {
         const newData = { ...data, paperApi: ref.current };
 
         let cell;
+
         if (
           classType === source ||
           classType === sink ||
@@ -167,10 +197,10 @@ const Paper = React.forwardRef((props, ref) => {
         ) {
           cell = ConnectorCell({
             ...newData,
-            onCellStart,
-            onCellStop,
+            onCellStart: onCellEvnetRef.current.onCellStart,
+            onCellStop: onCellEvnetRef.current.onCellStop,
             onCellConfig,
-            onCellRemove,
+            onCellRemove: onCellEvnetRef.current.onCellRemove,
           });
         } else if (classType === topic) {
           cell = TopicCell({ ...newData, onCellRemove });

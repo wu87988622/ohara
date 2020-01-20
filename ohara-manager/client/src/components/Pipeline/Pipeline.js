@@ -31,6 +31,8 @@ import {
   usePipelineState as usePipelineReducerState,
   useRedirect,
 } from './PipelineHooks';
+import * as paperUtils from './PaperUtils';
+import { KIND } from 'const';
 
 export const PaperContext = createContext(null);
 
@@ -60,6 +62,17 @@ const Pipeline = () => {
     'isPipelineMetricsOn',
     null,
   );
+
+  const {
+    create: createConnector,
+    start: startConnector,
+    stop: stopConnector,
+    remove: removeConnector,
+  } = paperUtils.connector();
+
+  const { create: createTopic } = paperUtils.topic();
+
+  const { create: createStream } = paperUtils.stream();
 
   const paperRef = useRef();
   const isPaperApiReady = _.has(paperRef, 'current.state.isReady');
@@ -114,6 +127,38 @@ const Pipeline = () => {
                   ref={paperRef}
                   onCellSelect={cellView => setSelectedCell(cellView)}
                   onCellDeselect={() => setSelectedCell(null)}
+                  onElementAdd={(cell, paperApi) => {
+                    switch (paperUtils.utils.getCellClassType(cell)) {
+                      case KIND.sink:
+                      case KIND.source:
+                        if (!cell.attributes.isTemporary) {
+                          createConnector({ ...cell, paperApi });
+                        }
+                        break;
+
+                      case KIND.stream:
+                        if (!cell.attributes.isTemporary) {
+                          createStream({ ...cell, paperApi });
+                        }
+                        break;
+
+                      case KIND.topic:
+                        createTopic({ ...cell, paperApi });
+                        break;
+
+                      default:
+                        break;
+                    }
+                  }}
+                  onCellStart={(id, name, paperApi) => {
+                    startConnector({ id, name, paperApi });
+                  }}
+                  onCellStop={(id, name, paperApi) => {
+                    stopConnector({ id, name, paperApi });
+                  }}
+                  onCellRemove={(id, name, paperApi) => {
+                    removeConnector({ id, name, paperApi });
+                  }}
                 />
                 {isPaperApiReady && (
                   <Toolbox

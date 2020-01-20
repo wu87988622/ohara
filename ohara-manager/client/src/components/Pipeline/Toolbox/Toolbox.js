@@ -111,7 +111,6 @@ const Toolbox = props => {
 
   const handleAddGraph = async newGraphName => {
     setZIndex(zIndex + 1);
-
     const sharedParams = {
       displayName: newGraphName,
       ...cellInfo,
@@ -119,7 +118,11 @@ const Toolbox = props => {
 
     switch (cellInfo.classType) {
       case KIND.stream:
-        paperApi.addElement(sharedParams);
+        paperApi.addElement({
+          ...sharedParams,
+          name: newGraphName,
+          displayName: newGraphName,
+        });
 
         break;
 
@@ -128,6 +131,7 @@ const Toolbox = props => {
         paperApi.addElement({
           ...sharedParams,
           name: newGraphName,
+          displayName: newGraphName,
         });
         break;
 

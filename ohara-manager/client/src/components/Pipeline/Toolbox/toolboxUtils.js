@@ -137,6 +137,7 @@ export const createToolboxList = params => {
         classType: stream.classType,
         icon: streamIcon,
         className: stream.className,
+        jarKey: stream.jarKey,
       }),
     );
   });
@@ -228,7 +229,12 @@ export const enableDragAndDrop = params => {
           const scale = paperApi.scale();
           const newX = (x - offsetLeft - offset.x) / scale.sx + localPoint.x;
           const newY = (y - offsetTop - offset.y) / scale.sy + localPoint.y;
-          const { classType, className, name } = cellView.model.attributes;
+          const {
+            classType,
+            className,
+            name,
+            jarKey,
+          } = cellView.model.attributes;
           const isTopic = classType === KIND.topic;
 
           // These info will be used when creating a cell
@@ -237,6 +243,7 @@ export const enableDragAndDrop = params => {
             displayName: name,
             classType,
             className,
+            jarKey: jarKey || undefined,
           };
 
           setCellInfo(prevState => ({

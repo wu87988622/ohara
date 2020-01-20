@@ -49,6 +49,7 @@ const ConnectorCell = options => {
     metrics = {
       meters: [],
     },
+    jarKey,
   } = options;
 
   joint.shapes.html = {};
@@ -143,12 +144,12 @@ const ConnectorCell = options => {
 
       // Start
       $startButton.on('click', () => {
-        if (_.isFunction(onCellStart)) onCellStart(id, name);
+        if (_.isFunction(onCellStart)) onCellStart(id, name, paperApi);
       });
 
       // Stop
       $stopButton.on('click', () => {
-        if (_.isFunction(onCellStop)) onCellStop(id, name);
+        if (_.isFunction(onCellStop)) onCellStop(id, name, paperApi);
       });
 
       // Config
@@ -158,7 +159,7 @@ const ConnectorCell = options => {
 
       // Remove
       $removeButton.on('click', () => {
-        if (_.isFunction(onCellRemove)) onCellRemove(id, name);
+        if (_.isFunction(onCellRemove)) onCellRemove(id, name, paperApi);
         this.$box.remove();
       });
 
@@ -182,7 +183,10 @@ const ConnectorCell = options => {
       const status = this.model.get('status');
       const iconState = getIconState(status);
       this.$box.find('.status-value').text(status);
-      this.$box.find('.icon').addClass(iconState);
+      this.$box
+        .find('.icon')
+        .removeClass()
+        .addClass(`icon ${iconState}`);
 
       const displayValue = this.model.get('isMenuDisplayed') ? 'block' : 'none';
       this.$box.find('.display-name').text(this.model.get('displayName'));
@@ -234,6 +238,7 @@ const ConnectorCell = options => {
     isTemporary,
     size: { width: 240, height: isMetricsDisplayed ? 160 : 100 },
     isMenuDisplayed: false,
+    jarKey,
   });
 };
 
