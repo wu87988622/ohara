@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { reject, includes } from 'lodash';
 import * as routines from './eventLogRoutines';
 
 const initialState = {
@@ -21,6 +22,15 @@ const initialState = {
   data: [],
   lastUpdated: null,
   error: null,
+  settings: {
+    data: {
+      limit: 1000,
+      unlimited: false,
+    },
+    isFetching: false,
+    lastUpdated: null,
+    error: null,
+  },
 };
 
 const reducer = (state, action) => {
@@ -47,6 +57,15 @@ const reducer = (state, action) => {
         data: [...state.data, action.payload],
         lastUpdated: new Date(),
       };
+    case routines.deleteEventLogsRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: reject(state.data, log => {
+          return includes(action.payload, log.key);
+        }),
+        lastUpdated: new Date(),
+      };
     case routines.clearEventLogsRoutine.SUCCESS:
       return {
         ...state,
@@ -61,6 +80,37 @@ const reducer = (state, action) => {
         ...state,
         isFetching: false,
         error: action.payload,
+      };
+    case routines.fetchSettingsRoutine.REQUEST:
+    case routines.updateSettingsRoutine.REQUEST:
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          isFetching: true,
+          error: null,
+        },
+      };
+    case routines.fetchSettingsRoutine.SUCCESS:
+    case routines.updateSettingsRoutine.SUCCESS:
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          data: { ...state.settings.data, ...action.payload },
+          isFetching: false,
+          lastUpdated: new Date(),
+        },
+      };
+    case routines.fetchSettingsRoutine.FAILURE:
+    case routines.updateSettingsRoutine.FAILURE:
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          isFetching: false,
+          error: action.payload,
+        },
       };
     default:
       return state;

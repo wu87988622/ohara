@@ -17,7 +17,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import localForage from 'localforage';
+import { isEmpty, get, take } from 'lodash';
 import { createActions } from './eventLogActions';
+import { useSettingsApi } from './eventLogHooks';
 import { reducer, initialState } from './eventLogReducer';
 
 const EventLogStateContext = React.createContext();
@@ -25,11 +27,38 @@ const EventLogDispatchContext = React.createContext();
 
 const EventLogProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const settingsApi = useSettingsApi();
 
   localForage.config({
     name: 'ohara',
     storeName: 'event_logs',
   });
+
+  const actions = React.useMemo(
+    () => createActions({ state, dispatch, settingsApi }),
+    [state, dispatch, settingsApi],
+  );
+
+  React.useEffect(() => {
+    if (!actions) return;
+    actions.fetchSettings();
+  }, [actions]);
+
+  React.useEffect(() => {
+    if (!actions) return;
+
+    const unlimited = get(state, 'settings.data.unlimited');
+    if (unlimited) return;
+
+    const { data: logs = [] } = state;
+    if (isEmpty(logs)) return;
+
+    const limit = get(state, 'settings.data.limit');
+    if (logs.length > limit) {
+      const keysToDelete = take(logs, logs.length - limit).map(log => log.key);
+      actions.deleteEventLogs(keysToDelete);
+    }
+  }, [state, actions]);
 
   return (
     <EventLogStateContext.Provider value={state}>
@@ -66,9 +95,11 @@ EventLogProvider.propTypes = {
 const useEventLogActions = () => {
   const state = useEventLogState();
   const dispatch = useEventLogDispatch();
-  return React.useMemo(() => createActions({ state, dispatch }), [
+  const settingsApi = useSettingsApi();
+  return React.useMemo(() => createActions({ state, dispatch, settingsApi }), [
     state,
     dispatch,
+    settingsApi,
   ]);
 };
 

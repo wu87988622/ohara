@@ -19,57 +19,109 @@ import localForage from 'localforage';
 import * as routines from './eventLogRoutines';
 
 export const createActions = context => {
-  const { state, dispatch } = context;
+  const { state, dispatch, settingsApi } = context;
+
   return {
     fetchEventLogs: async () => {
       const routine = routines.fetchEventLogsRoutine;
       if (state.isFetching || state.lastUpdated || state.error) return;
       dispatch(routine.request());
-      const logs = [];
-      localForage
-        .iterate((value, key) => {
-          logs.push({
+      try {
+        const data = [];
+        await localForage.iterate((value, key) => {
+          const log = {
             key,
             type: get(value, 'type'),
             title: get(value, 'payload.title'),
             createAt: get(value, 'createAt'),
             payload: get(value, 'payload'),
-          });
-        })
-        .then(() => dispatch(routine.success(logs)))
-        .catch(err => dispatch(routine.failure(err)));
+          };
+          data.push(log);
+        });
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e));
+      }
     },
     createEventLog: async (log, type = 'info') => {
       const routine = routines.createEventLogRoutine;
       if (state.isFetching) return;
-
       if (!has(log, 'title')) {
         // eslint-disable-next-line no-console
         console.error('createEventLog error: must contain the title property');
         return;
       }
 
-      const now = new Date();
-      const key = now.getTime().toString();
-      const value = {
-        key,
-        type,
-        title: log.title,
-        createAt: now,
-        payload: log,
-      };
-      localForage
-        .setItem(key, value)
-        .then(data => dispatch(routine.success(data)))
-        .catch(err => dispatch(routine.failure(err)));
+      try {
+        const now = new Date();
+        const key = now.getTime().toString();
+        const value = {
+          key,
+          type,
+          title: log.title,
+          createAt: now,
+          payload: log,
+        };
+        await localForage.setItem(key, value);
+        dispatch(routine.success(value));
+      } catch (e) {
+        dispatch(routine.failure(e));
+      }
+    },
+    deleteEventLogs: async (keys = []) => {
+      const routine = routines.deleteEventLogsRoutine;
+      if (state.isFetching) return;
+
+      try {
+        await Promise.all(
+          keys.map(async key => await localForage.removeItem(key)),
+        );
+        dispatch(routine.success(keys));
+      } catch (e) {
+        dispatch(routine.failure(e));
+      }
     },
     clearEventLogs: async () => {
       const routine = routines.clearEventLogsRoutine;
       if (state.isFetching) return;
-      localForage
-        .clear()
-        .then(() => dispatch(routine.success()))
-        .catch(err => dispatch(routine.failure(err)));
+
+      try {
+        await localForage.clear();
+        dispatch(routine.success());
+      } catch (e) {
+        dispatch(routine.failure(e));
+      }
+    },
+    fetchSettings: async () => {
+      const routine = routines.fetchSettingsRoutine;
+      if (
+        state.settings.isFetching ||
+        state.settings.lastUpdated ||
+        state.settings.error
+      ) {
+        return;
+      }
+
+      dispatch(routine.request());
+      try {
+        const data = settingsApi.fetchSettings();
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    updateSettings: async values => {
+      const routine = routines.updateSettingsRoutine;
+      if (state.settings.isFetching) return;
+
+      const ensuredValues = { ...state.settings.data, ...values };
+      dispatch(routine.request());
+      try {
+        settingsApi.updateSettings(ensuredValues);
+        dispatch(routine.success(ensuredValues));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
     },
   };
 };

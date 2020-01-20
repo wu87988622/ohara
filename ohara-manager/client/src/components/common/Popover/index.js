@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import Popover from './Popover';
 
-export const fetchEventLogsRoutine = createRoutine('FETCH_EVENT_LOGS');
-export const createEventLogRoutine = createRoutine('CREATE_EVENT_LOG');
-export const deleteEventLogsRoutine = createRoutine('DELETE_EVENT_LOGS');
-export const clearEventLogsRoutine = createRoutine('CLEAR_EVENT_LOGS');
-
-export const fetchSettingsRoutine = createRoutine('FETCH_SETTINGS');
-export const updateSettingsRoutine = createRoutine('UPDATE_SETTINGS');
+export default Popover;

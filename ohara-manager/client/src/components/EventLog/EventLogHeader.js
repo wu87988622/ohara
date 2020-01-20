@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { noop } from 'lodash';
 
@@ -29,17 +29,20 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 import { QuickSearch } from 'components/common/Search';
 import { Tooltip } from 'components/common/Tooltip';
+import Popover from 'components/common/Popover';
 import {
   useEventLogActions,
   useEventLogDialog,
   useEventLogState,
 } from 'context';
 import Wrapper from './EventLogHeaderStyles';
+import EventLogSettings from './EventLogSettings';
 
 const EventLogHeader = ({ onFilter }) => {
   const { clearEventLogs } = useEventLogActions();
   const { data: logs } = useEventLogState();
   const { close } = useEventLogDialog();
+  const settingsPopoverRef = useRef(null);
 
   return (
     <Wrapper>
@@ -64,11 +67,20 @@ const EventLogHeader = ({ onFilter }) => {
               <DeleteSweepIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Event logs settings">
-            <IconButton color="default">
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
+          <Popover
+            ref={settingsPopoverRef}
+            showTooltip
+            tooltipTitle="Event logs settings"
+            trigger={
+              <IconButton color="default">
+                <SettingsIcon />
+              </IconButton>
+            }
+          >
+            <EventLogSettings
+              onSave={() => settingsPopoverRef.current.close()}
+            />
+          </Popover>
           <Tooltip title="Close event logs">
             <IconButton color="default" onClick={close}>
               <CloseIcon />

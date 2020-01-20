@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import styled, { css } from 'styled-components';
 
-export const fetchEventLogsRoutine = createRoutine('FETCH_EVENT_LOGS');
-export const createEventLogRoutine = createRoutine('CREATE_EVENT_LOG');
-export const deleteEventLogsRoutine = createRoutine('DELETE_EVENT_LOGS');
-export const clearEventLogsRoutine = createRoutine('CLEAR_EVENT_LOGS');
+export default styled.div(
+  ({ theme }) => css`
+    .MuiPaper-root {
+      padding: ${theme.spacing(2)}px;
+    }
 
-export const fetchSettingsRoutine = createRoutine('FETCH_SETTINGS');
-export const updateSettingsRoutine = createRoutine('UPDATE_SETTINGS');
+    .align-right {
+      text-align: right;
+    }
+  `,
+);

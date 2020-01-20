@@ -39,7 +39,7 @@ export const Wrapper = styled.div(
 
     .MuiIconButton-root {
       padding: ${props =>
-        props.size === 'sm' ? theme.spacing(0.75, 1.5) : theme.spacing(1.5)};
+        props.size === 'sm' ? theme.spacing(0.75, 0.75) : theme.spacing(1.5)};
     }
   `,
 );
