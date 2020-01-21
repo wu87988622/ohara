@@ -14,12 +14,5 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
-
-export const StyledTopicView = styled.div`
-  textarea {
-    width: 100%;
-    height: 200px;
-    resize: none;
-  }
-`;
+export * from './ViewTopic';
+export * from './ViewLog';

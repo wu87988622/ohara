@@ -41,7 +41,9 @@ import {
   ConfiguratorProvider,
   StreamProvider,
   ConnectorProvider,
+  DevToolProvider,
   LogProvider,
+  TopicDataProvider,
 } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
@@ -70,7 +72,6 @@ const AppProviders = ({ children }) => {
         <ApiProvider children={children} />,
         <ConfiguratorProvider children={children} />,
         <NodeProvider children={children} />,
-        <LogProvider children={children} />,
         <PipelineProvider children={children} />,
         <ZookeeperProvider children={children} />,
         <BrokerProvider children={children} />,
@@ -82,6 +83,9 @@ const AppProviders = ({ children }) => {
         <TopicProvider children={children} />,
         <FileProvider children={children} />,
         <StreamProvider children={children} />,
+        <DevToolProvider children={children} />,
+        <LogProvider children={children} />,
+        <TopicDataProvider children={children} />,
       ]}
     >
       {children}

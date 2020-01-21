@@ -22,3 +22,13 @@ export const fetchZookeeperRoutine = createRoutine('FETCH_ZOOKEEPER');
 export const fetchBrokerRoutine = createRoutine('FETCH_BROKER');
 export const fetchWorkerRoutine = createRoutine('FETCH_WORKER');
 export const fetchStreamRoutine = createRoutine('FETCH_STREAM');
+
+export const setLogTypeRoutine = createRoutine('SET_LOG_TYPE');
+export const setHostNameRoutine = createRoutine('SET_HOST_NAME');
+export const setStreamNameRoutine = createRoutine('SET_STREAM_NAME');
+export const setTimeGroupRoutine = createRoutine('SET_TIME_GROUP');
+export const setTimeRangeRoutine = createRoutine('SET_TIME_RANGE');
+export const setStartTimeRoutine = createRoutine('SET_START_TIME');
+export const setEndTimeRoutine = createRoutine('SET_END_TIME');
+
+export const refetchLogRoutine = createRoutine('REFETCH_LOG');

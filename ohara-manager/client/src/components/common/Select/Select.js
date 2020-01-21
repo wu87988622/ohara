@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
+import MuiSelect from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputBase from '@material-ui/core/InputBase';
 import styled, { css } from 'styled-components';
@@ -36,37 +36,30 @@ const StyledInputBase = styled(InputBase)(
   `,
 );
 
-const DevToolSelect = props => {
+const Select = props => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const {
-    index,
-    currentTab,
     value,
     onChange,
     list,
-    setAnchor,
-    anchor = null,
-    disabled = false,
+    disabled,
+    anchorOrigin,
+    transformOrigin,
   } = props;
 
   return (
-    <Typography component="div" hidden={index !== currentTab}>
+    <Typography component="div">
       <FormControl disabled={disabled}>
-        <Select
+        <MuiSelect
           value={value}
-          onOpen={setAnchor}
+          onOpen={event => setAnchorEl(event.currentTarget)}
           onChange={onChange}
           input={<StyledInputBase />}
           MenuProps={{
             getContentAnchorEl: null,
-            anchorEl: anchor,
-            anchorOrigin: {
-              vertical: 'bottom',
-              horizontal: 'center',
-            },
-            transformOrigin: {
-              vertical: 'top',
-              horizontal: 'center',
-            },
+            anchorEl,
+            anchorOrigin,
+            transformOrigin,
           }}
         >
           {list.map(item => {
@@ -76,21 +69,37 @@ const DevToolSelect = props => {
               </MenuItem>
             );
           })}
-        </Select>
+        </MuiSelect>
       </FormControl>
     </Typography>
   );
 };
 
-DevToolSelect.propTypes = {
-  index: PropTypes.string.isRequired,
-  currentTab: PropTypes.string.isRequired,
+Select.propTypes = {
   value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
   list: PropTypes.array.isRequired,
-  setAnchor: PropTypes.func.isRequired,
-  anchor: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
+  anchorOrigin: PropTypes.shape({
+    vertical: PropTypes.string,
+    horizontal: PropTypes.string,
+  }),
+  transformOrigin: PropTypes.shape({
+    vertical: PropTypes.string,
+    horizontal: PropTypes.string,
+  }),
 };
 
-export default DevToolSelect;
+Select.defaultProps = {
+  anchorOrigin: {
+    vertical: 'bottom',
+    horizontal: 'center',
+  },
+  transformOrigin: {
+    vertical: 'top',
+    horizontal: 'center',
+  },
+  disabled: false,
+};
+
+export default Select;

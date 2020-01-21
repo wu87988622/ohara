@@ -15,18 +15,48 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
+import moment from 'moment';
+import { get, isEmpty } from 'lodash';
 
+import * as context from 'context';
+import { TAB } from 'context/devTool/const';
+import { useCurrentLogs } from '../hooks';
 import { StyledStatusBar } from './StatusBarStyles';
 
-const StatusBar = props => {
-  const { statusText } = props;
+const StatusBar = () => {
+  const { tabName } = context.useDevTool();
+  const { query: logQuery } = context.useLogState();
+  const { timeGroup, timeRange, startTime, endTime } = logQuery;
+  const { data } = context.useTopicDataState();
+  const messages = get(data, 'messages', []);
+  const currentLog = useCurrentLogs();
 
-  return <StyledStatusBar>{statusText}</StyledStatusBar>;
-};
+  const getStatusText = () => {
+    if (tabName === TAB.topic) {
+      if (isEmpty(messages)) {
+        return 'No topic data';
+      } else {
+        return `${messages.length} rows per query`;
+      }
+    } else {
+      if (isEmpty(currentLog)) {
+        return 'No log data';
+      } else {
+        switch (timeGroup) {
+          case 'latest':
+            return `Latest ${timeRange} minutes`;
+          case 'customize':
+            return `Customize from ${moment(startTime).format(
+              'YYYY/MM/DD hh:mm',
+            )} to ${moment(endTime).format('YYYY/MM/DD hh:mm')}`;
+          default:
+            return 'Unexpected time format';
+        }
+      }
+    }
+  };
 
-StatusBar.propTypes = {
-  statusText: PropTypes.string.isRequired,
+  return <StyledStatusBar>{getStatusText()}</StyledStatusBar>;
 };
 
 export default StatusBar;

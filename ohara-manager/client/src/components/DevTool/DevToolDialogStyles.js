@@ -21,13 +21,7 @@ export const StyledDevTool = styled.div(
     width: 100%;
     height: 100%;
 
-    /* We need to leave some space for StatusBar */
-    bottom: 26px;
     background-color: ${theme.palette.common.white};
-
-    &.is-close {
-      display: none;
-    }
 
     .header {
       width: 100%;

@@ -14,35 +14,33 @@
  * limitations under the License.
  */
 
-import React from 'react';
 import styled from 'styled-components';
+import TextField from '@material-ui/core/TextField';
 
-import * as context from 'context';
 import { TAB } from 'context/devTool/const';
-import { ViewTopic, ViewLog } from './View';
 
-const TabPanel = styled.div`
-  display: ${props => (props.value !== props.index ? 'none' : 'block')};
-  position: absolute;
-  width: 100%;
-  top: 48px;
-  height: calc(100% - 74px);
-  overflow: auto;
+export const StyledSearchBody = styled.div`
+  width: 280px;
+  height: ${props => (props.tab === TAB.topic ? '210px' : '440px')};
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  background-color: ${props => props.theme.palette.common.white};
+  padding: ${props => props.theme.spacing(3)}px;
+
+  label {
+    font-weight: bold;
+  }
+
+  button {
+    width: 88px;
+    height: 36px;
+    background-color: ${props => props.theme.palette.primary[600]};
+    align-self: flex-end;
+  }
 `;
 
-const Body = () => {
-  const { tabName } = context.useDevTool();
-
-  return (
-    <>
-      <TabPanel value={tabName} index={TAB.topic}>
-        <ViewTopic />
-      </TabPanel>
-      <TabPanel value={tabName} index={TAB.log}>
-        <ViewLog />
-      </TabPanel>
-    </>
-  );
-};
-
-export default Body;
+export const StyledTextField = styled(TextField)`
+  width: 230px;
+`;

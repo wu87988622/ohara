@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-import * as routine from './logRoutines';
-import { TIME_GROUP } from './const';
+import * as routine from './topicDataRoutines';
 
 const initialState = {
   isFetching: false,
   query: {
-    logType: '',
-    hostName: '',
-    streamName: '',
-    timeGroup: TIME_GROUP.latest,
-    timeRange: 10,
-    startTime: '',
-    endTime: '',
+    name: '',
+    limit: 10,
   },
   data: {},
   lastUpdated: null,
@@ -37,47 +31,30 @@ const reducer = (state, action) => {
   switch (action.type) {
     case routine.initializeRoutine.TRIGGER:
       return initialState;
-    case routine.refetchLogRoutine.TRIGGER:
+    case routine.refetchTopicRoutine.TRIGGER:
       return {
         ...state,
         lastUpdated: null,
       };
-    case routine.setLogTypeRoutine.REQUEST:
-    case routine.setHostNameRoutine.REQUEST:
-    case routine.setStreamNameRoutine.REQUEST:
-    case routine.setTimeGroupRoutine.REQUEST:
-    case routine.setTimeRangeRoutine.REQUEST:
-    case routine.setStartTimeRoutine.REQUEST:
-    case routine.setEndTimeRoutine.REQUEST:
+    case routine.setNameRoutine.REQUEST:
+    case routine.setLimitRoutine.REQUEST:
       return {
         ...state,
         query: Object.assign({}, state.query, action.payload),
       };
-    case routine.fetchConfiguratorRoutine.REQUEST:
-    case routine.fetchZookeeperRoutine.REQUEST:
-    case routine.fetchBrokerRoutine.REQUEST:
-    case routine.fetchWorkerRoutine.REQUEST:
-    case routine.fetchStreamRoutine.REQUEST:
+    case routine.fetchTopicDataRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
       };
-    case routine.fetchConfiguratorRoutine.SUCCESS:
-    case routine.fetchZookeeperRoutine.SUCCESS:
-    case routine.fetchBrokerRoutine.SUCCESS:
-    case routine.fetchWorkerRoutine.SUCCESS:
-    case routine.fetchStreamRoutine.SUCCESS:
+    case routine.fetchTopicDataRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         lastUpdated: new Date(),
         data: action.payload,
       };
-    case routine.fetchConfiguratorRoutine.FAILURE:
-    case routine.fetchZookeeperRoutine.FAILURE:
-    case routine.fetchBrokerRoutine.FAILURE:
-    case routine.fetchWorkerRoutine.FAILURE:
-    case routine.fetchStreamRoutine.FAILURE:
+    case routine.fetchTopicDataRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

@@ -69,12 +69,13 @@ const ApiProvider = ({ children }) => {
   const logApi = useMemo(
     () =>
       createLogApi({
+        workspaceKey,
         brokerGroup,
         streamGroup,
         workerGroup,
         zookeeperGroup,
       }),
-    [brokerGroup, streamGroup, workerGroup, zookeeperGroup],
+    [workspaceKey, brokerGroup, streamGroup, workerGroup, zookeeperGroup],
   );
 
   const nodeApi = useMemo(() => createNodeApi({ showMessage }), [showMessage]);

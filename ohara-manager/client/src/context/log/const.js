@@ -14,21 +14,7 @@
  * limitations under the License.
  */
 
-import styled, { css } from 'styled-components';
-
-export const StyledStatusBar = styled.div(
-  ({ theme }) => css`
-    position: absolute;
-    width: 100%;
-    bottom: 0;
-    line-height: 26px;
-    padding-left: ${theme.spacing(1)}px;
-    height: 26px;
-    z-index: ${theme.zIndex.appBar};
-    background-color: ${props => props.theme.palette.grey[50]};
-    color: ${props => props.theme.palette.text.disabled};
-    border: 1px;
-    border-color: ${theme.palette.grey[200]};
-    border-style: solid;
-  `,
-);
+export const TIME_GROUP = {
+  latest: 'latest',
+  customize: 'customize',
+};

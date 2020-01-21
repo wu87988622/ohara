@@ -150,5 +150,31 @@ export const createApi = context => {
         throw e;
       }
     },
+    fetchData: async values => {
+      try {
+        validate(values);
+        const params = {
+          ...values,
+          group,
+        };
+        const res = await inspectApi.getTopicData(params);
+        if (!isEmpty(res.errors)) {
+          throw new Error(res.title);
+        }
+        const noTagsData = res.data.messages.map(message => {
+          // we don't need the "tags" field in the topic data
+          if (message.value) delete message.value.tags;
+          return message;
+        });
+        const data = generateClusterResponse({
+          values: { messages: noTagsData },
+        });
+        showMessage(res.title);
+        return data;
+      } catch (e) {
+        showMessage(e.message);
+        throw e;
+      }
+    },
   };
 };

@@ -20,12 +20,16 @@ import * as action from 'utils/action';
 export const createActions = context => {
   const { state, dispatch, logApi } = context;
   return {
-    fetchConfiguratorLog: async () => {
+    refetchLog: () => {
+      if (state.isFetching) return;
+      dispatch(routines.refetchLogRoutine.trigger());
+    },
+    fetchConfiguratorLog: async sinceSeconds => {
       const routine = routines.fetchConfiguratorRoutine;
-      if (state.isFetching || state.lastUpdated || state.error) return;
+      if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await logApi.fetchConfigurator();
+        const data = await logApi.fetchConfigurator({ sinceSeconds });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
@@ -33,12 +37,12 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    fetchZookeeperLog: async values => {
+    fetchZookeeperLog: async sinceSeconds => {
       const routine = routines.fetchZookeeperRoutine;
-      if (state.isFetching || state.lastUpdated || state.error) return;
+      if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await logApi.fetchZookeeper(values);
+        const data = await logApi.fetchZookeeper({ sinceSeconds });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
@@ -46,12 +50,12 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    fetchBrokerLog: async values => {
+    fetchBrokerLog: async sinceSeconds => {
       const routine = routines.fetchBrokerRoutine;
-      if (state.isFetching || state.lastUpdated || state.error) return;
+      if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await logApi.fetchBroker(values);
+        const data = await logApi.fetchBroker({ sinceSeconds });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
@@ -59,12 +63,12 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    fetchWorkerLog: async values => {
+    fetchWorkerLog: async sinceSeconds => {
       const routine = routines.fetchWorkerRoutine;
-      if (state.isFetching || state.lastUpdated || state.error) return;
+      if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await logApi.fetchWorker(values);
+        const data = await logApi.fetchWorker({ sinceSeconds });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
@@ -72,18 +76,53 @@ export const createActions = context => {
         return action.failure(e.message);
       }
     },
-    fetchStreamLog: async values => {
+    fetchStreamLog: async ({ name, sinceSeconds }) => {
       const routine = routines.fetchStreamRoutine;
-      if (state.isFetching || state.lastUpdated || state.error) return;
+      if (state.isFetching) return;
       try {
         dispatch(routine.request());
-        const data = await logApi.fetchStream(values);
+        const data = await logApi.fetchStream({ name, sinceSeconds });
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
+    },
+    setLogType: logType => {
+      const routine = routines.setLogTypeRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ logType }));
+    },
+    setHostName: hostName => {
+      const routine = routines.setHostNameRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ hostName }));
+    },
+    setStreamName: streamName => {
+      const routine = routines.setStreamNameRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ streamName }));
+    },
+    setTimeGroup: timeGroup => {
+      const routine = routines.setTimeGroupRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ timeGroup }));
+    },
+    setTimeRange: timeRange => {
+      const routine = routines.setTimeRangeRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ timeRange }));
+    },
+    setStartTime: startTime => {
+      const routine = routines.setStartTimeRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ startTime }));
+    },
+    setEndTime: endTime => {
+      const routine = routines.setEndTimeRoutine;
+      if (state.isFetching) return;
+      dispatch(routine.request({ endTime }));
     },
   };
 };

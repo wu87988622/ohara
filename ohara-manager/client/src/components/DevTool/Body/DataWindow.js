@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import { isEmpty } from 'lodash';
 import { useLocation, useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
-import { WindowScroller } from 'react-virtualized/dist/commonjs/WindowScroller';
+import { Typography } from '@material-ui/core';
 
-import * as inspectApi from 'api/inspectApi';
-import * as logApi from 'api/logApi';
-import DataTable from './DataTable';
-import { tabName } from '../DevToolDialog';
-import { hashByGroupAndName } from 'utils/sha';
-import { useSnackbar } from 'context';
+import { KIND } from 'const';
+import { usePrevious } from 'utils/hooks';
+import * as context from 'context';
+import { TIME_GROUP } from 'context/log/const';
+import { TAB } from 'context/devTool/const';
+import { ViewTopic, ViewLog } from './View';
 
 // the react-virtualized <List> cached row style
 const cache = new CellMeasurerCache({
@@ -34,163 +36,184 @@ const cache = new CellMeasurerCache({
   fixedWidth: true,
 });
 
+const WindowDiv = styled.div`
+  height: 100vh;
+`;
+
 const DataWindow = () => {
   const location = useLocation();
   const { workspaceName, pipelineName } = useParams();
+  const { setWorkspaceName, setPipelineName } = context.useApp();
+  const {
+    isFetching: isFetchingTopic,
+    lastUpdated: lastUpdatedTopic,
+  } = context.useTopicDataState();
+  const {
+    isFetching: isFetchingLog,
+    lastUpdated: lastUpdatedLog,
+  } = context.useLogState();
+  const { data: topics } = context.useTopicState();
+  const topicActions = context.useTopicDataActions();
+  const logActions = context.useLogActions();
+  const {
+    currentZookeeper,
+    currentBroker,
+    currentWorker,
+  } = context.useWorkspace();
 
   const searchParams = new URLSearchParams(location.search);
-  const [isLoadingData, setIsLoadingData] = useState(false);
-  const [topicResult, setTopicResult] = useState([]);
-  const [logData, setLogData] = useState([]);
-  const showMessage = useSnackbar();
 
   const type = searchParams.get('type') || '';
 
   // topics tab query parameter
-  const topicName = searchParams.get('topic') || '';
-  const topicLimit = searchParams.get('limit') || 10;
-  const topicTimeout = searchParams.get('timeout') || 5000;
+  const topicName = searchParams.get('topicName') || '';
+  const topicLimit = searchParams.get('topicLimit') || 10;
   // logs tab query parameter
-  const service = searchParams.get('service') || '';
+  const logType = searchParams.get('logType') || '';
   const hostname = searchParams.get('hostname') || '';
-  const timeSeconds = searchParams.get('timeSeconds') || '';
-  const stream = searchParams.get('stream') || '';
+  const streamName = searchParams.get('streamName') || '';
+  const timeGroup = searchParams.get('timeGroup') || '';
+  const timeRange = searchParams.get('timeRange') || '';
+  const startTime = searchParams.get('startTime') || '';
+  const endTime = searchParams.get('endTime') || '';
 
-  const fetchTopicData = useCallback(async () => {
-    if (type !== tabName.topic) return;
-    setIsLoadingData(true);
-    let data = [];
-    const response = await inspectApi.getTopicData({
-      name: topicName,
-      group: hashByGroupAndName('workspace', workspaceName),
-      limit: topicLimit,
-      timeout: topicTimeout,
-    });
+  const prevWorkspaceName = usePrevious(workspaceName);
+  const prevPipelineName = usePrevious(pipelineName);
 
-    if (!response.errors) {
-      data = response.data.messages.map(message => {
-        // we don't need the "tags" field in the topic data
-        if (message.value) delete message.value.tags;
-        return message;
-      });
+  React.useEffect(() => {
+    function handleResize() {
+      // when window resize, we force re-render the log data height
+      // give it a little delay to avoid performance issue
+      setTimeout(cache.clearAll(), 500);
     }
 
-    setTopicResult(data);
-    setIsLoadingData(false);
-  }, [type, topicName, workspaceName, topicLimit, topicTimeout]);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []); // Empty array ensures that effect is only run on mount and unmount
 
-  useEffect(() => {
-    if (!topicName) return;
-    fetchTopicData();
-  }, [topicName, fetchTopicData]);
+  React.useEffect(() => {
+    if (workspaceName && workspaceName !== prevWorkspaceName) {
+      setWorkspaceName(workspaceName);
+    }
+  }, [prevWorkspaceName, setWorkspaceName, workspaceName]);
 
-  useEffect(() => {
-    if (isEmpty(service)) return;
+  React.useEffect(() => {
+    if (pipelineName && pipelineName !== prevPipelineName) {
+      setPipelineName(pipelineName);
+    }
+  }, [pipelineName, prevPipelineName, setPipelineName]);
 
-    const fetchLogs = async () => {
-      let response;
-      setIsLoadingData(true);
-      switch (service) {
-        case 'configurator':
-          response = await logApi.getConfiguratorLog({
-            sinceSeconds: timeSeconds,
-          });
-          break;
-        case 'zookeeper':
-          response = await logApi.getZookeeperLog({
-            name: workspaceName,
-            group: 'zookeeper',
-            sinceSeconds: timeSeconds,
-          });
-          break;
-        case 'broker':
-          response = await logApi.getBrokerLog({
-            name: workspaceName,
-            group: 'broker',
-            sinceSeconds: timeSeconds,
-          });
-          break;
-        case 'worker':
-          response = await logApi.getWorkerLog({
-            name: workspaceName,
-            group: 'worker',
-            sinceSeconds: timeSeconds,
-          });
-          break;
-        case 'stream':
-          const pipelineGroup = hashByGroupAndName('workspace', workspaceName);
-          if (!isEmpty(stream) && !isEmpty(pipelineName)) {
-            response = await logApi.getStreamLog({
-              name: stream,
-              group: hashByGroupAndName(pipelineGroup, pipelineName),
-              sinceSeconds: timeSeconds,
-            });
-          }
-          break;
-        default:
-      }
+  React.useEffect(() => {
+    if (!topicActions || lastUpdatedTopic) return;
 
-      showMessage(response.title);
-      setIsLoadingData(false);
+    // do nothing if the query parameters not completed
+    if (
+      isEmpty(topics) ||
+      isEmpty(topicName) ||
+      isEmpty(topicLimit) ||
+      isFetchingTopic
+    )
+      return;
 
-      if (response && !response.errors) {
-        const result = response.data.logs
-          // the hostname log should be unique, it is OK to "filter" the result
-          .filter(log => log.hostname === hostname)
-          .map(log => log.value.split('\n'));
-
-        if (!isEmpty(result)) setLogData(result[0]);
-        return;
-      }
-
-      response.errors && showMessage(response.title);
-    };
-
-    fetchLogs();
+    topicActions.fetchTopicData({
+      name: topicName,
+      limit: topicLimit,
+    });
   }, [
-    hostname,
-    pipelineName,
-    service,
-    showMessage,
-    stream,
-    timeSeconds,
-    workspaceName,
+    lastUpdatedTopic,
+    isFetchingTopic,
+    topicActions,
+    topicLimit,
+    topicName,
+    topics,
   ]);
 
-  // we don't generate the data view if no query parameters existed
-  if (!workspaceName || !pipelineName || !location.search) return null;
+  React.useEffect(() => {
+    if (!logActions || lastUpdatedLog) return;
+
+    // do nothing if the query parameters not completed
+    if (
+      isFetchingLog ||
+      isEmpty(logType) ||
+      isEmpty(hostname) ||
+      isEmpty(timeGroup)
+    )
+      return;
+
+    // do nothing if logType was configurator and the context not ready
+    if (
+      logType !== KIND.configurator &&
+      (!currentZookeeper || !currentBroker || !currentWorker)
+    )
+      return;
+
+    const getTimeSeconds = () => {
+      if (timeGroup === TIME_GROUP.latest) {
+        // timeRange uses minute units
+        return timeRange * 60;
+      } else {
+        return Math.ceil(
+          moment.duration(moment(endTime).diff(moment(startTime))).asSeconds(),
+        );
+      }
+    };
+
+    const setHostName = () => {
+      logActions.setHostName(hostname);
+    };
+
+    switch (logType) {
+      case KIND.configurator:
+        logActions.fetchConfiguratorLog(getTimeSeconds()).then(setHostName);
+        break;
+      case KIND.zookeeper:
+        logActions.fetchZookeeperLog(getTimeSeconds()).then(setHostName);
+        break;
+      case KIND.broker:
+        logActions.fetchBrokerLog(getTimeSeconds().then(setHostName));
+        break;
+      case KIND.worker:
+        logActions.fetchWorkerLog(getTimeSeconds().then(setHostName));
+        break;
+      case KIND.stream:
+        if (isEmpty(streamName)) return;
+        logActions
+          .fetchStreamLog({
+            name: streamName,
+            sinceSeconds: getTimeSeconds(),
+          })
+          .then(setHostName);
+        break;
+      default:
+    }
+  }, [
+    lastUpdatedLog,
+    endTime,
+    hostname,
+    isFetchingLog,
+    logActions,
+    logType,
+    startTime,
+    streamName,
+    timeGroup,
+    timeRange,
+    currentZookeeper,
+    currentBroker,
+    currentWorker,
+  ]);
+
+  if (!location.search) {
+    return <Typography>There is nothing to show</Typography>;
+  }
 
   switch (type) {
-    case tabName.topic:
+    case TAB.topic:
+      return <ViewTopic />;
+    case TAB.log:
       return (
-        <DataTable
-          data={{
-            topicData: topicResult,
-            isLoading: isLoadingData,
-          }}
-          type={tabName.topic}
-        />
-      );
-    case tabName.log:
-      return (
-        <WindowScroller>
-          {({ height, isScrolling, onChildScroll, scrollTop }) => (
-            <DataTable
-              data={{
-                hostLog: logData,
-                isLoading: isLoadingData,
-              }}
-              type={tabName.log}
-              cache={cache}
-              windowOpts={{
-                windowHeight: height,
-                windowIsScrolling: isScrolling,
-                windowOnScroll: onChildScroll,
-                windowScrollTop: scrollTop,
-              }}
-            />
-          )}
-        </WindowScroller>
+        <WindowDiv>
+          <ViewLog />
+        </WindowDiv>
       );
 
     default:

@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import { useApp, useApi } from 'context';
 import { initializeRoutine } from './logRoutines';
 import { createActions } from './logActions';
@@ -26,11 +27,11 @@ const LogDispatchContext = React.createContext();
 
 const LogProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName, pipelineName } = useApp();
+  const { workspaceName } = useApp();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
-  }, [workspaceName, pipelineName]);
+  }, [workspaceName]);
 
   return (
     <LogStateContext.Provider value={state}>
