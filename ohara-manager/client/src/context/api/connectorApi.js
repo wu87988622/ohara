@@ -17,7 +17,6 @@
 import { isEmpty, has, map } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
-import * as objectApi from 'api/objectApi';
 import * as inspectApi from 'api/inspectApi';
 import { generateClusterResponse } from './utils';
 
@@ -66,17 +65,9 @@ export const createApi = context => {
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
         }
-        const stageRes = await objectApi.create({
-          ...values,
-          group,
-        });
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Create connector stage ${values.name} failed.`);
-        }
         const info = await getDefinition(values.connector__class);
         const data = generateClusterResponse({
           values: res.data,
-          stageValues: stageRes.data,
           inspectInfo: info,
         });
         showMessage(res.title);
@@ -104,37 +95,12 @@ export const createApi = context => {
         throw e;
       }
     },
-    stage: async values => {
-      try {
-        validateName(values);
-        const stageRes = await objectApi.update({
-          ...values,
-          group,
-        });
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Save connector stage ${values.name} failed.`);
-        }
-        const data = generateClusterResponse({ stageValues: stageRes.data });
-        showMessage(`Save connector stage ${values.name} successful.`);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
-    },
     delete: async name => {
       try {
         const params = { name, group };
         const res = await connectorApi.remove(params);
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
-        }
-        const stageRes = await objectApi.remove({
-          name,
-          group,
-        });
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Remove connector stage ${name} failed.`);
         }
         showMessage(res.title);
         return params;
@@ -149,14 +115,9 @@ export const createApi = context => {
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
-      const stageRes = await objectApi.get(params);
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(res.title);
-      }
       const info = await getDefinition(res.data.connector__class);
       return generateClusterResponse({
         values: res.data,
-        stageValues: stageRes.data,
         inspectInfo: info,
       });
     },
@@ -167,17 +128,9 @@ export const createApi = context => {
       }
       return await Promise.all(
         map(res.data, async connector => {
-          const stageRes = await objectApi.get({
-            name: connector.name,
-            group,
-          });
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(`Fetch connector stage list failed.`);
-          }
           const info = await getDefinition(connector.connector__class);
           return generateClusterResponse({
             values: connector,
-            stageValues: stageRes.data,
             inspectInfo: info,
           });
         }),

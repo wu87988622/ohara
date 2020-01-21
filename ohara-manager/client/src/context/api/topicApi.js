@@ -17,7 +17,6 @@
 import { isEmpty, map } from 'lodash';
 
 import * as inspectApi from 'api/inspectApi';
-import * as objectApi from 'api/objectApi';
 import * as topicApi from 'api/topicApi';
 import { generateClusterResponse, validate } from './utils';
 
@@ -37,18 +36,12 @@ export const createApi = context => {
       }
       return await Promise.all(
         map(res.data, async topic => {
-          const params = { name: topic.name, group };
-          const stageRes = await objectApi.get(params);
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(stageRes.title);
-          }
           const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
           if (!isEmpty(infoRes.errors)) {
             throw new Error(infoRes.title);
           }
           return generateClusterResponse({
             values: topic,
-            stageValues: stageRes.data,
             inspectInfo: infoRes.data.classInfos[0],
           });
         }),
@@ -60,17 +53,12 @@ export const createApi = context => {
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
-      const stageRes = await objectApi.get(params);
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(stageRes.title);
-      }
       const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
       if (!isEmpty(infoRes.errors)) {
         throw new Error(infoRes.title);
       }
       return generateClusterResponse({
         values: res.data,
-        stageValues: stageRes.data,
         inspectInfo: infoRes.data.classInfos[0],
       });
     },
@@ -87,17 +75,12 @@ export const createApi = context => {
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
         }
-        const stageRes = await objectApi.create(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(stageRes.title);
-        }
         const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
         if (!isEmpty(infoRes.errors)) {
           throw new Error(infoRes.title);
         }
         const data = generateClusterResponse({
           values: res.data,
-          stageValues: stageRes.data,
           inspectInfo: infoRes.data.classInfos[0],
         });
         showMessage(res.title);
@@ -123,31 +106,11 @@ export const createApi = context => {
         throw e;
       }
     },
-    stage: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const stageRes = await objectApi.update(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Save topic ${values.name} failed.`);
-        }
-        const data = generateClusterResponse({ stageValues: stageRes.data });
-        showMessage(`Save topic ${values.name} successful.`);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
-    },
     delete: async name => {
       try {
         const params = { name, group };
         const res = await topicApi.remove(params);
         if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const stageRes = await objectApi.remove(params);
-        if (!isEmpty(stageRes.errors)) {
           throw new Error(res.title);
         }
         showMessage(res.title);

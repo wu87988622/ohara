@@ -17,7 +17,6 @@
 import { isEmpty, has, map } from 'lodash';
 
 import * as inspectApi from 'api/inspectApi';
-import * as objectApi from 'api/objectApi';
 import * as streamApi from 'api/streamApi';
 import { generateClusterResponse, validate } from './utils';
 
@@ -41,18 +40,12 @@ export const createApi = context => {
       }
       return await Promise.all(
         map(res.data, async stream => {
-          const params = { name: stream.name, group };
-          const stageRes = await objectApi.get(params);
-          if (!isEmpty(stageRes.errors)) {
-            throw new Error(stageRes.title);
-          }
           const infoRes = await inspectApi.getStreamsInfo(stream);
           if (!isEmpty(infoRes.errors)) {
             throw new Error(infoRes.title);
           }
           return generateClusterResponse({
             values: stream,
-            stageValues: stageRes.data,
             inspectInfo: infoRes.data,
           });
         }),
@@ -64,17 +57,12 @@ export const createApi = context => {
       if (!isEmpty(res.errors)) {
         throw new Error(res.title);
       }
-      const stageRes = await objectApi.get(params);
-      if (!isEmpty(stageRes.errors)) {
-        throw new Error(stageRes.title);
-      }
       const infoRes = await inspectApi.getStreamsInfo(params);
       if (!isEmpty(infoRes.errors)) {
         throw new Error(infoRes.title);
       }
       return generateClusterResponse({
         values: res.data,
-        stageValues: stageRes.data,
         inspectInfo: infoRes.data,
       });
     },
@@ -91,17 +79,12 @@ export const createApi = context => {
         if (!isEmpty(res.errors)) {
           throw new Error(res.title);
         }
-        const stageRes = await objectApi.create(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(stageRes.title);
-        }
         const infoRes = await inspectApi.getStreamsInfo(params);
         if (!isEmpty(infoRes.errors)) {
           throw new Error(infoRes.title);
         }
         const data = generateClusterResponse({
           values: res.data,
-          stageValues: stageRes.data,
           inspectInfo: infoRes.data,
         });
         showMessage(res.title);
@@ -127,31 +110,11 @@ export const createApi = context => {
         throw e;
       }
     },
-    stage: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const stageRes = await objectApi.update(params);
-        if (!isEmpty(stageRes.errors)) {
-          throw new Error(`Save stream ${values.name} failed.`);
-        }
-        const data = generateClusterResponse({ stageValues: stageRes.data });
-        showMessage(`Save stream ${values.name} successful.`);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
-    },
     delete: async name => {
       try {
         const params = { name, group };
         const res = await streamApi.remove(params);
         if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const stageRes = await objectApi.remove(params);
-        if (!isEmpty(stageRes.errors)) {
           throw new Error(res.title);
         }
         showMessage(res.title);
