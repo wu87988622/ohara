@@ -23,10 +23,13 @@ import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
 import com.island.ohara.common.setting.SettingDef.{Reference, Type}
 import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.kafka
+import com.island.ohara.kafka.{PartitionInfo, PartitionNode}
 import org.apache.kafka.common.config.TopicConfig
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -180,16 +183,56 @@ object TopicApi {
     override def write(obj: State): JsValue = JsString(obj.name)
   }
 
-  final case class PartitionInfo(
-    index: Int,
-    leaderNode: String,
-    replicaNodes: Set[String],
-    inSyncReplicaNodes: Set[String],
-    beginningOffset: Long,
-    endOffset: Long
-  )
+  implicit val PARTITION_NODE_FORMAT: RootJsonFormat[PartitionNode] = new RootJsonFormat[PartitionNode] {
+    private[this] case class _Node(id: Int, host: String, port: Int)
+    private[this] val format = jsonFormat3(_Node)
+    override def read(json: JsValue): PartitionNode = {
+      val node = format.read(json)
+      new PartitionNode(node.id, node.host, node.port)
+    }
+    override def write(obj: PartitionNode): JsValue =
+      format.write(
+        _Node(
+          id = obj.id,
+          host = obj.host,
+          port = obj.port
+        )
+      )
+  }
 
-  implicit val TOPIC_PARTITION_FORMAT: RootJsonFormat[PartitionInfo] = jsonFormat6(PartitionInfo)
+  implicit val PARTITION_INFO_FORMAT: RootJsonFormat[PartitionInfo] = new RootJsonFormat[PartitionInfo] {
+    private[this] case class _PartitionInfo(
+      id: Int,
+      leader: PartitionNode,
+      replicas: Seq[PartitionNode],
+      inSyncReplicas: Seq[PartitionNode],
+      beginningOffset: Long,
+      endOffset: Long
+    )
+    private[this] val format = jsonFormat6(_PartitionInfo)
+    override def read(json: JsValue): kafka.PartitionInfo = {
+      val partitionInfo = format.read(json)
+      new kafka.PartitionInfo(
+        partitionInfo.id,
+        partitionInfo.leader,
+        partitionInfo.replicas.asJava,
+        partitionInfo.inSyncReplicas.asJava,
+        partitionInfo.beginningOffset,
+        partitionInfo.endOffset
+      )
+    }
+    override def write(obj: kafka.PartitionInfo): JsValue =
+      format.write(
+        _PartitionInfo(
+          id = obj.id,
+          leader = obj.leader,
+          replicas = obj.replicas.asScala,
+          inSyncReplicas = obj.inSyncReplicas.asScala,
+          beginningOffset = obj.beginningOffset,
+          endOffset = obj.endOffset
+        )
+      )
+  }
 
   case class TopicInfo(
     settings: Map[String, JsValue],

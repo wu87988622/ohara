@@ -24,8 +24,8 @@ import com.island.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Port
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterStatus}
-import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.setting.ObjectKey
+import com.island.ohara.kafka.TopicAdmin
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -171,7 +171,7 @@ trait BrokerCollie extends Collie {
   def topicAdmin(
     brokerClusterInfo: BrokerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
-    cluster(brokerClusterInfo.key).map(_ => TopicAdmin(brokerClusterInfo.connectionProps))
+    cluster(brokerClusterInfo.key).map(_ => TopicAdmin.of(brokerClusterInfo.connectionProps))
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext

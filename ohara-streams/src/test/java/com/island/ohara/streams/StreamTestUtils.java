@@ -20,9 +20,9 @@ import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.kafka.TopicAdmin;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collections;
@@ -38,7 +38,7 @@ public class StreamTestUtils {
   private static final Logger log = Logger.getLogger(StreamTestUtils.class);
 
   public static void createTopic(
-      BrokerClient client, String topic, int partitions, short replications) {
+      TopicAdmin client, String topic, int partitions, short replications) {
     client
         .topicCreator()
         .numberOfPartitions(partitions)
@@ -59,7 +59,7 @@ public class StreamTestUtils {
   }
 
   public static void assertResult(
-      BrokerClient client, String toTopic, List<Row> expectedContainedRows, int expectedSize) {
+      TopicAdmin client, String toTopic, List<Row> expectedContainedRows, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.<Row, byte[]>builder()
             .topicName(toTopic)

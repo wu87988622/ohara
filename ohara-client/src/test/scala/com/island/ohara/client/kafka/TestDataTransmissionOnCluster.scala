@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
+import com.island.ohara.kafka.{TopicAdmin, Consumer, Producer}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
@@ -28,18 +28,18 @@ import org.scalatest.Matchers._
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestDataTransmissionOnCluster extends WithBrokerWorker {
-  private[this] val brokerClient = BrokerClient.of(testUtil().brokersConnProps)
+  private[this] val topicAdmin   = TopicAdmin.of(testUtil().brokersConnProps)
   private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
   private[this] val row          = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
   private[this] val schema       = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
   private[this] val numberOfRows = 20
 
   @After
-  def tearDown(): Unit = Releasable.close(brokerClient)
+  def tearDown(): Unit = Releasable.close(topicAdmin)
 
   private[this] def createTopic(topicKey: TopicKey, compacted: Boolean): Unit = {
     if (compacted)
-      brokerClient
+      topicAdmin
         .topicCreator()
         .compacted()
         .numberOfPartitions(1)
@@ -47,7 +47,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicName(topicKey.topicNameOnKafka)
         .create()
     else
-      brokerClient
+      topicAdmin
         .topicCreator()
         .deleted()
         .numberOfPartitions(1)
@@ -214,8 +214,9 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
     val topicName  = CommonUtils.randomString(10)
-    val topicAdmin = TopicAdmin(testUtil().brokersConnProps())
-    try topicAdmin.creator
+    val topicAdmin = TopicAdmin.of(testUtil().brokersConnProps())
+    try topicAdmin
+      .topicCreator()
       .topicKey(TopicKey.of("fake", topicName))
       .numberOfPartitions(1)
       .numberOfReplications(1)

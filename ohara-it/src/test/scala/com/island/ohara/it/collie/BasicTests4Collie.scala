@@ -31,7 +31,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.{IntegrationTest, ServiceKeyHolder}
-import com.island.ohara.kafka.{BrokerClient, Consumer, Producer}
+import com.island.ohara.kafka.{Consumer, Producer, TopicAdmin}
 import com.island.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.InvalidReplicationFactorException
@@ -409,17 +409,17 @@ abstract class BasicTests4Collie extends IntegrationTest {
     val topicName = CommonUtils.randomString()
     val brokers   = cluster.nodeNames.map(_ + s":${cluster.clientPort}").mkString(",")
     log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers")
-    val brokerClient = BrokerClient.of(brokers)
+    val topicAdmin = TopicAdmin.of(brokers)
     try {
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames}")
       // make sure all active broker nodes are sync!
-      await(() => brokerClient.brokerPorts().size() == cluster.nodeNames.size)
+      await(() => topicAdmin.brokerPorts().toCompletableFuture.get().size() == cluster.nodeNames.size)
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames} ... done")
       log.info(s"[BROKER] number of replications:${cluster.nodeNames.size}")
       await(
         () =>
           try {
-            brokerClient.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
+            topicAdmin.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
             true
           } catch {
             case e: OharaExecutionException =>
@@ -464,8 +464,8 @@ abstract class BasicTests4Collie extends IntegrationTest {
         records.stream().forEach(record => record.key().get() shouldBe record.value().get())
         log.info(s"[BROKER] start to receive data ... done")
       } finally consumer.close()
-      brokerClient.deleteTopic(topicName)
-    } finally brokerClient.close()
+      topicAdmin.deleteTopic(topicName)
+    } finally topicAdmin.close()
   }
 
   private[this] def testRemoveNodeToRunningBrokerCluster(

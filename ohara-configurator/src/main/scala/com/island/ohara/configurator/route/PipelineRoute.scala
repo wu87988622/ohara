@@ -49,7 +49,9 @@ import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
 import com.typesafe.scalalogging.Logger
 
+import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
+
 private[configurator] object PipelineRoute {
   private[this] lazy val LOG = Logger(PipelineRoute.getClass)
 
@@ -105,6 +107,7 @@ private[configurator] object PipelineRoute {
         case (clusterInfo, topicAdmin) =>
           topicAdmin
             .exist(data.key)
+            .toScala
             .map(
               try if (_) Some(TopicApi.State.RUNNING) else None
               finally topicAdmin.close()

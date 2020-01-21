@@ -22,9 +22,9 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.metrics.BeanChannel;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
@@ -49,7 +49,7 @@ public class TestSimpleStreamCounter extends WithBroker {
   private static TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), "metric-from");
   private static TopicKey toKey = TopicKey.of(CommonUtils.randomString(), "metric-to");
 
-  private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+  private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
       Producer.<Row, byte[]>builder()
           .connectionProps(client.connectionProps())

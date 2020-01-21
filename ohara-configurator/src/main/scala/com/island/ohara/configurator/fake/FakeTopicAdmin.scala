@@ -16,77 +16,91 @@
 
 package com.island.ohara.configurator.fake
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
+import java.util.concurrent.{CompletableFuture, CompletionStage, ConcurrentHashMap}
+import java.{lang, util}
 
-import com.island.ohara.client.kafka.TopicAdmin
-import com.island.ohara.client.kafka.TopicAdmin.KafkaTopicInfo
-import com.island.ohara.common.setting.TopicKey
-
-import scala.concurrent.Future
+import com.island.ohara.kafka.{TopicAdmin, TopicCreator, TopicDescription, TopicOption}
 
 private[configurator] class FakeTopicAdmin extends TopicAdmin {
   import scala.collection.JavaConverters._
 
   override val connectionProps: String = "Unknown"
 
-  private[this] val cachedTopics = new ConcurrentHashMap[String, KafkaTopicInfo]()
+  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
 
-  override def changePartitions(topicKey: TopicKey, numberOfPartitions: Int): Future[Unit] = {
-    val previous = cachedTopics.get(topicKey.topicNameOnKafka())
+  override def createPartitions(name: String, numberOfPartitions: Int): CompletionStage[Void] = {
+    val previous = cachedTopics.get(name)
+    val f        = new CompletableFuture[Void]()
     if (previous == null)
-      Future.failed(
+      f.completeExceptionally(
         new NoSuchElementException(
-          s"the topic:${topicKey.topicNameOnKafka()} doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"
+          s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"
         )
       )
     else {
       cachedTopics.put(
-        topicKey.topicNameOnKafka(),
-        new KafkaTopicInfo(
-          name = previous.name,
-          numberOfPartitions = numberOfPartitions,
-          numberOfReplications = previous.numberOfReplications,
-          partitionInfos = previous.partitionInfos,
-          configs = previous.configs
+        name,
+        new TopicDescription(
+          previous.name,
+          previous.partitionInfos(),
+          previous.options
         )
       )
-      Future.unit
     }
+    f
   }
 
-  override def topics(): Future[Seq[TopicAdmin.KafkaTopicInfo]] =
-    Future.successful {
-      cachedTopics.values().asScala.toSeq
-    }
+  override def topicDescriptions(): CompletionStage[util.List[TopicDescription]] =
+    CompletableFuture.completedFuture(new util.ArrayList[TopicDescription](cachedTopics.values()))
 
-  override def creator: TopicAdmin.Creator =
-    (topicKey, numberOfPartitions, numberOfReplications, configs) =>
-      if (cachedTopics.contains(topicKey.topicNameOnKafka()))
-        Future.failed(new IllegalArgumentException(s"${topicKey.topicNameOnKafka()} already exists!"))
+  override def topicCreator(): TopicCreator =
+    (numberOfPartitions: Int, numberOfReplications: Short, options: util.Map[String, String], name: String) => {
+      val f = new CompletableFuture[Void]()
+      if (cachedTopics.contains(name))
+        f.completeExceptionally(new IllegalArgumentException(s"$name already exists!"))
       else {
-        val topicInfo = new KafkaTopicInfo(
-          name = topicKey.topicNameOnKafka(),
-          numberOfPartitions = numberOfPartitions,
-          numberOfReplications = numberOfReplications,
-          partitionInfos = Seq.empty,
-          configs
+        val topicInfo = new TopicDescription(
+          name,
+          Collections.emptyList(),
+          options.asScala
+            .map {
+              case (key, value) =>
+                new TopicOption(
+                  key,
+                  value,
+                  false,
+                  false,
+                  false
+                )
+            }
+            .toSeq
+            .asJava
         )
-        if (cachedTopics.putIfAbsent(topicKey.topicNameOnKafka(), topicInfo) != null)
-          throw new RuntimeException(s"the ${topicKey.topicNameOnKafka()} already exists in kafka")
-        Future.unit
+        if (cachedTopics.putIfAbsent(name, topicInfo) != null)
+          throw new RuntimeException(s"the $name already exists in kafka")
+        f.complete(null)
       }
+      f
+    }
+
   private[this] var _closed = false
-  override def close(): Unit = {
-    _closed = true
-  }
 
-  override def closed: Boolean = _closed
-  override def delete(topicName: String): Future[Boolean] = {
-    val removed = cachedTopics.remove(topicName)
-    if (removed == null) Future.successful(false)
-    else Future.successful(true)
-  }
+  override def close(): Unit = _closed = true
 
-  override def exist(topicKey: TopicKey): Future[Boolean] =
-    Future.successful(cachedTopics.containsKey(topicKey.topicNameOnKafka()))
+  override def closed(): Boolean = _closed
+
+  override def brokerPorts(): CompletionStage[util.Map[String, Integer]] =
+    CompletableFuture.completedFuture(Collections.emptyMap())
+
+  override def exist(name: String): CompletionStage[lang.Boolean] =
+    CompletableFuture.completedFuture(cachedTopics.containsKey(name))
+
+  override def deleteTopic(name: String): CompletionStage[lang.Boolean] = {
+    val f       = new CompletableFuture[lang.Boolean]()
+    val removed = cachedTopics.remove(name)
+    if (removed == null) f.complete(false)
+    else f.complete(true)
+    f
+  }
 }

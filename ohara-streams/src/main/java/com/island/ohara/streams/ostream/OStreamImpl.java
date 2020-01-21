@@ -20,7 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.metrics.basic.Counter;
 import com.island.ohara.streams.OGroupedStream;
 import com.island.ohara.streams.OStream;
@@ -32,7 +32,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.kstream.Grouped;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +70,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   @Override
   public OStream<Row> through(String topicName, int partitions) {
-    BrokerClient client = BrokerClient.of(builder.getBootstrapServers());
+    TopicAdmin client = TopicAdmin.of(builder.getBootstrapServers());
     client.topicCreator().topicName(topicName).numberOfPartitions(partitions).create();
     return new OStreamImpl(
         builder,

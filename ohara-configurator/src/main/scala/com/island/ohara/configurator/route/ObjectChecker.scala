@@ -28,12 +28,13 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
-import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.route.ObjectChecker.CheckList
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import com.island.ohara.configurator.store.DataStore
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
@@ -435,11 +436,9 @@ object ObjectChecker {
                         .flatMap(
                           admin =>
                             admin
-                              .topics()
-                              .map(
-                                try _
-                                finally Releasable.close(admin)
-                              )
+                              .topicDescriptions()
+                              .toScala
+                              .map(_.asScala)
                         )
                         .map(_.exists(_.name == key.topicNameOnKafka()))
                         .map(if (_) RUNNING else STOPPED)

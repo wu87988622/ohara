@@ -56,12 +56,11 @@ class TestMetrics extends WithBrokerWorker {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 15 seconds)
 
-  private[this] def assertNoMetricsForTopic(topicId: String): Unit = {
+  private[this] def assertNoMetricsForTopic(topicId: String): Unit =
     CommonUtils.await(
       () => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
       java.time.Duration.ofSeconds(20)
     )
-  }
 
   @Test
   def testTopic(): Unit = {

@@ -33,12 +33,13 @@ import com.island.ohara.client.configurator.v0.{
   ErrorApi,
   OharaJsonFormat
 }
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.kafka.TopicAdmin
 import spray.json.{DeserializationException, JsArray, JsBoolean, JsNumber, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -435,8 +436,7 @@ package object route {
     implicit brokerCollie: BrokerCollie,
     adminCleaner: AdminCleaner,
     executionContext: ExecutionContext
-  ): Future[TopicAdmin] =
-    brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
+  ): Future[TopicAdmin] = brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
 
   def extractDefaultValues(settingDefs: Seq[SettingDef]): Map[String, JsValue] =
     settingDefs

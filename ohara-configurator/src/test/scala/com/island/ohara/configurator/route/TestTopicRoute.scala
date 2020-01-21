@@ -307,7 +307,7 @@ class TestTopicRoute extends OharaTest {
 
     val topicAdmin = result(configurator.serviceCollie.brokerCollie.topicAdmin(brokerClusterInfo))
     try {
-      topicAdmin.delete(topic.key)
+      topicAdmin.deleteTopic(topic.key).toCompletableFuture.get()
       // the topic is removed but we don't throw exception.
       result(topicApi.delete(topic.key))
     } finally topicAdmin.close()

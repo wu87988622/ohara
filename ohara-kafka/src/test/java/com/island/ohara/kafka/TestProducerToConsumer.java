@@ -37,7 +37,7 @@ public class TestProducerToConsumer extends WithBroker {
 
   @Before
   public void setup() {
-    try (BrokerClient client = BrokerClient.of(testUtil().brokersConnProps())) {
+    try (TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps())) {
       client
           .topicCreator()
           .numberOfPartitions(1)
@@ -287,7 +287,7 @@ public class TestProducerToConsumer extends WithBroker {
 
   @After
   public void tearDown() {
-    try (BrokerClient client = BrokerClient.of(testUtil().brokersConnProps())) {
+    try (TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps())) {
       client.deleteTopic(topicName);
     }
   }

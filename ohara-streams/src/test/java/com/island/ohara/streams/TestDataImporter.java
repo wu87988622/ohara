@@ -18,7 +18,7 @@ package com.island.ohara.streams;
 
 import static com.island.ohara.streams.DataImporter.createKafkaConsumer;
 
-import com.island.ohara.kafka.BrokerClient;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.kafka.TopicDescription;
 import com.island.ohara.testing.With3Brokers;
 import java.time.Duration;
@@ -32,7 +32,7 @@ import org.junit.Test;
 
 public class TestDataImporter extends With3Brokers {
 
-  private BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+  private TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private List<String> TOPICS = Arrays.asList("carriers", "plane", "airport", "flight");
 
   @Test
@@ -41,17 +41,28 @@ public class TestDataImporter extends With3Brokers {
     short replications = 1;
     TOPICS.forEach(
         topic -> {
-          client
-              .topicCreator()
-              .numberOfPartitions(partitions)
-              .numberOfReplications(replications)
-              .topicName(topic)
-              .create();
+          try {
+            client
+                .topicCreator()
+                .numberOfPartitions(partitions)
+                .numberOfReplications(replications)
+                .topicName(topic)
+                .create()
+                .toCompletableFuture()
+                .get();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         });
 
     TOPICS.forEach(
         topic -> {
-          TopicDescription desc = client.topicDescription(topic);
+          TopicDescription desc;
+          try {
+            desc = client.topicDescription(topic).toCompletableFuture().get();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
           Assert.assertEquals(topic, desc.name());
           Assert.assertEquals(partitions, desc.numberOfPartitions());
           Assert.assertEquals(replications, desc.numberOfReplications());

@@ -17,11 +17,11 @@
 package com.island.ohara.configurator.route
 
 import java.util
-import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{Executors, LinkedBlockingQueue, TimeUnit}
 
-import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.kafka.TopicAdmin
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +42,8 @@ class AdminCleaner(timeout: Duration) extends Releasable {
       try while (!queue.isEmpty) {
         val obj = queue.take()
         if (timeout != null && CommonUtils.current() - obj._1 <= timeout.toMillis) buf.add(obj)
-        else if (!obj._2.closed) Releasable.close(obj._2)
+        else if (!obj._2.closed)
+          Releasable.close(obj._2)
       } finally queue.addAll(buf)
     }
     Future {

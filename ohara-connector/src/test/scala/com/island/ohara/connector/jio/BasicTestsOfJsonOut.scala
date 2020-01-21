@@ -124,9 +124,7 @@ trait BasicTestsOfJsonOut {
     )
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    println(s"[CHIA] testNormalCase v1")
     CommonUtils.await(() => pollData(connectorHostname, topicKey).size == 2, java.time.Duration.ofSeconds(60))
-    println(s"[CHIA] testNormalCase v2")
     val receivedData = pollData(connectorHostname, topicKey)
     receivedData.size shouldBe data.size
     data.foreach { d =>
@@ -141,9 +139,7 @@ trait BasicTestsOfJsonOut {
     val data                          = Row.of(Cell.of("abc", Row.of(Cell.of("a", "b"))))
     pushRawData(Seq(data), topicKey)
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
-    println(s"[CHIA] testNestedRowData v1")
     pollData(connectorHostname, topicKey).head.fields("abc").asJsObject.fields("a") shouldBe JsString("b")
-    println(s"[CHIA] testNestedRowData v2")
   }
 
   @Test
@@ -160,10 +156,8 @@ trait BasicTestsOfJsonOut {
         )
     )
     pushData(data, topicKey)
-    println(s"[CHIA] testBufferSize v1")
     // connector is running in async mode so we have to wait data is pushed to connector
     CommonUtils.await(() => pollData(connectorHostname, topicKey).nonEmpty, java.time.Duration.ofSeconds(60))
-    println(s"[CHIA] testBufferSize v2")
     val receivedData = pollData(connectorHostname, topicKey)
     // the size of data is larger than buffer size so some data must be discard
     receivedData.size shouldBe bufferSize

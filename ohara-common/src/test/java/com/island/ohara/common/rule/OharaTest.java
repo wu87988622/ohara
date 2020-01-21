@@ -26,6 +26,12 @@ import org.junit.rules.Timeout;
  * it. TestTestCases (in ohara-assembly) is able to pick up the invalidated classes for us :)
  */
 public abstract class OharaTest {
+
+  /** used by assertException. */
+  public interface Tester {
+    void run() throws Exception;
+  }
+
   /**
    * the timeout to whole test class. Consider splitting test class if it is too large to be
    * completed before timeout.
@@ -34,23 +40,42 @@ public abstract class OharaTest {
 
   /** the timeout to test case. */
   @Rule public final Timeout timeout = Timeout.seconds(120);
+
   /**
    * check exception will throws
    *
    * @param c Exception class
    * @param r executed method
    */
-  protected static <T extends Throwable> T assertException(Class<T> c, Runnable r) {
+  protected static <T extends Throwable> T assertException(Class<T> c, Tester r) {
+    return assertException(c, r, false);
+  }
+
+  /**
+   * assert the tester should throw exception containing specify exception if nested is true.
+   * Otherwise, the exception thrown by tester is verified.
+   *
+   * @param c expected nested exception
+   * @param r tester
+   * @param nested as comment
+   * @param <T> expected class type
+   * @return the expected exception
+   */
+  protected static <T extends Throwable> T assertException(Class<T> c, Tester r, boolean nested) {
     try {
       r.run();
     } catch (Exception e) {
-      if (c.isInstance(e)) return c.cast(e);
+      Throwable expectedException = nested ? e.getCause() : e;
+      if (c.isInstance(expectedException)) return c.cast(expectedException);
+      else if (expectedException == null)
+        throw new AssertionError(
+            "Assert ERROR: null exception ,but the expected exception is " + c.getName());
       else
         throw new AssertionError(
             String.format(
                 "Assert ERROR: The %s throws ,but the expected exception is  %s ",
-                e.getClass().getName(), c.getName()),
-            e);
+                expectedException.getClass().getName(), c.getName()),
+            expectedException);
     }
     throw new AssertionError("Assert ERROR: No exception throws");
   }

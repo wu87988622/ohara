@@ -57,7 +57,7 @@ final class TestRoute extends BasicShabondiTest {
       rowsTopic1(0).key.get.cells.size should ===(6)
     } finally {
       webServer.close()
-      brokerClient.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1.name())
     }
   }
 }

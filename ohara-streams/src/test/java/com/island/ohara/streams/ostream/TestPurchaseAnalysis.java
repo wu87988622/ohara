@@ -22,9 +22,9 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Consumer;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.streams.OStream;
 import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.config.StreamDefUtils;
@@ -53,7 +53,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
   private static final TopicKey itemTopic = TopicKey.of(CommonUtils.randomString(), "items");
   private static final TopicKey orderTopic = TopicKey.of(CommonUtils.randomString(), "orders");
   private static final TopicKey userTopic = TopicKey.of(CommonUtils.randomString(), "users");
-  private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+  private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
       Producer.<Row, byte[]>builder()
           .connectionProps(client.connectionProps())
@@ -314,7 +314,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
     }
   }
 
-  private void assertResult(BrokerClient client, String topic, int expectedSize) {
+  private void assertResult(TopicAdmin client, String topic, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.<Row, byte[]>builder()
             .topicName(topic)

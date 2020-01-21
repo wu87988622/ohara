@@ -72,7 +72,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       rows.size should ===(1)
     } finally {
       Releasable.close(producer)
-      brokerClient.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1.name())
     }
   }
 
@@ -112,8 +112,8 @@ final class TestStreamFlow extends BasicShabondiTest {
       rowsTopic2.size should ===(maxRowSize)
     } finally {
       Releasable.close(producer)
-      brokerClient.deleteTopic(topicKey1.name())
-      brokerClient.deleteTopic(topicKey2.name())
+      topicAdmin.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey2.name())
     }
   }
 
@@ -144,7 +144,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       rowsTopic1(99).key.get.cell(9) should ===(Cell.of("col-10", "r99-100"))
     } finally {
       Releasable.close(producer)
-      brokerClient.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1.name())
     }
   }
 }

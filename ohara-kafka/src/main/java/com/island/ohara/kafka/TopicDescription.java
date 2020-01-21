@@ -19,50 +19,43 @@ package com.island.ohara.kafka;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * get TopicDescription from kafka client
  *
- * @see BrokerClient ;
+ * @see TopicAdmin ;
  */
 public class TopicDescription {
   private final String name;
-  private final int numberOfPartitions;
-  private final short numberOfReplications;
+  private final List<PartitionInfo> partitionInfos;
   private final List<TopicOption> options;
-  private final boolean internal;
 
-  TopicDescription(
-      String name,
-      int numberOfPartitions,
-      short numberOfReplications,
-      List<TopicOption> options,
-      boolean internal) {
+  public TopicDescription(
+      String name, List<PartitionInfo> partitionInfos, List<TopicOption> options) {
     this.name = name;
-    this.numberOfPartitions = numberOfPartitions;
-    this.numberOfReplications = numberOfReplications;
+    this.partitionInfos = Collections.unmodifiableList(partitionInfos);
     this.options = Collections.unmodifiableList(options);
-    this.internal = internal;
   }
 
   public String name() {
     return name;
   }
 
+  public List<PartitionInfo> partitionInfos() {
+    return partitionInfos;
+  }
+
   public int numberOfPartitions() {
-    return numberOfPartitions;
+    return partitionInfos.size();
   }
 
   public short numberOfReplications() {
-    return numberOfReplications;
+    return (short) (partitionInfos.isEmpty() ? 0 : partitionInfos.get(0).replicas().size());
   }
 
   public List<TopicOption> options() {
     return options;
-  }
-
-  public boolean internal() {
-    return internal;
   }
 
   @Override
@@ -70,29 +63,23 @@ public class TopicDescription {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     TopicDescription that = (TopicDescription) o;
-    return numberOfPartitions == that.numberOfPartitions
-        && numberOfReplications == that.numberOfReplications
+    return partitionInfos.equals(that.partitionInfos)
         && Objects.equals(name, that.name)
-        && Objects.equals(options, that.options)
-        && Objects.equals(internal, that.internal);
+        && Objects.equals(options, that.options);
   }
 
   @Override
   public String toString() {
     return "name="
         + name
-        + ", numberOfPartitions="
-        + numberOfPartitions
-        + ", numberOfReplications="
-        + numberOfReplications
-        + ", internal="
-        + internal
+        + ", partitionInfos="
+        + partitionInfos.stream().map(PartitionInfo::toString).collect(Collectors.joining(","))
         + ", options="
         + options;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, numberOfPartitions, numberOfReplications, options, internal);
+    return Objects.hash(name, partitionInfos, options);
   }
 }

@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * get TopicOption from kafka client
  *
- * @see BrokerClient ;
+ * @see TopicAdmin ;
  */
 public class TopicOption {
   private final String key;
@@ -30,7 +30,8 @@ public class TopicOption {
   private final boolean sensitive;
   private final boolean readOnly;
 
-  TopicOption(String key, String value, boolean isDefault, boolean sensitive, boolean readOnly) {
+  public TopicOption(
+      String key, String value, boolean isDefault, boolean sensitive, boolean readOnly) {
     this.key = key;
     this.value = value;
     this.isDefault = isDefault;

@@ -41,9 +41,8 @@ final class TestKafkaClient extends BasicShabondiTest {
   }
 
   @After
-  override def tearDown(): Unit = {
-    brokerClient.deleteTopic(TOPIC_1)
-  }
+  override def tearDown(): Unit =
+    topicAdmin.deleteTopic(TOPIC_1)
 
   @Test
   def testSingleProducer(): Unit = {

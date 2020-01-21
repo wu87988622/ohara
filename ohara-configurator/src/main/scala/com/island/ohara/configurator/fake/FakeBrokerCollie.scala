@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentSkipListMap
 import com.island.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException}
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ClusterStatus
-import com.island.ohara.client.kafka.TopicAdmin
 import com.island.ohara.common.annotations.VisibleForTesting
+import com.island.ohara.kafka.TopicAdmin
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,7 +56,7 @@ private[configurator] class FakeBrokerCollie(dataCollie: DataCollie, bkConnectio
   override def topicAdmin(
     brokerClusterInfo: BrokerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
-    if (bkConnectionProps != null) Future.successful(TopicAdmin(bkConnectionProps))
+    if (bkConnectionProps != null) Future.successful(TopicAdmin.of(bkConnectionProps))
     else if (clusterCache.keySet().asScala.contains(brokerClusterInfo.key)) {
       val fake = new FakeTopicAdmin
       val r    = fakeAdminCache.putIfAbsent(brokerClusterInfo, fake)

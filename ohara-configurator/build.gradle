@@ -27,6 +27,7 @@ dependencies {
   implementation project(':ohara-kafka')
   implementation project(":ohara-streams")
   implementation project(":ohara-metrics")
+  implementation libs.scalaJava8Compat
   implementation libs.kafkaClient
   implementation libs.kafkaConnectFile
   implementation libs.kafkaConnectRuntime

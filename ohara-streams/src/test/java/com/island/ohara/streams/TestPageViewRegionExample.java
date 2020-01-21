@@ -22,8 +22,8 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.examples.PageViewRegionExample;
 import com.island.ohara.testing.WithBroker;
@@ -37,7 +37,7 @@ import org.junit.Test;
 
 public class TestPageViewRegionExample extends WithBroker {
 
-  private final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+  private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
       Producer.builder()
           .connectionProps(client.connectionProps())

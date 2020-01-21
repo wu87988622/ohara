@@ -108,7 +108,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     */
   private[this] val terminateTimeout = 3 seconds
   private[this] val cacheTimeout     = 3 seconds
-  private[this] val cleanupTimeout   = 30 seconds
+  private[this] val cleanupTimeout   = 10 seconds
 
   private[configurator] def size: Int = store.size()
 

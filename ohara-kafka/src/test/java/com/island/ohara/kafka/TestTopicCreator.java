@@ -18,14 +18,19 @@ package com.island.ohara.kafka;
 
 import com.island.ohara.common.rule.OharaTest;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 
 public class TestTopicCreator extends OharaTest {
 
   private static class FakeTopicCreator extends TopicCreator {
     @Override
-    public Void create() {
-      // do nothing
+    protected CompletionStage<Void> doCreate(
+        int numberOfPartitions,
+        short numberOfReplications,
+        Map<String, String> options,
+        String name) {
       return null;
     }
   }
@@ -52,10 +57,5 @@ public class TestTopicCreator extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void emptyOptions() {
     fake().options(Collections.emptyMap());
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void nullTimeout() {
-    fake().timeout(null);
   }
 }

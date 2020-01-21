@@ -38,7 +38,7 @@ import com.island.ohara.client.configurator.v0.{
   ZookeeperApi
 }
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.{TopicAdmin, WorkerClient}
+import com.island.ohara.client.kafka.WorkerClient
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
@@ -47,7 +47,7 @@ import com.island.ohara.configurator.fake.FakeWorkerClient
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.Consumer.Record
-import com.island.ohara.kafka.{Consumer, Header}
+import com.island.ohara.kafka.{TopicAdmin, Consumer, Header}
 import com.island.ohara.streams.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
 import spray.json.{DeserializationException, JsNull, JsObject}

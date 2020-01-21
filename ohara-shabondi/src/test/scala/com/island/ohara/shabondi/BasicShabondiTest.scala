@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.kafka.BrokerClient
+import com.island.ohara.kafka.TopicAdmin
 import com.island.ohara.shabondi.DefaultDefinitions._
 import com.island.ohara.testing.WithBroker
 import com.typesafe.scalalogging.Logger
@@ -39,8 +39,8 @@ import scala.concurrent.duration._
 abstract class BasicShabondiTest extends WithBroker with Matchers {
   protected val log = Logger(this.getClass())
 
-  protected val brokerProps                = testUtil.brokersConnProps
-  protected val brokerClient: BrokerClient = BrokerClient.of(brokerProps)
+  protected val brokerProps            = testUtil.brokersConnProps
+  protected val topicAdmin: TopicAdmin = TopicAdmin.of(brokerProps)
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
@@ -71,7 +71,7 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
     createTestTopic(topicKey.name)
 
   protected def createTestTopic(name: String): Unit =
-    brokerClient.topicCreator
+    topicAdmin.topicCreator
       .numberOfPartitions(1)
       .numberOfReplications(1.toShort)
       .topicName(name)
@@ -105,6 +105,6 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
 
   @After
   def tearDown(): Unit = {
-    Releasable.close(brokerClient)
+    Releasable.close(topicAdmin)
   }
 }

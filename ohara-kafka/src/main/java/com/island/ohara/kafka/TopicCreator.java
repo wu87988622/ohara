@@ -17,28 +17,25 @@
 package com.island.ohara.kafka;
 
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 import org.apache.kafka.common.config.TopicConfig;
 
 /**
  * a helper class used to create the kafka topic. all member are protected since we have to
  * implement a do-nothing TopicCreator in testing.
  */
-public abstract class TopicCreator implements com.island.ohara.common.pattern.Creator<Void> {
+public abstract class TopicCreator
+    implements com.island.ohara.common.pattern.Creator<CompletionStage<Void>> {
   protected int numberOfPartitions = 1;
   protected short numberOfReplications = 1;
   protected Map<String, String> options = Collections.emptyMap();
-  protected Duration timeout = Duration.ofSeconds(10);
   protected String name = null;
-
-  TopicCreator() {
-    // do nothing
-  }
 
   @Optional("default value is 1")
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
@@ -66,11 +63,10 @@ public abstract class TopicCreator implements com.island.ohara.common.pattern.Cr
    */
   @Optional("default is deleted")
   public TopicCreator compacted() {
-    doOptions(
+    return doOptions(
         Collections.singletonMap(
             TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT),
         false);
-    return this;
   }
   /**
    * Specify that the topic's data should be deleted. It means the topic won't keep any data when
@@ -80,11 +76,10 @@ public abstract class TopicCreator implements com.island.ohara.common.pattern.Cr
    */
   @Optional("default is deleted")
   public TopicCreator deleted() {
-    doOptions(
+    return doOptions(
         Collections.singletonMap(
             TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE),
         false);
-    return this;
   }
 
   private TopicCreator doOptions(Map<String, String> options, boolean overwrite) {
@@ -108,14 +103,24 @@ public abstract class TopicCreator implements com.island.ohara.common.pattern.Cr
     return this;
   }
 
-  @Optional("default value is 10 seconds")
-  public TopicCreator timeout(Duration timeout) {
-    this.timeout = Objects.requireNonNull(timeout);
-    return this;
-  }
-
   public TopicCreator topicName(String name) {
     this.name = CommonUtils.requireNonEmpty(name);
     return this;
   }
+
+  public TopicCreator topicKey(TopicKey key) {
+    return topicName(key.topicNameOnKafka());
+  }
+
+  @Override
+  public CompletionStage<Void> create() {
+    return doCreate(
+        CommonUtils.requirePositiveInt(numberOfPartitions),
+        CommonUtils.requirePositiveShort(numberOfReplications),
+        Objects.requireNonNull(options),
+        CommonUtils.requireNonEmpty(name));
+  }
+
+  protected abstract CompletionStage<Void> doCreate(
+      int numberOfPartitions, short numberOfReplications, Map<String, String> options, String name);
 }

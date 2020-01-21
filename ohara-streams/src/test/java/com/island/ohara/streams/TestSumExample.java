@@ -21,8 +21,8 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
-import com.island.ohara.kafka.BrokerClient;
 import com.island.ohara.kafka.Producer;
+import com.island.ohara.kafka.TopicAdmin;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.examples.SumExample;
 import com.island.ohara.testing.WithBroker;
@@ -36,7 +36,7 @@ public class TestSumExample extends WithBroker {
 
   @Test
   public void testCase() {
-    final BrokerClient client = BrokerClient.of(testUtil().brokersConnProps());
+    final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
     final Producer<Row, byte[]> producer =
         Producer.<Row, byte[]>builder()
             .connectionProps(client.connectionProps())

@@ -60,8 +60,8 @@ final class TestStreamGraph extends BasicShabondiTest {
       rowsTopic2(0).key.get.cells.size should ===(columnSize)
     } finally {
       Releasable.close(producer)
-      brokerClient.deleteTopic(topicKey1.name())
-      brokerClient.deleteTopic(topicKey2.name())
+      topicAdmin.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey2.name())
     }
   }
 }

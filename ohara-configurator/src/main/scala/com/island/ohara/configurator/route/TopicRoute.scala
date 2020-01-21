@@ -24,15 +24,19 @@ import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi
 import com.island.ohara.client.configurator.v0.TopicApi._
 import com.island.ohara.common.setting.{ObjectKey, TopicKey}
-import com.island.ohara.common.util.{CommonUtils, Releasable}
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import com.island.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import com.island.ohara.configurator.route.hook._
 import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import com.island.ohara.kafka.PartitionInfo
 import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
+import scala.collection.JavaConverters._
+import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
+
 private[configurator] object TopicRoute {
   private[this] val LOG = Logger(TopicRoute.getClass)
 
@@ -80,31 +84,29 @@ private[configurator] object TopicRoute {
               topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
                 topicAdmin
                   .exist(topicInfo.key)
+                  .toScala
                   .flatMap(
                     if (_)
                       topicAdmin
-                        .topics()
+                        .topicDescriptions()
+                        .toScala
+                        .map(_.asScala)
                         .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
-                        .map(_.partitionInfos        -> Some(State.RUNNING))
-                    else Future.successful(Seq.empty -> None)
-                  )
-                  // pre-close topic admin
-                  .map(
-                    try _
-                    finally Releasable.close(topicAdmin)
+                        .map(_.partitionInfos.asScala -> Some(State.RUNNING))
+                    else Future.successful(Seq.empty  -> None)
                   )
                   .map {
                     case (partitions, state) =>
                       topicInfo.copy(
                         partitionInfos = partitions.map(
                           partition =>
-                            PartitionInfo(
-                              index = partition.index,
-                              leaderNode = partition.leaderNode,
-                              replicaNodes = partition.replicaNodes,
-                              inSyncReplicaNodes = partition.inSyncReplicaNodes,
-                              beginningOffset = partition.beginningOffset,
-                              endOffset = partition.endOffset
+                            new PartitionInfo(
+                              partition.id,
+                              partition.leader,
+                              partition.replicas,
+                              partition.inSyncReplicas(),
+                              partition.beginningOffset,
+                              partition.endOffset
                             )
                         ),
                         state = state,
@@ -257,23 +259,20 @@ private[configurator] object TopicRoute {
               case RUNNING => Future.unit
               case STOPPED =>
                 topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
-                  topicAdmin.creator
+                  topicAdmin.topicCreator
                     .topicKey(topicInfo.key)
                     .numberOfPartitions(topicInfo.numberOfPartitions)
                     .numberOfReplications(topicInfo.numberOfReplications)
-                    .configs(topicInfo.configs.map {
+                    .options(topicInfo.configs.map {
                       case (key, value) =>
                         key -> (value match {
                           case JsString(value) => value
                           case _               => value.toString()
                         })
-                    })
+                    }.asJava)
                     .create()
-                    .flatMap(
-                      _ =>
-                        try Future.unit
-                        finally Releasable.close(topicAdmin)
-                    )
+                    .toScala
+                    .flatMap(_ => Future.unit)
                 }
             }
         }
@@ -305,12 +304,9 @@ private[configurator] object TopicRoute {
                   .flatMap(topicAdmin)
                   .flatMap { topicAdmin =>
                     topicAdmin
-                      .delete(topicInfo.key)
-                      .flatMap(
-                        _ =>
-                          try Future.unit
-                          finally Releasable.close(topicAdmin)
-                      )
+                      .deleteTopic(topicInfo.key)
+                      .toScala
+                      .flatMap(_ => Future.unit)
                   }
             }
         }
