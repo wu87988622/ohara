@@ -125,39 +125,41 @@ const Pipeline = () => {
               <PaperWrapper>
                 <Paper
                   ref={paperRef}
-                  onCellSelect={cellView => setSelectedCell(cellView)}
+                  onCellSelect={element => {
+                    setSelectedCell(element);
+                  }}
                   onCellDeselect={() => setSelectedCell(null)}
                   onElementAdd={(cell, paperApi) => {
-                    switch (paperUtils.utils.getCellClassType(cell)) {
+                    switch (cell.kind) {
                       case KIND.sink:
                       case KIND.source:
-                        if (!cell.attributes.isTemporary) {
-                          createConnector({ ...cell, paperApi });
+                        if (!cell.isTemporary) {
+                          createConnector({ ...cell }, paperApi);
                         }
                         break;
 
                       case KIND.stream:
-                        if (!cell.attributes.isTemporary) {
-                          createStream({ ...cell, paperApi });
+                        if (!cell.isTemporary) {
+                          createStream({ ...cell }, paperApi);
                         }
                         break;
 
                       case KIND.topic:
-                        createTopic({ ...cell, paperApi });
+                        createTopic({ ...cell }, paperApi);
                         break;
 
                       default:
                         break;
                     }
                   }}
-                  onCellStart={(id, name, paperApi) => {
-                    startConnector({ id, name, paperApi });
+                  onCellStart={({ id, name }, paperApi) => {
+                    startConnector({ id, name }, paperApi);
                   }}
-                  onCellStop={(id, name, paperApi) => {
-                    stopConnector({ id, name, paperApi });
+                  onCellStop={({ id, name }, paperApi) => {
+                    stopConnector({ id, name }, paperApi);
                   }}
-                  onCellRemove={(id, name, paperApi) => {
-                    removeConnector({ id, name, paperApi });
+                  onCellRemove={({ id, name }, paperApi) => {
+                    removeConnector({ id, name }, paperApi);
                   }}
                 />
                 {isPaperApiReady && (

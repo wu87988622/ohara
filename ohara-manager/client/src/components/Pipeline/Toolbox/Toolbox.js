@@ -31,7 +31,7 @@ import * as joint from 'jointjs';
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
 import ToolboxUploadButton from './ToolboxUploadButton';
-import * as utils from './toolboxUtils';
+import * as utils from './ToolboxUtils';
 import * as context from 'context';
 import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
@@ -58,13 +58,12 @@ const Toolbox = props => {
   const showMessage = context.useSnackbar();
 
   const [isOpen, setIsOpen] = React.useState(false);
-  const [zIndex, setZIndex] = React.useState(2);
   const [searchResults, setSearchResults] = React.useState(null);
   const [cellInfo, setCellInfo] = React.useState({
     classType: '',
     className: '',
-    displayName: '',
     position: {
+      displayName: '',
       x: 0,
       y: 0,
     },
@@ -105,21 +104,20 @@ const Toolbox = props => {
     // Remove temporary cells
     paperApi
       .getCells()
-      .filter(cell => cell.attributes.isTemporary)
-      .forEach(cell => cell.remove());
+      .filter(cell => cell.isTemporary)
+      .forEach(cell => paperApi.removeElement(cell.id));
   };
 
   const handleAddGraph = async newGraphName => {
-    setZIndex(zIndex + 1);
-    const sharedParams = {
-      displayName: newGraphName,
+    const params = {
       ...cellInfo,
+      displayName: newGraphName,
     };
 
     switch (cellInfo.classType) {
       case KIND.stream:
         paperApi.addElement({
-          ...sharedParams,
+          ...params,
           name: newGraphName,
           displayName: newGraphName,
         });
@@ -129,15 +127,15 @@ const Toolbox = props => {
       case KIND.source:
       case KIND.sink:
         paperApi.addElement({
-          ...sharedParams,
+          ...params,
           name: newGraphName,
           displayName: newGraphName,
         });
         break;
 
       default:
-        break;
     }
+
     removeTempCell();
     showMessage(`${newGraphName} has been added`);
     setIsOpen(false);

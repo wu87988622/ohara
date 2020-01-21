@@ -15,45 +15,61 @@
  */
 
 import { KIND } from 'const';
+import { createLink } from './cell';
+import { getPrivateTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
-const getPrivateTopicDisplayNames = topics => {
-  const topicIndex = topics
-    .map(topic => topic.tags)
-    .filter(topic => topic.type === 'private')
-    .map(topic => topic.displayName.replace('T', ''))
-    .sort();
+function isView(cell) {
+  if (cell.$box === undefined) return false;
 
-  if (topicIndex.length === 0) return 'T1';
-  return `T${Number(topicIndex.pop()) + 1}`;
+  return true;
+}
+
+export const getReturnedData = cell => {
+  const isCellView = isView(cell);
+
+  const _cell = isCellView ? cell.model : cell;
+
+  if (_cell.isElement()) {
+    return {
+      cellType: _cell.get('type'), // JointJS element type
+      id: _cell.get('id'),
+      name: _cell.get('name'),
+      kind: _cell.get('classType'),
+      displayName: _cell.get('displayName'),
+      isTemporary: _cell.get('isTemporary') || false,
+      className: _cell.get('className'),
+      jarKey: _cell.get('jarKey') || null,
+    };
+  }
+
+  const link = _cell;
+  return {
+    id: link.get('id'),
+    sourceId: link.get('source').id || null,
+    targetId: link.get('target').id || null,
+  };
 };
 
-export const createConnection = async params => {
+export const createConnection = params => {
   const {
-    currentLink: sourceLink,
+    sourceLink,
     showMessage,
+    targetElementView,
+    paperApi,
     graph,
-    cellView,
-    setInitToolboxList,
-    createTopic,
-    currentTopic,
-    updatePipeline,
-    currentPipeline,
-    updateConnector,
   } = params;
 
-  const targetCell = cellView.model;
-  const targetName = targetCell.attributes.params.name;
-  const targetId = targetCell.get('id');
-  const targetType = targetCell.get('classType');
-  const targetTitle = targetCell.get('title');
-  const targetConnectedLinks = graph.current.getConnectedLinks(targetCell);
-
   const sourceId = sourceLink.get('source').id;
-  const sourceName = graph.current.getCell(sourceId).attributes.params.name;
-  const sourceType = graph.current.getCell(sourceId).attributes.classType;
-  const sourceCell = graph.current.getCell(sourceId);
-  const sourceTitle = sourceCell.get('title');
+  const sourceType = graph.getCell(sourceId).attributes.classType;
+  const sourceElement = graph.getCell(sourceId);
+  const sourceDisplayName = sourceElement.get('displayName');
+
+  const targetElement = targetElementView.model;
+  const targetId = targetElement.get('id');
+  const targetType = targetElement.get('classType');
+  const targetDisplayName = targetElement.get('displayName');
+  const targetConnectedLinks = graph.getConnectedLinks(targetElement);
 
   const isLoopLink = () => {
     return targetConnectedLinks.some(link => {
@@ -65,8 +81,6 @@ export const createConnection = async params => {
 
   const handleError = message => {
     showMessage(message);
-
-    // Reset a link when connection failed
   };
 
   // Cell connection logic
@@ -74,7 +88,7 @@ export const createConnection = async params => {
     // A cell cannot connect to itself, not throwing a
     // message out here since the behavior is not obvious
   } else if (targetType === KIND.source) {
-    handleError(`Target ${targetTitle} is a source!`);
+    handleError(`Target ${targetDisplayName} is a source!`);
   } else if (
     sourceType === targetType &&
     (sourceType !== KIND.stream && targetType !== KIND.stream)
@@ -85,8 +99,8 @@ export const createConnection = async params => {
   } else if (isLoopLink()) {
     handleError(`A connection is already in place for these two cells`);
   } else {
-    const predecessors = graph.current.getPredecessors(targetCell);
-    const successors = graph.current.getSuccessors(sourceCell);
+    const predecessors = graph.getPredecessors(targetElement);
+    const successors = graph.getSuccessors(sourceElement);
     const sourceHasTarget = successors.some(
       successor => successor.attributes.classType === KIND.topic,
     );
@@ -100,12 +114,12 @@ export const createConnection = async params => {
     if (sourceType === KIND.source && targetType === KIND.sink) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a target`,
+          `The source ${sourceDisplayName} is already connected to a target`,
         );
       }
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -113,12 +127,12 @@ export const createConnection = async params => {
     if (sourceType === KIND.source && targetType === KIND.stream) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a target`,
+          `The source ${sourceDisplayName} is already connected to a target`,
         );
       }
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -126,7 +140,7 @@ export const createConnection = async params => {
     if (sourceType === KIND.source && targetType === KIND.topic) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a target`,
+          `The source ${sourceDisplayName} is already connected to a target`,
         );
       }
     }
@@ -134,7 +148,7 @@ export const createConnection = async params => {
     if (sourceType === KIND.topic && targetType === KIND.sink) {
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -142,7 +156,7 @@ export const createConnection = async params => {
     if (sourceType === KIND.topic && targetType === KIND.stream) {
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -150,7 +164,7 @@ export const createConnection = async params => {
     if (sourceType === KIND.stream && targetType === KIND.topic) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a target`,
+          `The source ${sourceDisplayName} is already connected to a target`,
         );
       }
     }
@@ -158,13 +172,13 @@ export const createConnection = async params => {
     if (sourceType === KIND.stream && targetType === KIND.sink) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a sink`,
+          `The source ${sourceDisplayName} is already connected to a sink`,
         );
       }
 
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -172,13 +186,13 @@ export const createConnection = async params => {
     if (sourceType === KIND.stream && targetType === KIND.stream) {
       if (sourceHasTarget) {
         return handleError(
-          `The source ${sourceTitle} is already connected to a sink`,
+          `The source ${sourceDisplayName} is already connected to a sink`,
         );
       }
 
       if (targetHasSource) {
         return handleError(
-          `The target ${targetTitle} is already connected to a source`,
+          `The target ${targetDisplayName} is already connected to a source`,
         );
       }
     }
@@ -191,39 +205,22 @@ export const createConnection = async params => {
       (sourceType === KIND.stream && targetType === KIND.sink) ||
       (sourceType === KIND.stream && targetType === KIND.stream)
     ) {
-      const sourcePosition = sourceCell.position();
-      const targetPosition = targetCell.position();
+      const sourcePosition = sourceElement.position();
+      const targetPosition = targetElement.position();
 
       // The topic will be placed at the center of two cells
       const topicX = (sourcePosition.x + targetPosition.x + 23) / 2;
       const topicY = (sourcePosition.y + targetPosition.y + 23) / 2;
 
-      const privateTopicName = generate.serviceName({ length: 5 });
-      const displayName = getPrivateTopicDisplayNames(currentTopic);
+      const privateTopicName = generate.serviceName();
+      const displayName = getPrivateTopicDisplayNames(
+        paperApi.getCells('topic'),
+      );
 
-      const { data: topicData } = await createTopic({
-        name: privateTopicName,
-        tags: {
-          type: 'private',
-          displayName,
-        },
-      });
-
-      await updatePipeline({
-        name: currentPipeline.name,
-        endpoints: [
-          ...currentPipeline.endpoints,
-          {
-            name: privateTopicName,
-            kind: KIND.topic,
-          },
-        ],
-      });
-
-      graph.current.addCell({
+      const topic = paperApi.addElement({
         name: privateTopicName,
         graph,
-        title: displayName,
+        displayName,
         classType: KIND.topic,
         className: 'privateTopic',
         position: {
@@ -232,40 +229,40 @@ export const createConnection = async params => {
         },
       });
 
-      await updateConnector({
-        name: sourceName,
-        topicKeys: [{ name: topicData.name, group: topicData.group }],
+      const { id: topicId } = topic;
+
+      sourceLink.target({ id: topicId });
+
+      // Restore pinter event so the link can be clicked by mouse again
+      sourceLink.attr('root/style', 'pointer-events: auto');
+
+      const targetLink = createLink({
+        sourceId: topicId,
+        targetId: targetElement.id,
       });
 
-      await updateConnector({
-        name: targetName,
-        topicKeys: [{ name: topicData.name, group: topicData.group }],
-      });
+      graph.addCell(targetLink);
 
-      // There's a bug causes by not re-initializing JointJS' HTML element
-      // Because we're using these custom HTML elements both in `TopicGraph`
-      // Component as well as Toolbox. And so we're manually re-initializing
-      // Toolbox to prevent the bug
-      setInitToolboxList(prevState => prevState + 1);
-    } else if (sourceType === KIND.topic && targetType === KIND.sink) {
-      const topicData = currentTopic.find(topic => topic.name === sourceName);
+      const result = {
+        sourceElement: getReturnedData(sourceElement),
+        firstLink: getReturnedData(sourceLink),
+        topicElement: topic,
+        secondeLink: getReturnedData(targetLink),
+        targetElement: getReturnedData(targetElement),
+      };
 
-      await updateConnector({
-        name: targetName,
-        topicKeys: [{ name: topicData.name, group: topicData.group }],
-      });
-    } else if (sourceType === KIND.source && targetType === KIND.topic) {
-      const topicData = currentTopic.find(topic => topic.name === targetName);
-
-      await updateConnector({
-        name: sourceName,
-        topicKeys: [{ name: topicData.name, group: topicData.group }],
-      });
+      return result;
     }
 
     // Link to the target cell
-    sourceLink.target({ id: targetCell.id });
+    sourceLink.target({ id: targetId });
     // Restore pinter event so the link can be clicked by mouse again
     sourceLink.attr('root/style', 'pointer-events: auto');
+
+    return {
+      sourceElement: getReturnedData(sourceElement),
+      link: getReturnedData(sourceLink),
+      targetElement: getReturnedData(targetElement),
+    };
   }
 };

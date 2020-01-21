@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import ConnectorCell from './ConnectorCell';
-import TopicCell from './TopicCell';
+export const getPrivateTopicDisplayNames = topicCells => {
+  const topicIndex = topicCells
+    .filter(topicCell => topicCell.className === 'privateTopic')
+    .map(topicCell => topicCell.displayName.replace('T', ''))
+    .sort((a, b) => a - b);
 
-export { ConnectorCell, TopicCell };
+  if (topicIndex.length === 0) return 'T1';
+  return `T${Number(topicIndex.pop()) + 1}`;
+};

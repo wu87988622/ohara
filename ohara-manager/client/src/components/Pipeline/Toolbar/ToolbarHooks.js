@@ -87,7 +87,7 @@ export const useZoom = () => {
     if (isValidScale) {
       // If the instruction is `fromDropdown`, we will use the scale it gives
       // and update the state right alway
-      if (instruction === 'fromDropdown') return paperApi.scale(scale);
+      if (instruction === 'fromDropdown') return paperApi.setScale(scale);
 
       // By default, the scale is multiply and divide by `2`
       let newScale = 0;
@@ -110,7 +110,7 @@ export const useZoom = () => {
         newScale = fixedScale / 2;
       }
 
-      paperApi.scale(newScale);
+      paperApi.setScale(newScale);
       return setPaperScale(newScale);
     }
 

@@ -15,13 +15,14 @@
  */
 
 import React from 'react';
-
 import SplitPane from 'react-split-pane';
+
 import AppBar from './AppBar';
-import * as context from 'context';
-import { Pipeline, Navigator } from 'components/Pipeline';
-import { DevToolDialog } from 'components/DevTool';
+import Pipeline from 'components/Pipeline';
+import Navigator from './Navigator';
 import EventLog from 'components/EventLog';
+import * as context from 'context';
+import { DevToolDialog } from 'components/DevTool';
 import { Wrapper } from './AppLayoutStyles';
 
 const AppLayout = () => {

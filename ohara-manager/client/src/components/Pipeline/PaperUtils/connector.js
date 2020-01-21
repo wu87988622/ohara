@@ -27,13 +27,11 @@ const connector = () => {
     deleteConnector,
   } = context.useConnectorActions();
 
-  const create = async params => {
-    const { paperApi, id } = params;
-    const name = util.getCellName(params);
-    const connectorClass = util.getCellClassName(params);
+  const create = async (params, paperApi) => {
+    const { id, name, className } = params;
     const res = await createConnector({
       name,
-      connector__class: connectorClass,
+      connector__class: className,
     });
     if (!res.error) {
       const state = util.getCellState(res);
@@ -50,8 +48,8 @@ const connector = () => {
     await updateConnector({ ...data });
   };
 
-  const start = async params => {
-    const { paperApi, id, name } = params;
+  const start = async (params, paperApi) => {
+    const { id, name } = params;
 
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
@@ -69,8 +67,8 @@ const connector = () => {
     }
   };
 
-  const stop = async params => {
-    const { paperApi, id, name } = params;
+  const stop = async (params, paperApi) => {
+    const { id, name } = params;
     const res = await stopConnector(name);
     if (!res.error) {
       const state = util.getCellState(res);
@@ -80,8 +78,8 @@ const connector = () => {
     }
   };
 
-  const remove = async params => {
-    const { paperApi, id, name } = params;
+  const remove = async (params, paperApi) => {
+    const { id, name } = params;
     const res = await deleteConnector(name);
     if (!res.error) {
       paperApi.removeElement(id);

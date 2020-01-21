@@ -21,9 +21,8 @@ import { CELL_STATUS } from 'const';
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
 
-  const create = async params => {
-    const { paperApi, id } = params;
-    const name = util.getCellName(params);
+  const create = async (params, paperApi) => {
+    const { id, name } = params;
     const res = await createTopic({
       name,
     });
@@ -40,8 +39,8 @@ const topic = () => {
     }
   };
 
-  const remove = async params => {
-    const { paperApi, id, name } = params;
+  const remove = async (params, paperApi) => {
+    const { id, name } = params;
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });

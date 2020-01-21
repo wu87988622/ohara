@@ -21,6 +21,8 @@ export const StyledPaper = styled.div(
     border: ${theme.spacing(1)}px solid ${theme.palette.common.white};
     overflow: hidden;
     cursor: grab;
+    width: 100%;
+    height: 100%;
 
     &.is-being-grabbed {
       cursor: grabbing;

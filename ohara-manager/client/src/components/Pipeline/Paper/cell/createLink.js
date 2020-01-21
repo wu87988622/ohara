@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
-import Pipeline from './Pipeline';
+import * as joint from 'jointjs';
 
-export default Pipeline;
+const createLink = options => {
+  const { sourceId, targetId } = options;
+
+  const link = new joint.shapes.standard.Link();
+  link.source({ id: sourceId });
+  link.target({ id: targetId });
+  link.attr({ line: { stroke: '#9e9e9e' } });
+  return link;
+};
+
+export default createLink;

@@ -26,6 +26,7 @@ import $ from 'jquery';
 
 import { KIND } from 'const';
 import { AddPublicTopicIcon } from 'components/common/Icon';
+import { getPrivateTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
 export const createToolboxList = params => {
@@ -226,7 +227,7 @@ export const enableDragAndDrop = params => {
         // Dropped over paper ?
         if (isInsidePaper) {
           const localPoint = paperApi.getLocalPoint();
-          const scale = paperApi.scale();
+          const scale = paperApi.getScale();
           const newX = (x - offsetLeft - offset.x) / scale.sx + localPoint.x;
           const newY = (y - offsetTop - offset.y) / scale.sy + localPoint.y;
           const {
@@ -239,8 +240,8 @@ export const enableDragAndDrop = params => {
 
           // These info will be used when creating a cell
           const params = {
+            name,
             position: { x: newX, y: newY },
-            displayName: name,
             classType,
             className,
             jarKey: jarKey || undefined,
@@ -273,7 +274,7 @@ export const enableDragAndDrop = params => {
             paperApi.addElement({
               ...params,
               isTemporary: true,
-              name: 'newgraph',
+              displayName: 'newgraph',
             });
           }
         }
@@ -288,16 +289,6 @@ export const enableDragAndDrop = params => {
     });
   });
 };
-
-function getPrivateTopicDisplayNames(topicCells) {
-  const topicIndex = topicCells
-    .filter(topicCell => topicCell.attributes.className === 'privateTopic')
-    .map(topicCell => topicCell.attributes.displayName.replace('T', ''))
-    .sort((a, b) => a - b);
-
-  if (topicIndex.length === 0) return 'T1';
-  return `T${Number(topicIndex.pop()) + 1}`;
-}
 
 export function getConnectorInfo(worker) {
   let sources = [];

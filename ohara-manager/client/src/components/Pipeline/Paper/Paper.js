@@ -18,31 +18,41 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import * as joint from 'jointjs';
 import _ from 'lodash';
+import $ from 'jquery';
 import { useTheme } from '@material-ui/core/styles';
 
 import { KIND } from 'const';
 import { StyledPaper } from './PaperStyles';
-import { ConnectorCell, TopicCell } from '../Cells';
+import { createConnectorCell, createTopicCell, createLink } from './cell';
+import { createConnection, getReturnedData } from './PaperUtils';
+import { useSnackbar } from 'context';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
-    onCellSelect,
-    onCellDeselect,
-    onElementAdd,
-    onCellStart,
-    onCellStop,
-    onCellRemove,
-    onCellConfig,
+    onChange = _.noop,
+    onCellSelect = _.noop,
+    onCellDeselect = _.noop,
+    onElementAdd = _.noop,
+    onConnect = _.noop,
+    onDisconnect = _.noop,
+
+    // Cell events, these are passing down to cells
+    onCellStart = _.noop,
+    onCellStop = _.noop,
+    onCellRemove = _.noop,
+    onCellConfig = _.noop,
   } = props;
 
   const { palette } = useTheme();
+  const showMessage = useSnackbar();
 
   const graphRef = React.useRef(null);
   const paperRef = React.useRef(null);
   const cellRef = React.useRef({});
   // sometime onCellEvent props do not immediate updates
-  const onCellEvnetRef = React.useRef({});
+  const onCellEventRef = React.useRef({});
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
+  const [hasUnConnectedLink, setHasUnConnectedLink] = React.useState(false);
 
   React.useEffect(() => {
     const namespace = joint.shapes;
@@ -91,7 +101,7 @@ const Paper = React.forwardRef((props, ref) => {
   }, [palette.common.white, palette.grey, palette.primary.main]);
 
   React.useEffect(() => {
-    onCellEvnetRef.current = {
+    onCellEventRef.current = {
       onCellStart,
       onCellStop,
       onCellRemove,
@@ -120,59 +130,225 @@ const Paper = React.forwardRef((props, ref) => {
       }
     });
 
-    // Binding handlers
-    const paperApi = ref.current;
-    graph.on('add', cell => {
-      if (
-        _.isFunction(onElementAdd) &&
-        !_.isEqual(cellRef.current, cell) &&
-        _.get(paperApi, 'state.isReady', false)
-      ) {
-        cellRef.current = cell;
-        onCellEvnetRef.current.onElementAdd(cell, paperApi);
+    paper.on('blank:pointerup', () => {
+      setDragStartPosition(null);
+    });
+
+    paper.on('link:mouseenter', linkView => {
+      const toolsView = new joint.dia.ToolsView({
+        tools: [
+          // Allow users to add vertices on link view
+          new joint.linkTools.Vertices(),
+          new joint.linkTools.Segments(),
+          new joint.linkTools.TargetArrowhead(),
+          new joint.linkTools.TargetAnchor({
+            restrictArea: true,
+            areaPadding: 100,
+          }),
+          new joint.linkTools.Boundary(),
+          // Add a custom remove tool
+          new joint.linkTools.Remove({
+            distance: '50%',
+            markup: [
+              {
+                tagName: 'circle',
+                selector: 'button',
+                attributes: {
+                  r: 8,
+                  fill: 'grey',
+                  cursor: 'pointer',
+                },
+              },
+              {
+                tagName: 'path',
+                selector: 'icon',
+                attributes: {
+                  d: 'M -3 -3 3 3 M -3 3 3 -3',
+                  fill: 'none',
+                  stroke: '#fff',
+                  'stroke-width': 2,
+                  'pointer-events': 'none',
+                },
+              },
+            ],
+            action(event, linkView, toolView) {
+              const source = linkView.model.getSourceElement();
+              const target = linkView.model.getTargetElement();
+              linkView.model.remove({ ui: true, tool: toolView.cid });
+              onDisconnect(
+                {
+                  sourceElement: getReturnedData(source),
+                  targetElement: getReturnedData(target),
+                },
+                paperApi,
+              );
+            },
+          }),
+        ],
+      });
+
+      linkView.addTools(toolsView);
+      linkView.highlight();
+    });
+
+    paper.on('link:mouseleave', linkView => {
+      paper.removeTools();
+      linkView.unhighlight();
+    });
+
+    paper.on('element:mouseenter', element => {
+      element.highlight();
+    });
+
+    paper.on('element:mouseleave', element => {
+      // We might want to keep the state
+      if (!element.model.attributes.isMenuDisplayed) {
+        element.unhighlight();
       }
     });
 
-    paper.on('cell:pointerclick', cellView => {
-      if (_.isFunction(onCellSelect)) onCellSelect(cellView, paperApi);
-      resetCells();
+    // Create a link that moves along with mouse cursor
+    $(document).on('mousemove.createlink', event => {
+      if (_.has(paperApi, 'state.isReady')) {
+        const link = graph
+          .getCells()
+          .filter(cell => cell.isLink())
+          .find(link => !link.get('target').id);
 
-      cellView.model.attributes.isMenuDisplayed = true;
-      cellView.updateBox();
+        if (link) {
+          const localPoint = paperApi.getLocalPoint();
+          const scale = paperApi.getScale();
+          const { offsetLeft, offsetTop } = paperApi.getBbox();
+
+          link.target({
+            x: (event.pageX - offsetLeft) / scale.sx + localPoint.x,
+            y: (event.pageY - offsetTop) / scale.sy + localPoint.y,
+          });
+
+          link.attr({
+            // prevent the link from clicking by users, the `root` here is the
+            // SVG container element of the link
+            root: { style: 'pointer-events: none' },
+            line: { stroke: palette.grey[500] },
+          });
+        }
+      }
+    });
+
+    // This paperApi should be passed into all event handlers as the second
+    // parameter,  // e.g., onConnect(..., paperApi)
+    // the only exception is the onRemove as it doesn't any other parameters.
+    const paperApi = ref.current;
+
+    // Binding custom handlers
+    graph.on('add', cell => {
+      if (
+        !_.isEqual(cellRef.current, cell) &&
+        _.get(paperApi, 'state.isReady', false)
+      ) {
+        const data = getReturnedData(cell);
+        cellRef.current = cell;
+        onCellEventRef.current.onElementAdd(data, paperApi);
+      }
+    });
+
+    graph.on('change', (cell, updates) => {
+      onChange({ cell, updates }, paperApi);
+    });
+
+    paper.on('element:pointerclick', elementView => {
+      onCellSelect(getReturnedData(elementView), paperApi);
+      resetCells();
+      elementView.highlight();
+      elementView.model.attributes.isMenuDisplayed = true;
+      elementView.updateBox();
+
+      const sourceLink = graph.getLinks().find(link => !link.get('target').id);
+      if (sourceLink) {
+        const result = createConnection({
+          sourceLink,
+          targetElementView: elementView,
+          showMessage,
+          paperApi,
+
+          // Since createConnection is using quite some JointJS APIs
+          // and these APIs are not listed/wrapped in our public APIs
+          // so we're passing graph down here
+          graph,
+        });
+
+        setHasUnConnectedLink(false);
+
+        if (result) {
+          return onConnect(result, paperApi);
+        }
+
+        resetLinks();
+      }
     });
 
     paper.on('blank:pointerclick', () => {
-      if (_.isFunction(onCellDeselect)) onCellDeselect(paperApi);
+      onCellDeselect(paperApi);
       resetCells();
+      resetLinks();
     });
 
     function resetCells() {
-      getCellViews().forEach(cell => {
-        cell.model.attributes.isMenuDisplayed = false;
-        cell.updateBox();
+      getCellViews().forEach(cellView => {
+        cellView.unhighlight();
+        cellView.model.attributes.isMenuDisplayed = false;
+        cellView.updateBox();
       });
     }
 
+    function resetLinks() {
+      const links = graph.getLinks();
+      if (links.length > 0) {
+        // There should only be one
+        const unConnectedLink = links.find(link => !link.get('target').id);
+        if (unConnectedLink) unConnectedLink.remove();
+      }
+    }
+
     return () => {
+      // Event should all be cleaned in every render, or it will causes weird
+      // behavior in UI
+
+      $(document).off('mousemove.createlink');
+
       // Graph events
       // graph.off('add');
+      graph.off('change');
 
-      // Cell events
-      paper.off('cell:pointerclick');
+      // Element events
+      paper.off('element:pointerclick');
+      paper.off('element:mouseenter');
+      paper.off('element:mouseleave');
+
+      // Link
+      paper.off('link:pointerclick');
+      paper.off('link:mouseenter');
+      paper.off('link:mouseleave');
 
       // Blank events
-      paper.off('blank:pointerdown');
       paper.off('blank:pointerclick');
+      paper.off('blank:pointerdown');
+      paper.off('blank:pointerup');
+      paper.off('blank:pointermove');
     };
   }, [
     dragStartPosition,
+    hasUnConnectedLink,
     onCellDeselect,
-    onCellRemove,
     onCellSelect,
     onCellStart,
-    onCellStop,
+    onChange,
+    onConnect,
+    onDisconnect,
     onElementAdd,
+    palette.grey,
     ref,
+    showMessage,
   ]);
 
   React.useImperativeHandle(ref, () => {
@@ -195,21 +371,28 @@ const Paper = React.forwardRef((props, ref) => {
           classType === sink ||
           classType === stream
         ) {
-          cell = ConnectorCell({
+          cell = createConnectorCell({
             ...newData,
-            onCellStart: onCellEvnetRef.current.onCellStart,
-            onCellStop: onCellEvnetRef.current.onCellStop,
+            onCellStart: onCellEventRef.current.onCellStart,
+            onCellStop: onCellEventRef.current.onCellStop,
             onCellConfig,
-            onCellRemove: onCellEvnetRef.current.onCellRemove,
+            onCellRemove: onCellEventRef.current.onCellRemove,
           });
         } else if (classType === topic) {
-          cell = TopicCell({ ...newData, onCellRemove });
+          cell = createTopicCell({ ...newData, onCellRemove });
         }
 
         graph.addCell(cell);
-        return graph.getLastCell();
+        const targetCell = graph.getLastCell();
+
+        return getReturnedData(targetCell);
       },
       removeElement(id) {
+        if (typeof id !== 'string')
+          throw new Error(
+            `paperApi: removeElement(id: string) argument id is not valid!`,
+          );
+
         const cell = graph.getCell(id);
         graph.removeCells(cell);
       },
@@ -226,31 +409,65 @@ const Paper = React.forwardRef((props, ref) => {
         }
       },
       addLink(sourceId, targetId) {
-        const link = new joint.shapes.standard.Link();
-        link.source({ id: sourceId });
-        link.attr({
-          line: { stroke: '#9e9e9e' },
-        });
+        const newLink = createLink({ sourceId });
 
+        // TargetId is not supplied, meaning, the target is not decided yet,
+        // so we will assign mouse position later on. This allows user to control
+        // the link
         if (targetId === undefined) {
-          return graph.addCell(link);
+          // Hide the link when it's first added into Paper. This is because
+          // the link position will be set to `0, 0`. We will wait until user
+          // moves their cursor and start using the mouse position as link's
+          // position
+          newLink.attr({
+            line: { stroke: 'translate' },
+          });
+
+          graph.addCell(newLink);
+          setHasUnConnectedLink(true);
+          return;
         }
 
-        link.target({ id: targetId });
-        return graph.addCell(link);
+        newLink.target({ id: targetId });
+        graph.addCell(newLink);
+
+        return getReturnedData(newLink);
+      },
+      getCell(id) {
+        return getReturnedData(graph.getCell(id));
       },
       getCells(classType) {
         if (classType) {
-          return graph.getCells().filter(cell => {
-            return cell.attributes.classType === classType;
-          });
+          const validTypes = _.values(
+            _.pick(KIND, ['source', 'sink', 'stream', 'topic']),
+          );
+
+          if (!validTypes.includes(classType))
+            throw new Error(
+              `paperApi: getCells(classType: string?) argument ${classType} is not a valid type! Available types are: ${validTypes.toString()}`,
+            );
+
+          return graph
+            .getCells()
+            .filter(cell => cell.attributes.classType === classType)
+            .map(getReturnedData);
         }
 
-        return graph.getCells();
+        return graph.getCells().map(getReturnedData);
       },
-      scale(newScale) {
-        if (newScale === undefined) return paper.scale(); // getter
-        paper.scale(newScale); // setter
+      setScale(sx, sy) {
+        if (sx === undefined) {
+          throw new Error(
+            'paperApi: setScale(sx: number, sy: number) argument sx is undefined!',
+          );
+        }
+
+        if (sy === undefined) sy = sx;
+
+        paper.scale(sx, sy);
+      },
+      getScale() {
+        return paper.scale(); // getter
       },
       getBbox() {
         const { width, height } = paper.getComputedSize();
@@ -275,15 +492,21 @@ const Paper = React.forwardRef((props, ref) => {
           maxScale: 1,
         });
 
-        return this.scale().sx;
+        return this.getScale().sx;
       },
-      center(currentCell) {
+      center(id) {
+        if (typeof id !== 'string')
+          throw new Error(
+            `paperApi: center(id: string) argument id should be a string!`,
+          );
+
+        const element = graph.getCell(id);
         const cellBbox = {
-          ...currentCell.getBBox(),
-          ...currentCell.getBBox().center(),
+          ...element.getBBox(),
+          ...element.getBBox().center(),
         };
 
-        const scale = this.scale().sx;
+        const scale = this.getScale().sx;
         const contentLocalOrigin = paper.paperToLocalPoint(cellBbox);
         const { tx, ty } = paper.translate();
         const { width, height } = this.getBbox();
@@ -298,6 +521,9 @@ const Paper = React.forwardRef((props, ref) => {
           newOy + fittingBbox.height / 2,
         );
       },
+
+      // TODO: the state here will be stale, we should update
+      // the state will there are updates
       state: {
         isReady: true,
         options: paper.options,
@@ -310,10 +536,17 @@ const Paper = React.forwardRef((props, ref) => {
     return paperRef.current.findViewsInArea(paperRef.current.getArea());
   }
 
-  return <StyledPaper id="paper" />;
+  return (
+    <StyledPaper className={`${dragStartPosition ? 'is-being-grabbed' : ''}`}>
+      <div id="paper" />
+    </StyledPaper>
+  );
 });
 
 Paper.propTypes = {
+  onChange: PropTypes.func,
+  onConnect: PropTypes.func,
+  onDisconnect: PropTypes.func,
   onCellSelect: PropTypes.func,
   onCellDeselect: PropTypes.func,
   onElementAdd: PropTypes.func,

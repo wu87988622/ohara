@@ -19,13 +19,12 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 import { renderToString } from 'react-dom/server';
 import * as joint from 'jointjs';
-import _ from 'lodash';
 import $ from 'jquery';
 
 import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
 import { CELL_STATUS } from 'const';
 
-const TopicCell = options => {
+const createTopicCell = options => {
   const {
     id,
     name,
@@ -37,8 +36,6 @@ const TopicCell = options => {
     onCellRemove,
     status = CELL_STATUS.stopped,
   } = options;
-
-  let link;
 
   joint.shapes.html = {};
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -79,19 +76,18 @@ const TopicCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updateBox);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = this.$box.find('.topic-link');
-      const $removeButton = this.$box.find('.topic-remove');
+      const $linkButton = $box.find('.topic-link');
+      const $removeButton = $box.find('.topic-remove');
 
       const id = this.model.id;
-      const name = this.attributes.name;
 
-      $linkButton.on('mousedown', () => {
-        paperApi.addCell(id);
+      $linkButton.on('click', () => {
+        paperApi.addLink(id);
       });
 
       $removeButton.on('click', () => {
-        if (_.isFunction(onCellRemove)) onCellRemove(id, name);
-        this.$box.remove();
+        const elementData = paperApi.getCell(id);
+        onCellRemove(elementData, paperApi);
       });
 
       this.updateBox();
@@ -100,9 +96,10 @@ const TopicCell = options => {
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bBox = this.getBBox({ useModelGeometry: true });
-      const scale = paperApi.scale();
+      const scale = paperApi.getScale();
+      const $box = this.$box;
 
-      this.$box.css({
+      $box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
         width: bBox.width / scale.sx,
@@ -111,33 +108,11 @@ const TopicCell = options => {
         top: bBox.y,
       });
 
-      const displayValue = this.model.get('isMenuDisplayed') ? 'block' : 'none';
-      this.$box.find('.display-name').text(this.model.get('displayName'));
-      this.$box.find('.topic-menu').attr('style', `display: ${displayValue};`);
+      const { isMenuDisplayed } = this.model.attributes;
 
-      if (this.paper) {
-        this.paper.$document.on('mousemove', function(event) {
-          if (link) {
-            if (!link.get('target').id) {
-              const localPoint = paperApi.getLocalPoint();
-
-              // 290: AppBar and Navigator width
-              // 72: Toolbar height
-              link.target({
-                x: (event.pageX - 290) / scale.sx + localPoint.x,
-                y: (event.pageY - 72) / scale.sy + localPoint.y,
-              });
-
-              link.attr({
-                // prevent the link from clicking by users, the `root` here is the
-                // SVG container element of the link
-                root: { style: 'pointer-events: none' },
-                line: { stroke: '#9e9e9e' },
-              });
-            }
-          }
-        });
-      }
+      const displayValue = isMenuDisplayed ? 'block' : 'none';
+      $box.find('.display-name').text(displayName);
+      $box.find('.topic-menu').attr('style', `display: ${displayValue};`);
     },
     onRemove() {
       this.$box.remove();
@@ -156,4 +131,4 @@ const TopicCell = options => {
     isMenuDisplayed: false,
   });
 };
-export default TopicCell;
+export default createTopicCell;

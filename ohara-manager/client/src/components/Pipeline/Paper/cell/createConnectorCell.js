@@ -30,7 +30,7 @@ import * as joint from 'jointjs';
 
 import { KIND, CELL_STATUS } from 'const';
 
-const ConnectorCell = options => {
+const createConnectorCell = options => {
   const {
     id,
     displayName,
@@ -81,7 +81,7 @@ const ConnectorCell = options => {
         <div class="header">
           <div class="icon ${iconState}">${getIcon(classType)}</div>
           <div class="display-name-wrapper">
-            <div class="display-name"></div>
+            <div class="display-name">${displayName}</div>
               <div class="type">${displayClassName}</div>
             </div>
           </div>
@@ -129,13 +129,13 @@ const ConnectorCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updateBox);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = this.$box.find('.connector-link');
-      const $startButton = this.$box.find('.connector-start');
-      const $stopButton = this.$box.find('.connector-stop');
-      const $configButton = this.$box.find('.connector-config');
-      const $removeButton = this.$box.find('.connector-remove');
+      const $linkButton = $box.find('.connector-link');
+      const $startButton = $box.find('.connector-start');
+      const $stopButton = $box.find('.connector-stop');
+      const $configButton = $box.find('.connector-config');
+      const $removeButton = $box.find('.connector-remove');
       const id = this.model.id;
-      const name = this.model.attributes.name;
+      const eventData = paperApi.getCell(id);
 
       // Link
       $linkButton.on('click', () => {
@@ -144,23 +144,22 @@ const ConnectorCell = options => {
 
       // Start
       $startButton.on('click', () => {
-        if (_.isFunction(onCellStart)) onCellStart(id, name, paperApi);
+        onCellStart(eventData, paperApi);
       });
 
       // Stop
       $stopButton.on('click', () => {
-        if (_.isFunction(onCellStop)) onCellStop(id, name, paperApi);
+        onCellStop(eventData, paperApi);
       });
 
       // Config
       $configButton.on('click', () => {
-        if (_.isFunction(onCellConfig)) onCellConfig();
+        onCellConfig();
       });
 
       // Remove
       $removeButton.on('click', () => {
-        if (_.isFunction(onCellRemove)) onCellRemove(id, name, paperApi);
-        this.$box.remove();
+        onCellRemove(eventData, paperApi);
       });
 
       this.updateBox();
@@ -169,9 +168,10 @@ const ConnectorCell = options => {
     updateBox() {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bBox = this.getBBox({ useModelGeometry: true });
-      const scale = paperApi.scale();
+      const scale = paperApi.getScale();
+      const $box = this.$box;
 
-      this.$box.css({
+      $box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
         width: bBox.width / scale.sx,
@@ -180,44 +180,18 @@ const ConnectorCell = options => {
         top: bBox.y,
       });
 
-      const status = this.model.get('status');
+      const { status, isMenuDisplayed } = this.model.attributes;
+
       const iconState = getIconState(status);
-      this.$box.find('.status-value').text(status);
-      this.$box
+      const displayValue = isMenuDisplayed ? 'block' : 'none';
+
+      $box.find('.status-value').text(status);
+      $box.find('.display-name').text(displayName);
+      $box.find('.connector-menu').attr('style', `display: ${displayValue};`);
+      $box
         .find('.icon')
         .removeClass()
         .addClass(`icon ${iconState}`);
-
-      const displayValue = this.model.get('isMenuDisplayed') ? 'block' : 'none';
-      this.$box.find('.display-name').text(this.model.get('displayName'));
-      this.$box
-        .find('.connector-menu')
-        .attr('style', `display: ${displayValue};`);
-
-      let link;
-      if (this.paper) {
-        this.paper.$document.on('mousemove', function(event) {
-          if (link) {
-            if (!link.get('target').id) {
-              const localPoint = paperApi.getLocalPoint();
-
-              // 290: AppBar and Navigator width
-              // 72: Toolbar height
-              link.target({
-                x: (event.pageX - 290) / scale.sx + localPoint.x,
-                y: (event.pageY - 72) / scale.sy + localPoint.y,
-              });
-
-              link.attr({
-                // prevent the link from clicking by users, the `root` here is the
-                // SVG container element of the link
-                root: { style: 'pointer-events: none' },
-                line: { stroke: '#9e9e9e' },
-              });
-            }
-          }
-        });
-      }
     },
 
     // Keeping this handler here since when calling `cell.remove()` somehow
@@ -286,4 +260,4 @@ function getIconState(status) {
   return stopped;
 }
 
-export default ConnectorCell;
+export default createConnectorCell;

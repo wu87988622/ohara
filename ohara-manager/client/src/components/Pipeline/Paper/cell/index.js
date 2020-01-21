@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
-import Pipeline from './Pipeline';
+import createConnectorCell from './createConnectorCell';
+import createTopicCell from './createTopicCell';
+import createLink from './createLink';
 
-export default Pipeline;
+export { createConnectorCell, createTopicCell, createLink };

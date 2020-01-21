@@ -27,14 +27,11 @@ const stream = () => {
     deleteStream,
   } = context.useStreamActions();
 
-  const create = async params => {
-    const { paperApi, id } = params;
-    const name = util.getCellName(params);
-    const connectorClass = util.getCellClassName(params);
-    const jarKey = util.getCellJarKey(params);
+  const create = async (params, paperApi) => {
+    const { id, name, className, jarKey } = params;
     const res = await createStream({
       name,
-      connector__class: connectorClass,
+      connector__class: className,
       jarKey,
     });
 
@@ -53,8 +50,8 @@ const stream = () => {
     await updateStream({ ...data });
   };
 
-  const start = async params => {
-    const { paperApi, id, name } = params;
+  const start = async (params, paperApi) => {
+    const { id, name } = params;
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });

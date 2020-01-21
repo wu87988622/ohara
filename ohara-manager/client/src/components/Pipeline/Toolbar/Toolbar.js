@@ -240,7 +240,7 @@ const Toolbar = props => {
         <div className="center">
           <Tooltip title="Move selected graph to the center">
             <Button
-              onClick={() => paperApi.center(selectedCell)}
+              onClick={() => paperApi.center(selectedCell.id)}
               variant="outlined"
               color="default"
               size="small"
