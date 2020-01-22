@@ -37,7 +37,7 @@ const createConnectorCell = options => {
     isTemporary = false,
     isMetricsOn = true,
     name,
-    classType,
+    kind,
     className,
     position,
     status = CELL_STATUS.stopped,
@@ -79,7 +79,7 @@ const createConnectorCell = options => {
     template: `
       <div class="connector">
         <div class="header">
-          <div class="icon ${iconState}">${getIcon(classType)}</div>
+          <div class="icon ${iconState}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">
             <div class="display-name">${displayName}</div>
               <div class="type">${displayClassName}</div>
@@ -109,7 +109,7 @@ const createConnectorCell = options => {
         <div class="connector-menu">
           ${
             // Sink cannot create connection form itself to others
-            classType !== KIND.sink
+            kind !== KIND.sink
               ? `<Button class="connector-link">${linkIcon}</Button>`
               : ''
           }
@@ -135,7 +135,7 @@ const createConnectorCell = options => {
       const $configButton = $box.find('.connector-config');
       const $removeButton = $box.find('.connector-remove');
       const id = this.model.id;
-      const eventData = paperApi.getCell(id);
+      const cellData = paperApi.getCell(id);
 
       // Link
       $linkButton.on('click', () => {
@@ -144,22 +144,22 @@ const createConnectorCell = options => {
 
       // Start
       $startButton.on('click', () => {
-        onCellStart(eventData, paperApi);
+        onCellStart(cellData, paperApi);
       });
 
       // Stop
       $stopButton.on('click', () => {
-        onCellStop(eventData, paperApi);
+        onCellStop(cellData, paperApi);
       });
 
       // Config
       $configButton.on('click', () => {
-        onCellConfig();
+        onCellConfig(cellData, paperApi);
       });
 
       // Remove
       $removeButton.on('click', () => {
-        onCellRemove(eventData, paperApi);
+        onCellRemove(cellData, paperApi);
       });
 
       this.updateBox();
@@ -204,7 +204,7 @@ const createConnectorCell = options => {
   return new joint.shapes.html.Element({
     id: id ? id : undefined, // undefined -> id is controlled by JointJS
     name,
-    classType,
+    kind,
     className,
     displayName,
     position,
@@ -216,15 +216,15 @@ const createConnectorCell = options => {
   });
 };
 
-function getIcon(classType) {
+function getIcon(kind) {
   const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
   const sinkIcon = renderToString(<FlightLandIcon color="action" />);
   const streamIcon = renderToString(<WavesIcon color="action" />);
   const { source, sink, stream } = KIND;
 
-  if (classType === source) return sourceIcon;
-  if (classType === sink) return sinkIcon;
-  if (classType === stream) return streamIcon;
+  if (kind === source) return sourceIcon;
+  if (kind === sink) return sinkIcon;
+  if (kind === stream) return streamIcon;
 }
 
 function getMetrics(metrics) {

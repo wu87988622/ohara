@@ -48,10 +48,9 @@ export const useDeleteServices = () => {
         await deleteConnector(name);
       }
 
-      // Only private topics are belong to this Pipeline and so need to
+      // Only pipeline-only topics are belong to this Pipeline and so need to
       // be deleted along with this pipeline
-      const isPrivate = tags.type === 'private';
-      if (kind === KIND.topic && isPrivate) {
+      if (kind === KIND.topic && !tags.isShared) {
         if (isRunning) await stopTopic(name);
 
         await deleteTopic(name);

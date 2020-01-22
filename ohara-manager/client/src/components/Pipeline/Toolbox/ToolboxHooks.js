@@ -24,22 +24,23 @@ import { PaperContext } from '../Pipeline';
 export const useTopics = () => {
   const { data: topicsData } = useTopicState();
 
-  // Private topic
-  const privateTopic = {
+  // Pipeline-only topic
+  const pipelineOnlyTopic = {
     name: 'Pipeline Only',
-    tags: { type: 'private', label: 'Pipeline Only' },
+    tags: { isShared: false, label: 'Pipeline Only' },
   };
 
-  const topics = [privateTopic, ...topicsData]
+  const topics = [pipelineOnlyTopic, ...topicsData]
     .map(topic => ({
-      classType: KIND.topic,
-      name: topic.name,
-      type: topic.tags.type,
       displayName: topic.tags.displayName || '',
+      kind: KIND.topic,
+      className: KIND.topic,
+      name: topic.name,
+      isShared: topic.tags.isShared,
     }))
     .filter(
-      // Private topics are hidden from Toolbox
-      topic => topic.type === 'shared' || topic.name === 'Pipeline Only',
+      // Pipeline-only topics are hidden from Toolbox
+      topic => topic.isShared || topic.name === 'Pipeline Only',
     );
 
   return [topics, topicsData];
@@ -59,7 +60,7 @@ export const useFiles = () => {
           name: file.name,
           group: file.group,
           classInfos: file.classInfos.filter(
-            classInfo => classInfo.classType === KIND.stream,
+            classInfo => classInfo.kind === KIND.stream,
           ),
         };
       });
@@ -70,7 +71,7 @@ export const useFiles = () => {
               const name = calssInfo.className.split('.').pop();
               return {
                 name,
-                classType: calssInfo.classType,
+                kind: calssInfo.kind,
                 className: calssInfo.className,
                 jarKey: {
                   name: streamClass.name,
@@ -120,7 +121,7 @@ export const useToolboxHeight = ({
 
     const panelHeights = {
       source: itemHeight * sources.length + addButtonHeight,
-      // +1 for the private topic icon
+      // +1 for the pipeline-only topic icon
       topic: itemHeight * topics.length + addButtonHeight,
       stream: itemHeight * streams.length + addButtonHeight,
       sink: itemHeight * sinks.length + addButtonHeight,

@@ -130,9 +130,9 @@ export const StyledToolbox = styled.div(
         margin-right: ${theme.spacing(1)}px;
       }
 
-      .public-topic {
+      .shared-topic {
         /* Need to hard-code this since the margin is needed in order 
-           to align this icon with the private icon
+           to align this icon with the pipeline-only icon
         */
         margin-left: 2px;
       }

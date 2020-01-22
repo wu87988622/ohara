@@ -50,14 +50,14 @@ const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
       let streams = [];
 
       searchData.forEach(data => {
-        const { name, classType } = data;
+        const { name, kind } = data;
         const lowercaseName = name.toLowerCase();
 
         if (lowercaseName.includes(debouncedSearchTerm)) {
-          if (classType === KIND.source) sources.push(data);
-          if (classType === KIND.topic) topics.push(data);
-          if (classType === KIND.stream) streams.push(data);
-          if (classType === KIND.sink) sinks.push(data);
+          if (kind === KIND.source) sources.push(data);
+          if (kind === KIND.topic) topics.push(data);
+          if (kind === KIND.stream) streams.push(data);
+          if (kind === KIND.sink) sinks.push(data);
         }
       });
 

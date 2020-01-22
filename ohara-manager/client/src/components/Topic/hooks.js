@@ -23,7 +23,7 @@ export const useTopics = () => {
 
   return useMemo(() => {
     return topics.map(topic => {
-      const isShared = get(topic, 'tags.type') === 'shared';
+      const isShared = get(topic, 'tags.isShared');
       return {
         ...topic,
         isShared,

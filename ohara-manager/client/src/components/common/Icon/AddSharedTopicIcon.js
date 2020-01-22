@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import * as generate from 'utils/generate';
 
-export const AddPublicTopicIcon = ({
+export const AddSharedTopicIcon = ({
   width,
   height,
   fillColor = 'currentColor',
@@ -61,7 +61,7 @@ export const AddPublicTopicIcon = ({
   );
 };
 
-AddPublicTopicIcon.propTypes = {
+AddSharedTopicIcon.propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   fillColor: PropTypes.string,

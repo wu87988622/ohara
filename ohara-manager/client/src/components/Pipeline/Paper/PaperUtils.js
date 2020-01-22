@@ -14,37 +14,33 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 import { KIND } from 'const';
 import { createLink } from './cell';
-import { getPrivateTopicDisplayNames } from '../PipelineUtils';
+import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
-function isView(cell) {
-  if (cell.$box === undefined) return false;
+export const getCellData = cellOrView => {
+  const cell = _.has(cellOrView, 'model') ? cellOrView.model : cellOrView;
 
-  return true;
-}
-
-export const getReturnedData = cell => {
-  const isCellView = isView(cell);
-
-  const _cell = isCellView ? cell.model : cell;
-
-  if (_cell.isElement()) {
+  if (cell.isElement()) {
     return {
-      cellType: _cell.get('type'), // JointJS element type
-      id: _cell.get('id'),
-      name: _cell.get('name'),
-      kind: _cell.get('classType'),
-      displayName: _cell.get('displayName'),
-      isTemporary: _cell.get('isTemporary') || false,
-      className: _cell.get('className'),
-      jarKey: _cell.get('jarKey') || null,
+      cellType: cell.get('type'), // JointJS element type
+      id: cell.get('id'),
+      name: cell.get('name'),
+      kind: cell.get('kind'),
+      displayName: cell.get('displayName'),
+      isTemporary: cell.get('isTemporary') || false,
+      className: cell.get('className'),
+      jarKey: cell.get('jarKey') || null,
+      isShared: cell.get('isShared') || false,
     };
   }
 
-  const link = _cell;
+  const link = cell;
   return {
+    cellType: link.get('type'), // JointJS element type
     id: link.get('id'),
     sourceId: link.get('source').id || null,
     targetId: link.get('target').id || null,
@@ -61,13 +57,13 @@ export const createConnection = params => {
   } = params;
 
   const sourceId = sourceLink.get('source').id;
-  const sourceType = graph.getCell(sourceId).attributes.classType;
+  const sourceType = graph.getCell(sourceId).attributes.kind;
   const sourceElement = graph.getCell(sourceId);
   const sourceDisplayName = sourceElement.get('displayName');
 
   const targetElement = targetElementView.model;
   const targetId = targetElement.get('id');
-  const targetType = targetElement.get('classType');
+  const targetType = targetElement.get('kind');
   const targetDisplayName = targetElement.get('displayName');
   const targetConnectedLinks = graph.getConnectedLinks(targetElement);
 
@@ -102,10 +98,10 @@ export const createConnection = params => {
     const predecessors = graph.getPredecessors(targetElement);
     const successors = graph.getSuccessors(sourceElement);
     const sourceHasTarget = successors.some(
-      successor => successor.attributes.classType === KIND.topic,
+      successor => successor.attributes.kind === KIND.topic,
     );
     const targetHasSource = predecessors.some(
-      predecessor => predecessor.attributes.classType === KIND.topic,
+      predecessor => predecessor.attributes.kind === KIND.topic,
     );
 
     // Following are complex connection logic, each source and target
@@ -212,17 +208,17 @@ export const createConnection = params => {
       const topicX = (sourcePosition.x + targetPosition.x + 23) / 2;
       const topicY = (sourcePosition.y + targetPosition.y + 23) / 2;
 
-      const privateTopicName = generate.serviceName();
-      const displayName = getPrivateTopicDisplayNames(
+      const PipelineOnlyTopicName = generate.serviceName();
+      const displayName = getPipelineOnlyTopicDisplayNames(
         paperApi.getCells('topic'),
       );
 
       const topic = paperApi.addElement({
-        name: privateTopicName,
+        name: PipelineOnlyTopicName,
         graph,
         displayName,
-        classType: KIND.topic,
-        className: 'privateTopic',
+        kind: KIND.topic,
+        className: KIND.topic,
         position: {
           x: topicX,
           y: topicY,
@@ -244,11 +240,11 @@ export const createConnection = params => {
       graph.addCell(targetLink);
 
       const result = {
-        sourceElement: getReturnedData(sourceElement),
-        firstLink: getReturnedData(sourceLink),
+        sourceElement: getCellData(sourceElement),
+        firstLink: getCellData(sourceLink),
         topicElement: topic,
-        secondeLink: getReturnedData(targetLink),
-        targetElement: getReturnedData(targetElement),
+        secondeLink: getCellData(targetLink),
+        targetElement: getCellData(targetElement),
       };
 
       return result;
@@ -260,9 +256,9 @@ export const createConnection = params => {
     sourceLink.attr('root/style', 'pointer-events: auto');
 
     return {
-      sourceElement: getReturnedData(sourceElement),
-      link: getReturnedData(sourceLink),
-      targetElement: getReturnedData(targetElement),
+      sourceElement: getCellData(sourceElement),
+      link: getCellData(sourceLink),
+      targetElement: getCellData(targetElement),
     };
   }
 };

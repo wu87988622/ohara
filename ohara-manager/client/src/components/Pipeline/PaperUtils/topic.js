@@ -20,15 +20,30 @@ import { CELL_STATUS } from 'const';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
+  const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {
-    const { id, name } = params;
-    const res = await createTopic({
-      name,
-    });
+    const { id, name, displayName, isShared } = params;
+
+    if (isShared) {
+      const target = topics.find(topic => topic.name === name);
+      return paperApi.updateElement(id, {
+        status: target.state,
+      });
+    }
+
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });
+
+    const res = await createTopic({
+      name,
+      tags: {
+        isShared: false,
+        displayName,
+      },
+    });
+
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
@@ -40,7 +55,10 @@ const topic = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name } = params;
+    const { id, name, isShared } = params;
+
+    if (isShared) return paperApi.removeElement(id);
+
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });

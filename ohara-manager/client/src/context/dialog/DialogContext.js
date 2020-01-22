@@ -110,8 +110,8 @@ const useEventLogDialog = createUseDialogActions(dialogNames.EVENT_LOG_DIALOG);
 const useEventLogContentDialog = createUseDialogActions(
   dialogNames.EVENT_LOG_CONTENT_DIALOG,
 );
-const useGraphSettingDialog = createUseDialogActions(
-  dialogNames.GRAPH_SETTING_DIALOG,
+const usePipelinePropertyDialog = createUseDialogActions(
+  dialogNames.PIPELINE_PROPERTY_DIALOG,
 );
 const useListWorkspacesDialog = createUseDialogActions(
   dialogNames.LIST_WORKSPACES_DIALOG,
@@ -137,6 +137,6 @@ export {
   useEventLogDialog,
   useEventLogContentDialog,
   useDevToolDialog,
-  useGraphSettingDialog,
+  usePipelinePropertyDialog,
   useAddPluginDialog,
 };

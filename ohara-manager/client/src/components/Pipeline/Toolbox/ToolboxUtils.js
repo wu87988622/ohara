@@ -25,8 +25,8 @@ import * as joint from 'jointjs';
 import $ from 'jquery';
 
 import { KIND } from 'const';
-import { AddPublicTopicIcon } from 'components/common/Icon';
-import { getPrivateTopicDisplayNames } from '../PipelineUtils';
+import { AddSharedTopicIcon } from 'components/common/Icon';
+import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
 export const createToolboxList = params => {
@@ -85,11 +85,11 @@ export const createToolboxList = params => {
   const sourceIcon = renderToString(<FlightTakeoffIcon color="action" />);
   const sinkIcon = renderToString(<FlightLandIcon color="action" />);
   const streamIcon = renderToString(<WavesIcon color="action" />);
-  const AddPrivateTopic = renderToString(<StorageIcon color="action" />);
+  const AddPipelineOnlyTopic = renderToString(<StorageIcon color="action" />);
 
   // Custom icon, so we need to pass some props...
-  const AddPublicTopic = renderToString(
-    <AddPublicTopicIcon className="public-topic" width={23} height={22} />,
+  const AddSharedTopic = renderToString(
+    <AddSharedTopicIcon className="public-topic" width={23} height={22} />,
   );
 
   const displaySources = isNull(searchResults)
@@ -103,7 +103,7 @@ export const createToolboxList = params => {
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
         name: source.name,
-        classType: source.classType,
+        kind: source.kind,
         icon: sourceIcon,
         className: source.className,
       }),
@@ -118,9 +118,10 @@ export const createToolboxList = params => {
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
         name: topic.name,
-        classType: topic.classType,
-        className: index === 0 ? 'privateTopic' : 'publicTopic',
-        icon: topic.type === 'private' ? AddPrivateTopic : AddPublicTopic,
+        kind: topic.kind,
+        className: topic.className,
+        icon: topic.isShared ? AddPipelineOnlyTopic : AddSharedTopic,
+        isShared: topic.isShared,
       }),
     );
   });
@@ -135,7 +136,7 @@ export const createToolboxList = params => {
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
         name: stream.name,
-        classType: stream.classType,
+        kind: stream.kind,
         icon: streamIcon,
         className: stream.className,
         jarKey: stream.jarKey,
@@ -151,7 +152,7 @@ export const createToolboxList = params => {
         position: { x: 10, y: index * 40 },
         size: { width: 272 - 8 * 2, height: 40 },
         name: sink.name,
-        classType: sink.classType,
+        kind: sink.kind,
         icon: sinkIcon,
         className: sink.className,
       }),
@@ -231,20 +232,22 @@ export const enableDragAndDrop = params => {
           const newX = (x - offsetLeft - offset.x) / scale.sx + localPoint.x;
           const newY = (y - offsetTop - offset.y) / scale.sy + localPoint.y;
           const {
-            classType,
+            kind,
             className,
             name,
             jarKey,
+            isShared,
           } = cellView.model.attributes;
-          const isTopic = classType === KIND.topic;
+          const isTopic = kind === KIND.topic;
 
           // These info will be used when creating a cell
           const params = {
             name,
             position: { x: newX, y: newY },
-            classType,
+            kind,
             className,
-            jarKey: jarKey || undefined,
+            jarKey: jarKey || null,
+            isShared,
           };
 
           setCellInfo(prevState => ({
@@ -253,18 +256,20 @@ export const enableDragAndDrop = params => {
           }));
 
           if (isTopic) {
-            const privateTopicName = generate.serviceName();
-            const isPublicTopic = className === 'publicTopic';
-
-            const displayName = isPublicTopic
-              ? name
-              : getPrivateTopicDisplayNames(paperApi.getCells('topic'));
-
-            paperApi.addElement({
-              ...params,
-              name: privateTopicName,
-              displayName,
-            });
+            if (isShared) {
+              paperApi.addElement({
+                ...params,
+                displayName: name,
+              });
+            } else {
+              paperApi.addElement({
+                ...params,
+                name: generate.serviceName(),
+                displayName: getPipelineOnlyTopicDisplayNames(
+                  paperApi.getCells('topic'),
+                ),
+              });
+            }
           } else {
             openAddConnectorDialog(true);
 
@@ -296,17 +301,18 @@ export function getConnectorInfo(worker) {
 
   if (worker) {
     worker.classInfos.forEach(info => {
-      const { className, classType } = info;
+      const { className, settingDefinitions: defs } = info;
+      const kind = defs.find(def => def.key === 'kind').defaultValue;
       const displayClassName = className.split('.').pop();
-      if (info.classType === KIND.source) {
+      if (kind === KIND.source) {
         return sources.push({
           name: displayClassName,
-          classType,
+          kind,
           className,
         });
       }
 
-      sinks.push({ name: displayClassName, classType, className });
+      sinks.push({ name: displayClassName, kind, className });
     });
   }
 

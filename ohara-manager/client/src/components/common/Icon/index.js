@@ -29,8 +29,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AddPublicTopicIcon } from './AddPublicTopicIcon';
-import { PublicTopicIcon } from './PublicTopicIcon';
-import { PrivateTopicIcon } from './PrivateTopicIcon';
+import { AddSharedTopicIcon } from './AddSharedTopicIcon';
+import { SharedTopicIcon } from './SharedTopicIcon';
+import { PipelineOnlyTopicIcon } from './PipelineOnlyTopicIcon';
 
-export { AddPublicTopicIcon, PublicTopicIcon, PrivateTopicIcon };
+export { AddSharedTopicIcon, SharedTopicIcon, PipelineOnlyTopicIcon };

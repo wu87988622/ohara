@@ -28,9 +28,9 @@ function TopicChip({ isShared }) {
         variant="outlined"
         size="small"
         icon={isShared ? <ShareIcon /> : <LockIcon />}
-        label={isShared ? 'Shared' : 'Private'}
+        label={isShared ? 'Shared' : 'Pipeline only'}
         color={isShared ? 'primary' : 'secondary'}
-        className={isShared ? 'shared' : 'private'}
+        className={isShared ? 'is-shared' : 'pipeline-only'}
       />
     </Wrapper>
   );

@@ -25,7 +25,7 @@ import { Dialog } from 'components/common/Dialog';
 import { required, validServiceName, composeValidators } from 'utils/validate';
 
 const ToolboxAddGraphDialog = props => {
-  const { isOpen, handleClose, handleConfirm, classType } = props;
+  const { isOpen, handleClose, handleConfirm, kind } = props;
 
   const onSubmit = async (values, form) => {
     await handleConfirm(values.newGraph);
@@ -45,7 +45,7 @@ const ToolboxAddGraphDialog = props => {
               form.reset();
             }}
             handleConfirm={handleSubmit}
-            title={`Add a new ${classType}`}
+            title={`Add a new ${kind}`}
             confirmText="ADD"
             confirmDisabled={submitting || pristine || invalid}
             loading={submitting}
@@ -59,7 +59,7 @@ const ToolboxAddGraphDialog = props => {
               <Field
                 type="text"
                 name="newGraph"
-                label={`${capitalize(classType)} Name`}
+                label={`${capitalize(kind)} Name`}
                 component={InputField}
                 validate={composeValidators(required, validServiceName)}
                 disabled={submitting}
@@ -78,7 +78,7 @@ ToolboxAddGraphDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   handleConfirm: PropTypes.func.isRequired,
-  classType: PropTypes.string.isRequired,
+  kind: PropTypes.string.isRequired,
 };
 
 export default ToolboxAddGraphDialog;

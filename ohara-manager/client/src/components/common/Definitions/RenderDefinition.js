@@ -48,14 +48,14 @@ const RenderDefinition = props => {
   const finalTopics = topics.map(topic => {
     const { name, tags } = topic;
     const finalTopic = { name: '', tags: { displayName: '' } };
-    if (tags.type === 'private') {
+    if (!tags.isShared) {
       finalTopic.name = tags.displayName;
       finalTopic.tags.displayName = name;
-      finalTopic.tags.type = tags.type;
+      finalTopic.tags.isShared = tags.isShared;
     } else {
       finalTopic.name = name;
       finalTopic.tags.displayName = name;
-      finalTopic.tags.type = tags.type;
+      finalTopic.tags.isShared = tags.isShared;
     }
 
     return finalTopic;

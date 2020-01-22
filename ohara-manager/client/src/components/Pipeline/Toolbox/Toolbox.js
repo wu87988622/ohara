@@ -60,7 +60,7 @@ const Toolbox = props => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState(null);
   const [cellInfo, setCellInfo] = React.useState({
-    classType: '',
+    kind: '',
     className: '',
     position: {
       displayName: '',
@@ -114,7 +114,7 @@ const Toolbox = props => {
       displayName: newGraphName,
     };
 
-    switch (cellInfo.classType) {
+    switch (cellInfo.kind) {
       case KIND.stream:
         paperApi.addElement({
           ...params,
@@ -337,7 +337,7 @@ const Toolbox = props => {
 
         <ToolboxAddGraphDialog
           isOpen={isOpen}
-          classType={cellInfo.classType}
+          kind={cellInfo.kind}
           handleConfirm={handleAddGraph}
           handleClose={() => {
             setIsOpen(false);

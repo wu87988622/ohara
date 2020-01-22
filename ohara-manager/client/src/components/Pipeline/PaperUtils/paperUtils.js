@@ -25,8 +25,8 @@ export const getCellClassName = cell => {
   return get(cell, 'attributes.className', null);
 };
 
-export const getCellClassType = cell => {
-  return get(cell, 'attributes.classType', null);
+export const getCellKind = cell => {
+  return get(cell, 'attributes.kind', null);
 };
 
 export const getCellJarKey = cell => {

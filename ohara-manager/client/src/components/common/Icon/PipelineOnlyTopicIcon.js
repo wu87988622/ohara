@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import * as generate from 'utils/generate';
 
-export const PrivateTopicIcon = ({
+export const PipelineOnlyTopicIcon = ({
   width,
   height,
   fillColor = 'currentColor',
@@ -68,7 +68,7 @@ export const PrivateTopicIcon = ({
   );
 };
 
-PrivateTopicIcon.propTypes = {
+PipelineOnlyTopicIcon.propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   fillColor: PropTypes.string,

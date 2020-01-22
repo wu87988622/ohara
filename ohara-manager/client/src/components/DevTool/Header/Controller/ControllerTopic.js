@@ -45,12 +45,12 @@ const ControllerTopic = () => {
   React.useEffect(() => {
     if (lastUpdated && prevName === name) return;
     if (isEmpty(name)) return;
-    const privateTopic =
-      // Only private topics are able to use capital letters as name
+    const pipelineOnlyTopic =
+      // Only pipeline only topics are able to use capital letters as name
       name.startsWith('T') &&
       topics.find(topic => topic.tags.displayName === name);
     topicDataActions.fetchTopicData({
-      name: privateTopic ? privateTopic.name : name,
+      name: pipelineOnlyTopic ? pipelineOnlyTopic.name : name,
       limit,
     });
   }, [lastUpdated, limit, name, prevName, topicDataActions, topics]);
@@ -74,10 +74,8 @@ const ControllerTopic = () => {
         value={name}
         onChange={event => setName(event.target.value)}
         list={topics.map(topic => {
-          // Private topic names are stored in tags, the name field is randomly generated.
-          return topic.tags.type === 'shared'
-            ? topic.name
-            : topic.tags.displayName;
+          // pipeline only topic names are stored in tags, the name field is randomly generated.
+          return topic.tags.isShared ? topic.name : topic.tags.displayName;
         })}
         disabled={isFetching}
       />

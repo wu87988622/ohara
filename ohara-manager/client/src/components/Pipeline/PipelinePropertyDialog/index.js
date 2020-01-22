@@ -14,26 +14,6 @@
  * limitations under the License.
  */
 
-import styled, { css } from 'styled-components';
+import PipelinePropertyDialog from './PipelinePropetyDialog';
 
-export const Wrapper = styled.div(
-  ({ theme }) => css`
-    .is-shared {
-      color: ${theme.palette.success.main};
-      border: 1px solid ${theme.palette.success.main};
-    }
-
-    .pipeline-only {
-      color: ${theme.palette.warning.main};
-      border: 1px solid ${theme.palette.warning.main};
-    }
-
-    .MuiChip-root {
-      border-radius: ${theme.spacing(0.5)}px;
-
-      .MuiSvgIcon-root {
-        font-size: 1rem;
-      }
-    }
-  `,
-);
+export default PipelinePropertyDialog;

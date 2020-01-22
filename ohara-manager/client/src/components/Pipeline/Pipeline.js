@@ -23,7 +23,7 @@ import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
-import SettingDialog from './SettingDialog';
+import PipelinePropertyDialog from './PipelinePropertyDialog';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious, useLocalStorage } from 'utils/hooks';
 import { PaperWrapper } from './PipelineStyles';
@@ -41,14 +41,17 @@ const Pipeline = () => {
     workspaces,
     currentWorkspace,
     currentPipeline,
+    currentWorker,
   } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
 
   const {
-    isOpen: openSettingDialog,
-    close: closeSettingDialog,
-    data: settingDialogData,
-  } = context.useGraphSettingDialog();
+    open: openPropertyDialog,
+    isOpen: isPropertyDialogOpen,
+    close: closePropertyDialog,
+    setData: setPropertyDialogData,
+    data: PropertyDialogData,
+  } = context.usePipelinePropertyDialog();
   const { setSelectedCell } = context.usePipelineActions();
 
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
@@ -125,42 +128,54 @@ const Pipeline = () => {
               <PaperWrapper>
                 <Paper
                   ref={paperRef}
-                  onCellSelect={element => {
-                    setSelectedCell(element);
-                  }}
+                  onCellSelect={element => setSelectedCell(element)}
                   onCellDeselect={() => setSelectedCell(null)}
-                  onElementAdd={(cell, paperApi) => {
-                    switch (cell.kind) {
+                  onElementAdd={(cellData, paperApi) => {
+                    switch (cellData.kind) {
                       case KIND.sink:
                       case KIND.source:
-                        if (!cell.isTemporary) {
-                          createConnector({ ...cell }, paperApi);
+                        if (!cellData.isTemporary) {
+                          createConnector(cellData, paperApi);
                         }
                         break;
 
                       case KIND.stream:
-                        if (!cell.isTemporary) {
-                          createStream({ ...cell }, paperApi);
+                        if (!cellData.isTemporary) {
+                          createStream(cellData, paperApi);
                         }
                         break;
 
                       case KIND.topic:
-                        createTopic({ ...cell }, paperApi);
+                        createTopic(cellData, paperApi);
                         break;
 
                       default:
                         break;
                     }
                   }}
-                  onCellStart={({ id, name }, paperApi) => {
-                    startConnector({ id, name }, paperApi);
+                  onCellConfig={cellData => {
+                    const { displayName, className, kind } = cellData;
+                    const { classInfos } = currentWorker;
+                    const [targetConnector] = classInfos.filter(
+                      classInfo => classInfo.className === className,
+                    );
+
+                    openPropertyDialog();
+                    setPropertyDialogData({
+                      title: `Edit the property of ${displayName} ${kind} connector`,
+                      classInfo: targetConnector,
+                      cellData,
+                    });
                   }}
-                  onCellStop={({ id, name }, paperApi) => {
-                    stopConnector({ id, name }, paperApi);
-                  }}
-                  onCellRemove={({ id, name }, paperApi) => {
-                    removeConnector({ id, name }, paperApi);
-                  }}
+                  onCellStart={(cellData, paperApi) =>
+                    startConnector(cellData, paperApi)
+                  }
+                  onCellStop={(cellData, paperApi) =>
+                    stopConnector(cellData, paperApi)
+                  }
+                  onCellRemove={(cellData, paperApi) =>
+                    removeConnector(cellData, paperApi)
+                  }
                 />
                 {isPaperApiReady && (
                   <Toolbox
@@ -180,10 +195,10 @@ const Pipeline = () => {
         quickModeText={workspaces.length > 0 ? 'QUICK CREATE' : 'QUICK START'}
       />
       <NodeDialog />
-      <SettingDialog
-        open={openSettingDialog}
-        handleClose={closeSettingDialog}
-        data={settingDialogData}
+      <PipelinePropertyDialog
+        isOpen={isPropertyDialogOpen}
+        handleClose={closePropertyDialog}
+        data={PropertyDialogData}
       />
     </>
   );

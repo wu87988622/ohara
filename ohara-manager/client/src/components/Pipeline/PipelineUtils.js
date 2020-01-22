@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-export const getPrivateTopicDisplayNames = topicCells => {
+export const getPipelineOnlyTopicDisplayNames = topicCells => {
   const topicIndex = topicCells
-    .filter(topicCell => topicCell.className === 'privateTopic')
+    .filter(topicCell => !topicCell.isShared)
     .map(topicCell => topicCell.displayName.replace('T', ''))
     .sort((a, b) => a - b);
 

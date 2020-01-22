@@ -24,7 +24,7 @@ import { useTheme } from '@material-ui/core/styles';
 import { KIND } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import { createConnection, getReturnedData } from './PaperUtils';
+import { createConnection, getCellData } from './PaperUtils';
 import { useSnackbar } from 'context';
 
 const Paper = React.forwardRef((props, ref) => {
@@ -177,8 +177,9 @@ const Paper = React.forwardRef((props, ref) => {
               linkView.model.remove({ ui: true, tool: toolView.cid });
               onDisconnect(
                 {
-                  sourceElement: getReturnedData(source),
-                  targetElement: getReturnedData(target),
+                  sourceElement: getCellData(source),
+                  link: getCellData(linkView),
+                  targetElement: getCellData(target),
                 },
                 paperApi,
               );
@@ -246,7 +247,7 @@ const Paper = React.forwardRef((props, ref) => {
         !_.isEqual(cellRef.current, cell) &&
         _.get(paperApi, 'state.isReady', false)
       ) {
-        const data = getReturnedData(cell);
+        const data = getCellData(cell);
         cellRef.current = cell;
         onCellEventRef.current.onElementAdd(data, paperApi);
       }
@@ -257,7 +258,7 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('element:pointerclick', elementView => {
-      onCellSelect(getReturnedData(elementView), paperApi);
+      onCellSelect(getCellData(elementView), paperApi);
       resetCells();
       elementView.highlight();
       elementView.model.attributes.isMenuDisplayed = true;
@@ -361,16 +362,11 @@ const Paper = React.forwardRef((props, ref) => {
       // Public APIs
       addElement(data) {
         const { source, sink, stream, topic } = KIND;
-        const { classType } = data;
+        const { kind } = data;
         const newData = { ...data, paperApi: ref.current };
 
         let cell;
-
-        if (
-          classType === source ||
-          classType === sink ||
-          classType === stream
-        ) {
+        if (kind === source || kind === sink || kind === stream) {
           cell = createConnectorCell({
             ...newData,
             onCellStart: onCellEventRef.current.onCellStart,
@@ -378,22 +374,34 @@ const Paper = React.forwardRef((props, ref) => {
             onCellConfig,
             onCellRemove: onCellEventRef.current.onCellRemove,
           });
-        } else if (classType === topic) {
+        } else if (kind === topic) {
           cell = createTopicCell({ ...newData, onCellRemove });
+        } else {
+          // invalid type won't be added thru this method (e.g., link)
+          throw new Error(
+            `paperApi: addElement(data: object) invalid kind from the given data object!`,
+          );
         }
 
         graph.addCell(cell);
         const targetCell = graph.getLastCell();
 
-        return getReturnedData(targetCell);
+        return getCellData(targetCell);
       },
       removeElement(id) {
-        if (typeof id !== 'string')
+        if (typeof id !== 'string') {
           throw new Error(
-            `paperApi: removeElement(id: string) argument id is not valid!`,
+            `paperApi: removeElement(id: string) invalid argument id!`,
           );
+        }
 
         const cell = graph.getCell(id);
+
+        if (!cell.isElement())
+          throw new Error(
+            `paperApi: removeElement(id: string) can only remove an element with this method`,
+          );
+
         graph.removeCells(cell);
       },
       updateElement(id, data) {
@@ -409,6 +417,12 @@ const Paper = React.forwardRef((props, ref) => {
         }
       },
       addLink(sourceId, targetId) {
+        if (typeof sourceId !== 'string') {
+          throw new Error(
+            `paperApi: addLink(sourceId: string, targetId: string?) invalid argument sourceId`,
+          );
+        }
+
         const newLink = createLink({ sourceId });
 
         // TargetId is not supplied, meaning, the target is not decided yet,
@@ -431,29 +445,42 @@ const Paper = React.forwardRef((props, ref) => {
         newLink.target({ id: targetId });
         graph.addCell(newLink);
 
-        return getReturnedData(newLink);
+        return getCellData(newLink);
+      },
+      removeLink(id) {
+        if (typeof id !== 'string') {
+          throw new Error(
+            `paperApi: removeLink(id: string) invalid argument id`,
+          );
+        }
+
+        graph.removeCells(graph.getLinks(id));
       },
       getCell(id) {
-        return getReturnedData(graph.getCell(id));
+        if (typeof id !== 'string') {
+          throw new Error(`paperApi: getCell(id: string) invalid argument id`);
+        }
+
+        return getCellData(graph.getCell(id));
       },
-      getCells(classType) {
-        if (classType) {
+      getCells(kind) {
+        if (kind) {
           const validTypes = _.values(
             _.pick(KIND, ['source', 'sink', 'stream', 'topic']),
           );
 
-          if (!validTypes.includes(classType))
+          if (!validTypes.includes(kind))
             throw new Error(
-              `paperApi: getCells(classType: string?) argument ${classType} is not a valid type! Available types are: ${validTypes.toString()}`,
+              `paperApi: getCells(kind: string?) argument ${kind} is not a valid type! Available types are: ${validTypes.toString()}`,
             );
 
           return graph
             .getCells()
-            .filter(cell => cell.attributes.classType === classType)
-            .map(getReturnedData);
+            .filter(cell => cell.attributes.kind === kind)
+            .map(getCellData);
         }
 
-        return graph.getCells().map(getReturnedData);
+        return graph.getCells().map(getCellData);
       },
       setScale(sx, sy) {
         if (sx === undefined) {
@@ -471,11 +498,11 @@ const Paper = React.forwardRef((props, ref) => {
       },
       getBbox() {
         const { width, height } = paper.getComputedSize();
-        const offset = paper.$el.offset();
+        const { left, top } = paper.$el.offset();
 
         return {
-          offsetLeft: offset.left,
-          offsetTop: offset.top,
+          offsetLeft: left,
+          offsetTop: top,
           width,
           height,
         };
@@ -495,10 +522,9 @@ const Paper = React.forwardRef((props, ref) => {
         return this.getScale().sx;
       },
       center(id) {
-        if (typeof id !== 'string')
-          throw new Error(
-            `paperApi: center(id: string) argument id should be a string!`,
-          );
+        if (typeof id !== 'string') {
+          throw new Error(`paperApi: center(id: string) invalid argument id!`);
+        }
 
         const element = graph.getCell(id);
         const cellBbox = {
@@ -526,7 +552,8 @@ const Paper = React.forwardRef((props, ref) => {
       // the state will there are updates
       state: {
         isReady: true,
-        options: paper.options,
+        // Only expose necessary options from JointJS's default
+        options: _.pick(paper.options, ['origin']),
       },
     };
   });

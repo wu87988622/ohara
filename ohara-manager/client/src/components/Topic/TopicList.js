@@ -80,7 +80,7 @@ function TopicList() {
       <Grid container className="filters">
         <QuickSearch
           data={topics}
-          keys={['name', 'tags.type', 'state']}
+          keys={['name', 'tags.shared', 'state']}
           setResults={handleSearchChange}
         />
         <FormGroup row className="checkboxes">

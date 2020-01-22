@@ -17,155 +17,52 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { find, some, filter, isEmpty, capitalize } from 'lodash';
-import List from '@material-ui/core/List';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
-import styled, { css } from 'styled-components';
 import CloseIcon from '@material-ui/icons/Close';
 import ListItem from '@material-ui/core/ListItem';
-import TextField from '@material-ui/core/TextField';
-import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import FilterListIcon from '@material-ui/icons/FilterList';
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import MuiDialogContent from '@material-ui/core/DialogContent';
-import MuiDialogActions from '@material-ui/core/DialogActions';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import RenderDefinitions from './SettingDefinitions';
-import { useConnectorState, useConnectorActions, useTopicState } from 'context';
+import { KIND } from 'const';
+import { useConnectorState, useTopicState } from 'context';
+import {
+  StyleTitle,
+  StyleIconButton,
+  StyleMuiDialogContent,
+  StyleMuiDialogActions,
+  LeftBody,
+  RightBody,
+  StyleFilter,
+  StyleExpansionPanel,
+  StyleList,
+  StyleDiv,
+} from './PipelinePropertyDialogStyles';
 
-const StyleTitle = styled(MuiDialogTitle)(
-  ({ theme }) => css`
-    margin: 0;
-    padding: ${theme.spacing(2)}px;
-  `,
-);
-
-const StyleIconButton = styled(IconButton)(
-  ({ theme }) => css`
-    position: absolute;
-    right: ${theme.spacing(1)}px;
-    top: ${theme.spacing(1)}px;
-    color: ${theme.palette.grey[500]};
-  `,
-);
-
-const StyleMuiDialogContent = styled(MuiDialogContent)(
-  ({ theme }) => css`
-    height: 100%;
-    padding: ${theme.spacing(2)}px;
-  `,
-);
-
-const StyleMuiDialogActions = styled(MuiDialogActions)(
-  ({ theme }) => css`
-    margin: 0;
-    padding: ${theme.spacing(1)}px;
-  `,
-);
-
-const LeftBody = styled.div(
-  ({ theme }) => css`
-    float: left;
-    height: 600px;
-    width: 256px;
-
-    .nested {
-      padding-left: ${theme.spacing(3)}px;
-
-      .MuiListItemText-root {
-        padding-left: ${theme.spacing(3)}px;
-      }
-
-      ::before {
-        content: '';
-        left: ${theme.spacing(3)}px;
-        top: 0;
-        bottom: 0;
-        position: absolute;
-        width: ${theme.spacing(0.25)}px;
-        background-color: ${theme.palette.grey[300]};
-      }
-
-      :first-child::before {
-        margin-top: ${theme.spacing(1.5)}px;
-      }
-
-      :last-child::before {
-        margin-bottom: ${theme.spacing(1.5)}px;
-      }
-
-      &.Mui-selected {
-        background-color: white;
-
-        .MuiListItemText-root {
-          border-left: ${theme.palette.primary[600]} ${theme.spacing(0.25)}px
-            solid;
-          z-index: 0;
-        }
-      }
-    }
-  `,
-);
-const RightBody = styled.div(
-  ({ theme }) => css`
-    float: left;
-    height: 600px;
-    width: 656px;
-    overflow: scroll;
-    margin-left: ${theme.spacing(2)}px;
-    padding-right: ${theme.spacing(2)}px;
-
-    & > form > * {
-      margin: ${theme.spacing(0, 0, 3, 2)};
-    }
-
-    & > form > div > .MuiPaper-elevation2 {
-      padding-left: ${theme.spacing(1)}px;
-      margin-left: ${theme.spacing(1)}px;
-    }
-  `,
-);
-
-const StyleFilter = styled(TextField)(
-  ({ theme }) => css`
-    width: 100%;
-    margin-bottom: ${theme.spacing(2)}px;
-  `,
-);
-
-const StyleExpansionPanel = styled(ExpansionPanel)(
-  () => css`
-    &.MuiExpansionPanel-root.Mui-expanded {
-      margin: 0;
-    }
-  `,
-);
-
-const StyleList = styled(List)(
-  () => css`
-    width: 100%;
-  `,
-);
-
-const SettingDialog = props => {
-  const { open, handleClose, data = {}, maxWidth = 'md' } = props;
-  const { title = '', classInfo = {}, name: connectorName } = data;
+const PipelinePropertyDialog = props => {
+  const {
+    isOpen,
+    handleClose,
+    handleSubmit,
+    data = {},
+    maxWidth = 'md',
+  } = props;
+  const { title = '', classInfo = {}, cellData } = data;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
   const { data: currentConnectors } = useConnectorState();
   const { data: currentTopics } = useTopicState();
-  const { updateConnector } = useConnectorActions();
+
   const targetConnector = currentConnectors.find(
     connector =>
       connector.className === classInfo.className &&
-      connector.name === connectorName,
+      connector.name === cellData.name,
   );
 
   const groupBy = array => {
@@ -187,21 +84,14 @@ const SettingDialog = props => {
 
   const groups = groupBy(classInfo.settingDefinitions);
 
-  const StyleDiv = styled.div`
-    max-height: 540px;
-    overflow: scroll;
-    padding: 1px;
-  `;
-
   const onSubmit = async values => {
+    let isPipelineOnlyTopic;
     if (!isEmpty(values.topicKeys)) {
-      // topicKeys could be an empty array or single string
-      // May need refactoring to only one type (array)
-      // But it's ok to use filter function here
-      if (
-        !isEmpty(filter(values.topicKeys, topicKey => topicKey.startsWith('T')))
-      ) {
-        const privateTopic = find(currentTopics, topic =>
+      isPipelineOnlyTopic = !isEmpty(
+        filter(values.topicKeys, topicKey => topicKey.startsWith('T')),
+      );
+      if (isPipelineOnlyTopic) {
+        const pipelineOnlyTopic = find(currentTopics, topic =>
           some(
             values.topicKeys,
             topicKey => topicKey === topic.tags.displayName,
@@ -209,7 +99,7 @@ const SettingDialog = props => {
         );
 
         values.topicKeys = [
-          { name: privateTopic.name, group: privateTopic.group },
+          { name: pipelineOnlyTopic.name, group: pipelineOnlyTopic.group },
         ];
       } else {
         const publicTopic = currentTopics.filter(
@@ -219,12 +109,18 @@ const SettingDialog = props => {
           { name: publicTopic.name, group: publicTopic.group },
         ];
       }
+      handleSubmit({
+        sourceElement: cellData,
+        topicElement: {
+          name: values.topicKeys.name,
+          kind: KIND.topic,
+          className: KIND.topic,
+          isShared: !isPipelineOnlyTopic,
+        },
+      });
     }
-    await updateConnector({
-      name: targetConnector.name,
-      group: targetConnector.group,
-      ...values,
-    });
+
+    handleSubmit({ sourceElement: cellData });
     handleClose();
   };
 
@@ -272,7 +168,7 @@ const SettingDialog = props => {
   };
 
   return (
-    <Dialog onClose={handleClose} open={open} maxWidth={maxWidth} fullWidth>
+    <Dialog onClose={handleClose} open={isOpen} maxWidth={maxWidth} fullWidth>
       <DialogTitle handleClose={handleClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
@@ -343,11 +239,12 @@ const SettingDialog = props => {
   );
 };
 
-SettingDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
+PipelinePropertyDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
   data: PropTypes.object,
   maxWidth: PropTypes.string,
   handleClose: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
 };
 
-export default SettingDialog;
+export default PipelinePropertyDialog;

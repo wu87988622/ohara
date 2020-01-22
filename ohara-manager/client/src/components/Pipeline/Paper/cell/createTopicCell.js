@@ -21,7 +21,7 @@ import { renderToString } from 'react-dom/server';
 import * as joint from 'jointjs';
 import $ from 'jquery';
 
-import { PrivateTopicIcon, PublicTopicIcon } from 'components/common/Icon';
+import { SharedTopicIcon, PipelineOnlyTopicIcon } from 'components/common/Icon';
 import { CELL_STATUS } from 'const';
 
 const createTopicCell = options => {
@@ -29,12 +29,13 @@ const createTopicCell = options => {
     id,
     name,
     displayName,
-    classType,
+    kind,
     className,
     position,
     paperApi,
     onCellRemove,
     status = CELL_STATUS.stopped,
+    isShared,
   } = options;
 
   joint.shapes.html = {};
@@ -50,17 +51,17 @@ const createTopicCell = options => {
     ),
   });
 
-  const privateIcon = renderToString(
-    <PrivateTopicIcon width={56} height={56} />,
+  const pipelineOnlyIcon = renderToString(
+    <PipelineOnlyTopicIcon width={56} height={56} />,
   );
-  const publicIcon = renderToString(<PublicTopicIcon width={56} height={56} />);
+  const sharedIcon = renderToString(<SharedTopicIcon width={56} height={56} />);
   const linkIcon = renderToString(<TrendingUpIcon />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
       <div class="topic">
-        ${className === 'publicTopic' ? publicIcon : privateIcon}
+        ${isShared ? sharedIcon : pipelineOnlyIcon}
         <div class="display-name">${displayName}</div>
         <div class="topic-menu">
           <Button class="topic-link">${linkIcon}</Button>
@@ -122,11 +123,12 @@ const createTopicCell = options => {
   return new joint.shapes.html.Element({
     id: id ? id : undefined, // undefined -> id is controlled by JointJS
     name,
-    classType,
+    kind,
     className,
     displayName,
     position,
     status,
+    isShared,
     size: { width: 56, height: 76 },
     isMenuDisplayed: false,
   });
