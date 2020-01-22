@@ -158,6 +158,10 @@ trait WorkerCollie extends Collie {
                 .append("key.converter.schemas.enable", true)
                 .append("value.converter", "org.apache.kafka.connect.json.JsonConverter")
                 .append("value.converter.schemas.enable", true)
+                /**
+                  * this config enables us to custom producer/consumer for source/sink.
+                  */
+                .append("connector.client.config.override.policy", "All")
                 .done
                 .build
               doCreator(executionContext, containerInfo, newNode, routes, arguments)
