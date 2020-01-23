@@ -24,15 +24,15 @@ import com.island.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
-class TestQueryResultIterator extends OharaTest with MockitoSugar {
+class TestQueryResultIterator extends OharaTest {
   private[this] val VARCHAR: String = "VARCHAR"
 
   @Test
   def testOnlyNext(): Unit = {
-    val preparedStatement = mock[PreparedStatement]
-    val resultSet         = mock[ResultSet]
+    val preparedStatement = MockitoSugar.mock[PreparedStatement]
+    val resultSet         = MockitoSugar.mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
 
     val columnList = Seq(
@@ -41,7 +41,7 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
       RdbColumn("column3", VARCHAR, false)
     )
 
-    val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
+    val dataTypeConverter: RDBDataTypeConverter = MockitoSugar.mock[RDBDataTypeConverter]
     val it: Iterator[Seq[Object]]               = new QueryResultIterator(dataTypeConverter, resultSet, columnList)
     intercept[NoSuchElementException] {
       it.next()
@@ -50,8 +50,8 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
 
   @Test
   def testHasNextHaveData(): Unit = {
-    val preparedStatement = mock[PreparedStatement]
-    val resultSet         = mock[ResultSet]
+    val preparedStatement = MockitoSugar.mock[PreparedStatement]
+    val resultSet         = MockitoSugar.mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
     when(resultSet.next()).thenReturn(true).thenReturn(false)
     when(resultSet.getString("column1")).thenReturn("value1-1")
@@ -64,7 +64,7 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
       RdbColumn("column3", VARCHAR, false)
     )
 
-    val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
+    val dataTypeConverter: RDBDataTypeConverter = MockitoSugar.mock[RDBDataTypeConverter]
     val it: Iterator[Seq[Object]]               = new QueryResultIterator(dataTypeConverter, resultSet, columnList)
     var count: Int                              = 0
     while (it.hasNext) {
@@ -76,8 +76,8 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
 
   @Test
   def testHasNextHaveMoreData(): Unit = {
-    val preparedStatement = mock[PreparedStatement]
-    val resultSet         = mock[ResultSet]
+    val preparedStatement = MockitoSugar.mock[PreparedStatement]
+    val resultSet         = MockitoSugar.mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
     when(resultSet.next()).thenReturn(true).thenReturn(true).thenReturn(true).thenReturn(false)
     when(resultSet.getString("column1")).thenReturn("value1-1").thenReturn("value2-1").thenReturn("value3-1")
@@ -90,7 +90,7 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
       RdbColumn("column3", VARCHAR, false)
     )
 
-    val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
+    val dataTypeConverter: RDBDataTypeConverter = MockitoSugar.mock[RDBDataTypeConverter]
     val it: Iterator[Seq[Object]]               = new QueryResultIterator(dataTypeConverter, resultSet, columnList)
     var count: Int                              = 0
     while (it.hasNext) {
@@ -102,8 +102,8 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
 
   @Test
   def testHasNextNoData(): Unit = {
-    val preparedStatement = mock[PreparedStatement]
-    val resultSet         = mock[ResultSet]
+    val preparedStatement = MockitoSugar.mock[PreparedStatement]
+    val resultSet         = MockitoSugar.mock[ResultSet]
     when(preparedStatement.executeQuery()).thenReturn(resultSet)
     when(resultSet.next()).thenReturn(false)
 
@@ -113,7 +113,7 @@ class TestQueryResultIterator extends OharaTest with MockitoSugar {
       RdbColumn("column3", VARCHAR, false)
     )
 
-    val dataTypeConverter: RDBDataTypeConverter = mock[RDBDataTypeConverter]
+    val dataTypeConverter: RDBDataTypeConverter = MockitoSugar.mock[RDBDataTypeConverter]
     val it: Iterator[Seq[Object]]               = new QueryResultIterator(dataTypeConverter, resultSet, columnList)
     var count: Int                              = 0
     while (it.hasNext) {

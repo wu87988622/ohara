@@ -25,9 +25,9 @@ import com.island.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import org.junit.Test
 import org.mockito.Mockito._
 import org.scalatest.Matchers._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
-class TestResultSetDataConverter extends OharaTest with MockitoSugar {
+class TestResultSetDataConverter extends OharaTest {
   private[this] val VARCHAR: String   = "VARCHAR"
   private[this] val TIMESTAMP: String = "TIMESTAMP"
   private[this] val INT: String       = "INT"
@@ -36,7 +36,7 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterRecord(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn("aaa")
     when(resultSet.getInt("column3")).thenReturn(10)
@@ -63,7 +63,7 @@ class TestResultSetDataConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testNullValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn(null)
     when(resultSet.getDate("column3")).thenReturn(null)

@@ -23,12 +23,12 @@ import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.Matchers._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
-class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
+class TestOracleDataTypeConverter extends OharaTest {
   @Test
   def testConverterCharValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("value1")
     val column                  = RdbColumn("column1", "CHAR", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
@@ -39,7 +39,7 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterRawValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn("aaaa".getBytes)
     val column                  = RdbColumn("column1", "RAW", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
@@ -50,7 +50,7 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterRawNullValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn(null)
     val column                  = RdbColumn("column1", "RAW", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()
@@ -61,7 +61,7 @@ class TestOracleDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterSmallIntValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getInt("column1")).thenReturn(111)
     val column                  = RdbColumn("column1", "INT", false)
     val oracleDataTypeConverter = new OracleDataTypeConverter()

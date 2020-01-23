@@ -23,12 +23,12 @@ import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.mockito.Mockito.when
 import org.scalatest.Matchers._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
-class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
+class TestMySQLDataTypeConverter extends OharaTest {
   @Test
   def testConverterBitValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBoolean("column1")).thenReturn(true)
     val column                 = RdbColumn("column1", "bit", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -39,7 +39,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterTinyIntValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getInt("column1")).thenReturn(123)
     val column                 = RdbColumn("column1", "TINYINT", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -50,7 +50,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBoolValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBoolean("column1")).thenReturn(false)
     val column                 = RdbColumn("column1", "bool", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -61,7 +61,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterSmallIntValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getInt("column1")).thenReturn(111)
     val column                 = RdbColumn("column1", "smallint", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -72,7 +72,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBigDecimalValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBigDecimal("column1")).thenReturn(java.math.BigDecimal.valueOf(1000L))
     val column                 = RdbColumn("column1", "decimal", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -83,7 +83,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBigDecimalNullValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBigDecimal("column1")).thenReturn(null)
     val column                 = RdbColumn("column1", "DECIMAL", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -94,7 +94,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterVarCharValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn("aaa")
     val column                 = RdbColumn("column1", "varchar", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -105,7 +105,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterVarCharNullValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getString("column1")).thenReturn(null)
     val column                 = RdbColumn("column1", "VARCHAR", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -116,7 +116,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBinaryValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn("aaaa".getBytes)
     val column                 = RdbColumn("column1", "binary", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()
@@ -128,7 +128,7 @@ class TestMySQLDataTypeConverter extends OharaTest with MockitoSugar {
 
   @Test
   def testConverterBinaryNullValue(): Unit = {
-    val resultSet: ResultSet = mock[ResultSet]
+    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
     when(resultSet.getBytes("column1")).thenReturn(null)
     val column                 = RdbColumn("column1", "BINARY", false)
     val mySQLDataTypeConverter = new MySQLDataTypeConverter()

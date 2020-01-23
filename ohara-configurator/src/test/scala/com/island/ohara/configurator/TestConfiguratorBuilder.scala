@@ -29,8 +29,7 @@ import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
 import org.junit.Test
 import org.scalatest.Matchers._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.mockito.MockitoSugar._
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -199,7 +198,7 @@ class TestConfiguratorBuilder extends OharaTest {
   @Test
   def assigningK8sBeforeHomeFolderShouldNotCauseException(): Unit =
     Configurator.builder
-      .k8sClient(mock[K8SClient])
+      .k8sClient(MockitoSugar.mock[K8SClient])
       .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(5)).getAbsolutePath)
 
   private[this] def toServer(route: server.Route): SimpleServer = {
