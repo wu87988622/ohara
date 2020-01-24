@@ -306,12 +306,12 @@ public interface TopicAdmin extends Releasable {
                   Map<String, List<PartitionInfo>> partitionInfos = partitionInfos();
                   return nameAndOpts.entrySet().stream()
                       .map(
-                          entry ->
-                              new TopicDescription(
-                                  entry.getKey(),
-                                  partitionInfos.getOrDefault(
-                                      entry.getKey(), Collections.emptyList()),
-                                  entry.getValue()))
+                          entry -> {
+                            List<PartitionInfo> infos =
+                                partitionInfos.getOrDefault(
+                                    entry.getKey(), Collections.emptyList());
+                            return new TopicDescription(entry.getKey(), infos, entry.getValue());
+                          })
                       .collect(Collectors.toList());
                 });
       }
