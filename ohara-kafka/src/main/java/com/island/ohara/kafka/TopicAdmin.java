@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.setting.TopicKey;
 import com.island.ohara.common.util.CommonUtils;
@@ -333,7 +332,8 @@ public interface TopicAdmin extends Releasable {
                     CompletableFuture<Void> f = new CompletableFuture<>();
                     admin
                         .createPartitions(
-                            ImmutableMap.of(name, NewPartitions.increaseTo(numberOfPartitions)))
+                            Collections.singletonMap(
+                                name, NewPartitions.increaseTo(numberOfPartitions)))
                         .values()
                         .get(name)
                         .whenComplete(

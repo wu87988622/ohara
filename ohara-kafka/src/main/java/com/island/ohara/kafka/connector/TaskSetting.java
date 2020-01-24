@@ -18,7 +18,6 @@ package com.island.ohara.kafka.connector;
 
 import static com.island.ohara.common.util.CommonUtils.toDuration;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.ConnectorKey;
@@ -53,7 +52,7 @@ public class TaskSetting {
   private final Map<String, String> raw;
 
   private TaskSetting(Map<String, String> raw) {
-    this.raw = ImmutableMap.copyOf(Objects.requireNonNull(raw));
+    this.raw = Collections.unmodifiableMap(Objects.requireNonNull(raw));
     raw.forEach(
         (k, v) -> {
           CommonUtils.requireNonEmpty(k, () -> "k:" + k + ", v:" + v);

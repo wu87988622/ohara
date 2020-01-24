@@ -18,6 +18,7 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-metrics')
+  implementation libs.guava
   implementation libs.kafkaClient
   implementation libs.kafkaConnectFile
   implementation libs.kafkaConnectRuntime

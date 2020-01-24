@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
@@ -117,7 +116,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   @Override
   public final void start(Map<String, String> props) {
-    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
+    taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
     _start(taskSetting);
   }
 

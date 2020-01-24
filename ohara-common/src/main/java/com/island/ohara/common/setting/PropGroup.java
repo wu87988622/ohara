@@ -52,7 +52,7 @@ public final class PropGroup implements Iterable<Map<String, String>> {
         Collections.unmodifiableList(
             values.stream()
                 .filter(s -> !s.isEmpty())
-                .map(v -> Collections.unmodifiableMap(ImmutableMap.copyOf(v)))
+                .map(v -> Collections.unmodifiableMap(Collections.unmodifiableMap(v)))
                 .collect(Collectors.toList()));
     this.values.forEach(
         props ->
@@ -68,7 +68,7 @@ public final class PropGroup implements Iterable<Map<String, String>> {
   }
 
   public Map<String, String> props(int index) {
-    return ImmutableMap.copyOf(values.get(index));
+    return Collections.unmodifiableMap(values.get(index));
   }
 
   public boolean isEmpty() {

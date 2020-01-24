@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.SettingDef;
@@ -24,6 +23,7 @@ import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -165,7 +165,7 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void start(Map<String, String> props) {
-    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
+    taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
     messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.name());
     messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
     ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());

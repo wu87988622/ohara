@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.Serializer;
@@ -29,6 +28,7 @@ import com.island.ohara.kafka.Header;
 import com.island.ohara.kafka.RecordMetadata;
 import com.island.ohara.metrics.basic.Counter;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +197,7 @@ public abstract class RowSourceTask extends SourceTask {
 
   @Override
   public final void start(Map<String, String> props) {
-    taskSetting = TaskSetting.of(ImmutableMap.copyOf(props));
+    taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
     messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.name());
     messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
     ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());

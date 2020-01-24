@@ -16,7 +16,6 @@
 
 package com.island.ohara.common.setting;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.rule.OharaTest;
@@ -155,19 +154,19 @@ public class TestPropGroup extends OharaTest {
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemove() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(ImmutableMap.of("a", "b")));
+    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
     pgs.iterator().remove();
   }
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemoveFromList() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(ImmutableMap.of("a", "b")));
+    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
     pgs.raw().remove(0);
   }
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemoveFromMap() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(ImmutableMap.of("a", "b")));
+    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
     pgs.raw().get(0).remove("a");
   }
 

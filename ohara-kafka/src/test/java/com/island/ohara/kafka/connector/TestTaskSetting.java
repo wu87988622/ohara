@@ -139,7 +139,7 @@ public class TestTaskSetting extends OharaTest {
             Arrays.asList(
                 ImmutableMap.of("k0", "v0", "k1", "v1", "k2", "v2"),
                 ImmutableMap.of("k0", "v0", "k1", "v1")));
-    TaskSetting config = TaskSetting.of(ImmutableMap.of(key, propGroup.toJsonString()));
+    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, propGroup.toJsonString()));
     PropGroup another = config.propGroup(key);
     Assert.assertEquals(propGroup, another);
     Assert.assertTrue(config.propGroupOption(key).isPresent());
@@ -148,7 +148,7 @@ public class TestTaskSetting extends OharaTest {
 
   @Test
   public void getEmptyColumn() {
-    TaskSetting config = TaskSetting.of(ImmutableMap.of("pgs", "asdasd"));
+    TaskSetting config = TaskSetting.of(Collections.singletonMap("pgs", "asdasd"));
     Assert.assertTrue(config.columns().isEmpty());
   }
 

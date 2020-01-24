@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import com.google.common.collect.ImmutableMap;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.setting.*;
@@ -167,7 +166,7 @@ public final class ConnectorFormatter {
   }
 
   public Creation requestOfCreation() {
-    return Creation.of(ImmutableMap.copyOf(settings));
+    return Creation.of(Collections.unmodifiableMap(settings));
   }
 
   public Validation requestOfValidation() {
