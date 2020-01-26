@@ -293,7 +293,9 @@ trait Collie {
                     unit = counter.getUnit,
                     document = counter.getDocument,
                     queryTime = counter.getQueryTime,
-                    startTime = Some(counter.getStartTime)
+                    startTime = Some(counter.getStartTime),
+                    lastModified = Some(counter.getLastModified),
+                    valueInPerSec = Some(counter.valueInPerSec())
                   )
                 }.toList // convert to serializable collection
             } ++ topicMeters(clusterInfo)
@@ -307,7 +309,9 @@ trait Collie {
                     unit = s"${counter.eventType()} / ${counter.rateUnit().name()}",
                     document = counter.catalog.name(),
                     queryTime = counter.queryTime(),
-                    startTime = None
+                    startTime = None,
+                    lastModified = None,
+                    valueInPerSec = None
                   )
                 }.toList // convert to serializable collection
             }

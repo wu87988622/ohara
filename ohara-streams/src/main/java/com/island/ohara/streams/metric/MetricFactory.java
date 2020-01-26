@@ -16,7 +16,6 @@
 
 package com.island.ohara.streams.metric;
 
-import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.basic.Counter;
 import com.island.ohara.streams.config.StreamDefUtils;
 
@@ -37,7 +36,6 @@ public final class MetricFactory {
         .name(type.name())
         .unit("row")
         .document(type.value + ": the number of rows")
-        .startTime(CommonUtils.current())
         .value(0)
         .register();
   }

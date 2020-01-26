@@ -20,6 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.ConnectorKey;
 import com.island.ohara.common.setting.SettingDef;
@@ -102,7 +103,7 @@ public class TestConnectorProps extends OharaTest {
                   "topic",
                   0,
                   null,
-                  Row.of(Cell.of(column.name(), CommonUtils.randomString())),
+                  Serializer.ROW.to(Row.of(Cell.of(column.name(), CommonUtils.randomString()))),
                   null,
                   null,
                   10)));
@@ -115,7 +116,13 @@ public class TestConnectorProps extends OharaTest {
       task.put(
           Collections.singletonList(
               new SinkRecord(
-                  "topic", 0, null, Row.of(Cell.of(column.name(), 12313)), null, null, 10)));
+                  "topic",
+                  0,
+                  null,
+                  Serializer.ROW.to(Row.of(Cell.of(column.name(), 12313))),
+                  null,
+                  null,
+                  10)));
       Assert.assertEquals(task.messageNumberCounter.getValue(), 1);
       Assert.assertNotEquals(task.messageSizeCounter.getValue(), 0);
       Assert.assertEquals(task.ignoredMessageNumberCounter.getValue(), 1);

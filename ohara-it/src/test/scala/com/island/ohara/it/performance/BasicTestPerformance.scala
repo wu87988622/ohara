@@ -247,13 +247,12 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       .map(_.className)
       .toSet[String]
       .foreach(
-        className =>
-          recordCsv(path(className), connectorInfos.filter(_.className == className).flatMap(_.metrics.meters))
+        className => record(path(className), connectorInfos.filter(_.className == className).flatMap(_.metrics.meters))
       )
 
     // record topic meters
     val topicInfos = result(topicApi.list())
-    recordCsv(path("topic"), topicInfos.flatMap(_.metrics.meters))
+    record(path("topic"), topicInfos.flatMap(_.metrics.meters))
 
     // Have setup connector on the worker.
     // Need to stop the connector on the worker.
@@ -271,16 +270,36 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     afterStoppingConnectors(connectorInfos, topicInfos)
   }
 
-  private[this] def recordCsv(file: File, meters: Seq[Meter]): Unit =
-    recordCsv(file, meters.map { m =>
-      m.name -> meters.filter(_.name == m.name).map(_.value).sum
-    }.toMap)
+  private[this] def record(file: File, meters: Seq[Meter]): Unit =
+    recordCsv(
+      file,
+      meters
+        .map(m => m.name -> m)
+        .toMap
+        .flatMap {
+          case (name, meter) =>
+            Seq(
+              name               -> meter.value,
+              s"$name(inPerSec)" -> meter.valueInPerSec.getOrElse(0.0)
+            )
+        },
+      // the empty causes exception
+      (meters.flatMap(_.duration) :+ 0L).max.toDouble / 1000f
+    )
 
-  private[this] def recordCsv(file: File, items: Map[String, Double]): Unit = if (items.nonEmpty) {
+  private[this] def recordCsv(file: File, items: Map[String, Double], duration: Double): Unit = if (items.nonEmpty) {
     // we have to fix the order of key-value
     // if we generate line via map.keys and map.values, the order may be different ...
-    val headers    = items.keys.toList
-    val values     = headers.map(items(_)).mkString(",")
+    val headers = (items.keys.toList :+ "duration").sorted
+    val values = headers
+      .map {
+        case "duration" =>
+          duration
+        case s =>
+          items(s)
+      }
+      .map(d => f"$d%.3f")
+      .mkString(",")
     val fileWriter = new FileWriter(file)
     try {
       fileWriter.write(headers.map(s => s"""\"$s\"""").mkString(","))

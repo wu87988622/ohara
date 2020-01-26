@@ -17,11 +17,9 @@
 package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.TimestampType;
 import java.util.Objects;
-import org.apache.kafka.connect.sink.SinkRecord;
 
 /**
  * The methods it have are almost same with SinkRecord. It return Table rather than any object.
@@ -73,26 +71,6 @@ public class RowSinkRecord {
 
   public TimestampType timestampType() {
     return timestampType;
-  }
-
-  /**
-   * @param record kafka's sink record
-   * @return ohara's sink record
-   */
-  static RowSinkRecord of(SinkRecord record) {
-    return builder()
-        .topicName(record.topic())
-        // add a room to accept the row in kafka
-        .row(
-            (record.key() instanceof Row)
-                ? ((Row) record.key())
-                : Serializer.ROW.from((byte[]) record.key()))
-        .partition(record.kafkaPartition())
-        .offset(record.kafkaOffset())
-        // constructing a record without timeout is legal in kafka ...
-        .timestamp(record.timestamp() == null ? 0 : record.timestamp())
-        .timestampType(TimestampType.of(record.timestampType()))
-        .build();
   }
 
   public static Builder builder() {

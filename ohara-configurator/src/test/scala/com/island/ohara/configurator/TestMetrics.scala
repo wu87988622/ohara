@@ -134,7 +134,11 @@ class TestMetrics extends WithBrokerWorker {
       () => {
         val meters = result(connectorApi.get(sink.key)).metrics.meters
         // custom metrics should have queryTime and startTime also
-        meters.nonEmpty && meters.head.queryTime > 0 && meters.head.startTime.isDefined
+        meters.nonEmpty &&
+        meters.head.queryTime > 0 &&
+        meters.head.startTime.isDefined &&
+        meters.head.lastModified.isDefined &&
+        meters.head.valueInPerSec.isDefined
       },
       java.time.Duration.ofSeconds(20)
     )

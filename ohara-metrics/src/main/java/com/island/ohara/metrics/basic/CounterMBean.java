@@ -16,7 +16,6 @@
 
 package com.island.ohara.metrics.basic;
 
-import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.metrics.BeanObject;
 
 public interface CounterMBean {
@@ -39,6 +38,7 @@ public interface CounterMBean {
 
   String START_TIME_KEY = "StartTime";
   String VALUE_KEY = "Value";
+  String LAST_MODIFIED_KEY = "LastModified";
   String DOCUMENT_KEY = "Document";
   String UNIT_KEY = "Unit";
 
@@ -48,6 +48,7 @@ public interface CounterMBean {
         && obj.properties().containsKey(NAME_KEY)
         && obj.properties().containsKey(GROUP_KEY)
         && obj.attributes().containsKey(START_TIME_KEY)
+        && obj.attributes().containsKey(LAST_MODIFIED_KEY)
         && obj.attributes().containsKey(VALUE_KEY)
         && obj.attributes().containsKey(DOCUMENT_KEY)
         && obj.attributes().containsKey(UNIT_KEY);
@@ -60,6 +61,7 @@ public interface CounterMBean {
         // NOTED: name is NOT a part of attribute!!!!
         .name(obj.properties().get(NAME_KEY))
         .startTime((long) obj.attributes().get(START_TIME_KEY))
+        .lastModified((long) obj.attributes().get(LAST_MODIFIED_KEY))
         .queryTime(obj.queryTime())
         .value((long) obj.attributes().get(VALUE_KEY))
         .document((String) obj.attributes().get(DOCUMENT_KEY))
@@ -97,6 +99,13 @@ public interface CounterMBean {
   long getQueryTime();
 
   /**
+   * Get last modified time
+   *
+   * @return the time of modifying metrics object
+   */
+  long getLastModified();
+
+  /**
    * NOTED: if you are going to change the method name, you have to rewrite the {@link
    * CounterMBean#VALUE_KEY} also
    *
@@ -126,6 +135,8 @@ public interface CounterMBean {
    * @return value in per sec
    */
   default double valueInPerSec() {
-    return (double) (getValue() / 1000) / (double) (CommonUtils.current() - getStartTime());
+    long duration = getLastModified() - getStartTime();
+    if (duration <= 0) return 0;
+    else return ((double) getValue() / (double) duration) * (double) 1000;
   }
 }

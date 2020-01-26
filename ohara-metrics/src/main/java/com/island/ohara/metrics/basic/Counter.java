@@ -47,6 +47,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   private final String document;
   private final String unit;
   private final AtomicLong value = new AtomicLong(0);
+  private final AtomicLong lastModified = new AtomicLong(CommonUtils.current());
   private final long startTime;
   private final long queryTime;
 
@@ -59,7 +60,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       String unit,
       long startTime,
       long queryTime,
-      long value) {
+      long value,
+      long lastModified) {
     this.needClose = needClose;
     this.properties =
         Collections.unmodifiableMap(new HashMap<>(CommonUtils.requireNonEmpty(properties)));
@@ -70,6 +72,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     this.startTime = startTime;
     this.queryTime = queryTime;
     this.value.set(value);
+    this.lastModified.set(lastModified);
   }
 
   @Override
@@ -91,13 +94,22 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   public String getUnit() {
     return unit;
   }
+
+  private long updateLastModified() {
+    return lastModified.updateAndGet(last -> Math.max(last, CommonUtils.current()));
+  }
+
   /**
    * Atomically increments by one the current value.
    *
    * @return the updated value
    */
   public long incrementAndGet() {
-    return value.incrementAndGet();
+    try {
+      return value.incrementAndGet();
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -106,7 +118,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the previous value
    */
   public long getAndIncrement() {
-    return value.getAndIncrement();
+    try {
+      return value.getAndIncrement();
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -115,7 +131,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the updated value
    */
   public long decrementAndGet() {
-    return value.decrementAndGet();
+    try {
+      return value.decrementAndGet();
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -124,7 +144,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the previous value
    */
   public long getAndDecrement() {
-    return value.getAndDecrement();
+    try {
+      return value.getAndDecrement();
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -134,7 +158,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the updated value
    */
   public long addAndGet(long delta) {
-    return value.addAndGet(delta);
+    try {
+      return value.addAndGet(delta);
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -144,7 +172,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the previous value
    */
   public long getAndAdd(long delta) {
-    return value.getAndAdd(delta);
+    try {
+      return value.getAndAdd(delta);
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -154,7 +186,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the previous value
    */
   public long getAndSet(long newValue) {
-    return value.getAndSet(newValue);
+    try {
+      return value.getAndSet(newValue);
+    } finally {
+      updateLastModified();
+    }
   }
 
   /**
@@ -164,8 +200,12 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
    * @return the new value
    */
   public long setAndGet(long newValue) {
-    value.set(newValue);
-    return newValue;
+    try {
+      value.set(newValue);
+      return newValue;
+    } finally {
+      updateLastModified();
+    }
   }
 
   @Override
@@ -176,6 +216,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   @Override
   public long getQueryTime() {
     return queryTime;
+  }
+
+  @Override
+  public long getLastModified() {
+    return lastModified.get();
   }
 
   @Override
@@ -191,14 +236,16 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
           && another.name().equals(name())
           && another.getStartTime() == getStartTime()
           && another.getValue() == getValue()
-          && another.getUnit().equals(getUnit());
+          && another.getUnit().equals(getUnit())
+          && another.getQueryTime() == getQueryTime()
+          && another.getLastModified() == getLastModified();
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(group(), name(), getValue(), getStartTime(), getUnit());
+    return Objects.hash(group(), name(), getValue(), getStartTime(), getUnit(), getLastModified());
   }
 
   @Override
@@ -212,7 +259,11 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
         + " value:"
         + getValue()
         + " unit:"
-        + getUnit();
+        + getUnit()
+        + " query time:"
+        + getQueryTime()
+        + " last modified:"
+        + getLastModified();
   }
 
   @Override
@@ -228,6 +279,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     private String document = "there is no document for this counter...";
     private long value = 0;
     private long startTime = CommonUtils.current();
+    private long lastModified = startTime;
     private long queryTime = CommonUtils.current();
 
     private Builder() {}
@@ -257,14 +309,20 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     }
 
     @Optional("default is current time")
-    public Builder startTime(long startTime) {
-      this.startTime = startTime;
+    Builder startTime(long startTime) {
+      this.startTime = CommonUtils.requirePositiveLong(startTime);
       return this;
     }
 
-    // Internal usage
-    protected Builder queryTime(long queryTime) {
-      this.queryTime = queryTime;
+    @Optional("default is current time")
+    Builder lastModified(long lastModified) {
+      this.lastModified = CommonUtils.requirePositiveLong(lastModified);
+      return this;
+    }
+
+    @Optional("default is current time")
+    Builder queryTime(long queryTime) {
+      this.queryTime = CommonUtils.requirePositiveLong(queryTime);
       return this;
     }
 
@@ -283,10 +341,6 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     private void checkArgument() {
       CommonUtils.requireNonEmpty(group);
       CommonUtils.requireNonEmpty(name);
-      CommonUtils.requireNonEmpty(unit);
-      CommonUtils.requireNonEmpty(document);
-      CommonUtils.requirePositiveLong(startTime);
-      CommonUtils.requirePositiveLong(queryTime);
     }
 
     /**
@@ -333,7 +387,16 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       // If we don't have this id, the multiple tasks will fail since the duplicate counters.
       properties.put(ID_KEY, CommonUtils.isEmpty(id) ? CommonUtils.randomString() : id);
       return new Counter(
-          needClose, properties, group, name, document, unit, startTime, queryTime, value);
+          needClose,
+          properties,
+          group,
+          name,
+          document,
+          unit,
+          startTime,
+          queryTime,
+          value,
+          lastModified);
     }
   }
 }

@@ -32,12 +32,17 @@ object MetricsApi {
   final case class Meter(
     name: String,
     value: Double,
+    valueInPerSec: Option[Double],
     unit: String,
     document: String,
     queryTime: Long,
-    startTime: Option[Long]
-  )
-  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat6(Meter)
+    startTime: Option[Long],
+    lastModified: Option[Long]
+  ) {
+    def duration: Option[Long] = lastModified.flatMap(last => startTime.map(s => last - s))
+  }
+
+  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat8(Meter)
   final case class Metrics(meters: Seq[Meter])
   object Metrics {
     val EMPTY: Metrics = Metrics(Seq.empty)

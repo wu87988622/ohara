@@ -21,68 +21,11 @@ import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.DataType;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.OharaTest;
-import com.island.ohara.common.util.ByteUtils;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.Collections;
-import org.apache.kafka.connect.connector.ConnectRecord;
-import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class TestConnectorUtils extends OharaTest {
-  @Test
-  public void testSizeOfBytes() {
-    Assert.assertNotEquals(ConnectorUtils.sizeOf(new byte[10]), 0);
-  }
-
-  @Test
-  public void testSizeOfRow() {
-    Assert.assertNotEquals(ConnectorUtils.sizeOf(Row.of(Cell.of("a", "v"))), 0);
-  }
-
-  @Test
-  public void testSizeOfShort() {
-    Assert.assertEquals(ConnectorUtils.sizeOf((short) 123), ByteUtils.SIZE_OF_SHORT);
-  }
-
-  @Test
-  public void testSizeOfInt() {
-    Assert.assertEquals(ConnectorUtils.sizeOf(123), ByteUtils.SIZE_OF_INT);
-  }
-
-  @Test
-  public void testSizeOfLong() {
-    Assert.assertEquals(ConnectorUtils.sizeOf(123L), ByteUtils.SIZE_OF_LONG);
-  }
-
-  @Test
-  public void testSizeOfFloat() {
-    Assert.assertEquals(ConnectorUtils.sizeOf((float) 123), ByteUtils.SIZE_OF_FLOAT);
-  }
-
-  @Test
-  public void testSizeOfDouble() {
-    Assert.assertEquals(ConnectorUtils.sizeOf((double) 123), ByteUtils.SIZE_OF_DOUBLE);
-  }
-
-  @Test
-  public void testSizeOfBoolean() {
-    Assert.assertEquals(ConnectorUtils.sizeOf(false), ByteUtils.SIZE_OF_BOOLEAN);
-  }
-
-  @Test
-  public void testSizeOfString() {
-    Assert.assertEquals(ConnectorUtils.sizeOf("abc"), 3);
-  }
-
-  @Test
-  public void testSizeOfEmptyRecord() {
-    ConnectRecord<?> record = Mockito.mock(ConnectRecord.class);
-    Mockito.when(record.key()).thenReturn(null);
-    Mockito.when(record.value()).thenReturn(null);
-    Assert.assertEquals(ConnectorUtils.sizeOf(record), 0);
-  }
-
   @Test
   public void testMatch() {
     Column column =

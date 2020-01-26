@@ -18,9 +18,13 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.Pair;
+import com.island.ohara.common.data.Row;
+import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.Releasable;
 import com.island.ohara.common.util.VersionUtils;
+import com.island.ohara.kafka.TimestampType;
 import com.island.ohara.metrics.basic.Counter;
 import java.util.Collection;
 import java.util.Collections;
@@ -122,6 +126,26 @@ public abstract class RowSinkTask extends SinkTask {
   @VisibleForTesting Counter ignoredMessageSizeCounter = null;
   @VisibleForTesting TaskSetting taskSetting = null;
 
+  /**
+   * @param record kafka's sink record
+   * @return ohara's sink record
+   */
+  private static RowSinkRecord toOhara(SinkRecord record) {
+    return RowSinkRecord.builder()
+        .topicName(record.topic())
+        // add a room to accept the row in kafka
+        .row(
+            (record.key() instanceof Row)
+                ? ((Row) record.key())
+                : Serializer.ROW.from((byte[]) record.key()))
+        .partition(record.kafkaPartition())
+        .offset(record.kafkaOffset())
+        // constructing a record without timeout is legal in kafka ...
+        .timestamp(record.timestamp() == null ? 0 : record.timestamp())
+        .timestampType(TimestampType.of(record.timestampType()))
+        .build();
+  }
+
   @Override
   public final void put(Collection<SinkRecord> raw) {
     SettingDef.CheckRule rule = taskSetting.checkRule();
@@ -129,25 +153,27 @@ public abstract class RowSinkTask extends SinkTask {
     if (raw == null) return;
     List<RowSinkRecord> records =
         raw.stream()
-            .map(RowSinkRecord::of)
+            .map(kafkaRecord -> Pair.of(toOhara(kafkaRecord), kafkaRecord))
             .filter(
-                record ->
-                    ConnectorUtils.match(
-                        rule,
-                        record.row(),
-                        columns,
-                        true,
-                        ignoredMessageNumberCounter,
-                        ignoredMessageSizeCounter))
+                pair -> {
+                  long rowSize = ConnectorUtils.sizeOf(pair.right());
+                  boolean pass =
+                      ConnectorUtils.match(
+                          rule,
+                          pair.left().row(),
+                          rowSize,
+                          columns,
+                          true,
+                          ignoredMessageNumberCounter,
+                          ignoredMessageSizeCounter);
+                  if (pass && messageSizeCounter != null) messageSizeCounter.addAndGet(rowSize);
+
+                  return pass;
+                })
+            .map(Pair::left)
             .collect(Collectors.toList());
-    try {
-      _put(records);
-    } finally {
-      // rowCounter should not be null ....
-      if (messageNumberCounter != null) messageNumberCounter.addAndGet(records.size());
-      if (messageSizeCounter != null)
-        messageSizeCounter.addAndGet(records.stream().mapToLong(ConnectorUtils::sizeOf).sum());
-    }
+    if (messageNumberCounter != null) messageNumberCounter.addAndGet(records.size());
+    _put(records);
   }
 
   /**

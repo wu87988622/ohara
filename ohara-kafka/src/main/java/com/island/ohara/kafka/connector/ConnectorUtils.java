@@ -16,13 +16,10 @@
 
 package com.island.ohara.kafka.connector;
 
-import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.Row;
-import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.SettingDef;
-import com.island.ohara.common.util.ByteUtils;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import com.island.ohara.metrics.basic.Counter;
@@ -68,7 +65,6 @@ final class ConnectorUtils {
         .name("message.number")
         .unit("messages")
         .document("number of messages")
-        .startTime(CommonUtils.current())
         .value(0)
         .register();
   }
@@ -85,7 +81,6 @@ final class ConnectorUtils {
         .name("message.size")
         .unit("bytes")
         .document("size (in bytes) of messages")
-        .startTime(CommonUtils.current())
         .value(0)
         .register();
   }
@@ -102,7 +97,6 @@ final class ConnectorUtils {
         .name("ignored.message.number")
         .unit("messages")
         .document("number of ignored messages")
-        .startTime(CommonUtils.current())
         .value(0)
         .register();
   }
@@ -119,7 +113,6 @@ final class ConnectorUtils {
         .name("ignored.message.size")
         .unit("bytes")
         .document("size of ignored messages")
-        .startTime(CommonUtils.current())
         .value(0)
         .register();
   }
@@ -133,6 +126,7 @@ final class ConnectorUtils {
   static boolean match(
       SettingDef.CheckRule rule,
       Row row,
+      long rowSize,
       List<Column> columns,
       boolean isSink,
       Counter ignoredMessageNumberCounter,
@@ -146,8 +140,7 @@ final class ConnectorUtils {
         } catch (Throwable e) {
           if (rule == SettingDef.CheckRule.PERMISSIVE) {
             if (ignoredMessageNumberCounter != null) ignoredMessageNumberCounter.incrementAndGet();
-            if (ignoredMessageSizeCounter != null)
-              ignoredMessageSizeCounter.addAndGet(ConnectorUtils.sizeOf(row));
+            if (ignoredMessageSizeCounter != null) ignoredMessageSizeCounter.addAndGet(rowSize);
             return false;
           } else throw e;
         }
@@ -169,7 +162,6 @@ final class ConnectorUtils {
         columns.stream()
             .map(column -> isSink ? column.name() : column.newName())
             .collect(Collectors.toList());
-    ;
 
     if (!CommonUtils.isEmpty(columns)) {
       if (row.size() != columns.size())
@@ -240,27 +232,8 @@ final class ConnectorUtils {
     }
   }
 
-  /**
-   * estimate the size of object. Apart from row and byte array, other types have zero size.
-   *
-   * @param obj object
-   * @return size of object
-   */
-  @VisibleForTesting
-  static long sizeOf(Object obj) {
-    if (obj instanceof byte[]) return ((byte[]) obj).length;
-    else if (obj instanceof Row) return Serializer.ROW.to((Row) obj).length;
-    else if (obj instanceof Boolean) return ByteUtils.SIZE_OF_BOOLEAN;
-    else if (obj instanceof Short) return ByteUtils.SIZE_OF_SHORT;
-    else if (obj instanceof Integer) return ByteUtils.SIZE_OF_INT;
-    else if (obj instanceof Long) return ByteUtils.SIZE_OF_LONG;
-    else if (obj instanceof Float) return ByteUtils.SIZE_OF_FLOAT;
-    else if (obj instanceof Double) return ByteUtils.SIZE_OF_DOUBLE;
-    else if (obj instanceof String) return ((String) obj).getBytes().length;
-    else if (obj instanceof ConnectRecord)
-      return sizeOf(((ConnectRecord) obj).key()) + sizeOf(((ConnectRecord) obj).value());
-    else if (obj instanceof RowSinkRecord) return sizeOf(((RowSinkRecord) obj).row());
-    else if (obj instanceof RowSourceRecord) return sizeOf(((RowSourceRecord) obj).row());
+  static long sizeOf(ConnectRecord<?> record) {
+    if (record.key() instanceof byte[]) return ((byte[]) record.key()).length;
     else return 0;
   }
 

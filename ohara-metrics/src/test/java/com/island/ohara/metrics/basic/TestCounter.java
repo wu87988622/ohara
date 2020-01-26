@@ -376,12 +376,19 @@ public class TestCounter extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNegativeQueryTime() {
-    Counter.builder()
-        .group("group")
-        .name("name")
-        .unit("unit")
-        .document("document")
-        .queryTime(-999)
-        .build();
+    Counter.builder().queryTime(-999);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeLastModifiedTime() {
+    Counter.builder().lastModified(-999);
+  }
+
+  @Test
+  public void testInPerSecond() {
+    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).register()) {
+      counter.addAndGet(100);
+      Assert.assertNotEquals(0.0f, counter.valueInPerSec());
+    }
   }
 }

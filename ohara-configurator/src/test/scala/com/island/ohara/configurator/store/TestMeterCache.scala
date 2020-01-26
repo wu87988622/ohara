@@ -58,7 +58,9 @@ class TestMeterCache extends OharaTest {
           unit = "unit",
           document = "document",
           queryTime = CommonUtils.current(),
-          startTime = Some(CommonUtils.current())
+          startTime = Some(CommonUtils.current()),
+          lastModified = Some(CommonUtils.current()),
+          valueInPerSec = None
         )
       )
     )

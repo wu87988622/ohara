@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.data.Column;
+import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.SettingDef;
@@ -159,26 +160,26 @@ public abstract class RowSourceTask extends SourceTask {
     List<Column> columns = taskSetting.columns();
     List<SourceRecord> raw =
         records.stream()
+            .map(record -> Pair.of(record, toKafka(record)))
             .filter(
-                record ->
-                    ConnectorUtils.match(
-                        rule,
-                        record.row(),
-                        columns,
-                        false,
-                        ignoredMessageNumberCounter,
-                        ignoredMessageSizeCounter))
-            .map(
-                record -> {
-                  SourceRecord kafkaRecord = toKafka(record);
-                  cachedRecords.put(kafkaRecord, record);
-                  return kafkaRecord;
+                pair -> {
+                  cachedRecords.put(pair.right(), pair.left());
+                  long rowSize = ConnectorUtils.sizeOf(pair.right());
+                  boolean pass =
+                      ConnectorUtils.match(
+                          rule,
+                          pair.left().row(),
+                          rowSize,
+                          columns,
+                          false,
+                          ignoredMessageNumberCounter,
+                          ignoredMessageSizeCounter);
+                  if (pass && messageSizeCounter != null) messageSizeCounter.addAndGet(rowSize);
+                  return pass;
                 })
+            .map(Pair::right)
             .collect(Collectors.toList());
-
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(raw.size());
-    if (messageSizeCounter != null)
-      messageSizeCounter.addAndGet(raw.stream().mapToLong(ConnectorUtils::sizeOf).sum());
     return raw;
   }
 
