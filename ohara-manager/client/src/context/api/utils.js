@@ -16,11 +16,14 @@
 
 import { has, isEmpty, keys, pick } from 'lodash';
 
+import ContextApiError from 'context/ContextApiError';
 import { getDefinition } from 'api/utils/definitionsUtils';
 
 export const validate = values => {
   if (!has(values, 'name'))
-    throw new Error('The values must contain the name property');
+    throw new ContextApiError({
+      title: 'The values must contain the name property',
+    });
 };
 
 // for workspace stage object, we use a "prefix" to identify it

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { isEmpty, isEqual } from 'lodash';
 
 import * as context from 'context';
-import { usePrevious } from 'utils/hooks';
+import { useEventLog, usePrevious } from 'utils/hooks';
 import { createActions } from './workspaceActions';
 import { reducer, initialState } from './workspaceReducer';
 
@@ -37,6 +37,8 @@ const WorkspaceProvider = ({ children }) => {
   const { data: zookeepers } = context.useZookeeperState();
   const { data: pipelines } = context.usePipelineState();
   const { workspaceApi } = context.useApi();
+  const eventLog = useEventLog();
+
   /**
    * Abbreviations:
    * workspace => ws
@@ -59,9 +61,9 @@ const WorkspaceProvider = ({ children }) => {
 
   React.useEffect(() => {
     if (!workspaceApi) return;
-    const actions = createActions({ state, dispatch, workspaceApi });
+    const actions = createActions({ state, dispatch, eventLog, workspaceApi });
     actions.fetchWorkspaces();
-  }, [state, workspaceApi]);
+  }, [state, dispatch, eventLog, workspaceApi]);
 
   // Set current pipeline
   React.useEffect(() => {
@@ -155,12 +157,12 @@ WorkspaceProvider.propTypes = {
 const useWorkspaceActions = () => {
   const state = useWorkspaceState();
   const dispatch = useWorkspaceDispatch();
+  const eventLog = useEventLog();
   const { workspaceApi } = context.useApi();
-  return React.useMemo(() => createActions({ state, dispatch, workspaceApi }), [
-    state,
-    dispatch,
-    workspaceApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, workspaceApi }),
+    [state, dispatch, eventLog, workspaceApi],
+  );
 };
 
 export {

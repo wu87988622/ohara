@@ -15,12 +15,7 @@
  */
 
 import * as node from './body/nodeBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -33,13 +28,14 @@ export const state = {
 };
 
 export const create = async (params = {}) => {
+  const { hostname } = params;
   const requestBody = requestUtil(params, node);
   const res = await axiosInstance.post(url, requestBody);
 
   const result = responseUtil(res, node);
-  result.title =
-    `Create node ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create node ${hostname}.`
+    : `Successfully created node ${hostname}.`;
   return result;
 };
 
@@ -49,9 +45,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${hostname}`, body);
   const result = responseUtil(res, node);
-  result.title =
-    `Update node ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update node ${hostname}.`
+    : `Successfully updated node ${hostname}.`;
   return result;
 };
 
@@ -70,10 +66,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, node);
   }
-
-  result.title =
-    `Remove node ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove node ${hostname}.`
+    : `Successfully removed node ${hostname}.`;
   return result;
 };
 
@@ -81,14 +76,17 @@ export const get = async params => {
   const { hostname } = params;
   const res = await axiosInstance.get(`${url}/${hostname}`);
   const result = responseUtil(res, node);
-  result.title =
-    `Get node ${getKey(params)} ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get node ${hostname}.`
+    : `Successfully got node ${hostname}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, node);
-  result.title = `Get node list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get node list.`
+    : `Successfully got node list.`;
   return result;
 };

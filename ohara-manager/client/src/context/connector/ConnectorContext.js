@@ -23,6 +23,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './connectorActions';
 import { reducer, initialState } from './connectorReducer';
 
@@ -31,13 +32,14 @@ const ConnectorDispatchContext = createContext();
 
 const ConnectorProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { connectorApi } = useApi();
 
   useEffect(() => {
     if (!connectorApi) return;
-    const actions = createActions({ state, dispatch, connectorApi });
+    const actions = createActions({ state, dispatch, eventLog, connectorApi });
     actions.fetchConnectors();
-  }, [state, connectorApi]);
+  }, [state, dispatch, eventLog, connectorApi]);
 
   return (
     <ConnectorStateContext.Provider value={state}>
@@ -76,12 +78,12 @@ const useConnectorDispatch = () => {
 const useConnectorActions = () => {
   const state = useConnectorState();
   const dispatch = useConnectorDispatch();
+  const eventLog = useEventLog();
   const { connectorApi } = useApi();
-  return useMemo(() => createActions({ state, dispatch, connectorApi }), [
-    state,
-    dispatch,
-    connectorApi,
-  ]);
+  return useMemo(
+    () => createActions({ state, dispatch, eventLog, connectorApi }),
+    [state, dispatch, eventLog, connectorApi],
+  );
 };
 
 export {

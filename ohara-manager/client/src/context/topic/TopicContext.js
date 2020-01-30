@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 
 import { initializeRoutine } from './topicRoutines';
 import { useApi, useApp } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './topicActions';
 import { reducer, initialState } from './topicReducer';
 
@@ -27,6 +28,7 @@ const TopicDispatchContext = React.createContext();
 
 const TopicProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { workspaceName } = useApp();
   const { topicApi } = useApi();
 
@@ -36,9 +38,9 @@ const TopicProvider = ({ children }) => {
 
   React.useEffect(() => {
     if (!topicApi) return;
-    const actions = createActions({ state, dispatch, topicApi });
+    const actions = createActions({ state, dispatch, eventLog, topicApi });
     actions.fetchTopics();
-  }, [state, topicApi]);
+  }, [state, dispatch, eventLog, topicApi]);
 
   return (
     <TopicStateContext.Provider value={state}>
@@ -73,12 +75,12 @@ TopicProvider.propTypes = {
 const useTopicActions = () => {
   const state = useTopicState();
   const dispatch = useTopicDispatch();
+  const eventLog = useEventLog();
   const { topicApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, topicApi }), [
-    state,
-    dispatch,
-    topicApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, topicApi }),
+    [state, dispatch, eventLog, topicApi],
+  );
 };
 
 export { TopicProvider, useTopicState, useTopicDispatch, useTopicActions };

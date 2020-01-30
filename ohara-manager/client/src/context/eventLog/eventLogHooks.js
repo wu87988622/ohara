@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
+import { useMemo } from 'react';
 import { useLocalStorage } from 'utils/hooks';
 import { initialState } from './eventLogReducer';
 
 export const useSettingsApi = () => {
-  const [storedValue, setValue] = useLocalStorage(
+  const [storedValue, setStoredValue] = useLocalStorage(
     'event_logs',
     initialState.settings.data,
   );
-  return { fetchSettings: () => storedValue, updateSettings: setValue };
+  return useMemo(() => {
+    const api = {
+      fetchSettings: () => storedValue,
+      updateSettings: setStoredValue,
+    };
+    return api;
+  }, [storedValue, setStoredValue]);
 };

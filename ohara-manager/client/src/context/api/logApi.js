@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-
 import * as logApi from 'api/logApi';
+import ContextApiError from 'context/ContextApiError';
 import { validate } from './utils';
 
 export const createApi = context => {
@@ -31,9 +30,7 @@ export const createApi = context => {
   return {
     fetchConfigurator: async values => {
       const res = await logApi.getConfiguratorLog(values);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetchZookeeper: async values => {
@@ -43,34 +40,26 @@ export const createApi = context => {
         group: zookeeperGroup,
       };
       const res = await logApi.getZookeeperLog(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetchBroker: async values => {
       const params = { ...values, name: workspaceKey.name, group: brokerGroup };
       const res = await logApi.getBrokerLog(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetchWorker: async values => {
       const params = { ...values, name: workspaceKey.name, group: workerGroup };
       const res = await logApi.getWorkerLog(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetchStream: async values => {
       validate(values);
       const params = { ...values, group: streamGroup };
       const res = await logApi.getStreamLog(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
   };

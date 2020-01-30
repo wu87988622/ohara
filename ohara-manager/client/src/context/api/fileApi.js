@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
-
 import * as fileApi from 'api/fileApi';
+import ContextApiError from 'context/ContextApiError';
 import { validate } from './utils';
 
 export const createApi = context => {
-  const { fileGroup, workspaceKey, showMessage } = context;
+  const { fileGroup, workspaceKey } = context;
   if (!fileGroup || !workspaceKey) return;
 
   const group = fileGroup;
@@ -30,61 +29,33 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await fileApi.getAll(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetch: async name => {
       const params = { name, group };
       const res = await fileApi.get(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     create: async file => {
-      try {
-        const params = { file, group, tags: { parentKey } };
-        const res = await fileApi.create(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { file, group, tags: { parentKey } };
+      const res = await fileApi.create(params);
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     update: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const res = await fileApi.update(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = { ...values, group };
+      const res = await fileApi.update(params);
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await fileApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await fileApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      return params;
     },
   };
 };

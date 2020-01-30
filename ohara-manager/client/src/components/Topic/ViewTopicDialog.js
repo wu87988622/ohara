@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { get } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -32,6 +32,7 @@ import NumberFormat from 'react-number-format';
 
 import { useViewTopicDialog, useTopicState, useTopicActions } from 'context';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
+import { useEventLog } from 'utils/hooks';
 import TopicChip from './TopicChip';
 import { Wrapper } from './ViewTopicDialogStyles';
 
@@ -44,13 +45,17 @@ const ViewTopicDialog = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { isFetching: isDeleting } = useTopicState();
   const { deleteTopic } = useTopicActions();
+  const eventLog = useEventLog();
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const name = get(topic, 'name');
     const group = get(topic, 'group');
-    deleteTopic(name, group);
-    setIsConfirmOpen(false);
-    closeDialog();
+    const res = await deleteTopic(name, group);
+    if (!res.error) {
+      eventLog.info(`Successfully deleted topic ${name}.`);
+      setIsConfirmOpen(false);
+      closeDialog();
+    }
   };
 
   const displayName = get(topic, 'displayName');
@@ -78,7 +83,7 @@ const ViewTopicDialog = () => {
             <Button
               variant="outlined"
               color="secondary"
-              disabled={isShared}
+              disabled={isShared && !isEmpty(usedByPipelines)}
               onClick={() => setIsConfirmOpen(true)}
             >
               Delete

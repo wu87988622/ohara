@@ -18,7 +18,7 @@ import * as routines from './topicRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const { state, dispatch, topicApi } = context;
+  const { state, dispatch, eventLog, topicApi } = context;
   return {
     state,
     fetchTopics: async () => {
@@ -30,6 +30,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -45,6 +46,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -58,6 +60,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -72,6 +75,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -85,6 +89,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -98,6 +103,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }

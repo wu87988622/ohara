@@ -41,6 +41,11 @@ const EventLogProvider = ({ children }) => {
 
   React.useEffect(() => {
     if (!actions) return;
+    actions.fetchEventLogs();
+  }, [actions]);
+
+  React.useEffect(() => {
+    if (!actions) return;
     actions.fetchSettings();
   }, [actions]);
 

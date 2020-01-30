@@ -14,72 +14,46 @@
  * limitations under the License.
  */
 
-import { has, isEmpty } from 'lodash';
+import { has } from 'lodash';
 import * as nodeApi from 'api/nodeApi';
+import ContextApiError from 'context/ContextApiError';
 
 const validate = values => {
   if (!has(values, 'hostname'))
-    throw new Error('The values must contain the hostname property');
+    throw new ContextApiError({
+      title: 'The values must contain the hostname property',
+    });
 };
 
-export const createApi = context => {
-  const { showMessage } = context;
+export const createApi = () => {
   return {
     fetchAll: async () => {
       const res = await nodeApi.getAll();
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetch: async hostname => {
       const res = await nodeApi.get({ hostname });
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     create: async values => {
-      try {
-        validate(values);
-        const res = await nodeApi.create({ ...values });
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const res = await nodeApi.create({ ...values });
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     update: async values => {
-      try {
-        validate(values);
-        const res = await nodeApi.update({ ...values });
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const res = await nodeApi.update({ ...values });
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     delete: async hostname => {
-      try {
-        const params = { hostname };
-        const res = await nodeApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { hostname };
+      const res = await nodeApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      return params;
     },
   };
 };

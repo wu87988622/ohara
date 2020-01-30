@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './nodeActions';
 import { reducer, initialState } from './nodeReducer';
 
@@ -25,13 +26,14 @@ const NodeDispatchContext = React.createContext();
 
 const NodeProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { nodeApi } = useApi();
 
   React.useEffect(() => {
     if (!nodeApi) return;
-    const actions = createActions({ state, dispatch, nodeApi });
+    const actions = createActions({ state, dispatch, eventLog, nodeApi });
     actions.fetchNodes();
-  }, [state, nodeApi]);
+  }, [state, dispatch, eventLog, nodeApi]);
 
   return (
     <NodeStateContext.Provider value={state}>
@@ -65,12 +67,12 @@ const useNodeDispatch = () => {
 const useNodeActions = () => {
   const state = useNodeState();
   const dispatch = useNodeDispatch();
+  const eventLog = useEventLog();
   const { nodeApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, nodeApi }), [
-    state,
-    dispatch,
-    nodeApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, nodeApi }),
+    [state, dispatch, eventLog, nodeApi],
+  );
 };
 
 export { NodeProvider, useNodeState, useNodeDispatch, useNodeActions };

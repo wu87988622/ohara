@@ -17,8 +17,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
-import { useSnackbar } from 'context/SnackbarContext';
-import { useApp, useEventLogActions } from 'context';
+import { useApp } from 'context';
 import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
 import { createApi as createNodeApi } from './nodeApi';
@@ -48,29 +47,21 @@ const ApiProvider = ({ children }) => {
     workerKey,
     workspaceKey,
   } = useApp();
-  const showMessage = useSnackbar();
-  const { createEventLog } = useEventLogActions();
 
   const brokerApi = useMemo(
-    () => createBrokerApi({ brokerGroup, zookeeperGroup, showMessage }),
-    [brokerGroup, zookeeperGroup, showMessage],
+    () => createBrokerApi({ brokerGroup, zookeeperGroup }),
+    [brokerGroup, zookeeperGroup],
   );
 
   const connectorApi = useMemo(
-    () =>
-      createConnectorApi({
-        connectorGroup,
-        workerKey,
-        showMessage,
-        topicGroup,
-      }),
-    [connectorGroup, workerKey, showMessage, topicGroup],
+    () => createConnectorApi({ connectorGroup, workerKey, topicGroup }),
+    [connectorGroup, workerKey, topicGroup],
   );
 
-  const fileApi = useMemo(
-    () => createFileApi({ fileGroup, workspaceKey, showMessage }),
-    [fileGroup, workspaceKey, showMessage],
-  );
+  const fileApi = useMemo(() => createFileApi({ fileGroup, workspaceKey }), [
+    fileGroup,
+    workspaceKey,
+  ]);
 
   const logApi = useMemo(
     () =>
@@ -84,37 +75,34 @@ const ApiProvider = ({ children }) => {
     [workspaceKey, brokerGroup, streamGroup, workerGroup, zookeeperGroup],
   );
 
-  const nodeApi = useMemo(() => createNodeApi({ showMessage }), [showMessage]);
+  const nodeApi = useMemo(() => createNodeApi(), []);
 
-  const pipelineApi = useMemo(
-    () => createPipelineApi({ pipelineGroup, showMessage, createEventLog }),
-    [pipelineGroup, showMessage, createEventLog],
-  );
+  const pipelineApi = useMemo(() => createPipelineApi({ pipelineGroup }), [
+    pipelineGroup,
+  ]);
 
   const streamApi = useMemo(
-    () => createStreamApi({ streamGroup, brokerKey, showMessage, topicGroup }),
-    [streamGroup, brokerKey, showMessage, topicGroup],
+    () => createStreamApi({ streamGroup, brokerKey, topicGroup }),
+    [streamGroup, brokerKey, topicGroup],
   );
 
   const topicApi = useMemo(
-    () => createTopicApi({ topicGroup, brokerKey, workspaceKey, showMessage }),
-    [topicGroup, brokerKey, workspaceKey, showMessage],
+    () => createTopicApi({ topicGroup, brokerKey, workspaceKey }),
+    [topicGroup, brokerKey, workspaceKey],
   );
 
   const workerApi = useMemo(
-    () => createWorkerApi({ workerGroup, brokerGroup, showMessage }),
-    [workerGroup, brokerGroup, showMessage],
+    () => createWorkerApi({ workerGroup, brokerGroup }),
+    [workerGroup, brokerGroup],
   );
 
-  const workspaceApi = useMemo(
-    () => createWorkspaceApi({ workspaceGroup, showMessage }),
-    [workspaceGroup, showMessage],
-  );
+  const workspaceApi = useMemo(() => createWorkspaceApi({ workspaceGroup }), [
+    workspaceGroup,
+  ]);
 
-  const zookeeperApi = useMemo(
-    () => createZookeeperApi({ zookeeperGroup, showMessage }),
-    [zookeeperGroup, showMessage],
-  );
+  const zookeeperApi = useMemo(() => createZookeeperApi({ zookeeperGroup }), [
+    zookeeperGroup,
+  ]);
 
   return (
     <ApiContext.Provider

@@ -18,12 +18,7 @@ import { isEmpty } from 'lodash';
 
 import { KIND } from '../const';
 import * as stream from './body/streamBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -46,12 +41,13 @@ export const create = async (params, body = {}) => {
       if (classes.length > 0) body = classes[0];
     }
   }
+  const { name } = params;
   const requestBody = requestUtil(params, stream, body);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, stream);
-  result.title =
-    `Create stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create stream ${name}.`
+    : `Successfully created stream ${name}.`;
   return result;
 };
 
@@ -62,9 +58,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, stream);
-  result.title =
-    `Update stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update stream ${name}.`
+    : `Successfully updated stream ${name}.`;
   return result;
 };
 
@@ -85,9 +81,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, stream);
   }
-  result.title =
-    `Remove stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove stream ${name}.`
+    : `Successfully removed stream ${name}.`;
   return result;
 };
 
@@ -107,10 +103,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, stream);
   }
-
-  result.title =
-    `Start stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start stream ${name}.`
+    : `Successfully started stream ${name}.`;
   return result;
 };
 
@@ -128,10 +123,9 @@ export const stop = async params => {
   } else {
     result = responseUtil(stopRes, stream);
   }
-
-  result.title =
-    `Stop stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop stream ${name}.`
+    : `Successfully stopped stream ${name}.`;
   return result;
 };
 
@@ -139,16 +133,17 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, stream);
-  result.title =
-    `Get stream ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get stream ${name}.`
+    : `Successfully got stream ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, stream);
-  result.title =
-    `Get stream list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get stream list.`
+    : `Successfully got stream list.`;
   return result;
 };

@@ -26,6 +26,7 @@ import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
 import * as context from 'context';
+import { useEventLog } from 'utils/hooks';
 import * as validate from 'utils/validate';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
@@ -49,6 +50,7 @@ const Navigator = () => {
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
   const { data: pipelines } = context.usePipelineState();
   const { createPipeline } = context.usePipelineActions();
+  const eventLog = useEventLog();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -64,7 +66,10 @@ const Navigator = () => {
   };
 
   const onSubmit = async ({ pipelineName: name }, form) => {
-    await createPipeline({ name });
+    const res = await createPipeline({ name });
+    if (!res.error) {
+      eventLog.info(`Successfully created pipeline ${name}.`);
+    }
     setTimeout(form.reset);
     setIsOpen(false);
   };

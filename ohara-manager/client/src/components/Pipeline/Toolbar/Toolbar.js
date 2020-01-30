@@ -36,6 +36,7 @@ import _ from 'lodash';
 
 import { KIND } from 'const';
 import { Progress } from 'components/common/Progress';
+import { useEventLog } from 'utils/hooks';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { useDeleteServices, useZoom } from './ToolbarHooks';
@@ -66,6 +67,7 @@ const Toolbar = props => {
   const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
   const paperApi = React.useContext(PaperContext);
+  const eventLog = useEventLog();
 
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
@@ -122,7 +124,10 @@ const Toolbar = props => {
     const { objects: services, name } = currentPipeline;
 
     await deleteServices(services);
-    deletePipeline(name);
+    const res = await deletePipeline(name);
+    if (!res.error) {
+      eventLog.info(`Successfully deleted pipeline ${name}.`);
+    }
     setIsDeletingPipeline(false);
 
     if (!error) history.push(`/${currentWorkspace.name}`);

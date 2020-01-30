@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
 import * as pipelineApi from 'api/pipelineApi';
+import ContextApiError from 'context/ContextApiError';
 import { validate } from './utils';
 
 export const createApi = context => {
-  const { pipelineGroup, showMessage, createEventLog } = context;
+  const { pipelineGroup } = context;
   if (!pipelineGroup) return;
 
   const group = pipelineGroup;
@@ -27,79 +27,39 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await pipelineApi.getAll(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     fetch: async name => {
       const params = { name, group };
       const res = await pipelineApi.get(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
     create: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const res = await pipelineApi.create(params);
-        if (!isEmpty(res.errors)) {
-          createEventLog(res, 'error');
-          throw new Error(res.title);
-        }
-        createEventLog(res);
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = { ...values, group };
+      const res = await pipelineApi.create(params);
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     update: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const res = await pipelineApi.update(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return res.data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = { ...values, group };
+      const res = await pipelineApi.update(params);
+      if (res.errors) throw new ContextApiError(res);
+      return res.data;
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await pipelineApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          createEventLog(res, 'error');
-          throw new Error(res.title);
-        }
-        createEventLog(res);
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await pipelineApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      return params;
     },
     refresh: async name => {
-      try {
-        const params = { name, group };
-        const res = await pipelineApi.refresh(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await pipelineApi.refresh(params);
+      if (res.errors) throw new ContextApiError(res);
     },
   };
 };

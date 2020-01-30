@@ -18,7 +18,7 @@ import * as routines from './topicDataRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const { state, dispatch, topicApi } = context;
+  const { state, dispatch, eventLog, topicApi } = context;
   return {
     refetchTopic: () => {
       if (state.isFetching) return;
@@ -33,6 +33,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }

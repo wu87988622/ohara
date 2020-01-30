@@ -24,12 +24,6 @@ import {
 import axios from 'axios';
 import { has, isEmpty, isArray } from 'lodash';
 
-export const getKey = params => {
-  const name = params.name || params.hostname || undefined;
-  const group = params.group || undefined;
-  return JSON.stringify({ group, name });
-};
-
 const converterUtil = (warnReasons, params, api) => {
   const converterKeys = Object.keys(api.reqConverter ? api.reqConverter : {});
   const paramsKeys = Object.keys(params);

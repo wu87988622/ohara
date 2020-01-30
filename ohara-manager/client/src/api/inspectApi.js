@@ -21,12 +21,7 @@ import * as inspectServiceBody from './body/inspectServiceBody';
 import * as inspectTopicBody from './body/inspectTopicBody';
 import * as inspectRdbBody from './body/inspectRdbBody';
 import * as file from './body/fileBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.INSPECT_URL;
@@ -88,15 +83,15 @@ const converterDotToLodash = params => {
 };
 
 const fetchServiceInfo = async (kind, params) => {
+  const { name } = params;
   const reqUrl = !isEmpty(params)
     ? `${url}/${kind}/${params.name}?group=${params.group}`
     : `${url}/${kind}`;
   const res = await axiosInstance.get(reqUrl);
   const result = responseUtil(res, inspectServiceBody);
-  result.title =
-    `Inspect ${kind} ${getKey(params)} info ` +
-    (result.errors ? 'failed.' : 'successful.');
-
+  result.title = result.errors
+    ? `Failed to inspect ${kind} ${name} info.`
+    : `Successfully inspected ${kind} ${name} info.`;
   const converterResult = converterDotToLodash(result);
 
   return converterResult;
@@ -105,9 +100,9 @@ const fetchServiceInfo = async (kind, params) => {
 export const getConfiguratorInfo = async () => {
   const res = await axiosInstance.get(`${url}/${inspectKind.configurator}`);
   const result = responseUtil(res, inspectConfiguratorBody);
-  result.title =
-    `Inspect ${inspectKind.configurator} info ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to inspect ${inspectKind.configurator} info.`
+    : `Successfully inspected ${inspectKind.configurator} info.`;
   return result;
 };
 
@@ -130,13 +125,14 @@ export const getStreamsInfo = async (params = {}) => {
 export const getManagerInfo = async () => {
   const res = await axiosInstance.get(`${url}/${inspectKind.manager}`);
   const result = responseUtil(res, inspectManagerBody);
-  result.title =
-    `Inspect ${inspectKind.manager} info ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to inspect ${inspectKind.manager} info.`
+    : `Successfully inspected ${inspectKind.manager} info.`;
   return result;
 };
 
 export const getFileInfoWithoutUpload = async params => {
+  const { name } = params;
   const fileUrl = `${url}/${inspectKind.file}`;
 
   const requestBody = requestUtil(params, file);
@@ -154,9 +150,9 @@ export const getFileInfoWithoutUpload = async params => {
   }
   const res = await axiosInstance.post(fileUrl, formData, config);
   const result = responseUtil(res, file);
-  result.title =
-    `Inspect ${inspectKind.file} ${getKey(params)} info ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to inspect ${inspectKind.file} ${name} info.`
+    : `Successfully inspected ${inspectKind.file} ${name}  info.`;
   return result;
 };
 
@@ -166,9 +162,9 @@ export const getTopicData = async params => {
     `${url}/${inspectKind.topic}/${name}` + URL.toQueryParameters(others);
   const res = await axiosInstance.post(topicUrl);
   const result = responseUtil(res, inspectTopicBody);
-  result.title =
-    `Inspect ${inspectKind.topic} ${getKey(params)} info ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to inspect ${inspectKind.topic} ${name} info.`
+    : `Successfully inspected ${inspectKind.topic} ${name}  info.`;
   return result;
 };
 
@@ -177,8 +173,8 @@ export const getRdbData = async params => {
   const requestBody = requestUtil(params, inspectRdbBody);
   const res = await axiosInstance.post(rdbUrl, requestBody);
   const result = responseUtil(res, inspectRdbBody);
-  result.title =
-    `Inspect ${inspectKind.rdb} info ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to inspect ${inspectKind.rdb} info.`
+    : `Successfully inspected ${inspectKind.rdb} info.`;
   return result;
 };

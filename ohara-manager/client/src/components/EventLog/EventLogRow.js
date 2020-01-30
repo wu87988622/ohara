@@ -25,15 +25,17 @@ import Row from './EventLogRowStyles';
 
 const EventLogRow = ({ onClick, rowData: log, style }) => {
   const title = get(log, 'title');
+  const message = get(log, 'payload.errors[0].message', '');
   const isError = get(log, 'type') === 'error';
 
   return (
     <Row style={style} className={clx({ error: isError })}>
       {(isError && (
         <Link color="error" href="#" onClick={onClick}>
-          {title}
+          {title} {message && `--> ${message}`}
         </Link>
       )) || <div>{title}</div>}
+
       <div className="date">{getDateFromTimestamp(get(log, 'createAt'))}</div>
     </Row>
   );

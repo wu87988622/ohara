@@ -15,12 +15,7 @@
  */
 
 import * as topic from './body/topicBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -36,12 +31,13 @@ export const create = async params => {
     // we fetch the first element here
     topicDefinition = brokerInfo.data.classInfos[0];
   }
+  const { name } = params;
   const requestBody = requestUtil(params, topic, topicDefinition);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, topic);
-  result.title =
-    `Create topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create topic ${name}.`
+    : `Successfully created topic ${name}.`;
   return result;
 };
 
@@ -61,10 +57,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, topic);
   }
-
-  result.title =
-    `Start topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start topic ${name}.`
+    : `Successfully started topic ${name}.`;
   return result;
 };
 
@@ -75,9 +70,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, topic);
-  result.title =
-    `Update topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update topic ${name}.`
+    : `Successfully updated topic ${name}.`;
   return result;
 };
 
@@ -95,10 +90,9 @@ export const stop = async params => {
   } else {
     result = responseUtil(stopRes, topic);
   }
-
-  result.title =
-    `Stop topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop topic ${name}.`
+    : `Successfully stopped topic ${name}.`;
   return result;
 };
 
@@ -119,9 +113,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, topic);
   }
-  result.title =
-    `Remove topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove topic ${name}.`
+    : `Successfully removed topic ${name}.`;
   return result;
 };
 
@@ -129,16 +123,17 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, topic);
-  result.title =
-    `Get topic ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get topic ${name}.`
+    : `Successfully got topic ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, topic);
-  result.title =
-    `Get topic list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get topic list.`
+    : `Successfully got topic list.`;
   return result;
 };

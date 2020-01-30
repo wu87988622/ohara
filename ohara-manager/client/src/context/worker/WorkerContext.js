@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './workerActions';
 import { reducer, initialState } from './workerReducer';
 
@@ -25,13 +26,14 @@ const WorkerDispatchContext = React.createContext();
 
 const WorkerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { workerApi } = useApi();
 
   React.useEffect(() => {
     if (!workerApi) return;
-    const actions = createActions({ state, dispatch, workerApi });
+    const actions = createActions({ state, dispatch, eventLog, workerApi });
     actions.fetchWorkers();
-  }, [state, workerApi]);
+  }, [state, dispatch, eventLog, workerApi]);
 
   return (
     <WorkerStateContext.Provider value={state}>
@@ -65,12 +67,12 @@ const useWorkerDispatch = () => {
 const useWorkerActions = () => {
   const state = useWorkerState();
   const dispatch = useWorkerDispatch();
+  const eventLog = useEventLog();
   const { workerApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, workerApi }), [
-    state,
-    dispatch,
-    workerApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, workerApi }),
+    [state, dispatch, eventLog, workerApi],
+  );
 };
 
 export { WorkerProvider, useWorkerState, useWorkerDispatch, useWorkerActions };

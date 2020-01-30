@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { size } from 'lodash';
 
-import {
-  useEventLogActions,
-  useEventLogState,
-  useEventLogContentDialog,
-} from 'context';
+import { useEventLogState, useEventLogContentDialog } from 'context';
 import { VirtualizedList } from 'components/common/List';
 import StatusBar from 'components/DevTool/StatusBar';
 import EventLogRow from './EventLogRow';
@@ -32,12 +28,7 @@ import Wrapper from './EventLogStyles';
 const EventLog = () => {
   const [logs, setLogs] = useState([]);
   const { isFetching } = useEventLogState();
-  const { fetchEventLogs } = useEventLogActions();
   const { open: openEventLogContentDialog } = useEventLogContentDialog();
-
-  useEffect(() => {
-    fetchEventLogs();
-  }, [fetchEventLogs]);
 
   const handleRowClick = rowData => openEventLogContentDialog(rowData);
 

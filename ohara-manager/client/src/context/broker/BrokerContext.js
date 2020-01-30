@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './brokerActions';
 import { reducer, initialState } from './brokerReducer';
 
@@ -25,13 +26,14 @@ const BrokerDispatchContext = React.createContext();
 
 const BrokerProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { brokerApi } = useApi();
 
   React.useEffect(() => {
     if (!brokerApi) return;
-    const actions = createActions({ state, dispatch, brokerApi });
+    const actions = createActions({ state, dispatch, eventLog, brokerApi });
     actions.fetchBrokers();
-  }, [state, brokerApi]);
+  }, [state, dispatch, eventLog, brokerApi]);
 
   return (
     <BrokerStateContext.Provider value={state}>
@@ -65,12 +67,12 @@ const useBrokerDispatch = () => {
 const useBrokerActions = () => {
   const state = useBrokerState();
   const dispatch = useBrokerDispatch();
+  const eventLog = useEventLog();
   const { brokerApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, brokerApi }), [
-    state,
-    dispatch,
-    brokerApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, brokerApi }),
+    [state, dispatch, eventLog, brokerApi],
+  );
 };
 
 export { BrokerProvider, useBrokerState, useBrokerDispatch, useBrokerActions };

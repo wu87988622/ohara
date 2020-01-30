@@ -15,7 +15,7 @@
  */
 
 import * as objBody from './body/objectBody';
-import { getKey, responseUtil, axiosInstance } from './utils/apiUtils';
+import { responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -23,12 +23,13 @@ import * as waitUtil from './utils/waitUtils';
 const url = URL.OBJECT_URL;
 
 export const create = async (params = {}) => {
+  const { name } = params;
   const res = await axiosInstance.post(url, params);
 
   const result = responseUtil(res, objBody);
-  result.title =
-    `Create object ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create object ${name}.`
+    : `Successfully created object ${name}.`;
   return result;
 };
 
@@ -39,9 +40,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, objBody);
-  result.title =
-    `Update object ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update object ${name}.`
+    : `Successfully updated object ${name}.`;
   return result;
 };
 
@@ -60,10 +61,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deleteRes, objBody);
   }
-
-  result.title =
-    `Remove object ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove object ${name}.`
+    : `Successfully removed object ${name}.`;
   return result;
 };
 
@@ -71,16 +71,17 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, objBody);
-  result.title =
-    `Get object ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get object ${name}.`
+    : `Successfully got object ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, objBody);
-  result.title =
-    `Get object list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get object list.`
+    : `Successfully got object list.`;
   return result;
 };

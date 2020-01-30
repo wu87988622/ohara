@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import * as context from 'context';
+import { useEventLog } from 'utils/hooks';
 import { initializeRoutine } from './topicDataRoutines';
 import { createActions } from './topicDataActions';
 import { reducer, initialState } from './topicDataReducer';
@@ -70,12 +71,12 @@ TopicDataProvider.propTypes = {
 const useTopicDataActions = () => {
   const state = useTopicDataState();
   const dispatch = useTopicDataDispatch();
+  const eventLog = useEventLog();
   const { topicApi } = context.useApi();
-  return React.useMemo(() => createActions({ state, dispatch, topicApi }), [
-    state,
-    dispatch,
-    topicApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, topicApi }),
+    [state, dispatch, eventLog, topicApi],
+  );
 };
 
 export {

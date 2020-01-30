@@ -15,12 +15,7 @@
  */
 
 import * as connector from './body/connectorBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -45,6 +40,7 @@ export const connectorSinks = {
 };
 
 export const create = async params => {
+  const { name } = params;
   const info = params.classInfos
     ? { data: { classInfos: params.classInfos } }
     : await inspectApi.getWorkerInfo(params.workerClusterKey);
@@ -62,9 +58,9 @@ export const create = async params => {
   const requestBody = requestUtil(params, connector, connectorDefinition);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, connector);
-  result.title =
-    `Create connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create connector ${name}.`
+    : `Successfully created connector ${name}.`;
   return result;
 };
 
@@ -84,10 +80,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, connector);
   }
-
-  result.title =
-    `Start connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start connector ${name}.`
+    : `Successfully started connector ${name}.`;
   return result;
 };
 
@@ -98,9 +93,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, connector);
-  result.title =
-    `Update connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update connector ${name}.`
+    : `Successfully updated connector ${name}.`;
   return result;
 };
 
@@ -118,10 +113,9 @@ export const stop = async params => {
   } else {
     result = responseUtil(stopRes, connector);
   }
-
-  result.title =
-    `Stop connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop connector ${name}.`
+    : `Successfully stopped connector ${name}.`;
   return result;
 };
 
@@ -142,9 +136,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, connector);
   }
-  result.title =
-    `Remove connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove connector ${name}.`
+    : `Successfully removed connector ${name}.`;
   return result;
 };
 
@@ -152,16 +146,17 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, connector);
-  result.title =
-    `Get connector ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get connector ${name}.`
+    : `Successfully got connector ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, connector);
-  result.title =
-    `Get connector list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get connector list.`
+    : `Successfully got connector list.`;
   return result;
 };

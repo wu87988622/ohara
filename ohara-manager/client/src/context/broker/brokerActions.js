@@ -21,7 +21,7 @@ import * as routines from './brokerRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const { state, dispatch, brokerApi } = context;
+  const { state, dispatch, eventLog, brokerApi } = context;
   return {
     fetchBrokers: async () => {
       const routine = routines.fetchBrokersRoutine;
@@ -36,6 +36,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -51,6 +52,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -64,6 +66,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -77,6 +80,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -90,6 +94,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -103,6 +108,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -116,6 +122,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }

@@ -15,17 +15,13 @@
  */
 
 import * as file from './body/fileBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.FILE_URL;
 
 export const create = async (params = {}) => {
+  const { name } = params;
   const requestBody = requestUtil(params, file);
   const config = {
     headers: {
@@ -41,9 +37,9 @@ export const create = async (params = {}) => {
   }
   const res = await axiosInstance.post(url, formData, config);
   const result = responseUtil(res, file);
-  result.title =
-    `Create file ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create file ${name}.`
+    : `Successfully created file ${name}.`;
   return result;
 };
 
@@ -54,9 +50,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, file);
-  result.title =
-    `Update file ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update file ${name}.`
+    : `Successfully updated file ${name}.`;
   return result;
 };
 
@@ -65,9 +61,9 @@ export const remove = async (params = {}) => {
   const res = await axiosInstance.delete(`${url}/${name}?group=${group}`);
 
   const result = responseUtil(res, file);
-  result.title =
-    `Remove file ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove file ${name}.`
+    : `Successfully removed file ${name}.`;
   return result;
 };
 
@@ -75,14 +71,17 @@ export const get = async (params = {}) => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, file);
-  result.title =
-    `Get file ${getKey(params)} ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get file ${name}.`
+    : `Successfully got file ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, file);
-  result.title = `Get file list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get file list.`
+    : `Successfully got file list.`;
   return result;
 };

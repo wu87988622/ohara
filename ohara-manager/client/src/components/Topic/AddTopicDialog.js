@@ -20,7 +20,7 @@ import { Form, Field } from 'react-final-form';
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
 import { useTopicState, useTopicActions, useAddTopicDialog } from 'context';
-
+import { useEventLog } from 'utils/hooks';
 import {
   required,
   minNumber,
@@ -30,13 +30,14 @@ import {
 
 const AddTopicDialog = () => {
   const { isFetching: isSaving } = useTopicState();
+  const eventLog = useEventLog();
   const { createTopic } = useTopicActions();
 
   const { isOpen: isDialogOpen, close: closeDialog } = useAddTopicDialog();
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
-    createTopic({
+    const res = await createTopic({
       name: topicName,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
@@ -44,8 +45,11 @@ const AddTopicDialog = () => {
         isShared: true,
       },
     });
-    setTimeout(form.reset);
-    closeDialog();
+    if (!res.error) {
+      eventLog.info(`Successfully created topic ${topicName}.`);
+      setTimeout(form.reset);
+      closeDialog();
+    }
   };
 
   return (

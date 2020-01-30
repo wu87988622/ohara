@@ -18,7 +18,7 @@ import * as routines from './workspaceRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const { state, dispatch, workspaceApi } = context;
+  const { state, dispatch, eventLog, workspaceApi } = context;
   return {
     fetchWorkspaces: async () => {
       const routine = routines.fetchWorkspacesRoutine;
@@ -29,6 +29,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -42,6 +43,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -55,6 +57,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -68,6 +71,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -81,6 +85,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }

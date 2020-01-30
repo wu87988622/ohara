@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './zookeeperActions';
 import { reducer, initialState } from './zookeeperReducer';
 
@@ -25,13 +26,14 @@ const ZookeeperDispatchContext = React.createContext();
 
 const ZookeeperProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { zookeeperApi } = useApi();
 
   React.useEffect(() => {
     if (!zookeeperApi) return;
-    const actions = createActions({ state, dispatch, zookeeperApi });
+    const actions = createActions({ state, dispatch, eventLog, zookeeperApi });
     actions.fetchZookeepers();
-  }, [state, zookeeperApi]);
+  }, [state, dispatch, eventLog, zookeeperApi]);
 
   return (
     <ZookeeperStateContext.Provider value={state}>
@@ -69,12 +71,12 @@ const useZookeeperDispatch = () => {
 const useZookeeperActions = () => {
   const state = useZookeeperState();
   const dispatch = useZookeeperDispatch();
+  const eventLog = useEventLog();
   const { zookeeperApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, zookeeperApi }), [
-    state,
-    dispatch,
-    zookeeperApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, zookeeperApi }),
+    [state, dispatch, eventLog, zookeeperApi],
+  );
 };
 
 export {

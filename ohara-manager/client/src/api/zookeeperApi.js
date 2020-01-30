@@ -16,12 +16,7 @@
 
 import { isEmpty } from 'lodash';
 import * as zookeeper from './body/zookeeperBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -35,12 +30,13 @@ export const create = async (params, body = {}) => {
     if (!info.errors) body = info.data;
   }
 
+  const { name } = params;
   const requestBody = requestUtil(params, zookeeper, body);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, zookeeper);
-  result.title =
-    `Create zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create zookeeper ${name}.`
+    : `Successfully created zookeeper ${name}.`;
   return result;
 };
 
@@ -60,10 +56,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, zookeeper);
   }
-
-  result.title =
-    `Start zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start zookeeper ${name}.`
+    : `Successfully started zookeeper ${name}.`;
   return result;
 };
 
@@ -74,9 +69,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, zookeeper);
-  result.title =
-    `Update zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update zookeeper ${name}.`
+    : `Successfully updated zookeeper ${name}.`;
   return result;
 };
 
@@ -94,10 +89,9 @@ export const stop = async params => {
   } else {
     result = responseUtil(stopRes, zookeeper);
   }
-
-  result.title =
-    `Stop zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop zookeeper ${name}.`
+    : `Successfully stopped zookeeper ${name}.`;
   return result;
 };
 
@@ -118,10 +112,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, zookeeper);
   }
-
-  result.title =
-    `Remove zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove zookeeper ${name}.`
+    : `Successfully removed zookeeper ${name}.`;
   return result;
 };
 
@@ -129,16 +122,17 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, zookeeper);
-  result.title =
-    `Get zookeeper ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get zookeeper ${name}.`
+    : `Successfully got zookeeper ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, zookeeper);
-  result.title =
-    `Get zookeeper list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get zookeeper list.`
+    : `Successfully got zookeeper list.`;
   return result;
 };

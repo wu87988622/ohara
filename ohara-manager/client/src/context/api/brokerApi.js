@@ -19,11 +19,12 @@ import { map } from 'lodash';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as brokerApi from 'api/brokerApi';
+import ContextApiError from 'context/ContextApiError';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const { brokerGroup, zookeeperGroup, showMessage } = context;
+  const { brokerGroup, zookeeperGroup } = context;
   if (!brokerGroup || !zookeeperGroup) return;
 
   const group = brokerGroup;
@@ -31,17 +32,14 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await brokerApi.getAll(params);
-      if (res.errors) throw new Error(res.title);
-
+      if (res.errors) throw new ContextApiError(res);
       return await Promise.all(
         map(res.data, async broker => {
           const params = { name: broker.name, group };
           const stageRes = await objectApi.get(params);
-          if (stageRes.errors) throw new Error(stageRes.title);
-
+          if (stageRes.errors) throw new ContextApiError(stageRes);
           const infoRes = await inspectApi.getBrokerInfo(params);
-          if (infoRes.errors) throw new Error(infoRes.title);
-
+          if (infoRes.errors) throw new ContextApiError(infoRes);
           return generateClusterResponse({
             values: broker,
             stageValues: stageRes.data,
@@ -53,14 +51,11 @@ export const createApi = context => {
     fetch: async name => {
       const params = { name, group };
       const res = await brokerApi.get(params);
-      if (res.errors) throw new Error(res.title);
-
+      if (res.errors) throw new ContextApiError(res);
       const stageRes = await objectApi.get(params);
-      if (stageRes.errors) throw new Error(stageRes.title);
-
+      if (stageRes.errors) throw new ContextApiError(stageRes);
       const infoRes = await inspectApi.getBrokerInfo(params);
-      if (infoRes.errors) throw new Error(infoRes.title);
-
+      if (infoRes.errors) throw new ContextApiError(infoRes);
       return generateClusterResponse({
         values: res.data,
         stageValues: stageRes.data,
@@ -68,109 +63,64 @@ export const createApi = context => {
       });
     },
     create: async values => {
-      try {
-        validate(values);
-        const zookeeperClusterKey = {
-          group: zookeeperGroup,
-          name: values.name,
-        };
-        const ensuredValues = { ...values, group, zookeeperClusterKey };
-        const res = await brokerApi.create(ensuredValues);
-        if (res.errors) throw new Error(res.title);
-
-        const stageRes = await objectApi.create(res.data);
-        if (stageRes.errors) throw new Error(stageRes.title);
-
-        const infoRes = await inspectApi.getBrokerInfo(ensuredValues);
-        if (infoRes.errors) throw new Error(infoRes.title);
-
-        const data = generateClusterResponse({
-          values: res.data,
-          stageValues: stageRes.data,
-          inspectInfo: infoRes.data,
-        });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const zookeeperClusterKey = {
+        group: zookeeperGroup,
+        name: values.name,
+      };
+      const ensuredValues = { ...values, group, zookeeperClusterKey };
+      const res = await brokerApi.create(ensuredValues);
+      if (res.errors) throw new ContextApiError(res);
+      const stageRes = await objectApi.create(res.data);
+      if (stageRes.errors) throw new ContextApiError(stageRes);
+      const infoRes = await inspectApi.getBrokerInfo(ensuredValues);
+      if (infoRes.errors) throw new ContextApiError(infoRes);
+      return generateClusterResponse({
+        values: res.data,
+        stageValues: stageRes.data,
+        inspectInfo: infoRes.data,
+      });
     },
     update: async values => {
-      try {
-        validate(values);
-        const ensuredValues = { ...values, group };
-        const res = await brokerApi.update(ensuredValues);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const ensuredValues = { ...values, group };
+      const res = await brokerApi.update(ensuredValues);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stage: async values => {
-      try {
-        validate(values);
-        const ensuredValues = { ...values, group };
-        const stageRes = await objectApi.update(ensuredValues);
-        if (stageRes.errors)
-          throw new Error(`Save broker ${values.name} failed.`);
-
-        const data = generateClusterResponse({ stageValues: stageRes.data });
-        const key = getKey(stageRes.data);
-        showMessage(`Save broker ${values.name} successful.`);
-        return { ...data, ...key };
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
+      validate(values);
+      const ensuredValues = { ...values, group };
+      const stageRes = await objectApi.update(ensuredValues);
+      if (stageRes.errors) {
+        throw new ContextApiError({
+          ...stageRes,
+          title: `Save broker ${values.name} failed.`,
+        });
       }
+      const data = generateClusterResponse({ stageValues: stageRes.data });
+      const key = getKey(stageRes.data);
+      return { ...data, ...key };
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await brokerApi.remove(params);
-        if (res.errors) throw new Error(res.title);
-
-        const stageRes = await objectApi.remove(params);
-        if (stageRes.errors) throw new Error(res.title);
-
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await brokerApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      const stageRes = await objectApi.remove(params);
+      if (stageRes.errors) throw new ContextApiError(stageRes);
+      return params;
     },
     start: async name => {
-      try {
-        const params = { name, group };
-        const res = await brokerApi.start(params);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await brokerApi.start(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stop: async name => {
-      try {
-        const params = { name, group };
-        const res = await brokerApi.stop(params);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await brokerApi.stop(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
   };
 };

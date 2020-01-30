@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 
 import { reducer, initialState } from './pipelineReducer';
 import { useApi, useApp, useWorkspace } from 'context';
+import { useEventLog } from 'utils/hooks';
 import { createActions } from './pipelineActions';
 import { initializeRoutine } from './pipelineRoutines';
 
@@ -27,14 +28,15 @@ const PipelineDispatchContext = React.createContext();
 
 const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { pipelineApi } = useApi();
   const { workspaceName } = useApp();
 
   React.useEffect(() => {
     if (!pipelineApi) return;
-    const actions = createActions({ state, dispatch, pipelineApi });
+    const actions = createActions({ state, dispatch, eventLog, pipelineApi });
     actions.fetchPipelines();
-  }, [state, pipelineApi]);
+  }, [state, dispatch, eventLog, pipelineApi]);
 
   // Reset pipeline state on workspace change
   React.useEffect(() => {
@@ -75,20 +77,31 @@ PipelineProvider.propTypes = {
 const usePipelineActions = () => {
   const state = usePipelineState();
   const dispatch = usePipelineDispatch();
+  const eventLog = useEventLog();
   const { pipelineApi } = useApi();
   const { streamGroup, topicGroup } = useApp();
   const { currentPipeline } = useWorkspace();
+
   return React.useMemo(
     () =>
       createActions({
         state,
         dispatch,
+        eventLog,
         pipelineApi,
         currentPipeline,
         streamGroup,
         topicGroup,
       }),
-    [state, dispatch, pipelineApi, currentPipeline, streamGroup, topicGroup],
+    [
+      state,
+      dispatch,
+      eventLog,
+      pipelineApi,
+      currentPipeline,
+      streamGroup,
+      topicGroup,
+    ],
   );
 };
 

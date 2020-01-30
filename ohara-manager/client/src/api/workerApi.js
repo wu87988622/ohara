@@ -18,12 +18,7 @@ import { isEmpty } from 'lodash';
 
 import { KIND } from '../const';
 import * as worker from './body/workerBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -37,12 +32,13 @@ export const create = async (params, body = {}) => {
     if (!info.errors) body = info.data;
   }
 
+  const { name } = params;
   const requestBody = requestUtil(params, worker, body);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, worker);
-  result.title =
-    `Create worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create worker ${name}.`
+    : `Successfully created worker ${name}.`;
   return result;
 };
 
@@ -63,10 +59,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, worker);
   }
-
-  result.title =
-    `Start worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start worker ${name}.`
+    : `Successfully started worker ${name}.`;
   return result;
 };
 
@@ -77,9 +72,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, worker);
-  result.title =
-    `Update worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update worker ${name}.`
+    : `Successfully updated worker ${name}.`;
   return result;
 };
 
@@ -98,10 +93,9 @@ export const stop = async params => {
   } else {
     result = responseUtil(stopRes, worker);
   }
-
-  result.title =
-    `Stop worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop worker ${name}.`
+    : `Successfully stopped worker ${name}.`;
   return result;
 };
 
@@ -122,9 +116,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, worker);
   }
-  result.title =
-    `Remove worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove worker ${name}.`
+    : `Successfully removed worker ${name}.`;
   return result;
 };
 
@@ -132,17 +126,18 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, worker);
-  result.title =
-    `Get worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get worker ${name}.`
+    : `Successfully got worker ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, worker);
-  result.title =
-    `Get worker list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get worker list.`
+    : `Successfully got worker list.`;
   return result;
 };
 
@@ -164,10 +159,9 @@ export const addNode = async params => {
   } else {
     result = responseUtil(addNodeRes, worker);
   }
-
-  result.title =
-    `Add node to worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to add node ${nodeName} to worker ${name}.`
+    : `Successfully added node ${nodeName} to worker ${name}.`;
   return result;
 };
 
@@ -189,9 +183,8 @@ export const removeNode = async params => {
   } else {
     result = responseUtil(removeNodeRes, worker);
   }
-
-  result.title =
-    `Remove node from worker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove node ${nodeName} from worker ${name}.`
+    : `Successfully removed node ${nodeName} from worker ${name}.`;
   return result;
 };

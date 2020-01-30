@@ -16,12 +16,7 @@
 
 import { isEmpty } from 'lodash';
 import * as broker from './body/brokerBody';
-import {
-  getKey,
-  requestUtil,
-  responseUtil,
-  axiosInstance,
-} from './utils/apiUtils';
+import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 import wait from './waitApi';
 import * as waitUtil from './utils/waitUtils';
@@ -35,12 +30,13 @@ export const create = async (params, body = {}) => {
     if (!info.errors) body = info.data;
   }
 
+  const { name } = params;
   const requestBody = requestUtil(params, broker, body);
   const res = await axiosInstance.post(url, requestBody);
   const result = responseUtil(res, broker);
-  result.title =
-    `Create broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to create broker ${name}.`
+    : `Successfully created broker ${name}.`;
   return result;
 };
 
@@ -60,10 +56,9 @@ export const start = async params => {
   } else {
     result = responseUtil(startRes, broker);
   }
-
-  result.title =
-    `Start broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to start broker ${name}.`
+    : `Successfully started broker ${name}.`;
   return result;
 };
 
@@ -74,9 +69,9 @@ export const update = async params => {
   const body = params;
   const res = await axiosInstance.put(`${url}/${name}?group=${group}`, body);
   const result = responseUtil(res, broker);
-  result.title =
-    `Update broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to update broker ${name}.`
+    : `Successfully updated broker ${name}.`;
   return result;
 };
 
@@ -88,9 +83,9 @@ export const stop = async params => {
     checkFn: waitUtil.waitForStop,
   });
   const result = responseUtil(res, broker);
-  result.title =
-    `Stop broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to stop broker ${name}.`
+    : `Successfully stopped broker ${name}.`;
   return result;
 };
 
@@ -111,9 +106,9 @@ export const remove = async params => {
   } else {
     result = responseUtil(deletedRes, broker);
   }
-  result.title =
-    `Remove broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove broker ${name}.`
+    : `Successfully removed broker ${name}.`;
   return result;
 };
 
@@ -121,17 +116,18 @@ export const get = async params => {
   const { name, group } = params;
   const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
   const result = responseUtil(res, broker);
-  result.title =
-    `Get broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get broker ${name}.`
+    : `Successfully got broker ${name}.`;
   return result;
 };
 
 export const getAll = async (params = {}) => {
   const res = await axiosInstance.get(url + URL.toQueryParameters(params));
   const result = responseUtil(res, broker);
-  result.title =
-    `Get broker list ` + (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get broker list.`
+    : `Successfully got broker list.`;
   return result;
 };
 
@@ -152,10 +148,9 @@ export const addNode = async params => {
   } else {
     result = responseUtil(addNodeRes, broker);
   }
-
-  result.title =
-    `Add node to broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to add node ${nodeName} into broker ${name}.`
+    : `Successfully added node ${nodeName} into broker ${name}.`;
   return result;
 };
 
@@ -176,9 +171,8 @@ export const removeNode = async params => {
   } else {
     result = responseUtil(removeNodeRes, broker);
   }
-
-  result.title =
-    `Remove node from broker ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to remove node ${nodeName} from broker ${name}.`
+    : `Successfully removed node ${nodeName} from broker ${name}.`;
   return result;
 };

@@ -19,11 +19,12 @@ import { map } from 'lodash';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as zookeeperApi from 'api/zookeeperApi';
+import ContextApiError from 'context/ContextApiError';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const { zookeeperGroup, showMessage } = context;
+  const { zookeeperGroup } = context;
   if (!zookeeperGroup) return;
 
   const group = zookeeperGroup;
@@ -31,17 +32,14 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await zookeeperApi.getAll(params);
-      if (res.errors) throw new Error(res.title);
-
+      if (res.errors) throw new ContextApiError(res);
       return await Promise.all(
         map(res.data, async zookeeper => {
           const params = { name: zookeeper.name, group };
           const stageRes = await objectApi.get(params);
-          if (stageRes.errors) throw new Error(stageRes.title);
-
+          if (stageRes.errors) throw new ContextApiError(stageRes);
           const infoRes = await inspectApi.getZookeeperInfo(params);
-          if (infoRes.errors) throw new Error(infoRes.title);
-
+          if (infoRes.errors) throw new ContextApiError(infoRes);
           return generateClusterResponse({
             values: zookeeper,
             stageValues: stageRes.data,
@@ -53,14 +51,11 @@ export const createApi = context => {
     fetch: async name => {
       const params = { name, group };
       const res = await zookeeperApi.get(params);
-      if (res.errors) throw new Error(res.title);
-
+      if (res.errors) throw new ContextApiError(res);
       const stageRes = await objectApi.get(params);
-      if (stageRes.errors) throw new Error(stageRes.title);
-
+      if (stageRes.errors) throw new ContextApiError(stageRes);
       const infoRes = await inspectApi.getZookeeperInfo(params);
-      if (infoRes.errors) throw new Error(infoRes.title);
-
+      if (infoRes.errors) throw new ContextApiError(infoRes);
       return generateClusterResponse({
         values: res.data,
         stageValues: stageRes.data,
@@ -68,105 +63,60 @@ export const createApi = context => {
       });
     },
     create: async values => {
-      try {
-        validate(values);
-        const ensuredValues = { ...values, group };
-        const res = await zookeeperApi.create(ensuredValues);
-        if (res.errors) throw new Error(res.title);
-
-        const stageRes = await objectApi.create(res.data);
-        if (stageRes.errors) throw new Error(stageRes.title);
-
-        const infoRes = await inspectApi.getZookeeperInfo(ensuredValues);
-        if (infoRes.errors) throw new Error(infoRes.title);
-
-        const data = generateClusterResponse({
-          values: res.data,
-          stageValues: stageRes.data,
-          inspectInfo: infoRes.data,
-        });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const ensuredValues = { ...values, group };
+      const res = await zookeeperApi.create(ensuredValues);
+      if (res.errors) throw new ContextApiError(res);
+      const stageRes = await objectApi.create(res.data);
+      if (stageRes.errors) throw new ContextApiError(stageRes);
+      const infoRes = await inspectApi.getZookeeperInfo(ensuredValues);
+      if (infoRes.errors) throw new ContextApiError(infoRes);
+      return generateClusterResponse({
+        values: res.data,
+        stageValues: stageRes.data,
+        inspectInfo: infoRes.data,
+      });
     },
     update: async values => {
-      try {
-        validate(values);
-        const ensuredValues = { ...values, group };
-        const res = await zookeeperApi.update(ensuredValues);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const ensuredValues = { ...values, group };
+      const res = await zookeeperApi.update(ensuredValues);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stage: async values => {
-      try {
-        validate(values);
-        const ensuredValues = { ...values, group };
-        const stageRes = await objectApi.update(ensuredValues);
-        if (stageRes.errors)
-          throw new Error(`Save zookeeper ${values.name} failed.`);
-
-        const data = generateClusterResponse({ stageValues: stageRes.data });
-        const key = getKey(stageRes.data);
-        showMessage(`Save zookeeper ${values.name} successful.`);
-        return { ...data, ...key };
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
+      validate(values);
+      const ensuredValues = { ...values, group };
+      const stageRes = await objectApi.update(ensuredValues);
+      if (stageRes.errors) {
+        throw new ContextApiError({
+          ...stageRes,
+          title: `Save zookeeper ${values.name} failed.`,
+        });
       }
+      const data = generateClusterResponse({ stageValues: stageRes.data });
+      const key = getKey(stageRes.data);
+      return { ...data, ...key };
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await zookeeperApi.remove(params);
-        if (res.errors) throw new Error(res.title);
-
-        const stageRes = await objectApi.remove(params);
-        if (stageRes.errors) throw new Error(res.title);
-
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await zookeeperApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      const stageRes = await objectApi.remove(params);
+      if (stageRes.errors) throw new ContextApiError(stageRes);
+      return params;
     },
     start: async name => {
-      try {
-        const params = { name, group };
-        const res = await zookeeperApi.start(params);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await zookeeperApi.start(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stop: async name => {
-      try {
-        const params = { name, group };
-        const res = await zookeeperApi.stop(params);
-        if (res.errors) throw new Error(res.title);
-
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await zookeeperApi.stop(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
   };
 };

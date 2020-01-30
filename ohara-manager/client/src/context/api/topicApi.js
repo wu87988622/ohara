@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import { isEmpty, map } from 'lodash';
+import { map } from 'lodash';
 
 import * as inspectApi from 'api/inspectApi';
 import * as topicApi from 'api/topicApi';
+import ContextApiError from 'context/ContextApiError';
 import { generateClusterResponse, validate } from './utils';
 
 export const createApi = context => {
-  const { topicGroup, brokerKey, workspaceKey, showMessage } = context;
+  const { topicGroup, brokerKey, workspaceKey } = context;
   if (!topicGroup || !brokerKey || !workspaceKey) return;
 
   const group = topicGroup;
@@ -31,15 +32,11 @@ export const createApi = context => {
     fetchAll: async () => {
       const params = { group };
       const res = await topicApi.getAll(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return await Promise.all(
         map(res.data, async topic => {
           const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-          if (!isEmpty(infoRes.errors)) {
-            throw new Error(infoRes.title);
-          }
+          if (infoRes.errors) throw new ContextApiError(infoRes);
           return generateClusterResponse({
             values: topic,
             inspectInfo: infoRes.data.classInfos[0],
@@ -50,131 +47,72 @@ export const createApi = context => {
     fetch: async name => {
       const params = { name, group };
       const res = await topicApi.get(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-      if (!isEmpty(infoRes.errors)) {
-        throw new Error(infoRes.title);
-      }
+      if (infoRes.errors) throw new ContextApiError(infoRes);
       return generateClusterResponse({
         values: res.data,
         inspectInfo: infoRes.data.classInfos[0],
       });
     },
     create: async values => {
-      try {
-        validate(values);
-        const params = {
-          ...values,
-          group,
-          brokerClusterKey,
-          tags: { ...values.tags, parentKey },
-        };
-        const res = await topicApi.create(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-        if (!isEmpty(infoRes.errors)) {
-          throw new Error(infoRes.title);
-        }
-        const data = generateClusterResponse({
-          values: res.data,
-          inspectInfo: infoRes.data.classInfos[0],
-        });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = {
+        ...values,
+        group,
+        brokerClusterKey,
+        tags: { ...values.tags, parentKey },
+      };
+      const res = await topicApi.create(params);
+      if (res.errors) throw new ContextApiError(res);
+      const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
+      if (infoRes.errors) throw new ContextApiError(infoRes);
+      return generateClusterResponse({
+        values: res.data,
+        inspectInfo: infoRes.data.classInfos[0],
+      });
     },
     update: async values => {
-      try {
-        validate(values);
-        const params = { ...values, group };
-        const res = await topicApi.update(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = { ...values, group };
+      const res = await topicApi.update(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await topicApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await topicApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      return params;
     },
     start: async name => {
-      try {
-        const params = { name, group };
-        const res = await topicApi.start(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await topicApi.start(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stop: async name => {
-      try {
-        const params = { name, group };
-        const res = await topicApi.stop(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await topicApi.stop(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     fetchData: async values => {
-      try {
-        validate(values);
-        const params = {
-          ...values,
-          group,
-        };
-        const res = await inspectApi.getTopicData(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const noTagsData = res.data.messages.map(message => {
-          // we don't need the "tags" field in the topic data
-          if (message.value) delete message.value.tags;
-          return message;
-        });
-        const data = generateClusterResponse({
-          values: { messages: noTagsData },
-        });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validate(values);
+      const params = {
+        ...values,
+        group,
+      };
+      const res = await inspectApi.getTopicData(params);
+      if (res.errors) throw new ContextApiError(res);
+      const noTagsData = res.data.messages.map(message => {
+        // we don't need the "tags" field in the topic data
+        if (message.value) delete message.value.tags;
+        return message;
+      });
+      return generateClusterResponse({
+        values: { messages: noTagsData },
+      });
     },
   };
 };

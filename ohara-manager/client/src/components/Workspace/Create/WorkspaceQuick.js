@@ -58,6 +58,7 @@ import {
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
+import { useEventLog } from 'utils/hooks';
 import { hashByGroupAndName } from 'utils/sha';
 import { useUniqueName } from './hooks';
 
@@ -107,6 +108,7 @@ const WorkspaceQuick = props => {
   const { refreshNodes } = useNodeActions();
   const { workspaces } = useWorkspace();
   const defaultWorkspaceName = useUniqueName();
+  const eventLog = useEventLog();
 
   const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
@@ -280,6 +282,8 @@ const WorkspaceQuick = props => {
       // after workspace creation successful, we need to refresh the node list
       // in order to get the newest service information of node
       await refreshNodes();
+
+      eventLog.info(`Successfully created workspace ${workspaceName}.`);
       setTimeout(form.reset);
       setActiveStep(0);
       setFiles([]);

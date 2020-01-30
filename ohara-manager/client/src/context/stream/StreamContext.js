@@ -16,8 +16,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { createActions } from './streamActions';
+
 import { useApi } from 'context';
+import { useEventLog } from 'utils/hooks';
+import { createActions } from './streamActions';
 import { reducer, initialState } from './streamReducer';
 
 const StreamStateContext = React.createContext();
@@ -25,13 +27,14 @@ const StreamDispatchContext = React.createContext();
 
 const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const eventLog = useEventLog();
   const { streamApi } = useApi();
 
   React.useEffect(() => {
     if (!streamApi) return;
-    const actions = createActions({ state, dispatch, streamApi });
+    const actions = createActions({ state, dispatch, eventLog, streamApi });
     actions.fetchStreams();
-  }, [state, streamApi]);
+  }, [state, dispatch, eventLog, streamApi]);
 
   return (
     <StreamStateContext.Provider value={state}>
@@ -65,12 +68,12 @@ const useStreamDispatch = () => {
 const useStreamActions = () => {
   const state = useStreamState();
   const dispatch = useStreamDispatch();
+  const eventLog = useEventLog();
   const { streamApi } = useApi();
-  return React.useMemo(() => createActions({ state, dispatch, streamApi }), [
-    state,
-    dispatch,
-    streamApi,
-  ]);
+  return React.useMemo(
+    () => createActions({ state, dispatch, eventLog, streamApi }),
+    [state, dispatch, eventLog, streamApi],
+  );
 };
 
 export { StreamProvider, useStreamState, useStreamDispatch, useStreamActions };

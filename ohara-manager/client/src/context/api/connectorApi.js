@@ -14,24 +14,29 @@
  * limitations under the License.
  */
 
-import { isEmpty, has, map } from 'lodash';
+import { has, isEmpty, map } from 'lodash';
 
 import * as connectorApi from 'api/connectorApi';
 import * as inspectApi from 'api/inspectApi';
+import ContextApiError from 'context/ContextApiError';
 import { generateClusterResponse } from './utils';
 
 const validateName = values => {
   if (!has(values, 'name'))
-    throw new Error('The request should contain name in payload');
+    throw new ContextApiError({
+      title: 'The request should contain name in payload',
+    });
 };
 
 const validateClassName = values => {
   if (!has(values, 'connector__class'))
-    throw new Error('The request should contain connector__class in payload');
+    throw new ContextApiError({
+      title: 'The request should contain connector__class in payload',
+    });
 };
 
 export const createApi = context => {
-  const { connectorGroup, workerKey, showMessage, topicGroup } = context;
+  const { connectorGroup, workerKey, topicGroup } = context;
   if (!connectorGroup || !workerKey) return;
 
   const group = connectorGroup;
@@ -39,91 +44,62 @@ export const createApi = context => {
 
   const getDefinition = async className => {
     const workerInfo = await inspectApi.getWorkerInfo(workerClusterKey);
-    if (!isEmpty(workerInfo.errors)) {
-      throw new Error(workerInfo.title);
-    }
+    if (workerInfo.errors) throw new ContextApiError(workerInfo);
     const connectorDefinition = workerInfo.data.classInfos
       // the "connector__class" field is converted by "connector.class" from request
       // each connector creation must assign connector.class
       .find(param => param.className === className);
     if (!connectorDefinition)
-      throw new Error(`Cannot find required definitions of ${className}.`);
-
+      throw new ContextApiError({
+        ...workerInfo,
+        title: `Cannot find required definitions of ${className}.`,
+      });
     return connectorDefinition;
   };
 
   return {
     create: async values => {
-      try {
-        validateName(values);
-        validateClassName(values);
-        const res = await connectorApi.create({
-          ...values,
-          group,
-          workerClusterKey,
-        });
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const info = await getDefinition(values.connector__class);
-        const data = generateClusterResponse({
-          values: res.data,
-          inspectInfo: info,
-        });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      validateName(values);
+      validateClassName(values);
+      const res = await connectorApi.create({
+        ...values,
+        group,
+        workerClusterKey,
+      });
+      if (res.errors) throw new ContextApiError(res);
+      const info = await getDefinition(values.connector__class);
+      return generateClusterResponse({
+        values: res.data,
+        inspectInfo: info,
+      });
     },
     update: async values => {
-      try {
-        validateName(values);
-        if (!isEmpty(values.topicKeys)) {
-          values.topicKeys = values.topicKeys.map(topicKey => {
-            return {
-              name: topicKey.name,
-              group: topicGroup,
-            };
-          });
-        }
-        const res = await connectorApi.update({
-          ...values,
-
-          group,
+      validateName(values);
+      if (!isEmpty(values.topicKeys)) {
+        values.topicKeys = values.topicKeys.map(topicKey => {
+          return {
+            name: topicKey.name,
+            group: topicGroup,
+          };
         });
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
       }
+      const res = await connectorApi.update({
+        ...values,
+        group,
+      });
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     delete: async name => {
-      try {
-        const params = { name, group };
-        const res = await connectorApi.remove(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        showMessage(res.title);
-        return params;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await connectorApi.remove(params);
+      if (res.errors) throw new ContextApiError(res);
+      return params;
     },
     fetch: async name => {
       const params = { name, group };
       const res = await connectorApi.get(params);
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       const info = await getDefinition(res.data.connector__class);
       return generateClusterResponse({
         values: res.data,
@@ -132,9 +108,7 @@ export const createApi = context => {
     },
     fetchAll: async () => {
       const res = await connectorApi.getAll({ group });
-      if (!isEmpty(res.errors)) {
-        throw new Error(res.title);
-      }
+      if (res.errors) throw new ContextApiError(res);
       return await Promise.all(
         map(res.data, async connector => {
           const info = await getDefinition(connector.connector__class);
@@ -146,34 +120,16 @@ export const createApi = context => {
       );
     },
     start: async name => {
-      try {
-        const params = { name, group };
-        const res = await connectorApi.start(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await connectorApi.start(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
     stop: async name => {
-      try {
-        const params = { name, group };
-        const res = await connectorApi.stop(params);
-        if (!isEmpty(res.errors)) {
-          throw new Error(res.title);
-        }
-        const data = generateClusterResponse({ values: res.data });
-        showMessage(res.title);
-        return data;
-      } catch (e) {
-        showMessage(e.message);
-        throw e;
-      }
+      const params = { name, group };
+      const res = await connectorApi.stop(params);
+      if (res.errors) throw new ContextApiError(res);
+      return generateClusterResponse({ values: res.data });
     },
   };
 };

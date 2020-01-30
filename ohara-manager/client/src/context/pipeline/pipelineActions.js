@@ -19,7 +19,14 @@ import * as routines from './pipelineRoutines';
 import * as action from 'utils/action';
 
 export const createActions = context => {
-  const { state, dispatch, pipelineApi, streamGroup, topicGroup } = context;
+  const {
+    state,
+    dispatch,
+    eventLog,
+    pipelineApi,
+    streamGroup,
+    topicGroup,
+  } = context;
   return {
     fetchPipelines: async () => {
       const routine = routines.fetchPipelinesRoutine;
@@ -30,6 +37,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -43,6 +51,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -79,6 +88,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }
@@ -92,6 +102,7 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
+        eventLog.error(e.getPayload());
         dispatch(routine.failure(e.message));
         return action.failure(e.message);
       }

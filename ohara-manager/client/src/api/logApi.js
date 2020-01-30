@@ -15,7 +15,7 @@
  */
 
 import * as log from './body/logBody';
-import { getKey, responseUtil, axiosInstance } from './utils/apiUtils';
+import { responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
 
 const url = URL.LOG_URL;
@@ -29,13 +29,14 @@ export const logServices = {
 };
 
 export const getConfiguratorLog = async (params = {}) => {
+  const { name } = params;
   const res = await axiosInstance.get(
     `${url}/${logServices.configurator}${URL.toQueryParameters(params)}`,
   );
   const result = responseUtil(res, log);
-  result.title =
-    `Get ${logServices.configurator} log ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get ${logServices.configurator} log ${name}.`
+    : `Successfully got ${logServices.configurator} log ${name}.`;
   return result;
 };
 
@@ -45,9 +46,9 @@ export const getZookeeperLog = async params => {
     `${url}/${logServices.zookeeper}/${name}${URL.toQueryParameters(params)}`,
   );
   const result = responseUtil(res, log);
-  result.title =
-    `Get ${logServices.zookeeper} log ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get ${logServices.zookeeper} log ${name}.`
+    : `Successfully got ${logServices.zookeeper} log ${name}.`;
   return result;
 };
 
@@ -57,9 +58,9 @@ export const getBrokerLog = async params => {
     `${url}/${logServices.broker}/${name}${URL.toQueryParameters(params)}`,
   );
   const result = responseUtil(res, log);
-  result.title =
-    `Get ${logServices.broker} log ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get ${logServices.broker} log ${name}.`
+    : `Successfully got ${logServices.broker} log ${name}.`;
   return result;
 };
 
@@ -69,9 +70,9 @@ export const getWorkerLog = async params => {
     `${url}/${logServices.worker}/${name}${URL.toQueryParameters(params)}`,
   );
   const result = responseUtil(res, log);
-  result.title =
-    `Get ${logServices.worker} log ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get ${logServices.worker} log ${name}.`
+    : `Successfully got ${logServices.worker} log ${name}.`;
   return result;
 };
 
@@ -81,8 +82,8 @@ export const getStreamLog = async params => {
     `${url}/${logServices.stream}/${name}${URL.toQueryParameters(params)}`,
   );
   const result = responseUtil(res, log);
-  result.title =
-    `Get ${logServices.stream} log ${getKey(params)} ` +
-    (result.errors ? 'failed.' : 'successful.');
+  result.title = result.errors
+    ? `Failed to get ${logServices.stream} log ${name}.`
+    : `Successfully got ${logServices.stream} log ${name}.`;
   return result;
 };
