@@ -15,7 +15,7 @@
  */
 
 import * as context from 'context';
-import * as util from './paperUtils';
+import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
 
 const topic = () => {
@@ -52,6 +52,7 @@ const topic = () => {
     } else {
       paperApi.removeElement(id);
     }
+    return res;
   };
 
   const remove = async (params, paperApi) => {

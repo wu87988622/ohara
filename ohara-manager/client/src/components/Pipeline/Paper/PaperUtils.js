@@ -223,6 +223,7 @@ export const createConnection = params => {
           x: topicX,
           y: topicY,
         },
+        shouldSkipOnElementAdd: true,
       });
 
       const { id: topicId } = topic;

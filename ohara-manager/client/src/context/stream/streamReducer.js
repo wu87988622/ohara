@@ -31,6 +31,8 @@ const reducer = (state, action) => {
     case routines.createStreamRoutine.REQUEST:
     case routines.updateStreamRoutine.REQUEST:
     case routines.deleteStreamRoutine.REQUEST:
+    case routines.startStreamRoutine.REQUEST:
+    case routines.stopStreamRoutine.REQUEST:
       return {
         ...state,
         isFetching: true,
@@ -44,6 +46,20 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case routines.createStreamRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: sortByName([...state.data, action.payload]),
+        lastUpdated: new Date(),
+      };
+    case routines.startStreamRoutine.SUCCESS:
+      return {
+        ...state,
+        isFetching: false,
+        data: sortByName([...state.data, action.payload]),
+        lastUpdated: new Date(),
+      };
+    case routines.stopStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -72,6 +88,8 @@ const reducer = (state, action) => {
     case routines.createStreamRoutine.FAILURE:
     case routines.updateStreamRoutine.FAILURE:
     case routines.deleteStreamRoutine.FAILURE:
+    case routines.startStreamRoutine.FAILURE:
+    case routines.stopStreamRoutine.FAILURE:
       return {
         ...state,
         isFetching: false,

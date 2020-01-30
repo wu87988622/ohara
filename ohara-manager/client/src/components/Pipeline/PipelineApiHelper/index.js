@@ -14,25 +14,9 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
-import { CELL_STATUS } from 'const';
+import connector from './connector';
+import stream from './stream';
+import topic from './topic';
+import * as utils from './apiHelperUtils';
 
-export const getCellName = cell => {
-  return get(cell, 'attributes.name', null);
-};
-
-export const getCellClassName = cell => {
-  return get(cell, 'attributes.className', null);
-};
-
-export const getCellKind = cell => {
-  return get(cell, 'attributes.kind', null);
-};
-
-export const getCellJarKey = cell => {
-  return get(cell, 'attributes.jarKey', null);
-};
-
-export const getCellState = cell => {
-  return get(cell, 'data.state', CELL_STATUS.stopped);
-};
+export { connector, stream, topic, utils };

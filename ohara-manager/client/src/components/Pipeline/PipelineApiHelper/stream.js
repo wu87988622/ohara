@@ -15,7 +15,7 @@
  */
 
 import * as context from 'context';
-import * as util from './paperUtils';
+import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
 
 const stream = () => {
@@ -45,9 +45,29 @@ const stream = () => {
     }
   };
 
-  const update = async params => {
-    const { data } = params;
-    await updateStream({ ...data });
+  const updateLinkTo = async (params, paperApi) => {
+    const { stream, topic, link } = params;
+    const res = await updateStream({
+      name: stream.name,
+      to: [{ name: topic.name }],
+    });
+    if (res.error) {
+      paperApi.removeElement(link.id);
+    }
+    return res;
+  };
+
+  const updateLinkFrom = async (params, paperApi) => {
+    const { stream, topic, link } = params;
+    const res = await updateStream({
+      name: stream.name,
+      from: [{ name: topic.name }],
+    });
+
+    if (res.error) {
+      paperApi.removeElement(link.id);
+    }
+    return res;
   };
 
   const start = async (params, paperApi) => {
@@ -68,8 +88,8 @@ const stream = () => {
     }
   };
 
-  const stop = async params => {
-    const { paperApi, id, name } = params;
+  const stop = async (params, paperApi) => {
+    const { id, name } = params;
     const res = await stopStream(name);
     if (!res.error) {
       const state = util.getCellState(res);
@@ -79,15 +99,38 @@ const stream = () => {
     }
   };
 
-  const remove = async params => {
-    const { paperApi, id, name } = params;
+  const remove = async (params, paperApi) => {
+    const { id, name } = params;
     const res = await deleteStream(name);
     if (!res.error) {
       paperApi.removeElement(id);
     }
   };
 
-  return { create, update, start, stop, remove };
+  const removeLinkTo = async ({ name }) => {
+    await updateStream({
+      name,
+      to: [],
+    });
+  };
+
+  const removeLinkFrom = async ({ name }) => {
+    await updateStream({
+      name,
+      from: [],
+    });
+  };
+
+  return {
+    create,
+    updateLinkTo,
+    updateLinkFrom,
+    start,
+    stop,
+    remove,
+    removeLinkTo,
+    removeLinkFrom,
+  };
 };
 
 export default stream;

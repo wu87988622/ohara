@@ -57,8 +57,14 @@ const ApiProvider = ({ children }) => {
   );
 
   const connectorApi = useMemo(
-    () => createConnectorApi({ connectorGroup, workerKey, showMessage }),
-    [connectorGroup, workerKey, showMessage],
+    () =>
+      createConnectorApi({
+        connectorGroup,
+        workerKey,
+        showMessage,
+        topicGroup,
+      }),
+    [connectorGroup, workerKey, showMessage, topicGroup],
   );
 
   const fileApi = useMemo(
@@ -86,8 +92,8 @@ const ApiProvider = ({ children }) => {
   );
 
   const streamApi = useMemo(
-    () => createStreamApi({ streamGroup, brokerKey, showMessage }),
-    [streamGroup, brokerKey, showMessage],
+    () => createStreamApi({ streamGroup, brokerKey, showMessage, topicGroup }),
+    [streamGroup, brokerKey, showMessage, topicGroup],
   );
 
   const topicApi = useMemo(

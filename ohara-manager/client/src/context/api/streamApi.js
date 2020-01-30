@@ -26,7 +26,7 @@ const validateJarKey = values => {
 };
 
 export const createApi = context => {
-  const { streamGroup, brokerKey, showMessage } = context;
+  const { streamGroup, brokerKey, showMessage, topicGroup } = context;
   if (!streamGroup || !brokerKey) return;
 
   const group = streamGroup;
@@ -97,6 +97,22 @@ export const createApi = context => {
     update: async values => {
       try {
         validate(values);
+        if (!isEmpty(values.to)) {
+          values.to = values.to.map(to => {
+            return {
+              name: to.name,
+              group: topicGroup,
+            };
+          });
+        }
+        if (!isEmpty(values.from)) {
+          values.from = values.from.map(from => {
+            return {
+              name: from.name,
+              group: topicGroup,
+            };
+          });
+        }
         const params = { ...values, group };
         const res = await streamApi.update(params);
         if (!isEmpty(res.errors)) {

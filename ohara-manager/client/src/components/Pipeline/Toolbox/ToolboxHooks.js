@@ -51,7 +51,6 @@ export const useFiles = () => {
 
   const { fetchFiles } = useFileActions();
   const { data: files } = useFileState();
-
   useEffect(() => {
     const loadFiles = async () => {
       await fetchFiles();
@@ -60,7 +59,9 @@ export const useFiles = () => {
           name: file.name,
           group: file.group,
           classInfos: file.classInfos.filter(
-            classInfo => classInfo.kind === KIND.stream,
+            classInfo =>
+              classInfo.settingDefinitions.find(def => def.key === 'kind')
+                .defaultValue === KIND.stream,
           ),
         };
       });
@@ -71,7 +72,7 @@ export const useFiles = () => {
               const name = calssInfo.className.split('.').pop();
               return {
                 name,
-                kind: calssInfo.kind,
+                kind: KIND.stream,
                 className: calssInfo.className,
                 jarKey: {
                   name: streamClass.name,

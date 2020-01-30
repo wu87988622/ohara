@@ -245,7 +245,8 @@ const Paper = React.forwardRef((props, ref) => {
     graph.on('add', cell => {
       if (
         !_.isEqual(cellRef.current, cell) &&
-        _.get(paperApi, 'state.isReady', false)
+        _.get(paperApi, 'state.isReady', false) &&
+        !_.get(cell, 'attributes.shouldSkipOnElementAdd', false)
       ) {
         const data = getCellData(cell);
         cellRef.current = cell;
