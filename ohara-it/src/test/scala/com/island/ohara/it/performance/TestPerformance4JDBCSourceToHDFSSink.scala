@@ -22,27 +22,41 @@ import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.hdfs.sink.HDFSSink
-import com.island.ohara.it.category.PerformanceGroup
-import org.junit.experimental.categories.Category
-import spray.json.{JsNumber, JsString}
+import com.island.ohara.connector.jdbc.source.JDBCSourceConnector
 import org.junit.{AssumptionViolatedException, Test}
+import spray.json.{JsNumber, JsString}
 
-@Category(Array(classOf[PerformanceGroup]))
-class TestPerformance4HdfsSink extends BasicTestPerformance {
-  private[this] val HDFS_URL_KEY: String         = "ohara.it.performance.hdfs.url"
-  private[this] val NEED_DELETE_DATA_KEY: String = "ohara.it.performance.hdfs.needDeleteData"
-
-  private[this] val dataDir: String = "/tmp"
+class TestPerformance4JDBCSourceToHDFSSink extends BasicTestPerformance4Jdbc {
+  private[this] val HDFS_URL_KEY: String = "ohara.it.performance.hdfs.url"
+  private[this] val dataDir: String      = "/tmp"
   private[this] val hdfsURL: String = sys.env.getOrElse(
     HDFS_URL_KEY,
     throw new AssumptionViolatedException(s"$HDFS_URL_KEY does not exists!!!")
   )
 
-  private[this] val needDeleteData: Boolean = sys.env.getOrElse(NEED_DELETE_DATA_KEY, "true").toBoolean
+  override protected val tableName: String = s"TABLE${CommonUtils.randomString().toUpperCase()}"
 
   @Test
   def test(): Unit = {
-    produce(createTopic())
+    createTopic()
+    val (tableName, _, _) = setupTableData()
+    //Running JDBC Source Connector
+    setupConnector(
+      connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
+      className = classOf[JDBCSourceConnector].getName(),
+      settings = Map(
+        com.island.ohara.connector.jdbc.source.DB_URL                -> JsString(url),
+        com.island.ohara.connector.jdbc.source.DB_USERNAME           -> JsString(user),
+        com.island.ohara.connector.jdbc.source.DB_PASSWORD           -> JsString(password),
+        com.island.ohara.connector.jdbc.source.DB_TABLENAME          -> JsString(tableName),
+        com.island.ohara.connector.jdbc.source.TIMESTAMP_COLUMN_NAME -> JsString(timestampColumnName),
+        com.island.ohara.connector.jdbc.source.DB_SCHEMA_PATTERN     -> JsString(user),
+        com.island.ohara.connector.jdbc.source.JDBC_FETCHDATA_SIZE   -> JsNumber(10000),
+        com.island.ohara.connector.jdbc.source.JDBC_FLUSHDATA_SIZE   -> JsNumber(10000)
+      )
+    )
+
+    //Running HDFS Sink Connector
     setupConnector(
       connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
       className = classOf[HDFSSink].getName(),
@@ -57,6 +71,10 @@ class TestPerformance4HdfsSink extends BasicTestPerformance {
 
   override protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit =
     if (needDeleteData) {
+      //Drop table for the database
+      client.dropTable(tableName)
+
+      //Delete file for the HDFS
       val fileSystem = FileSystem.hdfsBuilder.url(hdfsURL).build
       try topicInfos.foreach { topicInfo =>
         val path = s"${dataDir}/${topicInfo.topicNameOnKafka}"

@@ -16,6 +16,8 @@
 
 package com.island.ohara.it.performance
 
+import com.island.ohara.common.setting.ConnectorKey
+import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.perf.PerfSource
 import com.island.ohara.it.category.PerformanceGroup
 import org.junit.Test
@@ -27,6 +29,7 @@ class TestPerformance4PerfSource extends BasicTestPerformance {
   def test(): Unit = {
     createTopic()
     setupConnector(
+      connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
       className = classOf[PerfSource].getName,
       settings = Map.empty
     )
