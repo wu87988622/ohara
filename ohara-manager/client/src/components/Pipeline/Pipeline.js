@@ -32,7 +32,7 @@ import {
   useRedirect,
 } from './PipelineHooks';
 import * as pipelineUtils from './PipelineApiHelper';
-import { KIND, CONNECTION_ORDER } from 'const';
+import { KIND, CONNECTION_TYPE } from 'const';
 
 export const PaperContext = createContext(null);
 
@@ -228,25 +228,25 @@ const Pipeline = () => {
                     let sinkRes;
                     let streamRes;
                     switch (type) {
-                      case CONNECTION_ORDER.source_topic:
+                      case CONNECTION_TYPE.source_topic:
                         updateConnector(
                           { connector: source, topic, link },
                           paperApi,
                         );
                         break;
-                      case CONNECTION_ORDER.topic_sink:
+                      case CONNECTION_TYPE.topic_sink:
                         updateConnector(
                           { connector: sink, topic, link },
                           paperApi,
                         );
                         break;
-                      case CONNECTION_ORDER.stream_topic:
+                      case CONNECTION_TYPE.stream_topic:
                         updateStreamLinkTo({ stream, topic, link }, paperApi);
                         break;
-                      case CONNECTION_ORDER.topic_stream:
+                      case CONNECTION_TYPE.topic_stream:
                         updateStreamLinkFrom({ stream, topic, link }, paperApi);
                         break;
-                      case CONNECTION_ORDER.source_topic_sink:
+                      case CONNECTION_TYPE.source_topic_sink:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,
@@ -275,7 +275,7 @@ const Pipeline = () => {
                           return;
                         }
                         break;
-                      case CONNECTION_ORDER.source_topic_stream:
+                      case CONNECTION_TYPE.source_topic_stream:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,
@@ -304,7 +304,7 @@ const Pipeline = () => {
                           return;
                         }
                         break;
-                      case CONNECTION_ORDER.stream_topic_sink:
+                      case CONNECTION_TYPE.stream_topic_sink:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,

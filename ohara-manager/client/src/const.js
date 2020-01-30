@@ -40,7 +40,7 @@ export const CELL_STATUS = {
   failed: 'failed',
 };
 
-export const CONNECTION_ORDER = {
+export const CONNECTION_TYPE = {
   source_topic_sink: 'source_topic_sink',
   source_topic_stream: 'source_topic_stream',
   stream_topic_sink: 'stream_topic_sink',
