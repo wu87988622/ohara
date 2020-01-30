@@ -15,7 +15,7 @@
  */
 
 import * as context from 'context';
-import * as util from './paperUtils';
+import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
 
 const connector = () => {
@@ -43,9 +43,18 @@ const connector = () => {
     }
   };
 
-  const update = async params => {
-    const { data } = params;
-    await updateConnector({ ...data });
+  const update = async (params, paperApi) => {
+    const { connector, topic, link } = params;
+
+    const res = await updateConnector({
+      name: connector.name,
+      topicKeys: [{ name: topic.name }],
+    });
+
+    if (res.error) {
+      paperApi.removeElement(link.id);
+    }
+    return res;
   };
 
   const start = async (params, paperApi) => {
@@ -86,7 +95,14 @@ const connector = () => {
     }
   };
 
-  return { create, update, start, stop, remove };
+  const removeLink = async ({ name }) => {
+    await updateConnector({
+      name,
+      topicKeys: [],
+    });
+  };
+
+  return { create, update, start, stop, remove, removeLink };
 };
 
 export default connector;

@@ -30,6 +30,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     createStream: async values => {
@@ -42,6 +43,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     updateStream: async values => {
@@ -54,6 +56,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     deleteStream: async name => {
@@ -66,6 +69,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     startStream: async name => {
@@ -78,6 +82,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
     stopStream: async name => {
@@ -90,6 +95,7 @@ export const createActions = context => {
         return action.success(data);
       } catch (e) {
         dispatch(routine.failure(e.message));
+        return action.failure(e.message);
       }
     },
   };

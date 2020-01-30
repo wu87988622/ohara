@@ -31,7 +31,7 @@ const validateClassName = values => {
 };
 
 export const createApi = context => {
-  const { connectorGroup, workerKey, showMessage } = context;
+  const { connectorGroup, workerKey, showMessage, topicGroup } = context;
   if (!connectorGroup || !workerKey) return;
 
   const group = connectorGroup;
@@ -80,8 +80,17 @@ export const createApi = context => {
     update: async values => {
       try {
         validateName(values);
+        if (!isEmpty(values.topicKeys)) {
+          values.topicKeys = values.topicKeys.map(topicKey => {
+            return {
+              name: topicKey.name,
+              group: topicGroup,
+            };
+          });
+        }
         const res = await connectorApi.update({
           ...values,
+
           group,
         });
         if (!isEmpty(res.errors)) {

@@ -36,6 +36,7 @@ const createTopicCell = options => {
     onCellRemove,
     status = CELL_STATUS.stopped,
     isShared,
+    shouldSkipOnElementAdd = false,
   } = options;
 
   joint.shapes.html = {};
@@ -131,6 +132,7 @@ const createTopicCell = options => {
     isShared,
     size: { width: 56, height: 76 },
     isMenuDisplayed: false,
+    shouldSkipOnElementAdd,
   });
 };
 export default createTopicCell;
