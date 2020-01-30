@@ -250,10 +250,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         className => record(path(className), connectorInfos.filter(_.className == className).flatMap(_.metrics.meters))
       )
 
-    // record topic meters
-    val topicInfos = result(topicApi.list())
-    record(path("topic"), topicInfos.flatMap(_.metrics.meters))
-
     // Have setup connector on the worker.
     // Need to stop the connector on the worker.
     result(connectorApi.list()).foreach(
@@ -267,7 +263,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         )
     )
 
-    afterStoppingConnectors(connectorInfos, topicInfos)
+    afterStoppingConnectors(connectorInfos, result(topicApi.list()))
   }
 
   private[this] def record(file: File, meters: Seq[Meter]): Unit =
