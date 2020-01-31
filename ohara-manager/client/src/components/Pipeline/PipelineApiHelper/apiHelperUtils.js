@@ -34,7 +34,7 @@ export const getCellJarKey = cell => {
 };
 
 export const getCellState = cell => {
-  return get(cell, 'data.state', CELL_STATUS.stopped);
+  return get(cell, 'data.state', CELL_STATUS.stopped).toLowerCase();
 };
 
 export const getConnectionOrder = cells => {

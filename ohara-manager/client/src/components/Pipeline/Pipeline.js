@@ -362,7 +362,7 @@ const Pipeline = () => {
                         break;
                     }
                   }}
-                  onCellRemove={(cellData, paperApi) => {
+                  onCellRemove={async (cellData, paperApi) => {
                     switch (cellData.kind) {
                       case KIND.sink:
                       case KIND.source:
@@ -374,7 +374,7 @@ const Pipeline = () => {
                         break;
 
                       case KIND.topic:
-                        removeTopic(cellData, paperApi);
+                        await removeTopic(cellData, paperApi);
 
                         if (cellData.isShared) {
                           // If a shared topic is removed from the Paper, we should

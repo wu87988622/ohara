@@ -37,6 +37,7 @@ const createTopicCell = options => {
     status = CELL_STATUS.stopped,
     isShared,
     shouldSkipOnElementAdd = false,
+    statusColors,
   } = options;
 
   joint.shapes.html = {};
@@ -53,9 +54,19 @@ const createTopicCell = options => {
   });
 
   const pipelineOnlyIcon = renderToString(
-    <PipelineOnlyTopicIcon width={56} height={56} />,
+    <PipelineOnlyTopicIcon
+      statusColor={statusColors[status]}
+      width={56}
+      height={56}
+    />,
   );
-  const sharedIcon = renderToString(<SharedTopicIcon width={56} height={56} />);
+  const sharedIcon = renderToString(
+    <SharedTopicIcon
+      statusColor={statusColors[status]}
+      width={56}
+      height={56}
+    />,
+  );
   const linkIcon = renderToString(<TrendingUpIcon />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
@@ -110,11 +121,12 @@ const createTopicCell = options => {
         top: bBox.y,
       });
 
-      const { isMenuDisplayed } = this.model.attributes;
+      const { isMenuDisplayed, status } = this.model.attributes;
 
       const displayValue = isMenuDisplayed ? 'block' : 'none';
       $box.find('.display-name').text(displayName);
       $box.find('.topic-menu').attr('style', `display: ${displayValue};`);
+      $box.find('.topic-status').attr('fill', statusColors[status]);
     },
     onRemove() {
       this.$box.remove();
@@ -135,4 +147,5 @@ const createTopicCell = options => {
     shouldSkipOnElementAdd,
   });
 };
+
 export default createTopicCell;

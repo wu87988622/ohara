@@ -417,7 +417,13 @@ const Paper = React.forwardRef((props, ref) => {
       addElement(data) {
         const { source, sink, stream, topic } = KIND;
         const { kind } = data;
-        const newData = { ...data, paperApi: ref.current };
+        const statusColors = {
+          stopped: palette.text.secondary,
+          pending: palette.secondary.main,
+          running: palette.success.main,
+          failed: palette.error.main,
+        };
+        const newData = { ...data, statusColors, paperApi: ref.current };
 
         let cell;
         if (kind === source || kind === sink || kind === stream) {

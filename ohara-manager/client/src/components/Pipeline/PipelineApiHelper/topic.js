@@ -28,7 +28,7 @@ const topic = () => {
     if (isShared) {
       const target = topics.find(topic => topic.name === name);
       return paperApi.updateElement(id, {
-        status: target.state,
+        status: target.state.toLowerCase(),
       });
     }
 
@@ -65,6 +65,7 @@ const topic = () => {
     });
 
     const stopRes = await stopTopic(name);
+
     if (!stopRes.error) {
       const state = util.getCellState(stopRes);
       paperApi.updateElement(id, {
