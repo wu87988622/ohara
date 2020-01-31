@@ -39,13 +39,3 @@ export const CELL_STATUS = {
   running: 'running',
   failed: 'failed',
 };
-
-export const CONNECTION_TYPE = {
-  source_topic_sink: 'source_topic_sink',
-  source_topic_stream: 'source_topic_stream',
-  stream_topic_sink: 'stream_topic_sink',
-  source_topic: 'source_topic',
-  stream_topic: 'stream_topic',
-  topic_sink: 'topic_sink',
-  topic_stream: 'topic_stream',
-};

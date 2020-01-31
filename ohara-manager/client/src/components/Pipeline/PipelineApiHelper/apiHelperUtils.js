@@ -15,22 +15,16 @@
  */
 
 import { get } from 'lodash';
-import { CELL_STATUS, CONNECTION_TYPE, KIND } from 'const';
+import { CELL_STATUS, KIND } from 'const';
 
-export const getCellName = cell => {
-  return get(cell, 'attributes.name', null);
-};
-
-export const getCellClassName = cell => {
-  return get(cell, 'attributes.className', null);
-};
-
-export const getCellClassType = cell => {
-  return get(cell, 'attributes.classType', null);
-};
-
-export const getCellJarKey = cell => {
-  return get(cell, 'attributes.jarKey', null);
+export const CONNECTION_TYPE = {
+  SOURCE_TOPIC_SINK: 'source_topic_sink',
+  SOURCE_TOPIC_STREAM: 'source_topic_stream',
+  STREAM_TOPIC_SINK: 'stream_topic_sink',
+  SOURCE_TOPIC: 'source_topic',
+  STREAM_TOPIC: 'stream_topic',
+  TOPIC_SINK: 'topic_sink',
+  TOPIC_STREAM: 'topic_stream',
 };
 
 export const getCellState = cell => {
@@ -51,7 +45,7 @@ export const getConnectionOrder = cells => {
     const firstLink = get(cells, 'firstLink', null);
     const secondeLink = get(cells, 'secondeLink', null);
     return {
-      type: CONNECTION_TYPE.source_topic_sink,
+      type: CONNECTION_TYPE.SOURCE_TOPIC_SINK,
       topic,
       source,
       sink,
@@ -66,7 +60,7 @@ export const getConnectionOrder = cells => {
     const firstLink = get(cells, 'firstLink', null);
     const secondeLink = get(cells, 'secondeLink', null);
     return {
-      type: CONNECTION_TYPE.source_topic_stream,
+      type: CONNECTION_TYPE.SOURCE_TOPIC_STREAM,
       topic,
       source,
       stream,
@@ -81,7 +75,7 @@ export const getConnectionOrder = cells => {
     const firstLink = get(cells, 'firstLink', null);
     const secondeLink = get(cells, 'secondeLink', null);
     return {
-      type: CONNECTION_TYPE.stream_topic_sink,
+      type: CONNECTION_TYPE.STREAM_TOPIC_SINK,
       topic,
       stream,
       sink,
@@ -93,7 +87,7 @@ export const getConnectionOrder = cells => {
     const topic = get(cells, 'targetElement', null);
     const source = get(cells, 'sourceElement', null);
     const link = get(cells, 'link');
-    return { type: CONNECTION_TYPE.source_topic, topic, source, link };
+    return { type: CONNECTION_TYPE.SOURCE_TOPIC, topic, source, link };
   }
   if (!hasSource && !hasSink && hasStream) {
     const link = get(cells, 'link');
@@ -102,17 +96,17 @@ export const getConnectionOrder = cells => {
     if (source.kind === KIND.stream && target.kind === KIND.topic) {
       const topic = get(cells, 'targetElement', null);
       const stream = get(cells, 'sourceElement', null);
-      return { type: CONNECTION_TYPE.stream_topic, topic, stream, link };
+      return { type: CONNECTION_TYPE.STREAM_TOPIC, topic, stream, link };
     } else {
       const topic = get(cells, 'sourceElement', null);
       const stream = get(cells, 'targetElement', null);
-      return { type: CONNECTION_TYPE.topic_stream, topic, stream, link };
+      return { type: CONNECTION_TYPE.TOPIC_STREAM, topic, stream, link };
     }
   }
   if (!hasSource && hasSink && !hasStream) {
     const link = get(cells, 'link');
     const topic = get(cells, 'sourceElement', null);
     const sink = get(cells, 'targetElement', null);
-    return { type: CONNECTION_TYPE.topic_sink, topic, sink, link };
+    return { type: CONNECTION_TYPE.TOPIC_SINK, topic, sink, link };
   }
 };

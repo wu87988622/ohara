@@ -107,18 +107,28 @@ const stream = () => {
     }
   };
 
-  const removeLinkTo = async ({ name }) => {
-    await updateStream({
+  const removeLinkTo = async (params, topic, paperApi) => {
+    const { name, id } = params;
+    const res = await updateStream({
       name,
       to: [],
     });
+
+    if (res.error) {
+      paperApi.addLink(id, topic.id);
+    }
   };
 
-  const removeLinkFrom = async ({ name }) => {
-    await updateStream({
+  const removeLinkFrom = async (params, topic, paperApi) => {
+    const { name, id } = params;
+    const res = await updateStream({
       name,
       from: [],
     });
+
+    if (res.error) {
+      paperApi.addLink(topic.id, id);
+    }
   };
 
   return {

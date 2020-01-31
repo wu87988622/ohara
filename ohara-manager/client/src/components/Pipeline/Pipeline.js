@@ -32,7 +32,8 @@ import {
   useRedirect,
 } from './PipelineHooks';
 import * as pipelineUtils from './PipelineApiHelper';
-import { KIND, CONNECTION_TYPE } from 'const';
+import { CONNECTION_TYPE } from './PipelineApiHelper';
+import { KIND } from 'const';
 
 export const PaperContext = createContext(null);
 
@@ -72,7 +73,8 @@ const Pipeline = () => {
     start: startConnector,
     stop: stopConnector,
     remove: removeConnector,
-    removeLink: removeLinkConnector,
+    removeSourceLink: removeSourceLinkConnector,
+    removeSinkLink: removeSinkLinkConnector,
   } = pipelineUtils.connector();
 
   const {
@@ -88,25 +90,23 @@ const Pipeline = () => {
 
   const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
 
-  const clean = (cells, paperApi) => {
+  const clean = (cells, paperApi, onlyRemoveLink = false) => {
     Object.keys(cells).forEach(key => {
       switch (key) {
         case 'source':
-        case 'sink':
-          removeLinkConnector({ name: cells[key].name });
+          removeSourceLinkConnector({ ...cells[key] }, cells.topic, paperApi);
           break;
-
+        case 'sink':
+          removeSinkLinkConnector({ ...cells[key] }, cells.topic, paperApi);
+          break;
         case 'to':
-          removeStreamLinkTo({
-            name: cells[key].name,
-          });
+          removeStreamLinkTo({ ...cells[key] }, cells.topic, paperApi);
           break;
         case 'from':
-          removeStreamLinkFrom({
-            name: cells[key].name,
-          });
+          removeStreamLinkFrom({ ...cells[key] }, cells.topic, paperApi);
           break;
         case 'topic':
+          if (onlyRemoveLink) break;
           removeTopic({ ...cells[key] }, paperApi);
           break;
 
@@ -223,25 +223,25 @@ const Pipeline = () => {
                     let sinkRes;
                     let streamRes;
                     switch (type) {
-                      case CONNECTION_TYPE.source_topic:
+                      case CONNECTION_TYPE.SOURCE_TOPIC:
                         updateConnector(
                           { connector: source, topic, link },
                           paperApi,
                         );
                         break;
-                      case CONNECTION_TYPE.topic_sink:
+                      case CONNECTION_TYPE.TOPIC_SINK:
                         updateConnector(
                           { connector: sink, topic, link },
                           paperApi,
                         );
                         break;
-                      case CONNECTION_TYPE.stream_topic:
+                      case CONNECTION_TYPE.STREAM_TOPIC:
                         updateStreamLinkTo({ stream, topic, link }, paperApi);
                         break;
-                      case CONNECTION_TYPE.topic_stream:
+                      case CONNECTION_TYPE.TOPIC_STREAM:
                         updateStreamLinkFrom({ stream, topic, link }, paperApi);
                         break;
-                      case CONNECTION_TYPE.source_topic_sink:
+                      case CONNECTION_TYPE.SOURCE_TOPIC_SINK:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,
@@ -258,7 +258,7 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (sourceRes.error) {
-                          clean({ topic });
+                          clean({ topic }, paperApi);
                           return;
                         }
                         sinkRes = await updateConnector(
@@ -266,11 +266,11 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (sinkRes.error) {
-                          clean({ source, topic });
+                          clean({ source, topic }, paperApi);
                           return;
                         }
                         break;
-                      case CONNECTION_TYPE.source_topic_stream:
+                      case CONNECTION_TYPE.SOURCE_TOPIC_STREAM:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,
@@ -287,7 +287,7 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (sourceRes.error) {
-                          clean({ topic });
+                          clean({ topic }, paperApi);
                           return;
                         }
                         streamRes = await updateStreamLinkFrom(
@@ -295,11 +295,11 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (streamRes.error) {
-                          clean({ source, topic });
+                          clean({ source, topic }, paperApi);
                           return;
                         }
                         break;
-                      case CONNECTION_TYPE.stream_topic_sink:
+                      case CONNECTION_TYPE.STREAM_TOPIC_SINK:
                         topicRes = await createTopic(
                           ({
                             id: topic.id,
@@ -316,7 +316,7 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (streamRes.error) {
-                          clean({ topic });
+                          clean({ topic }, paperApi);
                           return;
                         }
                         sinkRes = await updateConnector(
@@ -324,9 +324,34 @@ const Pipeline = () => {
                           paperApi,
                         );
                         if (sinkRes.error) {
-                          clean({ to: stream, topic });
+                          clean({ to: stream, topic }, paperApi);
                           return;
                         }
+                        break;
+                      default:
+                        break;
+                    }
+                  }}
+                  onDisconnect={(cells, paperApi) => {
+                    const {
+                      type,
+                      source,
+                      stream,
+                      sink,
+                      topic,
+                    } = pipelineUtils.utils.getConnectionOrder(cells);
+                    switch (type) {
+                      case CONNECTION_TYPE.SOURCE_TOPIC:
+                        clean({ source, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.STREAM_TOPIC:
+                        clean({ to: stream, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.TOPIC_STREAM:
+                        clean({ from: stream, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.TOPIC_SINK:
+                        clean({ sink, topic }, paperApi, true);
                         break;
                       default:
                         break;

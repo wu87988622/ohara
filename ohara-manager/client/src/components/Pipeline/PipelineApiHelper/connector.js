@@ -95,14 +95,39 @@ const connector = () => {
     }
   };
 
-  const removeLink = async ({ name }) => {
-    await updateConnector({
+  const removeSourceLink = async (params, topic, paperApi) => {
+    const { name, id } = params;
+    const res = await updateConnector({
       name,
       topicKeys: [],
     });
+
+    if (res.error) {
+      paperApi.addLink(id, topic.id);
+    }
   };
 
-  return { create, update, start, stop, remove, removeLink };
+  const removeSinkLink = async (params, topic, paperApi) => {
+    const { name, id } = params;
+    const res = await updateConnector({
+      name,
+      topicKeys: [],
+    });
+
+    if (res.error) {
+      paperApi.addLink(topic.id, id);
+    }
+  };
+
+  return {
+    create,
+    update,
+    start,
+    stop,
+    remove,
+    removeSourceLink,
+    removeSinkLink,
+  };
 };
 
 export default connector;
