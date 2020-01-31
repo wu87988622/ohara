@@ -514,7 +514,11 @@ const Paper = React.forwardRef((props, ref) => {
           throw new Error(`paperApi: getCell(id: string) invalid argument id`);
         }
 
-        return getCellData(graph.getCell(id));
+        const result =
+          graph.getCell(id) ||
+          graph.getCells().find(cell => cell.get('name') === id);
+
+        if (result) return getCellData(result);
       },
       getCells(kind) {
         if (kind) {
