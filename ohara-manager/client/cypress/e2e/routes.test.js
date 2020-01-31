@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 
-// TODO: skip these tests for now, this is tracked in #3161
-describe.skip('Root route', () => {
+import { deleteAllServices } from '../utils';
+
+describe('Root route', () => {
+  before(async () => await deleteAllServices());
+
   it('should display root route', () => {
     cy.visit('/')
-      .findByText(`You don't have any workspace yet!`)
-      .should('exist');
+      .location()
+      .should(location => {
+        expect(location.pathname).to.be.eq('/');
+      })
+      .findByText('QUICK START')
+      .should('exist')
+      .end();
   });
 });
 
-describe.skip('Not found page', () => {
+describe('Not found page', () => {
   it('should display page not found route', () => {
     // Another URL pattern, we can add more patterns here
     // to ensure different route patterns are all handled
     // properly
     cy.visit('/jladkf/safkj/ksjdl/jlkfsd/kjlfds')
-      .findByText('Ooooops, page not found!')
+      .contains('404')
       .should('exist');
   });
 });

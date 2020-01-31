@@ -109,6 +109,28 @@ export const start = async params => {
   return result;
 };
 
+export const forceStop = async params => {
+  const { name, group } = params;
+  const stopRes = await axiosInstance.put(
+    `${url}/${name}/stop?group=${group}&force=true`,
+  );
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    result = responseUtil(res, stream);
+  } else {
+    result = responseUtil(stopRes, stream);
+  }
+  result.title = result.errors
+    ? `Failed to stop stream ${name}.`
+    : `Successfully stopped stream ${name}.`;
+  return result;
+};
+
 export const stop = async params => {
   const { name, group } = params;
   const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);

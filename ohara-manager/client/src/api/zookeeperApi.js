@@ -75,6 +75,28 @@ export const update = async params => {
   return result;
 };
 
+export const forceStop = async params => {
+  const { name, group } = params;
+  const stopRes = await axiosInstance.put(
+    `${url}/${name}/stop?group=${group}&force=true`,
+  );
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    result = responseUtil(res, zookeeper);
+  } else {
+    result = responseUtil(stopRes, zookeeper);
+  }
+  result.title = result.errors
+    ? `Failed to stop zookeeper ${name}.`
+    : `Successfully stopped zookeeper ${name}.`;
+  return result;
+};
+
 export const stop = async params => {
   const { name, group } = params;
   const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);

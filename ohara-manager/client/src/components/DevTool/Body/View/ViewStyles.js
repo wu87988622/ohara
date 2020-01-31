@@ -18,6 +18,11 @@ import styled, { css } from 'styled-components';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 
+export const StyledLogDiv = styled.div`
+  width: 100%;
+  height: 100%;
+`;
+
 export const StyledTableRow = styled(TableRow)`
   height: 50px;
 `;

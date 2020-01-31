@@ -70,15 +70,17 @@ const ControllerTopic = () => {
 
   return (
     <>
-      <Select
-        value={name}
-        onChange={event => setName(event.target.value)}
-        list={topics.map(topic => {
-          // pipeline only topic names are stored in tags, the name field is randomly generated.
-          return topic.tags.isShared ? topic.name : topic.tags.displayName;
-        })}
-        disabled={isFetching}
-      />
+      <Tooltip title="Select topic">
+        <Select
+          value={name}
+          onChange={event => setName(event.target.value)}
+          list={topics.map(topic => {
+            // pipeline only topic names are stored in tags, the name field is randomly generated.
+            return topic.tags.isShared ? topic.name : topic.tags.displayName;
+          })}
+          disabled={isFetching}
+        />
+      </Tooltip>
       <Tooltip title="Fetch the data again">
         <IconButton
           className="item"

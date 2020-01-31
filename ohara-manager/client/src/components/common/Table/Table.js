@@ -74,6 +74,7 @@ const MuiTable = props => {
     isLoading = false,
     children,
     footer,
+    testId,
   } = props;
   const lastIdx = headers.length - 1; // Make sure we have the same length as idx
 
@@ -86,7 +87,7 @@ const MuiTable = props => {
     <Wrapper className={`${titleClass}`}>
       <Paper elevation={1}>
         {hasTitle && <Typography variant="h6">{title}</Typography>}
-        <Table stickyHeader={fixedHeader} size="small">
+        <Table stickyHeader={fixedHeader} size="small" data-testid={testId}>
           <StyledTableHead>
             <TableRow>
               {headers.map((header, idx) => {
@@ -121,6 +122,7 @@ MuiTable.propTypes = {
   isLoading: PropTypes.bool,
   footer: PropTypes.any,
   fixedHeader: PropTypes.bool,
+  testId: PropTypes.string,
 };
 
 export default MuiTable;

@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import * as context from 'context';
 import { VirtualizedList } from 'components/common/List';
 import { useCurrentLogs } from 'components/DevTool/hooks';
-import { StyledContent } from './ViewStyles';
+import { StyledLogDiv, StyledContent } from './ViewStyles';
 
 const ViewLog = () => {
   const { isFetching } = context.useLogState();
@@ -35,11 +35,13 @@ const ViewLog = () => {
   };
 
   return (
-    <VirtualizedList
-      data={currentLog}
-      rowRenderer={rowRenderer}
-      isLoading={isFetching}
-    />
+    <StyledLogDiv data-testid="view-log-list">
+      <VirtualizedList
+        data={currentLog}
+        rowRenderer={rowRenderer}
+        isLoading={isFetching}
+      />
+    </StyledLogDiv>
   );
 };
 

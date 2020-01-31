@@ -78,6 +78,29 @@ export const update = async params => {
   return result;
 };
 
+export const forceStop = async params => {
+  const { name, group } = params;
+  const stopRes = await axiosInstance.put(
+    `${url}/${name}/stop?group=${group}&force=true`,
+  );
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
+    result = responseUtil(res, worker);
+  } else {
+    result = responseUtil(stopRes, worker);
+  }
+  result.title = result.errors
+    ? `Failed to stop worker ${name}.`
+    : `Successfully stopped worker ${name}.`;
+  return result;
+};
+
 export const stop = async params => {
   const { name, group } = params;
   const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);

@@ -108,7 +108,11 @@ const MuiDialog = ({ quickModeText }) => {
               <span className="name">Ohara Stream</span>
             </Typography>
           </div>
-          <IconButton className="close-button" onClick={() => setIsOpen(false)}>
+          <IconButton
+            data-testid="close-intro-button"
+            className="close-button"
+            onClick={() => setIsOpen(false)}
+          >
             <CloseIcon />
           </IconButton>
         </StyledDialogTitle>

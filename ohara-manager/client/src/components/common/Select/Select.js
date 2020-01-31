@@ -45,10 +45,11 @@ const Select = props => {
     disabled,
     anchorOrigin,
     transformOrigin,
+    testId,
   } = props;
 
   return (
-    <Typography component="div">
+    <Typography component="div" data-testid={testId}>
       <FormControl disabled={disabled}>
         <MuiSelect
           value={value}
@@ -88,6 +89,7 @@ Select.propTypes = {
     vertical: PropTypes.string,
     horizontal: PropTypes.string,
   }),
+  testId: PropTypes.string,
 };
 
 Select.defaultProps = {

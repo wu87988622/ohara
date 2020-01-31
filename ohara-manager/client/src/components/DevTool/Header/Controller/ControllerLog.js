@@ -176,6 +176,7 @@ const ControllerLog = () => {
         }}
         list={Object.keys(logServices)}
         disabled={isFetching}
+        testId="log-type-select"
       />
       {logType === KIND.stream && (
         <Select
@@ -220,7 +221,7 @@ const ControllerLog = () => {
           </IconButton>
         }
       >
-        <StyledSearchBody tab={TAB.log}>
+        <StyledSearchBody tab={TAB.log} data-testid="log-query-popover">
           <RadioGroup value={timeGroup} onChange={handleRadioChange}>
             <FormControlLabel
               value={TIME_GROUP.latest}

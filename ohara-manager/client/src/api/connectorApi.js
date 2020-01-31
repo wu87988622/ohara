@@ -99,6 +99,28 @@ export const update = async params => {
   return result;
 };
 
+export const forceStop = async params => {
+  const { name, group } = params;
+  const stopRes = await axiosInstance.put(
+    `${url}/${name}/stop?group=${group}&force=true`,
+  );
+
+  let result = {};
+  if (stopRes.data.isSuccess) {
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForStop,
+    });
+    result = responseUtil(res, connector);
+  } else {
+    result = responseUtil(stopRes, connector);
+  }
+  result.title = result.errors
+    ? `Failed to stop connector ${name}.`
+    : `Successfully stopped connector ${name}.`;
+  return result;
+};
+
 export const stop = async params => {
   const { name, group } = params;
   const stopRes = await axiosInstance.put(`${url}/${name}/stop?group=${group}`);

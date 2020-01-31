@@ -60,6 +60,7 @@ const ViewTopic = () => {
           <>
             <StyledTableCell key={rowIdx + '_view'}>
               <VisibilityIcon
+                data-testid={`detail-view-icon-${rowIdx}`}
                 onClick={() => {
                   setViewTopicMessage(message);
                 }}
@@ -104,6 +105,7 @@ const ViewTopic = () => {
         headers={getHeaders(messages).map(header => capitalize(header))}
         isLoading={isFetching}
         children={renderDataBody(messages)}
+        testId="view-topic-table"
       />
       <Dialog
         title="View topic source"
@@ -124,6 +126,7 @@ const ViewTopic = () => {
           </StyledTopicView>
         }
         showActions={false}
+        testId="topic-detail-view"
       />
     </>
   );
