@@ -58,7 +58,7 @@ import {
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { hashByGroupAndName } from 'utils/sha';
 import { useUniqueName } from './hooks';
 

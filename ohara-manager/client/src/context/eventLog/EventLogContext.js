@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import localForage from 'localforage';
 import { isEmpty, get, take } from 'lodash';
 import { createActions } from './eventLogActions';
-import { useSettingsApi } from './eventLogHooks';
+import { useEventLogApi } from './eventLogHooks';
 import { reducer, initialState } from './eventLogReducer';
 
 const EventLogStateContext = React.createContext();
@@ -27,7 +27,7 @@ const EventLogDispatchContext = React.createContext();
 
 const EventLogProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const settingsApi = useSettingsApi();
+  const eventLogApi = useEventLogApi();
 
   localForage.config({
     name: 'ohara',
@@ -35,17 +35,14 @@ const EventLogProvider = ({ children }) => {
   });
 
   const actions = React.useMemo(
-    () => createActions({ state, dispatch, settingsApi }),
-    [state, dispatch, settingsApi],
+    () => createActions({ state, dispatch, eventLogApi }),
+    [state, dispatch, eventLogApi],
   );
 
   React.useEffect(() => {
     if (!actions) return;
+    actions.fetchNotifications();
     actions.fetchEventLogs();
-  }, [actions]);
-
-  React.useEffect(() => {
-    if (!actions) return;
     actions.fetchSettings();
   }, [actions]);
 
@@ -100,11 +97,11 @@ EventLogProvider.propTypes = {
 const useEventLogActions = () => {
   const state = useEventLogState();
   const dispatch = useEventLogDispatch();
-  const settingsApi = useSettingsApi();
-  return React.useMemo(() => createActions({ state, dispatch, settingsApi }), [
+  const eventLogApi = useEventLogApi();
+  return React.useMemo(() => createActions({ state, dispatch, eventLogApi }), [
     state,
     dispatch,
-    settingsApi,
+    eventLogApi,
   ]);
 };
 

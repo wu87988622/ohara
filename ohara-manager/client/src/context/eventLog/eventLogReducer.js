@@ -31,6 +31,15 @@ const initialState = {
     lastUpdated: null,
     error: null,
   },
+  notifications: {
+    data: {
+      info: 0,
+      error: 0,
+    },
+    isFetching: false,
+    lastUpdated: null,
+    error: null,
+  },
 };
 
 const reducer = (state, action) => {
@@ -108,6 +117,50 @@ const reducer = (state, action) => {
         ...state,
         settings: {
           ...state.settings,
+          isFetching: false,
+          error: action.payload,
+        },
+      };
+
+    case routines.fetchNotificationsRoutine.REQUEST:
+    case routines.updateNotificationsRoutine.REQUEST:
+    case routines.clearNotificationsRoutine.REQUEST:
+      return {
+        ...state,
+        notifications: {
+          ...state.notifications,
+          isFetching: true,
+          error: null,
+        },
+      };
+    case routines.fetchNotificationsRoutine.SUCCESS:
+    case routines.updateNotificationsRoutine.SUCCESS:
+      return {
+        ...state,
+        notifications: {
+          ...state.notifications,
+          data: { ...state.notifications.data, ...action.payload },
+          isFetching: false,
+          lastUpdated: new Date(),
+        },
+      };
+    case routines.clearNotificationsRoutine.SUCCESS:
+      return {
+        ...state,
+        notifications: {
+          ...state.notifications,
+          data: { ...initialState.notifications.data },
+          isFetching: false,
+          lastUpdated: new Date(),
+        },
+      };
+    case routines.fetchNotificationsRoutine.FAILURE:
+    case routines.updateNotificationsRoutine.FAILURE:
+    case routines.clearNotificationsRoutine.FAILURE:
+      return {
+        ...state,
+        notifications: {
+          ...state.notifications,
           isFetching: false,
           error: action.payload,
         },

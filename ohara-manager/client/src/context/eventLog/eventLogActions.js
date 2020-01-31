@@ -19,7 +19,7 @@ import localForage from 'localforage';
 import * as routines from './eventLogRoutines';
 
 export const createActions = context => {
-  const { state, dispatch, settingsApi } = context;
+  const { state, dispatch, eventLogApi } = context;
 
   return {
     fetchEventLogs: async () => {
@@ -104,7 +104,7 @@ export const createActions = context => {
 
       dispatch(routine.request());
       try {
-        const data = settingsApi.fetchSettings();
+        const data = await eventLogApi.fetchSettings();
         dispatch(routine.success(data));
       } catch (e) {
         dispatch(routine.failure(e.message));
@@ -117,8 +117,52 @@ export const createActions = context => {
       const ensuredValues = { ...state.settings.data, ...values };
       dispatch(routine.request());
       try {
-        settingsApi.updateSettings(ensuredValues);
+        await eventLogApi.updateSettings(ensuredValues);
         dispatch(routine.success(ensuredValues));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+
+    fetchNotifications: async () => {
+      const routine = routines.fetchNotificationsRoutine;
+      if (
+        state.notifications.isFetching ||
+        state.notifications.lastUpdated ||
+        state.notifications.error
+      ) {
+        return;
+      }
+
+      dispatch(routine.request());
+      try {
+        const data = await eventLogApi.fetchNotifications();
+        dispatch(routine.success(data));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    updateNotifications: async values => {
+      const routine = routines.updateNotificationsRoutine;
+      if (state.notifications.isFetching) return;
+
+      const ensuredValues = { ...state.notifications.data, ...values };
+      dispatch(routine.request());
+      try {
+        await eventLogApi.updateNotifications(ensuredValues);
+        dispatch(routine.success(ensuredValues));
+      } catch (e) {
+        dispatch(routine.failure(e.message));
+      }
+    },
+    clearNotifications: async () => {
+      const routine = routines.clearNotificationsRoutine;
+      if (state.notifications.isFetching) return;
+
+      dispatch(routine.request());
+      try {
+        await eventLogApi.clearNotifications();
+        dispatch(routine.success());
       } catch (e) {
         dispatch(routine.failure(e.message));
       }

@@ -16,12 +16,14 @@
 
 import React from 'react';
 import { useParams, NavLink } from 'react-router-dom';
+import { get } from 'lodash';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import StorageIcon from '@material-ui/icons/Storage';
 import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
+import Badge from '@material-ui/core/Badge';
 
 import * as context from 'context';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
@@ -47,6 +49,7 @@ const AppBar = () => {
     close: closeEventLog,
   } = context.useEventLogDialog();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
+  const eventLogState = context.useEventLogState();
 
   const prevWorkspaceName = usePrevious(workspaceName);
   const prevPipelineName = usePrevious(pipelineName);
@@ -114,7 +117,12 @@ const AppBar = () => {
                 closeDevTool();
               }}
             >
-              <AssignmentIcon />
+              <Badge
+                badgeContent={get(eventLogState, 'notifications.data.error', 0)}
+                color="secondary"
+              >
+                <AssignmentIcon />
+              </Badge>
             </IconButton>
           </Tooltip>
 

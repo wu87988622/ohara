@@ -36,7 +36,7 @@ import _ from 'lodash';
 
 import { KIND } from 'const';
 import { Progress } from 'components/common/Progress';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { useDeleteServices, useZoom } from './ToolbarHooks';

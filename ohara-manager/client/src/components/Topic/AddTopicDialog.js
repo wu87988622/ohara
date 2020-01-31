@@ -20,7 +20,7 @@ import { Form, Field } from 'react-final-form';
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
 import { useTopicState, useTopicActions, useAddTopicDialog } from 'context';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import {
   required,
   minNumber,

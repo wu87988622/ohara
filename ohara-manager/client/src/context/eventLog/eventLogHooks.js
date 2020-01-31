@@ -14,20 +14,85 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { min } from 'lodash';
+
+import * as context from 'context';
 import { useLocalStorage } from 'utils/hooks';
 import { initialState } from './eventLogReducer';
 
-export const useSettingsApi = () => {
-  const [storedValue, setStoredValue] = useLocalStorage(
-    'event_logs',
+export const useEventLogApi = () => {
+  const [settings, setSettings] = useLocalStorage(
+    'event_log_settings',
     initialState.settings.data,
   );
+
+  const [notifications, setNotifications] = useLocalStorage(
+    'event_log_notifications',
+    initialState.notifications.data,
+  );
+
   return useMemo(() => {
     const api = {
-      fetchSettings: () => storedValue,
-      updateSettings: setStoredValue,
+      fetchSettings: () => settings,
+      updateSettings: setSettings,
+      fetchNotifications: () => notifications,
+      updateNotifications: setNotifications,
+      clearNotifications: () => {
+        setNotifications(initialState.notifications.data);
+      },
     };
     return api;
-  }, [storedValue, setStoredValue]);
+  }, [settings, setSettings, notifications, setNotifications]);
+};
+
+export const useEventLog = () => {
+  const {
+    createEventLog,
+    clearEventLogs,
+    updateNotifications,
+  } = context.useEventLogActions();
+  const showMessage = context.useSnackbar();
+
+  const { notifications, settings } = context.useEventLogState();
+  const { error = 0, info = 0 } = notifications.data;
+  const { limit = 1000, unlimited } = settings.data;
+
+  const { isOpen: isEventLogDialogOpen } = context.useEventLogDialog();
+
+  const increaseErrorNotification = useCallback(() => {
+    const nextCount = error + 1;
+    const countToUpdate = unlimited ? nextCount : min([nextCount, limit]);
+    updateNotifications({ error: countToUpdate });
+  }, [error, limit, unlimited, updateNotifications]);
+
+  const increaseInfoNotification = useCallback(() => {
+    const nextCount = info + 1;
+    const countToUpdate = unlimited ? nextCount : min([nextCount, limit]);
+    updateNotifications({ info: countToUpdate });
+  }, [info, limit, unlimited, updateNotifications]);
+
+  return useMemo(() => {
+    const eventLog = {
+      info: (title, showSnackbar = true) => {
+        createEventLog({ title }, 'info');
+        if (!isEventLogDialogOpen) increaseInfoNotification();
+        if (showSnackbar) showMessage(title);
+      },
+      error: ({ title, status, errors, meta }, showSnackbar = true) => {
+        createEventLog({ title, status, errors, meta }, 'error');
+        if (!isEventLogDialogOpen) increaseErrorNotification();
+        if (showSnackbar) showMessage(title);
+      },
+      clear: () => clearEventLogs(),
+    };
+    return eventLog;
+  }, [
+    clearEventLogs,
+    createEventLog,
+    increaseErrorNotification,
+    increaseInfoNotification,
+    isEventLogDialogOpen,
+    showMessage,
+  ]);
 };

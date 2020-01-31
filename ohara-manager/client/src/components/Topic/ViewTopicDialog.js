@@ -32,7 +32,7 @@ import NumberFormat from 'react-number-format';
 
 import { useViewTopicDialog, useTopicState, useTopicActions } from 'context';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import TopicChip from './TopicChip';
 import { Wrapper } from './ViewTopicDialogStyles';
 

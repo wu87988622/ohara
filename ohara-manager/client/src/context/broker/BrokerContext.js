@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './brokerActions';
 import { reducer, initialState } from './brokerReducer';
 

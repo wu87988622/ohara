@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { useApp, useApi } from 'context';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './logRoutines';
 import { createActions } from './logActions';
 import { reducer, initialState } from './logReducer';

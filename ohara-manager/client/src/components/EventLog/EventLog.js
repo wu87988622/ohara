@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { size } from 'lodash';
+import React, { useEffect, useState } from 'react';
+import { delay, size } from 'lodash';
 
-import { useEventLogState, useEventLogContentDialog } from 'context';
+import {
+  useEventLogActions,
+  useEventLogState,
+  useEventLogContentDialog,
+} from 'context';
 import { VirtualizedList } from 'components/common/List';
 import StatusBar from 'components/DevTool/StatusBar';
 import EventLogRow from './EventLogRow';
@@ -27,8 +31,18 @@ import Wrapper from './EventLogStyles';
 
 const EventLog = () => {
   const [logs, setLogs] = useState([]);
-  const { isFetching } = useEventLogState();
+  const { isFetching, notifications } = useEventLogState();
   const { open: openEventLogContentDialog } = useEventLogContentDialog();
+  const { clearNotifications } = useEventLogActions();
+  const [cleared, setCleared] = useState(false);
+
+  // When the event log page opens, should clear the event log notifications.
+  useEffect(() => {
+    if (!cleared && notifications.data.error > 0) {
+      delay(() => clearNotifications(), 250);
+      setCleared(true);
+    }
+  }, [cleared, clearNotifications, notifications.data.error, setCleared]);
 
   const handleRowClick = rowData => openEventLogContentDialog(rowData);
 

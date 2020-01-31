@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import * as context from 'context';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
 export const usePrevious = value => {
   // The ref object is a generic container whose current property is mutable ...
@@ -83,23 +82,4 @@ export const useLocalStorage = (key, initialValue) => {
   );
 
   return [storedValue, setValue];
-};
-
-export const useEventLog = () => {
-  const { createEventLog, clearEventLogs } = context.useEventLogActions();
-  const showMessage = context.useSnackbar();
-  return useMemo(() => {
-    const eventLog = {
-      info: (title, showSnackbar = true) => {
-        createEventLog({ title }, 'info');
-        if (showSnackbar) showMessage(title);
-      },
-      error: ({ title, status, errors, meta }, showSnackbar = true) => {
-        createEventLog({ title, status, errors, meta }, 'error');
-        if (showSnackbar) showMessage(title);
-      },
-      clear: () => clearEventLogs(),
-    };
-    return eventLog;
-  }, [createEventLog, clearEventLogs, showMessage]);
 };

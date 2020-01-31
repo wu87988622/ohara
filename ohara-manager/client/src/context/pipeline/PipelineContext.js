@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 
 import { reducer, initialState } from './pipelineReducer';
 import { useApi, useApp, useWorkspace } from 'context';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './pipelineActions';
 import { initializeRoutine } from './pipelineRoutines';
 

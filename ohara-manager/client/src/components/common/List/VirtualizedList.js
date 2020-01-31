@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { isEmpty, noop } from 'lodash';
+import { noop } from 'lodash';
 
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { List } from 'react-virtualized/dist/commonjs/List';
@@ -37,14 +37,6 @@ const VirtualizedList = props => {
     defaultHeight: 20,
     fixedWidth: true,
   });
-
-  useEffect(() => {
-    if (listRef.current && autoScrollToBottom && !isEmpty(data)) {
-      setTimeout(() => {
-        listRef.current.scrollToRow(data.length);
-      }, 0);
-    }
-  }, [autoScrollToBottom, data]);
 
   const RowRendererWrapper = ({
     index,
@@ -96,6 +88,7 @@ const VirtualizedList = props => {
           rowHeight={cache.rowHeight}
           rowRenderer={RowRendererWrapper}
           overscanRowCount={0}
+          scrollToIndex={autoScrollToBottom ? data.length : 0}
           width={width}
         />
       )}

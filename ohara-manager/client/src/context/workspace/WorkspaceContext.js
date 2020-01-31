@@ -19,7 +19,8 @@ import PropTypes from 'prop-types';
 import { isEmpty, isEqual } from 'lodash';
 
 import * as context from 'context';
-import { useEventLog, usePrevious } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
+import { usePrevious } from 'utils/hooks';
 import { createActions } from './workspaceActions';
 import { reducer, initialState } from './workspaceReducer';
 

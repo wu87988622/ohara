@@ -23,3 +23,7 @@ export const clearEventLogsRoutine = createRoutine('CLEAR_EVENT_LOGS');
 
 export const fetchSettingsRoutine = createRoutine('FETCH_SETTINGS');
 export const updateSettingsRoutine = createRoutine('UPDATE_SETTINGS');
+
+export const fetchNotificationsRoutine = createRoutine('FETCH_NOTIFICATIONS');
+export const updateNotificationsRoutine = createRoutine('UPDATE_NOTIFICATIONS');
+export const clearNotificationsRoutine = createRoutine('CLEAR_NOTIFICATIONS');

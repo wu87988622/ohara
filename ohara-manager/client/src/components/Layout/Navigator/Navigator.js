@@ -26,7 +26,7 @@ import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
 import * as context from 'context';
-import { useEventLog } from 'utils/hooks';
+import { useEventLog } from 'context/eventLog/eventLogHooks';
 import * as validate from 'utils/validate';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
