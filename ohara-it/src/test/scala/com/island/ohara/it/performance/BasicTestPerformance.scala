@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.{AtomicBoolean, LongAdder}
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import com.island.ohara.client.configurator.v0.MetricsApi.Meter
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import com.island.ohara.common.data.{Cell, Row, Serializer}
@@ -34,6 +33,7 @@ import org.junit.rules.Timeout
 import org.junit.{After, Rule}
 import spray.json.JsValue
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -83,10 +83,15 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     )
   )
 
+  private[this] val logMetersFrequencyKey               = "ohara.it.performance.log.meters.frequency"
+  private[this] val logMetersFrequencyDefault: Duration = 5 seconds
+  protected val logMetersFrequency: Duration =
+    value(logMetersFrequencyKey).map(Duration(_)).getOrElse(logMetersFrequencyDefault)
+
   //------------------------------[topic properties]------------------------------//
   private[this] val megabytesOfInputDataKey           = "ohara.it.performance.data.size"
   private[this] val megabytesOfInputDataDefault: Long = 1000
-  protected val sizeOfInputData =
+  protected val sizeOfInputData: Long =
     1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
 
   private[this] val numberOfPartitionsKey     = "ohara.it.performance.topic.partitions"
@@ -108,9 +113,87 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     folder
   }
 
+  /**
+    * cache all historical meters. we always create an new file with all meters so we have to cache them.
+    */
+  private[this] val reportBuilders = mutable.Map[ConnectorKey, PerformanceReport.Builder]()
+
+  private[this] def connectorReports(): Seq[PerformanceReport] = {
+    val connectorInfos = result(connectorApi.list())
+    connectorInfos.map { info =>
+      val duration = (info.metrics.meters.flatMap(_.duration) :+ 0L).max / 1000
+      val builder  = reportBuilders.getOrElseUpdate(info.key, PerformanceReport.builder)
+      builder.connectorKey(info.key)
+      builder.className(info.className)
+      info.metrics.meters.foreach(
+        meter =>
+          builder
+            .record(duration, meter.name, meter.value)
+            .record(duration, s"${meter.name}(inPerSec)", meter.valueInPerSec.getOrElse(0.0f))
+      )
+      builder.build
+    }
+  }
+
+  private[this] def logMeters(report: PerformanceReport): Unit = if (report.records.nonEmpty) {
+    def simpleName(className: String): String = {
+      val index = className.lastIndexOf(".")
+      if (index != -1) className.substring(index + 1)
+      else className
+    }
+
+    def path(className: String): File = {
+      new File(
+        mkdir(new File(mkdir(new File(reportOutputFolder, simpleName(className))), this.getClass.getSimpleName)),
+        s"${report.key.group()}-${report.key.name()}.csv"
+      )
+    }
+    // we have to fix the order of key-value
+    // if we generate line via map.keys and map.values, the order may be different ...
+    val headers = report.records.head._2.keySet.toList
+    report.records.values.foreach { items =>
+      headers.foreach(
+        name =>
+          if (!items.contains(name))
+            throw new RuntimeException(s"$name disappear?? current:${items.keySet.mkString(",")}")
+      )
+    }
+    val file = path(report.className)
+    if (file.exists() && !file.delete()) throw new RuntimeException(s"failed to remove file:$file")
+    val fileWriter = new FileWriter(file)
+    try {
+      fileWriter.write("duration," + headers.map(s => s"""\"$s\"""").mkString(","))
+      fileWriter.write("\n")
+      report.records.foreach {
+        case (duration, item) =>
+          val line = s"$duration," + headers.map(header => f"${item(header)}%.3f").mkString(",")
+          fileWriter.write(line)
+          fileWriter.write("\n")
+      }
+    } finally Releasable.close(fileWriter)
+  }
+
   protected def sleepUntilEnd(): Long = {
-    TimeUnit.MILLISECONDS.sleep(durationOfPerformance.toMillis)
+    val end = CommonUtils.current() + durationOfPerformance.toMillis
+    while (CommonUtils.current() <= end) {
+      val reports = connectorReports()
+      try reports.foreach(logMeters)
+      catch {
+        case e: Throwable =>
+          log.error("failed to log meters", e)
+      } finally afterRecodingReports(reports)
+      TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
+    }
     durationOfPerformance.toMillis
+  }
+
+  /**
+    * invoked after all metrics of connectors are recorded.
+    * Noted: it is always invoked even if we fail to record reports
+    * @param reports the stuff we record
+    */
+  protected def afterRecodingReports(reports: Seq[PerformanceReport]): Unit = {
+    // nothing by default
   }
 
   /**
@@ -228,28 +311,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   @After
   def record(): Unit = {
-    def simpleName(className: String): String = {
-      val index = className.lastIndexOf(".")
-      if (index != -1) className.substring(index + 1)
-      else className
-    }
-
-    // $OUTPUT/className/testName/$RANDOM.csv
-    def path(className: String): File =
-      new File(
-        mkdir(new File(mkdir(new File(reportOutputFolder, simpleName(className))), this.getClass.getSimpleName)),
-        s"${CommonUtils.randomString(10)}.csv"
-      )
-
-    // record connector meters
-    val connectorInfos = result(connectorApi.list())
-    connectorInfos
-      .map(_.className)
-      .toSet[String]
-      .foreach(
-        className => record(path(className), connectorInfos.filter(_.className == className).flatMap(_.metrics.meters))
-      )
-
     // Have setup connector on the worker.
     // Need to stop the connector on the worker.
     result(connectorApi.list()).foreach(
@@ -262,45 +323,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
           true
         )
     )
-
-    afterStoppingConnectors(connectorInfos, result(topicApi.list()))
-  }
-
-  private[this] def record(file: File, meters: Seq[Meter]): Unit =
-    recordCsv(
-      file,
-      meters
-        .map(m => m.name -> m)
-        .toMap
-        .flatMap {
-          case (name, meter) =>
-            Seq(
-              name               -> meter.value,
-              s"$name(inPerSec)" -> meter.valueInPerSec.getOrElse(0.0)
-            )
-        },
-      // the empty causes exception
-      (meters.flatMap(_.duration) :+ 0L).max.toDouble / 1000f
-    )
-
-  private[this] def recordCsv(file: File, items: Map[String, Double], duration: Double): Unit = if (items.nonEmpty) {
-    // we have to fix the order of key-value
-    // if we generate line via map.keys and map.values, the order may be different ...
-    val headers = (items.keys.toList :+ "duration").sorted
-    val values = headers
-      .map {
-        case "duration" =>
-          duration
-        case s =>
-          items(s)
-      }
-      .map(d => f"$d%.3f")
-      .mkString(",")
-    val fileWriter = new FileWriter(file)
-    try {
-      fileWriter.write(headers.map(s => s"""\"$s\"""").mkString(","))
-      fileWriter.write("\n")
-      fileWriter.write(values)
-    } finally Releasable.close(fileWriter)
+    afterStoppingConnectors(result(connectorApi.list()), result(topicApi.list()))
   }
 }
