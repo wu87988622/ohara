@@ -63,11 +63,11 @@ final class TestConfig extends OharaTest with Matchers {
 
   @Test
   def testAllSettings(): Unit = {
-    DefaultDefinitions.all(SERVER_TYPE_KEY) should ===(SERVER_TYPE_DEFINITION)
-    DefaultDefinitions.all(CLIENT_PORT_KEY) should ===(CLIENT_PORT_DEFINITION)
-    DefaultDefinitions.all(BROKERS_KEY) should ===(BROKERS_DEFINITION)
-    DefaultDefinitions.all(SOURCE_TO_TOPICS_KEY) should ===(SOURCE_TO_TOPICS_DEFINITION)
-    DefaultDefinitions.all(SINK_FROM_TOPICS_KEY) should ===(SINK_FROM_TOPICS_DEFINITION)
-    DefaultDefinitions.all(SINK_POLL_TIMEOUT) should ===(SINK_POLL_TIMEOUT_DEF)
+    DefaultDefinitions.all should contain(SERVER_TYPE_DEFINITION)
+    DefaultDefinitions.all should contain(CLIENT_PORT_DEFINITION)
+    DefaultDefinitions.all should contain(BROKERS_DEFINITION)
+    DefaultDefinitions.all should contain(SOURCE_TO_TOPICS_DEFINITION)
+    DefaultDefinitions.all should contain(SINK_FROM_TOPICS_DEFINITION)
+    DefaultDefinitions.all should contain(SINK_POLL_TIMEOUT_DEF)
   }
 }

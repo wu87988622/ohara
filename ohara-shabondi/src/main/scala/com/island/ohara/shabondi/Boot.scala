@@ -24,17 +24,36 @@ import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.shabondi.DefaultDefinitions.{SERVER_TYPE_SINK, SERVER_TYPE_SOURCE}
 import com.island.ohara.shabondi.sink.SinkRouteHandler
 import com.island.ohara.shabondi.source.SourceRouteHandler
+import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 
 object Boot {
+  private val log                              = Logger(Boot.getClass)
   implicit val actorSystem: ActorSystem        = ActorSystem("shabondi")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
+  private def parseArgs(args: Array[String]): Map[String, String] =
+    CommonUtils
+      .parse(args.toSeq.asJava)
+      .asScala
+      .toMap
+      .map {
+        case (k, v) =>
+          (k, Config.unescape(v))
+      }
+
+  private def dumpArgs(args: Map[String, String]): Unit = {
+    log.info("Arguments:")
+    args.foreach { case (k, v) => log.info(s"    $k=$v") }
+  }
+
   def main(args: Array[String]): Unit = {
     try {
-      val rawConfig = CommonUtils.parse(args.toSeq.asJava).asScala.toMap
-      val config    = Config(rawConfig)
+      val newArgs = parseArgs(args)
+      dumpArgs(newArgs)
+
+      val config    = Config(newArgs)
       val webServer = new WebServer(config, newRouteHandler(config))
       webServer.start()
     } catch {

@@ -21,18 +21,31 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.island.ohara.common.setting.SettingDef.Type
 import com.island.ohara.common.setting.{SettingDef, TopicKey}
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-private[shabondi] object Config {
+object Config {
   def apply(raw: Map[String, String]) =
     new Config(raw)
+
+  private val ESCAPE_STRING = "_____"
+
+  def escape(value: String): String = {
+    if (value.contains(ESCAPE_STRING))
+      throw new IllegalArgumentException(s"Cannot escape the value `$value` by escape string $ESCAPE_STRING")
+    value.replaceAll("\"", ESCAPE_STRING)
+  }
+
+  def unescape(value: String): String =
+    value.replaceAll(ESCAPE_STRING, "\"")
 }
 
 private[shabondi] class Config(raw: Map[String, String]) {
   import DefaultDefinitions._
+
+  //private def valueOf(key: String): String = Config.unescape(raw(key))
 
   def serverType: String = raw(SERVER_TYPE_KEY)
 
@@ -49,7 +62,10 @@ private[shabondi] class Config(raw: Map[String, String]) {
   def brokers: String = raw(BROKERS_KEY)
 
   private def durationValue(settingDef: SettingDef): JDuration =
-    if (!raw.contains(settingDef.key)) settingDef.defaultDuration() else CommonUtils.toDuration(raw(settingDef.key))
+    if (!raw.contains(settingDef.key))
+      settingDef.defaultDuration()
+    else
+      CommonUtils.toDuration(raw(settingDef.key))
 }
 
 object DefaultDefinitions {
@@ -65,16 +81,17 @@ object DefaultDefinitions {
   val SERVER_TYPE_SINK   = "sink"
   val SERVER_TYPES       = Set(SERVER_TYPE_SOURCE, SERVER_TYPE_SINK)
 
-  def all: Map[String, SettingDef] = defaultDefinitions.toMap
+  def all: Seq[SettingDef] = defaultDefinitions.values.toSeq
 
   val SERVER_TYPE_KEY = "shabondi.serverType"
   val SERVER_TYPE_DEFINITION = SettingDef.builder
     .key(SERVER_TYPE_KEY)
     .group(coreGroup)
     .orderInGroup(orderNumber)
-    .optional(SERVER_TYPE_SOURCE, SERVER_TYPES.asJava)
+    .required(SERVER_TYPES.asJava)
     .displayName("Shabondi server type")
     .documentation("The server type when Shabondi service start.")
+    .internal()
     .build
     .registerDefault
 
@@ -84,8 +101,20 @@ object DefaultDefinitions {
     .group(coreGroup)
     .orderInGroup(orderNumber)
     .required(Type.BINDING_PORT)
-    .displayName("Topic topic of data produce to")
+    .displayName("The port used to expose Shabondi service")
     .build
+    .registerDefault
+
+  val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
+  val BROKER_CLUSTER_KEY_DEFINITION = SettingDef.builder
+    .key(BROKER_CLUSTER_KEY_KEY)
+    .group(coreGroup)
+    .orderInGroup(orderNumber)
+    .displayName("Broker cluster key")
+    .documentation("the key of broker cluster used for Shabondi")
+    .required(Type.OBJECT_KEY)
+    .reference(SettingDef.Reference.BROKER_CLUSTER)
+    .build()
     .registerDefault
 
   val BROKERS_KEY = "shabondi.brokers"
@@ -96,6 +125,7 @@ object DefaultDefinitions {
     .required(Type.STRING)
     .displayName("Broker list")
     .documentation("The broker list of current workspace")
+    .internal()
     .build
     .registerDefault
 
@@ -142,6 +172,29 @@ object DefaultDefinitions {
     .optional(JDuration.ofMinutes(3))
     .displayName("Data group idle time")
     .documentation("The resource will be released automatically if the data group is not used more than idle time.")
+    .build
+    .registerDefault
+
+  val IMAGE_NAME_DEFINITION = SettingDef.builder
+    .key("imageName")
+    .group(coreGroup)
+    .orderInGroup(orderNumber)
+    .displayName("Image name")
+    .documentation("The image name of this shabondi running with")
+    .optional("oharastream/shabondi:" + VersionUtils.VERSION)
+    // In manager, user cannot change the image name
+    .permission(SettingDef.Permission.READ_ONLY)
+    .build
+    .registerDefault
+
+  val ROUTES_DEFINITION = SettingDef
+    .builder()
+    .key("routes")
+    .group(coreGroup)
+    .orderInGroup(orderNumber)
+    .displayName("Routes")
+    .documentation("the extra routes to this service")
+    .optional(Type.TAGS)
     .build
     .registerDefault
 

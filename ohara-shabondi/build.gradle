@@ -15,11 +15,11 @@
  */
 
 apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'java-library-distribution'
 
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
-  implementation project(':ohara-client')
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging
@@ -43,4 +43,24 @@ dependencies {
   testImplementation libs.scalatest
   testImplementation libs.mockitoAll
   testImplementation libs.junit
+}
+
+
+distributions {
+  main {
+    baseName = "ohara"
+    contents {
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+      into("conf") {
+        from { "$projectDir/src/main/resources" }
+      }
+      into("lib") {
+        from { "$projectDir/build/libs/ohara-shabondi-${version}.jar" }
+      }
+    }
+  }
 }
