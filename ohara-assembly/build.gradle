@@ -42,8 +42,8 @@ dependencies {
   testImplementation libs.akkaHttpTestKit
   testImplementation libs.scalatest
   testImplementation libs.junit
-  testImplementation libs.kafkaStream
-  testImplementation libs.mockito
+  testImplementation libs.kafkaStreams
+  testImplementation libs.mockitoAll
   testImplementation libs.ftpServer
   testImplementation libs.commonsLang
 }

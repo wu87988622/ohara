@@ -28,11 +28,11 @@ class TestShabondiApi extends OharaTest {
 
     val desc  = ShabondiDescription("name1", 123, Some("RUNNING"), Seq.empty, 129, 1)
     val json1 = SHABONDI_DESCRIPTION_JSON_FORMAT.write(desc).toString()
-    json1 should be("""{"name":"name1","state":"RUNNING","lastModified":123,"instances":1,"to":[],"port":129}""")
+    json1 should be("""{"instances":1,"lastModified":123,"name":"name1","port":129,"state":"RUNNING","to":[]}""")
 
     val desc2 = ShabondiDescription("name1", 123, None, Seq("topic1"), 129, 1)
     val json2 = SHABONDI_DESCRIPTION_JSON_FORMAT.write(desc2).toString()
-    json2 should be("""{"name":"name1","lastModified":123,"instances":1,"to":["topic1"],"port":129}""")
+    json2 should be("""{"instances":1,"lastModified":123,"name":"name1","port":129,"to":["topic1"]}""")
 
     val jsonValue =
       """

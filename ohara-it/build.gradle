@@ -36,7 +36,7 @@ dependencies {
   implementation project(':ohara-streams')
   implementation libs.kafkaConnectRuntime
   testImplementation libs.scalaLogging
-  testImplementation libs.sprayJson
+  testImplementation libs.akkaHttpSprayJson
   // our it env use postgresql
   testImplementation libs.postgresql
 
