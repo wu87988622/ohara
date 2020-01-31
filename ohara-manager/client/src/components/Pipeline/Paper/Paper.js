@@ -24,7 +24,11 @@ import { useTheme } from '@material-ui/core/styles';
 import { KIND } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import { createConnection, getCellData } from './PaperUtils';
+import {
+  createConnection,
+  getCellData,
+  getChangeEventType,
+} from './PaperUtils';
 import { useSnackbar } from 'context';
 
 const Paper = React.forwardRef((props, ref) => {
@@ -43,16 +47,22 @@ const Paper = React.forwardRef((props, ref) => {
     onCellConfig = _.noop,
   } = props;
 
-  const { palette } = useTheme();
   const showMessage = useSnackbar();
+  const { palette } = useTheme();
 
   const graphRef = React.useRef(null);
   const paperRef = React.useRef(null);
-  const cellRef = React.useRef({});
-  // sometime onCellEvent props do not immediate updates
-  const onCellEventRef = React.useRef({});
+
+  // Ensure that we only call the event handler once, this prevent paper from
+  // making too many network request to the backend service
+  const cellAddRef = React.useRef(null);
+  const cellChangeRef = React.useRef(null);
+  const cellRemoveRef = React.useRef(null);
+
+  // Prevent from getting stale event handlers
+  const onCellEventRef = React.useRef(null);
+
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
-  const [hasUnConnectedLink, setHasUnConnectedLink] = React.useState(false);
 
   React.useEffect(() => {
     const namespace = joint.shapes;
@@ -237,25 +247,69 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     // This paperApi should be passed into all event handlers as the second
-    // parameter,  // e.g., onConnect(..., paperApi)
+    // parameter,  // e.g., onConnect(eventObject, paperApi)
     // the only exception is the onRemove as it doesn't any other parameters.
     const paperApi = ref.current;
 
-    // Binding custom handlers
+    // Binding custom event handlers
     graph.on('add', cell => {
-      if (
-        !_.isEqual(cellRef.current, cell) &&
-        _.get(paperApi, 'state.isReady', false) &&
-        !_.get(cell, 'attributes.shouldSkipOnElementAdd', false)
-      ) {
-        const data = getCellData(cell);
-        cellRef.current = cell;
-        onCellEventRef.current.onElementAdd(data, paperApi);
-      }
+      if (!_.get(paperApi, 'state.isReady')) return;
+      if (_.isEqual(cellAddRef.current, cell)) return;
+      if (cell.get('shouldSkipOnElementAdd')) return;
+      if (cell.isLink()) return;
+
+      const data = getCellData(cell);
+      cellAddRef.current = cell;
+      onCellEventRef.current.onElementAdd(data, paperApi);
+
+      // OnChange event handler is called on graph's `add`, `change` and `remove` events
+      onChange(
+        {
+          eventType: 'add',
+          subEventType: 'add',
+          cellData: getCellData(cell),
+        },
+        paperApi,
+      );
     });
 
     graph.on('change', (cell, updates) => {
-      onChange({ cell, updates }, paperApi);
+      if (_.isEqual(cellChangeRef.current, updates)) return;
+
+      cellChangeRef.current = updates;
+
+      const subEventType = getChangeEventType(cell, updates);
+      if (subEventType === undefined) return;
+
+      onChange(
+        {
+          eventType: 'change',
+          subEventType: getChangeEventType(cell, updates),
+          cellData: getCellData(cell),
+        },
+        paperApi,
+      );
+    });
+
+    graph.on('remove', cell => {
+      if (_.isEqual(cellRemoveRef.current, cell)) return;
+      cellRemoveRef.current = cell;
+
+      // If the link is not fully connected, don't call the
+      // onChange handler below
+      if (cell.isLink()) {
+        const { targetId } = getCellData(cell);
+        if (targetId === null) return;
+      }
+
+      onChange(
+        {
+          eventType: 'remove',
+          subEventType: 'remove',
+          cellData: getCellData(cell),
+        },
+        paperApi,
+      );
     });
 
     paper.on('element:pointerclick', elementView => {
@@ -278,8 +332,6 @@ const Paper = React.forwardRef((props, ref) => {
           // so we're passing graph down here
           graph,
         });
-
-        setHasUnConnectedLink(false);
 
         if (result) {
           return onConnect(result, paperApi);
@@ -320,7 +372,11 @@ const Paper = React.forwardRef((props, ref) => {
 
       // Graph events
       // graph.off('add');
-      graph.off('change');
+      // graph.off('change');
+      // graph.off('remove');
+
+      // Cell events
+      paper.off('cell:pointermove');
 
       // Element events
       paper.off('element:pointerclick');
@@ -340,14 +396,11 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
-    hasUnConnectedLink,
     onCellDeselect,
     onCellSelect,
-    onCellStart,
     onChange,
     onConnect,
     onDisconnect,
-    onElementAdd,
     palette.grey,
     ref,
     showMessage,
@@ -439,7 +492,6 @@ const Paper = React.forwardRef((props, ref) => {
           });
 
           graph.addCell(newLink);
-          setHasUnConnectedLink(true);
           return;
         }
 
@@ -482,6 +534,9 @@ const Paper = React.forwardRef((props, ref) => {
         }
 
         return graph.getCells().map(getCellData);
+      },
+      load(cellData) {
+        graph.resetCells(cellData);
       },
       setScale(sx, sy) {
         if (sx === undefined) {
@@ -553,7 +608,7 @@ const Paper = React.forwardRef((props, ref) => {
       // the state will there are updates
       state: {
         isReady: true,
-        // Only expose necessary options from JointJS's default
+        // Only expose necessary options from JointJS' default
         options: _.pick(paper.options, ['origin']),
       },
     };

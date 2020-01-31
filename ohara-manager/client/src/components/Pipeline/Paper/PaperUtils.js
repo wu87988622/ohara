@@ -33,6 +33,7 @@ export const getCellData = cellOrView => {
       displayName: cell.get('displayName'),
       isTemporary: cell.get('isTemporary') || false,
       className: cell.get('className'),
+      position: cell.get('position'),
       jarKey: cell.get('jarKey') || null,
       isShared: cell.get('isShared') || false,
     };
@@ -45,6 +46,19 @@ export const getCellData = cellOrView => {
     sourceId: link.get('source').id || null,
     targetId: link.get('target').id || null,
   };
+};
+
+export const getChangeEventType = (cell, updates) => {
+  if (!updates) return null;
+
+  if (_.has(cell, 'changed.position') && _.has(updates, 'translateBy'))
+    return 'position';
+
+  if (_.has(cell, 'changed.vertices') || _.has(updates, 'ui'))
+    return 'vertices';
+
+  if (_.has(cell, 'changed.attrs') && cell.get('target').id)
+    return 'connection';
 };
 
 export const createConnection = params => {

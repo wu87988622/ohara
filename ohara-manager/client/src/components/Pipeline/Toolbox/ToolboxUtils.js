@@ -37,6 +37,7 @@ export const createToolboxList = params => {
     streamGraph,
     sinkGraph,
     searchResults,
+    paperApi,
   } = params;
 
   const { sources, topics, streams, sinks } = connectors;
@@ -77,8 +78,18 @@ export const createToolboxList = params => {
 
     updateBox() {
       // Updating the HTML with a data stored in the cell model.
-      this.$box.find('.display-name').text(this.model.get('name'));
-      this.$box.find('.icon').html(this.model.get('icon'));
+
+      const $box = this.$box;
+      const model = this.model;
+
+      $box.find('.display-name').text(model.get('name'));
+      $box.find('.icon').html(model.get('icon'));
+
+      if (model.get('isDisabled') !== undefined) {
+        model.get('isDisabled')
+          ? $box.addClass('is-disabled')
+          : $box.removeClass('is-disabled');
+      }
     },
   });
 
@@ -113,6 +124,11 @@ export const createToolboxList = params => {
   const displayTopics = isNull(searchResults) ? topics : searchResults.topics;
 
   displayTopics.forEach((topic, index) => {
+    // Shared topic can only be added into the Paper once
+    const isDisabled = paperApi
+      .getCells('topic')
+      .some(t => t.name === topic.name);
+
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
         position: { x: 10, y: index * 40 },
@@ -120,8 +136,9 @@ export const createToolboxList = params => {
         name: topic.name,
         kind: topic.kind,
         className: topic.className,
-        icon: topic.isShared ? AddPipelineOnlyTopic : AddSharedTopic,
+        icon: topic.isShared ? AddSharedTopic : AddPipelineOnlyTopic,
         isShared: topic.isShared,
+        isDisabled,
       }),
     );
   });
@@ -172,21 +189,27 @@ export const enableDragAndDrop = params => {
     // Add "hover" state in items, I cannot figure out how to do
     // this when initializing the HTML elements...
     toolPaper.on('cell:mouseenter', cellView => {
+      if (cellView.model.get('isDisabled')) return;
       cellView.$box.css('backgroundColor', 'rgba(0, 0, 0, 0.08)');
     });
 
     toolPaper.on('cell:mouseleave', cellView => {
+      if (cellView.model.get('isDisabled')) return;
       cellView.$box.css('backgroundColor', 'transparent');
     });
 
     // Create "flying papers", which enable drag and drop feature
     toolPaper.on('cell:pointerdown', (cellView, event, x, y) => {
-      $('#paper').append('<div id="flying-paper" class="flying-paper"></div>');
+      if (cellView.model.get('isDisabled')) return;
+
+      const cellKind = cellView.model.get('kind');
+      $('#paper').append(`<div class="flying-paper flying-${cellKind}"></div>`);
+
       const flyingGraph = new joint.dia.Graph();
       new joint.dia.Paper({
-        el: $('#flying-paper'),
-        width: 160,
-        height: 50,
+        el: $('.flying-paper'),
+        width: cellKind === KIND.topic ? 60 : 160,
+        height: 60,
         model: flyingGraph,
         cellViewNamespace: joint.shapes,
         interactive: false,
@@ -202,13 +225,13 @@ export const enableDragAndDrop = params => {
       flyingShape.position(0, 0);
       flyingGraph.addCell(flyingShape);
 
-      $('#flying-paper').offset({
+      $('.flying-paper').offset({
         left: event.pageX - offset.x,
         top: event.pageY - offset.y,
       });
 
       $('#paper').on('mousemove.fly', event => {
-        $('#flying-paper').offset({
+        $('.flying-paper').offset({
           left: event.pageX - offset.x,
           top: event.pageY - offset.y,
         });
@@ -289,7 +312,7 @@ export const enableDragAndDrop = params => {
           .off('mouseup.fly');
         flyingShape.remove();
 
-        $('#flying-paper').remove();
+        $('.flying-paper').remove();
       });
     });
   });

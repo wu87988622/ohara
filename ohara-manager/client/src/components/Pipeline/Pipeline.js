@@ -169,29 +169,24 @@ const Pipeline = () => {
                   ref={paperRef}
                   onCellSelect={element => setSelectedCell(element)}
                   onCellDeselect={() => setSelectedCell(null)}
-                  onElementAdd={(
-                    { id, name, className, jarKey, kind, isTemporary },
-                    paperApi,
-                  ) => {
+                  onElementAdd={(cellData, paperApi) => {
+                    const { kind, isTemporary } = cellData;
                     switch (kind) {
                       case KIND.sink:
                       case KIND.source:
                         if (!isTemporary) {
-                          createConnector({ id, name, className }, paperApi);
+                          createConnector(cellData, paperApi);
                         }
                         break;
 
                       case KIND.stream:
                         if (!isTemporary) {
-                          createStream(
-                            { id, name, className, jarKey },
-                            paperApi,
-                          );
+                          createStream(cellData, paperApi);
                         }
                         break;
 
                       case KIND.topic:
-                        createTopic({ id, name, className }, paperApi);
+                        createTopic(cellData, paperApi);
                         break;
 
                       default:
@@ -337,49 +332,57 @@ const Pipeline = () => {
                         break;
                     }
                   }}
-                  onCellStart={({ id, name, kind }, paperApi) => {
-                    switch (kind) {
+                  onCellStart={(cellData, paperApi) => {
+                    switch (cellData.kind) {
                       case KIND.sink:
                       case KIND.source:
-                        startConnector({ id, name }, paperApi);
+                        startConnector(cellData, paperApi);
                         break;
 
                       case KIND.stream:
-                        startStream({ id, name }, paperApi);
+                        startStream(cellData, paperApi);
                         break;
 
                       default:
                         break;
                     }
                   }}
-                  onCellStop={({ id, name, kind }, paperApi) => {
-                    switch (kind) {
+                  onCellStop={(cellData, paperApi) => {
+                    switch (cellData.kind) {
                       case KIND.sink:
                       case KIND.source:
-                        stopConnector({ id, name }, paperApi);
+                        stopConnector(cellData, paperApi);
                         break;
 
                       case KIND.stream:
-                        stopStream({ id, name }, paperApi);
+                        stopStream(cellData, paperApi);
                         break;
 
                       default:
                         break;
                     }
                   }}
-                  onCellRemove={({ id, name, kind }, paperApi) => {
-                    switch (kind) {
+                  onCellRemove={(cellData, paperApi) => {
+                    switch (cellData.kind) {
                       case KIND.sink:
                       case KIND.source:
-                        removeConnector({ id, name }, paperApi);
+                        removeConnector(cellData, paperApi);
                         break;
 
                       case KIND.stream:
-                        removeStream({ id, name }, paperApi);
+                        removeStream(cellData, paperApi);
                         break;
 
                       case KIND.topic:
-                        removeTopic({ id, name }, paperApi);
+                        removeTopic(cellData, paperApi);
+
+                        if (cellData.isShared) {
+                          // If a shared topic is removed from the Paper, we should
+                          // re-render the Toolbox, so the topic can be re-added
+                          // into the Paper again
+                          pipelineDispatch({ type: 'setToolboxKey' });
+                        }
+
                         break;
                       default:
                         break;

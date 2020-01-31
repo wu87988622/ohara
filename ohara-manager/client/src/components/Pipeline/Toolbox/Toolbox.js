@@ -194,6 +194,7 @@ const Toolbox = props => {
         sinkGraph,
         topicGraph,
         searchResults,
+        paperApi,
       });
 
       // Add the ability to drag and drop connectors/streams/topics

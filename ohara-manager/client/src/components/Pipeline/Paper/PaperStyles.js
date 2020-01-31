@@ -36,6 +36,22 @@ export const StyledPaper = styled.div(
       opacity: 0.85;
       z-index: ${theme.zIndex.flyingPaper};
       padding: ${theme.spacing(0, 2)};
+      font-size: ${theme.typography.body1};
+
+      &.flying-topic {
+        border-radius: 100%;
+
+        .item {
+          .icon {
+            margin-right: 0;
+            line-height: 0;
+          }
+        }
+
+        .display-name {
+          display: none;
+        }
+      }
 
       .item {
         height: auto !important;
