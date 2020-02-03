@@ -33,6 +33,10 @@ const path = require('path');
 
 module.exports = (on, config) => {
   const configFile = process.env.CYPRESS_CONFIG_FILE;
+
+  // using default configuration if not assign a config file
+  if (!configFile) return config;
+
   const configForEnvironment = getConfigurationByFile(configFile);
 
   // we overwrite default config by cypress.{api|e2e}.json file

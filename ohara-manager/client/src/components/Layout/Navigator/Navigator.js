@@ -144,6 +144,7 @@ const Navigator = () => {
             }}
             handleConfirm={handleSubmit}
             confirmDisabled={submitting || pristine || invalid}
+            testId="new-pipeline-dialog"
           >
             <form onSubmit={handleSubmit}>
               <Field

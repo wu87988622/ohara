@@ -35,6 +35,14 @@
 import './defaultCommands';
 import './e2eCommands';
 import './retryOnFail';
+import { deleteAllServices } from '../utils';
+
+after(async () => {
+  // after each spec (file) tests finished, we make sure all service are stopped and deleted directly
+  // even some tests of spec were failed, this command still run instantly.
+  // see https://github.com/cypress-io/cypress/issues/203#issuecomment-251009808
+  await deleteAllServices();
+});
 
 const customAssertions = (chai, utils) => {
   const customMethodA = _super => {

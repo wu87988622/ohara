@@ -108,17 +108,30 @@ export const useRedirect = () => {
       pipeline => pipeline.name === pipelineName,
     );
 
+    // pipelines exist in current workspace and pipeline name in path
     if (pipelineName && isPipelineReady) {
+      // the pipeline name in path not exist
       if (!hasCurrentPipeline) {
-        const url = hasPipeline
-          ? `/${workspaceName}/${pipelines[0].name}`
-          : `/${workspaceName}`;
-        history.push(url);
+        // redirect to default workspace and pipeline
+        if (!hasCurrentWorkspace) {
+          const url = hasPipeline
+            ? `/${workspaces[0].name}/${pipelines[0].name}`
+            : `/${workspaces[0].name}`;
+          history.push(url);
+          // redirect to current workspace and default pipeline
+        } else {
+          const url = hasPipeline
+            ? `/${workspaceName}/${pipelines[0].name}`
+            : `/${workspaceName}`;
+          history.push(url);
+        }
       } else {
         history.push(`/${workspaceName}/${pipelineName}`);
       }
+      // pipelines exist in current workspace but pipeline name not in path
     } else if (isPipelineReady && hasWorkspace && hasPipeline) {
       history.push(`/${workspaceName}/${pipelines[0].name}`);
+      // only workspace in the path
     } else if (workspaceName) {
       if (!hasCurrentWorkspace) {
         const url = hasWorkspace ? `/${workspaces[0].name}` : '/';
