@@ -26,7 +26,7 @@ RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 RUN gradle clean build -x test
 RUN mkdir /opt/ohara
-RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN tar -xvf $(find "/testpatch/ohara/ohara-manager/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 RUN $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara.sh -v > $(find "/opt/ohara/" -maxdepth 1 -type d -name "ohara-*")/bin/ohara_version
 
 FROM centos:7.7.1908

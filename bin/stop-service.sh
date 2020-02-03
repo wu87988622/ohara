@@ -28,7 +28,7 @@ PROJECT_HOME="$(dirname "$BIN_DIR")"
 
 # our manager is running background so a way of breaking manager is necessary
 if [ "$1" == "manager" ]; then
-  cd "$PROJECT_HOME/manager"
+  cd "$PROJECT_HOME"
   yarn clean:process
   exit
 elif [ "$1" == "-v" ] || [ "$1" == "version" ] || [ "$1" == "-version" ]; then

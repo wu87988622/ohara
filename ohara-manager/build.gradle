@@ -44,6 +44,7 @@ task clean {
       }
     }
   }
+  delete "$projectDir/build"
 }
 
 task setup {
@@ -135,12 +136,68 @@ task e2e {
   dependsOn setup
 }
 
+task assembly(type: Tar) {
+  /**
+   * the runtime stuff are downloaded by setup task so assembly must run after setup.
+   */
+  dependsOn setup
+  exec {
+    commandLine "ls", "$projectDir/client"
+  }
+  /**
+   * exclude useless dirs and files from ohara-manager
+   */
+  exclude ".env"
+  exclude ".env.test"
+  exclude ".eslintrc"
+  exclude ".gitignore"
+  exclude ".eslintignore"
+  exclude ".prettierignore"
+  exclude ".build.gradle"
+  exclude ".yarnrc"
+  exclude "package.json"
+  exclude "cypress.json"
+  exclude "yarn.lock"
+  exclude "node_modules"
+  exclude "cypress"
+  exclude "public"
+  exclude "coverage"
+  exclude "src"
+  into("ohara-manager-${project.properties["version"]}/bin") {
+    // ref to root module
+    from { "$projectDir/../bin" }
+    fileMode 0755
+  }
+  into("ohara-manager-${project.properties["version"]}/client") {
+    from { "$projectDir/client" }
+  }
+  into("ohara-manager-${project.properties["version"]}/constants") {
+    from { "$projectDir/constants" }
+  }
+  into("ohara-manager-${project.properties["version"]}/node_modules") {
+    from { "$projectDir/node_modules" }
+  }
+  into("ohara-manager-${project.properties["version"]}/routes") {
+    from { "$projectDir/routes" }
+  }
+  into("ohara-manager-${project.properties["version"]}/utils") {
+    from { "$projectDir/utils" }
+  }
+  into("ohara-manager-${project.properties["version"]}") {
+    from { "$projectDir/../gradle.properties" }
+    from { "$projectDir/start.js" }
+    from { "$projectDir/config.js" }
+  }
+  destinationDir file("$projectDir/build/distributions")
+  archiveName "ohara-manager-${project.properties["version"]}.tar"
+}
 
 task build {
   dependsOn setup
   dependsOn test
   dependsOn lint
   dependsOn format
+  dependsOn assembly
 }
 
 task runManager {

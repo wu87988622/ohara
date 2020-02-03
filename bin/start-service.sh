@@ -38,7 +38,7 @@ do
 done
 
 if [ "$service" == "manager" ]; then
-  cd "$PROJECT_HOME/manager"
+  cd "$PROJECT_HOME"
   exec node ./start.js $ARGS
 else
   if [ "$service" == "configurator" ]; then
