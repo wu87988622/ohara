@@ -23,15 +23,17 @@ import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.connector.hdfs.sink.HDFSSink
 import com.island.ohara.connector.jdbc.source.JDBCSourceConnector
+import com.island.ohara.it.category.PerformanceGroup
+import org.junit.experimental.categories.Category
 import org.junit.{AssumptionViolatedException, Test}
 import spray.json.{JsNumber, JsString}
 
+@Category(Array(classOf[PerformanceGroup]))
 class TestPerformance4JDBCSourceToHDFSSink extends BasicTestPerformance4Jdbc {
-  private[this] val HDFS_URL_KEY: String = "ohara.it.performance.hdfs.url"
-  private[this] val dataDir: String      = "/tmp"
+  private[this] val dataDir: String = "/tmp"
   private[this] val hdfsURL: String = sys.env.getOrElse(
-    HDFS_URL_KEY,
-    throw new AssumptionViolatedException(s"$HDFS_URL_KEY does not exists!!!")
+    PerformanceTestingUtils.HDFS_URL_KEY,
+    throw new AssumptionViolatedException(s"${PerformanceTestingUtils.HDFS_URL_KEY} does not exists!!!")
   )
 
   override protected val tableName: String = s"TABLE${CommonUtils.randomString().toUpperCase()}"
