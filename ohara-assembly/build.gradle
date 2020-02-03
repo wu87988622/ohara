@@ -18,15 +18,15 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
 dependencies {
   // using compile enable java-library-distribution to include all dependencies in binary file
-  compile project(':ohara-client')
-  compile project(':ohara-common')
-  compile project(':ohara-configurator')
-  compile project(':ohara-connector')
-  compile project(':ohara-kafka')
-  compile project(':ohara-metrics')
-  compile project(':ohara-shabondi')
-  compile project(':ohara-streams')
-  compile libs.akkaSlf4j
+  implementation project(':ohara-client')
+  implementation project(':ohara-common')
+  implementation project(':ohara-configurator')
+  implementation project(':ohara-connector')
+  implementation project(':ohara-kafka')
+  implementation project(':ohara-metrics')
+  implementation project(':ohara-shabondi')
+  implementation project(':ohara-streams')
+  implementation libs.akkaSlf4j
   testImplementation project(path: ':ohara-agent', configuration: 'tests')
   testImplementation project(path: ':ohara-client', configuration: 'tests')
   testImplementation project(path: ':ohara-common', configuration: 'tests')

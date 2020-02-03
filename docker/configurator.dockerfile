@@ -20,13 +20,15 @@ ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
 ARG BEFORE_BUILD=""
+ARG KAFKA_VERSION=2.4.0
+ARG SCALA_VERSION=2.12
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
-RUN gradle clean build -x test -PskipManager
+RUN gradle clean build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara
-RUN tar -xvf $(find "/testpatch/ohara/ohara-assembly/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
+RUN tar -xvf $(find "/testpatch/ohara/ohara-configurator/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 
 FROM centos:7.7.1908
 

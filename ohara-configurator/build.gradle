@@ -18,6 +18,7 @@ import java.util.stream.StreamSupport
  */
 
 apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: 'java-library-distribution'
 
 dependencies {
   implementation project(':ohara-agent')
@@ -82,3 +83,22 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
 test.dependsOn(':ohara-streams:streamJar')
 // we use the dumb connector to test FileInfoRoute
 test.dependsOn(':ohara-kafka:testJar')
+
+distributions {
+  main {
+    contents {
+      into("conf") {
+        // ref to root module
+        from { "$projectDir/src/main/resources" }
+      }
+      into("bin") {
+        // ref to root module
+        from { "$projectDir/../bin" }
+        fileMode 0755
+      }
+      into('lib') {
+        from(jar)
+      }
+    }
+  }
+}
