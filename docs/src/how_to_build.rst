@@ -53,7 +53,7 @@ to simplify the development of ohara.
       $ gradle clean build -x test
 
     .. note::
-      the tar file is located at ohara-assembly/build/distributions
+      the tar file is located at ohara-${module}/build/distributions
 
   Run All UTs
 
@@ -107,18 +107,6 @@ to simplify the development of ohara.
 
        Note that a file without the license header will fail at early QA
        build
-
-
-  Build Uber Jar
-
-    .. code-block:: console
-
-      $ gradle clean uberJar -PskipManager
-
-    .. note::
-
-       the uber jar is under ohara-assembly/build/libs/
-
 
   Publish Artifacts to JFrog Bintray
 

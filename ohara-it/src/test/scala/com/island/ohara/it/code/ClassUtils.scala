@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package com.island.ohara
+package com.island.ohara.it.code
 
 import java.io.FileInputStream
 import java.lang.reflect.Modifier
 import java.util.jar.JarInputStream
 import java.util.regex.Pattern
 
-import org.apache.commons.lang3.ClassUtils
 import org.junit.Test
 
 import scala.collection.JavaConverters._
-package object assembly {
+
+private[code] object ClassUtils {
   /**
     * return the super class and interfaces of input class.
     * @param rootClass input class
     * @return super class and interfaces
     */
   def superClasses(rootClass: Class[_]): Seq[Class[_]] =
-    ClassUtils.getAllInterfaces(rootClass).asScala ++ ClassUtils.getAllSuperclasses(rootClass).asScala
+    org.apache.commons.lang3.ClassUtils.getAllInterfaces(rootClass).asScala ++ org.apache.commons.lang3.ClassUtils
+      .getAllSuperclasses(rootClass)
+      .asScala
 
   /**
     * seek the methods having annotation "Test" from a class

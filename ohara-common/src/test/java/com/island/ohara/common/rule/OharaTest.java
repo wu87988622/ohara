@@ -23,7 +23,7 @@ import org.junit.rules.Timeout;
 
 /**
  * OharaTest carries the basic information to junit to set our tests. All ohara tests must extend
- * it. TestTestCases (in ohara-assembly) is able to pick up the invalidated classes for us :)
+ * it. TestTestCases (in ohara-it) is able to pick up the invalidated classes for us :)
  */
 public abstract class OharaTest {
 

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.island.ohara.assembly
+package com.island.ohara.it.code
 
 import com.island.ohara.common.pattern.{Builder, Creator}
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers._
+import ClassUtils._
 
 /**
   * this test class is used to find out the invalid format of builder/creator.

@@ -305,7 +305,7 @@ Ohara manager image
     $ yarn setup
 
   After the build, copy/use these files and directories to the destination
-  directory (Note this step is automatically done by Ohara-assembly
+  directory (Note this step is automatically done by Ohara-${module}
   module):
 
   -  start.js
@@ -323,7 +323,7 @@ Ohara manager image
      Note that if you add new files or dirs to the **Server** or
      **Client** and these files and dirs are required for production
      build, please list that file in the above list as well as editing the
-     gradle file under ``ohara/ohara-assembly/build.gradle``. **Skipping
+     gradle file under ``ohara/ohara-manager/build.gradle``. **Skipping
      this step will cause production build failed!**
 
   **From the Ohara manager project root**, use the following command to

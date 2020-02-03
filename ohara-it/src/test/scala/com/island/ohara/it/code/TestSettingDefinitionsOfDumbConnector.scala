@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.assembly
+package com.island.ohara.it.code
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef

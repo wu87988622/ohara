@@ -32,7 +32,7 @@ dependencies {
   implementation libs.slf4jLog4j
   testImplementation project(':ohara-common').sourceSets.test.output
   testImplementation project(':ohara-testing-util')
-  testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation libs.junit
 }
 

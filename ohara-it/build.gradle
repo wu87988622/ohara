@@ -66,11 +66,16 @@ dependencies {
     exclude group: 'org.mortbay.jetty', module: 'jetty'
     exclude group: 'org.mortbay.jetty', module: 'jetty-util'
   }
-  testImplementation project(":ohara-common").sourceSets.test.output
-  testImplementation project(":ohara-testing-util").sourceSets.test.output
-  testImplementation project(":ohara-connector").sourceSets.main.output
-  testImplementation project(":ohara-connector").sourceSets.test.output
-  testImplementation project(":ohara-client").sourceSets.test.output
+  testImplementation project(path: ':ohara-agent', configuration: 'tests')
+  testImplementation project(path: ':ohara-client', configuration: 'tests')
+  testImplementation project(path: ':ohara-common', configuration: 'tests')
+  testImplementation project(path: ':ohara-configurator', configuration: 'tests')
+  testImplementation project(path: ':ohara-connector', configuration: 'tests')
+  testImplementation project(path: ':ohara-kafka', configuration: 'tests')
+  testImplementation project(path: ':ohara-metrics', configuration: 'tests')
+  testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
+  testImplementation project(path: ':ohara-streams', configuration: 'tests')
+  testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.akkaStream

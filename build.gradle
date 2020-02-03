@@ -179,7 +179,7 @@ subprojects {
   }
 
   // -------------------------------------------------[publication]-------------------------------------------------//
-  if (it.name != 'ohara-manager' && it.name != 'ohara-it' && it.name != 'ohara-assembly') {
+  if (it.name != 'ohara-manager' && it.name != 'ohara-it') {
     String moduleName = it.name
     apply plugin: 'com.novoda.bintray-release'
 
@@ -243,7 +243,6 @@ subprojects {
   }
 
   // -------------------------------------------------[scala compiler configs]-------------------------------------------------//
-  // we put some test case in ohara-assembly so those compiler options should be added to ohara-assembly also.
   tasks.withType(ScalaCompile) {
     scalaCompileOptions.additionalParameters = [
       // Scala Compiler Options

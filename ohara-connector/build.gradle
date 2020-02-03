@@ -34,9 +34,9 @@ dependencies {
   implementation libs.akkaStream
   implementation libs.kafkaConnectRuntime
   testImplementation project(":ohara-testing-util")
-  testImplementation project(":ohara-common").sourceSets.test.output
-  testImplementation project(":ohara-kafka").sourceSets.test.output
-  testImplementation project(":ohara-testing-util").sourceSets.test.output
+  testImplementation project(path: ':ohara-common', configuration: 'tests')
+  testImplementation project(path: ':ohara-kafka', configuration: 'tests')
+  testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation libs.scalatest
   testImplementation libs.mockitoAll
   testImplementation libs.junit

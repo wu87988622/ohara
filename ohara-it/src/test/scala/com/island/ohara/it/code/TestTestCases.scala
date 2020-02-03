@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.island.ohara.assembly
+package com.island.ohara.it.code
 
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Method, Modifier}
@@ -23,6 +23,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.it.IntegrationTest
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
+import ClassUtils._
 
 class TestTestCases extends OharaTest {
   /**
@@ -31,13 +32,6 @@ class TestTestCases extends OharaTest {
   private[this] val validTestGroups: Seq[Class[_]] = Seq(
     classOf[OharaTest],
     classOf[IntegrationTest]
-  )
-
-  /**
-    * those classes don't have correct name format.
-    */
-  private[this] val ignoredTestClasses: Seq[Class[_]] = Seq(
-    classOf[ListTestCases]
   )
 
   @Test
@@ -80,7 +74,6 @@ class TestTestCases extends OharaTest {
       // there are many basic test cases for the various cases. Their names don't start with "Test" since they
       // are no prepared to test directly.
       .filterNot(isAbstract)
-      .filterNot(ignoredTestClasses.contains)
       .map(clz => clz -> superClasses(clz))
       .filter {
         case (_, supers) => supers.exists(validTestGroups.contains)
