@@ -773,17 +773,16 @@ class TestStreamApi extends OharaTest {
            |  """.stripMargin.parseJson)
     }.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
-    intercept[DeserializationException] {
-      StreamApi.UPDATING_JSON_FORMAT.read(s"""
-           |  {
-           |    "jarKey": {
-           |      "group": "g",
-           |      "name": "n"
-           |    },
-           |    "nodeNames": []
-           |  }
-           |  """.stripMargin.parseJson)
-    }.getMessage should include("nodeNames cannot be an empty array")
+    // pass
+    StreamApi.UPDATING_JSON_FORMAT.read(s"""
+                                           |  {
+                                           |    "jarKey": {
+                                           |      "group": "g",
+                                           |      "name": "n"
+                                           |    },
+                                           |    "nodeNames": []
+                                           |  }
+                                           |  """.stripMargin.parseJson).nodeNames shouldBe Some(Set.empty)
   }
 
   @Test

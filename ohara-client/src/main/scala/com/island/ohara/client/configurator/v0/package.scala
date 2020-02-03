@@ -272,8 +272,6 @@ package object v0 {
       // the "actions" keywords must be avoided in nodeNames parameter
       .rejectKeyword(START_COMMAND)
       .rejectKeyword(STOP_COMMAND)
-      // the node names can't be empty
-      .rejectEmpty()
       .toRefiner
       .refine
 

@@ -746,6 +746,15 @@ class TestWorkerApi extends OharaTest {
   }
 
   @Test
+  def emptyNodeNamesShouldPassInUpdating(): Unit = {
+    WorkerApi.UPDATING_JSON_FORMAT.read(s"""
+                                           |  {
+                                           |    "nodeNames": []
+                                           |  }
+                                           |  """.stripMargin.parseJson).nodeNames shouldBe Some(Set.empty)
+  }
+
+  @Test
   def groupShouldAppearInResponse(): Unit = {
     val name = CommonUtils.randomString(5)
     val res = WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(

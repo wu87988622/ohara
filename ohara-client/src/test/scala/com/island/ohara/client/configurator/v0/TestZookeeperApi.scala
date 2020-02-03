@@ -224,6 +224,15 @@ class TestZookeeperApi extends OharaTest {
       .convertTo[String] shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
   @Test
+  def emptyNodeNamesShouldPassInUpdating(): Unit = {
+    ZookeeperApi.UPDATING_JSON_FORMAT.read(s"""
+                                           |  {
+                                           |    "nodeNames": []
+                                           |  }
+                                           |  """.stripMargin.parseJson).nodeNames shouldBe Some(Set.empty)
+  }
+
+  @Test
   def parseImageNameOnUpdate(): Unit =
     intercept[DeserializationException] {
       ZookeeperApi.UPDATING_JSON_FORMAT.read(s"""

@@ -265,6 +265,14 @@ class TestBrokerApi extends OharaTest {
       .convertTo[String] shouldBe BrokerApi.IMAGE_NAME_DEFAULT
 
   @Test
+  def emptyNodeNamesShouldPassInUpdating(): Unit = {
+    BrokerApi.UPDATING_JSON_FORMAT.read(s"""
+                                              |  {
+                                              |    "nodeNames": []
+                                              |  }
+                                              |  """.stripMargin.parseJson).nodeNames shouldBe Some(Set.empty)
+  }
+  @Test
   def parseImageNameOnUpdate(): Unit =
     intercept[DeserializationException] {
       BrokerApi.UPDATING_JSON_FORMAT.read(s"""
