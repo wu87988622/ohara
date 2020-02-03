@@ -32,7 +32,7 @@ const StyledAutocomplete = styled(Autocomplete)(
 
 const ArrayDef = props => {
   const {
-    input: { name, onChange, value: formValue = [], ...restInput },
+    input: { name, onChange, value: formValue = [] },
     meta = {},
     helperText,
     refs,
@@ -48,7 +48,7 @@ const ArrayDef = props => {
       freeSolo
       renderTags={(value, getTagProps) => {
         onChange(value);
-        return [...formValue, value].map((option, index) => (
+        return formValue.map((option, index) => (
           <Chip variant="outlined" label={option} {...getTagProps({ index })} />
         ));
       }}
@@ -57,7 +57,6 @@ const ArrayDef = props => {
           <TextField
             {...params}
             {...rest}
-            InputProps={restInput}
             placeholder={'Please press enter to add'}
             fullWidth
             name={name}

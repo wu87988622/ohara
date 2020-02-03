@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { find, some, filter, isEmpty, capitalize } from 'lodash';
+import { find, filter, isEmpty, capitalize, has, isArray } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -31,7 +31,12 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import RenderDefinitions from './SettingDefinitions';
 import { KIND } from 'const';
-import { useConnectorState, useTopicState } from 'context';
+import {
+  useConnectorState,
+  useTopicState,
+  useStreamState,
+  useFileState,
+} from 'context';
 import {
   StyleTitle,
   StyleIconButton,
@@ -53,17 +58,37 @@ const PipelinePropertyDialog = props => {
     data = {},
     maxWidth = 'md',
   } = props;
-  const { title = '', classInfo = {}, cellData } = data;
+  const {
+    title = '',
+    classInfo = {},
+    cellData = { kind: '' },
+    paperApi,
+  } = data;
+  const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
   const { data: currentConnectors } = useConnectorState();
+  const { data: currentStreams } = useStreamState();
   const { data: currentTopics } = useTopicState();
+  const { data: currentFiles } = useFileState();
 
-  const targetConnector = currentConnectors.find(
-    connector =>
-      connector.className === classInfo.className &&
-      connector.name === cellData.name,
-  );
+  let targetCell;
+  switch (kind) {
+    case KIND.source:
+    case KIND.sink:
+      targetCell = currentConnectors.find(
+        connector =>
+          connector.className === classInfo.className &&
+          connector.name === cellData.name,
+      );
+      break;
+    case KIND.stream:
+      targetCell = currentStreams.find(stream => stream.name === cellData.name);
+      break;
+
+    default:
+      break;
+  }
 
   const groupBy = array => {
     if (!array) return [];
@@ -84,50 +109,79 @@ const PipelinePropertyDialog = props => {
 
   const groups = groupBy(classInfo.settingDefinitions);
 
-  const onSubmit = async values => {
-    let isPipelineOnlyTopic;
-    if (!isEmpty(values.topicKeys)) {
-      isPipelineOnlyTopic = !isEmpty(
-        filter(values.topicKeys, topicKey => topicKey.startsWith('T')),
+  const getTopicWithKey = (values, key) => {
+    if (values[key] === 'Please select...' || isArray(values[key])) return;
+    const isPipelineOnlyTopic = !isEmpty(
+      filter(values[key], topicKey => topicKey.startsWith('T')),
+    );
+    if (isPipelineOnlyTopic) {
+      const pipelineOnlyTopic = find(
+        currentTopics,
+        topic => topic.tags.displayName === values[key],
       );
-      if (isPipelineOnlyTopic) {
-        const pipelineOnlyTopic = find(currentTopics, topic =>
-          some(
-            values.topicKeys,
-            topicKey => topicKey === topic.tags.displayName,
-          ),
-        );
+      values[key] = [
+        { name: pipelineOnlyTopic.name, group: pipelineOnlyTopic.group },
+      ];
+    } else {
+      const publicTopic = currentTopics.filter(
+        topic => topic.name === values[key],
+      )[0];
+      values[key] = [{ name: publicTopic.name, group: publicTopic.group }];
+    }
+  };
 
-        values.topicKeys = [
-          { name: pipelineOnlyTopic.name, group: pipelineOnlyTopic.group },
-        ];
-      } else {
-        const publicTopic = currentTopics.filter(
-          topic => topic.name === values.topicKeys,
-        )[0];
-        values.topicKeys = [
-          { name: publicTopic.name, group: publicTopic.group },
-        ];
+  const remove = (values, key) => {
+    if (values[key].length === 0) {
+      delete values[key];
+    }
+  };
+
+  const onSubmit = async values => {
+    const topicCells = paperApi.getCells(KIND.topic);
+    Object.keys(values).forEach(key => {
+      switch (key) {
+        case 'topicKeys':
+          getTopicWithKey(values, key);
+          break;
+        case 'to':
+          getTopicWithKey(values, key);
+          break;
+        case 'from':
+          getTopicWithKey(values, key);
+          break;
+        case 'nodeNames':
+          remove(values, key);
+          break;
+        default:
+          break;
       }
-      handleSubmit({
-        sourceElement: cellData,
-        topicElement: {
-          name: values.topicKeys.name,
-          kind: KIND.topic,
-          className: KIND.topic,
-          isShared: !isPipelineOnlyTopic,
+    });
+    if (has(values, 'topicKeys') || has(values, 'to') || has(values, 'from')) {
+      handleSubmit(
+        {
+          cell: cellData,
+          topic: {
+            ...topicCells.find(
+              topic => topic.name === values.topicKeys[0].name,
+            ),
+          },
         },
-      });
+        values,
+        paperApi,
+      );
+      handleClose();
+      return;
     }
 
-    handleSubmit({ sourceElement: cellData });
+    handleSubmit({ cell: cellData }, values, paperApi);
     handleClose();
   };
 
   const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
     topics: currentTopics,
+    files: currentFiles,
     Definitions: groups.sort(),
-    initialValues: targetConnector,
+    initialValues: targetCell,
     onSubmit,
   });
 

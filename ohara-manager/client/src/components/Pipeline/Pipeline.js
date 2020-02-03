@@ -55,6 +55,8 @@ const Pipeline = () => {
   } = context.usePipelinePropertyDialog();
   const { setSelectedCell } = context.usePipelineActions();
 
+  const { data: currentStream } = context.useStreamState();
+
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
 
   const [
@@ -73,12 +75,14 @@ const Pipeline = () => {
     start: startConnector,
     stop: stopConnector,
     remove: removeConnector,
+    updateLink: updateLinkConnector,
     removeSourceLink: removeSourceLinkConnector,
     removeSinkLink: removeSinkLinkConnector,
   } = pipelineUtils.connector();
 
   const {
     create: createStream,
+    update: updateStream,
     updateLinkTo: updateStreamLinkTo,
     updateLinkFrom: updateStreamLinkFrom,
     start: startStream,
@@ -89,6 +93,12 @@ const Pipeline = () => {
   } = pipelineUtils.stream();
 
   const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
+
+  const currentStreamRef = React.useRef(null);
+
+  useEffect(() => {
+    currentStreamRef.current = currentStream;
+  }, [currentStream]);
 
   const clean = (cells, paperApi, onlyRemoveLink = false) => {
     Object.keys(cells).forEach(key => {
@@ -142,6 +152,22 @@ const Pipeline = () => {
     pipelineDispatch({ type: 'setToolboxKey' });
   }, [currentPipeline, pipelineDispatch, prevPipeline]);
 
+  const handleSubmit = (params, values, paperApi) => {
+    const { cell, topic = {} } = params;
+    const { kind } = cell;
+    switch (kind) {
+      case KIND.source:
+      case KIND.sink:
+        updateConnector(cell, topic, values, paperApi);
+        break;
+      case KIND.stream:
+        updateStream(cell, topic, values, paperApi);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       {currentWorkspace && (
@@ -193,18 +219,31 @@ const Pipeline = () => {
                         break;
                     }
                   }}
-                  onCellConfig={cellData => {
-                    const { displayName, className, kind } = cellData;
-                    const { classInfos } = currentWorker;
-                    const [targetConnector] = classInfos.filter(
-                      classInfo => classInfo.className === className,
-                    );
-
+                  onCellConfig={(cellData, paperApi) => {
+                    const { displayName, className, kind, name } = cellData;
+                    let targetCell;
+                    switch (kind) {
+                      case KIND.source:
+                      case KIND.sink:
+                        const { classInfos } = currentWorker;
+                        targetCell = classInfos.filter(
+                          classInfo => classInfo.className === className,
+                        );
+                        break;
+                      case KIND.stream:
+                        targetCell = currentStreamRef.current.find(
+                          stream => stream.name === name,
+                        ).classInfos;
+                        break;
+                      default:
+                        break;
+                    }
                     openPropertyDialog();
                     setPropertyDialogData({
                       title: `Edit the property of ${displayName} ${kind} connector`,
-                      classInfo: targetConnector,
+                      classInfo: targetCell[0],
                       cellData,
+                      paperApi,
                     });
                   }}
                   onConnect={async (cells, paperApi) => {
@@ -224,13 +263,13 @@ const Pipeline = () => {
                     let streamRes;
                     switch (type) {
                       case CONNECTION_TYPE.SOURCE_TOPIC:
-                        updateConnector(
+                        updateLinkConnector(
                           { connector: source, topic, link },
                           paperApi,
                         );
                         break;
                       case CONNECTION_TYPE.TOPIC_SINK:
-                        updateConnector(
+                        updateLinkConnector(
                           { connector: sink, topic, link },
                           paperApi,
                         );
@@ -253,7 +292,7 @@ const Pipeline = () => {
                         if (topicRes.error) {
                           return;
                         }
-                        sourceRes = await updateConnector(
+                        sourceRes = await updateLinkConnector(
                           { connector: source, topic, link: firstLink },
                           paperApi,
                         );
@@ -261,7 +300,7 @@ const Pipeline = () => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        sinkRes = await updateConnector(
+                        sinkRes = await updateLinkConnector(
                           { connector: sink, topic, link: secondeLink },
                           paperApi,
                         );
@@ -282,7 +321,7 @@ const Pipeline = () => {
                         if (topicRes.error) {
                           return;
                         }
-                        sourceRes = await updateConnector(
+                        sourceRes = await updateLinkConnector(
                           { connector: source, topic, link: firstLink },
                           paperApi,
                         );
@@ -319,7 +358,7 @@ const Pipeline = () => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        sinkRes = await updateConnector(
+                        sinkRes = await updateLinkConnector(
                           { connector: sink, topic, link: secondeLink },
                           paperApi,
                         );
@@ -436,6 +475,7 @@ const Pipeline = () => {
         isOpen={isPropertyDialogOpen}
         handleClose={closePropertyDialog}
         data={PropertyDialogData}
+        handleSubmit={handleSubmit}
       />
     </>
   );

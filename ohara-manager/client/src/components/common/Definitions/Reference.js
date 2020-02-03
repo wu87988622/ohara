@@ -15,14 +15,14 @@
  */
 
 import React from 'react';
-import { omit, isObject } from 'lodash';
+import { omit, has, isObject } from 'lodash';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
 const Reference = props => {
   const {
-    input: { name, onChange, value = [], ...restInput },
+    input: { name, onChange, value = {}, ...restInput },
     meta = {},
     helperText,
     disables = [],
@@ -37,14 +37,31 @@ const Reference = props => {
     ...list,
   ];
 
-  const _value =
-    value.length > 0 && list.length > 0
-      ? list.find(topic =>
-          topic.tags.displayName === isObject(value) ? value.name : value,
-        ).tags.displayName
-      : placeholder;
+  const _value = () => {
+    if (isObject(value)) {
+      if (has(value, 'displayName')) {
+        return value.tags.displayName;
+      } else if (has(value, 'name')) {
+        return value.name;
+      } else {
+        return placeholder;
+      }
+    } else if (list.length === 0) {
+      return placeholder;
+    } else {
+      return value;
+    }
+  };
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
+
+  const menuItemValue = item => {
+    if (has(item, 'displayName')) {
+      return item.tags.displayName;
+    } else {
+      return item.name;
+    }
+  };
 
   return (
     <TextField
@@ -53,7 +70,7 @@ const Reference = props => {
       fullWidth
       onChange={onChange}
       name={name}
-      value={_value}
+      value={_value()}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       InputProps={restInput}
@@ -65,7 +82,7 @@ const Reference = props => {
           <MenuItem
             disabled={disabled}
             key={item.name}
-            value={item.tags.displayName}
+            value={menuItemValue(item)}
           >
             {item.name}
           </MenuItem>
