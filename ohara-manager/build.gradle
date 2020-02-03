@@ -141,9 +141,6 @@ task assembly(type: Tar) {
    * the runtime stuff are downloaded by setup task so assembly must run after setup.
    */
   dependsOn setup
-  exec {
-    commandLine "ls", "$projectDir/client"
-  }
   /**
    * exclude useless dirs and files from ohara-manager
    */
