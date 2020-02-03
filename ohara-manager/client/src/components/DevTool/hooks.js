@@ -15,8 +15,10 @@
  */
 
 import { useMemo } from 'react';
+import moment from 'moment';
 import { get, map, find, isEmpty, split } from 'lodash';
 import * as context from 'context';
+import { TAB } from 'context/devTool/const';
 import { usePrevious } from 'utils/hooks';
 
 export const useCurrentLogs = () => {
@@ -52,4 +54,38 @@ export const useCurrentHostName = () => {
       else return allLogs[0].hostname;
     }
   }, [prevAllLogs, allLogs, hostName]);
+};
+
+export const useStatusText = () => {
+  const { tabName } = context.useDevTool();
+  const { query: logQuery } = context.useLogState();
+  const { timeGroup, timeRange, startTime, endTime } = logQuery;
+  const { data } = context.useTopicDataState();
+  const messages = get(data, 'messages', []);
+  const currentLog = useCurrentLogs();
+
+  return useMemo(() => {
+    if (tabName === TAB.topic) {
+      if (isEmpty(messages)) {
+        return 'No topic data';
+      } else {
+        return `${messages.length} rows per query`;
+      }
+    } else {
+      if (isEmpty(currentLog)) {
+        return 'No log data';
+      } else {
+        switch (timeGroup) {
+          case 'latest':
+            return `Latest ${timeRange} minutes`;
+          case 'customize':
+            return `Customize from ${moment(startTime).format(
+              'YYYY/MM/DD hh:mm',
+            )} to ${moment(endTime).format('YYYY/MM/DD hh:mm')}`;
+          default:
+            return 'Unexpected time format';
+        }
+      }
+    }
+  }, [currentLog, endTime, messages, startTime, tabName, timeGroup, timeRange]);
 };

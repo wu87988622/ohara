@@ -14,21 +14,36 @@
  * limitations under the License.
  */
 
+import React from 'react';
+import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
 
-export const StyledStatusBar = styled.div(
+const StyledStatusBar = styled.div(
   ({ theme }) => css`
-    position: absolute;
     width: 100%;
-    bottom: 0;
-    line-height: 26px;
+    height: ${props => props.height};
+    line-height: ${props => props.height};
     padding-left: ${theme.spacing(1)}px;
-    height: 26px;
-    z-index: ${theme.zIndex.appBar};
-    background-color: ${props => props.theme.palette.grey[50]};
-    color: ${props => props.theme.palette.text.disabled};
+    background-color: ${theme.palette.grey[50]};
+    color: ${theme.palette.text.disabled};
     border: 1px;
     border-color: ${theme.palette.grey[200]};
     border-style: solid;
+    z-index: ${theme.zIndex.appBar};
   `,
 );
+
+const StatusBar = props => (
+  <StyledStatusBar height={props.height}>{props.children}</StyledStatusBar>
+);
+
+StatusBar.propTypes = {
+  children: PropTypes.node.isRequired,
+  height: PropTypes.string,
+};
+
+StatusBar.defaultProps = {
+  height: '26px',
+};
+
+export default StatusBar;

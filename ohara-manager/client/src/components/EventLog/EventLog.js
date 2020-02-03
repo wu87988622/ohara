@@ -23,7 +23,7 @@ import {
   useEventLogContentDialog,
 } from 'context';
 import { VirtualizedList } from 'components/common/List';
-import StatusBar from 'components/DevTool/StatusBar';
+import StatusBar from 'components/common/StatusBar';
 import EventLogRow from './EventLogRow';
 import Header from './EventLogHeader';
 import EventLogContentDialog from './EventLogContentDialog';
@@ -68,7 +68,7 @@ const EventLog = () => {
         <EventLogContentDialog />
       </div>
       <div className="status-bar">
-        <StatusBar statusText={getStatusText()} />
+        <StatusBar>{getStatusText()}</StatusBar>
       </div>
     </Wrapper>
   );

@@ -28,5 +28,11 @@ export const StyledDevTool = styled.div(
       height: 48px;
       background-color: ${theme.palette.grey[50]};
     }
+
+    .status-bar {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+    }
   `,
 );

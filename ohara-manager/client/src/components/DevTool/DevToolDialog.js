@@ -20,11 +20,13 @@ import * as context from 'context';
 import { TAB } from '../../context/devTool/const';
 import Header from './Header';
 import Body from './Body';
-import StatusBar from './StatusBar';
+import { useStatusText } from './hooks';
+import StatusBar from 'components/common/StatusBar';
 import { StyledDevTool } from './DevToolDialogStyles';
 
 const DevToolDialog = () => {
   const { tabName, setTabName } = context.useDevTool();
+  const statusText = useStatusText();
 
   if (!tabName) {
     // initialize the tab
@@ -35,7 +37,9 @@ const DevToolDialog = () => {
     <StyledDevTool>
       <Header />
       <Body />
-      <StatusBar />
+      <div className="status-bar">
+        <StatusBar>{statusText}</StatusBar>
+      </div>
     </StyledDevTool>
   );
 };
