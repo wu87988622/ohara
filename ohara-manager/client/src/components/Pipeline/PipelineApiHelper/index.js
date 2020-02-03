@@ -18,5 +18,6 @@ import connector from './connector';
 import stream from './stream';
 import topic from './topic';
 import * as utils from './apiHelperUtils';
+import { CONNECTION_TYPE } from './apiHelperUtils';
 
-export { connector, stream, topic, utils };
+export { connector, stream, topic, utils, CONNECTION_TYPE };
