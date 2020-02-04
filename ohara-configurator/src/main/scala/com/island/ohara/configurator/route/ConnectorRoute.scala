@@ -100,22 +100,36 @@ private[configurator] object ConnectorRoute {
               )
             case RUNNING =>
               workerCollie.connectorAdmin(workerClusterInfo).flatMap { connectorAdmin =>
-                connectorAdmin.status(connectorInfo.key).map { connectorInfoFromKafka =>
-                  connectorInfo.copy(
-                    state = Some(State.forName(connectorInfoFromKafka.connector.state)),
-                    error = connectorInfoFromKafka.connector.trace,
-                    nodeName = Some(connectorInfoFromKafka.connector.workerHostname),
-                    tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
-                      Status(
-                        state = State.forName(taskStatus.state),
-                        error = taskStatus.trace,
-                        nodeName = taskStatus.workerHostname
+                // we check the active connectors first to avoid exception :)
+                connectorAdmin.exist(connectorInfo.key).flatMap {
+                  if (_) connectorAdmin.status(connectorInfo.key).map { connectorInfoFromKafka =>
+                    connectorInfo.copy(
+                      state = Some(State.forName(connectorInfoFromKafka.connector.state)),
+                      error = connectorInfoFromKafka.connector.trace,
+                      nodeName = Some(connectorInfoFromKafka.connector.workerHostname),
+                      tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
+                        Status(
+                          state = State.forName(taskStatus.state),
+                          error = taskStatus.trace,
+                          nodeName = taskStatus.workerHostname
+                        )
+                      },
+                      metrics = Metrics(
+                        meterCache
+                          .meters(workerClusterInfo)
+                          .getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty)
                       )
-                    },
-                    metrics = Metrics(
-                      meterCache.meters(workerClusterInfo).getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty)
                     )
-                  )
+                  } else
+                    Future.successful(
+                      connectorInfo.copy(
+                        state = None,
+                        error = None,
+                        nodeName = None,
+                        tasksStatus = Seq.empty,
+                        metrics = Metrics.EMPTY
+                      )
+                    )
                 }
               }
           }

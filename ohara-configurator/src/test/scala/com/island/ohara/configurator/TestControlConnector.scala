@@ -116,7 +116,7 @@ class TestControlConnector extends WithBrokerWorker {
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => result(connectorApi.stop(sink.key)))
       await(() => result(connectorAdmin.nonExist(sink.key)))
-      await(() => result(connectorApi.get(sink.key)).state.nonEmpty)
+      await(() => result(connectorApi.get(sink.key)).state.isEmpty)
     } finally if (result(connectorAdmin.exist(sink.key))) result(connectorAdmin.delete(sink.key))
   }
 
