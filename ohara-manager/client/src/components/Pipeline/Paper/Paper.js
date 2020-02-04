@@ -116,8 +116,9 @@ const Paper = React.forwardRef((props, ref) => {
       onCellStop,
       onCellRemove,
       onElementAdd,
+      onCellConfig,
     };
-  }, [onCellRemove, onCellStart, onCellStop, onElementAdd]);
+  }, [onCellConfig, onCellRemove, onCellStart, onCellStop, onElementAdd]);
 
   React.useEffect(() => {
     //Prevent event from repeating
@@ -431,7 +432,7 @@ const Paper = React.forwardRef((props, ref) => {
             ...newData,
             onCellStart: onCellEventRef.current.onCellStart,
             onCellStop: onCellEventRef.current.onCellStop,
-            onCellConfig,
+            onCellConfig: onCellEventRef.current.onCellConfig,
             onCellRemove: onCellEventRef.current.onCellRemove,
           });
         } else if (kind === topic) {

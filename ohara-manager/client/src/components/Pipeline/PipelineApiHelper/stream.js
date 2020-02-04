@@ -45,6 +45,23 @@ const stream = () => {
     }
   };
 
+  const update = async (cell, topic, values, paperApi) => {
+    const res = await updateStream({
+      name: cell.name,
+      ...values,
+    });
+
+    if (!res.error && topic !== undefined) {
+      if (values.to.length > 0) {
+        paperApi.addLink(cell.id, topic.id);
+      }
+      if (values.from.length > 0) {
+        paperApi.addLink(topic.id, cell.id);
+      }
+    }
+    return res;
+  };
+
   const updateLinkTo = async (params, paperApi) => {
     const { stream, topic, link } = params;
     const res = await updateStream({
@@ -133,6 +150,7 @@ const stream = () => {
 
   return {
     create,
+    update,
     updateLinkTo,
     updateLinkFrom,
     start,

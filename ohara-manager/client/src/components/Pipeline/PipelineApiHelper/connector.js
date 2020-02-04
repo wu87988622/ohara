@@ -16,7 +16,7 @@
 
 import * as context from 'context';
 import * as util from './apiHelperUtils';
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, KIND } from 'const';
 
 const connector = () => {
   const {
@@ -43,16 +43,23 @@ const connector = () => {
     }
   };
 
-  const update = async (params, paperApi) => {
-    const { connector, topic, link } = params;
-
+  const update = async (cell, topic, values, paperApi) => {
     const res = await updateConnector({
-      name: connector.name,
-      topicKeys: [{ name: topic.name }],
+      name: cell.name,
+      ...values,
     });
 
-    if (res.error) {
-      paperApi.removeElement(link.id);
+    if (!res.error && topic !== undefined) {
+      switch (cell.kind) {
+        case KIND.source:
+          paperApi.addLink(cell.id, topic.id);
+          break;
+        case KIND.sink:
+          paperApi.addLink(topic.id, cell.id);
+          break;
+        default:
+          break;
+      }
     }
     return res;
   };
@@ -95,6 +102,20 @@ const connector = () => {
     }
   };
 
+  const updateLink = async (params, paperApi) => {
+    const { connector, topic, link } = params;
+
+    const res = await updateConnector({
+      name: connector.name,
+      topicKeys: [{ name: topic.name }],
+    });
+
+    if (res.error) {
+      paperApi.removeElement(link.id);
+    }
+    return res;
+  };
+
   const removeSourceLink = async (params, topic, paperApi) => {
     const { name, id } = params;
     const res = await updateConnector({
@@ -125,6 +146,7 @@ const connector = () => {
     start,
     stop,
     remove,
+    updateLink,
     removeSourceLink,
     removeSinkLink,
   };
