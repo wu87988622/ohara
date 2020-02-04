@@ -77,7 +77,7 @@ public class SettingDef implements JsonObject, Serializable {
   public enum Necessary {
     REQUIRED,
     OPTIONAL,
-    OPTIONAL_WITH_RANDOM_DEFAULT
+    RANDOM_DEFAULT
   }
 
   // -------------------------------[Check rule]-------------------------------//
@@ -754,7 +754,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return this builder
      */
     public Builder stringWithRandomDefault() {
-      return checkAndSet(Type.STRING, Necessary.OPTIONAL_WITH_RANDOM_DEFAULT, null);
+      return checkAndSet(Type.STRING, Necessary.RANDOM_DEFAULT, null);
     }
 
     /**
@@ -764,7 +764,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return this builder
      */
     public Builder bindingPortWithRandomDefault() {
-      return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL_WITH_RANDOM_DEFAULT, null);
+      return checkAndSet(Type.BINDING_PORT, Necessary.RANDOM_DEFAULT, null);
     }
 
     /**

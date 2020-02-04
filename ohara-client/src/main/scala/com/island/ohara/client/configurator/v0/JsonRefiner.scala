@@ -152,7 +152,7 @@ trait JsonRefiner[T] {
       case Type.BINDING_PORT =>
         if (definition.hasDefault)
           nullToShort(definition.key(), definition.defaultShort)
-        else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
+        else if (definition.necessary() == Necessary.RANDOM_DEFAULT)
           nullToJsValue(definition.key(), () => JsNumber(CommonUtils.availablePort()))
         if (!definition.internal()) requireConnectionPort(definition.key())
       case Type.OBJECT_KEY =>
@@ -239,7 +239,7 @@ trait JsonRefiner[T] {
         }
       case Type.STRING =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
-        else if (definition.necessary() == Necessary.OPTIONAL_WITH_RANDOM_DEFAULT)
+        else if (definition.necessary() == Necessary.RANDOM_DEFAULT)
           nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)))
         if (!definition.internal()) requireJsonType[JsString](definition.key())
       case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>

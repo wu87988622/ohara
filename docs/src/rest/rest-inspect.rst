@@ -88,7 +88,7 @@ Example Response
            "internal": false,
            "permission": "EDITABLE",
            "documentation": "the port exposed to each quorum",
-           "necessary": "OPTIONAL_WITH_RANDOM_DEFAULT",
+           "necessary": "RANDOM_DEFAULT",
            "valueType": "BINDING_PORT",
            "tableKeys": [],
            "orderInGroup": 10,

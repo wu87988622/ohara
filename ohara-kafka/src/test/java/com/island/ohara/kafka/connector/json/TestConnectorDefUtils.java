@@ -316,7 +316,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .filter(s -> s.key().equals(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()))
             .findFirst()
             .get();
-    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL_WITH_RANDOM_DEFAULT);
+    Assert.assertEquals(setting.necessary(), SettingDef.Necessary.RANDOM_DEFAULT);
     Assert.assertFalse(setting.internal());
     Assert.assertFalse(setting.hasDefault());
     Assert.assertEquals(SettingDef.Reference.NONE, setting.reference());

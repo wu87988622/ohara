@@ -29,7 +29,7 @@ import { isArray, isFunction } from 'lodash';
 const necessaryType = {
   required: 'REQUIRED',
   optional: 'OPTIONAL',
-  randomValue: 'OPTIONAL_WITH_RANDOM_DEFAULT',
+  randomValue: 'RANDOM_DEFAULT',
 };
 
 const getTypeWithValueType = key => {
