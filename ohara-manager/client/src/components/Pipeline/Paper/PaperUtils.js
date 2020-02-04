@@ -48,19 +48,6 @@ export const getCellData = cellOrView => {
   };
 };
 
-export const getChangeEventType = (cell, updates) => {
-  if (!updates) return null;
-
-  if (_.has(cell, 'changed.position') && _.has(updates, 'translateBy'))
-    return 'position';
-
-  if (_.has(cell, 'changed.vertices') || _.has(updates, 'ui'))
-    return 'vertices';
-
-  if (_.has(cell, 'changed.attrs') && cell.get('target').id)
-    return 'connection';
-};
-
 export const createConnection = params => {
   const {
     sourceLink,
@@ -229,7 +216,6 @@ export const createConnection = params => {
 
       const topic = paperApi.addElement({
         name: PipelineOnlyTopicName,
-        graph,
         displayName,
         kind: KIND.topic,
         className: KIND.topic,

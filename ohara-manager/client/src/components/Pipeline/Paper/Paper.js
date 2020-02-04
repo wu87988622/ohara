@@ -24,11 +24,7 @@ import { useTheme } from '@material-ui/core/styles';
 import { KIND } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import {
-  createConnection,
-  getCellData,
-  getChangeEventType,
-} from './PaperUtils';
+import { createConnection, getCellData } from './PaperUtils';
 import { useSnackbar } from 'context';
 
 const Paper = React.forwardRef((props, ref) => {
@@ -235,6 +231,7 @@ const Paper = React.forwardRef((props, ref) => {
           link.target({
             x: (event.pageX - offsetLeft) / scale.sx + localPoint.x,
             y: (event.pageY - offsetTop) / scale.sy + localPoint.y,
+            shouldSkipOnChange: true,
           });
 
           link.attr({
@@ -254,63 +251,39 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Binding custom event handlers
     graph.on('add', cell => {
-      if (!_.get(paperApi, 'state.isReady')) return;
+      if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellAddRef.current, cell)) return;
-      if (cell.get('shouldSkipOnElementAdd')) return;
+
+      // Adding new link is not counted as an `add` event
       if (cell.isLink()) return;
 
       const data = getCellData(cell);
       cellAddRef.current = cell;
-      onCellEventRef.current.onElementAdd(data, paperApi);
+
+      if (!cell.get('shouldSkipOnElementAdd')) {
+        onCellEventRef.current.onElementAdd(data, paperApi);
+      }
 
       // OnChange event handler is called on graph's `add`, `change` and `remove` events
-      onChange(
-        {
-          eventType: 'add',
-          subEventType: 'add',
-          cellData: getCellData(cell),
-        },
-        paperApi,
-      );
+      onChange(paperApi);
     });
 
     graph.on('change', (cell, updates) => {
+      if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellChangeRef.current, updates)) return;
+      if (_.has(cell, 'attributes.target.shouldSkipOnChange')) return;
 
       cellChangeRef.current = updates;
-
-      const subEventType = getChangeEventType(cell, updates);
-      if (subEventType === undefined) return;
-
-      onChange(
-        {
-          eventType: 'change',
-          subEventType: getChangeEventType(cell, updates),
-          cellData: getCellData(cell),
-        },
-        paperApi,
-      );
+      onChange(paperApi);
     });
 
     graph.on('remove', cell => {
+      if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellRemoveRef.current, cell)) return;
+      if (_.has(cell, 'attributes.target.shouldSkipOnChange')) return;
+
       cellRemoveRef.current = cell;
-
-      // If the link is not fully connected, don't call the
-      // onChange handler below
-      if (cell.isLink()) {
-        const { targetId } = getCellData(cell);
-        if (targetId === null) return;
-      }
-
-      onChange(
-        {
-          eventType: 'remove',
-          subEventType: 'remove',
-          cellData: getCellData(cell),
-        },
-        paperApi,
-      );
+      onChange(paperApi);
     });
 
     paper.on('element:pointerclick', elementView => {
