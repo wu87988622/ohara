@@ -52,7 +52,7 @@ private[configurator] object ConnectorRoute {
         case (workerClusterInfo, condition) =>
           condition match {
             case RUNNING =>
-              try workerCollie.workerClient(workerClusterInfo).flatMap(_.connectorDefinitions())
+              try workerCollie.connectorAdmin(workerClusterInfo).flatMap(_.connectorDefinitions())
               catch {
                 case e: Throwable =>
                   LOG.error(s"failed to get definitions from worker cluster:${workerClusterInfo.key}", e)
@@ -99,8 +99,8 @@ private[configurator] object ConnectorRoute {
                 )
               )
             case RUNNING =>
-              workerCollie.workerClient(workerClusterInfo).flatMap { workerClient =>
-                workerClient.status(connectorInfo.key).map { connectorInfoFromKafka =>
+              workerCollie.connectorAdmin(workerClusterInfo).flatMap { connectorAdmin =>
+                connectorAdmin.status(connectorInfo.key).map { connectorInfoFromKafka =>
                   connectorInfo.copy(
                     state = Some(State.forName(connectorInfoFromKafka.connector.state)),
                     error = connectorInfoFromKafka.connector.trace,
@@ -233,7 +233,7 @@ private[configurator] object ConnectorRoute {
                       s"but topic:${topicInfo.key} is on another broker cluster:${topicInfo.brokerClusterKey}"
                   )
                 }
-                workerCollie.workerClient(workerClusterInfo).flatMap {
+                workerCollie.connectorAdmin(workerClusterInfo).flatMap {
                   _.connectorCreator()
                     .settings(connectorInfo.plain)
                     // always override the name
@@ -259,8 +259,8 @@ private[configurator] object ConnectorRoute {
             .workerCluster(connectorInfo.workerClusterKey, RUNNING)
             .check()
             .map(_.runningWorkers.head)
-            .flatMap(workerCollie.workerClient)
-            .flatMap(workerClient => workerClient.delete(connectorInfo.key))
+            .flatMap(workerCollie.connectorAdmin)
+            .flatMap(connectorAdmin => connectorAdmin.delete(connectorInfo.key))
       }
 
   private[this] def hookOfPause(
@@ -274,7 +274,7 @@ private[configurator] object ConnectorRoute {
         .connector(connectorInfo.key, RUNNING)
         .check()
         .map(_.runningWorkers.head)
-        .flatMap(workerCollie.workerClient)
+        .flatMap(workerCollie.connectorAdmin)
         .map { wkClient =>
           wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
             case State.PAUSED.name => Future.unit
@@ -293,7 +293,7 @@ private[configurator] object ConnectorRoute {
         .connector(connectorInfo.key, RUNNING)
         .check()
         .map(_.runningWorkers.head)
-        .flatMap(workerCollie.workerClient)
+        .flatMap(workerCollie.connectorAdmin)
         .map { wkClient =>
           wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
             case State.RUNNING.name => Future.unit

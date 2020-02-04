@@ -18,7 +18,7 @@ package com.island.ohara.it.connector.jio
 
 import com.island.ohara.client.configurator.v0.NodeApi
 import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.{EnvTestingUtils, ServiceKeyHolder}
 
@@ -40,7 +40,7 @@ abstract class BasicIntegrationTestsOfJsonIoOnK8s extends BasicIntegrationTestsO
   /**
     * we initialize the clusters in setup phase so there is nothing in construction .
     */
-  protected def workerClient: WorkerClient = _workerClient
+  protected def connectorAdmin: ConnectorAdmin = _connectorAdmin
 
   /**
     * we initialize the clusters in setup phase so there is nothing in construction .

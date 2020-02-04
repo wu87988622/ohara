@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.ftp
 
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.SettingDef.Necessary
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestFtpDefinition extends WithBrokerWorker {
-  private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -39,7 +39,7 @@ class TestFtpDefinition extends WithBrokerWorker {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
-      workerClient
+      connectorAdmin
         .connectorValidator()
         .connectorKey(connectorKey)
         .numberOfTasks(1)
@@ -93,7 +93,7 @@ class TestFtpDefinition extends WithBrokerWorker {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
-      workerClient
+      connectorAdmin
         .connectorValidator()
         .connectorKey(connectorKey)
         .numberOfTasks(1)

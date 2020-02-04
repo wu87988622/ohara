@@ -17,7 +17,7 @@
 package com.island.ohara.it.connector.jio
 
 import com.island.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.{IntegrationTest, ServiceKeyHolder}
@@ -40,7 +40,7 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
   private[this] def bkApi: BrokerApi.Access = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] def wkApi: WorkerApi.Access = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  protected var _workerClient: WorkerClient = _
+  protected var _connectorAdmin: ConnectorAdmin = _
 
   protected var _brokersConnProps: String = _
   @Before
@@ -100,11 +100,11 @@ abstract class BasicIntegrationTestsOfJsonIo extends IntegrationTest {
       }
       val wkCluster = result(wkApi.list()).head
       wkCluster.freePorts shouldBe Set(freePort)
-      _workerClient = WorkerClient(result(wkApi.list()).head)
+      _connectorAdmin = ConnectorAdmin(result(wkApi.list()).head)
       _brokersConnProps = result(bkApi.list()).head.connectionProps
       // wait worker cluster
       await { () =>
-        try result(_workerClient.plugins()).nonEmpty
+        try result(_connectorAdmin.plugins()).nonEmpty
         catch {
           case _: Throwable => false
         }

@@ -470,7 +470,7 @@ object ObjectChecker {
                     case STOPPED => Future.successful(Some(connectorInfo -> STOPPED))
                     case RUNNING =>
                       serviceCollie.workerCollie
-                        .workerClient(workerClusterInfo)
+                        .connectorAdmin(workerClusterInfo)
                         .flatMap(_.activeConnectors())
                         .map(_.contains(key.connectorNameOnKafka()))
                         .map(if (_) RUNNING else STOPPED)

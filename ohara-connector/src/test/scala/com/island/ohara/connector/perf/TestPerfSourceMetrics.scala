@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.perf
 
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.metrics.BeanChannel
@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 class TestPerfSourceMetrics extends WithBrokerWorker {
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(
     batch = 5,
@@ -41,7 +41,7 @@ class TestPerfSourceMetrics extends WithBrokerWorker {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     Await.result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])

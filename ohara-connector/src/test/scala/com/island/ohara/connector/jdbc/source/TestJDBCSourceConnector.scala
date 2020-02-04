@@ -20,7 +20,7 @@ import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.{Cell, Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -45,7 +45,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
   private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin      = ConnectorAdmin(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -88,7 +88,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .connectorKey(connectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
@@ -142,7 +142,7 @@ class TestJDBCSourceConnector extends With3Brokers3Workers {
       row5.cell(2) shouldBe Cell.of("column3", "null")
       row5.cell(3).toString shouldBe Cell.of("column4", "0").toString
       record.size shouldBe 6
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test

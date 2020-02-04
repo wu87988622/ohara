@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
 import com.island.ohara.client.configurator.v0.{ClusterStatus, WorkerApi}
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -197,10 +197,10 @@ trait WorkerCollie extends Collie {
     * @param workerClusterInfo target cluster
     * @return worker client
     */
-  def workerClient(
+  def connectorAdmin(
     workerClusterInfo: WorkerClusterInfo
-  )(implicit executionContext: ExecutionContext): Future[WorkerClient] =
-    cluster(workerClusterInfo.key).map(_ => WorkerClient(workerClusterInfo))
+  )(implicit executionContext: ExecutionContext): Future[ConnectorAdmin] =
+    cluster(workerClusterInfo.key).map(_ => ConnectorAdmin(workerClusterInfo))
 
   /**
     * Get all counter beans from specific worker cluster

@@ -18,7 +18,7 @@ package com.island.ohara.configurator
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
@@ -73,18 +73,18 @@ class TestControlConnector extends WithBrokerWorker {
     result(connectorApi.get(sink.key)).nodeName.get shouldBe CommonUtils.hostname()
     result(connectorApi.get(sink.key)).error shouldBe None
 
-    val workerClient = WorkerClient(testUtil.workersConnProps)
+    val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
     try {
       await(
         () =>
-          try result(workerClient.exist(sink.key))
+          try result(connectorAdmin.exist(sink.key))
           catch {
             case _: Throwable => false
           }
       )
       await(
         () =>
-          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          try result(connectorAdmin.status(sink.key)).connector.state == State.RUNNING.name
           catch {
             case _: Throwable => false
           }
@@ -95,7 +95,7 @@ class TestControlConnector extends WithBrokerWorker {
       (0 until 3).foreach(_ => result(connectorApi.pause(sink.key)))
       await(
         () =>
-          try result(workerClient.status(sink.key)).connector.state == State.PAUSED.name
+          try result(connectorAdmin.status(sink.key)).connector.state == State.PAUSED.name
           catch {
             case _: Throwable => false
           }
@@ -106,7 +106,7 @@ class TestControlConnector extends WithBrokerWorker {
       (0 until 3).foreach(_ => result(connectorApi.resume(sink.key)))
       await(
         () =>
-          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          try result(connectorAdmin.status(sink.key)).connector.state == State.RUNNING.name
           catch {
             case _: Throwable => false
           }
@@ -115,9 +115,9 @@ class TestControlConnector extends WithBrokerWorker {
 
       // test idempotent stop. the connector should be removed
       (0 until 3).foreach(_ => result(connectorApi.stop(sink.key)))
-      await(() => result(workerClient.nonExist(sink.key)))
+      await(() => result(connectorAdmin.nonExist(sink.key)))
       await(() => result(connectorApi.get(sink.key)).state.nonEmpty)
-    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
+    } finally if (result(connectorAdmin.exist(sink.key))) result(connectorAdmin.delete(sink.key))
   }
 
   @Test
@@ -143,18 +143,18 @@ class TestControlConnector extends WithBrokerWorker {
     // test start
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))
-    val workerClient = WorkerClient(testUtil.workersConnProps)
+    val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
     try {
       await(
         () =>
-          try result(workerClient.exist(sink.key))
+          try result(connectorAdmin.exist(sink.key))
           catch {
             case _: Throwable => false
           }
       )
       await(
         () =>
-          try result(workerClient.status(sink.key)).connector.state == State.RUNNING.name
+          try result(connectorAdmin.status(sink.key)).connector.state == State.RUNNING.name
           catch {
             case _: Throwable => false
           }
@@ -178,9 +178,9 @@ class TestControlConnector extends WithBrokerWorker {
 
       // test stop. the connector should be removed
       result(connectorApi.stop(sink.key))
-      await(() => result(workerClient.nonExist(sink.key)))
+      await(() => result(connectorAdmin.nonExist(sink.key)))
       await(() => result(connectorApi.get(sink.key)).state.isEmpty)
-    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
+    } finally if (result(connectorAdmin.exist(sink.key))) result(connectorAdmin.delete(sink.key))
   }
 
   @Test
@@ -206,18 +206,18 @@ class TestControlConnector extends WithBrokerWorker {
     // test start
     result(topicApi.start(topic.key))
     result(connectorApi.start(sink.key))
-    val workerClient = WorkerClient(testUtil.workersConnProps)
+    val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
     try {
       await(
         () =>
-          try result(workerClient.exist(sink.key))
+          try result(connectorAdmin.exist(sink.key))
           catch {
             case _: Throwable => false
           }
       )
-      result(workerClient.delete(sink.key))
-      result(workerClient.exist(sink.key)) shouldBe false
-    } finally if (result(workerClient.exist(sink.key))) result(workerClient.delete(sink.key))
+      result(connectorAdmin.delete(sink.key))
+      result(connectorAdmin.exist(sink.key)) shouldBe false
+    } finally if (result(connectorAdmin.exist(sink.key))) result(connectorAdmin.delete(sink.key))
   }
 
   @Test

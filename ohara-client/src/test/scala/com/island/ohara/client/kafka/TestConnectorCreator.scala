@@ -21,7 +21,7 @@ import org.junit.Test
 import org.scalatest.Matchers._
 
 class TestConnectorCreator extends OharaTest {
-  private[this] val notWorkingClient = WorkerClient("localhost:2222")
+  private[this] val notWorkingClient = ConnectorAdmin("localhost:2222")
 
   @Test
   def nullConfigs(): Unit =

@@ -22,7 +22,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.stream.StreamTcpException
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -42,7 +42,7 @@ import scala.concurrent.{Await, Future}
   * This class assumes that the clusters env is prepared and all clusters are accessible.
   */
 trait BasicTestsOfJsonIn {
-  protected def workerClient: WorkerClient
+  protected def connectorAdmin: ConnectorAdmin
   protected def brokersConnProps: String
   protected def freePort: Int
 
@@ -104,7 +104,7 @@ trait BasicTestsOfJsonIn {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[JsonIn])
@@ -113,8 +113,8 @@ trait BasicTestsOfJsonIn {
         .settings(props.plain)
         .create()
     )
-    ConnectorTestUtils.checkConnector(workerClient.connectionProps, connectorKey)
-    (result(workerClient.status(connectorKey)).tasks.head.workerHostname, topicKey)
+    ConnectorTestUtils.checkConnector(connectorAdmin.connectionProps, connectorKey)
+    (result(connectorAdmin.status(connectorKey)).tasks.head.workerHostname, topicKey)
   }
 
   @Test
@@ -177,6 +177,8 @@ trait BasicTestsOfJsonIn {
 
   @After
   def cleanupConnectors(): Unit =
-    if (workerClient != null)
-      Releasable.close(() => result(Future.sequence(result(workerClient.activeConnectors()).map(workerClient.delete))))
+    if (connectorAdmin != null)
+      Releasable.close(
+        () => result(Future.sequence(result(connectorAdmin.activeConnectors()).map(connectorAdmin.delete)))
+      )
 }

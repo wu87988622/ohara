@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 import com.island.ohara.agent.{DataCollie, NoSuchClusterException, WorkerCollie}
 import com.island.ohara.client.configurator.v0.ClusterStatus
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.metrics.BeanChannel
 import com.island.ohara.metrics.basic.CounterMBean
@@ -39,7 +39,7 @@ private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectio
   /**
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */
-  private[this] val fakeClientCache = new ConcurrentSkipListMap[WorkerClusterInfo, FakeWorkerClient](
+  private[this] val fakeClientCache = new ConcurrentSkipListMap[WorkerClusterInfo, FakeConnectorAdmin](
     (o1: WorkerClusterInfo, o2: WorkerClusterInfo) => o1.key.compareTo(o2.key)
   )
   override def creator: WorkerCollie.ClusterCreator =
@@ -57,15 +57,15 @@ private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectio
         )
       )
 
-  override def workerClient(
+  override def connectorAdmin(
     cluster: WorkerClusterInfo
-  )(implicit executionContext: ExecutionContext): Future[WorkerClient] =
+  )(implicit executionContext: ExecutionContext): Future[ConnectorAdmin] =
     if (wkConnectionProps != null)
       Future.successful(
-        WorkerClient.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build
+        ConnectorAdmin.builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(wkConnectionProps).build
       )
     else if (clusterCache.keySet().asScala.contains(cluster.key)) {
-      val fake = FakeWorkerClient()
+      val fake = FakeConnectorAdmin()
       val r    = fakeClientCache.putIfAbsent(cluster, fake)
       Future.successful(if (r == null) fake else r)
     } else

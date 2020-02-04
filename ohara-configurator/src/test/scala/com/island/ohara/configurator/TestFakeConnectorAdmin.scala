@@ -19,21 +19,21 @@ import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.fake.FakeWorkerClient
+import com.island.ohara.configurator.fake.FakeConnectorAdmin
 import org.junit.Test
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-class TestFakeWorkerClient extends OharaTest {
+class TestFakeConnectorAdmin extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
   @Test
   def testControlConnector(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val className    = CommonUtils.randomString(10)
-    val fake         = new FakeWorkerClient()
+    val fake         = new FakeConnectorAdmin()
     result(
       fake
         .connectorCreator()

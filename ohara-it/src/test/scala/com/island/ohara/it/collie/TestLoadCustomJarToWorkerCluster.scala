@@ -23,7 +23,7 @@ import com.island.ohara.agent.DataCollie
 import com.island.ohara.agent.docker.DockerClient
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0._
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
@@ -142,11 +142,11 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
     }
     // make sure all workers have loaded the test-purposed connector.
     result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
-      val workerClient = WorkerClient(wkCluster)
+      val connectorAdmin = ConnectorAdmin(wkCluster)
       await(
         () =>
-          try result(workerClient.plugins()).exists(_.className == classOf[DumbSinkConnector].getName)
-            && result(workerClient.plugins()).exists(_.className == classOf[DumbSourceConnector].getName)
+          try result(connectorAdmin.plugins()).exists(_.className == classOf[DumbSinkConnector].getName)
+            && result(connectorAdmin.plugins()).exists(_.className == classOf[DumbSourceConnector].getName)
           catch {
             case _: Throwable => false
           }

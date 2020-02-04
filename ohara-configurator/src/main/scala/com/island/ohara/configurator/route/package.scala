@@ -33,7 +33,7 @@ import com.island.ohara.client.configurator.v0.{
   ErrorApi,
   OharaJsonFormat
 }
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.SettingDef.Permission
 import com.island.ohara.common.setting.{ObjectKey, SettingDef}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
@@ -405,12 +405,14 @@ package object route {
     * @param clusterKey target cluster
     * @return cluster info and client
     */
-  def workerClient(clusterKey: ObjectKey)(
+  def connectorAdmin(clusterKey: ObjectKey)(
     implicit workerCollie: WorkerCollie,
     store: DataStore,
     executionContext: ExecutionContext
-  ): Future[(WorkerClusterInfo, WorkerClient)] =
-    store.value[WorkerClusterInfo](clusterKey).flatMap(cluster => workerCollie.workerClient(cluster).map(cluster -> _))
+  ): Future[(WorkerClusterInfo, ConnectorAdmin)] =
+    store
+      .value[WorkerClusterInfo](clusterKey)
+      .flatMap(cluster => workerCollie.connectorAdmin(cluster).map(cluster -> _))
 
   /**
     * create worker client and topic admin based on input worker cluster key.
@@ -421,8 +423,8 @@ package object route {
     cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext
-  ): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, WorkerClient)] =
-    workerClient(workerClusterKey).flatMap {
+  ): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, ConnectorAdmin)] =
+    connectorAdmin(workerClusterKey).flatMap {
       case (wkInfo, wkClient) =>
         topicAdmin(wkInfo.brokerClusterKey).map {
           case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)

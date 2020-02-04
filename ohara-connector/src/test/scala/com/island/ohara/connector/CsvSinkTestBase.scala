@@ -21,7 +21,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -61,7 +61,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   private[this] val row = Row.of(Cell.of("a", "abc"), Cell.of("b", 123), Cell.of("c", true))
 
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
@@ -97,7 +97,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
-      val creator = workerClient
+      val creator = connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(connectorClass)

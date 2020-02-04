@@ -19,7 +19,7 @@ package com.island.ohara.connector
 import java.time.Duration
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.OharaTestUtils
@@ -35,7 +35,7 @@ object ConnectorTestUtils {
 
   def assertFailedConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit = CommonUtils.await(
     () => {
-      val client = WorkerClient(workersConnProps)
+      val client = ConnectorAdmin(workersConnProps)
       try Await.result(client.status(connectorKey), 10 seconds).connector.state == State.FAILED.name
       catch {
         case _: Throwable => false
@@ -50,10 +50,10 @@ object ConnectorTestUtils {
   def checkConnector(workersConnProps: String, connectorKey: ConnectorKey): Unit =
     CommonUtils.await(
       () => {
-        val workerClient = WorkerClient(workersConnProps)
+        val connectorAdmin = ConnectorAdmin(workersConnProps)
         try {
-          Await.result(workerClient.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
-          val status = Await.result(workerClient.status(connectorKey), 10 seconds)
+          Await.result(connectorAdmin.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
+          val status = Await.result(connectorAdmin.status(connectorKey), 10 seconds)
           status.connector.state == State.RUNNING.name && status.tasks.nonEmpty && status.tasks
             .forall(_.state == State.RUNNING.name)
         } catch {

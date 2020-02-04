@@ -68,7 +68,7 @@ class Test873 extends OharaTest {
 
     try {
       val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-      val client       = WorkerClient(s"${server.hostname}:${server.port}")
+      val client       = ConnectorAdmin(s"${server.hostname}:${server.port}")
       val response = result(
         client.connectorCreator().connectorKey(connectorKey).settings(settings).className(className).create()
       )

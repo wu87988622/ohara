@@ -20,7 +20,7 @@ import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
 import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.{Cell, Column, DataType, Row}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -37,7 +37,7 @@ import scala.concurrent.duration._
   * ftp csv -> topic -> ftp csv
   */
 class TestFtp2Ftp extends With3Brokers3Workers {
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   private[this] val schema: Seq[Column] = Seq(
     Column.builder().name("name").dataType(DataType.STRING).order(1).build(),
@@ -93,7 +93,7 @@ class TestFtp2Ftp extends With3Brokers3Workers {
     val sourceConnectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     // start sink
     Await.result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[FtpSink])
@@ -108,7 +108,7 @@ class TestFtp2Ftp extends With3Brokers3Workers {
     try {
       try {
         Await.result(
-          workerClient
+          connectorAdmin
             .connectorCreator()
             .topicKey(topicKey)
             .connectorClass(classOf[FtpSource])
@@ -140,8 +140,8 @@ class TestFtp2Ftp extends With3Brokers3Workers {
         lines(0) shouldBe header
         lines(1) shouldBe data.head
         lines(2) shouldBe data(1)
-      } finally workerClient.delete(sourceConnectorKey)
-    } finally workerClient.delete(sinkConnectorKey)
+      } finally connectorAdmin.delete(sourceConnectorKey)
+    } finally connectorAdmin.delete(sinkConnectorKey)
   }
 
   private[this] def listCommittedFiles(dir: String): Seq[String] = {

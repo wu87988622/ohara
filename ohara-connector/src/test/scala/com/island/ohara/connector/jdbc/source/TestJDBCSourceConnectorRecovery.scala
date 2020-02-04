@@ -20,7 +20,7 @@ import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -41,7 +41,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
   private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin      = ConnectorAdmin(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -66,7 +66,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .connectorKey(connectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
@@ -91,7 +91,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
         poll1.size < 1000 shouldBe true
 
         //Pause JDBC Source Connector
-        result(workerClient.pause(connectorKey))
+        result(connectorAdmin.pause(connectorKey))
 
         val row0: Row = poll1.head.key.get
         row0.cell(0).name shouldBe "column1"
@@ -109,7 +109,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
         )
 
         //Resume JDBC Source Connector
-        result(workerClient.resume(connectorKey))
+        result(connectorAdmin.resume(connectorKey))
 
         consumer.seekToBeginning() //Reset consumer
 
@@ -127,14 +127,14 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
         poll3.last.key.get.cell(1).value shouldBe "a1001-1"
 
         //Delete JDBC Source Connector
-        result(workerClient.delete(connectorKey))
+        result(connectorAdmin.delete(connectorKey))
 
         val poll4 = consumer.poll(java.time.Duration.ofSeconds(1), 0).asScala
         poll4.isEmpty shouldBe true
 
         //Create JDBC Source Connector
         result(
-          workerClient
+          connectorAdmin
             .connectorCreator()
             .connectorKey(connectorKey)
             .connectorClass(classOf[JDBCSourceConnector])
@@ -166,7 +166,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
         val poll6 = consumer.poll(java.time.Duration.ofSeconds(30), 1002).asScala
         poll6.size shouldBe 1002
       } finally consumer.close
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @After

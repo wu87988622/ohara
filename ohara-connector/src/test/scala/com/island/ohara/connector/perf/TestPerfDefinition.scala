@@ -16,7 +16,7 @@
 
 package com.island.ohara.connector.perf
 
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -31,7 +31,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 class TestPerfDefinition extends WithBrokerWorker {
   private[this] val perfSource                 = new PerfSource
-  private[this] val workerClient               = WorkerClient(testUtil().workersConnProps())
+  private[this] val connectorAdmin             = ConnectorAdmin(testUtil().workersConnProps())
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
   @Test
@@ -60,7 +60,7 @@ class TestPerfDefinition extends WithBrokerWorker {
   def testSource(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val response = result(
-      workerClient
+      connectorAdmin
         .connectorValidator()
         .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         .numberOfTasks(1)

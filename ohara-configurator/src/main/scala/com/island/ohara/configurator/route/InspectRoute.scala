@@ -38,12 +38,12 @@ import com.island.ohara.client.configurator.v0.{
   ZookeeperApi
 }
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import com.island.ohara.configurator.Configurator.Mode
-import com.island.ohara.configurator.fake.FakeWorkerClient
+import com.island.ohara.configurator.fake.FakeConnectorAdmin
 import com.island.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import com.island.ohara.configurator.store.DataStore
 import com.island.ohara.kafka.Consumer.Record
@@ -131,9 +131,9 @@ private[configurator] object InspectRoute {
       post {
         entity(as[RdbQuery]) { query =>
           complete(both(query.workerClusterKey).flatMap {
-            case (_, topicAdmin, _, workerClient) =>
-              workerClient match {
-                case _: FakeWorkerClient =>
+            case (_, topicAdmin, _, connectorAdmin) =>
+              connectorAdmin match {
+                case _: FakeConnectorAdmin =>
                   val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
                   try Future.successful(
                     RdbInfo(
@@ -148,7 +148,7 @@ private[configurator] object InspectRoute {
                   finally client.close()
                 case _ =>
                   rdbInfo(
-                    workerClient,
+                    connectorAdmin,
                     topicAdmin,
                     query
                   )
@@ -231,7 +231,7 @@ private[configurator] object InspectRoute {
           complete(
             dataStore
               .value[WorkerClusterInfo](ObjectKey.of(group, name))
-              .flatMap(workerCollie.workerClient)
+              .flatMap(workerCollie.connectorAdmin)
               .flatMap(_.connectorDefinitions())
               .recover {
                 case _: Throwable => Seq.empty
@@ -322,12 +322,12 @@ private[configurator] object InspectRoute {
     * deployed the driver so we use our specific connector to query DB.
     * @return rdb information
     */
-  private def rdbInfo(workerClient: WorkerClient, topicAdmin: TopicAdmin, request: RdbQuery)(
+  private def rdbInfo(connectorAdmin: ConnectorAdmin, topicAdmin: TopicAdmin, request: RdbQuery)(
     implicit executionContext: ExecutionContext
   ): Future[RdbInfo] = {
     val requestId: String = CommonUtils.randomString()
     val connectorKey      = ConnectorKey.of(CommonUtils.randomString(5), s"Validator-${CommonUtils.randomString()}")
-    workerClient
+    connectorAdmin
       .connectorCreator()
       .connectorKey(connectorKey)
       .className("com.island.ohara.connector.validation.Validator")
@@ -376,6 +376,6 @@ private[configurator] object InspectRoute {
           .head
         finally Releasable.close(client)
       }
-      .flatMap(r => workerClient.delete(connectorKey).map(_ => r))
+      .flatMap(r => connectorAdmin.delete(connectorKey).map(_ => r))
   }
 }

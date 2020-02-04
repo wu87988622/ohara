@@ -38,10 +38,10 @@ private[configurator] object ValidationRoute {
           entity(as[Creation])(
             req =>
               complete(
-                workerClient(req.workerClusterKey)
+                connectorAdmin(req.workerClusterKey)
                   .flatMap {
-                    case (_, workerClient) =>
-                      workerClient
+                    case (_, connectorAdmin) =>
+                      connectorAdmin
                         .connectorValidator()
                         .settings(req.plain)
                         .className(req.className)

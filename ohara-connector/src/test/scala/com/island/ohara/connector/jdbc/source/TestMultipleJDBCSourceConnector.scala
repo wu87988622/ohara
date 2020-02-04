@@ -20,7 +20,7 @@ import java.sql.Statement
 
 import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -41,7 +41,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
   private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin      = ConnectorAdmin(testUtil.workersConnProps)
   private[this] val connectorKey1       = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
   private[this] val connectorKey2       = ConnectorKey.of(CommonUtils.randomString(5), "JDBC-Source-Connector-Test")
 
@@ -85,7 +85,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
     val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .connectorKey(connectorKey1)
         .connectorClass(classOf[JDBCSourceConnector])
@@ -109,7 +109,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
       record1.size shouldBe 6
 
       result(
-        workerClient
+        connectorAdmin
           .connectorCreator()
           .connectorKey(connectorKey2)
           .connectorClass(classOf[JDBCSourceConnector])
@@ -158,8 +158,8 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
 
   @After
   def tearDown(): Unit = {
-    result(workerClient.delete(connectorKey2))
-    result(workerClient.delete(connectorKey1))
+    result(connectorAdmin.delete(connectorKey2))
+    result(connectorAdmin.delete(connectorKey1))
     Releasable.close(client)
     Releasable.close(db)
   }

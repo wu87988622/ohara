@@ -65,9 +65,9 @@ private[configurator] object PipelineRoute {
     meterCache: MeterCache
   ): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
-      workerClient(data.workerClusterKey).flatMap {
-        case (clusterInfo, workerClient) =>
-          workerClient
+      connectorAdmin(data.workerClusterKey).flatMap {
+        case (clusterInfo, connectorAdmin) =>
+          connectorAdmin
             .connectorDefinition(data.className)
             .map(
               classInfo =>
@@ -86,7 +86,7 @@ private[configurator] object PipelineRoute {
                 )
             )
             .flatMap { obj =>
-              workerClient
+              connectorAdmin
                 .status(data.key)
                 .map { connectorInfo =>
                   obj.copy(

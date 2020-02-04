@@ -16,12 +16,12 @@
 
 package com.island.ohara.connector.jio
 
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.testing.WithBrokerWorker
 
 class TestJsonOut extends WithBrokerWorker with BasicTestsOfJsonOut {
-  override protected val workerClient: WorkerClient = WorkerClient(testUtil.workersConnProps)
+  override protected val connectorAdmin: ConnectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   override protected val brokersConnProps: String = testUtil().brokersConnProps()
 

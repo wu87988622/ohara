@@ -24,7 +24,7 @@ class TestConnectorValidator extends OharaTest {
   /**
     * we won't make connection in this test
     */
-  private[this] val notWorkingClient = WorkerClient("localhost:2222")
+  private[this] val notWorkingClient = ConnectorAdmin("localhost:2222")
 
   @Test
   def ignoreClassName(): Unit =

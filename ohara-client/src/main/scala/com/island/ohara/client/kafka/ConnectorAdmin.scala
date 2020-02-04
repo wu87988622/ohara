@@ -48,18 +48,18 @@ import scala.util.Random
   * group and name from input key. For example, the input key is ("g0", "n0") and a salt connector name called "g0-n0"
   * ensues from response.
   */
-trait WorkerClient {
+trait ConnectorAdmin {
   /**
     * start a process to create source/sink connector
     * @return connector creator
     */
-  def connectorCreator(): WorkerClient.Creator
+  def connectorCreator(): ConnectorAdmin.Creator
 
   /**
     * start a process to verify the connector
     * @return connector validator
     */
-  def connectorValidator(): WorkerClient.Validator
+  def connectorValidator(): ConnectorAdmin.Validator
 
   /**
     * delete a connector from worker cluster
@@ -177,7 +177,7 @@ trait WorkerClient {
       .map(_.settings().asScala.map(_.definition()))
 }
 
-object WorkerClient {
+object ConnectorAdmin {
   /**
     * THIS METHOD SHOULD BE USED BY TESTING ONLY.
     * Worker cluster key is a required config to ohara connectors. However, there are many tests against "connectors"
@@ -186,7 +186,7 @@ object WorkerClient {
     * @param connectionProps connection props
     * @return worker client
     */
-  def apply(connectionProps: String): WorkerClient =
+  def apply(connectionProps: String): ConnectorAdmin =
     builder.workerClusterKey(ObjectKey.of("fake", "fake")).connectionProps(connectionProps).build
 
   /**
@@ -194,14 +194,14 @@ object WorkerClient {
     * @param workerClusterInfo worker cluster
     * @return worker client
     */
-  def apply(workerClusterInfo: WorkerClusterInfo): WorkerClient =
+  def apply(workerClusterInfo: WorkerClusterInfo): ConnectorAdmin =
     builder.workerClusterKey(workerClusterInfo.key).connectionProps(workerClusterInfo.connectionProps).build
 
   def builder: Builder = new Builder
 
-  private[this] val LOG = Logger(WorkerClient.getClass)
+  private[this] val LOG = Logger(ConnectorAdmin.getClass)
 
-  class Builder private[WorkerClient] extends com.island.ohara.common.pattern.Builder[WorkerClient] {
+  class Builder private[ConnectorAdmin] extends com.island.ohara.common.pattern.Builder[ConnectorAdmin] {
     /**
       * set the fake key to following operations. This is workaround to avoid we encounter the error of lacking
       * worker key in communicating with kafka connectors.
@@ -244,7 +244,7 @@ object WorkerClient {
       * sent by this worker client may be influenced by other instances.
       * @return worker client
       */
-    override def build: WorkerClient = new WorkerClient() {
+    override def build: ConnectorAdmin = new ConnectorAdmin() {
       val connectionProps: String = CommonUtils.requireNonEmpty(Builder.this.connectionProps)
       private[this] def workerAddress: String = {
         val hostAddress = connectionProps.split(",")

@@ -30,16 +30,16 @@ import org.scalatest.Matchers._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-class TestWorkerClient extends With3Brokers3Workers {
-  private[this] val workerClient = WorkerClient(testUtil().workersConnProps())
+class TestConnectorAdmin extends With3Brokers3Workers {
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
   @Test
   def testExist(): Unit = {
     val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(workerClient.exist(connectorKey)) shouldBe false
+    result(connectorAdmin.exist(connectorKey)) shouldBe false
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
@@ -48,18 +48,18 @@ class TestWorkerClient extends With3Brokers3Workers {
         .create()
     )
 
-    try assertExist(workerClient, connectorKey)
-    finally result(workerClient.delete(connectorKey))
+    try assertExist(connectorAdmin, connectorKey)
+    finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
   def testExistOnUnrunnableConnector(): Unit = {
     val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    result(workerClient.exist(connectorKey)) shouldBe false
+    result(connectorAdmin.exist(connectorKey)) shouldBe false
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[BrokenConnector])
@@ -68,8 +68,8 @@ class TestWorkerClient extends With3Brokers3Workers {
         .create()
     )
 
-    try assertExist(workerClient, connectorKey)
-    finally result(workerClient.delete(connectorKey))
+    try assertExist(connectorAdmin, connectorKey)
+    finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -77,7 +77,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
@@ -86,7 +86,7 @@ class TestWorkerClient extends With3Brokers3Workers {
         .create()
     )
     try {
-      assertExist(workerClient, connectorKey)
+      assertExist(connectorAdmin, connectorKey)
       val consumer =
         Consumer
           .builder()
@@ -102,9 +102,9 @@ class TestWorkerClient extends With3Brokers3Workers {
         rows.size should not be 0
         rows.asScala.foreach(_.key.get shouldBe ROW)
         // pause connector
-        result(workerClient.pause(connectorKey))
+        result(connectorAdmin.pause(connectorKey))
 
-        await(() => result(workerClient.status(connectorKey)).connector.state == State.PAUSED.name)
+        await(() => result(connectorAdmin.status(connectorKey)).connector.state == State.PAUSED.name)
 
         // try to receive all data from topic...10 seconds should be enough in this case
         rows = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
@@ -115,15 +115,15 @@ class TestWorkerClient extends With3Brokers3Workers {
         rows.size shouldBe 0
 
         // resume connector
-        result(workerClient.resume(connectorKey))
+        result(connectorAdmin.resume(connectorKey))
 
-        await(() => result(workerClient.status(connectorKey)).connector.state == State.RUNNING.name)
+        await(() => result(connectorAdmin.status(connectorKey)).connector.state == State.RUNNING.name)
 
         // since connector is resumed so some data are generated
         rows = consumer.poll(java.time.Duration.ofSeconds(20), 1)
         rows.size should not be 0
       } finally consumer.close()
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -132,7 +132,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     val topicName     = CommonUtils.randomString(10)
     val numberOfTasks = 1
     val settingInfo = result(
-      workerClient
+      connectorAdmin
         .connectorValidator()
         .className(classOf[MyConnector].getName)
         .settings(
@@ -154,18 +154,18 @@ class TestWorkerClient extends With3Brokers3Workers {
   @Test
   def ignoreTopicNames(): Unit =
     an[NoSuchElementException] should be thrownBy result(
-      workerClient.connectorValidator().className(classOf[MyConnector].getName).run()
+      connectorAdmin.connectorValidator().className(classOf[MyConnector].getName).run()
     )
 
   @Test
   def ignoreClassName(): Unit =
-    an[NoSuchElementException] should be thrownBy result(workerClient.connectorValidator().run())
+    an[NoSuchElementException] should be thrownBy result(connectorAdmin.connectorValidator().run())
 
   @Test
   def testValidateWithoutValue(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val settingInfo = result(
-      workerClient.connectorValidator().className(classOf[MyConnector].getName).topicKey(topicKey).run()
+      connectorAdmin.connectorValidator().className(classOf[MyConnector].getName).topicKey(topicKey).run()
     )
     settingInfo.className.get shouldBe classOf[MyConnector].getName
     settingInfo.settings.size should not be 0
@@ -175,7 +175,7 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def testColumnsDefinition(): Unit =
-    result(workerClient.connectorDefinitions())
+    result(connectorAdmin.connectorDefinitions())
       .map(_.settingDefinitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
       .foreach { definition =>
         definition.tableKeys().size() should not be 0
@@ -183,13 +183,13 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def testAllPluginDefinitions(): Unit = {
-    val plugins = result(workerClient.connectorDefinitions())
+    val plugins = result(connectorAdmin.connectorDefinitions())
     plugins.size should not be 0
     plugins.foreach(plugin => check(plugin.settingDefinitions))
   }
   @Test
   def testListDefinitions(): Unit = {
-    check(result(workerClient.definitions(classOf[MyConnector].getName)))
+    check(result(connectorAdmin.definitions(classOf[MyConnector].getName)))
   }
 
   private[this] def check(settingDefinitionS: Seq[SettingDef]): Unit = {
@@ -338,7 +338,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val e = intercept[IllegalArgumentException] {
       result(
-        workerClient
+        connectorAdmin
           .connectorCreator()
           .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
@@ -357,7 +357,7 @@ class TestWorkerClient extends With3Brokers3Workers {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val e = intercept[IllegalArgumentException] {
       result(
-        workerClient
+        connectorAdmin
           .connectorCreator()
           .topicKey(topicKey)
           .connectorClass(classOf[MyConnector])
@@ -375,7 +375,7 @@ class TestWorkerClient extends With3Brokers3Workers {
   def pass1Second(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
@@ -389,7 +389,7 @@ class TestWorkerClient extends With3Brokers3Workers {
   def pass1Minute1Second(): Unit = {
     val topicKey = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[MyConnector])
@@ -402,18 +402,18 @@ class TestWorkerClient extends With3Brokers3Workers {
 
   @Test
   def nullConnectionProps(): Unit =
-    an[NullPointerException] should be thrownBy WorkerClient.builder.connectionProps(null)
+    an[NullPointerException] should be thrownBy ConnectorAdmin.builder.connectionProps(null)
 
   @Test
   def emptyConnectionProps(): Unit =
-    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.connectionProps("")
+    an[IllegalArgumentException] should be thrownBy ConnectorAdmin.builder.connectionProps("")
 
   @Test
   def nullRetryLimit(): Unit = {
-    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.retryLimit(0)
-    an[IllegalArgumentException] should be thrownBy WorkerClient.builder.retryLimit(-1)
+    an[IllegalArgumentException] should be thrownBy ConnectorAdmin.builder.retryLimit(0)
+    an[IllegalArgumentException] should be thrownBy ConnectorAdmin.builder.retryLimit(-1)
   }
 
   @Test
-  def nullRetryInterval(): Unit = an[NullPointerException] should be thrownBy WorkerClient.builder.retryInternal(null)
+  def nullRetryInterval(): Unit = an[NullPointerException] should be thrownBy ConnectorAdmin.builder.retryInternal(null)
 }

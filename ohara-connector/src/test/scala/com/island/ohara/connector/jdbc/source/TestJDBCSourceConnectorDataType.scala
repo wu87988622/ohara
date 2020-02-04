@@ -19,7 +19,7 @@ package com.island.ohara.connector.jdbc.source
 import java.sql.{Date, Time, Timestamp}
 
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.{Row, Serializer}
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -41,7 +41,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
   private[this] val client              = DatabaseClient.builder.url(db.url()).user(db.user()).password(db.password()).build
   private[this] val tableName           = "table1"
   private[this] val timestampColumnName = "column1"
-  private[this] val workerClient        = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin      = ConnectorAdmin(testUtil.workersConnProps)
 
   @Before
   def setup(): Unit = {
@@ -90,7 +90,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
 
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .connectorKey(connectorKey)
         .connectorClass(classOf[JDBCSourceConnector])
@@ -157,7 +157,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
       // Test longtext type
       row0.cell(12).value.isInstanceOf[String] shouldBe true
       row0.cell(12).value.toString shouldBe "aaaaaaaaaa"
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   private[this] def pollData(

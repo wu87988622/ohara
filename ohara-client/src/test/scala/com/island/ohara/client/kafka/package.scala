@@ -32,8 +32,8 @@ package object kafka {
 
   def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
 
-  def assertExist(workerClient: WorkerClient, connectorKey: ConnectorKey): Boolean =
-    CommonUtils.await(() => result(workerClient.exist(connectorKey)) == true, java.time.Duration.ofSeconds(30))
+  def assertExist(connectorAdmin: ConnectorAdmin, connectorKey: ConnectorKey): Boolean =
+    CommonUtils.await(() => result(connectorAdmin.exist(connectorKey)) == true, java.time.Duration.ofSeconds(30))
 
   val OUTPUT = "simple.row.connector.output"
   val BROKER = "simple.row.connector.broker"

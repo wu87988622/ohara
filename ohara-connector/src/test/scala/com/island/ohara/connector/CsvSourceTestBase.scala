@@ -20,7 +20,7 @@ import java.io.{BufferedWriter, OutputStreamWriter}
 import java.time.Duration
 
 import com.island.ohara.client.filesystem.FileSystem
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
@@ -59,7 +59,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     row.cells().asScala.map(_.value.toString).mkString(",")
   })
 
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   protected val fileSystem: FileSystem
 
@@ -94,7 +94,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
-      val creator = workerClient
+      val creator = connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(connectorClass)
@@ -179,7 +179,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -207,7 +207,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       checkFileCount(0, 2, 0)
       records = pollData(topicKey, 10 second)
       records.size shouldBe data.length
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -240,7 +240,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(1).value shouldBe rows(1).cell(1).value
       row0.cell(2).name shouldBe "newSingle"
       row1.cell(2).value shouldBe rows(1).cell(2).value
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -267,7 +267,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -290,7 +290,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe Cell.of(rows(1).cell(0).name, rows(1).cell(0).value.toString)
       row1.cell(1) shouldBe Cell.of(rows(1).cell(1).name, rows(1).cell(1).value.toString)
       row1.cell(2) shouldBe Cell.of(rows(1).cell(2).name, rows(1).cell(2).value.toString)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -314,7 +314,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -336,7 +336,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.size shouldBe 2
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -354,7 +354,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       // add a file to input again
       setupInput()
       checkFileCount(0, 0, 2)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -402,7 +402,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(0) shouldBe rows(1).cell(0)
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @After

@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.client.configurator.v0.FileInfoApi.ClassInfo
-import com.island.ohara.client.kafka.WorkerClient
-import com.island.ohara.client.kafka.WorkerClient.{Creator, Validator}
+import com.island.ohara.client.kafka.ConnectorAdmin
+import com.island.ohara.client.kafka.ConnectorAdmin.{Creator, Validator}
 import com.island.ohara.client.kafka.WorkerJson.{
   KafkaConnectorConfig,
   ConnectorCreationResponse,
@@ -43,7 +43,7 @@ import spray.json._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeWorkerClient extends WorkerClient {
+private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
   private[this] val cachedConnectors      = new ConcurrentHashMap[String, Map[String, String]]()
   private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
 
@@ -140,6 +140,6 @@ private[configurator] class FakeWorkerClient extends WorkerClient {
     Future.successful(ReflectionUtils.localConnectorDefinitions)
 }
 
-object FakeWorkerClient {
-  def apply(): FakeWorkerClient = new FakeWorkerClient
+object FakeConnectorAdmin {
+  def apply(): FakeConnectorAdmin = new FakeConnectorAdmin
 }

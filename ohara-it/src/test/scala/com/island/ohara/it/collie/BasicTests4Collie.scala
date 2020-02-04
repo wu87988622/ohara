@@ -24,7 +24,7 @@ import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import com.island.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ContainerApi, LogApi, WorkerApi, ZookeeperApi}
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.exception.{OharaExecutionException, OharaTimeoutException}
 import com.island.ohara.common.setting.ObjectKey
@@ -615,7 +615,7 @@ abstract class BasicTests4Collie extends IntegrationTest {
       () =>
         try {
           log.info(s"worker node head: ${cluster.nodeNames.head}:${cluster.clientPort}")
-          result(WorkerClient(cluster).connectorDefinitions()).nonEmpty
+          result(ConnectorAdmin(cluster).connectorDefinitions()).nonEmpty
         } catch {
           case e: Throwable =>
             log.info(s"[WORKER] worker cluster:${cluster.name} is starting ... retry", e)

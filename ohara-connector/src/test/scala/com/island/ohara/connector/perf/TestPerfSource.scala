@@ -15,7 +15,7 @@
  */
 
 package com.island.ohara.connector.perf
-import com.island.ohara.client.kafka.WorkerClient
+import com.island.ohara.client.kafka.ConnectorAdmin
 import com.island.ohara.common.data._
 import com.island.ohara.common.setting.{ConnectorKey, TopicKey}
 import com.island.ohara.common.util.CommonUtils
@@ -32,7 +32,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class TestPerfSource extends With3Brokers3Workers {
-  private[this] val workerClient = WorkerClient(testUtil.workersConnProps)
+  private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(
     batch = 5,
@@ -92,7 +92,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
@@ -118,7 +118,7 @@ class TestPerfSource extends With3Brokers3Workers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -126,7 +126,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
@@ -152,7 +152,7 @@ class TestPerfSource extends With3Brokers3Workers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -160,7 +160,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
@@ -186,7 +186,7 @@ class TestPerfSource extends With3Brokers3Workers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -194,7 +194,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
@@ -220,7 +220,7 @@ class TestPerfSource extends With3Brokers3Workers {
             matchType(cell.value.getClass, c.dataType)
           })
         })
-    } finally result(workerClient.delete(connectorKey))
+    } finally result(connectorAdmin.delete(connectorKey))
   }
 
   @Test
@@ -228,7 +228,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     an[IllegalArgumentException] should be thrownBy result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
@@ -245,7 +245,7 @@ class TestPerfSource extends With3Brokers3Workers {
     val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result(
-      workerClient
+      connectorAdmin
         .connectorCreator()
         .topicKey(topicKey)
         .connectorClass(classOf[PerfSource])
