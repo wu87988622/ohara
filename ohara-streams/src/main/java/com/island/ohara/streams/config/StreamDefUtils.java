@@ -101,6 +101,8 @@ public final class StreamDefUtils {
           .documentation("The jar key of this stream using")
           .required(Type.OBJECT_KEY)
           .reference(SettingDef.Reference.FILE)
+          // this core setting is controlled by UI flow so we don't expose it
+          .internal()
           .build();
 
   public static final SettingDef CLASS_NAME_DEFINITION =

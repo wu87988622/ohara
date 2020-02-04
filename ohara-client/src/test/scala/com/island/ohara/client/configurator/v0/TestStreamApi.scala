@@ -502,7 +502,7 @@ class TestStreamApi extends OharaTest {
            |    ]
            |  }
            |  """.stripMargin.parseJson)
-    }.getMessage should include("non-empty string")
+    }.getMessage should include("empty string")
   }
 
   @Test
