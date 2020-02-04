@@ -292,7 +292,12 @@ const Toolbar = props => {
             control={
               <Switch
                 checked={isMetricsOn}
-                onChange={() => setIsMetricsOn(prevState => !prevState)}
+                onChange={() => {
+                  setIsMetricsOn(prevState => {
+                    paperApi.toggleMetrics(!prevState);
+                    return !prevState;
+                  });
+                }}
                 color="primary"
               />
             }

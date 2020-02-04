@@ -30,12 +30,15 @@ import * as joint from 'jointjs';
 
 import { KIND, CELL_STATUS } from 'const';
 
+const NORMAL_HEIGHT = 100;
+const HEIGHT_WITH_METRICS = 160;
+
 const createConnectorCell = options => {
   const {
     id,
     displayName,
     isTemporary = false,
-    isMetricsOn = true,
+    isMetricsOn: areMetricsDisplayed = false,
     name,
     kind,
     className,
@@ -71,10 +74,11 @@ const createConnectorCell = options => {
   const configIcon = renderToString(<BuildIcon viewBox="-4 -5 32 32" />);
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
-  const isMetricsDisplayed = metrics.length > 0 && isMetricsOn;
-  const metricsData = getMetrics(metrics);
   const displayClassName = className.split('.').pop();
   const iconState = getIconState(status);
+
+  // Things that don't need to update can be placed here, otherwise, put them
+  // in the `updateBox()` method
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
       <div class="connector">
@@ -82,25 +86,10 @@ const createConnectorCell = options => {
           <div class="icon ${iconState}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">
             <div class="display-name">${displayName}</div>
-              <div class="type">${displayClassName}</div>
-            </div>
+            <div class="type">${displayClassName}</div>
           </div>
-
-          ${
-            isMetricsDisplayed
-              ? `<div class="metrics">
-            <div class="field">
-              <span class="field-name">${metricsData.firstFieldName}</span>
-              <span class="field-value">${metricsData.firstFieldValue.toLocaleString()}</span>
-            </div>
-            <div class="field">
-            <span class="field-name">${metricsData.secondFieldName}</span>
-            <span class="field-value">${metricsData.secondFieldValue.toLocaleString()}</span>
-          </div>
-          </div>`
-              : ''
-          }
-         
+        </div>
+        <div class="metrics"></div>
         <div class="status">
           <span class="status-name">Status</span>
           <span class="status-value">${status}</span>
@@ -134,42 +123,54 @@ const createConnectorCell = options => {
       const $stopButton = $box.find('.connector-stop');
       const $configButton = $box.find('.connector-config');
       const $removeButton = $box.find('.connector-remove');
-      const id = this.model.id;
+      const { id } = this.model;
       const cellData = paperApi.getCell(id);
 
-      // Link
-      $linkButton.on('click', () => {
-        paperApi.addLink(id);
-      });
-
-      // Start
-      $startButton.on('click', () => {
-        onCellStart(cellData, paperApi);
-      });
-
-      // Stop
-      $stopButton.on('click', () => {
-        onCellStop(cellData, paperApi);
-      });
-
-      // Config
-      $configButton.on('click', () => {
-        onCellConfig(cellData, paperApi);
-      });
-
-      // Remove
-      $removeButton.on('click', () => {
-        onCellRemove(cellData, paperApi);
-      });
+      // Menu actions
+      $linkButton.on('click', () => paperApi.addLink(id));
+      $startButton.on('click', () => onCellStart(cellData, paperApi));
+      $stopButton.on('click', () => onCellStop(cellData, paperApi));
+      $configButton.on('click', () => onCellConfig(cellData, paperApi));
+      $removeButton.on('click', () => onCellRemove(cellData, paperApi));
 
       this.updateBox();
       return this;
     },
-    updateBox() {
+    updateBox(
+      cell,
+      options,
+      customOptions = {
+        metrics: {
+          meters: [],
+        },
+      },
+    ) {
+      const {
+        metrics: { meters },
+      } = customOptions;
+
+      const displayMetrics = meters.length > 0 ? customOptions.meters : metrics;
+
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bBox = this.getBBox({ useModelGeometry: true });
+      const {
+        status,
+        areMetricsDisplayed,
+        isMenuDisplayed,
+      } = this.model.attributes;
+
       const scale = paperApi.getScale();
       const $box = this.$box;
+
+      // Update width size. Remember that we have both SVG and HTML elements, so
+      // we first update the SVG, than HTML
+      this.model.resize(
+        bBox.width,
+        areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT,
+      );
+
+      // Only updates the height
+      bBox.height = areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT;
 
       $box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
@@ -180,14 +181,20 @@ const createConnectorCell = options => {
         top: bBox.y,
       });
 
-      const { status, isMenuDisplayed } = this.model.attributes;
-
       const iconState = getIconState(status);
-      const displayValue = isMenuDisplayed ? 'block' : 'none';
+      const metricsData = areMetricsDisplayed ? getMetrics(displayMetrics) : '';
+
+      const menuDisplayValue = isMenuDisplayed ? 'block' : 'none';
 
       $box.find('.status-value').text(status);
       $box.find('.display-name').text(displayName);
-      $box.find('.connector-menu').attr('style', `display: ${displayValue};`);
+
+      $box
+        .find('.connector-menu')
+        .attr('style', `display: ${menuDisplayValue}`);
+
+      $box.find('.metrics').html(metricsData);
+
       $box
         .find('.icon')
         .removeClass()
@@ -210,8 +217,12 @@ const createConnectorCell = options => {
     position,
     status,
     isTemporary,
-    size: { width: 240, height: isMetricsDisplayed ? 160 : 100 },
+    size: {
+      width: 240,
+      height: areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT,
+    },
     isMenuDisplayed: false,
+    areMetricsDisplayed,
     jarKey,
   });
 };
@@ -240,12 +251,20 @@ function getMetrics(metrics) {
   // The user will be able to choose two metrics items with our UI
   // in the future, but for now, we're picking the first two items
   // from the list
-  return {
-    firstFieldName: _.get(results, '[0].document', ''),
-    firstFieldValue: _.get(results, '[0].value', 0),
-    secondFieldName: _.get(results, '[1].document', ''),
-    secondFieldValue: _.get(results, '[1].value', 0),
-  };
+  const firstFieldName = _.get(results, '[0].document', '');
+  const firstFieldValue = _.get(results, '[0].value', 0);
+  const secondFieldName = _.get(results, '[1].document', '');
+  const secondFieldValue = _.get(results, '[1].value', 0);
+
+  return `
+  <div class="field">
+    <span class="field-name">${firstFieldName}</span>
+    <span class="field-value">${firstFieldValue.toLocaleString()}</span>
+  </div>
+  <div class="field">
+    <span class="field-name">${secondFieldName}</span>    
+    <span class="field-value">${secondFieldValue.toLocaleString()}</span>
+  `;
 }
 
 function getIconState(status) {

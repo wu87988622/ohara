@@ -425,7 +425,6 @@ const Paper = React.forwardRef((props, ref) => {
           failed: palette.error.main,
         };
         const newData = { ...data, statusColors, paperApi: ref.current };
-
         let cell;
         if (kind === source || kind === sink || kind === stream) {
           cell = createConnectorCell({
@@ -613,6 +612,28 @@ const Paper = React.forwardRef((props, ref) => {
           newOx + fittingBbox.width / 2,
           newOy + fittingBbox.height / 2,
         );
+      },
+      toggleMetrics(state) {
+        getCellViews()
+          .filter(
+            ({ model }) =>
+              model.get('kind') === KIND.source ||
+              model.get('kind') === KIND.sink ||
+              model.get('kind') === KIND.stream,
+          )
+          .forEach(element => {
+            element.model.attributes.areMetricsDisplayed = state; // true or false
+            element.updateBox();
+          });
+      },
+
+      updateMetrics(id, metrics) {
+        const element = getCellViews().find(
+          element =>
+            element.model.get('id') === id || element.model.get('name') === id,
+        );
+
+        element.updateBox(metrics);
       },
 
       // TODO: the state here will be stale, we should update

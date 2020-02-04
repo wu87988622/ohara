@@ -94,10 +94,8 @@ const createTopicCell = options => {
 
       const id = this.model.id;
 
-      $linkButton.on('click', () => {
-        paperApi.addLink(id);
-      });
-
+      // Menu actions
+      $linkButton.on('click', () => paperApi.addLink(id));
       $removeButton.on('click', () => {
         const elementData = paperApi.getCell(id);
         onCellRemove(elementData, paperApi);

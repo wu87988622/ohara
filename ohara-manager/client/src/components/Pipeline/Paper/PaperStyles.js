@@ -166,6 +166,11 @@ export const StyledPaper = styled.div(
       .metrics {
         border-top: 1px solid ${theme.palette.divider};
 
+        /* Don't display the border when metrics data is empty */
+        &:empty {
+          border-top: none;
+        }
+
         .field {
           display: flex;
           padding: ${theme.spacing(0.5, 2)};
