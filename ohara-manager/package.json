@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preinstall": "node ./scripts/checkYarnVersion.js",
-    "setup": "yarn && yarn --cwd client setup",
+    "setup": "yarn install --frozen-lockfile && yarn --cwd client setup",
     "start": "cross-env NODE_ENV=development nodemon start.js --exec \"yarn lint:server && node\"",
     "start:prod": "cross-env NODE_ENV=production node start.js",
     "start:client": "yarn --cwd client start",

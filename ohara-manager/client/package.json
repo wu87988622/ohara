@@ -6,7 +6,7 @@
     "node": "^10.16.3"
   },
   "scripts": {
-    "setup": "yarn && yarn build",
+    "setup": "yarn install --frozen-lockfile && yarn build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "lint": "eslint --max-warnings 0 src cypress",
