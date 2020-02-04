@@ -455,9 +455,9 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        const cell = graph.getCell(id);
+        const cell = getCellByIdOrName(id);
 
-        if (!cell.isElement())
+        if (!cell || !cell.isElement())
           throw new Error(
             `paperApi: removeElement(id: string) can only remove an element with this method`,
           );
@@ -520,9 +520,7 @@ const Paper = React.forwardRef((props, ref) => {
           throw new Error(`paperApi: getCell(id: string) invalid argument id`);
         }
 
-        const result =
-          graph.getCell(id) ||
-          graph.getCells().find(cell => cell.get('name') === id);
+        const result = getCellByIdOrName(id);
 
         if (result) return getCellData(result);
       },
@@ -592,7 +590,7 @@ const Paper = React.forwardRef((props, ref) => {
           throw new Error(`paperApi: center(id: string) invalid argument id!`);
         }
 
-        const element = graph.getCell(id);
+        const element = getCellByIdOrName(id);
         const cellBbox = {
           ...element.getBBox(),
           ...element.getBBox().center(),
@@ -636,6 +634,20 @@ const Paper = React.forwardRef((props, ref) => {
         element.updateBox(metrics);
       },
 
+      highlight(id) {
+        if (typeof id !== 'string') {
+          throw new Error(
+            `paperApi: highlight(id: string) invalid argument id`,
+          );
+        }
+
+        const cellView = getCellViews().find(
+          ({ model }) => model.get('id') === id || model.get('name') === id,
+        );
+
+        cellView && cellView.highlight();
+      },
+
       // TODO: the state here will be stale, we should update
       // the state will there are updates
       state: {
@@ -649,6 +661,13 @@ const Paper = React.forwardRef((props, ref) => {
   // Private APIs
   function getCellViews() {
     return paperRef.current.findViewsInArea(paperRef.current.getArea());
+  }
+
+  function getCellByIdOrName(nameOrId) {
+    return (
+      graphRef.current.getCell(nameOrId) ||
+      graphRef.current.getCells().find(cell => cell.get('name') === nameOrId)
+    );
   }
 
   return (
