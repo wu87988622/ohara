@@ -94,6 +94,8 @@ const Pipeline = () => {
 
   const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
 
+  const { updateCells } = pipelineUtils.pipeline();
+
   const currentStreamRef = React.useRef(null);
 
   useEffect(() => {
@@ -195,6 +197,7 @@ const Pipeline = () => {
                   ref={paperRef}
                   onCellSelect={element => setSelectedCell(element)}
                   onCellDeselect={() => setSelectedCell(null)}
+                  onChange={_.debounce(paperApi => updateCells(paperApi), 1000)}
                   onElementAdd={(cellData, paperApi) => {
                     const { kind, isTemporary } = cellData;
                     switch (kind) {

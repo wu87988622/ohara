@@ -17,6 +17,7 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS, KIND } from 'const';
+import pipeline from './pipeline';
 
 const connector = () => {
   const {
@@ -28,7 +29,7 @@ const connector = () => {
   } = context.useConnectorActions();
 
   const create = async (params, paperApi) => {
-    const { id, name, className } = params;
+    const { id, name, className, kind } = params;
     const res = await createConnector({
       name,
       connector__class: className,
@@ -38,6 +39,7 @@ const connector = () => {
       paperApi.updateElement(id, {
         status: state,
       });
+      pipeline().addEndpoint({ name, kind });
     } else {
       paperApi.removeElement(id);
     }
@@ -95,10 +97,11 @@ const connector = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name } = params;
+    const { id, name, kind } = params;
     const res = await deleteConnector(name);
     if (!res.error) {
       paperApi.removeElement(id);
+      pipeline().removeEndpoint({ name, kind });
     }
   };
 

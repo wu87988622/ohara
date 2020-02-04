@@ -17,13 +17,14 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
+import pipeline from './pipeline';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
   const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {
-    const { id, name, displayName, isShared } = params;
+    const { id, name, displayName, isShared, kind } = params;
 
     if (isShared) {
       const target = topics.find(topic => topic.name === name);
@@ -49,6 +50,7 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
+      pipeline().addEndpoint({ name, kind });
     } else {
       paperApi.removeElement(id);
     }
@@ -56,7 +58,7 @@ const topic = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name, isShared } = params;
+    const { id, name, isShared, kind } = params;
 
     if (isShared) return paperApi.removeElement(id);
 
@@ -71,6 +73,7 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
+      pipeline().removeEndpoint({ name, kind });
     }
 
     const deleteRes = await deleteTopic(name);

@@ -17,6 +17,7 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
+import pipeline from './pipeline';
 
 const stream = () => {
   const {
@@ -28,7 +29,7 @@ const stream = () => {
   } = context.useStreamActions();
 
   const create = async (params, paperApi) => {
-    const { id, name, className, jarKey } = params;
+    const { id, name, className, jarKey, kind } = params;
     const res = await createStream({
       name,
       connector__class: className,
@@ -40,6 +41,7 @@ const stream = () => {
       paperApi.updateElement(id, {
         status: state,
       });
+      pipeline().addEndpoint({ name, kind });
     } else {
       paperApi.removeElement(id);
     }
@@ -117,10 +119,11 @@ const stream = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name } = params;
+    const { id, name, kind } = params;
     const res = await deleteStream(name);
     if (!res.error) {
       paperApi.removeElement(id);
+      pipeline().removeEndpoint({ name, kind });
     }
   };
 
