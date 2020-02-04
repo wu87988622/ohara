@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { noop } from 'lodash';
 
@@ -32,7 +32,6 @@ const VirtualizedList = props => {
     rowRenderer,
     autoScrollToBottom,
   } = props;
-  const listRef = useRef(null);
   const cache = new CellMeasurerCache({
     defaultHeight: 20,
     fixedWidth: true,
@@ -81,7 +80,6 @@ const VirtualizedList = props => {
     <AutoSizer onResize={() => cache.clearAll()}>
       {({ width, height }) => (
         <List
-          ref={listRef}
           deferredMeasurementCache={cache}
           height={height}
           rowCount={data.length}

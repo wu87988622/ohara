@@ -31,7 +31,7 @@ const EventLogRow = ({ onClick, rowData: log, style }) => {
   return (
     <Row style={style} className={clx({ error: isError })}>
       {(isError && (
-        <Link color="error" href="#" onClick={onClick}>
+        <Link color="error" onClick={onClick}>
           {title} {message && `--> ${message}`}
         </Link>
       )) || <div>{title}</div>}

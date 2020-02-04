@@ -17,22 +17,17 @@
 import React, { useEffect, useState } from 'react';
 import { delay, size } from 'lodash';
 
-import {
-  useEventLogActions,
-  useEventLogState,
-  useEventLogContentDialog,
-} from 'context';
-import { VirtualizedList } from 'components/common/List';
+import { useEventLogActions, useEventLogState } from 'context';
 import StatusBar from 'components/common/StatusBar';
-import EventLogRow from './EventLogRow';
-import Header from './EventLogHeader';
-import EventLogContentDialog from './EventLogContentDialog';
+import EventLogList from './EventLogList';
+import EventLogHeader from './EventLogHeader';
+
 import Wrapper from './EventLogStyles';
 
 const EventLog = () => {
   const [logs, setLogs] = useState([]);
   const { isFetching, notifications } = useEventLogState();
-  const { open: openEventLogContentDialog } = useEventLogContentDialog();
+
   const { clearNotifications } = useEventLogActions();
   const [cleared, setCleared] = useState(false);
 
@@ -44,8 +39,6 @@ const EventLog = () => {
     }
   }, [cleared, clearNotifications, notifications.data.error, setCleared]);
 
-  const handleRowClick = rowData => openEventLogContentDialog(rowData);
-
   const handleFilter = filteredLogs => setLogs(filteredLogs);
 
   const getStatusText = () => {
@@ -56,16 +49,9 @@ const EventLog = () => {
 
   return (
     <Wrapper>
-      <Header onFilter={handleFilter} />
+      <EventLogHeader onFilter={handleFilter} />
       <div className="logs">
-        <VirtualizedList
-          autoScrollToBottom
-          data={logs}
-          isLoading={isFetching}
-          onRowClick={handleRowClick}
-          rowRenderer={EventLogRow}
-        />
-        <EventLogContentDialog />
+        <EventLogList data={logs} isFetching={isFetching} />
       </div>
       <div className="status-bar">
         <StatusBar>{getStatusText()}</StatusBar>
