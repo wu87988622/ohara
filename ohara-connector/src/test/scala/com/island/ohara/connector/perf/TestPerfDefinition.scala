@@ -90,7 +90,7 @@ class TestPerfDefinition extends WithBrokerWorker {
       .filter(_.definition().key() == ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key())
       .head
       .definition()
-      .necessary() shouldBe Necessary.OPTIONAL_WITH_DEFAULT
+      .necessary() shouldBe Necessary.OPTIONAL
     response
       .settings()
       .asScala

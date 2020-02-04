@@ -47,7 +47,6 @@ SettingDef is a class used to describe the details of **a** setting. It consists
 
   - REQUIRED — this field has no default and user MUST define something for it.
   - OPTIONAL — this field has no default and user does NOT need to define something for it.
-  - OPTIONAL_WITH_DEFAULT — this field has a fixed default value
   - OPTIONAL_WITH_RANDOM_DEFAULT — this field has a "random" default value
 
 #. defaultValue (**object**) — the default value. the type is equal to what valueType defines
@@ -562,7 +561,6 @@ Necessary field has four values.
 
 #. REQUIRED — this value has no default value and it must be defined. You may get error if you don't give any value to it.
 #. OPTIONAL — this value has no default value but it is ok to leave nothing.
-#. OPTIONAL_WITH_DEFAULT — this value has default value so you don't need to define another one.
 #. OPTIONAL_WITH_RANDOM_DEFAULT — the default value assigned to this value is random. For example, all objects' name has
                                   a random string by default; The binding port field has a random free port by default.
 

@@ -77,7 +77,6 @@ public class SettingDef implements JsonObject, Serializable {
   public enum Necessary {
     REQUIRED,
     OPTIONAL,
-    OPTIONAL_WITH_DEFAULT,
     OPTIONAL_WITH_RANDOM_DEFAULT
   }
 
@@ -775,7 +774,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(boolean defaultValue) {
-      return checkAndSet(Type.BOOLEAN, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.BOOLEAN, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -785,7 +784,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(short defaultValue) {
-      return checkAndSet(Type.SHORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.SHORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -795,7 +794,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(short defaultValue) {
-      return checkAndSet(Type.POSITIVE_SHORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.POSITIVE_SHORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -805,7 +804,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(int defaultValue) {
-      return checkAndSet(Type.INT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.INT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -815,7 +814,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(int defaultValue) {
-      return checkAndSet(Type.POSITIVE_INT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.POSITIVE_INT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -825,7 +824,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(long defaultValue) {
-      return checkAndSet(Type.LONG, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.LONG, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -835,7 +834,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(long defaultValue) {
-      return checkAndSet(Type.POSITIVE_LONG, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.POSITIVE_LONG, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -845,7 +844,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optional(double defaultValue) {
-      return checkAndSet(Type.DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.DOUBLE, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -855,7 +854,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder positiveNumber(double defaultValue) {
-      return checkAndSet(Type.POSITIVE_DOUBLE, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.POSITIVE_DOUBLE, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -868,7 +867,7 @@ public class SettingDef implements JsonObject, Serializable {
       long value = defaultValue.toMillis();
       return checkAndSet(
           Type.DURATION,
-          Necessary.OPTIONAL_WITH_DEFAULT,
+          Necessary.OPTIONAL,
           // this format is more readable and it is compatible to scala.Duration
           value <= 1 ? value + " millisecond" : value + " milliseconds");
     }
@@ -881,7 +880,7 @@ public class SettingDef implements JsonObject, Serializable {
      */
     public Builder optional(String defaultValue) {
       return checkAndSet(
-          Type.STRING, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+          Type.STRING, Necessary.OPTIONAL, CommonUtils.requireNonEmpty(defaultValue));
     }
 
     /**
@@ -894,7 +893,7 @@ public class SettingDef implements JsonObject, Serializable {
     public Builder optional(String defaultValue, Set<String> recommendedValues) {
       this.recommendedValues = Objects.requireNonNull(recommendedValues);
       return checkAndSet(
-          Type.STRING, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+          Type.STRING, Necessary.OPTIONAL, CommonUtils.requireNonEmpty(defaultValue));
     }
 
     /**
@@ -904,8 +903,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optionalClassValue(String defaultValue) {
-      return checkAndSet(
-          Type.CLASS, Necessary.OPTIONAL_WITH_DEFAULT, CommonUtils.requireNonEmpty(defaultValue));
+      return checkAndSet(Type.CLASS, Necessary.OPTIONAL, CommonUtils.requireNonEmpty(defaultValue));
     }
 
     /**
@@ -915,7 +913,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optionalPort(int defaultValue) {
-      return checkAndSet(Type.PORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.PORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
@@ -925,7 +923,7 @@ public class SettingDef implements JsonObject, Serializable {
      * @return builder
      */
     public Builder optionalBindingPort(int defaultValue) {
-      return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL_WITH_DEFAULT, defaultValue);
+      return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**

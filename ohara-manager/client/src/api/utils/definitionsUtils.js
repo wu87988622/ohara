@@ -29,7 +29,6 @@ import { isArray, isFunction } from 'lodash';
 const necessaryType = {
   required: 'REQUIRED',
   optional: 'OPTIONAL',
-  defaultValue: 'OPTIONAL_WITH_DEFAULT',
   randomValue: 'OPTIONAL_WITH_RANDOM_DEFAULT',
 };
 
@@ -129,7 +128,7 @@ export const createBody = params => {
     }
 
     if (
-      params[key].necessary === necessaryType.defaultValue &&
+      params[key].necessary === necessaryType.optional &&
       params[key].defaultValue !== null &&
       isArray(body)
     ) {

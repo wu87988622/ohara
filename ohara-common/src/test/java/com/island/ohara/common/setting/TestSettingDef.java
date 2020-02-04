@@ -132,7 +132,7 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(orderInGroup, def.orderInGroup());
     Assert.assertEquals(valueDefault, def.defaultString());
     Assert.assertEquals(documentation, def.documentation());
-    Assert.assertEquals(def.necessary(), SettingDef.Necessary.OPTIONAL_WITH_DEFAULT);
+    Assert.assertEquals(def.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(def.internal());
   }
 
