@@ -49,19 +49,19 @@ final class TestStreamGraph extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 10, columnSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 10, columnSize)
       rowsTopic1.size should ===(1)
       rowsTopic1(0).key.get.cells.size should ===(columnSize)
 
       val rowsTopic2: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.name(), 10, columnSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.topicNameOnKafka, 10, columnSize)
 
       rowsTopic2.size should ===(1)
       rowsTopic2(0).key.get.cells.size should ===(columnSize)
     } finally {
       Releasable.close(producer)
-      topicAdmin.deleteTopic(topicKey1.name())
-      topicAdmin.deleteTopic(topicKey2.name())
+      topicAdmin.deleteTopic(topicKey1)
+      topicAdmin.deleteTopic(topicKey2)
     }
   }
 }

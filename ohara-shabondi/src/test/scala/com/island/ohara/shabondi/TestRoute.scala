@@ -17,16 +17,22 @@
 package com.island.ohara.shabondi
 
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import com.island.ohara.common.data.Row
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.shabondi.source.SourceRouteHandler
 import org.junit.Test
 import spray.json._
+import scala.concurrent.duration._
 
 final class TestRoute extends BasicShabondiTest {
   import DefaultDefinitions._
   import JsonSupport._
   import ShabondiRouteTestSupport._
+
+  // Extend the timeout to avoid the exception:
+  // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
+  implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
 
   private def sourceData: Map[String, Int] =
     (1 to 6).foldLeft(Map.empty[String, Int]) { (m, v) =>
@@ -52,12 +58,12 @@ final class TestRoute extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 10, 9)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 10, 9)
       rowsTopic1.size should ===(requestSize)
       rowsTopic1(0).key.get.cells.size should ===(6)
     } finally {
       webServer.close()
-      topicAdmin.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1)
     }
   }
 }

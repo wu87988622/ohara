@@ -72,7 +72,7 @@ private[sink] class DataGroup(val name: String, brokerProps: String, topicNames:
 
 private[sink] object SinkDataGroups {
   def apply(config: Config) =
-    new SinkDataGroups(config.brokers, config.sinkFromTopics.map(_.name()), config.sinkPollTimeout)
+    new SinkDataGroups(config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka), config.sinkPollTimeout)
 }
 
 private class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration) extends Releasable {

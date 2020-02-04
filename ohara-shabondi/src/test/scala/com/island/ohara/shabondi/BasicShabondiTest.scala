@@ -19,7 +19,6 @@ package com.island.ohara.shabondi
 import java.util
 import java.util.concurrent.{ExecutorService, Executors}
 
-import akka.http.scaladsl.testkit.RouteTestTimeout
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.island.ohara.common.data.Row
 import com.island.ohara.common.setting.TopicKey
@@ -34,17 +33,12 @@ import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import scala.collection.{immutable, mutable}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 
 abstract class BasicShabondiTest extends WithBroker with Matchers {
   protected val log = Logger(this.getClass())
 
   protected val brokerProps            = testUtil.brokersConnProps
   protected val topicAdmin: TopicAdmin = TopicAdmin.of(brokerProps)
-
-  // Extend the timeout to avoid the exception:
-  // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
-  implicit def default(): RouteTestTimeout = RouteTestTimeout(5 seconds)
 
   protected val newThreadPool: () => ExecutorService = () =>
     Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(this.getClass.getSimpleName + "-").build())

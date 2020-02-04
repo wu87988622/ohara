@@ -57,7 +57,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       singleRow.cells().size should ===(10)
       val source: Source[Row, NotUsed] = Source.single(singleRow)
       val pushRow: Flow[Row, RecordMetadata, NotUsed] = Flow[Row].mapAsync(4) { row =>
-        val sender = producer.sender().key(row).topicName(topicKey1.name())
+        val sender = producer.sender().key(row).topicName(topicKey1.topicNameOnKafka)
         sender.send.toScala
       }
 
@@ -68,11 +68,11 @@ final class TestStreamFlow extends BasicShabondiTest {
       val future: Future[Done] = source.via(pushRow).toMat(sink)(Keep.right).run()
       Await.result(future, 2 seconds)
 
-      val rows = KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 10, 10)
+      val rows = KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 10, 10)
       rows.size should ===(1)
     } finally {
       Releasable.close(producer)
-      topicAdmin.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1)
     }
   }
 
@@ -89,7 +89,7 @@ final class TestStreamFlow extends BasicShabondiTest {
 
       val flowSendRow = Flow[Row].mapAsync(4) { row =>
         Future.sequence(topicKeys.map { topicKey =>
-          val sender = producer.sender().key(row).topicName(topicKey.name())
+          val sender = producer.sender().key(row).topicName(topicKey.topicNameOnKafka)
           sender.send.toScala
         })
       } //.log("flowSendRow")
@@ -104,16 +104,16 @@ final class TestStreamFlow extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 30, maxRowSize)
       rowsTopic1.size should ===(maxRowSize)
 
       val rowsTopic2: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey2.topicNameOnKafka, 30, maxRowSize)
       rowsTopic2.size should ===(maxRowSize)
     } finally {
       Releasable.close(producer)
-      topicAdmin.deleteTopic(topicKey1.name())
-      topicAdmin.deleteTopic(topicKey2.name())
+      topicAdmin.deleteTopic(topicKey1)
+      topicAdmin.deleteTopic(topicKey2)
     }
   }
 
@@ -126,7 +126,7 @@ final class TestStreamFlow extends BasicShabondiTest {
     try {
       val source: Source[Row, NotUsed] = Source(rows)
       val sendRow: Flow[Row, RecordMetadata, NotUsed] = Flow[Row].mapAsync(4) { row =>
-        val sender = producer.sender().key(row).topicName(topicKey1.name())
+        val sender = producer.sender().key(row).topicName(topicKey1.topicNameOnKafka)
         sender.send.toScala
       } //.log("pushRow")
 
@@ -137,14 +137,14 @@ final class TestStreamFlow extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.name(), 30, maxRowSize)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 30, maxRowSize)
       rowsTopic1.size should ===(maxRowSize)
 
       rowsTopic1(0).key.get.cell(0) should ===(Cell.of("col-1", "r0-10"))
       rowsTopic1(99).key.get.cell(9) should ===(Cell.of("col-10", "r99-100"))
     } finally {
       Releasable.close(producer)
-      topicAdmin.deleteTopic(topicKey1.name())
+      topicAdmin.deleteTopic(topicKey1)
     }
   }
 }

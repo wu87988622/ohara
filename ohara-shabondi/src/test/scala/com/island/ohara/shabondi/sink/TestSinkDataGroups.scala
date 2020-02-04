@@ -19,6 +19,7 @@ package com.island.ohara.shabondi.sink
 import java.time.{Duration => JDuration}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Test}
@@ -28,6 +29,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 
 final class TestSinkDataGroups extends BasicShabondiTest {
+  // Extend the timeout to avoid the exception:
+  // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
+  implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
+
   @After
   override def tearDown(): Unit = {
     super.tearDown()
@@ -39,9 +44,10 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
-    val dataGroups                  = new SinkDataGroups(brokerProps, Seq(topicKey1.name), DurationConverters.toJava(10 seconds))
+    val dataGroups =
+      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount)
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
       val queue  = dataGroups.defaultGroup.queue
       val queue1 = dataGroups.defaultGroup.queue
@@ -63,9 +69,10 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
-    val dataGroups                  = new SinkDataGroups(brokerProps, Seq(topicKey1.name), DurationConverters.toJava(10 seconds))
+    val dataGroups =
+      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.name, rowCount)
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
       val queue  = dataGroups.defaultGroup.queue
       val queue1 = dataGroups.createIfAbsent("group1").queue
@@ -106,7 +113,8 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
     val topicKey1                   = createTopicKey
     val idleTime                    = JDuration.ofSeconds(3)
-    val dataGroups                  = new SinkDataGroups(brokerProps, Seq(topicKey1.name), DurationConverters.toJava(10 seconds))
+    val dataGroups =
+      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       val group1Name   = "group1"
       val defaultGroup = dataGroups.defaultGroup

@@ -37,7 +37,7 @@ private[shabondi] object StreamGraph {
     val source = Source.single(row)
     val flowSendRow = Flow[Row].mapAsync(4) { row =>
       Future.sequence(topicKeys.map { topicKey =>
-        val sender = producer.sender().key(row).topicName(topicKey.name())
+        val sender = producer.sender().key(row).topicName(topicKey.topicNameOnKafka)
         sender.send.toScala
       })
     }
