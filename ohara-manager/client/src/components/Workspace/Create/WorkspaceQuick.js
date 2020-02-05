@@ -73,9 +73,11 @@ const StyleStepper = styled(Stepper)`
   background-color: #f5f6fa;
 `;
 
-const StyleButton = styled(Button)`
-  margin-right: 16px;
-`;
+const StyleButton = styled(Button)(
+  ({ theme }) => css`
+    margin-right: ${theme.spacing(1)}px;
+  `,
+);
 
 const StyledTextField = styled(InputField)(
   ({ theme }) => css`
@@ -459,6 +461,12 @@ const WorkspaceQuick = props => {
                             {getStepContent(index, values)}
                           </StyledPaper>
                           <StyleButton
+                            disabled={activeStep === 0}
+                            onClick={() => handleBack(activeStep)}
+                          >
+                            Back
+                          </StyleButton>
+                          <StyleButton
                             variant="contained"
                             color="primary"
                             onClick={() =>
@@ -472,12 +480,6 @@ const WorkspaceQuick = props => {
                               ? 'Finish'
                               : 'Next'}
                           </StyleButton>
-                          <Button
-                            disabled={activeStep === 0}
-                            onClick={() => handleBack(activeStep)}
-                          >
-                            Back
-                          </Button>
                         </StepContent>
                       </Step>
                     ))}

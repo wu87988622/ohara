@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { useParams, NavLink } from 'react-router-dom';
-import { get } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -103,7 +103,11 @@ const AppBar = () => {
           <Tooltip title="Workspace list" placement="right">
             <IconButton
               className="workspace-list item"
-              onClick={toggleWorkspaceList}
+              onClick={() =>
+                isEmpty(workspaces)
+                  ? setIsNewWorkspaceOpen(true)
+                  : toggleWorkspaceList()
+              }
             >
               <AppsIcon />
             </IconButton>
