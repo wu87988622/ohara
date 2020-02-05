@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { MODE } from '../src/const';
 import * as generate from '../src/utils/generate';
 import * as nodeApi from '../src/api/nodeApi';
 import * as fileApi from '../src/api/fileApi';
@@ -24,6 +25,7 @@ import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
 import * as streamApi from '../src/api/streamApi';
 import * as objectApi from '../src/api/objectApi';
+import * as inspectApi from '../src/api/inspectApi';
 
 export const createServices = async ({
   withWorker = false,
@@ -158,15 +160,18 @@ export const deleteAllServices = async () => {
   await Promise.all(zookeepers.map(zk => zkApi.forceStop(zk)));
   await Promise.all(zookeepers.map(zk => zkApi.remove(zk)));
 
-  // delete all nodes
-  const nodeRes = await nodeApi.getAll();
-  if (nodeRes.errors) {
-    throw new Error(JSON.stringify(nodeRes));
+  // delete all nodes for docker mode
+  const inspectRes = await inspectApi.getConfiguratorInfo();
+  if (inspectRes.data.mode === MODE.docker) {
+    const nodeRes = await nodeApi.getAll();
+    if (nodeRes.errors) {
+      throw new Error(JSON.stringify(nodeRes));
+    }
+    const nodes = nodeRes.data;
+    // we don't care the execute order of each individual node was done or not.
+    // Using Promise.all() to make sure all nodes were deleted.
+    await Promise.all(nodes.map(node => nodeApi.remove(node)));
   }
-  const nodes = nodeRes.data;
-  // we don't care the execute order of each individual node was done or not.
-  // Using Promise.all() to make sure all nodes were deleted.
-  await Promise.all(nodes.map(node => nodeApi.remove(node)));
 
   // delete all files
   const fileRes = await fileApi.getAll();
