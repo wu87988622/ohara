@@ -139,7 +139,7 @@ const ViewNodeDialog = props => {
         }),
       )
       // since clusterKeys is array, we need to "flatten" object
-      .flat(1)
+      .reduce((acc, cur) => acc.concat(cur), [])
       .sort((a, b) => (a.workspace < b.workspace ? -1 : 1));
 
     const result = await Promise.all(

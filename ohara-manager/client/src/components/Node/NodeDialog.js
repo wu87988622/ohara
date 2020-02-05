@@ -89,7 +89,7 @@ const NodeDialog = () => {
     if (filteredNodes.length > 0) {
       const headers = filteredNodes
         .map(node => node.resources.map(resource => resource.name))
-        .flat(1);
+        .reduce((acc, cur) => acc.concat(cur), []);
       const distinctHeaders = [...new Set(headers)];
       return distinctHeaders.map(header => {
         return { id: header, label: header };

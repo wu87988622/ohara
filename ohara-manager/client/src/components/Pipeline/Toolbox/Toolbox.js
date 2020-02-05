@@ -230,7 +230,10 @@ const Toolbox = props => {
           </div>
 
           <ToolboxSearch
-            searchData={Object.values(connectors).flat()}
+            searchData={Object.values(connectors).reduce(
+              (acc, cur) => acc.concat(cur),
+              [],
+            )}
             setSearchResults={setSearchResults}
             pipelineDispatch={pipelineDispatch}
           />

@@ -16,7 +16,8 @@
 
 import { deleteAllServices } from '../utils';
 
-const displayWorkspaceName = Cypress.env('servicePrefix')
+// It's uppercase in AppBar
+const workspaceNameInAppBar = Cypress.env('servicePrefix')
   .substring(0, 2)
   .toUpperCase();
 
@@ -29,7 +30,7 @@ describe('Root route', () => {
       .should(location => {
         expect(location.pathname).to.be.eq('/');
       })
-      .findByText('QUICK START')
+      .findByText(/^quick start$/i)
       .should('exist')
       .end();
   });
@@ -44,7 +45,7 @@ describe('Redirect route', () => {
       withTopic: true,
     }).then(res => {
       cy.visit('/')
-        .findByText(displayWorkspaceName)
+        .findAllByText(workspaceNameInAppBar)
         .should('exist');
 
       cy.location().should(location => {
@@ -59,18 +60,18 @@ describe('Redirect route', () => {
       });
 
       // Add new pipeline
-      cy.findByText('Pipelines')
+      cy.findByText(/^pipelines$/i)
         .siblings('svg')
         .first()
         .click()
-        .findByText('Add a new pipeline')
+        .findByText(/^add a new pipeline$/i)
         .should('exist');
 
       cy.findByTestId('new-pipeline-dialog')
         .find('input')
         .type('pipeline1');
 
-      cy.findByText('ADD').click();
+      cy.findByText(/^add$/i).click();
 
       cy.location().should(location => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}/pipeline1`);

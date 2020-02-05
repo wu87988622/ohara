@@ -16,7 +16,8 @@
 
 import { deleteAllServices } from '../utils';
 
-const displayWorkspaceName = Cypress.env('servicePrefix')
+// It's uppercase in AppBar
+const workspaceNameInAppBar = Cypress.env('servicePrefix')
   .substring(0, 2)
   .toUpperCase();
 
@@ -33,7 +34,7 @@ describe('Topics tab', () => {
 
     cy.findByTitle('Developer Tools')
       .click()
-      .findByText(/topics/i)
+      .findByText(/^topics$/i)
       .should('exist');
 
     // check the topic Select component
@@ -57,7 +58,7 @@ describe('Topics tab', () => {
             cy.stub(win, 'open');
           },
         })
-        .findByText(displayWorkspaceName)
+        .findByText(workspaceNameInAppBar)
         .should('exist');
 
       // Check the topic tab exist
@@ -69,7 +70,7 @@ describe('Topics tab', () => {
         .click();
 
       // Check the status bar of no data
-      cy.findByText('No topic data').should('exist');
+      cy.findByText(/^no topic data$/i).should('exist');
 
       // Check the topic data detail view
       cy.findByTestId('view-topic-table')
@@ -80,7 +81,7 @@ describe('Topics tab', () => {
         .click();
 
       // Check the status bar
-      cy.findByText('10 rows per query').should('exist');
+      cy.findByText(/^10 rows per query$/i).should('exist');
 
       // the detail view should exist
       cy.findByTestId('topic-detail-view')
@@ -97,11 +98,11 @@ describe('Topics tab', () => {
       // query button
       cy.findByTitle('Query with different parameters')
         .click()
-        .findByText('QUERY')
+        .findByText(/^query$/i)
         .click()
         .get('table')
         .should('exist');
-      cy.findByText('Rows per query')
+      cy.findByText(/^rows per query$/i)
         .parent()
         .find('input[type=number]')
         .first()
@@ -133,27 +134,27 @@ describe('Logs tab', () => {
           cy.stub(win, 'open');
         },
       })
-        .findByText(displayWorkspaceName)
+        .findByText(workspaceNameInAppBar)
         .should('exist');
 
       // Check the log tab exist
       cy.findByTitle('Developer Tools')
         .click()
-        .findByText(/logs/i)
+        .findByText(/^logs$/i)
         .click();
 
       // Check the status bar of no data
-      cy.findByText('No log data').should('exist');
+      cy.findByText(/^no log data$/i).should('exist');
 
       // Check the logType dropdown list
       cy.findByTestId('log-type-select').click();
 
       // Check the log data of configurator
-      cy.findByText('configurator').click();
+      cy.findByText(/^configurator$/i).click();
       cy.findByTestId('view-log-list').should('exist');
 
       // Check the status bar
-      cy.findByText('Latest 10 minutes').should('exist');
+      cy.findByText(/^latest 10 minutes$/i).should('exist');
 
       // refresh button
       cy.get('span[title="Fetch the data again"] > button:enabled')
@@ -170,7 +171,7 @@ describe('Logs tab', () => {
         .click()
         .findByTestId('view-log-list')
         .should('exist');
-      cy.findByText('Minutes per query')
+      cy.findByText(/^minutes per query$/i)
         .parent()
         .find('input[type=number]')
         .first()
