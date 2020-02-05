@@ -16,48 +16,20 @@
 
 import * as context from 'context';
 
-const pipeline = () => {
+const usePipeline = () => {
   const { updatePipeline } = context.usePipelineActions();
   const { currentPipeline } = context.useWorkspace();
 
-  const update = async params => {
-    await updatePipeline({ ...params });
-  };
-
   const updateCells = paperApi => {
-    update({
+    updatePipeline({
       name: currentPipeline.name,
       tags: {
-        ...paperApi.toJSON(),
+        ...paperApi.toJson(),
       },
     });
   };
 
-  const addEndpoint = params => {
-    const { name, kind } = params;
-    update({
-      name: currentPipeline.name,
-      endpoints: [
-        ...currentPipeline.endpoints,
-        {
-          name,
-          kind,
-        },
-      ],
-    });
-  };
-
-  const removeEndpoint = params => {
-    const { name, kind } = params;
-    update({
-      name: currentPipeline.name,
-      endpoints: currentPipeline.endpoints.filter(
-        endpoint => endpoint.name !== name && endpoint.kind !== kind,
-      ),
-    });
-  };
-
-  return { update, addEndpoint, removeEndpoint, updateCells };
+  return { updateCells };
 };
 
-export default pipeline;
+export default usePipeline;

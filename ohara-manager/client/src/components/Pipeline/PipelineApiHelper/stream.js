@@ -17,7 +17,6 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
-import pipeline from './pipeline';
 
 const stream = () => {
   const {
@@ -27,6 +26,8 @@ const stream = () => {
     stopStream,
     deleteStream,
   } = context.useStreamActions();
+  const { updatePipeline } = context.usePipelineActions();
+  const { currentPipeline } = context.useWorkspace();
 
   const create = async (params, paperApi) => {
     const { id, name, className, jarKey, kind } = params;
@@ -41,7 +42,16 @@ const stream = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-      pipeline().addEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: [
+          ...currentPipeline.endpoints,
+          {
+            name,
+            kind,
+          },
+        ],
+      });
     } else {
       paperApi.removeElement(id);
     }
@@ -123,7 +133,12 @@ const stream = () => {
     const res = await deleteStream(name);
     if (!res.error) {
       paperApi.removeElement(id);
-      pipeline().removeEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: currentPipeline.endpoints.filter(
+          endpoint => endpoint.name !== name && endpoint.kind !== kind,
+        ),
+      });
     }
   };
 

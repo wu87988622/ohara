@@ -17,10 +17,11 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
-import pipeline from './pipeline';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
+  const { updatePipeline } = context.usePipelineActions();
+  const { currentPipeline } = context.useWorkspace();
   const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {
@@ -50,7 +51,16 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-      pipeline().addEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: [
+          ...currentPipeline.endpoints,
+          {
+            name,
+            kind,
+          },
+        ],
+      });
     } else {
       paperApi.removeElement(id);
     }
@@ -73,7 +83,12 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-      pipeline().removeEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: currentPipeline.endpoints.filter(
+          endpoint => endpoint.name !== name && endpoint.kind !== kind,
+        ),
+      });
     }
 
     const deleteRes = await deleteTopic(name);

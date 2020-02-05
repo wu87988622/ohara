@@ -17,7 +17,6 @@
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS, KIND } from 'const';
-import pipeline from './pipeline';
 
 const connector = () => {
   const {
@@ -27,6 +26,8 @@ const connector = () => {
     stopConnector,
     deleteConnector,
   } = context.useConnectorActions();
+  const { updatePipeline } = context.usePipelineActions();
+  const { currentPipeline } = context.useWorkspace();
 
   const create = async (params, paperApi) => {
     const { id, name, className, kind } = params;
@@ -39,7 +40,16 @@ const connector = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-      pipeline().addEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: [
+          ...currentPipeline.endpoints,
+          {
+            name,
+            kind,
+          },
+        ],
+      });
     } else {
       paperApi.removeElement(id);
     }
@@ -101,7 +111,12 @@ const connector = () => {
     const res = await deleteConnector(name);
     if (!res.error) {
       paperApi.removeElement(id);
-      pipeline().removeEndpoint({ name, kind });
+      updatePipeline({
+        name: currentPipeline.name,
+        endpoints: currentPipeline.endpoints.filter(
+          endpoint => endpoint.name !== name && endpoint.kind !== kind,
+        ),
+      });
     }
   };
 
