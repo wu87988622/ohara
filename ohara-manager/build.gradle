@@ -37,7 +37,7 @@ task clean {
     doLast {
       // We need some Manager's dependencies so we'll able to run the claen command afterward
       exec {
-        commandLine toOsCommand('yarn')
+        commandLine toOsCommand('yarn', 'install', '--frozen-lockfile')
       }
       exec {
         commandLine toOsCommand('yarn', 'clean')
