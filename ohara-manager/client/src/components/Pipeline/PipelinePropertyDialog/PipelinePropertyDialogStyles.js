@@ -16,7 +16,6 @@
 
 import styled, { css } from 'styled-components';
 
-import List from '@material-ui/core/List';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import MuiDialogContent from '@material-ui/core/DialogContent';
@@ -56,9 +55,21 @@ export const StyleMuiDialogActions = styled(MuiDialogActions)(
 
 export const LeftBody = styled.div(
   ({ theme }) => css`
-    float: left;
-    height: 600px;
-    width: 256px;
+    position: absolute;
+    width: ${theme.spacing(40)}px;
+    height: calc(100% - 140px);
+    padding: ${theme.spacing(0, 2, 1, 2)};
+    left: 0;
+    top: ${theme.spacing(9)}px;
+    overflow: auto;
+
+    .MuiPaper-root {
+      box-shadow: none;
+    }
+
+    .MuiExpansionPanelDetails-root {
+      padding: ${theme.spacing(0, 1, 1)};
+    }
 
     .nested {
       padding-left: ${theme.spacing(3)}px;
@@ -99,12 +110,7 @@ export const LeftBody = styled.div(
 );
 export const RightBody = styled.div(
   ({ theme }) => css`
-    float: left;
-    height: 600px;
-    width: 656px;
-    overflow: scroll;
-    margin-left: ${theme.spacing(2)}px;
-    padding-right: ${theme.spacing(2)}px;
+    margin: ${theme.spacing(2, 6, 2, 40)};
 
     & > form > * {
       margin: ${theme.spacing(0, 0, 3, 2)};
@@ -131,15 +137,3 @@ export const StyleExpansionPanel = styled(ExpansionPanel)(
     }
   `,
 );
-
-export const StyleList = styled(List)(
-  () => css`
-    width: 100%;
-  `,
-);
-
-export const StyleDiv = styled.div`
-  max-height: 540px;
-  overflow: scroll;
-  padding: 1px;
-`;

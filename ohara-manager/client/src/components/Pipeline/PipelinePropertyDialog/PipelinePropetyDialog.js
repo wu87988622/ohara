@@ -46,8 +46,6 @@ import {
   RightBody,
   StyleFilter,
   StyleExpansionPanel,
-  StyleList,
-  StyleDiv,
 } from './PipelinePropertyDialogStyles';
 
 const PipelinePropertyDialog = props => {
@@ -237,7 +235,7 @@ const PipelinePropertyDialog = props => {
               ),
             }}
           />
-          <StyleDiv>
+          <div>
             {groups.sort().map((group, index) => {
               const title = group[0].group;
               const defs = group.filter(def => !def.internal);
@@ -255,7 +253,7 @@ const PipelinePropertyDialog = props => {
                       <Typography>{capitalize(title)}</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
-                      <StyleList>
+                      <div>
                         {defs.map((def, index) => {
                           return (
                             <ListItem
@@ -272,7 +270,7 @@ const PipelinePropertyDialog = props => {
                             </ListItem>
                           );
                         })}
-                      </StyleList>
+                      </div>
                     </ExpansionPanelDetails>
                   </StyleExpansionPanel>
                 );
@@ -280,7 +278,7 @@ const PipelinePropertyDialog = props => {
                 return null;
               }
             })}
-          </StyleDiv>
+          </div>
         </LeftBody>
         <RightBody>{RenderForm}</RightBody>
       </StyleMuiDialogContent>
