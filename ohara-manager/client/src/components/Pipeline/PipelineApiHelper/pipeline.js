@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-import connector from './connector';
-import stream from './stream';
-import topic from './topic';
-import pipeline from './pipeline';
-import * as utils from './apiHelperUtils';
-import { CONNECTION_TYPE } from './apiHelperUtils';
+import * as context from 'context';
 
-export { connector, stream, topic, pipeline, utils, CONNECTION_TYPE };
+const usePipeline = () => {
+  const { updatePipeline } = context.usePipelineActions();
+  const { currentPipeline } = context.useWorkspace();
+
+  const updateCells = paperApi => {
+    updatePipeline({
+      name: currentPipeline.name,
+      tags: {
+        ...paperApi.toJson(),
+      },
+    });
+  };
+
+  return { updateCells };
+};
+
+export default usePipeline;
