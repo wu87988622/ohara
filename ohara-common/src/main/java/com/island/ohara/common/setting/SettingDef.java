@@ -158,6 +158,7 @@ public class SettingDef implements JsonObject, Serializable {
   // exposed to TableColumn
   static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
   private static final String BLACKLIST_KEY = "blacklist";
+  private static final String PREFIX_KEY = "prefix";
 
   public static SettingDef ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
@@ -178,6 +179,11 @@ public class SettingDef implements JsonObject, Serializable {
   private final List<TableColumn> tableKeys;
   private final Set<String> recommendedValues;
   private final Set<String> blacklist;
+  /**
+   * this is used by RANDOM_DEFAULT and type.String that the prefix will be added to the random
+   * string.
+   */
+  @Nullable private final String prefix;
 
   @JsonCreator
   private SettingDef(
@@ -195,7 +201,8 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(PERMISSION_KEY) Permission permission,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
       @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues,
-      @JsonProperty(BLACKLIST_KEY) Set<String> blacklist) {
+      @JsonProperty(BLACKLIST_KEY) Set<String> blacklist,
+      @Nullable @JsonProperty(PREFIX_KEY) String prefix) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
     this.key = CommonUtils.requireNonEmpty(key);
@@ -224,6 +231,7 @@ public class SettingDef implements JsonObject, Serializable {
     this.recommendedValues = Objects.requireNonNull(recommendedValues);
     this.blacklist = Objects.requireNonNull(blacklist);
     this.regex = regex;
+    this.prefix = prefix;
   }
 
   /**
@@ -422,6 +430,12 @@ public class SettingDef implements JsonObject, Serializable {
           break;
       }
     };
+  }
+
+  @Nullable
+  @JsonProperty(PREFIX_KEY)
+  public String prefix() {
+    return prefix;
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -623,7 +637,8 @@ public class SettingDef implements JsonObject, Serializable {
           && Objects.equals(permission, another.permission)
           && Objects.equals(tableKeys, another.tableKeys)
           && Objects.equals(recommendedValues, another.recommendedValues)
-          && Objects.equals(blacklist, another.blacklist);
+          && Objects.equals(blacklist, another.blacklist)
+          && Objects.equals(prefix, another.prefix);
     }
     return false;
   }
@@ -658,6 +673,7 @@ public class SettingDef implements JsonObject, Serializable {
     private Set<String> recommendedValues = Collections.emptySet();
     private Set<String> blacklist = Collections.emptySet();
     @Nullable private String regex = null;
+    @Nullable private String prefix = null;
 
     private Builder() {}
 
@@ -755,6 +771,19 @@ public class SettingDef implements JsonObject, Serializable {
      */
     public Builder stringWithRandomDefault() {
       return checkAndSet(Type.STRING, Necessary.RANDOM_DEFAULT, null);
+    }
+
+    /**
+     * set the string type and this definition generate random default value if the value is not
+     * defined.
+     *
+     * @param prefix the prefix added to random string
+     * @return this builder
+     */
+    public Builder stringWithRandomDefault(String prefix) {
+      checkAndSet(Type.STRING, Necessary.RANDOM_DEFAULT, null);
+      this.prefix = prefix;
+      return this;
     }
 
     /**
@@ -1006,7 +1035,8 @@ public class SettingDef implements JsonObject, Serializable {
           permission,
           tableKeys,
           recommendedValues,
-          blacklist);
+          blacklist,
+          prefix);
     }
   }
 }

@@ -100,7 +100,7 @@ object WorkerApi {
   val STATUS_TOPIC_NAME_DEFINITION: SettingDef = createDef(
     _.key(STATUS_TOPIC_NAME_KEY)
       .documentation("name of status topic which is used to store connector status")
-      .stringWithRandomDefault()
+      .stringWithRandomDefault("connect.status")
       .build()
   )
   private[this] val STATUS_TOPIC_PARTITIONS_KEY     = "status.storage.partitions"
@@ -124,8 +124,8 @@ object WorkerApi {
   private[this] val CONFIG_TOPIC_NAME_KEY = "config.storage.topic"
   val CONFIG_TOPIC_NAME_DEFINITION: SettingDef = createDef(
     _.key(CONFIG_TOPIC_NAME_KEY)
-      .documentation("number of replications for config topic")
-      .stringWithRandomDefault()
+      .documentation("name of config topic which is used to store connector config")
+      .stringWithRandomDefault("connect.config")
       .build()
   )
   private[this] val CONFIG_TOPIC_PARTITIONS_KEY     = "config.storage.partitions"
@@ -149,8 +149,8 @@ object WorkerApi {
   private[this] val OFFSET_TOPIC_NAME_KEY = "offset.storage.topic"
   val OFFSET_TOPIC_NAME_DEFINITION: SettingDef = createDef(
     _.key(OFFSET_TOPIC_NAME_KEY)
-      .documentation("number of replications for offset topic")
-      .stringWithRandomDefault()
+      .documentation("name of offset topic which is used to store connector data offset")
+      .stringWithRandomDefault("connect.offset")
       .build()
   )
   private[this] val OFFSET_TOPIC_PARTITIONS_KEY     = "offset.storage.partitions"

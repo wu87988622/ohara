@@ -1406,4 +1406,23 @@ class TestJsonRefiner extends OharaTest {
         }
       }
   }
+
+  @Test
+  def testPrefix(): Unit = {
+    val key    = CommonUtils.randomString()
+    val prefix = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).stringWithRandomDefault(prefix).build())
+      .refine
+
+    format.read(s"""
+                   |  {
+                   |  }
+                   |  """.stripMargin.parseJson).fields(key).convertTo[String] should include(prefix)
+  }
 }

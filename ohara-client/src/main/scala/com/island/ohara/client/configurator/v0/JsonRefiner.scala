@@ -240,7 +240,13 @@ trait JsonRefiner[T] {
       case Type.STRING =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
         else if (definition.necessary() == Necessary.RANDOM_DEFAULT)
-          nullToJsValue(definition.key(), () => JsString(CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)))
+          nullToJsValue(
+            definition.key(),
+            () =>
+              JsString(
+                Option(definition.prefix()).getOrElse("") + CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)
+              )
+          )
         if (!definition.internal()) requireJsonType[JsString](definition.key())
       case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
