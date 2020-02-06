@@ -26,6 +26,7 @@ buildscript {
     classpath "com.diffplug.spotless:spotless-plugin-gradle:3.26.0"
     classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0"
     classpath 'com.novoda:bintray-release:0.9.1'
+    classpath "org.gradle:test-retry-gradle-plugin:1.1.0"
   }
 }
 
@@ -142,14 +143,21 @@ subprojects {
 
   // -------------------------------------------------[jUnit configs]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
-    /**
-     * The tests in ohara-it are fucking heavy so it would be better to verify them one by one.
-     * TODO: Increase the number of forks if we buy a fucking super machine for QA
-     */
+    apply plugin: 'org.gradle.test-retry'
+
     int numberOfForks = it.name == 'ohara-it' ? 1 :
             project.hasProperty('maxParallelForks') ? maxParallelForks.toInteger() :
                     Math.max((int) (Runtime.runtime.availableProcessors() / 2), 1)
+
+    // the retries are disabled by default and it is up to jenkins.
+    int numberOfRetries = project.hasProperty('maxTestRetries') ? maxTestRetries.toInteger() : 0
+    int numberOfFailures = project.hasProperty('maxTestFailures') ? maxTestFailures.toInteger() : 1
+
     test {
+      retry {
+        maxRetries = numberOfRetries
+        maxFailures = numberOfFailures
+      }
       maxParallelForks = numberOfForks
       // make isolation for tests. It may be expensive but stability is first choice.
       forkEvery = 1

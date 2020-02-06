@@ -43,7 +43,7 @@ jobs:
         # 14 GB of SSD disk space
         # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
         run: |
-          gradle clean build -PmaxParallelForks=1
+          gradle clean build -PmaxParallelForks=1 -PmaxTestRetries=1 -PmaxTestFailures=5
   documentation:
     runs-on: ubuntu-latest
     container: oharastream/ohara:ci
