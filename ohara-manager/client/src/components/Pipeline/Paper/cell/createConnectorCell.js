@@ -49,6 +49,7 @@ const createConnectorCell = options => {
     onCellStop,
     onCellConfig,
     onCellRemove,
+    shouldSkipOnElementAdd,
     metrics = {
       meters: [],
     },
@@ -230,6 +231,7 @@ const createConnectorCell = options => {
       width: WIDTH,
       height: HEIGHT,
     },
+    shouldSkipOnElementAdd,
     jarKey,
   });
 };

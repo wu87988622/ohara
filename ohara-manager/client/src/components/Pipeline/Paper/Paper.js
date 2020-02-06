@@ -30,6 +30,7 @@ import { PipelineStateContext } from '../Pipeline';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
+    onInit = _.noop,
     onChange = _.noop,
     onCellSelect = _.noop,
     onCellDeselect = _.noop,
@@ -58,6 +59,7 @@ const Paper = React.forwardRef((props, ref) => {
 
   // Prevent from getting stale event handlers
   const onCellEventRef = React.useRef(null);
+  const isInitialized = React.useRef(false);
 
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
   const { isMetricsOn } = React.useContext(PipelineStateContext);
@@ -107,6 +109,15 @@ const Paper = React.forwardRef((props, ref) => {
       { cellNamespace: namespace },
     );
   }, [palette.common.white, palette.grey, palette.primary.main]);
+
+  React.useEffect(() => {
+    // Only run this once, there's no need to run this logic twice as
+    // that's intentional
+    if (isInitialized.current) return;
+
+    onInit();
+    isInitialized.current = true;
+  }, [onInit]);
 
   React.useEffect(() => {
     onCellEventRef.current = {
@@ -521,8 +532,20 @@ const Paper = React.forwardRef((props, ref) => {
 
         return graph.getCells().map(getCellData);
       },
-      load(cellData) {
-        graph.resetCells(cellData);
+      loadGraph(json) {
+        json.cells
+          // Elements should be render first, and then the links
+          .sort((a, b) => a.type.localeCompare(b.type))
+          .forEach(cell => {
+            const { type, source, target } = cell;
+            if (type === 'html.Element') {
+              return this.addElement({ ...cell, shouldSkipOnElementAdd: true });
+            }
+
+            if (type === 'standard.Link') {
+              this.addLink(source.id, target.id);
+            }
+          });
       },
       setScale(sx, sy) {
         if (sx === undefined) {
@@ -653,6 +676,7 @@ const Paper = React.forwardRef((props, ref) => {
 });
 
 Paper.propTypes = {
+  onInit: PropTypes.func,
   onChange: PropTypes.func,
   onConnect: PropTypes.func,
   onDisconnect: PropTypes.func,
