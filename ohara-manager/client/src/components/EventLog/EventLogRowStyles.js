@@ -24,12 +24,11 @@ export default styled.div(
     padding: ${theme.spacing(0.5, 1.5, 0.25, 3)};
     border-bottom: 1px solid ${theme.palette.divider};
 
-    &.default {
-      color: ${theme.palette.error.main};
-    }
-
     &.error {
       color: ${theme.palette.error.main};
+      a {
+        cursor: pointer;
+      }
     }
 
     .date {

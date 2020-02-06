@@ -32,6 +32,10 @@ export const StyledTableCell = styled(TableCell)`
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+
+  .MuiSvgIcon-root {
+    cursor: pointer;
+  }
 `;
 
 export const StyledTableErrorCell = styled(TableCell)(
@@ -44,14 +48,6 @@ export const StyledTableErrorCell = styled(TableCell)(
     }
   `,
 );
-
-export const StyledTopicView = styled.div`
-  textarea {
-    width: 100%;
-    height: 200px;
-    resize: none;
-  }
-`;
 
 export const StyledContent = styled.div`
   padding-bottom: ${props => props.theme.spacing(1)}px;

@@ -17,6 +17,7 @@
 import React from 'react';
 import { get, isEmpty, capitalize } from 'lodash';
 import VisibilityIcon from '@material-ui/icons/Visibility';
+import ReactJson from 'react-json-view';
 
 import * as context from 'context';
 import { Table } from 'components/common/Table';
@@ -25,7 +26,6 @@ import {
   StyledTableRow,
   StyledTableCell,
   StyledTableErrorCell,
-  StyledTopicView,
 } from './ViewStyles';
 
 const ViewTopic = () => {
@@ -112,18 +112,17 @@ const ViewTopic = () => {
         open={!isEmpty(viewTopicMessage)}
         handleClose={() => setViewTopicMessage({})}
         children={
-          <StyledTopicView>
-            <textarea
-              readOnly
-              value={JSON.stringify(
-                viewTopicMessage.value
-                  ? viewTopicMessage.value
-                  : viewTopicMessage.error,
-                null,
-                2,
-              )}
-            />
-          </StyledTopicView>
+          <ReactJson
+            src={get(
+              viewTopicMessage,
+              'value',
+              get(viewTopicMessage, 'error', {}),
+            )}
+            enableClipboard={false}
+            iconStyle="square"
+            displayDataTypes={false}
+            displayObjectSize={false}
+          />
         }
         showActions={false}
         testId="topic-detail-view"

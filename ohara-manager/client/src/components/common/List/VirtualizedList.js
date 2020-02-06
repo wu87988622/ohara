@@ -17,12 +17,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { noop } from 'lodash';
+import styled, { css } from 'styled-components';
 
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { List } from 'react-virtualized/dist/commonjs/List';
 import { AutoSizer } from 'react-virtualized/dist/commonjs/AutoSizer';
 import { CellMeasurer } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { TableLoader } from 'components/common/Loader';
+
+const StyledList = styled(List)(
+  () => css`
+    :focus {
+      outline: none;
+    }
+  `,
+);
 
 const VirtualizedList = props => {
   const {
@@ -79,7 +88,7 @@ const VirtualizedList = props => {
   return (
     <AutoSizer onResize={() => cache.clearAll()}>
       {({ width, height }) => (
-        <List
+        <StyledList
           deferredMeasurementCache={cache}
           height={height}
           rowCount={data.length}
