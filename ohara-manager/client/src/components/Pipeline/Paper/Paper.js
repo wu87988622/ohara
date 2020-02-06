@@ -222,10 +222,8 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('element:mouseleave', element => {
-      // We might want to keep the state
-      if (!element.model.attributes.isMenuDisplayed) {
-        element.unhighlight();
-      }
+      const isSelected = element.$box.find('.menu').is(':visible');
+      if (!isSelected) element.unhighlight();
     });
 
     // Create a link that moves along with mouse cursor
@@ -304,7 +302,7 @@ const Paper = React.forwardRef((props, ref) => {
     paper.on('element:pointerclick', elementView => {
       onCellSelect(getCellData(elementView), paperApi);
       resetCells();
-      elementView.openMenu();
+      elementView.showMenu();
       elementView.highlight();
 
       const sourceLink = graph.getLinks().find(link => !link.get('target').id);
@@ -336,9 +334,9 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     function resetCells() {
-      getCellViews().forEach(cellView => {
+      findCellViews().forEach(cellView => {
         cellView.unhighlight();
-        cellView.closeMenu();
+        cellView.hideMenu();
       });
     }
 
@@ -446,7 +444,7 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        const cell = getCellByIdOrName(id);
+        const cell = findCell(id);
 
         if (!cell || !cell.isElement())
           throw new Error(
@@ -456,7 +454,7 @@ const Paper = React.forwardRef((props, ref) => {
         graph.removeCells(cell);
       },
       updateElement(id, data) {
-        const targetCell = getCellViews().find(cell => cell.model.id === id);
+        const targetCell = findCellViews().find(cell => cell.model.id === id);
 
         if (targetCell) {
           targetCell.updateElement({
@@ -509,7 +507,7 @@ const Paper = React.forwardRef((props, ref) => {
           throw new Error(`paperApi: getCell(id: string) invalid argument id`);
         }
 
-        const result = getCellByIdOrName(id);
+        const result = findCell(id);
 
         if (result) return getCellData(result);
       },
@@ -591,7 +589,7 @@ const Paper = React.forwardRef((props, ref) => {
           throw new Error(`paperApi: center(id: string) invalid argument id!`);
         }
 
-        const element = getCellByIdOrName(id);
+        const element = findCell(id);
         const cellBbox = {
           ...element.getBBox(),
           ...element.getBBox().center(),
@@ -613,7 +611,7 @@ const Paper = React.forwardRef((props, ref) => {
         );
       },
       toggleMetrics(isOpen) {
-        getCellViews()
+        findCellViews()
           .filter(
             ({ model }) =>
               model.get('kind') === KIND.source ||
@@ -624,12 +622,8 @@ const Paper = React.forwardRef((props, ref) => {
       },
 
       updateMetrics(id, metrics) {
-        const element = getCellViews().find(
-          element =>
-            element.model.get('id') === id || element.model.get('name') === id,
-        );
-
-        element.updateElement(metrics);
+        const elementView = findCellView(id);
+        elementView.updateElement(metrics);
       },
 
       highlight(id) {
@@ -639,11 +633,19 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        const cellView = getCellViews().find(
-          ({ model }) => model.get('id') === id || model.get('name') === id,
-        );
+        const cellView = findCellView(id);
 
         cellView && cellView.highlight();
+      },
+
+      enableMenu(id, items) {
+        const cellView = findCellView(id);
+        cellView && cellView.enableMenu(items);
+      },
+
+      disableMenu(id, items) {
+        const cellView = findCellView(id);
+        cellView && cellView.disableMenu(items);
       },
 
       // TODO: the state here will be stale, we should update
@@ -657,11 +659,18 @@ const Paper = React.forwardRef((props, ref) => {
   });
 
   // Private APIs
-  function getCellViews() {
+  function findCellViews() {
     return paperRef.current.findViewsInArea(paperRef.current.getArea());
   }
 
-  function getCellByIdOrName(nameOrId) {
+  function findCellView(nameOrId) {
+    return findCellViews().find(
+      ({ model }) =>
+        model.get('id') === nameOrId || model.get('name') === nameOrId,
+    );
+  }
+
+  function findCell(nameOrId) {
     return (
       graphRef.current.getCell(nameOrId) ||
       graphRef.current.getCells().find(cell => cell.get('name') === nameOrId)

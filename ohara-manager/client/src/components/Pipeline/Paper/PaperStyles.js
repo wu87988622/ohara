@@ -85,7 +85,7 @@ export const StyledPaper = styled.div(
         box-shadow: 0 0 0 2px ${theme.palette.primary};
       }
 
-      .connector-menu {
+      .menu {
         position: absolute;
         top: ${theme.spacing(0.5)}px;
         left: calc(100% + 8px);
@@ -100,6 +100,11 @@ export const StyledPaper = styled.div(
           background-color: transparent;
           border: 0;
           padding: 0;
+
+          &.is-disabled {
+            pointer-events: none;
+            opacity: 0.3;
+          }
 
           &:hover {
             cursor: pointer;
@@ -219,7 +224,7 @@ export const StyledPaper = styled.div(
         text-align: center;
       }
 
-      .topic-menu {
+      .menu {
         width: 24px;
         position: absolute;
         top: ${theme.spacing(0.5)}px;
@@ -235,6 +240,11 @@ export const StyledPaper = styled.div(
           background-color: transparent;
           border: 0;
           padding: 0;
+
+          &.is-disabled {
+            pointer-events: none;
+            opacity: 0.3;
+          }
 
           &:hover {
             cursor: pointer;

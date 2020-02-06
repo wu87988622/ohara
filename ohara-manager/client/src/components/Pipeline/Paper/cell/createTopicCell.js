@@ -75,9 +75,9 @@ const createTopicCell = options => {
       <div class="topic">
         ${isShared ? sharedIcon : pipelineOnlyIcon}
         <div class="display-name">${displayName}</div>
-        <div class="topic-menu">
-          <Button class="topic-link">${linkIcon}</Button>
-          <Button class="topic-remove">${removeIcon}</Button> 
+        <div class="menu">
+          <Button class="link">${linkIcon}</Button>
+          <Button class="remove">${removeIcon}</Button> 
         </div>
       </div>`,
     init() {
@@ -89,8 +89,8 @@ const createTopicCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = $box.find('.topic-link');
-      const $removeButton = $box.find('.topic-remove');
+      const $linkButton = $box.find('.link');
+      const $removeButton = $box.find('.remove');
 
       const id = this.model.id;
 
@@ -104,11 +104,43 @@ const createTopicCell = options => {
       this.updatePosition();
       return this;
     },
-    openMenu() {
-      this.$box.find('.topic-menu').show();
+    showMenu() {
+      this.$box.find('.menu').show();
     },
-    closeMenu() {
-      this.$box.find('.topic-menu').hide();
+    hideMenu() {
+      this.$box.find('.menu').hide();
+    },
+    enableMenu(items = []) {
+      const cls = 'is-disabled';
+      const $buttons = this.$box.find('.menu > button');
+
+      if (items.length === 0) {
+        return $buttons.removeClass(cls);
+      }
+
+      $buttons.each((index, button) => {
+        if (button.className.includes(items)) {
+          $(button).removeClass(cls);
+        } else {
+          $(button).addClass(cls);
+        }
+      });
+    },
+    disableMenu(items = []) {
+      const cls = 'is-disabled';
+      const $buttons = this.$box.find('.menu > button');
+
+      if (items.length === 0) {
+        return $buttons.addClass(cls);
+      }
+
+      $buttons.each((index, button) => {
+        if (button.className.includes(items)) {
+          $(button).addClass(cls);
+        } else {
+          $(button).removeClass(cls);
+        }
+      });
     },
     updateElement(cellData) {
       const { status } = cellData;

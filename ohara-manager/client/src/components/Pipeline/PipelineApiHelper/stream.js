@@ -104,7 +104,9 @@ const stream = () => {
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });
+    paperApi.disableMenu(id);
     const res = await startStream(name);
+    paperApi.enableMenu(id);
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
@@ -119,7 +121,9 @@ const stream = () => {
 
   const stop = async (params, paperApi) => {
     const { id, name } = params;
+    paperApi.enableMenu(id);
     const res = await stopStream(name);
+    paperApi.disableMenu(id);
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {

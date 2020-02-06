@@ -94,17 +94,17 @@ const createConnectorCell = options => {
           <span class="status-value">${status}</span>
         </div>
 
-        <div class="connector-menu">
+        <div class="menu">
           ${
             // Sink cannot create connection form itself to others
             kind !== KIND.sink
-              ? `<Button class="connector-link">${linkIcon}</Button>`
+              ? `<Button class="link">${linkIcon}</Button>`
               : ''
           }
-          <Button class="connector-start">${startIcon}</Button>
-          <Button class="connector-stop">${stopIcon}</Button>
-          <Button class="connector-config">${configIcon}</Button>
-          <Button class="connector-remove">${removeIcon}</Button>
+          <Button class="start">${startIcon}</Button>
+          <Button class="stop">${stopIcon}</Button>
+          <Button class="config">${configIcon}</Button>
+          <Button class="remove">${removeIcon}</Button>
         </div>
     </div>`,
 
@@ -117,11 +117,11 @@ const createConnectorCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = $box.find('.connector-link');
-      const $startButton = $box.find('.connector-start');
-      const $stopButton = $box.find('.connector-stop');
-      const $configButton = $box.find('.connector-config');
-      const $removeButton = $box.find('.connector-remove');
+      const $linkButton = $box.find('.link');
+      const $startButton = $box.find('.start');
+      const $stopButton = $box.find('.stop');
+      const $configButton = $box.find('.config');
+      const $removeButton = $box.find('.remove');
       const { id } = this.model;
       const cellData = paperApi.getCell(id);
 
@@ -139,11 +139,43 @@ const createConnectorCell = options => {
       this.toggleMetrics(false);
       return this;
     },
-    openMenu() {
-      this.$box.find('.connector-menu').show();
+    showMenu() {
+      this.$box.find('.menu').show();
     },
-    closeMenu() {
-      this.$box.find('.connector-menu').hide();
+    hideMenu() {
+      this.$box.find('.menu').hide();
+    },
+    enableMenu(items = []) {
+      const cls = 'is-disabled';
+      const $buttons = this.$box.find('.menu > button');
+
+      if (items.length === 0) {
+        return $buttons.removeClass(cls);
+      }
+
+      $buttons.each((index, button) => {
+        if (button.className.includes(items)) {
+          $(button).removeClass(cls);
+        } else {
+          $(button).addClass(cls);
+        }
+      });
+    },
+    disableMenu(items = []) {
+      const cls = 'is-disabled';
+      const $buttons = this.$box.find('.menu > button');
+
+      if (items.length === 0) {
+        return $buttons.addClass(cls);
+      }
+
+      $buttons.each((index, button) => {
+        if (button.className.includes(items)) {
+          $(button).addClass(cls);
+        } else {
+          $(button).removeClass(cls);
+        }
+      });
     },
     toggleMetrics(isOpen) {
       const { $box, model } = this;
@@ -217,6 +249,7 @@ const createConnectorCell = options => {
       this.$box.remove();
     },
   });
+  window.$ = $;
 
   return new joint.shapes.html.Element({
     id: id ? id : undefined, // undefined -> id is controlled by JointJS

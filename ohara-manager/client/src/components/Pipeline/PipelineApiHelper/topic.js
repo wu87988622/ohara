@@ -38,6 +38,8 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
+    paperApi.disableMenu(id);
+
     const res = await createTopic({
       name,
       tags: {
@@ -45,6 +47,8 @@ const topic = () => {
         displayName,
       },
     });
+
+    paperApi.enableMenu(id);
 
     if (!res.error) {
       const state = util.getCellState(res);
@@ -76,7 +80,9 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
+    paperApi.disableMenu(id);
     const stopRes = await stopTopic(name);
+    paperApi.enableMenu(id);
 
     if (!stopRes.error) {
       const state = util.getCellState(stopRes);

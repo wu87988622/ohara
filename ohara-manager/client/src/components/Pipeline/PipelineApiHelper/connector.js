@@ -82,7 +82,9 @@ const connector = () => {
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });
+    paperApi.disableMenu(id);
     const res = await startConnector(name);
+    paperApi.enableMenu(id);
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
@@ -97,7 +99,9 @@ const connector = () => {
 
   const stop = async (params, paperApi) => {
     const { id, name } = params;
+    paperApi.disableMenu(id);
     const res = await stopConnector(name);
+    paperApi.enableMenu(id);
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
