@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.island.ohara.common.annotations.Nullable;
 import com.island.ohara.common.annotations.Optional;
+import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.exception.OharaConfigException;
 import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
@@ -45,6 +46,11 @@ import java.util.stream.Collectors;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SettingDef implements JsonObject, Serializable {
+
+  public static SettingDef of(String json) {
+    return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
+  }
+
   public static final int STRING_LENGTH_LIMIT = 25;
   public static final String COMMON_STRING_REGEX = "[a-z0-9_\\-]{1," + STRING_LENGTH_LIMIT + "}$";
   public static final String HOSTNAME_REGEX = "[a-zA-Z0-9.\\-]{1," + STRING_LENGTH_LIMIT + "}$";
@@ -143,14 +149,14 @@ public class SettingDef implements JsonObject, Serializable {
 
   // -------------------------------[key]-------------------------------//
   private static final String REFERENCE_KEY = "reference";
-  private static final String REGEX_KEY = "regex";
+  @VisibleForTesting static final String REGEX_KEY = "regex";
   private static final String GROUP_KEY = "group";
   private static final String ORDER_IN_GROUP_KEY = "orderInGroup";
   private static final String DISPLAY_NAME_KEY = "displayName";
   private static final String KEY_KEY = "key";
   private static final String VALUE_TYPE_KEY = "valueType";
   private static final String NECESSARY_KEY = "necessary";
-  private static final String DEFAULT_VALUE_KEY = "defaultValue";
+  @VisibleForTesting static final String DEFAULT_VALUE_KEY = "defaultValue";
   private static final String DOCUMENTATION_KEY = "documentation";
   private static final String INTERNAL_KEY = "internal";
   private static final String TABLE_KEYS_KEY = "tableKeys";
@@ -158,7 +164,7 @@ public class SettingDef implements JsonObject, Serializable {
   // exposed to TableColumn
   static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
   private static final String BLACKLIST_KEY = "blacklist";
-  private static final String PREFIX_KEY = "prefix";
+  @VisibleForTesting static final String PREFIX_KEY = "prefix";
 
   public static SettingDef ofJson(String json) {
     return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
@@ -432,10 +438,9 @@ public class SettingDef implements JsonObject, Serializable {
     };
   }
 
-  @Nullable
   @JsonProperty(PREFIX_KEY)
-  public String prefix() {
-    return prefix;
+  public java.util.Optional<String> prefix() {
+    return java.util.Optional.ofNullable(prefix);
   }
 
   @JsonProperty(INTERNAL_KEY)
@@ -453,7 +458,6 @@ public class SettingDef implements JsonObject, Serializable {
     return displayName;
   }
 
-  @Nullable
   @JsonProperty(GROUP_KEY)
   public String group() {
     return group;
@@ -583,16 +587,14 @@ public class SettingDef implements JsonObject, Serializable {
    *
    * @return origin type (object type)
    */
-  @Nullable
   @JsonProperty(DEFAULT_VALUE_KEY)
-  public Object defaultValue() {
-    return defaultValue;
+  public java.util.Optional<Object> defaultValue() {
+    return java.util.Optional.ofNullable(defaultValue);
   }
 
-  @Nullable
   @JsonProperty(REGEX_KEY)
-  public String regex() {
-    return regex;
+  public java.util.Optional<String> regex() {
+    return java.util.Optional.ofNullable(regex);
   }
 
   @JsonProperty(DOCUMENTATION_KEY)

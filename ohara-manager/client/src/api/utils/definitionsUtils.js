@@ -129,7 +129,7 @@ export const createBody = params => {
 
     if (
       params[key].necessary === necessaryType.optional &&
-      params[key].defaultValue !== null &&
+      params[key].defaultValue &&
       isArray(body)
     ) {
       body.push(generateValueWithDefaultValue(params[key].defaultValue, type));

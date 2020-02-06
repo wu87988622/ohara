@@ -72,7 +72,7 @@ trait JsonRefiner[T] {
     // the internal is not exposed to user so we skip it.
     // remove the value if the field is readonly
     if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
-    if (definition.regex() != null) stringRestriction(definition.key(), definition.regex())
+    definition.regex().ifPresent(regex => stringRestriction(definition.key(), regex))
     if (!definition.internal() && definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
     definition.valueType() match {
       case Type.BOOLEAN =>
@@ -244,7 +244,7 @@ trait JsonRefiner[T] {
             definition.key(),
             () =>
               JsString(
-                Option(definition.prefix()).getOrElse("") + CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)
+                definition.prefix().orElse("") + CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)
               )
           )
         if (!definition.internal()) requireJsonType[JsString](definition.key())

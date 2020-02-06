@@ -16,16 +16,27 @@
 
 package com.island.ohara.common.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
 import java.util.Objects;
 
 public final class JsonUtils {
 
+  /** @return the object mapper configured for jdk 8 */
+  public static ObjectMapper objectMapper() {
+    return new ObjectMapper()
+        // the Optional.empty is removed from json string
+        .registerModule(new Jdk8Module().configureAbsentsAsNulls(true))
+        // the null is removed from json string
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  }
+
   public static <T> T toObject(String string, TypeReference<T> ref) {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = JsonUtils.objectMapper();
     try {
       return mapper.readValue(CommonUtils.requireNonEmpty(string), ref);
     } catch (IOException e) {
@@ -34,9 +45,8 @@ public final class JsonUtils {
   }
 
   public static String toString(Object obj) {
-    ObjectMapper mapper = new ObjectMapper();
     try {
-      return mapper.writeValueAsString(Objects.requireNonNull(obj));
+      return objectMapper().writeValueAsString(Objects.requireNonNull(obj));
     } catch (IOException e) {
       throw new IllegalArgumentException(e);
     }

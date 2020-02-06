@@ -664,7 +664,7 @@ class TestBrokerApi extends OharaTest {
 
     BrokerApi.DEFINITIONS.filter(_.hasDefault).foreach { definition =>
       string should include(definition.key())
-      string should include(definition.defaultValue().toString)
+      string should include(definition.defaultValue().get().toString)
     }
   }
 

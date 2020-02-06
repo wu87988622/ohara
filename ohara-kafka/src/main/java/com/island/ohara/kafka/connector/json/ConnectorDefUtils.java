@@ -401,7 +401,7 @@ public final class ConnectorDefUtils {
         // report from kafka if we don't follow the rule.
         def.necessary() == SettingDef.Necessary.REQUIRED
             ? ConfigDef.NO_DEFAULT_VALUE
-            : def.defaultValue(),
+            : def.defaultValue().orElse(null),
         (String key, Object value) -> {
           // TODO move this to RouteUtils in #2191
           try {

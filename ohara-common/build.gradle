@@ -24,6 +24,7 @@ dependencies {
   implementation libs.commonsIo
   implementation libs.guava
   implementation libs.jacksonDatabind
+  implementation libs.jacksonJDK8Datatypes
   testImplementation libs.mockitoAll
   testImplementation libs.junit
 }

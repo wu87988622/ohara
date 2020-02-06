@@ -18,6 +18,7 @@ package com.island.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.util.CommonUtils;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class TestTopicKey extends OharaTest {
   @Test
   public void testEqual() throws IOException {
     TopicKey key = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5));
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = JsonUtils.objectMapper();
     Assert.assertEquals(
         key, mapper.readValue(mapper.writeValueAsString(key), new TypeReference<KeyImpl>() {}));
   }

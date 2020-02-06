@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.util.CommonUtils;
@@ -34,7 +35,7 @@ public class TestSetting extends OharaTest {
             SettingDef.builder().key(CommonUtils.randomString()).build(),
             SettingValue.of(
                 CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = JsonUtils.objectMapper();
     Assert.assertEquals(
         config,
         mapper.readValue(mapper.writeValueAsString(config), new TypeReference<Setting>() {}));

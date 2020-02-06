@@ -811,7 +811,7 @@ class TestWorkerApi extends OharaTest {
       .filter(_.permission() == Permission.EDITABLE)
       .foreach { definition =>
         string should include(definition.key())
-        string should include(definition.defaultValue().toString)
+        string should include(definition.defaultValue().get().toString)
       }
   }
 

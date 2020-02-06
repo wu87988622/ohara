@@ -646,7 +646,8 @@ public class TestSettingDef extends OharaTest {
             .key(CommonUtils.randomString())
             .optional(Duration.ofMillis(10))
             .build()
-            .defaultValue(),
+            .defaultValue()
+            .get(),
         "10 milliseconds");
 
     Assert.assertEquals(
@@ -654,7 +655,8 @@ public class TestSettingDef extends OharaTest {
             .key(CommonUtils.randomString())
             .optional(Duration.ofMillis(1))
             .build()
-            .defaultValue(),
+            .defaultValue()
+            .get(),
         "1 millisecond");
   }
 
@@ -694,5 +696,23 @@ public class TestSettingDef extends OharaTest {
     Assert.assertTrue("a.".matches(SettingDef.HOSTNAME_REGEX));
     // the length limit is 25
     Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.HOSTNAME_REGEX));
+  }
+
+  @Test
+  public void nullFieldShouldBeRemovedFromJsonString() {
+    checkNullField(SettingDef.builder().key(CommonUtils.randomString()).build());
+  }
+
+  @Test
+  public void nullFieldInConvertingJsonString() {
+    checkNullField(
+        SettingDef.of(SettingDef.builder().key(CommonUtils.randomString()).build().toJsonString()));
+  }
+
+  private static void checkNullField(SettingDef def) {
+    Assert.assertFalse(def.toJsonString(), def.toJsonString().contains(SettingDef.REGEX_KEY));
+    Assert.assertFalse(
+        def.toJsonString(), def.toJsonString().contains(SettingDef.DEFAULT_VALUE_KEY));
+    Assert.assertFalse(def.toJsonString(), def.toJsonString().contains(SettingDef.PREFIX_KEY));
   }
 }

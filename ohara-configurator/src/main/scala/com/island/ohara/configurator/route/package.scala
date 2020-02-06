@@ -444,7 +444,8 @@ package object route {
     settingDefs
       .filter(_.hasDefault)
       .map { definition =>
-        definition.key() -> (definition.defaultValue() match {
+        val defaultValue = definition.defaultValue().get()
+        definition.key() -> (defaultValue match {
           case s: String            => JsString(s)
           case i: java.lang.Short   => JsNumber(i.toInt)
           case i: java.lang.Integer => JsNumber(i)
@@ -454,7 +455,7 @@ package object route {
           case b: java.lang.Boolean => JsBoolean(b)
           case _ =>
             throw new UnsupportedOperationException(
-              s"this exception means that we have a new type(${definition.defaultValue().getClass.getName}) added to SettingDef but our route doesn't understand it :("
+              s"this exception means that we have a new type(${defaultValue.getClass.getName}) added to SettingDef but our route doesn't understand it :("
             )
         })
       }

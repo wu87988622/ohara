@@ -160,9 +160,9 @@ export const deleteAllServices = async () => {
   await Promise.all(zookeepers.map(zk => zkApi.forceStop(zk)));
   await Promise.all(zookeepers.map(zk => zkApi.remove(zk)));
 
-  // delete all nodes for docker mode
+  // delete all nodes if not k8s mode
   const inspectRes = await inspectApi.getConfiguratorInfo();
-  if (inspectRes.data.mode === MODE.docker) {
+  if (inspectRes.data.mode !== MODE.k8s) {
     const nodeRes = await nodeApi.getAll();
     if (nodeRes.errors) {
       throw new Error(JSON.stringify(nodeRes));
