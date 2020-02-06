@@ -20,12 +20,10 @@ import { CELL_STATUS } from 'const';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
-  const { updatePipeline } = context.usePipelineActions();
-  const { currentPipeline } = context.useWorkspace();
   const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {
-    const { id, name, displayName, isShared, kind } = params;
+    const { id, name, displayName, isShared } = params;
 
     if (isShared) {
       const target = topics.find(topic => topic.name === name);
@@ -51,16 +49,6 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: [
-          ...currentPipeline.endpoints,
-          {
-            name,
-            kind,
-          },
-        ],
-      });
     } else {
       paperApi.removeElement(id);
     }
@@ -68,7 +56,7 @@ const topic = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name, isShared, kind } = params;
+    const { id, name, isShared } = params;
 
     if (isShared) return paperApi.removeElement(id);
 
@@ -82,12 +70,6 @@ const topic = () => {
       const state = util.getCellState(stopRes);
       paperApi.updateElement(id, {
         status: state,
-      });
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: currentPipeline.endpoints.filter(
-          endpoint => endpoint.name !== name && endpoint.kind !== kind,
-        ),
       });
     }
 

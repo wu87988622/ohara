@@ -128,12 +128,6 @@ const PipelinePropertyDialog = props => {
     }
   };
 
-  const remove = (values, key) => {
-    if (values[key].length === 0) {
-      delete values[key];
-    }
-  };
-
   const onSubmit = async values => {
     const topicCells = paperApi.getCells(KIND.topic);
     Object.keys(values).forEach(key => {
@@ -146,9 +140,6 @@ const PipelinePropertyDialog = props => {
           break;
         case 'from':
           getTopicWithKey(values, key);
-          break;
-        case 'nodeNames':
-          remove(values, key);
           break;
         default:
           break;
