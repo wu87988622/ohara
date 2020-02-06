@@ -18,12 +18,12 @@
 usage="USAGE: $0 [start|stop|--help] arg1 arg2 ..."
 if [ $# -lt 1 ];
 then
-  echo $usage
+  echo ${usage}
   exit 1
 fi
 
 COMMAND=$1
-case $COMMAND in
+case ${COMMAND} in
   start)
     start="true"
     shift
@@ -37,14 +37,14 @@ case $COMMAND in
     shift
     ;;
   *)
-    echo $usage
+    echo ${usage}
     exit 1
     ;;
 esac
 
 if [ "${help}" == "true" ];
 then
-  echo $usage
+  echo ${usage}
   echo "Argument             Description"
   echo "--------             -----------"
   echo "--user               Set FTP server user name"
@@ -53,13 +53,14 @@ then
   echo "--host               Set host name to remote host the FTP server container"
   echo "--ip                 Set ftp server ip for passive mode"
   echo "--dataPortRange      Set ftp server data port range. example: --dataPortRange 30000-30004"
+  echo "--volume             Expose the container data folder to host path"
   exit 1
 fi
 
 port="21"
 containerName="ftp-benchmark-test"
 
-ARGUMENT_LIST=("user" "password" "port" "host" "ip" "dataPortRange")
+ARGUMENT_LIST=("user" "password" "port" "host" "ip" "dataPortRange" "volume")
 
 opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
@@ -93,6 +94,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dataPortRange)
       dataPortRnage=$2
+      shift 2
+      ;;
+    --volume)
+      volume=$2
       shift 2
       ;;
     *)
@@ -131,17 +136,22 @@ then
   exit 1
 fi
 
+if [[ ! -z ${volume} ]] && [[ "${start}" == "true" ]];
+then
+  volumeArg="-v ${volume}:/home/ohara/ftp-data"
+fi
+
 ftpDockerImageName="oharastream/ohara:ftp"
 if [[ "${start}" == "true" ]];
 then
   echo "Pull FTP server docker image"
-  ssh ohara@${host} docker pull $ftpDockerImageName
-  echo "Starting FTP server container. user name is $user"
-  ssh ohara@${host} docker run -d --name $containerName --env FTP_USER_NAME=$user --env FTP_USER_PASS=$password --env FORCE_PASSIVE_IP=$ip --env PASSIVE_PORT_RANGE=$dataPortRnage -p $port:2121 -p ${dataPortRnage}:${dataPortRnage} $ftpDockerImageName
+  ssh ohara@${host} docker pull ${ftpDockerImageName}
+  echo "Starting FTP server container. user name is ${user}"
+  ssh ohara@${host} docker run -d ${volumeArg} --name ${containerName} --env FTP_USER_NAME=${user} --env FTP_USER_PASS=${password} --env FORCE_PASSIVE_IP=${ip} --env PASSIVE_PORT_RANGE=${dataPortRnage} -p ${port}:2121 -p ${dataPortRnage}:${dataPortRnage} ${ftpDockerImageName}
 fi
 
 if [[ "${stop}" == "true" ]];
 then
   echo "Stoping FTP server container"
-  ssh ohara@${host} docker rm -f $containerName
+  ssh ohara@${host} docker rm -f ${containerName}
 fi
