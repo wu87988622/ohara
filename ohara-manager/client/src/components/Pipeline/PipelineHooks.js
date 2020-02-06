@@ -18,11 +18,18 @@ import { useReducer, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import * as context from 'context';
+import { useLocalStorage } from 'utils/hooks';
 
 export const usePipelineState = () => {
+  const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
+    'isPipelineMetricsOn',
+    null,
+  );
+
   const initialState = {
     isToolboxOpen: true,
     toolboxKey: 0,
+    isMetricsOn,
     toolboxExpanded: {
       topic: false,
       source: false,
@@ -75,6 +82,13 @@ export const usePipelineState = () => {
         return {
           ...state,
           toolboxExpanded: initialState.toolboxExpanded,
+        };
+
+      case 'toggleMetricsButton':
+        setIsMetricsOn(!state.isMetricsOn);
+        return {
+          ...state,
+          isMetricsOn: !state.isMetricsOn,
         };
 
       default:

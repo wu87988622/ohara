@@ -89,6 +89,7 @@ export const StyledPaper = styled.div(
         position: absolute;
         top: ${theme.spacing(0.5)}px;
         left: calc(100% + 8px);
+        display: none;
 
         svg {
           color: ${theme.palette.grey[600]};
@@ -223,6 +224,7 @@ export const StyledPaper = styled.div(
         position: absolute;
         top: ${theme.spacing(0.5)}px;
         left: calc(100% + 8px);
+        display: none;
 
         svg {
           color: ${theme.palette.grey[600]};

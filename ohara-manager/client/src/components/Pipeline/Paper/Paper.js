@@ -26,6 +26,7 @@ import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
 import { createConnection, getCellData } from './PaperUtils';
 import { useSnackbar } from 'context';
+import { PipelineStateContext } from '../Pipeline';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
@@ -59,6 +60,7 @@ const Paper = React.forwardRef((props, ref) => {
   const onCellEventRef = React.useRef(null);
 
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
+  const { isMetricsOn } = React.useContext(PipelineStateContext);
 
   React.useEffect(() => {
     const namespace = joint.shapes;
@@ -250,6 +252,7 @@ const Paper = React.forwardRef((props, ref) => {
     const paperApi = ref.current;
 
     // Binding custom event handlers
+    // Graph Events
     graph.on('add', cell => {
       if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellAddRef.current, cell)) return;
@@ -286,12 +289,12 @@ const Paper = React.forwardRef((props, ref) => {
       onChange(paperApi);
     });
 
+    // Paper events
     paper.on('element:pointerclick', elementView => {
       onCellSelect(getCellData(elementView), paperApi);
       resetCells();
+      elementView.openMenu();
       elementView.highlight();
-      elementView.model.attributes.isMenuDisplayed = true;
-      elementView.updateBox();
 
       const sourceLink = graph.getLinks().find(link => !link.get('target').id);
       if (sourceLink) {
@@ -324,8 +327,7 @@ const Paper = React.forwardRef((props, ref) => {
     function resetCells() {
       getCellViews().forEach(cellView => {
         cellView.unhighlight();
-        cellView.model.attributes.isMenuDisplayed = false;
-        cellView.updateBox();
+        cellView.closeMenu();
       });
     }
 
@@ -393,11 +395,16 @@ const Paper = React.forwardRef((props, ref) => {
         const { kind } = data;
         const statusColors = {
           stopped: palette.text.secondary,
-          pending: palette.secondary.main,
+          pending: palette.warning.main,
           running: palette.success.main,
           failed: palette.error.main,
         };
-        const newData = { ...data, statusColors, paperApi: ref.current };
+        const newData = {
+          ...data,
+          statusColors,
+          isMetricsOn,
+          paperApi: ref.current,
+        };
         let cell;
         if (kind === source || kind === sink || kind === stream) {
           cell = createConnectorCell({
@@ -441,12 +448,10 @@ const Paper = React.forwardRef((props, ref) => {
         const targetCell = getCellViews().find(cell => cell.model.id === id);
 
         if (targetCell) {
-          targetCell.model.attributes = {
+          targetCell.updateElement({
             ...targetCell.model.attributes,
             ...data,
-          };
-
-          targetCell.updateBox();
+          });
         }
       },
       addLink(sourceId, targetId) {
@@ -584,7 +589,7 @@ const Paper = React.forwardRef((props, ref) => {
           newOy + fittingBbox.height / 2,
         );
       },
-      toggleMetrics(state) {
+      toggleMetrics(isOpen) {
         getCellViews()
           .filter(
             ({ model }) =>
@@ -592,10 +597,7 @@ const Paper = React.forwardRef((props, ref) => {
               model.get('kind') === KIND.sink ||
               model.get('kind') === KIND.stream,
           )
-          .forEach(element => {
-            element.model.attributes.areMetricsDisplayed = state; // true or false
-            element.updateBox();
-          });
+          .forEach(element => element.toggleMetrics(isOpen));
       },
 
       updateMetrics(id, metrics) {
@@ -604,7 +606,7 @@ const Paper = React.forwardRef((props, ref) => {
             element.model.get('id') === id || element.model.get('name') === id,
         );
 
-        element.updateBox(metrics);
+        element.updateElement(metrics);
       },
 
       highlight(id) {

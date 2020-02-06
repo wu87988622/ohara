@@ -41,21 +41,21 @@ import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { useDeleteServices, useZoom } from './ToolbarHooks';
 import { Tooltip } from 'components/common/Tooltip';
-import { PaperContext } from '../Pipeline';
+import * as pipelineContext from '../Pipeline';
 import * as context from 'context';
 
 const Toolbar = props => {
-  const {
-    handleToolboxOpen,
-    handleToolbarClick,
-    isToolboxOpen,
-    setIsMetricsOn,
-    isMetricsOn,
-  } = props;
+  const { handleToolboxOpen, handleToolbarClick, isToolboxOpen } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
   const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
+  const pipelineDispatch = React.useContext(
+    pipelineContext.PipelineDispatchContext,
+  );
+  const { isMetricsOn } = React.useContext(
+    pipelineContext.PipelineStateContext,
+  );
 
   const { deletePipeline } = context.usePipelineActions();
   const { startConnector, stopConnector } = context.useConnectorActions();
@@ -66,7 +66,7 @@ const Toolbar = props => {
   const { steps, activeStep, deleteServices } = useDeleteServices();
   const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
-  const paperApi = React.useContext(PaperContext);
+  const paperApi = React.useContext(pipelineContext.PaperContext);
   const eventLog = useEventLog();
 
   const handleZoomClick = event => {
@@ -293,10 +293,8 @@ const Toolbar = props => {
               <Switch
                 checked={isMetricsOn}
                 onChange={() => {
-                  setIsMetricsOn(prevState => {
-                    paperApi.toggleMetrics(!prevState);
-                    return !prevState;
-                  });
+                  pipelineDispatch({ type: 'toggleMetricsButton' });
+                  paperApi.toggleMetrics(!isMetricsOn);
                 }}
                 color="primary"
               />
@@ -323,8 +321,6 @@ Toolbar.propTypes = {
   handleToolboxOpen: PropTypes.func.isRequired,
   handleToolbarClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
-  setIsMetricsOn: PropTypes.func.isRequired,
-  isMetricsOn: PropTypes.bool,
 };
 
 export default Toolbar;

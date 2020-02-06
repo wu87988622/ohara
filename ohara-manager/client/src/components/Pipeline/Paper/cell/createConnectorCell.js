@@ -30,7 +30,8 @@ import * as joint from 'jointjs';
 
 import { KIND, CELL_STATUS } from 'const';
 
-const NORMAL_HEIGHT = 100;
+const WIDTH = 240;
+const HEIGHT = 100;
 const HEIGHT_WITH_METRICS = 160;
 
 const createConnectorCell = options => {
@@ -38,7 +39,6 @@ const createConnectorCell = options => {
     id,
     displayName,
     isTemporary = false,
-    isMetricsOn: areMetricsDisplayed = false,
     name,
     kind,
     className,
@@ -75,15 +75,13 @@ const createConnectorCell = options => {
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
   const displayClassName = className.split('.').pop();
-  const iconState = getIconState(status);
+  const iconStatus = getIconStatus(status);
 
-  // Things that don't need to update can be placed here, otherwise, put them
-  // in the `updateBox()` method
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
       <div class="connector">
         <div class="header">
-          <div class="icon ${iconState}">${getIcon(kind)}</div>
+          <div class="icon ${iconStatus}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">
             <div class="display-name">${displayName}</div>
             <div class="type">${displayClassName}</div>
@@ -110,12 +108,12 @@ const createConnectorCell = options => {
     </div>`,
 
     init() {
-      this.listenTo(this.model, 'change', this.updateBox);
+      this.listenTo(this.model, 'change', this.updatePosition);
     },
     onRender() {
       const boxMarkup = joint.util.template(this.template)();
       const $box = (this.$box = $(boxMarkup));
-      this.listenTo(this.paper, 'scale translate', this.updateBox);
+      this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
       const $linkButton = $box.find('.connector-link');
@@ -133,72 +131,83 @@ const createConnectorCell = options => {
       $configButton.on('click', () => onCellConfig(cellData, paperApi));
       $removeButton.on('click', () => onCellRemove(cellData, paperApi));
 
-      this.updateBox();
+      this.updatePosition();
+
+      // TODO: don't show the metrics for now, this is still an issue, and
+      //  will be addressed in anther tasks in #3813
+      this.toggleMetrics(false);
       return this;
     },
-    updateBox(
-      cell,
-      options,
-      customOptions = {
-        metrics: {
-          meters: [],
-        },
-      },
-    ) {
-      const {
-        metrics: { meters },
-      } = customOptions;
+    openMenu() {
+      this.$box.find('.connector-menu').show();
+    },
+    closeMenu() {
+      this.$box.find('.connector-menu').hide();
+    },
+    toggleMetrics(isOpen) {
+      const { $box, model } = this;
 
-      const displayMetrics = meters.length > 0 ? customOptions.meters : metrics;
+      if (isOpen) {
+        $box.find('.metrics').show();
 
-      // Set the position and dimension of the box so that it covers the JointJS element.
-      const bBox = this.getBBox({ useModelGeometry: true });
-      const {
-        status,
-        areMetricsDisplayed,
-        isMenuDisplayed,
-      } = this.model.attributes;
+        // Update SVG
+        model.resize(WIDTH, HEIGHT_WITH_METRICS);
 
-      const scale = paperApi.getScale();
+        // Update HTML
+        $box.css({
+          width: WIDTH,
+          height: HEIGHT_WITH_METRICS,
+        });
+      } else {
+        $box.find('.metrics').hide();
+
+        // Update SVG
+        model.resize(WIDTH, HEIGHT);
+
+        // Update HTML
+        $box.css({
+          width: WIDTH,
+          height: HEIGHT,
+        });
+      }
+    },
+    updateElement(cellData, newMetrics = { meters: [] }) {
       const $box = this.$box;
 
-      // Update width size. Remember that we have both SVG and HTML elements, so
-      // we first update the SVG, than HTML
-      this.model.resize(
-        bBox.width,
-        areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT,
-      );
+      // Metrics
+      const meters = _.has(newMetrics, 'meters');
+      const displayMetrics = meters.length > 0 ? metrics.meters : metrics;
+      const metricsData = getMetrics(displayMetrics);
+      $box.find('.metrics').html(metricsData);
 
-      // Only updates the height
-      bBox.height = areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT;
+      // Status
+      const { status } = cellData;
+      $box.find('.status-value').text(status);
+
+      // Display name
+      $box.find('.display-name').text(displayName);
+
+      // Icon status
+      const iconStatus = getIconStatus(status);
+      $box
+        .find('.icon')
+        .removeClass()
+        .addClass(`icon ${iconStatus}`);
+    },
+    updatePosition() {
+      // Set the position and dimension of the box so that it covers the JointJS element.
+      const { width, height, x, y } = this.getBBox({ useModelGeometry: true });
+      const scale = paperApi.getScale();
+      const $box = this.$box;
 
       $box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
-        width: bBox.width / scale.sx,
-        height: bBox.height / scale.sy,
-        left: bBox.x,
-        top: bBox.y,
+        width: width / scale.sx,
+        height: height / scale.sy,
+        left: x,
+        top: y,
       });
-
-      const iconState = getIconState(status);
-      const metricsData = areMetricsDisplayed ? getMetrics(displayMetrics) : '';
-
-      const menuDisplayValue = isMenuDisplayed ? 'block' : 'none';
-
-      $box.find('.status-value').text(status);
-      $box.find('.display-name').text(displayName);
-
-      $box
-        .find('.connector-menu')
-        .attr('style', `display: ${menuDisplayValue}`);
-
-      $box.find('.metrics').html(metricsData);
-
-      $box
-        .find('.icon')
-        .removeClass()
-        .addClass(`icon ${iconState}`);
     },
 
     // Keeping this handler here since when calling `cell.remove()` somehow
@@ -218,11 +227,9 @@ const createConnectorCell = options => {
     status,
     isTemporary,
     size: {
-      width: 240,
-      height: areMetricsDisplayed ? HEIGHT_WITH_METRICS : NORMAL_HEIGHT,
+      width: WIDTH,
+      height: HEIGHT,
     },
-    isMenuDisplayed: false,
-    areMetricsDisplayed,
     jarKey,
   });
 };
@@ -267,7 +274,7 @@ function getMetrics(metrics) {
   `;
 }
 
-function getIconState(status) {
+function getIconStatus(status) {
   const { stopped, pending, running, failed } = CELL_STATUS;
   const _status = status.toLowerCase();
 

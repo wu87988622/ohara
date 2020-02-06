@@ -81,12 +81,12 @@ const createTopicCell = options => {
         </div>
       </div>`,
     init() {
-      this.listenTo(this.model, 'change', this.updateBox);
+      this.listenTo(this.model, 'change', this.updatePosition);
     },
     onRender() {
       const boxMarkup = joint.util.template(this.template)();
       const $box = (this.$box = $(boxMarkup));
-      this.listenTo(this.paper, 'scale translate', this.updateBox);
+      this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
       const $linkButton = $box.find('.topic-link');
@@ -101,16 +101,27 @@ const createTopicCell = options => {
         onCellRemove(elementData, paperApi);
       });
 
-      this.updateBox();
+      this.updatePosition();
       return this;
     },
-    updateBox() {
+    openMenu() {
+      this.$box.find('.topic-menu').show();
+    },
+    closeMenu() {
+      this.$box.find('.topic-menu').hide();
+    },
+    updateElement(cellData) {
+      const { status } = cellData;
+      const $box = this.$box;
+      $box.find('.display-name').text(displayName);
+      $box.find('.topic-status').attr('fill', statusColors[status]);
+    },
+    updatePosition() {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const bBox = this.getBBox({ useModelGeometry: true });
       const scale = paperApi.getScale();
-      const $box = this.$box;
 
-      $box.css({
+      this.$box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
         width: bBox.width / scale.sx,
@@ -118,13 +129,6 @@ const createTopicCell = options => {
         left: bBox.x,
         top: bBox.y,
       });
-
-      const { isMenuDisplayed, status } = this.model.attributes;
-
-      const displayValue = isMenuDisplayed ? 'block' : 'none';
-      $box.find('.display-name').text(displayName);
-      $box.find('.topic-menu').attr('style', `display: ${displayValue};`);
-      $box.find('.topic-status').attr('fill', statusColors[status]);
     },
     onRemove() {
       this.$box.remove();
