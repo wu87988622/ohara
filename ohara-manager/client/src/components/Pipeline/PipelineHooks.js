@@ -23,7 +23,7 @@ import { useLocalStorage } from 'utils/hooks';
 export const usePipelineState = () => {
   const [isMetricsOn, setIsMetricsOn] = useLocalStorage(
     'isPipelineMetricsOn',
-    null,
+    false,
   );
 
   const initialState = {

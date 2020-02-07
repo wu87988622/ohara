@@ -217,14 +217,17 @@ const createConnectorCell = options => {
         });
       }
     },
-    updateElement(cellData, newMetrics = { meters: [] }) {
+    updateMeters(newMetrics) {
       const $box = this.$box;
 
       // Metrics
-      const meters = _.has(newMetrics, 'meters');
-      const displayMetrics = meters.length > 0 ? metrics.meters : metrics;
+      const meters = _.get(newMetrics, 'meters');
+      const displayMetrics = meters.length > 0 ? meters : metrics;
       const metricsData = getMetrics(displayMetrics);
       $box.find('.metrics').html(metricsData);
+    },
+    updateElement(cellData) {
+      const $box = this.$box;
 
       // Status
       const { status } = cellData;
@@ -294,13 +297,13 @@ function getIcon(kind) {
   if (kind === stream) return streamIcon;
 }
 
-function getMetrics(metrics) {
+function getMetrics(meters) {
   // Make sure we're getting
   // 1. Same metrics data every time by sorting
   // 2. And removing duplicate items
   // 3. Finally, just pick the values that need to be displayed
   const results = _.map(
-    _.sortBy(_.uniqBy(metrics.meters, 'name'), 'name'),
+    _.sortBy(_.uniqBy(meters, 'name'), 'name'),
     _.partialRight(_.pick, ['document', 'value']),
   );
 
