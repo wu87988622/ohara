@@ -125,7 +125,7 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
   // Step1: workspace name
   if (workspaceName) {
     // type the workspaceName by parameter
-    cy.findByDisplayValue('quickworkspace', { exact: false })
+    cy.findByDisplayValue('workspace', { exact: false })
       .clear()
       .type(workspaceName);
   }
@@ -134,7 +134,7 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
     .click();
 
   // Step2: select nodes
-  cy.contains('button', 'Click here to select nodes').click();
+  cy.findByText('Click here to select nodes').click();
   cy.addNode();
 
   // Step3: add worker plugins (using default)
@@ -147,11 +147,11 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
     .filter(':visible')
     .click();
 
-  // the default workspace name is "quickstartXXX"
-  // hence, the first two words should be "QU"
+  // the default workspace name is "workspace1,workspace2,..."
+  // hence, the first two words should be "WO"
   if (workspaceName) {
     cy.findByText(workspaceName.substring(0, 2).toUpperCase()).should('exist');
   } else {
-    cy.findByText(/^qu$/i).should('exist');
+    cy.findByText(/^wo$/i).should('exist');
   }
 });

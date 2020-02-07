@@ -19,7 +19,7 @@ import { some } from 'lodash';
 
 import { useWorkspace } from 'context';
 
-export const useUniqueName = (prefix = 'quickworkspace') => {
+export const useUniqueName = (prefix = 'workspace') => {
   const { workspaces = [] } = useWorkspace();
   return useMemo(() => {
     for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {

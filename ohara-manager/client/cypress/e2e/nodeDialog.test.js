@@ -202,7 +202,7 @@ describe('NodeDialog in AppBar', () => {
       .click();
 
     // Step2: select nodes
-    cy.contains('button', 'Select nodes').click();
+    cy.findByText('Click here to select nodes').click();
     cy.findByText(nodeHost)
       .click()
       .findByText(/^save$/i)
@@ -222,7 +222,7 @@ describe('NodeDialog in AppBar', () => {
       .click();
 
     // Check the services in node
-    cy.findByText(/^qu$/i).should('exist');
+    cy.findByText(/^wo$/i).should('exist');
     cy.visit('/');
 
     if (mode === MODE.k8s) {
@@ -316,7 +316,7 @@ describe('NodeDialog in workspaceQuick', () => {
       .click();
 
     // Step2: select nodes
-    cy.contains('button', 'Select nodes').click();
+    cy.findByText('Click here to select nodes').click();
     cy.findByText(hostname1)
       .should('exist')
       .click();
