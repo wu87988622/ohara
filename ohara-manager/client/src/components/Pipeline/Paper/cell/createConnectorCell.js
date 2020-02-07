@@ -216,6 +216,7 @@ const createConnectorCell = options => {
       // Status
       const { status } = cellData;
       $box.find('.status-value').text(status);
+      this.model.set('status', status);
 
       // Display name
       $box.find('.display-name').text(displayName);

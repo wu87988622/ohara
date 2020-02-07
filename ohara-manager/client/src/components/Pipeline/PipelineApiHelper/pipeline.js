@@ -32,9 +32,12 @@ const pipeline = () => {
     const cellsJson = {
       cells: paperApi.toJson().cells.filter(cell => !cell.isTemporary),
     };
-    const endpoints = cellsJson.cells.map(cell => {
-      return { name: cell.name, kind: cell.kind };
-    });
+
+    const endpoints = cellsJson.cells
+      .filter(cell => cell.type === 'html.Element')
+      .map(cell => {
+        return { name: cell.name, kind: cell.kind };
+      });
     updatePipeline({
       name: currentPipeline.name,
       endpoints,

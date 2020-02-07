@@ -147,6 +147,8 @@ const createTopicCell = options => {
       const $box = this.$box;
       $box.find('.display-name').text(displayName);
       $box.find('.topic-status').attr('fill', statusColors[status]);
+
+      this.model.set('status', status);
     },
     updatePosition() {
       // Set the position and dimension of the box so that it covers the JointJS element.

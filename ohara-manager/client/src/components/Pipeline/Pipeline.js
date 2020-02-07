@@ -188,8 +188,6 @@ const Pipeline = () => {
                           payload: panel,
                         });
                       }}
-                      // isMetricsOn={isMetricsOn}
-                      // setIsMetricsOn={setIsMetricsOn}
                     />
                   )}
 
