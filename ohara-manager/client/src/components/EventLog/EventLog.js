@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { delay, size } from 'lodash';
+import { delay, get, size } from 'lodash';
 
 import { useEventLogActions, useEventLogState } from 'context';
 import StatusBar from 'components/common/StatusBar';
@@ -26,7 +26,7 @@ import Wrapper from './EventLogStyles';
 
 const EventLog = () => {
   const [logs, setLogs] = useState([]);
-  const { isFetching, notifications } = useEventLogState();
+  const { isFetching, notifications, settings } = useEventLogState();
 
   const { clearNotifications } = useEventLogActions();
   const [cleared, setCleared] = useState(false);
@@ -44,7 +44,15 @@ const EventLog = () => {
   const getStatusText = () => {
     if (isFetching) return 'Loading...';
     const count = size(logs);
-    return count > 0 ? `Total ${count} logs` : 'No log';
+    if (!count) return 'No log';
+
+    const limit = get(settings, 'data.limit');
+    const unlimited = get(settings, 'data.unlimited');
+    if (unlimited) {
+      return `There are ${count} currently`;
+    } else {
+      return `There are ${count} currently (up to ${limit})`;
+    }
   };
 
   return (

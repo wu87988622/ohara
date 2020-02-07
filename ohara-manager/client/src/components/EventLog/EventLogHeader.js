@@ -54,7 +54,7 @@ const EventLogHeader = ({ onFilter }) => {
           <QuickSearch
             className="search"
             data={logs}
-            keys={['title']}
+            keys={['title', 'payload.errors[0].message']}
             setResults={onFilter}
             size="sm"
           />

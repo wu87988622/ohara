@@ -29,6 +29,22 @@ export default styled.div(
       a {
         cursor: pointer;
       }
+
+      :before {
+        position: absolute;
+        margin-left: -${theme.spacing(2)}px;
+        margin-top: ${theme.spacing(0.5)}px;
+        content: '+';
+        transform: rotate(45deg);
+        height: 10px;
+        width: 10px;
+        color: white;
+        background: ${theme.palette.error.main};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 100%;
+      }
     }
 
     .date {

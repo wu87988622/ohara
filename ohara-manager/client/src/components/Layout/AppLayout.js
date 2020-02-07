@@ -42,9 +42,9 @@ const AppLayout = () => {
         >
           <SplitPane
             split="vertical"
-            defaultSize={224}
-            minSize={224}
-            maxSize={480}
+            defaultSize={240}
+            minSize={160}
+            maxSize={320}
           >
             <Navigator />
             <Pipeline />
