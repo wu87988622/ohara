@@ -45,10 +45,6 @@ const createConnectorCell = options => {
     position,
     status = CELL_STATUS.stopped,
     paperApi,
-    onCellStart,
-    onCellStop,
-    onCellConfig,
-    onCellRemove,
     shouldSkipOnElementAdd,
     metrics = {
       meters: [],
@@ -117,20 +113,37 @@ const createConnectorCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = $box.find('.link');
-      const $startButton = $box.find('.start');
-      const $stopButton = $box.find('.stop');
-      const $configButton = $box.find('.config');
-      const $removeButton = $box.find('.remove');
-      const { id } = this.model;
-      const cellData = paperApi.getCell(id);
-
-      // Menu actions
-      $linkButton.on('click', () => paperApi.addLink(id));
-      $startButton.on('click', () => onCellStart(cellData, paperApi));
-      $stopButton.on('click', () => onCellStop(cellData, paperApi));
-      $configButton.on('click', () => onCellConfig(cellData, paperApi));
-      $removeButton.on('click', () => onCellRemove(cellData, paperApi));
+      // Binding events for paper
+      $box.find('.link').on(
+        'click',
+        function(event) {
+          this.notify('element:link:button:pointerclick', event);
+        }.bind(this),
+      );
+      $box.find('.start').on(
+        'click',
+        function(event) {
+          this.notify('element:start:button:pointerclick', event);
+        }.bind(this),
+      );
+      $box.find('.stop').on(
+        'click',
+        function(event) {
+          this.notify('element:stop:button:pointerclick', event);
+        }.bind(this),
+      );
+      $box.find('.config').on(
+        'click',
+        function(event) {
+          this.notify('element:config:button:pointerclick', event);
+        }.bind(this),
+      );
+      $box.find('.remove').on(
+        'click',
+        function(event) {
+          this.notify('element:remove:button:pointerclick', event);
+        }.bind(this),
+      );
 
       this.updatePosition();
 

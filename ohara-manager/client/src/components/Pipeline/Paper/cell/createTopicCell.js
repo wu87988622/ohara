@@ -33,7 +33,6 @@ const createTopicCell = options => {
     className,
     position,
     paperApi,
-    onCellRemove,
     status = CELL_STATUS.stopped,
     isShared,
     shouldSkipOnElementAdd = false,
@@ -89,17 +88,19 @@ const createTopicCell = options => {
       this.listenTo(this.paper, 'scale translate', this.updatePosition);
       $box.appendTo(this.paper.el);
 
-      const $linkButton = $box.find('.link');
-      const $removeButton = $box.find('.remove');
+      $box.find('.link').on(
+        'click',
+        function(event) {
+          this.notify('element:link:button:pointerclick', event);
+        }.bind(this),
+      );
 
-      const id = this.model.id;
-
-      // Menu actions
-      $linkButton.on('click', () => paperApi.addLink(id));
-      $removeButton.on('click', () => {
-        const elementData = paperApi.getCell(id);
-        onCellRemove(elementData, paperApi);
-      });
+      $box.find('.remove').on(
+        'click',
+        function(event) {
+          this.notify('element:remove:button:pointerclick', event);
+        }.bind(this),
+      );
 
       this.updatePosition();
       return this;

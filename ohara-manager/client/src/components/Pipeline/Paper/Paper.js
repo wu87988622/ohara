@@ -127,13 +127,9 @@ const Paper = React.forwardRef((props, ref) => {
 
   React.useEffect(() => {
     onCellEventRef.current = {
-      onCellStart,
-      onCellStop,
-      onCellRemove,
       onElementAdd,
-      onCellConfig,
     };
-  }, [onCellConfig, onCellRemove, onCellStart, onCellStop, onElementAdd]);
+  }, [onElementAdd]);
 
   React.useEffect(() => {
     //Prevent event from repeating
@@ -302,7 +298,7 @@ const Paper = React.forwardRef((props, ref) => {
     // Paper events
     paper.on('element:pointerclick', elementView => {
       onCellSelect(getCellData(elementView), paperApi);
-      resetCells();
+      resetElements();
       elementView.showMenu();
       elementView.highlight();
 
@@ -328,13 +324,35 @@ const Paper = React.forwardRef((props, ref) => {
       }
     });
 
+    // Element button events, these are custom event binding down in the
+    // element like connector or topic
+    paper.on('element:link:button:pointerclick', ElementView => {
+      paperApi.addLink(ElementView.model.get('id'));
+    });
+
+    paper.on('element:start:button:pointerclick', ElementView => {
+      onCellStart(getCellData(ElementView), paperApi);
+    });
+
+    paper.on('element:stop:button:pointerclick', ElementView => {
+      onCellStop(getCellData(ElementView), paperApi);
+    });
+
+    paper.on('element:config:button:pointerclick', ElementView => {
+      onCellConfig(getCellData(ElementView), paperApi);
+    });
+
+    paper.on('element:remove:button:pointerclick', ElementView => {
+      onCellRemove(getCellData(ElementView), paperApi);
+    });
+
     paper.on('blank:pointerclick', () => {
       onCellDeselect(paperApi);
-      resetCells();
+      resetElements();
       resetLinks();
     });
 
-    function resetCells() {
+    function resetElements() {
       findCellViews().forEach(cellView => {
         cellView.unhighlight();
         cellView.hideMenu();
@@ -368,6 +386,11 @@ const Paper = React.forwardRef((props, ref) => {
       paper.off('element:pointerclick');
       paper.off('element:mouseenter');
       paper.off('element:mouseleave');
+      paper.off('element:link:button:pointerclick');
+      paper.off('element:start:button:pointerclick');
+      paper.off('element:stop:button:pointerclick');
+      paper.off('element:config:button:pointerclick');
+      paper.off('element:remove:button:pointerclick');
 
       // Link
       paper.off('link:pointerclick');
@@ -382,8 +405,12 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
+    onCellConfig,
     onCellDeselect,
+    onCellRemove,
     onCellSelect,
+    onCellStart,
+    onCellStop,
     onChange,
     onConnect,
     onDisconnect,
@@ -418,15 +445,9 @@ const Paper = React.forwardRef((props, ref) => {
         };
         let cell;
         if (kind === source || kind === sink || kind === stream) {
-          cell = createConnectorCell({
-            ...newData,
-            onCellStart: onCellEventRef.current.onCellStart,
-            onCellStop: onCellEventRef.current.onCellStop,
-            onCellConfig: onCellEventRef.current.onCellConfig,
-            onCellRemove: onCellEventRef.current.onCellRemove,
-          });
+          cell = createConnectorCell(newData);
         } else if (kind === topic) {
-          cell = createTopicCell({ ...newData, onCellRemove });
+          cell = createTopicCell(newData);
         } else {
           // invalid type won't be added thru this method (e.g., link)
           throw new Error(
