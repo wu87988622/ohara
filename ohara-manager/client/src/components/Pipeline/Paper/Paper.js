@@ -644,9 +644,10 @@ const Paper = React.forwardRef((props, ref) => {
           .forEach(element => element.toggleMetrics(isOpen));
       },
 
-      updateMetrics(id, metrics) {
-        const elementView = findCellView(id);
-        elementView.updateElement(metrics);
+      updateMetrics(objects) {
+        objects.map(object =>
+          findCellView(object.name).updateMeters(object.metrics),
+        );
       },
 
       highlight(id) {

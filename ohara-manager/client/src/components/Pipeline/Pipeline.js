@@ -55,7 +55,7 @@ const Pipeline = () => {
     setData: setPropertyDialogData,
     data: PropertyDialogData,
   } = context.usePipelinePropertyDialog();
-  const { setSelectedCell } = context.usePipelineActions();
+  const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
 
   const { data: currentStream } = context.useStreamState();
 
@@ -122,8 +122,8 @@ const Pipeline = () => {
     });
   };
 
-  const paperRef = useRef();
-  const isPaperApiReady = _.has(paperRef, 'current.state.isReady');
+  const paperApiRef = useRef();
+  const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
 
   useRedirect();
 
@@ -166,6 +166,26 @@ const Pipeline = () => {
 
   const { isToolboxOpen, toolboxExpanded, toolboxKey } = pipelineState;
 
+  useEffect(() => {
+    let timer;
+    if (pipelineState.isMetricsOn) {
+      if (currentPipeline) {
+        timer = setInterval(async () => {
+          const res = await fetchPipeline(currentPipeline.name);
+          if (isPaperApiReady) {
+            paperApiRef.current.updateMetrics(
+              res.data[0].objects.filter(object => object.kind !== KIND.topic),
+            );
+          }
+        }, 5000);
+      }
+    }
+
+    return () => {
+      clearInterval(timer);
+    };
+  });
+
   return (
     <>
       {currentWorkspace && (
@@ -173,7 +193,7 @@ const Pipeline = () => {
           {currentPipeline && (
             <PipelineDispatchContext.Provider value={pipelineDispatch}>
               <PipelineStateContext.Provider value={pipelineState}>
-                <PaperContext.Provider value={{ ...paperRef.current }}>
+                <PaperContext.Provider value={{ ...paperApiRef.current }}>
                   {isPaperApiReady && (
                     <Toolbar
                       isToolboxOpen={isToolboxOpen}
@@ -193,7 +213,7 @@ const Pipeline = () => {
 
                   <PaperWrapper>
                     <Paper
-                      ref={paperRef}
+                      ref={paperApiRef}
                       onCellSelect={element => setSelectedCell(element)}
                       onCellDeselect={() => setSelectedCell(null)}
                       onInit={paperApi => checkCells(paperApi)}

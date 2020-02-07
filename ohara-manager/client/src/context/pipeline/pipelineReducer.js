@@ -32,7 +32,6 @@ const filterOutObjects = pipelines =>
       objects: pipeline.objects.filter(object => object.kind !== KIND.object),
     };
   });
-
 const initialState = {
   data: [],
   selectedCell: null,
@@ -52,6 +51,7 @@ const reducer = (state, action) => {
         selectedCell: action.payload,
       };
     case routines.fetchPipelinesRoutine.REQUEST:
+    case routines.fetchPipelineRoutine.REQUEST:
     case routines.createPipelineRoutine.REQUEST:
     case routines.updatePipelineRoutine.REQUEST:
     case routines.deletePipelineRoutine.REQUEST:
@@ -60,6 +60,7 @@ const reducer = (state, action) => {
         isFetching: true,
       };
     case routines.fetchPipelinesRoutine.SUCCESS:
+    case routines.fetchPipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -97,6 +98,7 @@ const reducer = (state, action) => {
         lastUpdated: new Date(),
       };
     case routines.fetchPipelinesRoutine.FAILURE:
+    case routines.fetchPipelineRoutine.FAILURE:
     case routines.createPipelineRoutine.FAILURE:
     case routines.deletePipelineRoutine.FAILURE:
     case routines.updatePipelineRoutine.FAILURE:
