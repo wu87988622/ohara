@@ -88,7 +88,7 @@ const Pipeline = () => {
 
   const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
 
-  const { updateCells } = pipelineUtils.pipeline();
+  const { updateCells, checkCells } = pipelineUtils.pipeline();
 
   const currentStreamRef = React.useRef(null);
 
@@ -198,6 +198,7 @@ const Pipeline = () => {
                       ref={paperRef}
                       onCellSelect={element => setSelectedCell(element)}
                       onCellDeselect={() => setSelectedCell(null)}
+                      onInit={paperApi => checkCells(paperApi)}
                       onChange={_.debounce(
                         paperApi => updateCells(paperApi),
                         1000,

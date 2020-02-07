@@ -26,11 +26,9 @@ const connector = () => {
     stopConnector,
     deleteConnector,
   } = context.useConnectorActions();
-  const { updatePipeline } = context.usePipelineActions();
-  const { currentPipeline } = context.useWorkspace();
 
   const create = async (params, paperApi) => {
-    const { id, name, className, kind } = params;
+    const { id, name, className } = params;
     const res = await createConnector({
       name,
       connector__class: className,
@@ -39,16 +37,6 @@ const connector = () => {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
         status: state,
-      });
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: [
-          ...currentPipeline.endpoints,
-          {
-            name,
-            kind,
-          },
-        ],
       });
     } else {
       paperApi.removeElement(id);
@@ -111,16 +99,10 @@ const connector = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name, kind } = params;
+    const { id, name } = params;
     const res = await deleteConnector(name);
     if (!res.error) {
       paperApi.removeElement(id);
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: currentPipeline.endpoints.filter(
-          endpoint => endpoint.name !== name && endpoint.kind !== kind,
-        ),
-      });
     }
   };
 

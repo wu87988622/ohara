@@ -26,11 +26,9 @@ const stream = () => {
     stopStream,
     deleteStream,
   } = context.useStreamActions();
-  const { updatePipeline } = context.usePipelineActions();
-  const { currentPipeline } = context.useWorkspace();
 
   const create = async (params, paperApi) => {
-    const { id, name, className, jarKey, kind } = params;
+    const { id, name, className, jarKey } = params;
     const res = await createStream({
       name,
       connector__class: className,
@@ -41,16 +39,6 @@ const stream = () => {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
         status: state,
-      });
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: [
-          ...currentPipeline.endpoints,
-          {
-            name,
-            kind,
-          },
-        ],
       });
     } else {
       paperApi.removeElement(id);
@@ -133,16 +121,10 @@ const stream = () => {
   };
 
   const remove = async (params, paperApi) => {
-    const { id, name, kind } = params;
+    const { id, name } = params;
     const res = await deleteStream(name);
     if (!res.error) {
       paperApi.removeElement(id);
-      updatePipeline({
-        name: currentPipeline.name,
-        endpoints: currentPipeline.endpoints.filter(
-          endpoint => endpoint.name !== name && endpoint.kind !== kind,
-        ),
-      });
     }
   };
 

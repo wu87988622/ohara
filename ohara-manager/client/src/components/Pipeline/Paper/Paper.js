@@ -110,14 +110,20 @@ const Paper = React.forwardRef((props, ref) => {
     );
   }, [palette.common.white, palette.grey, palette.primary.main]);
 
+  // This paperApi should be passed into all event handlers as the second
+  // parameter,  // e.g., onConnect(eventObject, paperApi)
+  // the only exception is the onRemove as it doesn't any other parameters.
+  const paperApi = ref.current;
+
   React.useEffect(() => {
     // Only run this once, there's no need to run this logic twice as
     // that's intentional
+    if (!_.has(paperApi, 'state.isReady')) return;
     if (isInitialized.current) return;
 
-    onInit();
+    onInit(paperApi);
     isInitialized.current = true;
-  }, [onInit]);
+  }, [onInit, paperApi]);
 
   React.useEffect(() => {
     onCellEventRef.current = {
@@ -255,11 +261,6 @@ const Paper = React.forwardRef((props, ref) => {
       }
     });
 
-    // This paperApi should be passed into all event handlers as the second
-    // parameter,  // e.g., onConnect(eventObject, paperApi)
-    // the only exception is the onRemove as it doesn't any other parameters.
-    const paperApi = ref.current;
-
     // Binding custom event handlers
     // Graph Events
     graph.on('add', cell => {
@@ -387,6 +388,7 @@ const Paper = React.forwardRef((props, ref) => {
     onConnect,
     onDisconnect,
     palette.grey,
+    paperApi,
     ref,
     showMessage,
   ]);
