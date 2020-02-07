@@ -24,6 +24,7 @@ import * as wkApi from '../src/api/workerApi';
 import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
 import * as streamApi from '../src/api/streamApi';
+import * as pipelineApi from '../src/api/pipelineApi';
 import * as objectApi from '../src/api/objectApi';
 import * as inspectApi from '../src/api/inspectApi';
 
@@ -182,6 +183,16 @@ export const deleteAllServices = async () => {
   // we don't care the execute order of each individual file was done or not.
   // Using Promise.all() to make sure all files were deleted.
   await Promise.all(files.map(file => fileApi.remove(file)));
+
+  // delete all pipelines
+  const pipelineRes = await pipelineApi.getAll();
+  if (pipelineRes.errors) {
+    throw new Error(JSON.stringify(pipelineRes));
+  }
+  const pipelines = pipelineRes.data;
+  // we don't care the execute order of each individual pipeline was done or not.
+  // Using Promise.all() to make sure all pipelines were deleted.
+  await Promise.all(pipelines.map(file => pipelineApi.remove(file)));
 
   // delete all objects
   const objectRes = await objectApi.getAll();

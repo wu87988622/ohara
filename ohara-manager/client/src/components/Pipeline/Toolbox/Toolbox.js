@@ -218,7 +218,10 @@ const Toolbox = props => {
       ref={toolboxRef}
       key={toolboxKey}
     >
-      <StyledToolbox className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}>
+      <StyledToolbox
+        className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}
+        data-testid="toolbox-draggable"
+      >
         <div className="toolbox-header" ref={toolboxHeaderRef}>
           <div className="title toolbox-title">
             <Typography variant="subtitle1">Toolbox</Typography>

@@ -203,7 +203,9 @@ export const enableDragAndDrop = params => {
       if (cellView.model.get('isDisabled')) return;
 
       const cellKind = cellView.model.get('kind');
-      $('#paper').append(`<div class="flying-paper flying-${cellKind}"></div>`);
+      $('#paper').append(
+        `<div data-testid="flying-element" class="flying-paper flying-${cellKind}"></div>`,
+      );
 
       const flyingGraph = new joint.dia.Graph();
       new joint.dia.Paper({
