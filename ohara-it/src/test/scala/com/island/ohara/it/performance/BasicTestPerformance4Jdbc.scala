@@ -19,7 +19,6 @@ package com.island.ohara.it.performance
 import java.io.File
 import java.sql.Timestamp
 import java.util.concurrent.{Executors, TimeUnit}
-
 import java.util.concurrent.atomic.{AtomicBoolean, LongAdder}
 
 import com.island.ohara.common.util.Releasable
@@ -27,11 +26,12 @@ import org.junit.{After, Before}
 import com.island.ohara.client.configurator.v0.FileInfoApi
 import com.island.ohara.client.configurator.v0.InspectApi.RdbColumn
 import com.island.ohara.client.database.DatabaseClient
-import com.island.ohara.common.setting.{ObjectKey}
+import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.CommonUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.junit.AssumptionViolatedException
+
 import collection.JavaConverters._
 
 abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
@@ -64,6 +64,16 @@ abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
   private[this] val numberOfProducerThread     = 2
   protected[this] var client: DatabaseClient   = _
 
+  private[this] val columnNames: Seq[String] = Seq(timestampColumnName) ++ rowData().cells().asScala.map(_.name)
+  private[this] val columnInfos = columnNames
+    .map(columnName => if (!isColumnNameUpperCase) columnName.toLowerCase else columnName.toUpperCase)
+    .zipWithIndex
+    .map {
+      case (columnName, index) =>
+        if (index == 0) RdbColumn(columnName, "TIMESTAMP", true)
+        else if (index == 1) RdbColumn(columnName, "VARCHAR(45)", true)
+        else RdbColumn(columnName, "VARCHAR(45)", false)
+    }
   @Before
   final def setup(): Unit = {
     client = DatabaseClient.builder.url(url).user(user).password(password).build
@@ -80,21 +90,12 @@ abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
       .toSet
   }
 
-  protected[this] def setupTableData(): (String, Long, Long) = {
-    val columnNames: Seq[String] = Seq(timestampColumnName) ++ rowData().cells().asScala.map(_.name)
-
-    val columnInfos = columnNames
-      .map(columnName => if (!isColumnNameUpperCase) columnName.toLowerCase else columnName.toUpperCase)
-      .zipWithIndex
-      .map {
-        case (columnName, index) =>
-          if (index == 0) RdbColumn(columnName, "TIMESTAMP", true)
-          else if (index == 1) RdbColumn(columnName, "VARCHAR(45)", true)
-          else RdbColumn(columnName, "VARCHAR(45)", false)
-      }
-
+  protected[this] def createTable(): Unit = {
+    log.info(s"Create the ${tableName} table for JDBC source connector test")
     client.createTable(tableName, columnInfos)
+  }
 
+  protected[this] def setupTableData(dataSize: Long): (String, Long, Long) = {
     val pool        = Executors.newFixedThreadPool(numberOfProducerThread)
     val closed      = new AtomicBoolean(false)
     val count       = new LongAdder()
@@ -103,16 +104,17 @@ abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
       (0 until numberOfProducerThread).foreach { x =>
         pool.execute(() => {
           val client = DatabaseClient.builder.url(url).user(user).password(password).build
-          try while (!closed.get() && sizeInBytes.longValue() <= sizeOfInputData) {
+          try while (!closed.get() && sizeInBytes.longValue() <= dataSize) {
+            // 432000000 is 5 days ago
+            val timestampData = new Timestamp(CommonUtils.current() - 432000000)
             val sql = s"INSERT INTO $tableName VALUES " + columnInfos
               .map(_ => "?")
               .mkString("(", ",", ")")
 
             val preparedStatement = client.connection.prepareStatement(sql)
             try {
-              val t = new Timestamp(1576655465184L)
-              preparedStatement.setTimestamp(1, t)
-              sizeInBytes.add(t.toString().length())
+              preparedStatement.setTimestamp(1, timestampData)
+              sizeInBytes.add(timestampData.toString().length())
 
               rowData().cells().asScala.zipWithIndex.foreach {
                 case (result, index) => {

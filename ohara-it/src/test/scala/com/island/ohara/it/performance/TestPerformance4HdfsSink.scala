@@ -39,9 +39,12 @@ class TestPerformance4HdfsSink extends BasicTestPerformance {
 
   private[this] val needDeleteData: Boolean = sys.env.getOrElse(NEED_DELETE_DATA_KEY, "true").toBoolean
 
+  private[this] var topicInfo: TopicInfo = _
+
   @Test
   def test(): Unit = {
-    produce(createTopic())
+    topicInfo = createTopic()
+    produce(topicInfo, sizeOfInputData)
     setupConnector(
       connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
       className = classOf[HDFSSink].getName(),
@@ -62,4 +65,8 @@ class TestPerformance4HdfsSink extends BasicTestPerformance {
         if (fileSystem.exists(path)) fileSystem.delete(path, true)
       } finally Releasable.close(fileSystem)
     }
+
+  override protected def afterFrequencySleep(reports: Seq[PerformanceReport]): Unit = {
+    produce(topicInfo, sizeOfDurationInputData)
+  }
 }

@@ -89,10 +89,15 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     value(logMetersFrequencyKey).map(Duration(_)).getOrElse(logMetersFrequencyDefault)
 
   //------------------------------[topic properties]------------------------------//
-  private[this] val megabytesOfInputDataKey           = PerformanceTestingUtils.DATA_SIZE
+  private[this] val megabytesOfInputDataKey           = PerformanceTestingUtils.DATA_SIZE_KEY
   private[this] val megabytesOfInputDataDefault: Long = 1000
   protected val sizeOfInputData: Long =
     1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
+
+  private[this] val kbytesOfDurationInputDataKey   = PerformanceTestingUtils.DURATION_DATA_SIZE_KEY
+  private[this] val kbytesOfInputDataDefault: Long = 1
+  protected val sizeOfDurationInputData: Long =
+    1024L * value(kbytesOfDurationInputDataKey).map(_.toLong).getOrElse(kbytesOfInputDataDefault)
 
   private[this] val numberOfPartitionsKey     = PerformanceTestingUtils.PARTITION_SIZE_KEY
   private[this] val numberOfPartitionsDefault = 1
@@ -174,16 +179,15 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   }
 
   protected def sleepUntilEnd(): Long = {
-    val end = CommonUtils.current() + durationOfPerformance.toMillis
-    while (CommonUtils.current() <= end) {
-      val reports = connectorReports()
-      try reports.foreach(logMeters)
-      catch {
-        case e: Throwable =>
-          log.error("failed to log meters", e)
-      } finally afterRecodingReports(reports)
-      TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
-    }
+    try {
+      val end = CommonUtils.current() + durationOfPerformance.toMillis
+      while (CommonUtils.current() <= end) {
+        val reports = connectorReports()
+        afterFrequencySleep(reports)
+        fetchConnectorMetrics(reports)
+        TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
+      }
+    } finally fetchConnectorMetrics(connectorReports())
     durationOfPerformance.toMillis
   }
 
@@ -193,6 +197,13 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     * @param reports the stuff we record
     */
   protected def afterRecodingReports(reports: Seq[PerformanceReport]): Unit = {
+    // nothing by default
+  }
+
+  /**
+    * Duration running function for after sleep
+    */
+  protected def afterFrequencySleep(reports: Seq[PerformanceReport]): Unit = {
     // nothing by default
   }
 
@@ -242,7 +253,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(connectorApi.get(connectorKey))
   }
 
-  protected def produce(topicInfo: TopicInfo): (TopicInfo, Long, Long) = {
+  protected def produce(topicInfo: TopicInfo, dataSize: Long): (TopicInfo, Long, Long) = {
     val cellNames: Set[String] = (0 until 10).map(index => s"c$index").toSet
     val numberOfRowsToFlush    = 2000
     val numberOfProducerThread = 4
@@ -259,7 +270,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
             .connectionProps(brokerClusterInfo.connectionProps)
             .build()
           var cachedRows = 0
-          try while (!closed.get() && sizeInBytes.longValue() <= sizeOfInputData) {
+          try while (!closed.get() && sizeInBytes.longValue() <= dataSize) {
             producer
               .sender()
               .topicName(topicInfo.key.topicNameOnKafka())
@@ -324,5 +335,13 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
         )
     )
     afterStoppingConnectors(result(connectorApi.list()), result(topicApi.list()))
+  }
+
+  private[this] def fetchConnectorMetrics(reports: Seq[PerformanceReport]): Unit = {
+    try reports.foreach(logMeters)
+    catch {
+      case e: Throwable =>
+        log.error("failed to log meters", e)
+    } finally afterRecodingReports(reports)
   }
 }

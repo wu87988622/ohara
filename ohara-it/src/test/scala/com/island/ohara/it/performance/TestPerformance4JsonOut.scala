@@ -16,6 +16,7 @@
 
 package com.island.ohara.it.performance
 
+import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.common.setting.ConnectorKey
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.connector.jio.JsonOut
@@ -26,14 +27,21 @@ import spray.json.JsNumber
 
 @Category(Array(classOf[PerformanceGroup]))
 class TestPerformance4JsonOut extends BasicTestPerformance {
+  private[this] var topicInfo: TopicInfo = _
+
   @Test
   def test(): Unit = {
-    produce(createTopic())
+    topicInfo = createTopic()
+    produce(topicInfo, sizeOfInputData)
     setupConnector(
       connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
       className = classOf[JsonOut].getName,
       settings = Map(com.island.ohara.connector.jio.BINDING_PORT_KEY -> JsNumber(workerClusterInfo.freePorts.head))
     )
     sleepUntilEnd()
+  }
+
+  override protected def afterFrequencySleep(reports: Seq[PerformanceReport]): Unit = {
+    produce(topicInfo, sizeOfDurationInputData)
   }
 }
