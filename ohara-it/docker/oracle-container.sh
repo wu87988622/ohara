@@ -131,7 +131,21 @@ then
 echo "Starting oracle database container"
 echo "Port is ${port}"
 ssh ohara@${host} docker run -d ${volumeArg} -i --name ${containerName} --restart=always -p ${port}:1521 --env DB_SID=${sid} store/oracle/database-enterprise:12.2.0.1
-sleep 3m
+
+timeoutCount=0
+while [[ -z $(ssh ohara@${host} docker logs ${containerName}|awk '/Done ! The database is ready for use ./{print}') ]]
+do
+  sleep 1m # Sleep the 1 minute
+  ((timeoutCount+=1))
+  if [[ $timeoutCount -ge 10 ]]; # Timeout is 10 minute
+  then
+    echo "Running oracle database is timeout."
+    echo "Please use the docker logs -f ${containerName} check the container message."
+    echo "Confirm container log contain the 'Done ! The database is ready for use ' message."
+    exit 1
+  fi
+done
+
 ssh ohara@${host} << EOF
 docker exec -i ${containerName} bash -c "source /home/oracle/.bashrc;echo -e 'alter session set \"_ORACLE_SCRIPT\"=true;\ncreate user ${user} identified by ${password};\nGRANT CONNECT, RESOURCE, DBA TO ${user};'|sqlplus sys/Oradoc_db1@${sid} as sysdba"
 EOF
