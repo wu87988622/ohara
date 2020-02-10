@@ -22,6 +22,7 @@ import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import com.island.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import com.island.ohara.client.configurator.v0.NodeApi.Node
+import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -56,7 +57,8 @@ object ObjectChecker {
     zookeeperClusterInfos: Map[ZookeeperClusterInfo, Condition],
     brokerClusterInfos: Map[BrokerClusterInfo, Condition],
     workerClusterInfos: Map[WorkerClusterInfo, Condition],
-    streamClusterInfos: Map[StreamClusterInfo, Condition]
+    streamClusterInfos: Map[StreamClusterInfo, Condition],
+    shabondiClusterInfos: Map[ShabondiClusterInfo, Condition]
   ) {
     def runningTopics: Seq[TopicInfo]                = topicInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningConnectors: Seq[ConnectorInfo]        = connectorInfos.filter(_._2 == RUNNING).keys.toSeq
@@ -295,6 +297,15 @@ object ObjectChecker {
     def stream(key: ObjectKey, condition: Condition): CheckList = streams(Set(key), Some(condition))
 
     protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
+
+    //---------------[shabondi]---------------//
+
+    def shabondi(key: ObjectKey): CheckList = shabondis(Set(key), None)
+
+    def shabondi(key: ObjectKey, condition: Condition): CheckList = shabondis(Set(key), Some(condition))
+
+    protected def shabondis(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
+
     //---------------[final check]---------------//
     /**
       * throw exception if the input assurances don't pass. Otherwise, return the resources.
@@ -331,6 +342,7 @@ object ObjectChecker {
         private[this] val requiredWorkers      = mutable.Map[ObjectKey, Option[Condition]]()
         private[this] var requireAllStreams    = false
         private[this] val requiredStreams      = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] val requiredShabondis    = mutable.Map[ObjectKey, Option[Condition]]()
 
         private[this] def checkCluster[C <: ClusterInfo: ClassTag](
           collie: Collie,
@@ -415,6 +427,14 @@ object ObjectChecker {
               serviceCollie.streamCollie,
               requiredStreams.keys.toSet
             )
+
+        private[this] def checkShabondis()(
+          implicit executionContext: ExecutionContext
+        ): Future[Map[ShabondiClusterInfo, Condition]] =
+          checkClusters[ClusterStatus, ShabondiClusterInfo](
+            serviceCollie.shabondiCollie,
+            requiredShabondis.keys.toSet
+          )
 
         private[this] def checkTopic(
           key: TopicKey
@@ -526,7 +546,8 @@ object ObjectChecker {
                 zookeeperClusterInfos = Map.empty,
                 brokerClusterInfos = Map.empty,
                 workerClusterInfos = Map.empty,
-                streamClusterInfos = Map.empty
+                streamClusterInfos = Map.empty,
+                shabondiClusterInfos = Map.empty
               )
             }
             .flatMap { report =>
@@ -554,6 +575,13 @@ object ObjectChecker {
               checkStreams().map { passed =>
                 compare("stream", passed.map(e => e._1.key -> e._2), requiredStreams.toMap)
                 report.copy(streamClusterInfos = passed)
+              }
+            }
+            // check shabondis
+            .flatMap { report =>
+              checkShabondis().map { passed =>
+                compare("shabondi", passed.map(e => e._1.key -> e._2), requiredShabondis.toMap)
+                report.copy(shabondiClusterInfos = passed)
               }
             }
             // check workers
@@ -615,6 +643,11 @@ object ObjectChecker {
 
         override protected def streams(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredStreams += (key -> condition))
+          this
+        }
+
+        override protected def shabondis(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
+          keys.foreach(key => requiredShabondis += (key -> condition))
           this
         }
 

@@ -62,5 +62,6 @@ object ClusterStatus {
     case object BROKER    extends Kind
     case object WORKER    extends Kind
     case object STREAM    extends Kind
+    case object SHABONDI  extends Kind
   }
 }

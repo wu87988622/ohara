@@ -44,7 +44,7 @@ else
   if [ "$service" == "configurator" ]; then
     CLASS="com.island.ohara.configurator.Configurator"
   elif [ "$service" == "shabondi" ]; then
-    CLASS="com.island.ohara.shabondi.WebServer"
+    CLASS="com.island.ohara.shabondi.Boot"
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
     CLASS="com.island.ohara.common.util.VersionUtils"
   elif [ "$service" == "help" ]; then

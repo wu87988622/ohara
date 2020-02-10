@@ -51,6 +51,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     with WorkerCollie
   override val streamCollie: StreamCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
     with StreamCollie
+  override val shabondiCollie: ShabondiCollie = new BasicCollieImpl(dataCollie, dockerClient, clusterCache)
+    with ShabondiCollie
 
   private[this] def doClusters(
     implicit executionContext: ExecutionContext

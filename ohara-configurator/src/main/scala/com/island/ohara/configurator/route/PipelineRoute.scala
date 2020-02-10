@@ -25,7 +25,7 @@ import com.island.ohara.client.configurator.v0.MetricsApi._
 import com.island.ohara.client.configurator.v0.NodeApi.Node
 import com.island.ohara.client.configurator.v0.ObjectApi.ObjectInfo
 import com.island.ohara.client.configurator.v0.PipelineApi._
-import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiDescription
+import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.TopicApi.TopicInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -203,7 +203,7 @@ private[configurator] object PipelineRoute {
           case StreamApi.KIND =>
             store.get[StreamClusterInfo](d.key)
           case ShabondiApi.KIND =>
-            store.get[ShabondiDescription](d.key)
+            store.get[ShabondiClusterInfo](d.key)
           case FileInfoApi.KIND =>
             store.get[FileInfo](d.key)
           case PipelineApi.KIND =>
@@ -341,7 +341,7 @@ private[configurator] object PipelineRoute {
             case BrokerApi.KIND    => store.get[BrokerClusterInfo](endpoint.key)
             case WorkerApi.KIND    => store.get[WorkerClusterInfo](endpoint.key)
             case StreamApi.KIND    => store.get[StreamClusterInfo](endpoint.key)
-            case ShabondiApi.KIND  => store.get[ShabondiDescription](endpoint.key)
+            case ShabondiApi.KIND  => store.get[ShabondiClusterInfo](endpoint.key)
             case _                 => Future.successful(None)
           }).map {
             case None    => Seq.empty

@@ -34,6 +34,7 @@ dependencies {
   implementation project(':ohara-testing-util')
   implementation project(':ohara-metrics')
   implementation project(':ohara-streams')
+  implementation project(':ohara-shabondi')
   implementation libs.kafkaConnectRuntime
   testImplementation libs.scalaLogging
   testImplementation libs.akkaHttpSprayJson
@@ -76,6 +77,8 @@ dependencies {
   testImplementation project(path: ':ohara-shabondi', configuration: 'tests')
   testImplementation project(path: ':ohara-streams', configuration: 'tests')
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
+  testImplementation libs.akkaTestKit
+  testImplementation libs.akkaHttpTestKit
   testImplementation libs.scalatest
   testImplementation libs.junit
   testImplementation libs.akkaStream

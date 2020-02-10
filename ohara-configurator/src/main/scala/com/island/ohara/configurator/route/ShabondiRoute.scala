@@ -16,155 +16,157 @@
 
 package com.island.ohara.configurator.route
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Directives._
-import com.island.ohara.agent.container.ContainerClient
-import com.island.ohara.agent.k8s.K8SClient
-import com.island.ohara.client.configurator.v0.NodeApi.Node
-import com.island.ohara.client.configurator.v0.ShabondiApi
-import com.island.ohara.client.configurator.v0.ShabondiApi._
+import com.island.ohara.agent.{ServiceCollie, ShabondiCollie}
+import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.{ShabondiApi}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef}
+import com.island.ohara.common.setting.SettingDef.Necessary
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.configurator.store.DataStore
-import com.typesafe.scalalogging.Logger
+import com.island.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
+import com.island.ohara.configurator.route.hook._
+import com.island.ohara.configurator.store.{DataStore, MeterCache}
+import spray.json.{JsString, JsValue}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
-object ShabondiRoute {
-  private[this] lazy val LOG = Logger(ShabondiRoute.getClass)
+private[configurator] object ShabondiRoute {
+  import com.island.ohara.shabondi.DefaultDefinitions._
+  import ShabondiApi._
 
-  private def addShabondi(store: DataStore)(implicit executionContext: ExecutionContext) = {
-    val newShabondi =
-      ShabondiDescription(CommonUtils.randomString(), CommonUtils.current(), None, Seq.empty, -1, 1)
-
-    store.addIfAbsent[ShabondiDescription](newShabondi)
-  }
-
-  private def getProperty(name: String, store: DataStore)(implicit executionContext: ExecutionContext) = {
-    store.value[ShabondiDescription](ShabondiApi.key(name))
-  }
-
-  private def deleteShabondi(name: String, store: DataStore)(implicit executionContext: ExecutionContext) =
-    store.remove[ShabondiDescription](ShabondiApi.key(name)).map(_ => StatusCodes.NoContent)
-
-  private def updateProperty(name: String, property: ShabondiProperty, store: DataStore)(
-    implicit executionContext: ExecutionContext
-  ) = {
-    LOG.info(s"update shabondi: $name")
-    val updateValue = (data: ShabondiDescription) =>
-      duplicateShabondiDescription(data, property).copy(lastModified = CommonUtils.current())
-    store.addIfPresent[ShabondiDescription](ShabondiApi.key(name), updateValue)
-  }
-
-  private def updateShabondiState(name: String, state: Option[String], store: DataStore)(
-    implicit executionContext: ExecutionContext
-  ) = {
-    LOG.info(s"update shabondi: $name")
-    val updateValue = (data: ShabondiDescription) => data.copy(state = state, lastModified = CommonUtils.current())
-    store.addIfPresent[ShabondiDescription](ShabondiApi.key(name), updateValue)
-  }
-
-  private def randomPickNode(store: DataStore)(implicit executionContext: ExecutionContext): Node = {
-    val random = new scala.util.Random
-    val nodes  = awaitResult(store.values[Node]())
-    if (nodes.isEmpty)
-      throw new RuntimeException("Cannot find any ohara node.")
-    nodes(random.nextInt(nodes.length))
-  }
-
-  private def startShabondi(name: String, client: ContainerClient, store: DataStore)(
-    implicit executionContext: ExecutionContext
-  ) = {
-    val nodeName = randomPickNode(store).name
-    val podName  = POD_NAME_PREFIX + name
-    createContainer(client, nodeName, podName)
-      .flatMap(_ => client.container(podName))
-      .flatMap { container =>
-        LOG.info(s"Shabondi pod created: $podName")
-        updateShabondiState(name, Some(container.state), store)
+  private[route] def necessaryContains(definition: SettingDef, settings: Map[String, JsValue]): Unit = {
+    if (definition.necessary() == Necessary.REQUIRED) {
+      if (!definition.recommendedValues.isEmpty) {
+        val value = settings(definition.key()).asInstanceOf[JsString].value
+        if (!definition.recommendedValues.contains(value))
+          throw new IllegalArgumentException(
+            s"Invalid value of ${definition.key}, must be one of ${definition.recommendedValues}"
+          )
       }
-  }
-
-  private def stopShabondi(name: String, k8sClient: K8SClient, store: DataStore)(
-    implicit executionContext: ExecutionContext
-  ) = {
-    LOG.info(s"shabondi stop: $name")
-    val podName = POD_NAME_PREFIX + name
-    k8sClient.remove(podName).flatMap { container =>
-      LOG.info(s"Shabondi pod removed: $podName")
-      updateShabondiState(name, None, store)
     }
   }
 
-  def apply(
-    implicit k8sClientOpt: Option[K8SClient],
-    store: DataStore,
+  private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
+    implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext
-  ): server.Route =
-    pathPrefix(PATH_PREFIX) {
-      pathEnd {
-        post { complete { addShabondi(store) } }
+  ): Future[ShabondiClusterInfo] = {
+    necessaryContains(SERVER_TYPE_DEFINITION, creation.settings)
+    val serverType = creation.serverType
+    objectChecker.checkList
+      .nodeNames(creation.nodeNames)
+      .brokerCluster(creation.brokerClusterKey)
+      .topics {
+        serverType match {
+          case SERVER_TYPE_SOURCE => creation.sourceToTopics
+          case SERVER_TYPE_SINK   => creation.sinkFromTopics
+        }
       }
-    } ~
-      pathPrefix(PATH_PREFIX / Segment) { name: String =>
-        pathEnd {
-          get { complete { getProperty(name, store) } } ~
-            put {
-              entity(as[ShabondiProperty]) { prop: ShabondiProperty =>
-                complete { updateProperty(name, prop, store) }
-              }
-            } ~
-            delete { complete { deleteShabondi(name, store) } }
-        } ~
-          path(com.island.ohara.client.configurator.v0.START_COMMAND) {
-            // TODO: need integrate with Crane
-            k8sClientOpt match {
-              case Some(k8sClient) =>
-                put { complete { startShabondi(name, k8sClient, store) } }
-              case None =>
-                complete(StatusCodes.ServiceUnavailable -> "Shabondi need K8SClient...")
-            }
-          } ~
-          path(com.island.ohara.client.configurator.v0.STOP_COMMAND) {
-            // TODO: need integrate with Crane
-            k8sClientOpt match {
-              case Some(k8sClient) =>
-                put { complete { stopShabondi(name, k8sClient, store) } }
-              case None =>
-                complete(StatusCodes.ServiceUnavailable -> "Shabondi need K8SClient...")
-            }
-          }
-      }
-
-  private def awaitResult[T](f: Future[T]): T = Await.result(f, 10 seconds)
-
-  private val POD_NAME_PREFIX = "shabondi-"
-  private val POD_NAME        = "shabondi-host"
-
-  private def createContainer(client: ContainerClient, slaveNode: String, podHostname: String)(
-    implicit executionContext: ExecutionContext
-  ) = {
-    client.containerCreator
-      .imageName(IMAGE_NAME_DEFAULT)
-      .portMappings(
-        Map(
-          9090 -> 8080
+      .check()
+      .map { _: ObjectChecker.ObjectInfos =>
+        val settings = ShabondiApi.access.request.settings(creation.settings).creation.settings
+        ShabondiClusterInfo(
+          settings = settings,
+          aliveNodes = Set.empty,
+          state = None,
+          metrics = Metrics(Seq.empty),
+          error = None,
+          lastModified = CommonUtils.current()
         )
-      )
-      .nodeName(slaveNode)
-      .hostname(podHostname)
-      .name(POD_NAME)
-      .threadPool(executionContext)
-      .create()
+      }
   }
 
-  // TODO: we need a general function to copy object with different type of object or another function...
-  private def duplicateShabondiDescription(origin: ShabondiDescription, prop: ShabondiProperty): ShabondiDescription = {
-    var duplicate = origin
-    if (prop.to.isDefined) duplicate = duplicate.copy(to = prop.to.get)
-    if (prop.port.isDefined) duplicate = duplicate.copy(port = prop.port.get)
-    duplicate
+  private[this] def hookOfCreation(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfCreation[ShabondiClusterCreation, ShabondiClusterInfo] =
+    creationToClusterInfo(_)
+
+  private[this] def hookOfUpdating(
+    implicit objectChecker: ObjectChecker,
+    executionContext: ExecutionContext
+  ): HookOfUpdating[ShabondiClusterUpdating, ShabondiClusterInfo] =
+    (key: ObjectKey, updating: ShabondiClusterUpdating, previousOption: Option[ShabondiClusterInfo]) =>
+      previousOption match {
+        case None =>
+          val creation = ShabondiApi.access.request
+            .settings(updating.settings)
+            .key(key)
+            .creation
+          creationToClusterInfo(creation)
+        case Some(previous) =>
+          objectChecker.checkList
+            .check()
+            .flatMap { _ =>
+              val creation = ShabondiApi.access.request
+                .settings(previous.settings)
+                .settings(keepEditableFields(updating.settings, ShabondiApi.DEFINITIONS))
+                .key(key)
+                .creation
+              creationToClusterInfo(creation)
+            }
+      }
+
+  private[this] def hookOfStart(
+    implicit objectChecker: ObjectChecker,
+    shabondiCollie: ShabondiCollie,
+    executionContext: ExecutionContext
+  ): HookOfAction[ShabondiClusterInfo] =
+    (clusterInfo: ShabondiClusterInfo, subName: String, params: Map[String, String]) => {
+      val checkTopics = clusterInfo.serverType match {
+        case SERVER_TYPE_SOURCE => clusterInfo.sourceToTopics
+        case SERVER_TYPE_SINK   => clusterInfo.sinkFromTopics
+      }
+      if (checkTopics.isEmpty) {
+        val key = clusterInfo.serverType match {
+          case SERVER_TYPE_SOURCE => SOURCE_TO_TOPICS_DEFINITION.key
+          case SERVER_TYPE_SINK   => SINK_FROM_TOPICS_DEFINITION.key
+        }
+        throw new IllegalArgumentException(s"$key cannot be empty.")
+      }
+      objectChecker.checkList
+        .shabondi(clusterInfo.key)
+        .brokerCluster(clusterInfo.brokerClusterKey, RUNNING)
+        .topics(checkTopics, RUNNING)
+        .check()
+        .flatMap { objInfo: ObjectChecker.ObjectInfos =>
+          val condition = objInfo.shabondiClusterInfos.head._2
+          condition match {
+            case RUNNING => Future.unit
+            case STOPPED =>
+              val brokerClusterInfo = objInfo.brokerClusterInfos.head._1
+              shabondiCollie.creator
+                .settings(clusterInfo.settings)
+                .name(clusterInfo.name)
+                .group(clusterInfo.group)
+                .nodeNames(clusterInfo.nodeNames)
+                .brokerClusterKey(brokerClusterInfo.key)
+                .brokers(brokerClusterInfo.connectionProps)
+                .threadPool(executionContext)
+                .create()
+          }
+        }
+    }
+
+  private[this] def hookBeforeStop(): HookOfAction[ShabondiClusterInfo] = (_, _, _) => Future.unit
+
+  private[this] def hookBeforeDelete(): HookBeforeDelete = _ => Future.unit
+
+  def apply(
+    implicit store: DataStore,
+    objectChecker: ObjectChecker,
+    shabondiCollie: ShabondiCollie,
+    serviceCollie: ServiceCollie,
+    meterCache: MeterCache,
+    executionContext: ExecutionContext
+  ): server.Route = {
+    clusterRoute[ShabondiClusterInfo, ShabondiClusterCreation, ShabondiClusterUpdating](
+      root = SHABONDI_PREFIX_PATH,
+      metricsKey = Some("shabondi"),
+      hookOfCreation = hookOfCreation,
+      hookOfUpdating = hookOfUpdating,
+      hookOfStart = hookOfStart,
+      hookBeforeStop = hookBeforeStop,
+      hookBeforeDelete = hookBeforeDelete
+    )
   }
 }

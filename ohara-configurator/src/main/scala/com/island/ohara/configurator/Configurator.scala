@@ -118,6 +118,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] implicit val brokerCollie: BrokerCollie       = serviceCollie.brokerCollie
   private[this] implicit val workerCollie: WorkerCollie       = serviceCollie.workerCollie
   private[this] implicit val streamCollie: StreamCollie       = serviceCollie.streamCollie
+  private[this] implicit val shabondiCollie: ShabondiCollie   = serviceCollie.shabondiCollie
   private[this] implicit val adminCleaner: AdminCleaner       = new AdminCleaner(cleanupTimeout)
   private[this] implicit val objectChecker: ObjectChecker     = ObjectChecker()
 
@@ -202,8 +203,9 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
               .flatMap(keys => Future.traverse(keys)(store.get[StreamClusterInfo]))
               .map(_.flatten)
               .flatMap(clusterInfos => metrics(serviceCollie.streamCollie, clusterInfos))
+            // TODO: Shabondi metrics
           } yield zks ++ bks ++ wks ++ streams,
-          cacheTimeout * 5
+          cacheTimeout * 10
         )
       }
       .frequency(cacheTimeout)

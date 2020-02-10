@@ -20,6 +20,7 @@ dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
   implementation project(':ohara-streams')
+  implementation project(':ohara-shabondi')
   implementation libs.commonsNet
   implementation libs.commonsLang
   implementation libs.scalaLibrary

@@ -19,7 +19,7 @@ package com.island.ohara.configurator.fake
 import com.island.ohara.agent.container.ContainerName
 import com.island.ohara.agent.{DataCollie, ServiceCollie}
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
-import com.island.ohara.client.configurator.v0.{BrokerApi, StreamApi, WorkerApi, ZookeeperApi}
+import com.island.ohara.client.configurator.v0.{BrokerApi, ShabondiApi, StreamApi, WorkerApi, ZookeeperApi}
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.configurator.store.DataStore
 
@@ -46,6 +46,8 @@ private[configurator] class FakeServiceCollie(
 
   override val streamCollie: FakeStreamCollie = new FakeStreamCollie(dataCollie)
 
+  override val shabondiCollie: FakeShabondiCollie = new FakeShabondiCollie(dataCollie)
+
   override def close(): Unit = {
     // do nothing
   }
@@ -58,7 +60,8 @@ private[configurator] class FakeServiceCollie(
             ZookeeperApi.IMAGE_NAME_DEFAULT,
             BrokerApi.IMAGE_NAME_DEFAULT,
             WorkerApi.IMAGE_NAME_DEFAULT,
-            StreamApi.IMAGE_NAME_DEFAULT
+            StreamApi.IMAGE_NAME_DEFAULT,
+            ShabondiApi.IMAGE_NAME_DEFAULT
           )
         )
         .toMap

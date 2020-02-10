@@ -71,6 +71,8 @@ abstract class ServiceCollie extends Releasable {
     */
   def streamCollie: StreamCollie
 
+  def shabondiCollie: ShabondiCollie
+
   /**
     * the default implementation is expensive!!! Please override this method if you are a good programmer.
     * @return a collection of all clusters

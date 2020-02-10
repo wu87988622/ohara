@@ -23,6 +23,7 @@ import akka.http.scaladsl.server.Directives._
 import com.island.ohara.agent._
 import com.island.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import com.island.ohara.client.configurator.v0.MetricsApi.Metrics
+import com.island.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import com.island.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -340,6 +341,13 @@ package object route {
                     // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
                     metrics = Metrics.EMPTY
                   )
+                case c: ShabondiClusterInfo =>
+                  c.copy(
+                    aliveNodes = Set.empty,
+                    state = None,
+                    error = None,
+                    metrics = Metrics.EMPTY
+                  )
               }
             case Some(status) =>
               // no running cluster. It means no state and no dead nodes.
@@ -377,6 +385,13 @@ package object route {
                     // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
                     metrics =
                       Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
+                  )
+                case c: ShabondiClusterInfo =>
+                  c.copy(
+                    aliveNodes = status.aliveNodes,
+                    state = status.state,
+                    error = status.error,
+                    lastModified = CommonUtils.current()
                   )
               }
           }

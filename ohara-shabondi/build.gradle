@@ -36,7 +36,6 @@ dependencies {
   testImplementation project(':ohara-kafka')
   testImplementation project(':ohara-testing-util')
   testImplementation project(':ohara-testing-util').sourceSets.test.output
-  testImplementation project(':ohara-client')
   testImplementation libs.akkaTestKit
   testImplementation libs.akkaHttpSprayJson
   testImplementation libs.akkaHttpTestKit

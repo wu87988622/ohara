@@ -32,6 +32,8 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
 
   override val streamCollie: StreamCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with StreamCollie
 
+  override val shabondiCollie: ShabondiCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with ShabondiCollie
+
   override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().flatMap { nodes =>
       Future

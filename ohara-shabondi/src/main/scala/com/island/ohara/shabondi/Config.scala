@@ -27,6 +27,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 object Config {
+  val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
+
   def apply(raw: Map[String, String]) =
     new Config(raw)
 
@@ -181,7 +183,7 @@ object DefaultDefinitions {
     .orderInGroup(orderNumber)
     .displayName("Image name")
     .documentation("The image name of this shabondi running with")
-    .optional("oharastream/shabondi:" + VersionUtils.VERSION)
+    .optional(Config.IMAGE_NAME_DEFAULT)
     // In manager, user cannot change the image name
     .permission(SettingDef.Permission.READ_ONLY)
     .build
