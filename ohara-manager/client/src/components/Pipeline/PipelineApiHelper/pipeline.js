@@ -16,7 +16,7 @@
 
 import * as context from 'context';
 import * as _ from 'lodash';
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 
 const pipeline = () => {
   const { updatePipeline } = context.usePipelineActions();
@@ -81,39 +81,45 @@ const pipeline = () => {
       await deleteStream(stream);
     }
 
-    const updateEndpoints = currentPipeline.endpoints
-      .filter(
-        endpoint =>
-          endpoint.name !== legacyConnectors.legacyPaperData &&
-          (endpoint.kind === KIND.source || endpoint.kind === KIND.sink),
-      )
-      .filter(
-        endpoint =>
-          endpoint.name !== legacyTopics.legacyPaperData &&
-          endpoint.kind === KIND.topic,
-      )
-      .filter(
-        endpoint =>
-          endpoint.name !== legacyStream.legacyPaperData &&
-          endpoint.kind === KIND.stream,
-      );
+    const updateConnectorEndpoints = currentPipeline.endpoints.filter(
+      endpoint =>
+        !legacyConnectors.legacyPaperData.includes(endpoint.name) &&
+        (endpoint.kind === KIND.source || endpoint.kind === KIND.sink),
+    );
+    const updateTopicEndpoints = currentPipeline.endpoints.filter(
+      endpoint =>
+        !legacyTopics.legacyPaperData.includes(endpoint.name) &&
+        endpoint.kind === KIND.topic,
+    );
+    const updateStreamEndpoints = currentPipeline.endpoints.filter(
+      endpoint =>
+        !legacyStream.legacyPaperData.includes(endpoint.name) &&
+        endpoint.kind === KIND.stream,
+    );
+    const updateEndpoints = [
+      ...updateConnectorEndpoints,
+      ...updateTopicEndpoints,
+      ...updateStreamEndpoints,
+    ];
 
-    const updateTags = _.get(currentPipeline, 'tags.cells', [])
-      .filter(
-        cell =>
-          cell.name !== legacyConnectors.legacyPaperData &&
-          (cell.kind === KIND.source || cell.kind === KIND.sink),
-      )
-      .filter(
-        cell =>
-          cell.name !== legacyTopics.legacyPaperData &&
-          cell.kind === KIND.topic,
-      )
-      .filter(
-        cell =>
-          cell.name !== legacyStream.legacyPaperData &&
-          cell.kind === KIND.stream,
-      );
+    const updateConnectorsTags = _.get(currentPipeline, 'tags.cells', [])
+      .filter(cell => cell.kind === KIND.source || cell.kind === KIND.sink)
+      .filter(cell => !legacyConnectors.legacyPaperData.includes(cell.name))
+      .map(cell => updateStatus(cell, currentConnectors));
+    const updateTopicsTags = _.get(currentPipeline, 'tags.cells', [])
+      .filter(cell => cell.kind === KIND.topic)
+      .filter(cell => !legacyTopics.legacyPaperData.includes(cell.name))
+      .map(cell => updateStatus(cell, currentTopic));
+    const updateStreamsTags = _.get(currentPipeline, 'tags.cells', [])
+      .filter(cell => cell.kind === KIND.stream)
+      .filter(cell => !legacyStream.legacyPaperData.includes(cell.name))
+      .map(cell => updateStatus(cell, currentStream));
+    let updateTags = [
+      ...updateConnectorsTags,
+      ...updateTopicsTags,
+      ...updateStreamsTags,
+    ];
+
     if (updateTags.length > 0 || updateTags.length > 0) {
       updatePipeline({
         name: currentPipeline.name,
@@ -142,6 +148,19 @@ const pipeline = () => {
   };
 
   return { updateCells, checkCells };
+};
+
+const updateStatus = (cell, currentCells) => {
+  const currentCell = currentCells.find(
+    currentCell => currentCell.name === cell.name,
+  );
+
+  if (!currentCell) {
+    cell.status = CELL_STATUS.stopped;
+  } else {
+    cell.status = _.get(currentCell, 'state', CELL_STATUS.stopped);
+  }
+  return cell;
 };
 
 export default pipeline;

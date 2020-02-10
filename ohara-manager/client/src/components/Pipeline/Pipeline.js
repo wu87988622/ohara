@@ -57,7 +57,12 @@ const Pipeline = () => {
   } = context.usePipelinePropertyDialog();
   const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
 
-  const { data: currentStream } = context.useStreamState();
+  const {
+    data: currentStream,
+    lastUpdated: streamLastUpdated,
+  } = context.useStreamState();
+  const { lastUpdated: connectorLastUpdated } = context.useConnectorState();
+  const { lastUpdated: topicLastUpdated } = context.useTopicState();
 
   const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
 
@@ -91,6 +96,7 @@ const Pipeline = () => {
   const { updateCells, checkCells } = pipelineUtils.pipeline();
 
   const currentStreamRef = React.useRef(null);
+  const isInitialized = React.useRef(false);
 
   useEffect(() => {
     currentStreamRef.current = currentStream;
@@ -186,6 +192,27 @@ const Pipeline = () => {
     };
   });
 
+  useEffect(() => {
+    // Only run this once, there's no need to run this logic twice as
+    // that's intentional
+    if (!isPaperApiReady) return;
+    if (isInitialized.current) return;
+    if (!connectorLastUpdated) return;
+    if (!topicLastUpdated) return;
+    if (!streamLastUpdated) return;
+
+    checkCells(paperApiRef.current);
+
+    isInitialized.current = true;
+  }, [
+    checkCells,
+    connectorLastUpdated,
+    currentStream,
+    isPaperApiReady,
+    streamLastUpdated,
+    topicLastUpdated,
+  ]);
+
   return (
     <>
       {currentWorkspace && (
@@ -216,7 +243,6 @@ const Pipeline = () => {
                       ref={paperApiRef}
                       onCellSelect={element => setSelectedCell(element)}
                       onCellDeselect={() => setSelectedCell(null)}
-                      onInit={paperApi => checkCells(paperApi)}
                       onChange={_.debounce(
                         paperApi => updateCells(paperApi),
                         1000,

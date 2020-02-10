@@ -30,7 +30,6 @@ import { PipelineStateContext } from '../Pipeline';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
-    onInit = _.noop,
     onChange = _.noop,
     onCellSelect = _.noop,
     onCellDeselect = _.noop,
@@ -59,7 +58,6 @@ const Paper = React.forwardRef((props, ref) => {
 
   // Prevent from getting stale event handlers
   const onCellEventRef = React.useRef(null);
-  const isInitialized = React.useRef(false);
 
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
   const { isMetricsOn } = React.useContext(PipelineStateContext);
@@ -114,16 +112,6 @@ const Paper = React.forwardRef((props, ref) => {
   // parameter,  // e.g., onConnect(eventObject, paperApi)
   // the only exception is the onRemove as it doesn't any other parameters.
   const paperApi = ref.current;
-
-  React.useEffect(() => {
-    // Only run this once, there's no need to run this logic twice as
-    // that's intentional
-    if (!_.has(paperApi, 'state.isReady')) return;
-    if (isInitialized.current) return;
-
-    onInit(paperApi);
-    isInitialized.current = true;
-  }, [onInit, paperApi]);
 
   React.useEffect(() => {
     onCellEventRef.current = {
@@ -709,7 +697,6 @@ const Paper = React.forwardRef((props, ref) => {
 });
 
 Paper.propTypes = {
-  onInit: PropTypes.func,
   onChange: PropTypes.func,
   onConnect: PropTypes.func,
   onDisconnect: PropTypes.func,

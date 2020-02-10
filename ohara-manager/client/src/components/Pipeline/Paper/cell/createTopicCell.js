@@ -54,14 +54,14 @@ const createTopicCell = options => {
 
   const pipelineOnlyIcon = renderToString(
     <PipelineOnlyTopicIcon
-      statusColor={statusColors[status]}
+      statusColor={statusColors[getIconStatus(status)]}
       width={56}
       height={56}
     />,
   );
   const sharedIcon = renderToString(
     <SharedTopicIcon
-      statusColor={statusColors[status]}
+      statusColor={statusColors[getIconStatus(status)]}
       width={56}
       height={56}
     />,
@@ -184,5 +184,17 @@ const createTopicCell = options => {
     shouldSkipOnElementAdd,
   });
 };
+
+function getIconStatus(status) {
+  const { stopped, pending, running, failed } = CELL_STATUS;
+  const _status = status.toLowerCase();
+
+  if (_status === stopped) return stopped;
+  if (_status === pending) return pending;
+  if (_status === running) return running;
+  if (_status === failed) return failed;
+
+  return stopped;
+}
 
 export default createTopicCell;
