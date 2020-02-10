@@ -27,6 +27,7 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.setting.TableColumn;
+import com.island.ohara.kafka.RowPartitioner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -275,8 +276,7 @@ public final class ConnectorDefUtils {
                   .displayName("partitioner class")
                   .key("producer.override.partitioner.class")
                   .documentation("partitioner decides the partition to send the message")
-                  .optionalClassValue(
-                      "org.apache.kafka.clients.producer.internals.DefaultPartitioner")
+                  .optionalClassValue(RowPartitioner.class.getName())
                   .build());
 
   public static final SettingDef TAGS_DEFINITION =

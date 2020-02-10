@@ -42,9 +42,10 @@ object ConnectorApi {
   @VisibleForTesting
   private[v0] val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
   @VisibleForTesting
-  private[v0] val CONNECTOR_KEY_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
-  private[this] val GROUP_KEY: String       = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
-  private[this] val NAME_KEY: String        = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+  private[v0] val CONNECTOR_KEY_KEY: String       = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
+  private[this] val GROUP_KEY: String             = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
+  private[this] val NAME_KEY: String              = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
+  private[this] val PARTITIONER_CLASS_KEY: String = ConnectorDefUtils.PARTITIONER_CLASS_DEFINITION.key()
 
   /**
     * The name is a part of "Restful APIs" so "DON'T" change it arbitrarily
@@ -93,6 +94,8 @@ object ConnectorApi {
     override def key: ConnectorKey = ConnectorKey.of(group, name)
 
     override def tags: Map[String, JsValue] = settings.tags.get
+
+    def partitionClass: String = settings.partitionerClass.get
   }
 
   val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala
@@ -155,6 +158,8 @@ object ConnectorApi {
       noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
 
     def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
+
+    def partitionerClass: Option[String] = noJsNull(settings).get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
@@ -210,6 +215,8 @@ object ConnectorApi {
     override def tags: Map[String, JsValue] = settings.tags
 
     override protected def raw: Map[String, JsValue] = CONNECTOR_INFO_FORMAT.write(this).asJsObject.fields
+
+    def partitionClass: String = settings.partitionClass
   }
 
   implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =

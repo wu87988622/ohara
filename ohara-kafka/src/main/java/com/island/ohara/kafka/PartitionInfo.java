@@ -20,8 +20,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class PartitionInfo {
+
+  /**
+   * @param partitionInfo kafka partitionInfo
+   * @return ohara partition info. Noted, both offsets are -1 since kafka partition doesn't carry
+   *     such information.
+   */
+  public static PartitionInfo of(org.apache.kafka.common.PartitionInfo partitionInfo) {
+    return new PartitionInfo(
+        partitionInfo.partition(),
+        PartitionNode.of(partitionInfo.leader()),
+        Stream.of(partitionInfo.replicas()).map(PartitionNode::of).collect(Collectors.toList()),
+        Stream.of(partitionInfo.inSyncReplicas())
+            .map(PartitionNode::of)
+            .collect(Collectors.toList()),
+        -1,
+        -1);
+  }
+
   private final int id;
   private final PartitionNode leader;
   private final List<PartitionNode> replicas;

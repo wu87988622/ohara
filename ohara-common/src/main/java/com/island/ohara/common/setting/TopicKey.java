@@ -18,6 +18,7 @@ package com.island.ohara.common.setting;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +34,16 @@ public interface TopicKey extends ObjectKey {
    */
   static TopicKey of(String group, String name) {
     return new KeyImpl(group, name);
+  }
+
+  /**
+   * @param encodedName encodedName
+   * @return topic key
+   */
+  static Optional<TopicKey> of(String encodedName) {
+    String[] splits = encodedName.split("-");
+    if (splits.length == 2) return Optional.of(of(splits[0], splits[1]));
+    else return Optional.empty();
   }
 
   static String toJsonString(TopicKey key) {

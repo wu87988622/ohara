@@ -23,6 +23,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
+import com.island.ohara.kafka.RowPartitioner
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -636,6 +637,18 @@ class TestConnectorRoute extends OharaTest {
     result(connectorApi.query.tags(tags1).execute()).size shouldBe 1
     result(connectorApi.query.tags(tags2).execute()).size shouldBe 4
     result(connectorApi.query.tags(tags2).name(connector.name).execute()).size shouldBe 1
+  }
+
+  @Test
+  def testDefaultPartitioner(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("com.island.ohara.connector.ftp.FtpSink")
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    ).partitionClass shouldBe classOf[RowPartitioner].getName
   }
 
   @After
