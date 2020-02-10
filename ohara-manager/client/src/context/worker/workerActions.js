@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { map } from 'lodash';
+import { map, omit } from 'lodash';
 
 import { KIND } from 'const';
 import * as routines from './workerRoutines';
@@ -48,9 +48,14 @@ export const createActions = context => {
         dispatch(routine.request());
         const createRes = await workerApi.create(values);
         const startRes = await workerApi.start(values.name);
-        // after created, we need the "settings" and "stageSettings" from creation payload
+        // omit startRes "stageSettings", we need the startRes "stageSettings" creation payload
+        // omit createRes "classInfos", we need the createRes "classInfos" creation payload
         // to decide workspace is dirties or not
-        const data = { ...startRes, ...createRes };
+        const data = {
+          ...omit(createRes, ['classInfos']),
+          ...omit(startRes, ['stageSettings']),
+        };
+
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
