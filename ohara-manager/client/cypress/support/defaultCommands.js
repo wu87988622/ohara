@@ -103,6 +103,8 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
   // Click the quickstart dialog
   cy.visit('/');
 
+  // Since we will redirect the url
+  // need to wait a little time for url applying
   cy.wait(3000);
 
   cy.location().then(location => {

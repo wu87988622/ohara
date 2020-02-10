@@ -72,6 +72,7 @@ const AddTopicDialog = () => {
           >
             <form onSubmit={handleSubmit}>
               <Field
+                id="add-topic-name"
                 type="text"
                 label="Topic name"
                 name="name"
@@ -83,6 +84,7 @@ const AddTopicDialog = () => {
                 required
               />
               <Field
+                id="add-topic-partitions"
                 type="number"
                 label="Partitions"
                 name="numberOfPartitions"
@@ -96,6 +98,7 @@ const AddTopicDialog = () => {
                 validate={minNumber(1)}
               />
               <Field
+                id="add-topic-replication-factor"
                 type="number"
                 label="Replication factor"
                 name="numberOfReplications"

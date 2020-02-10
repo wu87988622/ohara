@@ -55,8 +55,12 @@ describe('Pipeline Page', () => {
 
     cy.findByText(/^add$/i).click();
 
+    // force to reload the page in order to get the connectors
+    cy.reload();
+
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
+
     cy.findByText(/^source$/i)
       .should('exist')
       .click();
@@ -94,17 +98,21 @@ describe('Pipeline Page', () => {
     cy.contains('span:visible', 'ConsoleSink').should('exist');
 
     // filter components in toolBox
-    cy.get('input[placeholder="Search topic & connector..."]').type('ftp');
+    cy.findAllByPlaceholderText('Search topic & connector...')
+      .filter(':visible')
+      .type('ftp');
     cy.contains('span:visible', 'FtpSource').should('exist');
     cy.contains('span:visible', 'FtpSink').should('exist');
 
-    cy.get('input[placeholder="Search topic & connector..."]')
+    cy.findAllByPlaceholderText('Search topic & connector...')
+      .filter(':visible')
       .clear()
       .type('console');
     cy.contains('span:visible', 'FtpSource').should('not.exist');
     cy.contains('span:visible', 'ConsoleSink').should('exist');
 
-    cy.get('input[placeholder="Search topic & connector..."]')
+    cy.findAllByPlaceholderText('Search topic & connector...')
+      .filter(':visible')
       .clear()
       .type('fake');
     cy.contains('span:visible', 'FtpSource').should('not.exist');

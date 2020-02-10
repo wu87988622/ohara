@@ -106,10 +106,13 @@ describe('NodeDialog in AppBar', () => {
       .click();
 
     if (mode === MODE.k8s) {
-      cy.get('input[placeholder="Quick Filter"]').type(nodeHost);
+      cy.findAllByPlaceholderText('Quick Filter')
+        .filter(':visible')
+        .type(nodeHost);
       cy.findByText(nodeHost).should('exist');
 
-      cy.get('input[placeholder="Quick Filter"]')
+      cy.findAllByPlaceholderText('Quick Filter')
+        .filter(':visible')
         .clear()
         .type('fake');
       cy.findByText(nodeHost).should('not.exist');
@@ -139,12 +142,15 @@ describe('NodeDialog in AppBar', () => {
     cy.findByText(hostname1).should('exist');
     cy.findByText(hostname2).should('exist');
 
-    cy.get('input[placeholder="Quick Filter"]').type(hostname2);
+    cy.findAllByPlaceholderText('Quick Filter')
+      .filter(':visible')
+      .type(hostname2);
 
     cy.findByText(hostname1).should('not.exist');
     cy.findByText(hostname2).should('exist');
 
-    cy.get('input[placeholder="Quick Filter"]')
+    cy.findAllByPlaceholderText('Quick Filter')
+      .filter(':visible')
       .clear()
       .type('fake');
 
@@ -326,13 +332,16 @@ describe('NodeDialog in workspaceQuick', () => {
       .click();
 
     // filter by non-selected hostname
-    cy.get('input[placeholder="Quick Filter"]').type(hostname2);
+    cy.findAllByPlaceholderText('Quick Filter')
+      .filter(':visible')
+      .type(hostname2);
     cy.findByText(hostname1).should('not.exist');
     cy.findByText(hostname3).should('not.exist');
     cy.get('input[type=checkbox]:visible').should('not.be.checked');
 
     // filter by selected hostname
-    cy.get('input[placeholder="Quick Filter"]')
+    cy.findAllByPlaceholderText('Quick Filter')
+      .filter(':visible')
       .clear()
       .type(hostname1);
     cy.findByText(hostname1).should('exist');

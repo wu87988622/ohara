@@ -48,7 +48,9 @@ export const createActions = context => {
         dispatch(routine.request());
         const createRes = await zookeeperApi.create(values);
         const startRes = await zookeeperApi.start(values.name);
-        const data = { ...createRes, ...startRes };
+        // after created, we need the "settings" and "stageSettings" from creation payload
+        // to decide workspace is dirties or not
+        const data = { ...startRes, ...createRes };
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
