@@ -56,7 +56,6 @@ ConnectorProvider.propTypes = {
 
 const useConnectorState = () => {
   const context = useContext(ConnectorStateContext);
-
   if (context === undefined) {
     throw new Error(
       'useConnectorState must be used within a ConnectorProvider',
