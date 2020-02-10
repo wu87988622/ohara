@@ -16,7 +16,7 @@
 
 import * as context from 'context';
 import * as _ from 'lodash';
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 
 const pipeline = () => {
   const { updatePipeline } = context.usePipelineActions();
@@ -156,9 +156,9 @@ const updateStatus = (cell, currentCells) => {
   );
 
   if (!currentCell) {
-    cell.status = 'stopped';
+    cell.status = CELL_STATUS.stopped;
   } else {
-    cell.status = _.get(currentCell, 'state', 'stopped');
+    cell.status = _.get(currentCell, 'state', CELL_STATUS.stopped);
   }
   return cell;
 };
