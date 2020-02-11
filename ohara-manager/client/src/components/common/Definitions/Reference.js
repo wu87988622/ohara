@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { omit, has, isObject } from 'lodash';
+import { omit, has, isObject, isArray } from 'lodash';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
@@ -38,7 +38,7 @@ const Reference = props => {
   ];
 
   const _value = () => {
-    if (isObject(value)) {
+    if (isObject(value) && !isArray(value)) {
       if (has(value, 'displayName')) {
         return value.tags.displayName;
       } else if (has(value, 'name')) {
@@ -46,6 +46,8 @@ const Reference = props => {
       } else {
         return placeholder;
       }
+    } else if (isArray(value)) {
+      return list.find(i => i.tags.displayName === value[0].name).name;
     } else if (list.length === 0) {
       return placeholder;
     } else {

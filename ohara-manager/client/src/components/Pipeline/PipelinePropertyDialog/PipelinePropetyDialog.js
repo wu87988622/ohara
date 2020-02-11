@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { find, filter, isEmpty, capitalize, has, isArray } from 'lodash';
+import { find, filter, isEmpty, capitalize, has, isArray, get } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -151,7 +151,13 @@ const PipelinePropertyDialog = props => {
           cell: cellData,
           topic: {
             ...topicCells.find(
-              topic => topic.name === values.topicKeys[0].name,
+              topic => topic.name === get(values, 'topicKeys[0].name', null),
+            ),
+            ...topicCells.find(
+              topic => topic.name === get(values, 'to[0].name', null),
+            ),
+            ...topicCells.find(
+              topic => topic.name === get(values, 'from[0].name', null),
             ),
           },
         },

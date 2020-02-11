@@ -85,8 +85,7 @@ const EditWorkspace = () => {
                 UPLOAD FILE
               </Button>
             </FileUpload>
-            {/* Feature is disabled because it's not implemented in 0.9 */
-            false && <MoreActions />}
+            <MoreActions />
           </Grid>
           <RestartIndicator invisible={dirties.all === 0} />
           <Tabs

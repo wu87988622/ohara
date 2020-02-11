@@ -114,10 +114,14 @@ const pipeline = () => {
       .filter(cell => cell.kind === KIND.stream)
       .filter(cell => !legacyStream.legacyPaperData.includes(cell.name))
       .map(cell => updateStatus(cell, currentStream));
+    const links = _.get(currentPipeline, 'tags.cells', []).filter(
+      cell => cell.type === 'standard.Link',
+    );
     let updateTags = [
       ...updateConnectorsTags,
       ...updateTopicsTags,
       ...updateStreamsTags,
+      ...links,
     ];
 
     if (updateTags.length > 0 || updateTags.length > 0) {
