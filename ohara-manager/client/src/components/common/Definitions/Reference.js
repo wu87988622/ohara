@@ -46,9 +46,9 @@ const Reference = props => {
       } else {
         return placeholder;
       }
-    } else if (isArray(value)) {
+    } else if (isArray(value) && value.length > 0) {
       return list.find(i => i.tags.displayName === value[0].name).name;
-    } else if (list.length === 0) {
+    } else if (list.length === 0 || value.length === 0) {
       return placeholder;
     } else {
       return value;

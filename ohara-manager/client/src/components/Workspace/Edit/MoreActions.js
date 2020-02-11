@@ -140,13 +140,14 @@ function MoreActions() {
         title={'Reset Workspace?'}
         children={
           <Typography>
-            Are you sure you want to reset the workspace, This action cannot be
-            undone!
+            Please be reminded that this reset will restart all services that
+            are currently running. There are changes that the data being
+            processed could be lost and there’s no way to undo this action.
           </Typography>
         }
         confirmText={'RESET'}
         handleClose={handleDialogClose}
-        handleConfirm={() => reset()}
+        handleConfirm={reset}
       />
       <Progress
         createTitle={'Resetting'}
