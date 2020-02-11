@@ -22,7 +22,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Grid from '@material-ui/core/Grid';
 
-import { KIND } from 'const';
+import { KIND, CELL_PROPS } from 'const';
 import * as context from 'context';
 import { Tooltip } from 'components/common/Tooltip';
 import { TAB } from 'context/devTool/const';
@@ -47,24 +47,25 @@ const Header = () => {
   React.useEffect(() => {
     if (!selectedCell || !isOpen || prevSelectedCell === selectedCell) return;
 
-    const getService = classType => {
-      if (classType === KIND.source || classType === KIND.sink)
-        return KIND.worker;
-      if (classType === KIND.topic) return KIND.broker;
-      if (classType === KIND.stream) return KIND.stream;
+    const getService = kind => {
+      if (kind === KIND.source || kind === KIND.sink) return KIND.worker;
+      if (kind === KIND.topic) return KIND.broker;
+      if (kind === KIND.stream) return KIND.stream;
     };
 
-    const isTopic = get(selectedCell, 'classType', null) === KIND.topic;
+    const kind = get(selectedCell, CELL_PROPS.kind, null);
 
-    if (isTopic) {
+    if (kind === KIND.topic) {
       if (tabName === TAB.log) {
         logActions.setLogType(KIND.broker);
       } else {
-        topicDataActions.setName(selectedCell.name);
+        topicDataActions.setName(
+          get(selectedCell, CELL_PROPS.displayName, null),
+        );
       }
     } else {
       setTabName(TAB.log);
-      const service = getService(selectedCell.classType);
+      const service = getService(kind);
       logActions.setLogType(service);
     }
   }, [

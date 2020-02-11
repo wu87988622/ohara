@@ -16,7 +16,7 @@
 
 import _ from 'lodash';
 
-import { KIND } from 'const';
+import { KIND, CELL_PROPS } from 'const';
 import { createLink } from './cell';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
@@ -26,26 +26,26 @@ export const getCellData = cellOrView => {
 
   if (cell.isElement()) {
     return {
-      cellType: cell.get('type'), // JointJS element type
-      id: cell.get('id'),
-      name: cell.get('name'),
-      kind: cell.get('kind'),
-      displayName: cell.get('displayName'),
-      isTemporary: cell.get('isTemporary') || false,
-      className: cell.get('className'),
-      position: cell.get('position'),
-      jarKey: cell.get('jarKey') || null,
-      isShared: cell.get('isShared') || false,
-      status: cell.get('status'),
+      cellType: cell.get(CELL_PROPS.cellType), // JointJS element type
+      id: cell.get(CELL_PROPS.id),
+      name: cell.get(CELL_PROPS.name),
+      kind: cell.get(CELL_PROPS.kind),
+      displayName: cell.get(CELL_PROPS.displayName),
+      isTemporary: cell.get(CELL_PROPS.isTemporary) || false,
+      className: cell.get(CELL_PROPS.className),
+      position: cell.get(CELL_PROPS.position),
+      jarKey: cell.get(CELL_PROPS.jarKey) || null,
+      isShared: cell.get(CELL_PROPS.isShared) || false,
+      status: cell.get(CELL_PROPS.status),
     };
   }
 
   const link = cell;
   return {
-    cellType: link.get('type'), // JointJS element type
-    id: link.get('id'),
-    sourceId: link.get('source').id || null,
-    targetId: link.get('target').id || null,
+    cellType: link.get(CELL_PROPS.cellType), // JointJS element type
+    id: link.get(CELL_PROPS.id),
+    sourceId: link.get(CELL_PROPS.source).id || null,
+    targetId: link.get(CELL_PROPS.target).id || null,
   };
 };
 
@@ -58,21 +58,22 @@ export const createConnection = params => {
     graph,
   } = params;
 
-  const sourceId = sourceLink.get('source').id;
+  const sourceId = sourceLink.get(CELL_PROPS.source).id;
   const sourceType = graph.getCell(sourceId).attributes.kind;
   const sourceElement = graph.getCell(sourceId);
-  const sourceDisplayName = sourceElement.get('displayName');
+  const sourceDisplayName = sourceElement.get(CELL_PROPS.displayName);
 
   const targetElement = targetElementView.model;
-  const targetId = targetElement.get('id');
-  const targetType = targetElement.get('kind');
-  const targetDisplayName = targetElement.get('displayName');
+  const targetId = targetElement.get(CELL_PROPS.id);
+  const targetType = targetElement.get(CELL_PROPS.kind);
+  const targetDisplayName = targetElement.get(CELL_PROPS.displayName);
   const targetConnectedLinks = graph.getConnectedLinks(targetElement);
 
   const isLoopLink = () => {
     return targetConnectedLinks.some(link => {
       return (
-        sourceId === link.get('source').id || sourceId === link.get('target').id
+        sourceId === link.get(CELL_PROPS.source).id ||
+        sourceId === link.get(CELL_PROPS.target).id
       );
     });
   };

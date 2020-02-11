@@ -39,3 +39,19 @@ export const CELL_STATUS = {
   running: 'running',
   failed: 'failed',
 };
+
+export const CELL_PROPS = {
+  cellType: 'type', // JointJS element type
+  id: 'id',
+  name: 'name',
+  kind: 'kind',
+  displayName: 'displayName',
+  isTemporary: 'isTemporary',
+  className: 'className',
+  position: 'position',
+  jarKey: 'jarKey',
+  isShared: 'isShared',
+  status: 'status',
+  source: 'source',
+  target: 'target',
+};
