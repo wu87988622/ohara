@@ -137,18 +137,19 @@ function MoreActions() {
       </Menu>
       <Dialog
         open={isOpen}
-        title={'Restart Workspace?'}
+        title={'Reset Workspace?'}
         children={
           <Typography>
-            Are you sure you want to restart the workspace, This action cannot
-            be undone!
+            Are you sure you want to reset the workspace, This action cannot be
+            undone!
           </Typography>
         }
-        confirmText={'RESTART'}
+        confirmText={'RESET'}
         handleClose={handleDialogClose}
         handleConfirm={() => reset()}
       />
       <Progress
+        createTitle={'Resetting'}
         open={isResetting}
         steps={steps}
         activeStep={activeStep}
