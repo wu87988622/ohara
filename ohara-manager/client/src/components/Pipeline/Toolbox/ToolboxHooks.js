@@ -81,7 +81,7 @@ export const useFiles = () => {
               };
             });
           })
-          .sort((a, b) => a.className.localeCompare(b.className))
+          .sort((a, b) => a[0].className.localeCompare(b[0].className))
           .reduce((acc, cur) => acc.concat(cur), []);
         setStreams(results);
       }

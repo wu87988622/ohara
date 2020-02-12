@@ -32,26 +32,30 @@ const StyledAutocomplete = styled(Autocomplete)(
 
 const ArrayDef = props => {
   const {
-    input: { name, onChange, value: formValue = [] },
+    input: { name, onChange, value: options },
     meta = {},
     helperText,
     refs,
     ...rest
   } = omit(props, ['tableKeys']);
 
-  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
+  if (!options) return null;
 
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
     <StyledAutocomplete
       ref={refs}
       multiple
       freeSolo
-      renderTags={(value, getTagProps) => {
-        onChange(value);
-        return formValue.map((option, index) => (
-          <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-        ));
+      defaultValue={options}
+      onChange={(event, values) => {
+        onChange(values);
       }}
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+        ))
+      }
       renderInput={params => {
         return (
           <TextField
@@ -62,7 +66,6 @@ const ArrayDef = props => {
             name={name}
             helperText={hasError ? meta.error : helperText}
             error={hasError}
-            type="text"
           />
         );
       }}
