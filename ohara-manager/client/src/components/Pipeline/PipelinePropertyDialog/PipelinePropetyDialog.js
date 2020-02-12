@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { find, filter, isEmpty, capitalize, has, isArray } from 'lodash';
+import { find, filter, isEmpty, capitalize, has, isArray, get } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -36,6 +36,7 @@ import {
   useTopicState,
   useStreamState,
   useFileState,
+  useWorkspace,
 } from 'context';
 import {
   StyleTitle,
@@ -65,6 +66,7 @@ const PipelinePropertyDialog = props => {
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
+  const { currentWorker } = useWorkspace();
   const { data: currentConnectors } = useConnectorState();
   const { data: currentStreams } = useStreamState();
   const { data: currentTopics } = useTopicState();
@@ -169,6 +171,7 @@ const PipelinePropertyDialog = props => {
   const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
     topics: currentTopics,
     files: currentFiles,
+    freePorts: get(currentWorker, 'freePorts', []),
     Definitions: groups.sort(),
     initialValues: targetCell,
     onSubmit,

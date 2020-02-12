@@ -30,6 +30,7 @@ const RenderDefinitions = props => {
     onSubmit,
     topics = [],
     files = [],
+    freePorts,
   } = props;
 
   const formRef = useRef(null);
@@ -60,6 +61,7 @@ const RenderDefinitions = props => {
                         files,
                         ref: refs[def.key],
                         defType: EDITABLE,
+                        freePorts,
                       });
                     })}
                 </Fragment>

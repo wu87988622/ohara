@@ -43,7 +43,15 @@ import { validWithDef } from 'utils/validate';
 import { CREATE_ONLY, EDITABLE } from './Permission';
 
 const RenderDefinition = props => {
-  const { def, topics = [], files, defType, ref, fieldProps = {} } = props;
+  const {
+    def,
+    topics = [],
+    files,
+    defType,
+    ref,
+    fieldProps = {},
+    freePorts,
+  } = props;
 
   const finalTopics = topics.map(topic => {
     const { name, tags } = topic;
@@ -136,7 +144,7 @@ const RenderDefinition = props => {
           return RenderField({ ...def, input: Duration });
 
         case 'BINDING_PORT':
-          return RenderField({ ...def, input: BindingPort });
+          return RenderField({ ...def, input: BindingPort, list: freePorts });
 
         case 'TAGS':
           return RenderField({ ...def, input: Tags });
