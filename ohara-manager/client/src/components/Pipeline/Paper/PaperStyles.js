@@ -86,10 +86,9 @@ export const StyledPaper = styled.div(
       }
 
       .menu {
-        position: absolute;
-        top: ${theme.spacing(0.5)}px;
-        left: calc(100% + 8px);
+        margin-top: 5px;
         display: none;
+        height: 100%;
 
         svg {
           color: ${theme.palette.grey[600]};
@@ -100,6 +99,7 @@ export const StyledPaper = styled.div(
           background-color: transparent;
           border: 0;
           padding: 0;
+          margin-right: ${theme.spacing(1)}px;
 
           &.is-disabled {
             pointer-events: none;
@@ -123,6 +123,15 @@ export const StyledPaper = styled.div(
 
       .header {
         display: flex;
+        align-items: center;
+        height: 65px;
+        border-bottom: 1px solid ${theme.palette.divider};
+      }
+
+      .body {
+        line-height: 35px;
+        height: 35px;
+        margin: 0 ${theme.spacing(2)}px;
       }
 
       .icon {
@@ -132,7 +141,7 @@ export const StyledPaper = styled.div(
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: ${theme.spacing(2)}px;
+        margin: 0 ${theme.spacing(2)}px;
 
         &.stopped {
           background-color: ${theme.palette.grey[600]};
@@ -158,7 +167,6 @@ export const StyledPaper = styled.div(
       .display-name {
         font-size: ${theme.typography.h5};
         color: ${theme.palette.text.primary};
-        margin-top: ${theme.spacing(2)}px;
         width: 150px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -170,16 +178,8 @@ export const StyledPaper = styled.div(
       }
 
       .metrics {
-        border-top: 1px solid ${theme.palette.divider};
-
-        /* Don't display the border when metrics data is empty */
-        &:empty {
-          border-top: none;
-        }
-
         .field {
           display: flex;
-          padding: ${theme.spacing(0.5, 2)};
           border-bottom: 1px solid ${theme.palette.divider};
         }
 
@@ -201,9 +201,7 @@ export const StyledPaper = styled.div(
       .status {
         display: flex;
         justify-content: space-between;
-        border-top: 1px solid ${theme.palette.divider};
         width: 100%;
-        padding: ${theme.spacing(0.5, 2, 0, 2)};
       }
 
       .status-value {
@@ -217,19 +215,25 @@ export const StyledPaper = styled.div(
       position: absolute;
       pointer-events: none;
       background-color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: ${theme.spacing(1)}px;
 
       .display-name {
         font-size: ${theme.typography.h5};
         color: ${theme.palette.text.primary};
         text-align: center;
+        margin-top: 2px;
       }
 
       .menu {
-        width: 24px;
         position: absolute;
-        top: ${theme.spacing(0.5)}px;
-        left: calc(100% + 8px);
+        bottom: 0;
+        left: 0;
+        width: 100%;
         display: none;
+        padding: 5px 0;
 
         svg {
           color: ${theme.palette.grey[600]};
@@ -259,6 +263,13 @@ export const StyledPaper = styled.div(
             outline: 0;
           }
         }
+      }
+
+      .menu-inner {
+        background-color: ${theme.palette.common.white};
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
       }
     }
   `,

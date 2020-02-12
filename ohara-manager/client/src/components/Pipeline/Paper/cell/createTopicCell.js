@@ -35,8 +35,9 @@ const createTopicCell = options => {
     paperApi,
     status = CELL_STATUS.stopped,
     isShared,
-    shouldSkipOnElementAdd = false,
     statusColors,
+    shouldSkipOnElementAdd = false,
+    isSelected = false,
   } = options;
 
   joint.shapes.html = {};
@@ -75,8 +76,10 @@ const createTopicCell = options => {
         ${isShared ? sharedIcon : pipelineOnlyIcon}
         <div class="display-name">${displayName}</div>
         <div class="menu">
-          <Button class="link">${linkIcon}</Button>
-          <Button class="remove">${removeIcon}</Button> 
+          <div class="menu-inner">
+            <Button class="link">${linkIcon}</Button>
+            <Button class="remove">${removeIcon}</Button> 
+          </div>
         </div>
       </div>`,
     init() {
@@ -105,15 +108,17 @@ const createTopicCell = options => {
       this.updatePosition();
       return this;
     },
-    showMenu() {
-      this.$box.find('.menu').show();
+    showElement(selector) {
+      this.$box.find(`.${selector}`).show();
+      return this;
     },
-    hideMenu() {
-      this.$box.find('.menu').hide();
+    hideElement(selector) {
+      this.$box.find(`.${selector}`).hide();
+      return this;
     },
     enableMenu(items = []) {
       const cls = 'is-disabled';
-      const $buttons = this.$box.find('.menu > button');
+      const $buttons = this.$box.find('.menu button');
 
       if (items.length === 0) {
         return $buttons.removeClass(cls);
@@ -126,10 +131,11 @@ const createTopicCell = options => {
           $(button).addClass(cls);
         }
       });
+      return this;
     },
     disableMenu(items = []) {
       const cls = 'is-disabled';
-      const $buttons = this.$box.find('.menu > button');
+      const $buttons = this.$box.find('.menu button');
 
       if (items.length === 0) {
         return $buttons.addClass(cls);
@@ -142,6 +148,11 @@ const createTopicCell = options => {
           $(button).removeClass(cls);
         }
       });
+      return this;
+    },
+    setIsSelected(isSelected) {
+      this.model.set('isSelected', isSelected);
+      return this;
     },
     updateElement(cellData) {
       const { status } = cellData;
@@ -150,6 +161,7 @@ const createTopicCell = options => {
       $box.find('.topic-status').attr('fill', statusColors[status]);
 
       this.model.set('status', status);
+      return this;
     },
     updatePosition() {
       // Set the position and dimension of the box so that it covers the JointJS element.
@@ -179,9 +191,9 @@ const createTopicCell = options => {
     position,
     status,
     isShared,
-    size: { width: 56, height: 76 },
-    isMenuDisplayed: false,
+    size: { width: 70, height: 96 },
     shouldSkipOnElementAdd,
+    isSelected,
   });
 };
 

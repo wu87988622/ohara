@@ -62,6 +62,36 @@ const Paper = React.forwardRef((props, ref) => {
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
   const { isMetricsOn } = React.useContext(PipelineStateContext);
 
+  const hoverHighlighter = {
+    highlighter: {
+      name: 'stroke',
+      options: {
+        padding: 2,
+        rx: 2,
+        ry: 2,
+        attrs: {
+          'stroke-width': 2,
+          stroke: palette.action.active,
+        },
+      },
+    },
+  };
+
+  const selectHighlighter = {
+    highlighter: {
+      name: 'stroke',
+      options: {
+        padding: 2,
+        rx: 2,
+        ry: 2,
+        attrs: {
+          'stroke-width': 2,
+          stroke: palette.primary.main,
+        },
+      },
+    },
+  };
+
   React.useEffect(() => {
     const namespace = joint.shapes;
     graphRef.current = new joint.dia.Graph({}, { cellNamespace: namespace });
@@ -78,22 +108,6 @@ const Paper = React.forwardRef((props, ref) => {
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
         background: { color: palette.common.white },
-
-        // Tweak the default highlighting to match our theme
-        highlighting: {
-          default: {
-            name: 'stroke',
-            options: {
-              padding: 4,
-              rx: 4,
-              ry: 4,
-              attrs: {
-                'stroke-width': 2,
-                stroke: palette.primary.main,
-              },
-            },
-          },
-        },
 
         // Ensures the link should always link to a valid target
         linkPinning: false,
@@ -199,21 +213,37 @@ const Paper = React.forwardRef((props, ref) => {
       });
 
       linkView.addTools(toolsView);
-      linkView.highlight();
+      linkView.highlight(null, hoverHighlighter);
     });
 
     paper.on('link:mouseleave', linkView => {
       paper.removeTools();
-      linkView.unhighlight();
+      linkView.unhighlight(null, hoverHighlighter);
     });
 
-    paper.on('element:mouseenter', element => {
-      element.highlight();
+    paper.on('element:mouseenter', elementView => {
+      showMenu(elementView, hoverHighlighter);
     });
 
-    paper.on('element:mouseleave', element => {
-      const isSelected = element.$box.find('.menu').is(':visible');
-      if (!isSelected) element.unhighlight();
+    paper.on('element:mouseleave', (elementView, event) => {
+      const width = elementView.$box.width();
+      const height = elementView.$box.height();
+      const { left, top } = elementView.$box.offset();
+      const { clientX, clientY } = event;
+
+      // TODO: #3995 Fix the mouseenter and mouseleave issue
+      // mouseenter and mouseleave events both get triggered again when hovering
+      // on menu's buttons. This creates a flickering effect which a lot like a
+      // UI defect. Here, we're calculating if the mouse is still moving inside the
+      // paper element, if so. We don't fire the event again. This does fix the issue
+      // but if user's mouse moves too fast, the bug could be appeared.
+      const isOutSideOfTheElement =
+        clientX > width + left ||
+        clientY > height + top ||
+        clientX < left ||
+        clientY < top;
+
+      if (isOutSideOfTheElement) hideMenu(elementView);
     });
 
     // Create a link that moves along with mouse cursor
@@ -285,10 +315,16 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Paper events
     paper.on('element:pointerclick', elementView => {
-      onCellSelect(getCellData(elementView), paperApi);
       resetElements();
-      elementView.showMenu();
-      elementView.highlight();
+
+      elementView
+        .highlight(null, selectHighlighter)
+        .showElement('menu')
+        .hideElement('metrics')
+        .hideElement('status')
+        .setIsSelected(true);
+
+      onCellSelect(getCellData(elementView), paperApi);
 
       const sourceLink = graph.getLinks().find(link => !link.get('target').id);
       if (sourceLink) {
@@ -340,10 +376,36 @@ const Paper = React.forwardRef((props, ref) => {
       resetLinks();
     });
 
+    function showMenu(elementView, highlighter) {
+      elementView.showElement('menu').highlight(null, highlighter);
+
+      if (elementView.model.get('isMetricsOn')) {
+        return elementView.hideElement('metrics');
+      }
+      elementView.hideElement('status');
+    }
+
+    function hideMenu(elementView) {
+      elementView.unhighlight(null, hoverHighlighter).hideElement('menu');
+
+      if (elementView.model.get('isMetricsOn')) {
+        return elementView.showElement('metrics');
+      }
+      elementView.showElement('status');
+    }
+
     function resetElements() {
-      findCellViews().forEach(cellView => {
-        cellView.unhighlight();
-        cellView.hideMenu();
+      findElementViews().forEach(elementView => {
+        elementView
+          .unhighlight(null, selectHighlighter)
+          .unhighlight(null, hoverHighlighter)
+          .hideElement('menu')
+          .setIsSelected(false);
+
+        if (elementView.model.get('isMetricsOn')) {
+          return elementView.showElement('metrics');
+        }
+        elementView.showElement('status');
       });
     }
 
@@ -393,6 +455,7 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
+    hoverHighlighter,
     onCellConfig,
     onCellDeselect,
     onCellRemove,
@@ -405,6 +468,7 @@ const Paper = React.forwardRef((props, ref) => {
     palette.grey,
     paperApi,
     ref,
+    selectHighlighter,
     showMessage,
   ]);
 
@@ -465,7 +529,9 @@ const Paper = React.forwardRef((props, ref) => {
         graph.removeCells(cell);
       },
       updateElement(id, data) {
-        const targetCell = findCellViews().find(cell => cell.model.id === id);
+        const targetCell = findElementViews().find(
+          cell => cell.model.id === id,
+        );
 
         if (targetCell) {
           targetCell.updateElement({
@@ -622,7 +688,7 @@ const Paper = React.forwardRef((props, ref) => {
         );
       },
       toggleMetrics(isOpen) {
-        findCellViews()
+        findElementViews()
           .filter(
             ({ model }) =>
               model.get('kind') === KIND.source ||
@@ -632,9 +698,9 @@ const Paper = React.forwardRef((props, ref) => {
           .forEach(element => element.toggleMetrics(isOpen));
       },
 
-      updateMetrics(objects) {
-        objects.map(object =>
-          findCellView(object.name).updateMeters(object.metrics),
+      updateMetrics(elementArray) {
+        elementArray.map(element =>
+          findElementView(element.name).updateMeters(element.metrics),
         );
       },
 
@@ -645,19 +711,18 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        const cellView = findCellView(id);
-
-        cellView && cellView.highlight();
+        const elementView = findElementView(id);
+        elementView && elementView.highlight();
       },
 
       enableMenu(id, items) {
-        const cellView = findCellView(id);
-        cellView && cellView.enableMenu(items);
+        const elementView = findElementView(id);
+        elementView && elementView.enableMenu(items);
       },
 
       disableMenu(id, items) {
-        const cellView = findCellView(id);
-        cellView && cellView.disableMenu(items);
+        const elementView = findElementView(id);
+        elementView && elementView.disableMenu(items);
       },
 
       // TODO: the state here will be stale, we should update
@@ -671,12 +736,16 @@ const Paper = React.forwardRef((props, ref) => {
   });
 
   // Private APIs
-  function findCellViews() {
-    return paperRef.current.findViewsInArea(paperRef.current.getArea());
+  function findElementViews() {
+    const result = graphRef.current
+      .getElements()
+      .map(element => paperRef.current.findViewByModel(element.get('id')));
+
+    return result;
   }
 
-  function findCellView(nameOrId) {
-    return findCellViews().find(
+  function findElementView(nameOrId) {
+    return findElementViews().find(
       ({ model }) =>
         model.get('id') === nameOrId || model.get('name') === nameOrId,
     );

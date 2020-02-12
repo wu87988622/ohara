@@ -30,26 +30,24 @@ import * as joint from 'jointjs';
 
 import { KIND, CELL_STATUS } from 'const';
 
-const WIDTH = 240;
-const HEIGHT = 100;
-const HEIGHT_WITH_METRICS = 160;
-
 const createConnectorCell = options => {
   const {
     id,
-    displayName,
-    isTemporary = false,
     name,
     kind,
     className,
+    displayName,
     position,
     status = CELL_STATUS.stopped,
-    paperApi,
-    shouldSkipOnElementAdd,
     metrics = {
       meters: [],
     },
+    paperApi,
     jarKey,
+    isMetricsOn,
+    shouldSkipOnElementAdd = false,
+    isTemporary = false,
+    isSelected = false,
   } = options;
 
   joint.shapes.html = {};
@@ -84,23 +82,27 @@ const createConnectorCell = options => {
             <div class="type">${displayClassName}</div>
           </div>
         </div>
-        <div class="metrics"></div>
-        <div class="status">
-          <span class="status-name">Status</span>
-          <span class="status-value">${status}</span>
-        </div>
+        <div class="body">
+          <div class="metrics">Loading metrics...</div>
+          <div class="status">
+            <span class="status-name">Status</span>
+            <span class="status-value">${status}</span>
+          </div>
 
-        <div class="menu">
-          ${
-            // Sink cannot create connection form itself to others
-            kind !== KIND.sink
-              ? `<Button class="link">${linkIcon}</Button>`
-              : ''
-          }
-          <Button class="start">${startIcon}</Button>
-          <Button class="stop">${stopIcon}</Button>
-          <Button class="config">${configIcon}</Button>
-          <Button class="remove">${removeIcon}</Button>
+          <div class="menu">
+            <div class="menu-inner">
+              ${
+                // Sink cannot create connection form itself to others
+                kind !== KIND.sink
+                  ? `<Button class="link">${linkIcon}</Button>`
+                  : ''
+              }
+              <Button class="start">${startIcon}</Button>
+              <Button class="stop">${stopIcon}</Button>
+              <Button class="config">${configIcon}</Button>
+              <Button class="remove">${removeIcon}</Button>
+            <div>
+          </div>
         </div>
     </div>`,
 
@@ -145,22 +147,21 @@ const createConnectorCell = options => {
         }.bind(this),
       );
 
+      this.toggleMetrics(isMetricsOn);
       this.updatePosition();
-
-      // TODO: don't show the metrics for now, this is still an issue, and
-      //  will be addressed in anther tasks in #3813
-      this.toggleMetrics(false);
       return this;
     },
-    showMenu() {
-      this.$box.find('.menu').show();
+    showElement(selector) {
+      this.$box.find(`.${selector}`).show();
+      return this;
     },
-    hideMenu() {
-      this.$box.find('.menu').hide();
+    hideElement(selector) {
+      this.$box.find(`.${selector}`).hide();
+      return this;
     },
     enableMenu(items = []) {
       const cls = 'is-disabled';
-      const $buttons = this.$box.find('.menu > button');
+      const $buttons = this.$box.find('.menu button');
 
       if (items.length === 0) {
         return $buttons.removeClass(cls);
@@ -173,10 +174,11 @@ const createConnectorCell = options => {
           $(button).addClass(cls);
         }
       });
+      return this;
     },
     disableMenu(items = []) {
       const cls = 'is-disabled';
-      const $buttons = this.$box.find('.menu > button');
+      const $buttons = this.$box.find('.menu button');
 
       if (items.length === 0) {
         return $buttons.addClass(cls);
@@ -189,50 +191,39 @@ const createConnectorCell = options => {
           $(button).removeClass(cls);
         }
       });
+      return this;
+    },
+    setIsSelected(isSelected) {
+      this.model.set('isSelected', isSelected);
+      return this;
     },
     toggleMetrics(isOpen) {
       const { $box, model } = this;
-
       if (isOpen) {
         $box.find('.metrics').show();
-
-        // Update SVG
-        model.resize(WIDTH, HEIGHT_WITH_METRICS);
-
-        // Update HTML
-        $box.css({
-          width: WIDTH,
-          height: HEIGHT_WITH_METRICS,
-        });
+        $box.find('.status').hide();
+        model.set('isMetricsOn', true);
       } else {
         $box.find('.metrics').hide();
-
-        // Update SVG
-        model.resize(WIDTH, HEIGHT);
-
-        // Update HTML
-        $box.css({
-          width: WIDTH,
-          height: HEIGHT,
-        });
+        $box.find('.status').show();
+        model.set('isMetricsOn', false);
       }
+      return this;
     },
     updateMeters(newMetrics) {
-      const $box = this.$box;
-
-      // Metrics
       const meters = _.get(newMetrics, 'meters');
       const displayMetrics = meters.length > 0 ? meters : metrics;
       const metricsData = getMetrics(displayMetrics);
-      $box.find('.metrics').html(metricsData);
+      this.$box.find('.metrics').html(metricsData);
+      return this;
     },
     updateElement(cellData) {
-      const $box = this.$box;
+      const { $box, model } = this;
 
       // Status
       const { status } = cellData;
       $box.find('.status-value').text(status);
-      this.model.set('status', status);
+      model.set('status', status);
 
       // Display name
       $box.find('.display-name').text(displayName);
@@ -243,6 +234,7 @@ const createConnectorCell = options => {
         .find('.icon')
         .removeClass()
         .addClass(`icon ${iconStatus}`);
+      return this;
     },
     updatePosition() {
       // Set the position and dimension of the box so that it covers the JointJS element.
@@ -258,6 +250,7 @@ const createConnectorCell = options => {
         left: x,
         top: y,
       });
+      return this;
     },
 
     // Keeping this handler here since when calling `cell.remove()` somehow
@@ -266,7 +259,6 @@ const createConnectorCell = options => {
       this.$box.remove();
     },
   });
-  window.$ = $;
 
   return new joint.shapes.html.Element({
     id: id ? id : undefined, // undefined -> id is controlled by JointJS
@@ -277,12 +269,14 @@ const createConnectorCell = options => {
     position,
     status,
     isTemporary,
-    size: {
-      width: WIDTH,
-      height: HEIGHT,
-    },
+    isMetricsOn,
     shouldSkipOnElementAdd,
     jarKey,
+    isSelected,
+    size: {
+      width: 240,
+      height: 100,
+    },
   });
 };
 
@@ -307,22 +301,22 @@ function getMetrics(meters) {
     _.partialRight(_.pick, ['document', 'value']),
   );
 
-  // The user will be able to choose two metrics items with our UI
-  // in the future, but for now, we're picking the first two items
+  // The user will be able to choose a metrics item with our UI
+  // in the future, but for now, we're displaying the first item
   // from the list
-  const firstFieldName = _.get(results, '[0].document', '');
-  const firstFieldValue = _.get(results, '[0].value', 0);
-  const secondFieldName = _.get(results, '[1].document', '');
-  const secondFieldValue = _.get(results, '[1].value', 0);
+  const firstFieldName = _.get(
+    results,
+    '[0].document',
+    'No metrics data available',
+  );
+  const defaultValue = firstFieldName === 'No metrics data available' ? '' : 0;
+  const firstFieldValue = _.get(results, '[0].value', defaultValue);
 
   return `
   <div class="field">
     <span class="field-name">${firstFieldName}</span>
     <span class="field-value">${firstFieldValue.toLocaleString()}</span>
   </div>
-  <div class="field">
-    <span class="field-name">${secondFieldName}</span>    
-    <span class="field-value">${secondFieldValue.toLocaleString()}</span>
   `;
 }
 
