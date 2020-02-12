@@ -49,6 +49,7 @@ const BindingPort = props => {
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       type="text"
+      select
     >
       {_list.map(item => {
         const disabled = disables.includes(item);

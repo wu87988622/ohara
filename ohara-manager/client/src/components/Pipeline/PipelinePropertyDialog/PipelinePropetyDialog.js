@@ -36,6 +36,7 @@ import {
   useTopicState,
   useStreamState,
   useFileState,
+  useWorkspace,
 } from 'context';
 import {
   StyleTitle,
@@ -65,6 +66,7 @@ const PipelinePropertyDialog = props => {
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
+  const { currentWorker } = useWorkspace();
   const { data: currentConnectors } = useConnectorState();
   const { data: currentStreams } = useStreamState();
   const { data: currentTopics } = useTopicState();
@@ -175,6 +177,7 @@ const PipelinePropertyDialog = props => {
   const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
     topics: currentTopics,
     files: currentFiles,
+    freePorts: get(currentWorker, 'freePorts', []),
     Definitions: groups.sort(),
     initialValues: targetCell,
     onSubmit,

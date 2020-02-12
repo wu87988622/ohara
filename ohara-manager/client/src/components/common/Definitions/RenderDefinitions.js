@@ -26,6 +26,7 @@ const RenderDefinitions = props => {
     onSubmit,
     topics = [],
     files = [],
+    freePorts,
   } = props;
 
   const formRef = useRef(null);
@@ -48,6 +49,7 @@ const RenderDefinitions = props => {
                 def,
                 topics,
                 files,
+                freePorts,
                 ref: refs[def.key],
               });
             })}

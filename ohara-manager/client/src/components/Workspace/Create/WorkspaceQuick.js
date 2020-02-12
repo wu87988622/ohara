@@ -61,6 +61,7 @@ import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { hashByGroupAndName } from 'utils/sha';
 import { useUniqueName } from './hooks';
+import * as generate from 'utils/generate';
 
 const StyledPaper = styled(Paper)(
   ({ theme }) => css`
@@ -278,9 +279,23 @@ const WorkspaceQuick = props => {
       setProgressActiveStep(1);
       await createBk({ name: workspaceName, nodeNames });
       setProgressActiveStep(2);
-      await createWk({ name: workspaceName, nodeNames, pluginKeys: plugins });
+      await createWk({
+        name: workspaceName,
+        nodeNames,
+        pluginKeys: plugins,
+        freePorts: [
+          generate.port(),
+          generate.port(),
+          generate.port(),
+          generate.port(),
+          generate.port(),
+        ],
+      });
       setProgressActiveStep(3);
-      await createWs({ name: workspaceName, nodeNames });
+      await createWs({
+        name: workspaceName,
+        nodeNames,
+      });
       // after workspace creation successful, we need to refresh the node list
       // in order to get the newest service information of node
       await refreshNodes();
