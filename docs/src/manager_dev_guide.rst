@@ -343,7 +343,7 @@ CI server integration
 
     .. code-block:: console
 
-      $ gradle test
+      $ ./gradlew test
 
     -  Run **Client**'s unit tests. The test reports can be found in ``ohara-manager/test-reports/``
 
@@ -351,13 +351,13 @@ CI server integration
 
     .. code-block:: console
 
-      $ gradle api -Pohara.manager.api.configurator=${http://host:port/v0}
+      $ ./gradlew api -Pohara.manager.api.configurator=${http://host:port/v0}
 
   End-to-End test:
 
     .. code-block:: console
 
-      $ gradle e2e -Pohara.manager.e2e.port=5050 -Pohara.manager.e2e.configurator=${http://host:port/v0}-Pohara.manager.e2e.nodeHost=${slaveNodeName} -Pohara.manager.e2e.nodePort=${slaveNodePort} -Pohara.manager.e2e.nodeUser=${slaveNodeUsername} -Pohara.manager.e2e.nodePass=${slaveNodePassword} -Pohara.it.container.prefix=${pullRequestNumber}
+      $ ./gradlew e2e -Pohara.manager.e2e.port=5050 -Pohara.manager.e2e.configurator=${http://host:port/v0}-Pohara.manager.e2e.nodeHost=${slaveNodeName} -Pohara.manager.e2e.nodePort=${slaveNodePort} -Pohara.manager.e2e.nodeUser=${slaveNodeUsername} -Pohara.manager.e2e.nodePass=${slaveNodePassword} -Pohara.it.container.prefix=${pullRequestNumber}
 
   Let's take a close look at these options:
     - ``-Pohara.manager.e2e.port=5050``: start Ohara manager at this port in the test run

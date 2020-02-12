@@ -76,7 +76,7 @@ Important things about pull request
   on your CI server.
 - Pass code style check. You can automatically fix these issues with a single command: ::
 
-   gradle spotlessApply
+   ./gradlew spotlessApply
 
 - Address all reviewers' comments
 

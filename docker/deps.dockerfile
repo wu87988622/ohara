@@ -56,6 +56,7 @@ RUN yum install -y python2 make \
   && pip install -U sphinx recommonmark sphinx_rtd_theme
 
 # download gradle
+# gradle version should be equal to version in gradle-wrapper.properties
 ARG GRADLE_VERSION=5.6.4
 WORKDIR /opt/gradle
 RUN wget https://downloads.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip
@@ -74,9 +75,9 @@ WORKDIR /ohara
 RUN git clone $REPO /ohara
 RUN git checkout $COMMIT
 # download dependencies
-RUN gradle clean build -x test \
-    # trigger download of database
-    && gradle clean ohara-client:test --tests TestDatabaseClient -PskipManager
+RUN ./gradlew clean build -x test
+# trigger download of database
+RUN ./gradlew clean ohara-client:test --tests TestDatabaseClient -PskipManager
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0

@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * all test cases here are executed on remote node. If no remote node is defined, all tests are skipped.
   * You can run following command to pass the information of remote node.
-  * $ gradle clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
+  * $ ./gradlew clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
 class TestDockerClient extends IntegrationTest {
   private[this] val webHost = "www.google.com.tw"

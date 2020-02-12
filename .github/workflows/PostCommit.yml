@@ -34,7 +34,7 @@ jobs:
       - name: build
         working-directory: /ohara
         run: |
-          gradle clean build -PskipManager -x test
+          ./gradlew clean build -PskipManager -x test
       - name: unit tests
         working-directory: /ohara
         # the hardware supported by Github is
@@ -43,7 +43,7 @@ jobs:
         # 14 GB of SSD disk space
         # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners#supported-runners-and-hardware-resources
         run: |
-          gradle clean build -PmaxParallelForks=1 -PmaxTestRetries=1 -PmaxTestFailures=5
+          ./gradlew clean build -PmaxParallelForks=1 -PmaxTestRetries=1 -PmaxTestFailures=5
   documentation:
     runs-on: ubuntu-latest
     container: oharastream/ohara:ci
@@ -55,11 +55,11 @@ jobs:
       - name: javadoc
         working-directory: /ohara
         run: |
-          gradle javadoc
+          ./gradlew javadoc
       - name: scaladoc
         working-directory: /ohara
         run: |
-          gradle scaladoc
+          ./gradlew scaladoc
       - name: doc
         working-directory: /ohara/docs
         run: |

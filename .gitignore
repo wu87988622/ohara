@@ -1,7 +1,7 @@
 .gradle/
-gradle/wrapper/*
-gradlew
+gradle/wrapper/*.jar
 gradlew.bat
+!gradle-wrapper.jar
 .idea
 target/
 *.iml

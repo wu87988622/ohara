@@ -50,7 +50,7 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ gradle clean build -x test
+      $ ./gradlew clean build -x test
 
     .. note::
       the tar file is located at ohara-${module}/build/distributions
@@ -59,7 +59,7 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ gradle clean test
+      $ ./gradlew clean test
 
     .. note::
 
@@ -86,7 +86,7 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ gradle spotlessApply
+      $ ./gradlew spotlessApply
 
     .. note::
 
@@ -101,7 +101,7 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ gradle licenseApply
+      $ ./gradlew licenseApply
 
     .. note::
 
@@ -112,7 +112,7 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ gradle clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
+      $ ./gradlew clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
 
     .. tip::
 

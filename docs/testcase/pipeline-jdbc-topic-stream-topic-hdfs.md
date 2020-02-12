@@ -290,7 +290,7 @@ Build stream jar
 
 ```sh
 # Make sure you're at the project root `/ohara`, then build the jar with:
-gradle clean :ohara-it:jar -PskipManager
+./gradlew clean :ohara-it:jar -PskipManager
 ```
 
 Go to stream jar folder and list the jars that you have
