@@ -16,6 +16,10 @@
 
 import { map } from 'lodash';
 
+import { KIND } from 'const';
+import wait from 'api/waitApi';
+import * as waitUtil from 'api/utils/waitUtils';
+import * as URL from 'api/utils/url';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as workerApi from 'api/workerApi';
@@ -111,8 +115,21 @@ export const createApi = context => {
       const params = { name, group };
       const res = await workerApi.start(params);
       if (res.errors) throw new ContextApiError(res);
+      // We need to wait the connectors are ready
+      // before we assert this worker started actually
+      const waitRes = await wait({
+        url: `${URL.INSPECT_URL}/${KIND.worker}/${name}?group=${group}`,
+        checkFn: waitUtil.waitForConnectReady,
+        // we don't need to inspect too frequently
+        sleep: 5000,
+      });
+      if (waitRes.errors) {
+        throw new ContextApiError({
+          ...waitRes,
+          title: `Get connector list of worker ${name} failed.`,
+        });
+      }
       const infoRes = await inspectApi.getWorkerInfo(params);
-      if (infoRes.errors) throw new ContextApiError(infoRes);
       return generateClusterResponse({
         values: res.data,
         inspectInfo: infoRes.data,

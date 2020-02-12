@@ -196,45 +196,10 @@ describe('NodeDialog in AppBar', () => {
       .first()
       .trigger('keydown', { keyCode: 27, which: 27 });
 
-    cy.findByTitle('Create a new workspace').click();
-    cy.findByText(/^quick start$/i)
-      .should('exist')
-      .click();
+    cy.createWorkspace(generate.serviceName());
 
-    // Create a workspace for this node
-    // Step1: workspace name (using default)
-    cy.findAllByText(/^next$/i)
-      .filter(':visible')
-      .click();
-
-    // Step2: select nodes
-    cy.findByText('Click here to select nodes').click();
-    cy.findByText(nodeHost)
-      .click()
-      .findByText(/^save$/i)
-      .click();
-    cy.findAllByText(/^next$/i)
-      .filter(':visible')
-      .click();
-
-    // Step3: add worker plugins (using default)
-    cy.findAllByText(/^next$/i)
-      .filter(':visible')
-      .click();
-
-    // Step4: create workspace
-    cy.findAllByText(/^finish$/i)
-      .filter(':visible')
-      .click();
-
-    // Check the services in node
-    cy.findByText(/^wo$/i).should('exist');
-    cy.visit('/');
-
-    if (mode === MODE.k8s) {
-      // wait a little time for k8s refresh the resources of node
-      cy.wait(6000);
-    }
+    // wait a little time for workspace ready
+    cy.wait(6000);
 
     cy.findByTitle('Node list')
       .should('exist')

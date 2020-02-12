@@ -16,7 +16,6 @@
 
 import { isEmpty } from 'lodash';
 
-import { KIND } from '../const';
 import * as worker from './body/workerBody';
 import { requestUtil, responseUtil, axiosInstance } from './utils/apiUtils';
 import * as URL from './utils/url';
@@ -50,11 +49,10 @@ export const start = async params => {
 
   let result = {};
   if (startRes.data.isSuccess) {
-    await wait({
-      url: `${URL.INSPECT_URL}/${KIND.worker}/${name}?group=${group}`,
-      checkFn: waitUtil.waitForConnectReady,
+    const res = await wait({
+      url: `${url}/${name}?group=${group}`,
+      checkFn: waitUtil.waitForRunning,
     });
-    const res = await axiosInstance.get(`${url}/${name}?group=${group}`);
     result = responseUtil(res, worker);
   } else {
     result = responseUtil(startRes, worker);

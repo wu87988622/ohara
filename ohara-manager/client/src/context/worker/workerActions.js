@@ -48,8 +48,8 @@ export const createActions = context => {
         dispatch(routine.request());
         const createRes = await workerApi.create(values);
         const startRes = await workerApi.start(values.name);
-        // omit startRes "stageSettings", we need the startRes "stageSettings" creation payload
-        // omit createRes "classInfos", we need the createRes "classInfos" creation payload
+        // omit startRes "stageSettings", we need the createRes "stageSettings" creation payload
+        // omit createRes "classInfos", we need the startRes "classInfos" creation payload
         // to decide workspace is dirties or not
         const data = {
           ...omit(createRes, ['classInfos']),

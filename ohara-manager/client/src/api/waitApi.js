@@ -35,6 +35,7 @@ const wait = async params => {
         isSuccess: false,
         result: {},
       },
+      errors: ['exceed max retry'],
     };
   } else {
     await sleepApi(sleep);

@@ -136,7 +136,9 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
     .click();
 
   // Step2: select nodes
-  cy.findByText('Click here to select nodes').click();
+  // we wait a little time for the "click button" to be rendered
+  cy.wait(1000);
+  cy.contains('p:visible', 'Click here to select nodes').click();
   cy.addNode();
 
   // Step3: add worker plugins (using default)
@@ -156,4 +158,6 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
   } else {
     cy.findByText(/^wo$/i).should('exist');
   }
+
+  cy.end();
 });
