@@ -59,12 +59,12 @@ const Pipeline = () => {
   const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
 
   const {
-    data: currentStream,
+    data: streams,
     lastUpdated: streamLastUpdated,
   } = context.useStreamState();
   const {
     lastUpdated: connectorLastUpdated,
-    data: currentConnector,
+    data: connectors,
   } = context.useConnectorState();
   const { lastUpdated: topicLastUpdated } = context.useTopicState();
 
@@ -103,6 +103,7 @@ const Pipeline = () => {
   const isInitialized = React.useRef(false);
   const forceDeleteList = React.useRef({});
   const [isOpen, setIsOpen] = React.useState(false);
+  const [selectTopic, setSelectTopic] = React.useState(false);
 
   const handleDialogClose = () => {
     setIsOpen(false);
@@ -110,8 +111,8 @@ const Pipeline = () => {
   };
 
   useEffect(() => {
-    currentStreamRef.current = currentStream;
-  }, [currentStream]);
+    currentStreamRef.current = streams;
+  }, [streams]);
 
   const clean = (cells, paperApi, onlyRemoveLink = false) => {
     Object.keys(cells).forEach(key => {
@@ -218,7 +219,6 @@ const Pipeline = () => {
   }, [
     checkCells,
     connectorLastUpdated,
-    currentStream,
     isPaperApiReady,
     streamLastUpdated,
     topicLastUpdated,
@@ -551,23 +551,21 @@ const Pipeline = () => {
                             break;
 
                           case KIND.topic:
-                            const hasTopicConnectors = currentConnector.filter(
+                            const hasTopicConnectors = connectors.filter(
                               connector =>
                                 connector.topicKeys.find(
                                   topic => topic.name === cellData.name,
                                 ),
                             );
-                            const hasTopicToStream = currentStream.filter(
-                              stream =>
-                                stream.to.find(
-                                  topic => topic.name === cellData.name,
-                                ),
+                            const hasTopicToStream = streams.filter(stream =>
+                              stream.to.find(
+                                topic => topic.name === cellData.name,
+                              ),
                             );
-                            const hasTopicFromStream = currentStream.filter(
-                              stream =>
-                                stream.from.find(
-                                  topic => topic.name === cellData.name,
-                                ),
+                            const hasTopicFromStream = streams.filter(stream =>
+                              stream.from.find(
+                                topic => topic.name === cellData.name,
+                              ),
                             );
                             if (
                               [
@@ -582,6 +580,7 @@ const Pipeline = () => {
                                 fromStreams: hasTopicFromStream,
                                 topic: cellData,
                               };
+                              setSelectTopic(cellData.displayName);
                               setIsOpen(true);
                             } else {
                               await removeTopic(cellData, paperApi);
@@ -628,9 +627,7 @@ const Pipeline = () => {
       <Dialog
         open={isOpen}
         title={'Force Delete Topic?'}
-        children={
-          'You are sure to force the deletion of topic, This operation cannot be replied.'
-        }
+        children={`Are you sure you want to delete the node: ${selectTopic} ? This action cannot be undone!`}
         confirmText={'FORCE DELETE'}
         handleClose={handleDialogClose}
         handleConfirm={forceDelete}
