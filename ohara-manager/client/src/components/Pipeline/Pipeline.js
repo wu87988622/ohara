@@ -302,7 +302,8 @@ const Pipeline = () => {
                         const {
                           type,
                           source,
-                          stream,
+                          toStream,
+                          fromStream,
                           sink,
                           link,
                           topic,
@@ -312,7 +313,8 @@ const Pipeline = () => {
                         let topicRes;
                         let sourceRes;
                         let sinkRes;
-                        let streamRes;
+                        let toStreamRes;
+                        let fromStreamRes;
                         switch (type) {
                           case CONNECTION_TYPE.SOURCE_TOPIC:
                             updateLinkConnector(
@@ -328,13 +330,13 @@ const Pipeline = () => {
                             break;
                           case CONNECTION_TYPE.STREAM_TOPIC:
                             updateStreamLinkTo(
-                              { stream, topic, link },
+                              { toStream, topic, link },
                               paperApi,
                             );
                             break;
                           case CONNECTION_TYPE.TOPIC_STREAM:
                             updateStreamLinkFrom(
-                              { stream, topic, link },
+                              { fromStream, topic, link },
                               paperApi,
                             );
                             break;
@@ -387,11 +389,11 @@ const Pipeline = () => {
                               clean({ topic }, paperApi);
                               return;
                             }
-                            streamRes = await updateStreamLinkFrom(
-                              { stream, topic, link },
+                            fromStreamRes = await updateStreamLinkFrom(
+                              { fromStream, topic, link },
                               paperApi,
                             );
-                            if (streamRes.error) {
+                            if (fromStreamRes.error) {
                               clean({ source, topic }, paperApi);
                               return;
                             }
@@ -408,11 +410,11 @@ const Pipeline = () => {
                             if (topicRes.error) {
                               return;
                             }
-                            streamRes = await updateStreamLinkTo(
-                              { stream, topic, link },
+                            toStreamRes = await updateStreamLinkTo(
+                              { toStream, topic, link },
                               paperApi,
                             );
-                            if (streamRes.error) {
+                            if (toStreamRes.error) {
                               clean({ topic }, paperApi);
                               return;
                             }
@@ -421,7 +423,36 @@ const Pipeline = () => {
                               paperApi,
                             );
                             if (sinkRes.error) {
-                              clean({ to: stream, topic }, paperApi);
+                              clean({ to: toStream, topic }, paperApi);
+                              return;
+                            }
+                            break;
+                          case CONNECTION_TYPE.STREAM_TOPIC_STREAM:
+                            topicRes = await createTopic(
+                              ({
+                                id: topic.id,
+                                name: topic.name,
+                                className: topic.className,
+                              } = topic),
+                              paperApi,
+                            );
+                            if (topicRes.error) {
+                              return;
+                            }
+                            toStreamRes = await updateStreamLinkTo(
+                              { toStream, topic, link },
+                              paperApi,
+                            );
+                            if (toStreamRes.error) {
+                              clean({ topic }, paperApi);
+                              return;
+                            }
+                            fromStreamRes = await updateStreamLinkFrom(
+                              { fromStream, topic, link },
+                              paperApi,
+                            );
+                            if (fromStreamRes.error) {
+                              clean({ to: toStream, topic }, paperApi);
                               return;
                             }
                             break;
@@ -433,7 +464,8 @@ const Pipeline = () => {
                         const {
                           type,
                           source,
-                          stream,
+                          toStream,
+                          fromStream,
                           sink,
                           topic,
                         } = pipelineUtils.utils.getConnectionOrder(cells);
@@ -442,10 +474,10 @@ const Pipeline = () => {
                             clean({ source, topic }, paperApi, true);
                             break;
                           case CONNECTION_TYPE.STREAM_TOPIC:
-                            clean({ to: stream, topic }, paperApi, true);
+                            clean({ to: toStream, topic }, paperApi, true);
                             break;
                           case CONNECTION_TYPE.TOPIC_STREAM:
-                            clean({ from: stream, topic }, paperApi, true);
+                            clean({ from: fromStream, topic }, paperApi, true);
                             break;
                           case CONNECTION_TYPE.TOPIC_SINK:
                             clean({ sink, topic }, paperApi, true);
