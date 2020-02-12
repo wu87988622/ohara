@@ -233,29 +233,42 @@ export const enableDragAndDrop = params => {
       });
 
       $('#paper').on('mousemove.fly', event => {
+        // Prevent the flying-paper from interfering by the Toolbox.
+        // We will set this back after the drag-and-drop action is finished
+        $('.toolbox').css('pointer-events', 'none');
+
         $('.flying-paper').offset({
           left: event.pageX - offset.x,
           top: event.pageY - offset.y,
         });
       });
 
-      $('#paper').on('mouseup.fly', async event => {
+      $('#paper').on('mouseup.fly', event => {
         const x = event.pageX;
         const y = event.pageY;
-        const { width, height, offsetLeft, offsetTop } = paperApi.getBbox();
+        const paperBbox = paperApi.getBbox();
+        const $toolbox = $('.toolbox');
+
+        const isInsideToolbox =
+          x > $toolbox.offset().left &&
+          x < $toolbox.offset().left + $toolbox.width() &&
+          y > $toolbox.offset().top &&
+          y < $toolbox.offset().top + $toolbox.height();
 
         const isInsidePaper =
-          x > offsetLeft &&
-          x < offsetLeft + width &&
-          y > offsetTop &&
-          y < offsetTop + height;
+          x > paperBbox.offsetLeft &&
+          x < paperBbox.offsetLeft + paperBbox.width &&
+          y > paperBbox.offsetTop &&
+          y < paperBbox.offsetTop + paperBbox.height;
 
         // Dropped over paper ?
-        if (isInsidePaper) {
+        if (isInsidePaper && !isInsideToolbox) {
           const localPoint = paperApi.getLocalPoint();
           const scale = paperApi.getScale();
-          const newX = (x - offsetLeft - offset.x) / scale.sx + localPoint.x;
-          const newY = (y - offsetTop - offset.y) / scale.sy + localPoint.y;
+          const newX =
+            (x - paperBbox.offsetLeft - offset.x) / scale.sx + localPoint.x;
+          const newY =
+            (y - paperBbox.offsetTop - offset.y) / scale.sy + localPoint.y;
           const {
             kind,
             className,
@@ -315,6 +328,8 @@ export const enableDragAndDrop = params => {
         flyingShape.remove();
 
         $('.flying-paper').remove();
+
+        $('.toolbox').css('pointer-events', 'auto');
       });
     });
   });
