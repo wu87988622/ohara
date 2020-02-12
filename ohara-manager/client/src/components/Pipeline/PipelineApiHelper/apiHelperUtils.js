@@ -21,6 +21,7 @@ export const CONNECTION_TYPE = {
   SOURCE_TOPIC_SINK: 'source_topic_sink',
   SOURCE_TOPIC_STREAM: 'source_topic_stream',
   STREAM_TOPIC_SINK: 'stream_topic_sink',
+  STREAM_TOPIC_STREAM: 'stream_topic_stream',
   SOURCE_TOPIC: 'source_topic',
   STREAM_TOPIC: 'stream_topic',
   TOPIC_SINK: 'topic_sink',
@@ -34,11 +35,10 @@ export const getCellState = cell => {
 export const getConnectionOrder = cells => {
   const hasSource = get(cells, 'sourceElement.kind', null) === KIND.source;
   const hasSink = get(cells, 'targetElement.kind', null) === KIND.sink;
-  const hasStream =
-    get(cells, 'sourceElement.kind', null) === KIND.stream ||
-    get(cells, 'targetElement.kind', null) === KIND.stream;
+  const hasFromStream = get(cells, 'targetElement.kind', null) === KIND.stream;
+  const hasToStream = get(cells, 'sourceElement.kind', null) === KIND.stream;
 
-  if (hasSource && hasSink && !hasStream) {
+  if (hasSource && hasSink && !hasFromStream && !hasToStream) {
     const topic = get(cells, 'topicElement', null);
     const source = get(cells, 'sourceElement', null);
     const sink = get(cells, 'targetElement', null);
@@ -53,57 +53,76 @@ export const getConnectionOrder = cells => {
       secondeLink,
     };
   }
-  if (hasSource && !hasSink && hasStream) {
+  if (hasSource && !hasSink && hasFromStream && !hasToStream) {
     const topic = get(cells, 'topicElement', null);
     const source = get(cells, 'sourceElement', null);
-    const stream = get(cells, 'targetElement', null);
+    const fromStream = get(cells, 'targetElement', null);
     const firstLink = get(cells, 'firstLink', null);
     const secondeLink = get(cells, 'secondeLink', null);
     return {
       type: CONNECTION_TYPE.SOURCE_TOPIC_STREAM,
       topic,
       source,
-      stream,
+      fromStream,
       firstLink,
       secondeLink,
     };
   }
-  if (!hasSource && hasSink && hasStream) {
+  if (!hasSource && hasSink && hasToStream && !hasFromStream) {
     const topic = get(cells, 'topicElement', null);
-    const stream = get(cells, 'sourceElement', null);
+    const toStream = get(cells, 'sourceElement', null);
     const sink = get(cells, 'targetElement', null);
     const firstLink = get(cells, 'firstLink', null);
     const secondeLink = get(cells, 'secondeLink', null);
     return {
       type: CONNECTION_TYPE.STREAM_TOPIC_SINK,
       topic,
-      stream,
+      toStream,
       sink,
       firstLink,
       secondeLink,
     };
   }
-  if (hasSource && !hasSink && !hasStream) {
+  if (!hasSource && !hasSink && hasToStream && hasFromStream) {
+    const topic = get(cells, 'topicElement', null);
+    const toStream = get(cells, 'sourceElement', null);
+    const fromStream = get(cells, 'targetElement', null);
+    const firstLink = get(cells, 'firstLink', null);
+    const secondeLink = get(cells, 'secondeLink', null);
+    return {
+      type: CONNECTION_TYPE.STREAM_TOPIC_STREAM,
+      topic,
+      toStream,
+      fromStream,
+      firstLink,
+      secondeLink,
+    };
+  }
+  if (hasSource && !hasSink && !hasToStream && !hasFromStream) {
     const topic = get(cells, 'targetElement', null);
     const source = get(cells, 'sourceElement', null);
     const link = get(cells, 'link');
     return { type: CONNECTION_TYPE.SOURCE_TOPIC, topic, source, link };
   }
-  if (!hasSource && !hasSink && hasStream) {
+  if (!hasSource && !hasSink && !hasToStream && !hasFromStream) {
+    const topic = get(cells, 'targetElement', null);
+    const source = get(cells, 'sourceElement', null);
     const link = get(cells, 'link');
-    const source = cells.sourceElement;
-    const target = cells.targetElement;
-    if (source.kind === KIND.stream && target.kind === KIND.topic) {
-      const topic = get(cells, 'targetElement', null);
-      const stream = get(cells, 'sourceElement', null);
-      return { type: CONNECTION_TYPE.STREAM_TOPIC, topic, stream, link };
-    } else {
-      const topic = get(cells, 'sourceElement', null);
-      const stream = get(cells, 'targetElement', null);
-      return { type: CONNECTION_TYPE.TOPIC_STREAM, topic, stream, link };
-    }
+    return { type: CONNECTION_TYPE.SOURCE_TOPIC, topic, source, link };
   }
-  if (!hasSource && hasSink && !hasStream) {
+  if (!hasSource && !hasSink && hasToStream && !hasFromStream) {
+    const link = get(cells, 'link');
+    const topic = get(cells, 'targetElement', null);
+    const toStream = get(cells, 'sourceElement', null);
+    return { type: CONNECTION_TYPE.STREAM_TOPIC, topic, toStream, link };
+  }
+  if (!hasSource && !hasSink && !hasToStream && hasFromStream) {
+    const link = get(cells, 'link');
+    const topic = get(cells, 'sourceElement', null);
+    const fromStream = get(cells, 'targetElement', null);
+    return { type: CONNECTION_TYPE.TOPIC_STREAM, topic, fromStream, link };
+  }
+  if (!hasSource && hasSink && !hasToStream && !hasFromStream) {
     const link = get(cells, 'link');
     const topic = get(cells, 'sourceElement', null);
     const sink = get(cells, 'targetElement', null);

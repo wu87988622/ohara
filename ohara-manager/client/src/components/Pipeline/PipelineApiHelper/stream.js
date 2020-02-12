@@ -63,9 +63,9 @@ const stream = () => {
   };
 
   const updateLinkTo = async (params, paperApi) => {
-    const { stream, topic, link } = params;
+    const { toStream, topic, link } = params;
     const res = await updateStream({
-      name: stream.name,
+      name: toStream.name,
       to: [{ name: topic.name }],
     });
     if (res.error) {
@@ -75,9 +75,9 @@ const stream = () => {
   };
 
   const updateLinkFrom = async (params, paperApi) => {
-    const { stream, topic, link } = params;
+    const { fromStream, topic, link } = params;
     const res = await updateStream({
-      name: stream.name,
+      name: fromStream.name,
       from: [{ name: topic.name }],
     });
 
