@@ -29,10 +29,14 @@ const connector = () => {
 
   const create = async (params, paperApi) => {
     const { id, name, className } = params;
+    paperApi.disableMenu(id);
     const res = await createConnector({
       name,
       connector__class: className,
     });
+
+    paperApi.enableMenu(id);
+
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
