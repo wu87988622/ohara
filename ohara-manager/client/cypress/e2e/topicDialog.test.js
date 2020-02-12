@@ -17,7 +17,7 @@
 import { deleteAllServices } from '../utils';
 import * as generate from '../../src/utils/generate';
 
-describe('Topic List', () => {
+describe('Topics Tab in Workspace Settings', () => {
   beforeEach(async () => await deleteAllServices());
 
   it('topic operations in workspace should be worked normally', () => {

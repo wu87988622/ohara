@@ -54,7 +54,9 @@ const EditWorkspace = () => {
     setEditWorkspaceDialogData({ tab: newTab });
   };
 
-  const tab = get(editWorkspaceDialogData, 'tab', 'overview');
+  // Overview tab is disabled because it's not implemented in 0.9
+  // We set the default value to topics
+  const tab = get(editWorkspaceDialogData, 'tab', WorkspaceTabs.TOPICS);
   return (
     <>
       <FullScreenDialog
