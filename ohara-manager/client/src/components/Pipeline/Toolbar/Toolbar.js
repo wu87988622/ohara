@@ -39,10 +39,11 @@ import { Progress } from 'components/common/Progress';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
-import { useDeleteServices, useZoom } from './ToolbarHooks';
+import { useDeleteCells, useZoom } from './ToolbarHooks';
 import { Tooltip } from 'components/common/Tooltip';
 import * as pipelineContext from '../Pipeline';
 import * as context from 'context';
+import * as pipelineUtils from '../PipelineApiHelper';
 
 const Toolbar = props => {
   const { handleToolboxOpen, handleToolbarClick, isToolboxOpen } = props;
@@ -58,16 +59,21 @@ const Toolbar = props => {
   );
 
   const { deletePipeline } = context.usePipelineActions();
-  const { startConnector, stopConnector } = context.useConnectorActions();
-  const { startStream, stopStream } = context.useStreamActions();
   const { currentWorkspace, currentPipeline, error } = context.useWorkspace();
   const { selectedCell } = context.usePipelineState();
 
-  const { steps, activeStep, deleteServices } = useDeleteServices();
+  const paperApi = React.useContext(pipelineContext.PaperContext);
+  const { steps, activeStep, deleteCells } = useDeleteCells(paperApi);
   const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
-  const paperApi = React.useContext(pipelineContext.PaperContext);
   const eventLog = useEventLog();
+
+  const {
+    start: startConnector,
+    stop: stopConnector,
+  } = pipelineUtils.connector();
+
+  const { start: startStream, stop: stopStream } = pipelineUtils.connector();
 
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
@@ -87,22 +93,27 @@ const Toolbar = props => {
   };
 
   const makeRequest = (pipeline, action) => {
-    const { objects: services } = pipeline;
-
-    const connectors = services.filter(
-      service => service.kind === KIND.source || service.kind === KIND.sink,
+    const cells = paperApi.getCells();
+    const connectors = cells.filter(
+      cell => cell.kind === KIND.source || cell.kind === KIND.sink,
     );
-    const streams = services.filter(service => service.kind === KIND.stream);
+    const streams = cells.filter(cell => cell.kind === KIND.stream);
 
     let connectorPromises = [];
     let streamsPromises = [];
 
     if (action === 'start') {
-      connectorPromises = connectors.map(({ name }) => startConnector(name));
-      streamsPromises = streams.map(({ name }) => startStream(name));
+      connectorPromises = connectors.map(cellData =>
+        startConnector(cellData, paperApi),
+      );
+      streamsPromises = streams.map(cellData =>
+        startStream(cellData, paperApi),
+      );
     } else {
-      connectorPromises = connectors.map(({ name }) => stopConnector(name));
-      streamsPromises = streams.map(({ name }) => stopStream(name));
+      connectorPromises = connectors.map(cellData =>
+        stopConnector(cellData, paperApi),
+      );
+      streamsPromises = streams.map(cellData => stopStream(cellData, paperApi));
     }
     return Promise.all([...connectorPromises, ...streamsPromises]).then(
       result => result,
@@ -110,20 +121,25 @@ const Toolbar = props => {
   };
 
   const handlePipelineStart = async () => {
-    await makeRequest(currentPipeline, 'start');
     handlePipelineControlsClose();
+    await makeRequest(currentPipeline, 'start');
   };
 
   const handlePipelineStop = async () => {
-    await makeRequest(currentPipeline, 'stop');
     handlePipelineControlsClose();
+    await makeRequest(currentPipeline, 'stop');
   };
 
   const handlePipelineDelete = async () => {
+    handlePipelineControlsClose();
     setIsDeletingPipeline(true);
-    const { objects: services, name } = currentPipeline;
+    const { name } = currentPipeline;
+    const cells = paperApi
+      .getCells()
+      .filter(cell => cell.cellType === 'html.Element')
+      .sort((a, b) => a.kind.localeCompare(b.kind));
 
-    await deleteServices(services);
+    await deleteCells(cells);
     const res = await deletePipeline(name);
     if (!res.error) {
       eventLog.info(`Successfully deleted pipeline ${name}.`);
@@ -131,7 +147,6 @@ const Toolbar = props => {
     setIsDeletingPipeline(false);
 
     if (!error) history.push(`/${currentWorkspace.name}`);
-    handlePipelineControlsClose();
   };
 
   const handlePipelineControlsClose = () => {

@@ -17,49 +17,47 @@
 import React from 'react';
 
 import { KIND } from 'const';
-import {
-  useConnectorActions,
-  useTopicActions,
-  useStreamActions,
-} from 'context';
-import { PaperContext } from '../Pipeline';
 
-export const useDeleteServices = () => {
+import { PaperContext } from '../Pipeline';
+import * as pipelineUtils from '../PipelineApiHelper';
+
+export const useDeleteCells = paperApi => {
   const [steps, setSteps] = React.useState([]);
   const [activeStep, setActiveStep] = React.useState(0);
-  const { deleteConnector, stopConnector } = useConnectorActions();
-  const { deleteTopic, stopTopic } = useTopicActions();
-  const { deleteStream, stopStream } = useStreamActions();
 
-  const deleteServices = async services => {
-    setSteps([...services.map(object => object.name)]);
+  const {
+    stop: stopConnector,
+    remove: removeConnector,
+  } = pipelineUtils.connector();
+
+  const { stop: stopStream, remove: removeStream } = pipelineUtils.stream();
+  const { remove: removeTopic } = pipelineUtils.topic();
+
+  const deleteCells = async cells => {
+    setSteps([...cells.map(cell => cell.name)]);
 
     // Need to use a while loop so we can update
     // react state: `activeStep` in the loop
     let index = 0;
-    while (index < services.length) {
-      const service = services[index];
-      const { kind, name, tags } = service;
-      const isRunning = Boolean(service.state);
+    while (index < cells.length) {
+      const currentCell = cells[index];
+      const { kind, isShared } = currentCell;
+      const isRunning = Boolean(currentCell.state);
 
       if (kind === KIND.source || kind === KIND.sink) {
-        if (isRunning) await stopConnector(name);
+        if (isRunning) await stopConnector(currentCell, paperApi);
+        await removeConnector(currentCell, paperApi);
+      }
 
-        await deleteConnector(name);
+      if (kind === KIND.stream) {
+        if (isRunning) await stopStream(currentCell, paperApi);
+        await removeStream(currentCell, paperApi);
       }
 
       // Only pipeline-only topics are belong to this Pipeline and so need to
       // be deleted along with this pipeline
-      if (kind === KIND.topic && !tags.isShared) {
-        if (isRunning) await stopTopic(name);
-
-        await deleteTopic(name);
-      }
-
-      if (kind === KIND.stream) {
-        if (isRunning) await stopStream(name);
-
-        await deleteStream(name);
+      if (kind === KIND.topic && !isShared) {
+        await removeTopic(currentCell, paperApi);
       }
 
       index++;
@@ -68,7 +66,7 @@ export const useDeleteServices = () => {
   };
 
   return {
-    deleteServices,
+    deleteCells,
     steps,
     activeStep,
   };
