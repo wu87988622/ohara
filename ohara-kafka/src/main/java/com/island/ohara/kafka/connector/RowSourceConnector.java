@@ -18,6 +18,8 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.WithDefinitions;
+import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import java.util.Collections;
 import java.util.List;
@@ -67,14 +69,6 @@ public abstract class RowSourceConnector extends SourceConnector implements With
   protected List<SettingDef> _definitions() {
     return Collections.emptyList();
   }
-  /**
-   * Get the version from this connector.
-   *
-   * @return the version, formatted as a String
-   */
-  protected ConnectorVersion _version() {
-    return ConnectorVersion.builder().build();
-  }
 
   /**
    * create counter builder. This is a helper method for custom connector which want to expose some
@@ -98,6 +92,21 @@ public abstract class RowSourceConnector extends SourceConnector implements With
    */
   protected boolean needColumnDefinition() {
     return true;
+  }
+
+  @Override
+  public String version() {
+    return VersionUtils.VERSION;
+  }
+
+  @Override
+  public String revision() {
+    return VersionUtils.REVISION;
+  }
+
+  @Override
+  public String author() {
+    return VersionUtils.USER;
   }
 
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
@@ -135,18 +144,13 @@ public abstract class RowSourceConnector extends SourceConnector implements With
                 ConnectorDefUtils.DEFAULT)
             .flatMap(List::stream)
             .collect(Collectors.toList()),
-        _version(),
+        this,
         needColumnDefinition());
   }
 
   @Override
   public final ConfigDef config() {
     return ConnectorUtils.toConfigDef(settingDefinitions());
-  }
-
-  @Override
-  public final String version() {
-    return _version().version();
   }
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//
   @Override

@@ -27,6 +27,7 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.setting.TableColumn;
+import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.RowPartitioner;
 import java.util.Arrays;
 import java.util.Collections;
@@ -298,7 +299,7 @@ public final class ConnectorDefUtils {
         .key(VERSION_KEY)
         .documentation("version of connector")
         .group(CORE_GROUP)
-        .optional(version)
+        .optional(CommonUtils.requireNonEmpty(version))
         .orderInGroup(VERSION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
         .build();
@@ -313,7 +314,7 @@ public final class ConnectorDefUtils {
         .key(REVISION_KEY)
         .documentation("revision of connector")
         .group(CORE_GROUP)
-        .optional(revision)
+        .optional(CommonUtils.requireNonEmpty(revision))
         .orderInGroup(REVISION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
         .build();
@@ -328,7 +329,7 @@ public final class ConnectorDefUtils {
         .key(AUTHOR_KEY)
         .documentation("author of connector")
         .group(CORE_GROUP)
-        .optional(author)
+        .optional(CommonUtils.requireNonEmpty(author))
         .orderInGroup(AUTHOR_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
         .build();

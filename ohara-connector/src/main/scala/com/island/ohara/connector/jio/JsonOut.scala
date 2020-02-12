@@ -19,7 +19,7 @@ package com.island.ohara.connector.jio
 import java.util
 
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSinkConnector, RowSinkTask, TaskSetting}
+import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
@@ -51,8 +51,6 @@ class JsonOut extends RowSinkConnector {
   override protected def _stop(): Unit = {
     // do nothing
   }
-
-  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
 

@@ -17,7 +17,7 @@
 package com.island.ohara.connector.perf
 import com.island.ohara.common.annotations.VisibleForTesting
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceConnector, RowSourceTask, TaskSetting}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
@@ -42,6 +42,4 @@ class PerfSource extends RowSourceConnector {
   override protected def _stop(): Unit = {}
 
   override protected def _definitions(): java.util.List[SettingDef] = DEFINITIONS.asJava
-
-  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }

@@ -22,7 +22,7 @@ import com.island.ohara.client.filesystem.FileSystem
 import com.island.ohara.common.data.Column
 import com.island.ohara.common.setting.SettingDef
 import com.island.ohara.kafka.connector.csv.CsvSourceConnector
-import com.island.ohara.kafka.connector.{ConnectorVersion, RowSourceTask, TaskSetting}
+import com.island.ohara.kafka.connector.{RowSourceTask, TaskSetting}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
@@ -55,8 +55,6 @@ class FtpSource extends CsvSourceConnector {
   override protected def _stop(): Unit = {
     //    do nothing
   }
-
-  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 
   override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
 }

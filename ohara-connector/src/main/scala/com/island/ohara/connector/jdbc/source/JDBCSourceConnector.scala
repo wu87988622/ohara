@@ -184,8 +184,6 @@ class JDBCSourceConnector extends RowSourceConnector {
         .orderInGroup(counter.getAndIncrement())
         .build()
     ).asJava
-
-  override protected def _version: ConnectorVersion = ConnectorVersion.DEFAULT
 }
 
 object JDBCSourceConnector {

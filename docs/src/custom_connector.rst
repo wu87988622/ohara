@@ -739,47 +739,26 @@ a connector.
 .. code-block:: java
 
    public abstract class RowSourceConnector extends SourceConnector {
-     /**
-      * Get the version from this connector.
-      *
-      * @return the version, formatted as a String
-      */
-     protected ConnectorVersion _version() {
-       return ConnectorVersion.builder().build();
+     public String version() {
+       return VersionUtils.VERSION;
+     }
+     public String author() {
+       return VersionUtils.USER;
+     }
+     public String revision() {
+        return VersionUtils.REVISION;
      }
    }
 
-By default, all information in ConnectorVersion are **unknown**. You can
-override one of them or all of them when writing connector. The version
+The default value is version of build. You can override one of them or all of them when writing connector. The version
 information of a connector is showed by :ref:`Worker APIs <rest-workers>`.
 
 .. warning:: Don’t return null, please!!!
 
-You can build a ConnectorVersion with fluent pattern.
-
-.. code-block:: java
-
-   public class ExampleOfConnectorVersion {
-     public static ConnectorVersion build() {
-       return ConnectorVersion.builder()
-                 .version("my_version")
-                 .revision("my_revision")
-                 .author("my_user")
-                 .build();
-     }
-   }
-
-All official connectors have identical ConnectorVersion consisting of
-ohara’s version, sha of commit and name of release manager. Feel free to
-fill what you want in ConnectorVersion. For example, it is ok to leave
-**unknown** in **Author** if you are the people that we can’t talk.
-However, Please don’t use illegal values like **null** or **empty string**.
-
-.. note::
-   Version in ohara connector is different to kafka connector. The later
-   only supports **version** and it’s APIs show only **version**. Hence,
-   you can’t get revision, author or other :ref:`settings <setting-definition>`
-   through kafka APIs
+Version in ohara connector is different to kafka connector. The later
+only supports **version** and it’s APIs show only **version**. Hence,
+you can’t get revision, author or other :ref:`settings <setting-definition>`
+through kafka APIs
 
 --------------
 

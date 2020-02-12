@@ -20,6 +20,7 @@ import com.island.ohara.common.data.Cell;
 import com.island.ohara.common.data.Column;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import com.island.ohara.metrics.basic.Counter;
@@ -33,13 +34,13 @@ import org.apache.kafka.connect.connector.ConnectRecord;
 
 final class ConnectorUtils {
   static List<SettingDef> toSettingDefinitions(
-      List<SettingDef> settingDefinitions, ConnectorVersion version, boolean needColumnDefinition) {
+      List<SettingDef> settingDefinitions, WithDefinitions def, boolean needColumnDefinition) {
     return Stream.of(
             settingDefinitions,
             Arrays.asList(
-                ConnectorDefUtils.createVersionDefinition(version.version()),
-                ConnectorDefUtils.createRevisionDefinition(version.revision()),
-                ConnectorDefUtils.createAuthorDefinition(version.author())))
+                ConnectorDefUtils.createVersionDefinition(def.version()),
+                ConnectorDefUtils.createRevisionDefinition(def.revision()),
+                ConnectorDefUtils.createAuthorDefinition(def.author())))
         .flatMap(Collection::stream)
         .filter(
             definition ->

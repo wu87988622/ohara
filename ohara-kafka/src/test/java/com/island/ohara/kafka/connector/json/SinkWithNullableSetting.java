@@ -16,7 +16,6 @@
 
 package com.island.ohara.kafka.connector.json;
 
-import com.island.ohara.kafka.connector.ConnectorVersion;
 import com.island.ohara.kafka.connector.RowSinkConnector;
 import com.island.ohara.kafka.connector.RowSinkTask;
 import com.island.ohara.kafka.connector.TaskSetting;
@@ -55,7 +54,17 @@ public class SinkWithNullableSetting extends RowSinkConnector {
   protected void _stop() {}
 
   @Override
-  protected ConnectorVersion _version() {
-    return ConnectorVersion.builder().version(version).revision(revision).author(author).build();
+  public String version() {
+    return version;
+  }
+
+  @Override
+  public String author() {
+    return author;
+  }
+
+  @Override
+  public String revision() {
+    return revision;
   }
 }

@@ -21,7 +21,7 @@ import java.util.Collections
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.data.Serializer
 import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
-import com.island.ohara.common.util.CommonUtils
+import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.json.{ConnectorDefUtils, ConverterType, StringList}
 import com.island.ohara.testing.With3Brokers3Workers
@@ -277,7 +277,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
       .find(_.key() == ConnectorDefUtils.AUTHOR_KEY)
       .head
       .permission() shouldBe SettingDef.Permission.READ_ONLY
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultString shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultString shouldBe VersionUtils.USER
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
@@ -286,7 +286,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
       .find(_.key() == ConnectorDefUtils.VERSION_KEY)
       .head
       .permission() shouldBe SettingDef.Permission.READ_ONLY
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultString shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultString shouldBe VersionUtils.VERSION
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_KEY) shouldBe true
     settingDefinitionS
@@ -294,7 +294,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
       .head
       .group() shouldBe ConnectorDefUtils.CORE_GROUP
     settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultString shouldBe "unknown"
+    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultString shouldBe VersionUtils.REVISION
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP

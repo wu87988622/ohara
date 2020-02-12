@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package com.island.ohara.kafka.connector;
+package com.island.ohara.common.setting;
 
-import com.island.ohara.common.setting.SettingDef;
 import java.util.List;
 
-@FunctionalInterface
 public interface WithDefinitions {
+
+  String version();
+
+  String author();
+
+  String revision();
 
   /** @return a unmodifiable collection of definitions */
   List<SettingDef> settingDefinitions();
