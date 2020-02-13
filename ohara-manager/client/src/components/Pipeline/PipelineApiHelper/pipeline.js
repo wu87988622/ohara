@@ -62,9 +62,7 @@ const pipeline = () => {
       .map(endpoint => endpoint.name);
 
     const apiConnectors = currentConnectors.map(api => api.name);
-    const apiTopics = currentTopic
-      .filter(api => !api.tags.isShared)
-      .map(api => api.name);
+    const apiTopics = currentTopic.map(api => api.name);
     const apiStreams = currentStream.map(api => api.name);
 
     const legacyConnectors = checkCell(apiConnectors, paperConnectors);
