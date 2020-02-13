@@ -116,6 +116,13 @@ export const StyledToolbox = styled.div(
         padding: ${theme.spacing(1, 2)};
         color: ${theme.palette.text.primary};
 
+        /* Shared topic uses a custom icon which is not aligned properly with
+          Mui's, so we're using a different padding here
+         */
+        &.shared {
+          padding-left: 18px;
+        }
+
         &.is-disabled {
           opacity: 0.3;
         }

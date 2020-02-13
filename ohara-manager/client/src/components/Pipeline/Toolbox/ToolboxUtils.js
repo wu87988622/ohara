@@ -78,12 +78,15 @@ export const createToolboxList = params => {
 
     updateBox() {
       // Updating the HTML with a data stored in the cell model.
-
-      const $box = this.$box;
-      const model = this.model;
+      const { $box, model } = this;
 
       $box.find('.display-name').text(model.get('name'));
       $box.find('.icon').html(model.get('icon'));
+
+      const isShared = model.get('isShared');
+      if (isShared !== undefined) {
+        $box.addClass(isShared ? 'shared' : 'pipeline-only');
+      }
 
       if (model.get('isDisabled') !== undefined) {
         model.get('isDisabled')
