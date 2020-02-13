@@ -75,7 +75,7 @@ const pipeline = () => {
     }
     for (const topic of legacyTopics.legacyApiData) {
       const findSharedTopic = currentTopic
-        .filter(api => api.tags.isShared)
+        .filter(topic => topic.tags.isShared)
         .find(topic => topic.name === topic);
       if (findSharedTopic) continue;
       await deleteTopic(topic);
