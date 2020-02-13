@@ -134,7 +134,6 @@ const Paper = React.forwardRef((props, ref) => {
   }, [onElementAdd]);
 
   React.useEffect(() => {
-    //Prevent event from repeating
     const graph = graphRef.current;
     const paper = paperRef.current;
 
@@ -350,24 +349,26 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Element button events, these are custom event binding down in the
     // element like connector or topic
-    paper.on('element:link:button:pointerclick', ElementView => {
-      paperApi.addLink(ElementView.model.get('id'));
+    paper.on('element:link:button:pointerclick', elementView => {
+      paperApi.addLink(elementView.model.get('id'));
     });
 
-    paper.on('element:start:button:pointerclick', ElementView => {
-      onCellStart(getCellData(ElementView), paperApi);
+    paper.on('element:start:button:pointerclick', elementView => {
+      onCellStart(getCellData(elementView), paperApi);
     });
 
-    paper.on('element:stop:button:pointerclick', ElementView => {
-      onCellStop(getCellData(ElementView), paperApi);
+    paper.on('element:stop:button:pointerclick', elementView => {
+      onCellStop(getCellData(elementView), paperApi);
     });
 
-    paper.on('element:config:button:pointerclick', ElementView => {
-      onCellConfig(getCellData(ElementView), paperApi);
+    paper.on('element:config:button:pointerclick', elementView => {
+      onCellConfig(getCellData(elementView), paperApi);
+
+      hideMenu(elementView);
     });
 
-    paper.on('element:remove:button:pointerclick', ElementView => {
-      onCellRemove(getCellData(ElementView), paperApi);
+    paper.on('element:remove:button:pointerclick', elementView => {
+      onCellRemove(getCellData(elementView), paperApi);
     });
 
     paper.on('blank:pointerclick', () => {

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
@@ -54,7 +56,7 @@ const stream = () => {
       ...values,
     });
 
-    if (!res.error && topic !== undefined) {
+    if (!res.error && !_.isEmpty(topic)) {
       if (values.to.length > 0) {
         paperApi.addLink(cell.id, topic.id);
       }

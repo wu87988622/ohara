@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 import * as context from 'context';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS, KIND } from 'const';
@@ -53,7 +55,7 @@ const connector = () => {
       ...values,
     });
 
-    if (!res.error && topic !== undefined) {
+    if (!res.error && !_.isEmpty(topic)) {
       switch (cell.kind) {
         case KIND.source:
           paperApi.addLink(cell.id, topic.id);
