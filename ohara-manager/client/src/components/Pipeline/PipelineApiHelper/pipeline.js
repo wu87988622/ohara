@@ -20,9 +20,9 @@ import { KIND, CELL_STATUS } from 'const';
 
 const pipeline = () => {
   const { updatePipeline } = context.usePipelineActions();
-  const { deleteConnector } = context.useConnectorActions();
+  const { deleteConnector, stopConnector } = context.useConnectorActions();
   const { deleteTopic } = context.useTopicActions();
-  const { deleteStream } = context.useStreamActions();
+  const { deleteStream, stopStream } = context.useStreamActions();
   const { currentPipeline } = context.useWorkspace();
   const { data: currentConnectors } = context.useConnectorState();
   const { data: currentTopic } = context.useTopicState();
@@ -70,12 +70,18 @@ const pipeline = () => {
     const legacyStream = checkCell(apiStreams, paperStreams);
 
     for (const connector of legacyConnectors.legacyApiData) {
+      await stopConnector(connector);
       await deleteConnector(connector);
     }
     for (const topic of legacyTopics.legacyApiData) {
+      const findSharedTopic = currentTopic
+        .filter(api => api.tags.isShared)
+        .find(topic => topic.name === topic);
+      if (findSharedTopic) continue;
       await deleteTopic(topic);
     }
     for (const stream of legacyStream.legacyApiData) {
+      await stopStream(stream);
       await deleteStream(stream);
     }
 
