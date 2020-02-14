@@ -24,6 +24,7 @@ import com.island.ohara.common.json.JsonObject;
 import com.island.ohara.common.json.JsonUtils;
 import com.island.ohara.common.setting.ObjectKey;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,15 +152,15 @@ public final class SettingInfo implements JsonObject {
   }
 
   public Optional<String> author() {
-    return value(ConnectorDefUtils.AUTHOR_KEY);
+    return value(WithDefinitions.AUTHOR_KEY);
   }
 
   public Optional<String> version() {
-    return value(ConnectorDefUtils.VERSION_KEY);
+    return value(WithDefinitions.VERSION_KEY);
   }
 
   public Optional<String> revision() {
-    return value(ConnectorDefUtils.REVISION_KEY);
+    return value(WithDefinitions.VERSION_KEY);
   }
 
   public Optional<ObjectKey> workerClusterKey() {

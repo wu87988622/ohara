@@ -297,7 +297,7 @@ private[configurator] object InspectRoute {
                 fileContent =>
                   ServiceDefinition(
                     imageName = StreamApi.IMAGE_NAME_DEFAULT,
-                    settingDefinitions = StreamDefUtils.DEFAULT.asScala,
+                    settingDefinitions = StreamDefUtils.DEFAULT.values().asScala.toSeq,
                     classInfos = fileContent.streamClassInfos
                   )
               )
@@ -307,7 +307,7 @@ private[configurator] object InspectRoute {
         complete(
           ServiceDefinition(
             imageName = StreamApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = StreamDefUtils.DEFAULT.asScala,
+            settingDefinitions = StreamDefUtils.DEFAULT.values().asScala.toSeq,
             classInfos = Seq.empty
           )
         )

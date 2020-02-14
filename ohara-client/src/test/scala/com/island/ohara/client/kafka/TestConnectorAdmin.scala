@@ -20,7 +20,7 @@ import java.util.Collections
 
 import com.island.ohara.client.configurator.v0.ConnectorApi.State
 import com.island.ohara.common.data.Serializer
-import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey, WithDefinitions}
 import com.island.ohara.common.util.{CommonUtils, VersionUtils}
 import com.island.ohara.kafka.Consumer
 import com.island.ohara.kafka.connector.json.{ConnectorDefUtils, ConverterType, StringList}
@@ -187,6 +187,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     plugins.size should not be 0
     plugins.foreach(plugin => check(plugin.settingDefinitions))
   }
+
   @Test
   def testListDefinitions(): Unit = {
     check(result(connectorAdmin.definitions(classOf[MyConnector].getName)))
@@ -270,31 +271,40 @@ class TestConnectorAdmin extends With3Brokers3Workers {
       .head
       .hasDefault shouldBe false
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.AUTHOR_KEY) shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.internal() shouldBe false
+    settingDefinitionS.exists(_.key() == WithDefinitions.AUTHOR_KEY) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.AUTHOR_KEY)
+      .find(_.key() == WithDefinitions.AUTHOR_KEY)
+      .head
+      .group() should not be ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == WithDefinitions.AUTHOR_KEY).head.internal() shouldBe false
+    settingDefinitionS
+      .find(_.key() == WithDefinitions.AUTHOR_KEY)
       .head
       .permission() shouldBe SettingDef.Permission.READ_ONLY
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.AUTHOR_KEY).head.defaultString shouldBe VersionUtils.USER
+    settingDefinitionS.find(_.key() == WithDefinitions.AUTHOR_KEY).head.defaultString shouldBe VersionUtils.USER
 
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.VERSION_KEY) shouldBe true
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.internal() shouldBe false
+    settingDefinitionS.exists(_.key() == WithDefinitions.VERSION_KEY) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.VERSION_KEY)
+      .find(_.key() == WithDefinitions.VERSION_KEY)
+      .head
+      .group() should not be ConnectorDefUtils.CORE_GROUP
+    settingDefinitionS.find(_.key() == WithDefinitions.VERSION_KEY).head.internal() shouldBe false
+    settingDefinitionS
+      .find(_.key() == WithDefinitions.VERSION_KEY)
       .head
       .permission() shouldBe SettingDef.Permission.READ_ONLY
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.VERSION_KEY).head.defaultString shouldBe VersionUtils.VERSION
-
-    settingDefinitionS.exists(_.key() == ConnectorDefUtils.REVISION_KEY) shouldBe true
     settingDefinitionS
-      .find(_.key() == ConnectorDefUtils.REVISION_KEY)
+      .find(_.key() == WithDefinitions.VERSION_KEY)
       .head
-      .group() shouldBe ConnectorDefUtils.CORE_GROUP
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.internal() shouldBe false
-    settingDefinitionS.find(_.key() == ConnectorDefUtils.REVISION_KEY).head.defaultString shouldBe VersionUtils.REVISION
+      .defaultString shouldBe VersionUtils.VERSION
+
+    settingDefinitionS.exists(_.key() == WithDefinitions.REVISION_KEY) shouldBe true
+    settingDefinitionS
+      .find(_.key() == WithDefinitions.REVISION_KEY)
+      .head
+      .group() shouldBe "common"
+    settingDefinitionS.find(_.key() == WithDefinitions.REVISION_KEY).head.internal() shouldBe false
+    settingDefinitionS.find(_.key() == WithDefinitions.REVISION_KEY).head.defaultString shouldBe VersionUtils.REVISION
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.KIND_KEY) shouldBe true
     settingDefinitionS.find(_.key() == ConnectorDefUtils.KIND_KEY).head.group() shouldBe ConnectorDefUtils.CORE_GROUP

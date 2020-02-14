@@ -64,5 +64,5 @@ class SmbSink extends CsvSinkConnector {
     //    do nothing
   }
 
-  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

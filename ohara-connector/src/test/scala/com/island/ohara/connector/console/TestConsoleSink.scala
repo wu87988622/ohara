@@ -19,13 +19,12 @@ package com.island.ohara.connector.console
 import com.island.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers._
-import scala.collection.JavaConverters._
 class TestConsoleSink extends OharaTest {
   @Test
   def testFrequenceDefinitions(): Unit = {
     val sink = new ConsoleSink
 
-    val freqDef = sink.settingDefinitions().asScala.find(_.key() == CONSOLE_FREQUENCE).get
+    val freqDef = sink.settingDefinitions().get(CONSOLE_FREQUENCE)
     freqDef.documentation() shouldBe CONSOLE_FREQUENCE_DOC
     freqDef.defaultDuration() shouldBe java.time.Duration.ofMillis(CONSOLE_FREQUENCE_DEFAULT.toMillis)
   }
@@ -34,7 +33,7 @@ class TestConsoleSink extends OharaTest {
   def testDividerDefinitions(): Unit = {
     val sink = new ConsoleSink
 
-    val dividerDef = sink.settingDefinitions().asScala.find(_.key() == CONSOLE_ROW_DIVIDER).get
+    val dividerDef = sink.settingDefinitions().get(CONSOLE_ROW_DIVIDER)
     dividerDef.documentation() shouldBe CONSOLE_ROW_DIVIDER_DOC
     dividerDef.defaultString() shouldBe CONSOLE_ROW_DIVIDER_DEFAULT
   }

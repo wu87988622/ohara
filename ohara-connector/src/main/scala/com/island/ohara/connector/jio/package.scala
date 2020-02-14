@@ -79,13 +79,13 @@ package object jio {
   /**
     * the core settings for JsonIn.
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
+  val DEFINITIONS: Map[String, SettingDef] = Seq(
     DATA_BUFFER_SIZE_DEFINITION,
     CLOSE_TIMEOUT_DEFINITION,
     BINDING_TIMEOUT_DEFINITION,
     BINDING_PORT_DEFINITION,
     BINDING_PATH_DEFINITION
-  )
+  ).map(d => d.key() -> d).toMap
 
   def toJson(row: Row): JsObject = com.island.ohara.client.configurator.v0.toJson(row)
 

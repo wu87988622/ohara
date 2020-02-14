@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector.json;
 
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.DumbSink;
 import org.apache.kafka.common.config.ConfigDef;
@@ -91,25 +92,25 @@ public class TestCoreDefinitions extends OharaTest {
   @Test
   public void testVersionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.VERSION_KEY);
-    Assert.assertEquals(ConnectorDefUtils.VERSION_KEY, key.name);
-    Assert.assertEquals(ConnectorDefUtils.VERSION_ORDER, key.orderInGroup);
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(WithDefinitions.VERSION_KEY);
+    Assert.assertEquals(WithDefinitions.VERSION_KEY, key.name);
+    Assert.assertEquals(WithDefinitions.VERSION_ORDER, key.orderInGroup);
   }
 
   @Test
   public void testRevisionDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.REVISION_KEY);
-    Assert.assertEquals(ConnectorDefUtils.REVISION_KEY, key.name);
-    Assert.assertEquals(ConnectorDefUtils.REVISION_ORDER, key.orderInGroup);
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(WithDefinitions.REVISION_KEY);
+    Assert.assertEquals(WithDefinitions.REVISION_KEY, key.name);
+    Assert.assertEquals(WithDefinitions.REVISION_ORDER, key.orderInGroup);
   }
 
   @Test
   public void testAuthorDefinition() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_KEY);
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_KEY, key.name);
-    Assert.assertEquals(ConnectorDefUtils.AUTHOR_ORDER, key.orderInGroup);
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(WithDefinitions.AUTHOR_KEY);
+    Assert.assertEquals(WithDefinitions.AUTHOR_KEY, key.name);
+    Assert.assertEquals(WithDefinitions.AUTHOR_ORDER, key.orderInGroup);
   }
 
   @Test

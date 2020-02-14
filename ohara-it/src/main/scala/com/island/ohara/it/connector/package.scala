@@ -24,7 +24,7 @@ package object connector {
   /**
     * add some definitions for testing.
     */
-  val DUMB_SETTING_DEFINITIONS: Seq[SettingDef] = Seq(
+  val DUMB_SETTING_DEFINITIONS: Map[String, SettingDef] = Seq(
     SettingDef
       .builder()
       .displayName("dumb boolean")
@@ -206,5 +206,5 @@ package object connector {
       .optional(Type.TAGS)
       .documentation("Tags")
       .build()
-  )
+  ).map(s => s.key() -> s).toMap
 }

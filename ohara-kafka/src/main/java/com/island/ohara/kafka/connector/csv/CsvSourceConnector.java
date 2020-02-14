@@ -23,10 +23,12 @@ import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT
 
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.kafka.connector.RowSourceConnector;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -57,16 +59,21 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
         .collect(Collectors.toList());
   }
 
+  /** @return custom setting definitions from sub csv connectors */
+  protected Map<String, SettingDef> customCsvSettingDefinitions() {
+    return Collections.emptyMap();
+  }
+
   @Override
-  public List<SettingDef> settingDefinitions() {
-    return Stream.of(
-            Arrays.asList(
+  protected final Map<String, SettingDef> customSettingDefinitions() {
+    Map<String, SettingDef> finalDefinitions = new TreeMap<>(customCsvSettingDefinitions());
+    finalDefinitions.putAll(
+        Stream.of(
                 INPUT_FOLDER_DEFINITION,
                 COMPLETED_FOLDER_DEFINITION,
                 ERROR_FOLDER_DEFINITION,
-                FILE_ENCODE_DEFINITION),
-            super.settingDefinitions())
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
+                FILE_ENCODE_DEFINITION)
+            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+    return Collections.unmodifiableMap(finalDefinitions);
   }
 }

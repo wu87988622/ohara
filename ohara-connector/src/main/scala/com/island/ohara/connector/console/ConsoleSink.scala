@@ -35,9 +35,9 @@ class ConsoleSink extends RowSinkConnector {
 
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(config).asJava
 
-  override protected def _definitions(): util.List[SettingDef] =
-    Seq(
-      CONSOLE_FREQUENCE_DEFINITION,
-      CONSOLE_ROW_DIVIDER_DEFINITION
+  override protected def customSettingDefinitions(): util.Map[String, SettingDef] =
+    Map(
+      CONSOLE_FREQUENCE_DEFINITION.key()   -> CONSOLE_FREQUENCE_DEFINITION,
+      CONSOLE_ROW_DIVIDER_DEFINITION.key() -> CONSOLE_ROW_DIVIDER_DEFINITION
     ).asJava
 }

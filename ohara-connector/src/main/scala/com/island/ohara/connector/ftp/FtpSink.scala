@@ -43,5 +43,5 @@ class FtpSink extends CsvSinkConnector {
 
   override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks) { settings }.asJava
 
-  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

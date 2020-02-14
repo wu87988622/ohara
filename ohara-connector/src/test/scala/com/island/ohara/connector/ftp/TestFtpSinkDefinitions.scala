@@ -22,13 +22,11 @@ import com.island.ohara.common.setting.SettingDef.{Necessary, Permission, Refere
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
-
 class TestFtpSinkDefinitions extends OharaTest {
   private[this] val ftpSink = new FtpSink
   @Test
   def checkOutputFolder(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == OUTPUT_FOLDER_KEY).get
+    val definition = ftpSink.settingDefinitions().get(OUTPUT_FOLDER_KEY)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -39,7 +37,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkNeedHeader(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FILE_NEED_HEADER_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FILE_NEED_HEADER_KEY)
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultBoolean() shouldBe true
     definition.permission() shouldBe Permission.EDITABLE
@@ -50,7 +48,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkEncode(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FILE_ENCODE_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FILE_ENCODE_KEY)
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe "UTF-8"
     definition.permission() shouldBe Permission.EDITABLE
@@ -61,7 +59,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkHostname(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_HOSTNAME_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FTP_HOSTNAME_KEY)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -72,7 +70,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkPort(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_PORT_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FTP_PORT_KEY)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -83,7 +81,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkUser(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_USER_NAME_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FTP_USER_NAME_KEY)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -94,7 +92,7 @@ class TestFtpSinkDefinitions extends OharaTest {
 
   @Test
   def checkPassword(): Unit = {
-    val definition = ftpSink.settingDefinitions().asScala.find(_.key() == FTP_PASSWORD_KEY).get
+    val definition = ftpSink.settingDefinitions().get(FTP_PASSWORD_KEY)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE

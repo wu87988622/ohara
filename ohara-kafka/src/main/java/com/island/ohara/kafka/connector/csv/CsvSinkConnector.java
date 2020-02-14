@@ -24,8 +24,10 @@ import static com.island.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTAT
 
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.kafka.connector.RowSinkConnector;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,17 +44,23 @@ import java.util.stream.Stream;
  * </ul>
  */
 public abstract class CsvSinkConnector extends RowSinkConnector {
+
+  /** @return custom setting definitions from sub csv connectors */
+  protected Map<String, SettingDef> customCsvSettingDefinitions() {
+    return Collections.emptyMap();
+  }
+
   @Override
-  public List<SettingDef> settingDefinitions() {
-    return Stream.of(
-            Arrays.asList(
+  protected final Map<String, SettingDef> customSettingDefinitions() {
+    Map<String, SettingDef> finalDefinitions = new TreeMap<>(customCsvSettingDefinitions());
+    finalDefinitions.putAll(
+        Stream.of(
                 OUTPUT_FOLDER_DEFINITION,
                 FLUSH_SIZE_DEFINITION,
                 ROTATE_INTERVAL_MS_DEFINITION,
                 FILE_NEED_HEADER_DEFINITION,
-                FILE_ENCODE_DEFINITION),
-            super.settingDefinitions())
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
+                FILE_ENCODE_DEFINITION)
+            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+    return Collections.unmodifiableMap(finalDefinitions);
   }
 }

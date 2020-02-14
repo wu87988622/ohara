@@ -39,10 +39,12 @@ class MyConnector extends RowSourceConnector {
     // do nothing
   }
 
-  override protected def _definitions(): util.List[SettingDef] = Collections.singletonList(
-    // used by TestConnectorAdmin.passIncorrectDuration
-    SettingDef.builder().key(MyConnector.DURATION_KEY).optional(Type.DURATION).build()
-  )
+  override protected def customSettingDefinitions(): util.Map[String, SettingDef] =
+    Collections.singletonMap(
+      MyConnector.DURATION_KEY,
+      // used by TestConnectorAdmin.passIncorrectDuration
+      SettingDef.builder().key(MyConnector.DURATION_KEY).optional(Type.DURATION).build()
+    )
 }
 
 object MyConnector {

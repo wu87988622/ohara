@@ -70,12 +70,12 @@ package object ftp {
   /**
     * the settings for Ftp Source and Sink.
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
+  val DEFINITIONS: Map[String, SettingDef] = Seq(
     FTP_HOSTNAME_DEFINITION,
     FTP_PORT_DEFINITION,
     FTP_USER_NAME_DEFINITION,
     FTP_PASSWORD_DEFINITION
-  )
+  ).map(d => d.key() -> d).toMap
 
   @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String     = CsvConnectorDefinitions.INPUT_FOLDER_KEY
   @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY

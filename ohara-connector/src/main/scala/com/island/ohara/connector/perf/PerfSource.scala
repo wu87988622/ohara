@@ -41,5 +41,5 @@ class PerfSource extends RowSourceConnector {
 
   override protected def _stop(): Unit = {}
 
-  override protected def _definitions(): java.util.List[SettingDef] = DEFINITIONS.asJava
+  override protected def customSettingDefinitions(): java.util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

@@ -18,6 +18,7 @@ package com.island.ohara.kafka.connector;
 
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
 import java.util.stream.Stream;
@@ -29,19 +30,19 @@ public class TestConnectorConfigDef extends OharaTest {
   @Test
   public void testVersion() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.VERSION_KEY));
+    Assert.assertNotNull(sink.config().configKeys().get(WithDefinitions.VERSION_KEY));
   }
 
   @Test
   public void testRevision() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.REVISION_KEY));
+    Assert.assertNotNull(sink.config().configKeys().get(WithDefinitions.VERSION_KEY));
   }
 
   @Test
   public void testAuthor() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.AUTHOR_KEY));
+    Assert.assertNotNull(sink.config().configKeys().get(WithDefinitions.AUTHOR_KEY));
   }
 
   @Test

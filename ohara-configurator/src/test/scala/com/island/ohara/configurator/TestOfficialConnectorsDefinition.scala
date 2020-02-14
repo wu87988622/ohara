@@ -17,7 +17,7 @@
 package com.island.ohara.configurator
 
 import com.island.ohara.common.rule.OharaTest
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
+import com.island.ohara.common.setting.WithDefinitions
 import org.junit.Test
 
 /**
@@ -47,7 +47,7 @@ class TestOfficialConnectorsDefinition extends OharaTest {
   @Test
   def testVersion(): Unit = {
     val illegalConnectors = localConnectorDefinitions
-      .map(c => c.className -> c.settingDefinitions.find(_.key == ConnectorDefUtils.VERSION_KEY).get.defaultString())
+      .map(c => c.className -> c.settingDefinitions.find(_.key == WithDefinitions.VERSION_KEY).get.defaultString())
       .toMap
       .filter(_._2 == "unknown")
     if (illegalConnectors.nonEmpty)
@@ -63,7 +63,7 @@ class TestOfficialConnectorsDefinition extends OharaTest {
   @Test
   def testRevision(): Unit = {
     val illegalConnectors = localConnectorDefinitions
-      .map(c => c.className -> c.settingDefinitions.find(_.key == ConnectorDefUtils.REVISION_KEY).get.defaultString())
+      .map(c => c.className -> c.settingDefinitions.find(_.key == WithDefinitions.VERSION_KEY).get.defaultString())
       .toMap
       .filter(_._2 == "unknown")
     if (illegalConnectors.nonEmpty)
@@ -79,7 +79,7 @@ class TestOfficialConnectorsDefinition extends OharaTest {
   @Test
   def testAuthor(): Unit = {
     val illegalConnectors = localConnectorDefinitions
-      .map(c => c.className -> c.settingDefinitions.find(_.key == ConnectorDefUtils.AUTHOR_KEY).get.defaultString())
+      .map(c => c.className -> c.settingDefinitions.find(_.key == WithDefinitions.AUTHOR_KEY).get.defaultString())
       .toMap
       .filter(_._2 == "unknown")
     if (illegalConnectors.nonEmpty)

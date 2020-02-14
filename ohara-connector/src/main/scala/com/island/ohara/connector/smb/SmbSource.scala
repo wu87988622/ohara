@@ -79,5 +79,5 @@ class SmbSource extends CsvSourceConnector {
     //    do nothing
   }
 
-  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

@@ -133,7 +133,7 @@ private[configurator] object StreamRoute {
               creationToClusterInfo(
                 access.request
                   .settings(previous.settings)
-                  .settings(keepEditableFields(updating.settings, StreamApi.DEFINITIONS))
+                  .settings(keepEditableFields(updating.settings, StreamApi.DEFINITIONS.values.toSeq))
                   // the key is not in update's settings so we have to add it to settings
                   .key(key)
                   .creation

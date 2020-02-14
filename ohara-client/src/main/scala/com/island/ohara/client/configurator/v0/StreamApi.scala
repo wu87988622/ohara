@@ -38,7 +38,7 @@ object StreamApi {
     */
   val STREAM_SERVICE_NAME: String = STREAM_PREFIX_PATH
 
-  def DEFINITIONS: Seq[SettingDef] = StreamDefUtils.DEFAULT.asScala
+  def DEFINITIONS: Map[String, SettingDef] = StreamDefUtils.DEFAULT.asScala.toMap
 
   /**
     * Stream Docker Image name
@@ -78,7 +78,7 @@ object StreamApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
-      DEFINITIONS
+      DEFINITIONS.values.toSeq
     )
 
   final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {

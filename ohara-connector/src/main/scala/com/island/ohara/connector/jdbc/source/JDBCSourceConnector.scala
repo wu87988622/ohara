@@ -93,9 +93,9 @@ class JDBCSourceConnector extends RowSourceConnector {
     * used to set the order of definitions.
     */
   private[this] val counter = new AtomicInteger(0)
-  override protected def _definitions(): java.util.List[SettingDef] =
-    Seq(
-      SettingDef
+  override protected def customSettingDefinitions(): java.util.Map[String, SettingDef] =
+    Map(
+      DB_URL -> SettingDef
         .builder()
         .displayName("jdbc url")
         .documentation("Connection database url")
@@ -103,7 +103,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_URL)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      DB_USERNAME -> SettingDef
         .builder()
         .displayName("user name")
         .documentation("Connection database user name")
@@ -111,7 +111,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_USERNAME)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      DB_PASSWORD -> SettingDef
         .builder()
         .displayName("password")
         .documentation("Connection database user password")
@@ -119,7 +119,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_PASSWORD)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      DB_TABLENAME -> SettingDef
         .builder()
         .displayName("table name")
         .documentation("write to topic from database table name")
@@ -127,7 +127,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_TABLENAME)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      DB_CATALOG_PATTERN -> SettingDef
         .builder()
         .displayName("catalog pattern")
         .documentation("database metadata catalog")
@@ -135,7 +135,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_CATALOG_PATTERN)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      DB_SCHEMA_PATTERN -> SettingDef
         .builder()
         .displayName("schema pattern")
         .documentation("database metadata schema pattern")
@@ -143,7 +143,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(DB_SCHEMA_PATTERN)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      MODE -> SettingDef
         .builder()
         .displayName("mode")
         .documentation("Only support timestamp column")
@@ -151,7 +151,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .optional(MODE_DEFAULT)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      TIMESTAMP_COLUMN_NAME -> SettingDef
         .builder()
         .displayName("timestamp column name")
         .documentation("Use a timestamp column to detect new and modified rows")
@@ -159,7 +159,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .key(TIMESTAMP_COLUMN_NAME)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      JDBC_FETCHDATA_SIZE -> SettingDef
         .builder()
         .displayName("JDBC fetch size")
         .documentation("Setting JDBC fetch data size for ResultSet")
@@ -167,7 +167,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .optional(JDBC_FETCHDATA_SIZE_DEFAULT)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      JDBC_FLUSHDATA_SIZE -> SettingDef
         .builder()
         .displayName("JDBC flush size")
         .documentation("Setting Data flush to topic size")
@@ -175,7 +175,7 @@ class JDBCSourceConnector extends RowSourceConnector {
         .optional(JDBC_FLUSHDATA_SIZE_DEFAULT)
         .orderInGroup(counter.getAndIncrement())
         .build(),
-      SettingDef
+      JDBC_FREQUENCE_TIME -> SettingDef
         .builder()
         .displayName("Fetch data frequence")
         .documentation("Setting fetch data frequency from database")

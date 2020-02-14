@@ -19,6 +19,7 @@ package com.island.ohara.streams.config;
 import com.island.ohara.common.annotations.VisibleForTesting;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.TopicKey;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,15 +33,16 @@ import java.util.stream.Collectors;
  */
 public final class StreamSetting {
 
-  public static StreamSetting of(List<SettingDef> settingDefinitions, Map<String, String> raw) {
+  public static StreamSetting of(
+      Collection<SettingDef> settingDefinitions, Map<String, String> raw) {
     return new StreamSetting(settingDefinitions, raw);
   }
 
-  private final List<SettingDef> settingDefinitions;
+  private final Collection<SettingDef> settingDefinitions;
   private final Map<String, String> raw;
 
-  private StreamSetting(List<SettingDef> settingDefinitions, Map<String, String> raw) {
-    this.settingDefinitions = Collections.unmodifiableList(settingDefinitions);
+  private StreamSetting(Collection<SettingDef> settingDefinitions, Map<String, String> raw) {
+    this.settingDefinitions = Collections.unmodifiableCollection(settingDefinitions);
     this.raw = Collections.unmodifiableMap(raw);
   }
 
@@ -58,7 +60,7 @@ public final class StreamSetting {
    *
    * @return config object list
    */
-  public List<SettingDef> settingDefinitions() {
+  public Collection<SettingDef> settingDefinitions() {
     return settingDefinitions;
   }
 

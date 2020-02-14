@@ -35,8 +35,8 @@ package object perf {
 
   private[this] val GROUP_COUNT = new AtomicInteger()
 
-  val DEFINITIONS = Seq(
-    SettingDef
+  val DEFINITIONS = Map(
+    PERF_BATCH_KEY -> SettingDef
       .builder()
       .displayName("Batch")
       .documentation("The batch of perf")
@@ -44,7 +44,7 @@ package object perf {
       .optional(PERF_BATCH_DEFAULT)
       .orderInGroup(GROUP_COUNT.getAndIncrement())
       .build(),
-    SettingDef
+    PERF_FREQUENCY_KEY -> SettingDef
       .builder()
       .displayName("Frequency")
       .documentation("The frequency of perf")
@@ -52,7 +52,7 @@ package object perf {
       .optional(java.time.Duration.ofMillis(PERF_FREQUENCY_DEFAULT.toMillis))
       .orderInGroup(GROUP_COUNT.getAndIncrement())
       .build(),
-    SettingDef
+    PERF_CELL_LENGTH_KEY -> SettingDef
       .builder()
       .displayName("cell length")
       .documentation("increase this value if you prefer to large cell. Noted, it works only for string type")

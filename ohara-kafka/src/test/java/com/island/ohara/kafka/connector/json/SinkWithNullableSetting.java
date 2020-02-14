@@ -16,10 +16,16 @@
 
 package com.island.ohara.kafka.connector.json;
 
+import com.island.ohara.common.setting.SettingDef;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.kafka.connector.RowSinkConnector;
 import com.island.ohara.kafka.connector.RowSinkTask;
 import com.island.ohara.kafka.connector.TaskSetting;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SinkWithNullableSetting extends RowSinkConnector {
   private final String version;
@@ -54,17 +60,11 @@ public class SinkWithNullableSetting extends RowSinkConnector {
   protected void _stop() {}
 
   @Override
-  public String version() {
-    return version;
-  }
-
-  @Override
-  public String author() {
-    return author;
-  }
-
-  @Override
-  public String revision() {
-    return revision;
+  public Map<String, SettingDef> customSettingDefinitions() {
+    return Stream.of(
+            WithDefinitions.authorDefinition(author),
+            WithDefinitions.versionDefinition(version),
+            WithDefinitions.revisionDefinition(revision))
+        .collect(Collectors.toMap(SettingDef::key, Function.identity()));
   }
 }

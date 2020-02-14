@@ -21,8 +21,9 @@ import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.util.VersionUtils;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -183,39 +184,6 @@ public final class StreamDefUtils {
           .permission(SettingDef.Permission.READ_ONLY)
           .build();
 
-  public static final SettingDef VERSION_DEFINITION =
-      SettingDef.builder()
-          .key("version")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Version")
-          .documentation("Version of stream")
-          .permission(SettingDef.Permission.READ_ONLY)
-          .optional(VersionUtils.VERSION)
-          .build();
-
-  public static final SettingDef REVISION_DEFINITION =
-      SettingDef.builder()
-          .key("revision")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Revision")
-          .permission(SettingDef.Permission.READ_ONLY)
-          .documentation("Revision of stream")
-          .optional(VersionUtils.REVISION)
-          .build();
-
-  public static final SettingDef AUTHOR_DEFINITION =
-      SettingDef.builder()
-          .key("author")
-          .group(CORE_GROUP)
-          .orderInGroup(ORDER_COUNTER.getAndIncrement())
-          .displayName("Author")
-          .permission(SettingDef.Permission.READ_ONLY)
-          .documentation("Author of stream")
-          .optional(VersionUtils.USER)
-          .build();
-
   public static final SettingDef ROUTES_DEFINITION =
       SettingDef.builder()
           // similar to com.island.ohara.client.configurator.ROUTES_KEY
@@ -263,7 +231,7 @@ public final class StreamDefUtils {
    *
    * <p>This field is associated to a immutable map.
    */
-  public static final List<SettingDef> DEFAULT =
+  public static final Map<String, SettingDef> DEFAULT =
       Arrays.stream(StreamDefUtils.class.getDeclaredFields())
           .filter(field -> field.getType().isAssignableFrom(SettingDef.class))
           .map(
@@ -274,7 +242,7 @@ public final class StreamDefUtils {
                   throw new IllegalArgumentException("field is not able cast to SettingDef", e);
                 }
               })
-          .collect(Collectors.toList());
+          .collect(Collectors.toMap(SettingDef::key, Function.identity()));
 
   // disable constructor
   private StreamDefUtils() {}

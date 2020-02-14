@@ -27,7 +27,6 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.setting.TableColumn;
-import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.kafka.RowPartitioner;
 import java.util.Arrays;
 import java.util.Collections;
@@ -289,51 +288,6 @@ public final class ConnectorDefUtils {
                   .optional(Type.TAGS)
                   .documentation("tags to this connector")
                   .build());
-
-  static final int VERSION_ORDER = _DEFAULT.size();
-  public static final String VERSION_KEY = "version";
-
-  public static SettingDef createVersionDefinition(String version) {
-    return SettingDef.builder()
-        .displayName(VERSION_KEY)
-        .key(VERSION_KEY)
-        .documentation("version of connector")
-        .group(CORE_GROUP)
-        .optional(CommonUtils.requireNonEmpty(version))
-        .orderInGroup(VERSION_ORDER)
-        .permission(SettingDef.Permission.READ_ONLY)
-        .build();
-  }
-
-  static final int REVISION_ORDER = VERSION_ORDER + 1;
-  public static final String REVISION_KEY = "revision";
-
-  public static SettingDef createRevisionDefinition(String revision) {
-    return SettingDef.builder()
-        .displayName(REVISION_KEY)
-        .key(REVISION_KEY)
-        .documentation("revision of connector")
-        .group(CORE_GROUP)
-        .optional(CommonUtils.requireNonEmpty(revision))
-        .orderInGroup(REVISION_ORDER)
-        .permission(SettingDef.Permission.READ_ONLY)
-        .build();
-  }
-
-  static final int AUTHOR_ORDER = REVISION_ORDER + 1;
-  public static final String AUTHOR_KEY = "author";
-
-  public static SettingDef createAuthorDefinition(String author) {
-    return SettingDef.builder()
-        .displayName(AUTHOR_KEY)
-        .key(AUTHOR_KEY)
-        .documentation("author of connector")
-        .group(CORE_GROUP)
-        .optional(CommonUtils.requireNonEmpty(author))
-        .orderInGroup(AUTHOR_ORDER)
-        .permission(SettingDef.Permission.READ_ONLY)
-        .build();
-  }
 
   @VisibleForTesting
   static ConfigDef.Type toType(Type type) {

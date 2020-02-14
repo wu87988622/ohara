@@ -29,6 +29,7 @@ import com.island.ohara.client.configurator.v0.InspectApi.FileContent
 import com.island.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
+import com.island.ohara.common.setting.WithDefinitions
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import com.island.ohara.streams.Stream
@@ -159,36 +160,22 @@ abstract class ServiceCollie extends Releasable {
     val expectedNames = classNames(reflections)
     if (expectedNames.all.isEmpty) FileContent.empty
     else {
-      def seek[T](clz: Class[T]) =
+      def seek[T <: WithDefinitions](clz: Class[T]) =
         reflections
           .getSubTypesOf(clz)
           .asScala
           .filter(clz => expectedNames.all.contains(clz.getName))
           .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
+          .flatMap { clz =>
+            try Some(clz.getName -> clz.newInstance().settingDefinitions().values().asScala.toSeq)
+            catch {
+              case e: Throwable =>
+                ServiceCollie.LOG.warn(s"failed to load class:${clz.getName}", e)
+                None
+            }
+          }
 
-      val result = seek(classOf[RowSourceConnector]).flatMap { clz =>
-        try Some(clz.getName -> clz.newInstance().settingDefinitions().asScala)
-        catch {
-          case e: Throwable =>
-            ServiceCollie.LOG.warn(s"failed to load source class", e)
-            None
-        }
-      } ++ seek(classOf[RowSinkConnector]).flatMap { clz =>
-        try Some(clz.getName -> clz.newInstance().settingDefinitions().asScala)
-        catch {
-          case e: Throwable =>
-            ServiceCollie.LOG.warn(s"failed to load sink class", e)
-            None
-        }
-      } ++ seek(classOf[Stream]).flatMap { clz =>
-        try Some(clz.getName -> clz.newInstance().definitions().asScala)
-        catch {
-          case e: Throwable =>
-            ServiceCollie.LOG.warn(s"failed to load stream class", e)
-            None
-        }
-      }
-      FileContent(result.map {
+      FileContent((seek(classOf[RowSourceConnector]) ++ seek(classOf[RowSinkConnector]) ++ seek(classOf[Stream])).map {
         case (name, settingDefinitions) => ClassInfo(name, settingDefinitions)
       }.toSeq)
     }

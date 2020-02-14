@@ -21,9 +21,11 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.kafka.common.config.Config;
@@ -67,8 +69,8 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
    *
    * @return The ConfigDef for this connector.
    */
-  protected List<SettingDef> _definitions() {
-    return Collections.emptyList();
+  protected Map<String, SettingDef> customSettingDefinitions() {
+    return Collections.emptyMap();
   }
 
   /**
@@ -96,18 +98,10 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
   }
 
   @Override
-  public String version() {
-    return VersionUtils.VERSION;
-  }
-
-  @Override
-  public String revision() {
-    return VersionUtils.REVISION;
-  }
-
-  @Override
-  public String author() {
-    return VersionUtils.USER;
+  public final String version() {
+    return java.util.Optional.ofNullable(settingDefinitions().get(VERSION_KEY))
+        .map(SettingDef::defaultString)
+        .orElse(VersionUtils.VERSION);
   }
 
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
@@ -137,21 +131,22 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   /** @return custom definitions + core definitions */
   @Override
-  public List<SettingDef> settingDefinitions() {
-    return ConnectorUtils.toSettingDefinitions(
+  public final Map<String, SettingDef> settingDefinitions() {
+    return WithDefinitions.merge(
         Stream.of(
                 Collections.singletonList(ConnectorDefUtils.SINK_KIND_DEFINITION),
-                _definitions(),
                 ConnectorDefUtils.DEFAULT)
-            .flatMap(List::stream)
-            .collect(Collectors.toList()),
-        this,
-        needColumnDefinition());
+            .flatMap(Collection::stream)
+            .filter(
+                definition ->
+                    needColumnDefinition() || definition != ConnectorDefUtils.COLUMNS_DEFINITION)
+            .collect(Collectors.toMap(SettingDef::key, Function.identity())),
+        customSettingDefinitions());
   }
 
   @Override
   public final ConfigDef config() {
-    return ConnectorUtils.toConfigDef(settingDefinitions());
+    return ConnectorUtils.toConfigDef(settingDefinitions().values());
   }
 
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//

@@ -44,5 +44,5 @@ class HDFSSink extends CsvSinkConnector {
     Seq.fill(maxTasks) { settings }.asJava
   }
 
-  override protected def _definitions(): util.List[SettingDef] = DEFINITIONS.asJava
+  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

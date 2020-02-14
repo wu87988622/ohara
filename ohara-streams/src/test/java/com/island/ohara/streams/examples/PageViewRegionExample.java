@@ -25,7 +25,7 @@ import com.island.ohara.streams.Stream;
 import com.island.ohara.streams.config.StreamSetting;
 import com.island.ohara.streams.ostream.Conditions;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 /**
  * A simple example to illustrate how to do a join between an {@code OStream} and {@code OTable}. We
@@ -101,9 +101,9 @@ public class PageViewRegionExample extends Stream {
   public static final String joinTopicKey = "joinTopicKey";
 
   @Override
-  protected List<SettingDef> _definitions() {
-    return Collections.singletonList(
-        SettingDef.builder().key(joinTopicKey).group("default").build());
+  protected Map<String, SettingDef> _definitions() {
+    return Collections.singletonMap(
+        joinTopicKey, SettingDef.builder().key(joinTopicKey).group("default").build());
   }
 
   @Override

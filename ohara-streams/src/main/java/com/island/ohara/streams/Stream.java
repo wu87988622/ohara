@@ -21,6 +21,7 @@ import com.island.ohara.common.exception.ExceptionHandler;
 import com.island.ohara.common.exception.OharaException;
 import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamSetting;
@@ -29,12 +30,10 @@ import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public abstract class Stream {
+public abstract class Stream implements WithDefinitions {
   // Exception handler
   private static ExceptionHandler handler =
       ExceptionHandler.builder()
@@ -55,7 +54,8 @@ public abstract class Stream {
         () -> {
           Constructor<? extends Stream> cons = clz.getConstructor();
           final Stream theApp = cons.newInstance();
-          StreamSetting streamSetting = StreamSetting.of(theApp.definitions(), configs);
+          StreamSetting streamSetting =
+              StreamSetting.of(theApp.settingDefinitions().values(), configs);
 
           OStream<Row> ostream =
               OStream.builder()
@@ -111,14 +111,13 @@ public abstract class Stream {
    *
    * @return the defined settings
    */
-  protected List<SettingDef> _definitions() {
-    return Collections.emptyList();
+  protected Map<String, SettingDef> _definitions() {
+    return Collections.emptyMap();
   }
 
-  public final List<SettingDef> definitions() {
-    return java.util.stream.Stream.of(StreamDefUtils.DEFAULT, _definitions())
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
+  @Override
+  public final Map<String, SettingDef> settingDefinitions() {
+    return WithDefinitions.merge(StreamDefUtils.DEFAULT, _definitions());
   }
 
   /** User defined initialization before running stream */

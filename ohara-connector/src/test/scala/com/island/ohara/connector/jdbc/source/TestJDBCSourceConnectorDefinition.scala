@@ -37,7 +37,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkDbURL(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_URL).get
+    val definition = jdbcSource.settingDefinitions().get(DB_URL)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -48,7 +48,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkDbUserName(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_USERNAME).get
+    val definition = jdbcSource.settingDefinitions().get(DB_USERNAME)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -59,7 +59,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkDbPassword(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_PASSWORD).get
+    val definition = jdbcSource.settingDefinitions().get(DB_PASSWORD)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -70,7 +70,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkFetchDataSize(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FETCHDATA_SIZE).get
+    val definition = jdbcSource.settingDefinitions().get(JDBC_FETCHDATA_SIZE)
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt shouldBe JDBC_FETCHDATA_SIZE_DEFAULT
     definition.permission() shouldBe Permission.EDITABLE
@@ -81,7 +81,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkFlushDataSize(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FLUSHDATA_SIZE).get
+    val definition = jdbcSource.settingDefinitions().get(JDBC_FLUSHDATA_SIZE)
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultInt shouldBe JDBC_FLUSHDATA_SIZE_DEFAULT
     definition.permission() shouldBe Permission.EDITABLE
@@ -92,7 +92,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkFrequenceTime(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == JDBC_FREQUENCE_TIME).get
+    val definition = jdbcSource.settingDefinitions().get(JDBC_FREQUENCE_TIME)
     definition.necessary should not be Necessary.REQUIRED
     definition.defaultDuration() shouldBe java.time.Duration.ofMillis(JDBC_FREQUENCE_TIME_DEFAULT.toMillis)
     definition.permission() shouldBe Permission.EDITABLE
@@ -103,7 +103,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkTableName(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_TABLENAME).get
+    val definition = jdbcSource.settingDefinitions().get(DB_TABLENAME)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -114,7 +114,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkCatalogPattern(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_CATALOG_PATTERN).get
+    val definition = jdbcSource.settingDefinitions().get(DB_CATALOG_PATTERN)
     definition.necessary() should not be Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -125,7 +125,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkSchemaPattern(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == DB_SCHEMA_PATTERN).get
+    val definition = jdbcSource.settingDefinitions().get(DB_SCHEMA_PATTERN)
     definition.necessary() should not be Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE
@@ -136,7 +136,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkMode(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == MODE).get
+    val definition = jdbcSource.settingDefinitions().get(MODE)
     definition.necessary() should not be Necessary.REQUIRED
     definition.defaultString() shouldBe MODE_DEFAULT
     definition.permission() shouldBe Permission.EDITABLE
@@ -147,7 +147,7 @@ class TestJDBCSourceConnectorDefinition extends WithBrokerWorker {
 
   @Test
   def checkTimeStampColumnName(): Unit = {
-    val definition = jdbcSource.settingDefinitions().asScala.find(_.key() == TIMESTAMP_COLUMN_NAME).get
+    val definition = jdbcSource.settingDefinitions().get(TIMESTAMP_COLUMN_NAME)
     definition.necessary() shouldBe Necessary.REQUIRED
     definition.hasDefault shouldBe false
     definition.permission() shouldBe Permission.EDITABLE

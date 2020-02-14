@@ -40,9 +40,9 @@ package object sink {
   /**
     * the core settings for HDFSSink.
     */
-  val DEFINITIONS: Seq[SettingDef] = Seq(
-    HDFS_URL_DEFINITION
-  )
+  val DEFINITIONS: Map[String, SettingDef] = Seq(HDFS_URL_DEFINITION)
+    .map(d => d.key() -> d)
+    .toMap
 
   @VisibleForTesting val OUTPUT_FOLDER_KEY: String         = CsvConnectorDefinitions.OUTPUT_FOLDER_KEY
   @VisibleForTesting val FLUSH_SIZE_KEY: String            = CsvConnectorDefinitions.FLUSH_SIZE_KEY

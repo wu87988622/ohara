@@ -30,11 +30,11 @@ import scala.collection.JavaConverters._
 class TestSettingDefinitionsOfDumbConnector extends OharaTest {
   @Test
   def allTypesShouldBeIncludedByDumbSource(): Unit =
-    verify((new DumbSourceConnector).settingDefinitions().asScala)
+    verify((new DumbSourceConnector).settingDefinitions().values().asScala.toSeq)
 
   @Test
   def allTypesShouldBeIncludedByDumbSink(): Unit =
-    verify((new DumbSinkConnector).settingDefinitions().asScala)
+    verify((new DumbSinkConnector).settingDefinitions().values().asScala.toSeq)
 
   private[this] def verify(settingDefs: Seq[SettingDef]): Unit =
     SettingDef.Type.values().foreach(t => settingDefs.map(_.valueType()).toSet should contain(t))
