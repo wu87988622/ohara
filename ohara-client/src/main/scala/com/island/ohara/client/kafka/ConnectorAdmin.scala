@@ -27,7 +27,7 @@ import com.island.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import com.island.ohara.client.kafka.WorkerJson._
 import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.data.Column
-import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting._
 import com.island.ohara.common.util.CommonUtils
 import com.island.ohara.kafka.connector.json._
 import com.typesafe.scalalogging.Logger
@@ -316,7 +316,7 @@ object ConnectorAdmin {
                       className = p.className,
                       classType = definitions
                         .filter(_.hasDefault)
-                        .find(_.key() == ConnectorDefUtils.KIND_KEY)
+                        .find(_.key() == WithDefinitions.KIND_KEY)
                         .map(_.defaultString)
                         .getOrElse("connector"),
                       settingDefinitions = definitions

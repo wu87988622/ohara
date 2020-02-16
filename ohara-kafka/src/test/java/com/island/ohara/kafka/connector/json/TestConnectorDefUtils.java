@@ -119,10 +119,8 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testDefaultKeyConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(d -> d.key().equals(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key()))
-            .findAny()
-            .get()
+        ConnectorDefUtils.DEFAULT
+            .get(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
             .defaultString());
   }
 
@@ -130,10 +128,8 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testDefaultValueConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(d -> d.key().equals(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()))
-            .findAny()
-            .get()
+        ConnectorDefUtils.DEFAULT
+            .get(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
             .defaultString());
   }
 
@@ -141,10 +137,8 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testDefaultHeaderConverter() {
     Assert.assertEquals(
         ConverterType.NONE.className(),
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(d -> d.key().equals(ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.key()))
-            .findAny()
-            .get()
+        ConnectorDefUtils.DEFAULT
+            .get(ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.key())
             .defaultString());
   }
 
@@ -197,23 +191,25 @@ public class TestConnectorDefUtils extends OharaTest {
 
   @Test
   public void checkReturnBySettingDefShouldBeSame() {
-    ConnectorDefUtils.DEFAULT.forEach(setting -> Assert.assertNotNull(setting.checker()));
+    ConnectorDefUtils.DEFAULT.values().forEach(setting -> Assert.assertNotNull(setting.checker()));
   }
 
   @Test
   public void testSerialization() {
-    ConnectorDefUtils.DEFAULT.forEach(
-        setting -> {
-          SettingDef copy = (SettingDef) Serializer.OBJECT.from(Serializer.OBJECT.to(setting));
-          Assert.assertEquals(setting, copy);
-        });
+    ConnectorDefUtils.DEFAULT
+        .values()
+        .forEach(
+            setting -> {
+              SettingDef copy = (SettingDef) Serializer.OBJECT.from(Serializer.OBJECT.to(setting));
+              Assert.assertEquals(setting, copy);
+            });
   }
 
   @Test
   public void testConnectorClass() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION))
             .count());
   }
@@ -222,7 +218,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testTopics() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.TOPIC_NAMES_DEFINITION))
             .count());
   }
@@ -231,7 +227,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testColumns() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.COLUMNS_DEFINITION))
             .count());
   }
@@ -240,7 +236,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testKeyConverter() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.KEY_CONVERTER_DEFINITION))
             .count());
   }
@@ -249,7 +245,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testValueConverter() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION))
             .count());
   }
@@ -258,7 +254,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testWorkerClusterName() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION))
             .count());
   }
@@ -267,7 +263,7 @@ public class TestConnectorDefUtils extends OharaTest {
   public void testNumberOfTasks() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION))
             .count());
   }
@@ -276,46 +272,48 @@ public class TestConnectorDefUtils extends OharaTest {
   public void mustHaveTable() {
     Assert.assertEquals(
         1,
-        ConnectorDefUtils.DEFAULT.stream()
+        ConnectorDefUtils.DEFAULT.values().stream()
             .filter(definition -> definition.valueType().equals(SettingDef.Type.TABLE))
             .count());
   }
 
   @Test
   public void testPropKeys() {
-    ConnectorDefUtils.DEFAULT.forEach(
-        definition -> {
-          if (definition.valueType().equals(SettingDef.Type.TABLE)) {
-            Assert.assertTrue(
-                definition.tableKeys().stream()
-                    .anyMatch(k -> k.name().equals(SettingDef.ORDER_KEY)));
-            Assert.assertTrue(
-                definition.tableKeys().stream()
-                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY)));
-            Assert.assertTrue(
-                definition.tableKeys().stream()
-                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NAME_KEY)));
-            Assert.assertTrue(
-                definition.tableKeys().stream()
-                    .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NEW_NAME_KEY)));
-          } else Assert.assertTrue(definition.tableKeys().isEmpty());
-        });
+    ConnectorDefUtils.DEFAULT
+        .values()
+        .forEach(
+            definition -> {
+              if (definition.valueType().equals(SettingDef.Type.TABLE)) {
+                Assert.assertTrue(
+                    definition.tableKeys().stream()
+                        .anyMatch(k -> k.name().equals(SettingDef.ORDER_KEY)));
+                Assert.assertTrue(
+                    definition.tableKeys().stream()
+                        .anyMatch(k -> k.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY)));
+                Assert.assertTrue(
+                    definition.tableKeys().stream()
+                        .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NAME_KEY)));
+                Assert.assertTrue(
+                    definition.tableKeys().stream()
+                        .anyMatch(k -> k.name().equals(SettingDef.COLUMN_NEW_NAME_KEY)));
+              } else Assert.assertTrue(definition.tableKeys().isEmpty());
+            });
   }
 
   @Test
   public void checkDuplicate() {
     Assert.assertEquals(
         ConnectorDefUtils.DEFAULT.size(),
-        ConnectorDefUtils.DEFAULT.stream().map(SettingDef::key).collect(Collectors.toSet()).size());
+        ConnectorDefUtils.DEFAULT.values().stream()
+            .map(SettingDef::key)
+            .collect(Collectors.toSet())
+            .size());
   }
 
   @Test
   public void testConnectorNameSetting() {
     SettingDef setting =
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(s -> s.key().equals(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()))
-            .findFirst()
-            .get();
+        ConnectorDefUtils.DEFAULT.get(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key());
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.RANDOM_DEFAULT);
     Assert.assertFalse(setting.internal());
     Assert.assertFalse(setting.hasDefault());
@@ -327,10 +325,7 @@ public class TestConnectorDefUtils extends OharaTest {
   @Test
   public void testConnectorKeySetting() {
     SettingDef setting =
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(s -> s.key().equals(ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()))
-            .findFirst()
-            .get();
+        ConnectorDefUtils.DEFAULT.get(ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key());
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.REQUIRED);
     Assert.assertTrue(setting.internal());
     Assert.assertFalse(setting.hasDefault());
@@ -342,11 +337,7 @@ public class TestConnectorDefUtils extends OharaTest {
 
   @Test
   public void testTagsSetting() {
-    SettingDef setting =
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(s -> s.key().equals(ConnectorDefUtils.TAGS_DEFINITION.key()))
-            .findFirst()
-            .get();
+    SettingDef setting = ConnectorDefUtils.DEFAULT.get(ConnectorDefUtils.TAGS_DEFINITION.key());
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(setting.internal());
     Assert.assertFalse(setting.hasDefault());
@@ -358,10 +349,7 @@ public class TestConnectorDefUtils extends OharaTest {
   @Test
   public void testTopicKeysSetting() {
     SettingDef setting =
-        ConnectorDefUtils.DEFAULT.stream()
-            .filter(s -> s.key().equals(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
-            .findFirst()
-            .get();
+        ConnectorDefUtils.DEFAULT.get(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key());
     Assert.assertEquals(setting.necessary(), SettingDef.Necessary.OPTIONAL);
     Assert.assertFalse(setting.internal());
     Assert.assertFalse(setting.hasDefault());

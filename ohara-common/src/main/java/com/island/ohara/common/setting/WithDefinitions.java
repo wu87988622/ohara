@@ -32,6 +32,8 @@ import java.util.TreeMap;
  */
 public interface WithDefinitions {
 
+  String COMMON_GROUP = "common";
+
   String AUTHOR_KEY = "author";
   int AUTHOR_ORDER = 0;
 
@@ -39,8 +41,8 @@ public interface WithDefinitions {
     return SettingDef.builder()
         .displayName(AUTHOR_KEY)
         .key(AUTHOR_KEY)
-        .documentation("author")
-        .group("common")
+        .documentation(AUTHOR_KEY)
+        .group(COMMON_GROUP)
         .optional(CommonUtils.requireNonEmpty(author))
         .orderInGroup(AUTHOR_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -56,8 +58,8 @@ public interface WithDefinitions {
     return SettingDef.builder()
         .displayName(VERSION_KEY)
         .key(VERSION_KEY)
-        .documentation("version")
-        .group("common")
+        .documentation(VERSION_KEY)
+        .group(COMMON_GROUP)
         .optional(CommonUtils.requireNonEmpty(version))
         .orderInGroup(VERSION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -73,8 +75,8 @@ public interface WithDefinitions {
     return SettingDef.builder()
         .displayName(REVISION_KEY)
         .key(REVISION_KEY)
-        .documentation("revision")
-        .group("common")
+        .documentation(REVISION_KEY)
+        .group(COMMON_GROUP)
         .optional(CommonUtils.requireNonEmpty(revision))
         .orderInGroup(REVISION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -83,16 +85,47 @@ public interface WithDefinitions {
 
   SettingDef REVISION_DEFINITION = revisionDefinition(VersionUtils.REVISION);
 
+  String KIND_KEY = "kind";
+  int KIND_ORDER = REVISION_ORDER + 1;
+
+  static SettingDef kindDefinition(String kind) {
+    return SettingDef.builder()
+        .displayName(KIND_KEY)
+        .key(KIND_KEY)
+        .documentation(KIND_KEY)
+        .group(COMMON_GROUP)
+        .optional(CommonUtils.requireNonEmpty(kind))
+        .orderInGroup(KIND_ORDER)
+        .permission(SettingDef.Permission.READ_ONLY)
+        .build();
+  }
+
+  /** the type of official classes which implement the definitions. */
+  enum Type {
+    SOURCE,
+    SINK,
+    PARTITIONER,
+    STREAM,
+    SHABONDI,
+    UNKNOWN;
+
+    public String key() {
+      return name().toLowerCase();
+    }
+  }
+
   /**
    * merge two collections of definitions. the priority of system's definitions is highest so it is
    * able to override the duplicate key in user's definitions. This method also adds version, author
    * and revision to the final definitions if they are absent.
    *
+   * @param ref the object used to detect the kind
    * @param systemDefinedDefinitions system level definitions
    * @param userDefinedDefinitions user level definitions
    * @return a collections of definitions consisting of both input definitions.
    */
   static Map<String, SettingDef> merge(
+      Object ref,
       Map<String, SettingDef> systemDefinedDefinitions,
       Map<String, SettingDef> userDefinedDefinitions) {
     Map<String, SettingDef> finalDefinitions = new TreeMap<>(userDefinedDefinitions);
@@ -101,9 +134,39 @@ public interface WithDefinitions {
     finalDefinitions.putIfAbsent(WithDefinitions.AUTHOR_KEY, WithDefinitions.AUTHOR_DEFINITION);
     finalDefinitions.putIfAbsent(WithDefinitions.VERSION_KEY, WithDefinitions.VERSION_DEFINITION);
     finalDefinitions.putIfAbsent(WithDefinitions.REVISION_KEY, WithDefinitions.REVISION_DEFINITION);
+    finalDefinitions.computeIfAbsent(
+        WithDefinitions.KIND_KEY,
+        key -> {
+          String kind = null;
+          Class<?> clz = ref.getClass();
+          // this class is in the super model so it can't reference the classes from sub model
+          // we use unit tests to avoid the class renaming.
+          do {
+            switch (clz.getName()) {
+              case "com.island.ohara.kafka.connector.RowSourceConnector":
+                kind = Type.SOURCE.key();
+                break;
+              case "com.island.ohara.kafka.connector.RowSinkConnector":
+                kind = Type.SINK.key();
+                break;
+              case "com.island.ohara.streams.Stream":
+                kind = Type.STREAM.key();
+                break;
+              case "com.island.ohara.kafka.RowPartitioner":
+                kind = Type.PARTITIONER.key();
+                break;
+            }
+            if (kind != null) break;
+            clz = clz.getSuperclass();
+          } while (clz != null);
+          if (kind == null) kind = Type.UNKNOWN.key();
+          return kindDefinition(kind);
+        });
     return Collections.unmodifiableMap(finalDefinitions);
   }
 
   /** @return a unmodifiable collection of definitions */
-  Map<String, SettingDef> settingDefinitions();
+  default Map<String, SettingDef> settingDefinitions() {
+    return merge(this, Collections.emptyMap(), Collections.emptyMap());
+  }
 }

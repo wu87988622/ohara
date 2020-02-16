@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.kafka;
 
-class ClassNames(
-  val sources: Set[String],
-  val sinks: Set[String],
-  val partitioners: Set[String],
-  val streams: Set[String]
-) {
-  def all: Set[String] = sources ++ sinks ++ partitioners ++ streams
+import com.island.ohara.common.data.Row;
+import com.island.ohara.common.setting.TopicKey;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class CountRowPartitioner extends RowPartitioner {
+  public final AtomicInteger count = new AtomicInteger(0);
+
+  @Override
+  public Optional<Integer> partition(
+      TopicKey topicKey, Row row, byte[] serializedRow, Cluster cluster) {
+    count.incrementAndGet();
+    return Optional.empty();
+  }
 }

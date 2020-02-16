@@ -21,10 +21,8 @@ import java.util.Objects
 
 import com.island.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import com.island.ohara.common.annotations.{Optional, VisibleForTesting}
-import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, TopicKey, WithDefinitions}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
-import com.island.ohara.streams.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsValue, RootJsonFormat}
 
@@ -78,9 +76,10 @@ object InspectApi {
   implicit val SERVICE_DEFINITION_FORMAT: RootJsonFormat[ServiceDefinition] = jsonFormat3(ServiceDefinition)
 
   case class FileContent(classInfos: Seq[ClassInfo]) {
-    def sourceClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == ConnectorDefUtils.SOURCE_CONNECTOR)
-    def sinkClassInfos: Seq[ClassInfo]   = classInfos.filter(_.classType == ConnectorDefUtils.SINK_CONNECTOR)
-    def streamClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == StreamDefUtils.STREAM)
+    def sourceClassInfos: Seq[ClassInfo]      = classInfos.filter(_.classType == WithDefinitions.Type.SOURCE.key)
+    def sinkClassInfos: Seq[ClassInfo]        = classInfos.filter(_.classType == WithDefinitions.Type.SINK.key)
+    def streamClassInfos: Seq[ClassInfo]      = classInfos.filter(_.classType == WithDefinitions.Type.STREAM.key)
+    def partitionerClassInfos: Seq[ClassInfo] = classInfos.filter(_.classType == WithDefinitions.Type.PARTITIONER.key)
   }
 
   object FileContent {

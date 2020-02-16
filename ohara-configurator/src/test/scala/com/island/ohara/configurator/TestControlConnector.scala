@@ -58,7 +58,7 @@ class TestControlConnector extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
@@ -134,7 +134,7 @@ class TestControlConnector extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
@@ -164,7 +164,7 @@ class TestControlConnector extends WithBrokerWorker {
         connectorApi.request
           .name(sink.name)
           .group(sink.group)
-          .className(classOf[DumbSink].getName)
+          .className(classOf[FallibleSink].getName)
           .numberOfTasks(1)
           .topicKey(topic.key)
           .workerClusterKey(
@@ -197,7 +197,7 @@ class TestControlConnector extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
@@ -234,7 +234,7 @@ class TestControlConnector extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)

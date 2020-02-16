@@ -19,6 +19,7 @@ package com.island.ohara.kafka;
 import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.WithDefinitions;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.kafka.clients.producer.Partitioner;
@@ -30,7 +31,7 @@ import org.apache.kafka.clients.producer.internals.DefaultPartitioner;
  *
  * <p>By default, the distribution is calculated by hash.
  */
-public class RowPartitioner implements Partitioner {
+public abstract class RowPartitioner implements Partitioner, WithDefinitions {
 
   private final DefaultPartitioner kafkaDefaultPartitioner = new DefaultPartitioner();
 

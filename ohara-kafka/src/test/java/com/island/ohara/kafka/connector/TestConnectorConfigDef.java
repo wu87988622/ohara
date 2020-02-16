@@ -46,9 +46,25 @@ public class TestConnectorConfigDef extends OharaTest {
   }
 
   @Test
-  public void testKind() {
+  public void testSinkKind() {
     DumbSink sink = new DumbSink();
-    Assert.assertNotNull(sink.config().configKeys().get(ConnectorDefUtils.KIND_KEY));
+    Assert.assertEquals(
+        WithDefinitions.Type.SINK.key(),
+        sink.config().configKeys().get(WithDefinitions.KIND_KEY).defaultValue);
+    Assert.assertEquals(
+        WithDefinitions.Type.SINK.key(),
+        sink.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
+  }
+
+  @Test
+  public void testSourceKind() {
+    DumbSource source = new DumbSource();
+    Assert.assertEquals(
+        WithDefinitions.Type.SOURCE.key(),
+        source.config().configKeys().get(WithDefinitions.KIND_KEY).defaultValue);
+    Assert.assertEquals(
+        WithDefinitions.Type.SOURCE.key(),
+        source.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
   }
 
   /** make sure all types from SettingDef are acceptable to kafka type. */

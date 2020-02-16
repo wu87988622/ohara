@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package com.island.ohara.agent
+package com.island.ohara.kafka;
 
-class ClassNames(
-  val sources: Set[String],
-  val sinks: Set[String],
-  val partitioners: Set[String],
-  val streams: Set[String]
-) {
-  def all: Set[String] = sources ++ sinks ++ partitioners ++ streams
-}
+/**
+ * the default partitioner without empty body since RowPartitioner offers the default
+ * implementation.
+ */
+public class RowDefaultPartitioner extends RowPartitioner {}

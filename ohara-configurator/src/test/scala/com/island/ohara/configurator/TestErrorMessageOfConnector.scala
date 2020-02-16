@@ -54,7 +54,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .setting("you_should_fail", JsBoolean(true))
@@ -110,7 +110,7 @@ class TestErrorMessageOfConnector extends WithBrokerWorker {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)

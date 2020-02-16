@@ -19,7 +19,7 @@ package com.island.ohara.it.connector
 import java.util
 
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
+import com.island.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 import scala.collection.JavaConverters._
 
@@ -27,11 +27,11 @@ import scala.collection.JavaConverters._
   * This is a stupid and do-nothing connector. It burns for testing deploy custom connector.
   * It is not placed at test scope since we need jar when tests manually.
   */
-class DumbSinkConnector extends RowSinkConnector {
+class IncludeAllTypesSourceConnector extends RowSourceConnector {
   private[this] var settings: TaskSetting                                         = _
+  override protected def _taskClass(): Class[_ <: RowSourceTask]                  = classOf[IncludeAllTypesSourceTask]
+  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting]     = Seq.fill(maxTasks)(settings).asJava
   override protected def _start(settings: TaskSetting): Unit                      = this.settings = settings
   override protected def _stop(): Unit                                            = {}
-  override protected def _taskClass(): Class[_ <: RowSinkTask]                    = classOf[DumbSinkTask]
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting]     = Seq.fill(maxTasks)(settings).asJava
-  override protected def customSettingDefinitions(): util.Map[String, SettingDef] = DUMB_SETTING_DEFINITIONS.asJava
+  override protected def customSettingDefinitions(): util.Map[String, SettingDef] = ALL_SETTING_DEFINITIONS.asJava
 }

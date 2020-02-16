@@ -21,13 +21,10 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.VersionUtils;
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectorContext;
@@ -132,14 +129,13 @@ public abstract class RowSourceConnector extends SourceConnector implements With
   @Override
   public final Map<String, SettingDef> settingDefinitions() {
     return WithDefinitions.merge(
-        Stream.of(
-                Collections.singletonList(ConnectorDefUtils.SOURCE_KIND_DEFINITION),
-                ConnectorDefUtils.DEFAULT)
-            .flatMap(Collection::stream)
+        this,
+        ConnectorDefUtils.DEFAULT.entrySet().stream()
             .filter(
-                definition ->
-                    needColumnDefinition() || definition != ConnectorDefUtils.COLUMNS_DEFINITION)
-            .collect(Collectors.toMap(SettingDef::key, Function.identity())),
+                entry ->
+                    needColumnDefinition()
+                        || entry.getValue() != ConnectorDefUtils.COLUMNS_DEFINITION)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
         customSettingDefinitions());
   }
 

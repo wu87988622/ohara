@@ -19,7 +19,7 @@ package com.island.ohara.configurator.validation
 import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.configurator.{Configurator, FallibleSink}
 import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import com.island.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
@@ -47,13 +47,13 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .port(configurator.port)
         .connectorRequest
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .workerClusterKey(wkCluster.key)
         .topicKeys(topicKeys)
         .verify()
     )
-    response.className.get() shouldBe classOf[DumbSink].getName
+    response.className.get() shouldBe classOf[FallibleSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get() shouldBe 1
     import scala.collection.JavaConverters._
@@ -91,7 +91,7 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .port(configurator.port)
         .connectorRequest
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .workerClusterKey(wkCluster.key)
         .verify()
@@ -105,12 +105,12 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .port(configurator.port)
         .connectorRequest
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
         .verify()
     )
-    response.className.get() shouldBe classOf[DumbSink].getName
+    response.className.get() shouldBe classOf[FallibleSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get shouldBe 1
     response.topicNamesOnKafka().size() shouldBe 1
@@ -131,7 +131,7 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .port(configurator.port)
         .connectorRequest
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
         .tags(tags)
@@ -155,7 +155,7 @@ class TestValidationOfConnector extends With3Brokers3Workers {
         .port(configurator.port)
         .connectorRequest
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .workerClusterKey(wkCluster.key)
         .verify()

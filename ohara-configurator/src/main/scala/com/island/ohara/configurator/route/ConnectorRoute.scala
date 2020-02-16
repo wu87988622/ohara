@@ -192,7 +192,7 @@ private[configurator] object ConnectorRoute {
             creationToConnectorInfo(
               access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, ConnectorApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.settings, ConnectorApi.DEFINITIONS.values.toSeq))
                 // the key is not in update's settings so we have to add it to settings
                 .name(key.name)
                 .group(key.group)

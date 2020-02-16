@@ -666,11 +666,11 @@ class TestConnectorApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    ConnectorApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
+    ConnectorApi.DEFINITIONS(NAME_KEY).permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    ConnectorApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
+    ConnectorApi.DEFINITIONS(GROUP_KEY).permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def settingsDisappearFromJson(): Unit = {

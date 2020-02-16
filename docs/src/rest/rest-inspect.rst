@@ -332,7 +332,7 @@ Example Response
       "classInfos": [
         {
           "classType": "sink",
-          "className": "com.island.ohara.it.connector.DumbSinkConnector",
+          "className": "com.island.ohara.it.connector.IncludeAllTypesSinkConnector",
           "settingDefinitions": [
             {
               "blacklist": [],

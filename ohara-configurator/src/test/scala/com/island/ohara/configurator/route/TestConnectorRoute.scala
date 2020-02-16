@@ -23,7 +23,7 @@ import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
 import com.island.ohara.configurator.Configurator
-import com.island.ohara.kafka.RowPartitioner
+import com.island.ohara.kafka.RowDefaultPartitioner
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -648,7 +648,7 @@ class TestConnectorRoute extends OharaTest {
         .className("com.island.ohara.connector.ftp.FtpSink")
         .workerClusterKey(workerClusterInfo.key)
         .create()
-    ).partitionClass shouldBe classOf[RowPartitioner].getName
+    ).partitionClass shouldBe classOf[RowDefaultPartitioner].getName
   }
 
   @After

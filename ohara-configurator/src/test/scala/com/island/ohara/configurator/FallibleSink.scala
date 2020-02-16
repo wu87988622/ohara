@@ -19,9 +19,9 @@ package com.island.ohara.configurator
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
-class DumbSink extends RowSinkConnector {
+class FallibleSink extends RowSinkConnector {
   private[this] var settings: TaskSetting                                          = _
-  override protected def _taskClass(): Class[_ <: RowSinkTask]                     = classOf[DumbSinkTask]
+  override protected def _taskClass(): Class[_ <: RowSinkTask]                     = classOf[FallibleSinkTask]
   override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
   override protected def _start(settings: TaskSetting): Unit = {
     this.settings = settings

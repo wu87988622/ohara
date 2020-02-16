@@ -18,7 +18,7 @@ package com.island.ohara.it.code
 
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
+import com.island.ohara.it.connector.{IncludeAllTypesSinkConnector, IncludeAllTypesSourceConnector}
 import org.junit.Test
 import org.scalatest.Matchers._
 
@@ -30,11 +30,11 @@ import scala.collection.JavaConverters._
 class TestSettingDefinitionsOfDumbConnector extends OharaTest {
   @Test
   def allTypesShouldBeIncludedByDumbSource(): Unit =
-    verify((new DumbSourceConnector).settingDefinitions().values().asScala.toSeq)
+    verify((new IncludeAllTypesSourceConnector).settingDefinitions().values().asScala.toSeq)
 
   @Test
   def allTypesShouldBeIncludedByDumbSink(): Unit =
-    verify((new DumbSinkConnector).settingDefinitions().values().asScala.toSeq)
+    verify((new IncludeAllTypesSinkConnector).settingDefinitions().values().asScala.toSeq)
 
   private[this] def verify(settingDefs: Seq[SettingDef]): Unit =
     SettingDef.Type.values().foreach(t => settingDefs.map(_.valueType()).toSet should contain(t))

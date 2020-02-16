@@ -30,6 +30,7 @@ public class TestWithDefinitions {
     Assert.assertEquals(
         author,
         WithDefinitions.merge(
+                this,
                 Collections.singletonMap(
                     WithDefinitions.AUTHOR_KEY, WithDefinitions.authorDefinition(author)),
                 Collections.emptyMap())
@@ -41,7 +42,7 @@ public class TestWithDefinitions {
   public void authorShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.USER,
-        WithDefinitions.merge(Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
             .get(WithDefinitions.AUTHOR_KEY)
             .defaultString());
   }
@@ -52,6 +53,7 @@ public class TestWithDefinitions {
     Assert.assertEquals(
         version,
         WithDefinitions.merge(
+                this,
                 Collections.singletonMap(
                     WithDefinitions.VERSION_KEY, WithDefinitions.versionDefinition(version)),
                 Collections.emptyMap())
@@ -63,7 +65,7 @@ public class TestWithDefinitions {
   public void versionShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.VERSION,
-        WithDefinitions.merge(Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
             .get(WithDefinitions.VERSION_KEY)
             .defaultString());
   }
@@ -74,6 +76,7 @@ public class TestWithDefinitions {
     Assert.assertEquals(
         revision,
         WithDefinitions.merge(
+                this,
                 Collections.singletonMap(
                     WithDefinitions.REVISION_KEY, WithDefinitions.revisionDefinition(revision)),
                 Collections.emptyMap())
@@ -85,8 +88,17 @@ public class TestWithDefinitions {
   public void revisionShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.REVISION,
-        WithDefinitions.merge(Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
             .get(WithDefinitions.REVISION_KEY)
+            .defaultString());
+  }
+
+  @Test
+  public void kindShouldBeUnknown() {
+    Assert.assertEquals(
+        WithDefinitions.Type.UNKNOWN.key(),
+        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
+            .get(WithDefinitions.KIND_KEY)
             .defaultString());
   }
 }

@@ -129,12 +129,11 @@ public class TestCoreDefinitions extends OharaTest {
   @Test
   public void testConnectorType() {
     DumbSink sink = new DumbSink();
-    ConfigDef.ConfigKey key = sink.config().configKeys().get(ConnectorDefUtils.KIND_KEY);
-    Assert.assertEquals(ConnectorDefUtils.KIND_KEY, key.name);
-    Assert.assertEquals(ConnectorDefUtils.SOURCE_KIND_DEFINITION.orderInGroup(), key.orderInGroup);
-    Assert.assertEquals(ConnectorDefUtils.SOURCE_KIND_DEFINITION.group(), key.group);
-    Assert.assertEquals(
-        ConnectorDefUtils.SOURCE_KIND_DEFINITION.valueType().name(), key.type.name());
+    ConfigDef.ConfigKey key = sink.config().configKeys().get(WithDefinitions.KIND_KEY);
+    Assert.assertEquals(WithDefinitions.KIND_KEY, key.name);
+    Assert.assertEquals(WithDefinitions.KIND_ORDER, key.orderInGroup);
+    Assert.assertEquals(WithDefinitions.COMMON_GROUP, key.group);
+    Assert.assertEquals(SettingDef.Type.STRING.name(), key.type.name());
   }
 
   @Test(expected = NullPointerException.class)

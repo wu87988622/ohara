@@ -20,6 +20,7 @@ import com.island.ohara.common.data.Pair;
 import com.island.ohara.common.data.Row;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.WithDefinitions;
 import com.island.ohara.common.util.CommonUtils;
 import com.island.ohara.streams.config.StreamDefUtils;
 import com.island.ohara.streams.config.StreamSetting;
@@ -50,6 +51,14 @@ public class TestStream extends OharaTest {
                     StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                     TopicKey.toJsonString(Collections.singletonList(toKey))))
             .collect(Collectors.toMap(Pair::left, Pair::right)));
+  }
+
+  @Test
+  public void testKind() {
+    CustomStream app = new CustomStream();
+    Assert.assertEquals(
+        WithDefinitions.Type.STREAM.key(),
+        app.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
   }
 
   public static class CustomStream extends Stream {

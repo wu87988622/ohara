@@ -27,11 +27,10 @@ import com.island.ohara.common.setting.SettingDef;
 import com.island.ohara.common.setting.SettingDef.Reference;
 import com.island.ohara.common.setting.SettingDef.Type;
 import com.island.ohara.common.setting.TableColumn;
-import com.island.ohara.kafka.RowPartitioner;
+import com.island.ohara.kafka.RowDefaultPartitioner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,9 +52,6 @@ public final class ConnectorDefUtils {
   private static SettingDef createDef(Function<SettingDef.Builder, SettingDef> f) {
     SettingDef settingDef =
         f.apply(SettingDef.builder().orderInGroup(_DEFAULT.size()).group(CORE_GROUP));
-    // source kind and sink kind have identical key :)
-    assert !(_DEFAULT.containsKey(settingDef.key()) && !settingDef.key().equals(KIND_KEY))
-        : "duplicate key:" + settingDef.key() + " is illegal";
     _DEFAULT.put(settingDef.key(), settingDef);
     return settingDef;
   }
@@ -239,36 +235,6 @@ public final class ConnectorDefUtils {
                   .internal()
                   .build());
 
-  /** this is the base of source/sink definition. */
-  public static final String KIND_KEY = "kind";
-
-  public static final String SOURCE_CONNECTOR = "source";
-  public static final String SINK_CONNECTOR = "sink";
-
-  public static final SettingDef SOURCE_KIND_DEFINITION =
-      createDef(
-          builder ->
-              builder
-                  .displayName(KIND_KEY)
-                  .key(KIND_KEY)
-                  .documentation("kind of connector")
-                  .optional(SOURCE_CONNECTOR)
-                  .permission(SettingDef.Permission.READ_ONLY)
-                  .build());
-
-  public static final SettingDef SINK_KIND_DEFINITION =
-      createDef(
-          builder ->
-              builder
-                  .displayName(SOURCE_KIND_DEFINITION.displayName())
-                  .key(SOURCE_KIND_DEFINITION.key())
-                  .documentation(SOURCE_KIND_DEFINITION.documentation())
-                  .group(SOURCE_KIND_DEFINITION.group())
-                  .optional(SINK_CONNECTOR)
-                  .orderInGroup(SOURCE_KIND_DEFINITION.orderInGroup())
-                  .permission(SettingDef.Permission.READ_ONLY)
-                  .build());
-
   public static final SettingDef PARTITIONER_CLASS_DEFINITION =
       createDef(
           builder ->
@@ -276,7 +242,7 @@ public final class ConnectorDefUtils {
                   .displayName("partitioner class")
                   .key("producer.override.partitioner.class")
                   .documentation("partitioner decides the partition to send the message")
-                  .optionalClassValue(RowPartitioner.class.getName())
+                  .optionalClassValue(RowDefaultPartitioner.class.getName())
                   .build());
 
   public static final SettingDef TAGS_DEFINITION =
@@ -388,11 +354,7 @@ public final class ConnectorDefUtils {
    * The default setting definitions for all connectors. Noted that the "kind" definition is removed
    * from returned value since it is different between source and sink.
    */
-  public static final List<SettingDef> DEFAULT =
-      _DEFAULT.values().stream()
-          // the kind is different between source and sink so we include it from default definitions
-          .filter(d -> !d.key().equals(KIND_KEY))
-          .collect(Collectors.toList());
+  public static final Map<String, SettingDef> DEFAULT = Collections.unmodifiableMap(_DEFAULT);
 
   // disable constructor
   private ConnectorDefUtils() {}

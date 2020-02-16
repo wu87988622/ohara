@@ -28,7 +28,7 @@ import com.island.ohara.common.setting.ObjectKey
 import com.island.ohara.common.util.Releasable
 import com.island.ohara.configurator.Configurator
 import com.island.ohara.it.category.CollieGroup
-import com.island.ohara.it.connector.{DumbSinkConnector, DumbSourceConnector}
+import com.island.ohara.it.connector.{IncludeAllTypesSinkConnector, IncludeAllTypesSourceConnector}
 import com.island.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
@@ -145,8 +145,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
       val connectorAdmin = ConnectorAdmin(wkCluster)
       await(
         () =>
-          try result(connectorAdmin.plugins()).exists(_.className == classOf[DumbSinkConnector].getName)
-            && result(connectorAdmin.plugins()).exists(_.className == classOf[DumbSourceConnector].getName)
+          try result(connectorAdmin.plugins()).exists(_.className == classOf[IncludeAllTypesSinkConnector].getName)
+            && result(connectorAdmin.plugins()).exists(_.className == classOf[IncludeAllTypesSourceConnector].getName)
           catch {
             case _: Throwable => false
           }
@@ -156,8 +156,8 @@ class TestLoadCustomJarToWorkerCluster extends IntegrationTest {
       val connectors = result(
         InspectApi.access.hostname(configurator.hostname).port(configurator.port).workerInfo(wkCluster.key)
       ).classInfos
-      connectors.map(_.className).contains(classOf[DumbSinkConnector].getName) &&
-      connectors.map(_.className).contains(classOf[DumbSourceConnector].getName)
+      connectors.map(_.className).contains(classOf[IncludeAllTypesSinkConnector].getName) &&
+      connectors.map(_.className).contains(classOf[IncludeAllTypesSourceConnector].getName)
     })
   }
 

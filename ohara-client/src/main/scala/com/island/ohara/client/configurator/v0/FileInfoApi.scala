@@ -25,9 +25,8 @@ import akka.http.scaladsl.model._
 import com.island.ohara.client.configurator.Data
 import com.island.ohara.client.configurator.v0.InspectApi.FileContent
 import com.island.ohara.common.annotations.Optional
-import com.island.ohara.common.setting.{ObjectKey, SettingDef}
+import com.island.ohara.common.setting.{ObjectKey, SettingDef, WithDefinitions}
 import com.island.ohara.common.util.CommonUtils
-import com.island.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
 
@@ -62,7 +61,7 @@ object FileInfoApi {
       */
     def apply(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo =
       ClassInfo(
-        classType = settingDefinitions.find(_.key() == ConnectorDefUtils.KIND_KEY).map(_.defaultString()) match {
+        classType = settingDefinitions.find(_.key() == WithDefinitions.KIND_KEY).map(_.defaultString()) match {
           case Some(kind) => kind
           case None       => "unknown"
         },
@@ -112,9 +111,10 @@ object FileInfoApi {
     }
     private[this] implicit def _classInfos(classInfos: Seq[ClassInfo]): FileContent = FileContent(classInfos)
 
-    def sourceClassInfos: Seq[ClassInfo] = classInfos.sourceClassInfos
-    def sinkClassInfos: Seq[ClassInfo]   = classInfos.sinkClassInfos
-    def streamClassInfos: Seq[ClassInfo] = classInfos.streamClassInfos
+    def sourceClassInfos: Seq[ClassInfo]      = classInfos.sourceClassInfos
+    def sinkClassInfos: Seq[ClassInfo]        = classInfos.sinkClassInfos
+    def partitionerClassInfos: Seq[ClassInfo] = classInfos.partitionerClassInfos
+    def streamClassInfos: Seq[ClassInfo]      = classInfos.streamClassInfos
 
     override def kind: String = KIND
 

@@ -117,7 +117,7 @@ public abstract class Stream implements WithDefinitions {
 
   @Override
   public final Map<String, SettingDef> settingDefinitions() {
-    return WithDefinitions.merge(StreamDefUtils.DEFAULT, _definitions());
+    return WithDefinitions.merge(this, StreamDefUtils.DEFAULT, _definitions());
   }
 
   /** User defined initialization before running stream */

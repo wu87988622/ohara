@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.island.ohara.it.connector
+package com.island.ohara.configurator
 
-import java.util
+import com.island.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
 
-import com.island.ohara.kafka.connector._
+class FallibleSinkTask extends RowSinkTask {
+  override protected def _start(settings: TaskSetting): Unit = {}
 
-class DumbSinkTask extends RowSinkTask {
-  override protected def _start(settings: TaskSetting): Unit           = {}
-  override protected def _stop(): Unit                                 = {}
-  override protected def _put(records: util.List[RowSinkRecord]): Unit = {}
+  override protected def _stop(): Unit = {}
+
+  override protected def _put(records: java.util.List[RowSinkRecord]): Unit = {}
 }

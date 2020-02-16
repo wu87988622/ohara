@@ -166,7 +166,8 @@ describe('Inspect API', () => {
       expect(className).to.be.a('string');
 
       expect(classType).to.be.a('string');
-      expect([KIND.source, KIND.sink]).to.include(classType);
+      // TODO: a hot fix to unit test
+      expect([KIND.source, KIND.sink, 'partitioner']).to.include(classType);
 
       expect(settingDefinitions).to.be.an('array');
       expect(settingDefinitions.length > 0).to.be.true;

@@ -42,7 +42,7 @@ class TestOfficialConnectorsDefinition extends OharaTest {
   }
 
   private[this] def localConnectorDefinitions =
-    ReflectionUtils.localConnectorDefinitions.filter(_.className != classOf[DumbSink].getName)
+    ReflectionUtils.localConnectorDefinitions.filter(_.className != classOf[FallibleSink].getName)
 
   @Test
   def testVersion(): Unit = {

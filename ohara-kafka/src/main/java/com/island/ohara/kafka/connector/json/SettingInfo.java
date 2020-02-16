@@ -168,7 +168,7 @@ public final class SettingInfo implements JsonObject {
   }
 
   public Optional<String> connectorType() {
-    return value(ConnectorDefUtils.KIND_KEY);
+    return value(WithDefinitions.KIND_KEY);
   }
 
   // ------------------------[json]------------------------//

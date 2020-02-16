@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0._
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.{ConnectorKey, ObjectKey}
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.configurator.{Configurator, FallibleSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -62,7 +62,7 @@ class TestPipelineRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
@@ -173,7 +173,7 @@ class TestPipelineRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topic.key)
@@ -200,7 +200,7 @@ class TestPipelineRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
@@ -299,7 +299,7 @@ class TestPipelineRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .name(name)
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
@@ -511,7 +511,7 @@ class TestPipelineRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .numberOfTasks(1)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)

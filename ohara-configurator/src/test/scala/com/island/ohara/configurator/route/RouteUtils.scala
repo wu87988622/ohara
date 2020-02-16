@@ -30,8 +30,19 @@ object RouteUtils {
     * the jar of connector has "version" but it is changed in running QA. Hence, we use seek directory to find the jar.
     * @return connector jar
     */
-  def connectorFile: File = {
-    val folder = new File(new File(".").getCanonicalPath, s"../ohara-kafka/build/libs/")
-    folder.listFiles().filter(_.getName.endsWith("tests.jar")).head
-  }
+  def connectorFile: File =
+    new File(new File(".").getCanonicalPath, s"../ohara-kafka/build/libs/")
+      .listFiles()
+      .filter(_.getName.endsWith("tests.jar"))
+      .head
+
+  /**
+    * we take the production jar since the RowPartitioner is NOT abstract so we can use it
+    * @return
+    */
+  def partitionerFile: File =
+    new File(new File(".").getCanonicalPath, s"../ohara-kafka/build/libs/")
+      .listFiles()
+      .filterNot(_.getName.endsWith("tests.jar"))
+      .head
 }

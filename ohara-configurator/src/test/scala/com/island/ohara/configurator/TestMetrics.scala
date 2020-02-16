@@ -119,7 +119,7 @@ class TestMetrics extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)
@@ -166,7 +166,7 @@ class TestMetrics extends WithBrokerWorker {
     val sink = result(
       connectorApi.request
         .name(CommonUtils.randomString(10))
-        .className(classOf[DumbSink].getName)
+        .className(classOf[FallibleSink].getName)
         .topicKey(topic.key)
         .numberOfTasks(1)
         .workerClusterKey(workerClusterInfo.key)

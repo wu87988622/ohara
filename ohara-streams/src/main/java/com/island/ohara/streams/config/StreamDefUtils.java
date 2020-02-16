@@ -168,22 +168,6 @@ public final class StreamDefUtils {
           .optional(Type.ARRAY)
           .build();
 
-  public static final String STREAM = "stream";
-  /**
-   * annotate the kind of this stream. This value is immutable and it is useful in parsing
-   * definitions dynamically. The value of kind help us to understand the "master" of those
-   * definitions.
-   */
-  public static final SettingDef KIND_DEFINITION =
-      SettingDef.builder()
-          .displayName("kind")
-          // this key must be equal to ConnectorDefUtils.KIND_KEY
-          .key("kind")
-          .documentation("kind of stream application")
-          .optional(STREAM)
-          .permission(SettingDef.Permission.READ_ONLY)
-          .build();
-
   public static final SettingDef ROUTES_DEFINITION =
       SettingDef.builder()
           // similar to com.island.ohara.client.configurator.ROUTES_KEY

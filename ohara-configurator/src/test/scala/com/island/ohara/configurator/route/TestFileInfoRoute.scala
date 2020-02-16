@@ -76,7 +76,7 @@ class TestFileInfoRoute extends OharaTest {
     val bytes = new Array[Byte](DEFAULT_FILE_SIZE_BYTES.toInt + 1)
     val f     = tmpFile(bytes)
 
-    an[IllegalArgumentException] should be thrownBy result(fileApi.request.file(f).upload())
+    an[Exception] should be thrownBy result(fileApi.request.file(f).upload())
 
     f.deleteOnExit()
   }
@@ -227,15 +227,20 @@ class TestFileInfoRoute extends OharaTest {
   @Test
   def testConnectorJar(): Unit = {
     val fileInfo = result(fileApi.request.file(RouteUtils.connectorFile).upload())
-    fileInfo.streamClassInfos shouldBe Seq.empty
     (fileInfo.sourceClassInfos ++ fileInfo.sinkClassInfos) should not be Seq.empty
+  }
+
+  @Test
+  def testPartitionerJar(): Unit = {
+    val fileInfo = result(fileApi.request.file(RouteUtils.partitionerFile).upload())
+    fileInfo.classInfos.foreach(classInfo => println(s"[CHIA] ${classInfo.classType} ${classInfo.className}"))
+    fileInfo.partitionerClassInfos should not be Seq.empty
   }
 
   @Test
   def testStreamJar(): Unit = {
     val fileInfo = result(fileApi.request.file(RouteUtils.streamFile).upload())
     fileInfo.streamClassInfos.size shouldBe 1
-    (fileInfo.sourceClassInfos ++ fileInfo.sinkClassInfos) shouldBe Seq.empty
   }
 
   @After

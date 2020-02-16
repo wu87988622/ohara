@@ -21,10 +21,9 @@ import com.island.ohara.common.data.Row;
 import com.island.ohara.common.data.Serializer;
 import com.island.ohara.common.rule.OharaTest;
 import com.island.ohara.common.setting.TopicKey;
+import com.island.ohara.common.setting.WithDefinitions;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.PartitionInfo;
 import org.junit.Assert;
@@ -34,16 +33,7 @@ public class TestRowPartitioner extends OharaTest {
 
   @Test
   public void nonRowShouldNotBePassedToSubClass() {
-    AtomicInteger count = new AtomicInteger(0);
-    RowPartitioner custom =
-        new RowPartitioner() {
-          @Override
-          public Optional<Integer> partition(
-              TopicKey topicKey, Row row, byte[] serializedRow, Cluster cluster) {
-            count.incrementAndGet();
-            return Optional.empty();
-          }
-        };
+    CountRowPartitioner custom = new CountRowPartitioner();
     Node node = new Node(0, "localhost", 99);
     Node[] nodes = new Node[] {node};
     TopicKey key = TopicKey.of("a", "b");
@@ -56,10 +46,26 @@ public class TestRowPartitioner extends OharaTest {
             Collections.emptySet(),
             Collections.emptySet());
     custom.partition(key.topicNameOnKafka(), "sss", "sss".getBytes(), null, null, cluster);
-    Assert.assertEquals(0, count.get());
+    Assert.assertEquals(0, custom.count.get());
 
     Row row = Row.of(Cell.of("a", "b"));
     custom.partition(key.topicNameOnKafka(), row, Serializer.ROW.to(row), null, null, cluster);
-    Assert.assertEquals(1, count.get());
+    Assert.assertEquals(1, custom.count.get());
+  }
+
+  @Test
+  public void testKind() {
+    Assert.assertEquals(
+        WithDefinitions.Type.PARTITIONER.key(),
+        new RowDefaultPartitioner()
+            .settingDefinitions()
+            .get(WithDefinitions.KIND_KEY)
+            .defaultString());
+    Assert.assertEquals(
+        WithDefinitions.Type.PARTITIONER.key(),
+        new CountRowPartitioner()
+            .settingDefinitions()
+            .get(WithDefinitions.KIND_KEY)
+            .defaultString());
   }
 }

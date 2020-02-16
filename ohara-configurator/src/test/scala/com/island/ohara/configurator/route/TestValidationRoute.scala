@@ -20,7 +20,7 @@ import com.island.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import com.island.ohara.common.rule.OharaTest
 import com.island.ohara.common.setting.TopicKey
 import com.island.ohara.common.util.{CommonUtils, Releasable}
-import com.island.ohara.configurator.{Configurator, DumbSink}
+import com.island.ohara.configurator.{Configurator, FallibleSink}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
@@ -35,7 +35,7 @@ class TestValidationRoute extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def validateConnector(): Unit = {
-    val className = classOf[DumbSink].getName
+    val className = classOf[FallibleSink].getName
     val response = result(
       ValidationApi.access
         .hostname(configurator.hostname)

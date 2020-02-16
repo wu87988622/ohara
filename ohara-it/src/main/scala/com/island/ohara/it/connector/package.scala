@@ -24,7 +24,7 @@ package object connector {
   /**
     * add some definitions for testing.
     */
-  val DUMB_SETTING_DEFINITIONS: Map[String, SettingDef] = Seq(
+  val ALL_SETTING_DEFINITIONS: Map[String, SettingDef] = Seq(
     SettingDef
       .builder()
       .displayName("dumb boolean")

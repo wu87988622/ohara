@@ -31,6 +31,7 @@ import com.island.ohara.common.annotations.Optional
 import com.island.ohara.common.pattern.Builder
 import com.island.ohara.common.setting.WithDefinitions
 import com.island.ohara.common.util.Releasable
+import com.island.ohara.kafka.RowPartitioner
 import com.island.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import com.island.ohara.streams.Stream
 import com.typesafe.scalalogging.Logger
@@ -137,11 +138,16 @@ abstract class ServiceCollie extends Releasable {
 
   private[this] def classNames(reflections: Reflections): ClassNames = {
     def fetch(clz: Class[_]): Set[String] =
+      try
       // classOf[SubTypesScanner].getSimpleName is hard-code since Reflections does not expose it ...
       reflections.getStore.getAll(classOf[SubTypesScanner].getSimpleName, clz.getName).asScala.toSet
+      catch {
+        case _: Throwable => Set.empty
+      }
     new ClassNames(
       sources = fetch(classOf[RowSourceConnector]),
       sinks = fetch(classOf[RowSinkConnector]),
+      partitioners = fetch(classOf[RowPartitioner]),
       streams = fetch(classOf[Stream])
     )
   }
@@ -157,33 +163,37 @@ abstract class ServiceCollie extends Releasable {
   def fileContent(urls: Seq[URL])(implicit executionContext: ExecutionContext): Future[FileContent] = Future {
     val reflections =
       new Reflections(new ConfigurationBuilder().addUrls(urls.asJava).addClassLoader(new URLClassLoader(urls.toArray)))
-    val expectedNames = classNames(reflections)
-    if (expectedNames.all.isEmpty) FileContent.empty
+    if (classNames(reflections).all.isEmpty) FileContent.empty
     else {
+      def settingDefinitions[T <: WithDefinitions](clz: Class[T]) =
+        try Some(clz.getName -> clz.newInstance().settingDefinitions().values().asScala.toSeq)
+        catch {
+          case e: Throwable =>
+            ServiceCollie.LOG.warn(s"failed to load class:${clz.getName}", e)
+            None
+        }
+
       def seek[T <: WithDefinitions](clz: Class[T]) =
         reflections
           .getSubTypesOf(clz)
           .asScala
-          .filter(clz => expectedNames.all.contains(clz.getName))
           .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
-          .flatMap { clz =>
-            try Some(clz.getName -> clz.newInstance().settingDefinitions().values().asScala.toSeq)
-            catch {
-              case e: Throwable =>
-                ServiceCollie.LOG.warn(s"failed to load class:${clz.getName}", e)
-                None
-            }
-          }
+          .flatMap(settingDefinitions(_))
 
-      FileContent((seek(classOf[RowSourceConnector]) ++ seek(classOf[RowSinkConnector]) ++ seek(classOf[Stream])).map {
-        case (name, settingDefinitions) => ClassInfo(name, settingDefinitions)
-      }.toSeq)
+      FileContent(
+        (seek(classOf[RowSourceConnector]) ++
+          seek(classOf[RowSinkConnector]) ++
+          seek(classOf[Stream]) ++
+          seek(classOf[RowPartitioner])).map {
+          case (name, settingDefinitions) => ClassInfo(name, settingDefinitions)
+        }.toSeq
+      )
     }
   }
 }
 
 object ServiceCollie {
-  val LOG = Logger(classOf[ServiceCollie])
+  val LOG: Logger = Logger(classOf[ServiceCollie])
 
   /**
     * the default implementation uses ssh and docker command to manage all clusters.
