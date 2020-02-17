@@ -175,7 +175,7 @@ const EditWorkspace = () => {
           )}
         </Wrapper>
       </FullScreenDialog>
-      <AddTopicDialog />
+      <AddTopicDialog uniqueId="edit-worker" />
     </>
   );
 };

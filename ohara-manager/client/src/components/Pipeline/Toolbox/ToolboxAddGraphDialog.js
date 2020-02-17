@@ -57,6 +57,7 @@ const ToolboxAddGraphDialog = props => {
 
             <form onSubmit={handleSubmit}>
               <Field
+                id={`add-${kind}-name`}
                 type="text"
                 name="newGraph"
                 label={`${capitalize(kind)} Name`}

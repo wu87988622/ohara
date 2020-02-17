@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
@@ -28,7 +29,8 @@ import {
   composeValidators,
 } from 'utils/validate';
 
-const AddTopicDialog = () => {
+const AddTopicDialog = props => {
+  const { uniqueId } = props;
   const { isFetching: isSaving } = useTopicState();
   const eventLog = useEventLog();
   const { createTopic } = useTopicActions();
@@ -72,7 +74,7 @@ const AddTopicDialog = () => {
           >
             <form onSubmit={handleSubmit}>
               <Field
-                id="add-topic-name"
+                id={`add-topic-name-${uniqueId}`}
                 type="text"
                 label="Topic name"
                 name="name"
@@ -84,7 +86,7 @@ const AddTopicDialog = () => {
                 required
               />
               <Field
-                id="add-topic-partitions"
+                id={`add-topic-partitions-${uniqueId}`}
                 type="number"
                 label="Partitions"
                 name="numberOfPartitions"
@@ -98,7 +100,7 @@ const AddTopicDialog = () => {
                 validate={minNumber(1)}
               />
               <Field
-                id="add-topic-replication-factor"
+                id={`add-topic-replication-factor-${uniqueId}`}
                 type="number"
                 label="Replication factor"
                 name="numberOfReplications"
@@ -117,6 +119,10 @@ const AddTopicDialog = () => {
       }}
     />
   );
+};
+
+AddTopicDialog.propTypes = {
+  uniqueId: PropTypes.string.isRequired,
 };
 
 export default AddTopicDialog;

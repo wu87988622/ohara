@@ -299,7 +299,7 @@ const Toolbox = props => {
             </ExpansionPanelDetails>
           </ExpansionPanel>
 
-          <AddTopicDialog />
+          <AddTopicDialog uniqueId="toolbox" />
 
           <ExpansionPanel square expanded={expanded.stream}>
             <ExpansionPanelSummary

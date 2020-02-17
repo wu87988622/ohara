@@ -52,14 +52,14 @@ Cypress.Commands.add(
     // we only get one "flying element" at one time
     // it's ok to find by testid
     cy.findByTestId('flying-element').then(element => {
-      const rect = element[0].getBoundingClientRect();
       cy.wrap(element)
         .trigger('mousemove', 'topLeft', {
           timeout: 1000,
-          pageX: rect.left + shiftX,
-          pageY: rect.top + shiftY,
+          pageX: shiftX,
+          pageY: shiftY,
+          force: true,
         })
-        .trigger('mouseup', 'topLeft', { timeout: 1000 });
+        .trigger('mouseup', 'topLeft', { timeout: 1000, force: true });
     });
   },
 );
@@ -106,7 +106,7 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
 
   // Since we will redirect the url
   // need to wait a little time for url applying
-  cy.wait(3000);
+  cy.wait(2000);
 
   cy.location().then(location => {
     if (location.pathname === '/') {
@@ -155,9 +155,11 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
   // the default workspace name is "workspace1,workspace2,..."
   // hence, the first two words should be "WO"
   if (workspaceName) {
-    cy.findByText(workspaceName.substring(0, 2).toUpperCase()).should('exist');
+    cy.findAllByText(workspaceName.substring(0, 2).toUpperCase()).should(
+      'exist',
+    );
   } else {
-    cy.findByText(/^wo$/i).should('exist');
+    cy.findAllByText(/^wo$/i).should('exist');
   }
 
   cy.end();

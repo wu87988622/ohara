@@ -32,11 +32,11 @@ export const connectorSources = {
 };
 
 export const connectorSinks = {
-  json: 'com.island.ohara.connector.jio.JsonOut',
+  console: 'com.island.ohara.connector.console.ConsoleSink',
   ftp: 'com.island.ohara.connector.ftp.FtpSink',
   hdfs: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
+  json: 'com.island.ohara.connector.jio.JsonOut',
   smb: 'com.island.ohara.connector.smb.SmbSink',
-  console: 'com.island.ohara.connector.console.ConsoleSink',
 };
 
 export const create = async params => {

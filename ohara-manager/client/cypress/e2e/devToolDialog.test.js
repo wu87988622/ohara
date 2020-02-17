@@ -22,7 +22,7 @@ const workspaceNameInAppBar = Cypress.env('servicePrefix')
   .toUpperCase();
 
 describe('Topics tab', () => {
-  before(async () => await deleteAllServices());
+  beforeEach(async () => await deleteAllServices());
 
   it('empty topic list', () => {
     // Close the quickstart dialog
@@ -121,7 +121,7 @@ describe('Topics tab', () => {
 });
 
 describe('Logs tab', () => {
-  before(async () => await deleteAllServices());
+  beforeEach(async () => await deleteAllServices());
 
   it('with an exist workspace, configurator log of devTool should work normally', () => {
     cy.createServices({
