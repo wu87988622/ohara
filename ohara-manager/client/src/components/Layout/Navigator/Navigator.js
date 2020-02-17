@@ -15,6 +15,7 @@
  */
 
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -22,6 +23,14 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
 import ShareIcon from '@material-ui/icons/Share';
 import Menu from '@material-ui/core/Menu';
+import Typography from '@material-ui/core/Typography';
+import ExtensionIcon from '@material-ui/icons/Extension';
+import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
+import FlightLandIcon from '@material-ui/icons/FlightLand';
+import WavesIcon from '@material-ui/icons/Waves';
+import StorageIcon from '@material-ui/icons/Storage';
+import classNames from 'classnames';
+import Scrollbar from 'react-scrollbars-custom';
 import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
@@ -38,15 +47,17 @@ import {
   StyledNavigator,
   StyledButton,
   StyledExpansionPanel,
-  StyledSubtitle1,
   PipelineList,
+  StyledOutlineList,
 } from './NavigatorStyles';
+import { KIND } from 'const';
+import { AddSharedTopicIcon } from 'components/common/Icon';
 
-const Navigator = () => {
+const Navigator = ({ pipelineApi }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { currentWorkspace } = context.useWorkspace();
   const [isExpanded, setIsExpanded] = useState(true);
+  const { currentWorkspace } = context.useWorkspace();
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
   const { data: pipelines } = context.usePipelineState();
   const { createPipeline } = context.usePipelineActions();
@@ -74,6 +85,21 @@ const Navigator = () => {
     setIsOpen(false);
   };
 
+  const getIcon = (kind, isShared) => {
+    const { source, sink, stream, topic } = KIND;
+
+    if (kind === source) return <FlightTakeoffIcon />;
+    if (kind === sink) return <FlightLandIcon />;
+    if (kind === stream) return <WavesIcon />;
+    if (kind === topic) {
+      return isShared ? (
+        <AddSharedTopicIcon width={20} height={22} />
+      ) : (
+        <StorageIcon />
+      );
+    }
+  };
+
   if (!currentWorkspace) return null;
 
   const {
@@ -82,10 +108,12 @@ const Navigator = () => {
 
   return (
     <StyledNavigator>
-      <StyledButton disableRipple onClick={handleClick}>
-        <span className="menu-name">{workspaceName}</span>
-        <ExpandMoreIcon />
-      </StyledButton>
+      <div className="button-wrapper">
+        <StyledButton disableRipple onClick={handleClick}>
+          <span className="menu-name">{workspaceName}</span>
+          <ExpandMoreIcon />
+        </StyledButton>
+      </div>
       <Menu
         anchorEl={anchorEl}
         keepMounted
@@ -196,7 +224,7 @@ const Navigator = () => {
           }}
           expandIcon={<ExpandMoreIcon />}
         >
-          <StyledSubtitle1>Pipelines</StyledSubtitle1>
+          <Typography variant="h5">Pipelines</Typography>
           <AddIcon
             className="new-pipeline-button"
             onClick={event => {
@@ -206,24 +234,78 @@ const Navigator = () => {
           />
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          <PipelineList>
-            {pipelines.map(pipeline => (
-              <li key={pipeline.name}>
-                <NavLink
-                  activeClassName="active-link"
-                  to={`/${workspaceName}/${pipeline.name}`}
-                >
-                  <ShareIcon className="link-icon" />
-                  {pipeline.name}
-                </NavLink>
-              </li>
-            ))}
-          </PipelineList>
+          <div className="scrollbar-wrapper">
+            <Scrollbar>
+              <PipelineList>
+                {pipelines.map(pipeline => (
+                  <li key={pipeline.name}>
+                    <NavLink
+                      activeClassName="active-link"
+                      to={`/${workspaceName}/${pipeline.name}`}
+                    >
+                      <ShareIcon className="link-icon" />
+                      {pipeline.name}
+                    </NavLink>
+                  </li>
+                ))}
+              </PipelineList>
+            </Scrollbar>
+          </div>
         </ExpansionPanelDetails>
       </StyledExpansionPanel>
+
+      <StyledOutlineList style={{ height: isExpanded ? '50%' : '100%' }}>
+        <Typography variant="h5">
+          <ExtensionIcon />
+          Outline
+        </Typography>
+        {pipelineApi && (
+          <div className="scrollbar-wrapper">
+            <Scrollbar>
+              <ul className="list">
+                {pipelineApi.getElements().map(element => {
+                  const {
+                    id,
+                    name,
+                    kind,
+                    isSelected,
+                    isShared,
+                    displayName,
+                  } = element;
+
+                  const isTopic = kind === KIND.topic;
+
+                  const className = classNames({
+                    'is-selected': isSelected,
+                    'is-shared': isTopic && isShared,
+                    'pipeline-only': isTopic && !isShared,
+                    [kind]: kind,
+                  });
+
+                  return (
+                    <li
+                      className={className}
+                      onClick={() => pipelineApi.highlight(id)}
+                      key={id}
+                    >
+                      {getIcon(kind, isShared)}
+                      {isTopic && !isShared ? displayName : name}
+                    </li>
+                  );
+                })}
+              </ul>
+            </Scrollbar>
+          </div>
+        )}
+      </StyledOutlineList>
+
       <EditWorkspace />
     </StyledNavigator>
   );
+};
+
+Navigator.propTypes = {
+  pipelineApi: PropTypes.object,
 };
 
 export default Navigator;

@@ -46,8 +46,7 @@ export const AddSharedTopicIcon = ({
             </mask>
             <g fillRule="nonzero"></g>
             <rect
-              fill="#000000"
-              fillOpacity="0.54"
+              fill={fillColor}
               mask={`url(#${maskId})`}
               x="-2"
               y="0"

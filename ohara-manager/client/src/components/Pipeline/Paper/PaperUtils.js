@@ -36,6 +36,7 @@ export const getCellData = cellOrView => {
       position: cell.get(CELL_PROPS.position),
       jarKey: cell.get(CELL_PROPS.jarKey) || null,
       isShared: cell.get(CELL_PROPS.isShared) || false,
+      isSelected: cell.get(CELL_PROPS.isSelected),
       status: cell.get(CELL_PROPS.status),
     };
   }

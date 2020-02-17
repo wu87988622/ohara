@@ -51,6 +51,7 @@ export const CELL_PROPS = {
   position: 'position',
   jarKey: 'jarKey',
   isShared: 'isShared',
+  isSelected: 'isSelected',
   status: 'status',
   source: 'source',
   target: 'target',

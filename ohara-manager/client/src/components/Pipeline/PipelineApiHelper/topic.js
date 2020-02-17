@@ -70,18 +70,21 @@ const topic = () => {
 
     paperApi.disableMenu(id);
     const stopRes = await stopTopic(name);
-    paperApi.enableMenu(id);
 
     if (!stopRes.error) {
       const state = util.getCellState(stopRes);
       paperApi.updateElement(id, {
         status: state,
       });
+    } else {
+      paperApi.enableMenu(id);
     }
 
     const deleteRes = await deleteTopic(name);
     if (!deleteRes.error) {
       paperApi.removeElement(id);
+    } else {
+      paperApi.enableMenu(id);
     }
   };
 

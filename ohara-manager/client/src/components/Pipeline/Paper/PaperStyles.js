@@ -40,6 +40,7 @@ export const StyledPaper = styled.div(
 
       &.flying-topic {
         border-radius: 100%;
+        color: ${theme.palette.grey[600]};
 
         .item {
           .icon {

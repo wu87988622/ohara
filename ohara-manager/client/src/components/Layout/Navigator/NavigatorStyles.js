@@ -15,7 +15,6 @@
  */
 
 import styled, { css } from 'styled-components';
-import Typography from '@material-ui/core/Typography';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 
 import { Button } from 'components/common/Form';
@@ -24,7 +23,11 @@ export const StyledNavigator = styled.nav(
   ({ theme }) => css`
     width: 100%;
     height: 100%;
-    background-color: ${theme.palette.primary[500]};
+    background-color: ${theme.palette.primary.main};
+
+    .button-wrapper {
+      background-color: ${theme.palette.primary[500]};
+    }
   `,
 );
 
@@ -58,19 +61,42 @@ export const StyledButton = styled(Button)(
   `,
 );
 
-export const StyledSubtitle1 = styled(Typography).attrs({
-  variant: 'subtitle1',
-})(
-  ({ theme }) => css`
-    color: ${theme.palette.common.white};
-  `,
-);
-
 export const StyledExpansionPanel = styled(ExpansionPanel)(
   ({ theme }) => css`
     box-shadow: none;
-    background-color: transparent;
     color: ${theme.palette.common.white};
+    background-color: ${theme.palette.primary[500]};
+
+    .MuiCollapse-container {
+      /* 64px -> Mui's summary title height */
+      height: calc(100% - 64px) !important;
+    }
+
+    /* 
+      Ensure these elements are taking up full with and height and thus the 
+      child element can have the full width/height
+    */
+    .MuiCollapse-wrapper,
+    .MuiCollapse-wrapperInner,
+    .MuiExpansionPanelDetails-root,
+    .scrollbar-wrapper,
+    div[role='region'] {
+      height: 100%;
+      width: 100%;
+    }
+
+    /* 
+      TODO: Override react-scrollbars-custom's default styles with props or 
+      custom styles
+    */
+
+    .scrollbar-wrapper {
+      .ScrollbarsCustom-TrackY {
+        top: 0 !important;
+        height: 100% !important;
+        width: 5px !important;
+      }
+    }
 
     .Mui-expanded {
       .new-pipeline-button {
@@ -82,6 +108,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
 
     &.MuiExpansionPanel-root.Mui-expanded {
       margin: 0;
+      height: calc(50% - 60px) !important;
     }
 
     /* Prevent an extra line when the expansion panel is closed...  */
@@ -94,7 +121,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
     }
 
     .MuiExpansionPanelSummary-root {
-      padding: 0 20px;
+      padding: 0 ${theme.spacing(2)}px;
       position: relative;
     }
 
@@ -153,7 +180,7 @@ export const PipelineList = styled.ul(
         color: ${theme.palette.common.white};
         text-decoration: none;
         width: 100%;
-        padding: 0 26px;
+        padding: 0 ${theme.spacing(3)}px;
         display: flex;
         align-items: center;
 
@@ -167,8 +194,72 @@ export const PipelineList = styled.ul(
 
         .link-icon {
           margin-right: ${theme.spacing(1)}px;
-          width: 16px;
+          width: 20px;
         }
+      }
+    }
+  `,
+);
+
+export const StyledOutlineList = styled.div(
+  ({ theme }) => css`
+    .scrollbar-wrapper {
+      /* 58px -> outline heading height */
+      height: calc(100% - 58px);
+
+      /* 
+        TODO: Override react-scrollbars-custom's default styles with props or 
+        custom styles
+       */
+
+      .ScrollbarsCustom-TrackY {
+        top: 0 !important;
+        height: 100% !important;
+        width: 5px !important;
+      }
+    }
+
+    h5 {
+      padding: 0 ${theme.spacing(2)}px;
+      color: ${theme.palette.common.white};
+      padding: ${theme.spacing(2)}px;
+      border-top: 1px solid ${theme.palette.primary[400]};
+      border-bottom: 1px solid ${theme.palette.primary[400]};
+      background-color: ${theme.palette.primary[500]};
+
+      display: flex;
+      align-items: center;
+
+      .MuiSvgIcon-root {
+        margin-right: ${theme.spacing(1)}px;
+      }
+    }
+
+    li {
+      color: ${theme.palette.common.white};
+      display: flex;
+      align-items: center;
+      color: ${theme.palette.common.white};
+      line-height: 36px;
+      font-size: 14px;
+      padding: ${theme.spacing(0, 3)};
+      cursor: pointer;
+
+      &:hover,
+      &.is-selected {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* The custom icon needs some more padding in order to be aligned 
+        with the rest of items
+      */
+      &.is-shared {
+        padding-left: 26px;
+      }
+
+      > svg {
+        margin-right: ${theme.spacing(1)}px;
+        width: 20px;
       }
     }
   `,

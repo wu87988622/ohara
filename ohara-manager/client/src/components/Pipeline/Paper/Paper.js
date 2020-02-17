@@ -77,21 +77,6 @@ const Paper = React.forwardRef((props, ref) => {
     },
   };
 
-  const selectHighlighter = {
-    highlighter: {
-      name: 'stroke',
-      options: {
-        padding: 2,
-        rx: 2,
-        ry: 2,
-        attrs: {
-          'stroke-width': 2,
-          stroke: palette.primary.main,
-        },
-      },
-    },
-  };
-
   React.useEffect(() => {
     const namespace = joint.shapes;
     graphRef.current = new joint.dia.Graph({}, { cellNamespace: namespace });
@@ -108,6 +93,22 @@ const Paper = React.forwardRef((props, ref) => {
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
 
         background: { color: palette.common.white },
+
+        // Tweak the default highlighting to match our theme
+        highlighting: {
+          default: {
+            name: 'stroke',
+            options: {
+              padding: 4,
+              rx: 4,
+              ry: 4,
+              attrs: {
+                'stroke-width': 2,
+                stroke: palette.primary.main,
+              },
+            },
+          },
+        },
 
         // Ensures the link should always link to a valid target
         linkPinning: false,
@@ -317,7 +318,7 @@ const Paper = React.forwardRef((props, ref) => {
       resetElements();
 
       elementView
-        .highlight(null, selectHighlighter)
+        .highlight()
         .showElement('menu')
         .hideElement('metrics')
         .hideElement('status')
@@ -372,9 +373,9 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('blank:pointerclick', () => {
-      onCellDeselect(paperApi);
       resetElements();
       resetLinks();
+      onCellDeselect(paperApi);
     });
 
     function showMenu(elementView, highlighter) {
@@ -398,7 +399,7 @@ const Paper = React.forwardRef((props, ref) => {
     function resetElements() {
       findElementViews().forEach(elementView => {
         elementView
-          .unhighlight(null, selectHighlighter)
+          .unhighlight()
           .unhighlight(null, hoverHighlighter)
           .hideElement('menu')
           .setIsSelected(false);
@@ -469,7 +470,6 @@ const Paper = React.forwardRef((props, ref) => {
     palette.grey,
     paperApi,
     ref,
-    selectHighlighter,
     showMessage,
   ]);
 
@@ -615,7 +615,11 @@ const Paper = React.forwardRef((props, ref) => {
           .forEach(cell => {
             const { type, source, target } = cell;
             if (type === 'html.Element') {
-              return this.addElement({ ...cell, shouldSkipOnElementAdd: true });
+              return this.addElement({
+                ...cell,
+                shouldSkipOnElementAdd: true,
+                isSelected: false, // we don't want to recovery this state for now
+              });
             }
 
             if (type === 'standard.Link') {
@@ -713,7 +717,16 @@ const Paper = React.forwardRef((props, ref) => {
         }
 
         const elementView = findElementView(id);
-        elementView && elementView.highlight();
+        if (elementView) {
+          findElementViews().forEach(elementView =>
+            elementView
+              .unhighlight()
+              .unhighlight(null, hoverHighlighter)
+              .setIsSelected(false),
+          );
+
+          elementView.highlight().setIsSelected(true);
+        }
       },
 
       enableMenu(id, items) {

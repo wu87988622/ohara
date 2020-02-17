@@ -114,7 +114,7 @@ export const StyledToolbox = styled.div(
         align-items: center;
         width: 100%;
         padding: ${theme.spacing(1, 2)};
-        color: ${theme.palette.text.primary};
+        color: ${theme.palette.grey[600]};
 
         /* Shared topic uses a custom icon which is not aligned properly with
           Mui's, so we're using a different padding here
@@ -124,7 +124,7 @@ export const StyledToolbox = styled.div(
         }
 
         &.is-disabled {
-          opacity: 0.3;
+          opacity: 0.38;
         }
 
         .display-name {

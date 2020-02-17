@@ -29,6 +29,8 @@ const AppLayout = () => {
   const { isOpen: isDevToolOpen } = context.useDevToolDialog();
   const { isOpen: isEventLogOpen } = context.useEventLogDialog();
 
+  const pipelineApiRef = React.useRef(null);
+
   return (
     <Wrapper>
       <SplitPane split="vertical" defaultSize={64} allowResize={false}>
@@ -46,8 +48,8 @@ const AppLayout = () => {
             minSize={160}
             maxSize={320}
           >
-            <Navigator />
-            <Pipeline />
+            <Navigator pipelineApi={pipelineApiRef.current} />
+            <Pipeline ref={pipelineApiRef} />
           </SplitPane>
           {isEventLogOpen && <EventLog />}
           {isDevToolOpen && <DevToolDialog />}

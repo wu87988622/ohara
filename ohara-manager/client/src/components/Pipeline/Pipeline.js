@@ -40,7 +40,7 @@ export const PaperContext = createContext(null);
 export const PipelineStateContext = createContext(null);
 export const PipelineDispatchContext = createContext(null);
 
-const Pipeline = () => {
+const Pipeline = React.forwardRef((props, ref) => {
   const {
     workspaces,
     currentWorkspace,
@@ -140,7 +140,7 @@ const Pipeline = () => {
     });
   };
 
-  const paperApiRef = useRef();
+  const paperApiRef = useRef(null);
   const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
 
   useRedirect();
@@ -267,6 +267,28 @@ const Pipeline = () => {
     setIsOpen(false);
     forceDeleteList.current = {};
   };
+
+  React.useImperativeHandle(ref, () => {
+    if (!paperApiRef.current) return null;
+
+    const paperApi = paperApiRef.current;
+
+    return {
+      getElements() {
+        return paperApi
+          .getCells()
+          .filter(
+            cell => cell.cellType === 'html.Element' || !cell.isTemporary,
+          );
+      },
+
+      highlight(id) {
+        paperApi.highlight(id);
+        const selectedCell = paperApi.getCell(id);
+        setSelectedCell(selectedCell);
+      },
+    };
+  });
 
   return (
     <>
@@ -666,6 +688,6 @@ const Pipeline = () => {
       />
     </>
   );
-};
+});
 
 export default Pipeline;
