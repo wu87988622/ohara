@@ -25,7 +25,10 @@ import FileCopyIcon from '@material-ui/icons/FileCopyOutlined';
 import EditIcon from '@material-ui/icons/Edit';
 
 import { AutofillEditor, AutofillSelector } from 'components/Autofill';
-import { toAutofillData, toFormValues } from './autofillUtils';
+import {
+  toAutofillData,
+  toFormValues,
+} from 'components/Autofill/autofillUtils';
 
 const PipelinePropertySpeedDial = ({ formRef }) => {
   const [isSeepDialOpen, setIsSeepDialOpen] = useState(false);

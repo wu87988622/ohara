@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import AutoComplete from './AutoComplete';
 import Button from './Button';
 import InputField from './InputField';
 import Select from './Select';
 import Label from './Label';
 import Checkbox from './Checkbox';
 
-export { Button, InputField, Select, Label, Checkbox };
+export { AutoComplete, Button, InputField, Select, Label, Checkbox };

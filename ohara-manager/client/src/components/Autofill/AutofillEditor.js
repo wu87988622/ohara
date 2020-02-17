@@ -27,11 +27,12 @@ import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
 
 import { useWorkspace, useWorkspaceActions } from 'context';
-import { InputField } from 'components/common/Form';
+import { InputField, AutoComplete } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import { required, composeValidators } from 'utils/validate';
 import Wrapper from './AutofillEditorStyles';
+import { useSuggestiveKeys } from './autofillHooks';
 
 export const MODE = {
   ADD: 'Add',
@@ -46,6 +47,7 @@ const AutofillEditor = props => {
   const { currentWorkspace } = useWorkspace();
   const workspaceName = get(currentWorkspace, 'name');
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
+  const suggestiveKeys = useSuggestiveKeys();
 
   const duplicateDisplayName = value => {
     if (mode === MODE.EDIT && value === data.displayName) return;
@@ -84,7 +86,7 @@ const AutofillEditor = props => {
     });
   };
 
-  const onSubmit = async (values, form) => {
+  const handleSubmit = async (values, form) => {
     if (mode === MODE.ADD || mode === MODE.COPY) {
       await saveNew(values);
     } else {
@@ -100,7 +102,7 @@ const AutofillEditor = props => {
       mutators={{
         ...arrayMutators,
       }}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       render={({
         form,
         form: {
@@ -141,13 +143,16 @@ const AutofillEditor = props => {
                     <div className="setting" key={name}>
                       <Field
                         className="input"
-                        component={InputField}
+                        component={AutoComplete}
                         label="key"
                         margin="normal"
                         name={`${name}.key`}
                         required
                         type="text"
                         validate={composeValidators(required, duplicateKey)}
+                        options={suggestiveKeys}
+                        freeSolo
+                        closeIcon={<></>}
                       />
                       <Field
                         className="input"
