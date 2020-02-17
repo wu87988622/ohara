@@ -111,7 +111,7 @@ Example Request
       "name":"perf",
       "topicKeys": ["t0"],
       "workerClusterKey": "wk",
-      "connector.class":"com.island.ohara.connector.perf.PerfSource"
+      "connector.class":"oharastream.ohara.connector.perf.PerfSource"
     }
 
 Example Response
@@ -136,7 +136,7 @@ Example Response
       "tasks.max": 1,
       "perf.batch": 10,
       "perf.frequency": "1000 milliseconds",
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "connector.class": "oharastream.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],
@@ -192,7 +192,7 @@ Example Response
       "tasks.max": 1,
       "perf.batch": 10,
       "perf.frequency": "1000 milliseconds",
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "connector.class": "oharastream.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],
@@ -245,7 +245,7 @@ Example Response
         "tasks.max": 1,
         "perf.batch": 10,
         "perf.frequency": "1000 milliseconds",
-        "connector.class": "com.island.ohara.connector.perf.PerfSource",
+        "connector.class": "oharastream.ohara.connector.perf.PerfSource",
         "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
         "version": "$|version|",
         "columns": [],
@@ -311,7 +311,7 @@ Example Response
       "tasks.max": 1,
       "perf.batch": 10,
       "perf.frequency": "1000 milliseconds",
-      "connector.class": "com.island.ohara.connector.perf.PerfSource",
+      "connector.class": "oharastream.ohara.connector.perf.PerfSource",
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],

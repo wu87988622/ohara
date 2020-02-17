@@ -215,7 +215,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Ohara.tex', u'Ohara Documentation',
-     u'is-land Systems', 'manual'),
+     u'oharastream', 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------

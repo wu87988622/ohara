@@ -57,9 +57,9 @@ required dependencies are shown below.
             url "https://dl.bintray.com/oharastream/ohara"
         }
     }
-   implementation "com.island.ohara:ohara-streams:$|version|"
-   implementation "com.island.ohara:ohara-common:$|version|"
-   implementation "com.island.ohara:ohara-kafka:$|version|"
+   implementation "oharastream.ohara:ohara-streams:$|version|"
+   implementation "oharastream.ohara:ohara-common:$|version|"
+   implementation "oharastream.ohara:ohara-kafka:$|version|"
 
 .. note::
    The `releases <https://github.com/oharastream/ohara/releases>`__ page
@@ -73,7 +73,7 @@ Stream Entry
 ---------------
 
 We will automatically find your custom class which should be extended by
-**om.island.ohara.streams.Stream**.
+**oharastream.ohara.streams.Stream**.
 
 In Ohara environment, the required parameters are defined in
 Ohara UI. You only need to initial the ``OStream`` as following:
@@ -294,9 +294,9 @@ Below we provide some examples that demonstrate how to develop your own
 stream applications. More description of each example could be found
 in javadoc.
 
-- :ohara-source:`WordCount <ohara-streams/src/test/java/com/island/ohara/streams/examples/WordCountExample.java>`: count the words in “word” column
-- :ohara-source:`PageViewRegion <ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java>`: count the views by each region
-- :ohara-source:`Sum <ohara-streams/src/test/java/com/island/ohara/streams/examples/SumExample.java>`: sum odd numbers in “number” column
+- :ohara-source:`WordCount <ohara-streams/src/test/java/oharastream/ohara/streams/examples/WordCountExample.java>`: count the words in “word” column
+- :ohara-source:`PageViewRegion <ohara-streams/src/test/java/oharastream/ohara/streams/examples/PageViewRegionExample.java>`: count the views by each region
+- :ohara-source:`Sum <ohara-streams/src/test/java/oharastream/ohara/streams/examples/SumExample.java>`: sum odd numbers in “number” column
 
 ---------------------------
 
@@ -379,7 +379,7 @@ stream will produce to. We use prefix words (**TOPIC_IN**, **TOPIC_OUT**)
 in the response data (:ref:`Stream APIs<rest-streams>`)
 in order to improve readabilities of those types. You don’t need to worry about the
 implementation of these official metrics, but you can still read the
-:ohara-source:`source code <ohara-streams/src/main/java/com/island/ohara/streams/metric/MetricFactory.java>`
+:ohara-source:`source code <ohara-streams/src/main/java/oharastream/ohara/streams/metric/MetricFactory.java>`
 to see how Ohara creates official metrics.
 
 ---------------------------

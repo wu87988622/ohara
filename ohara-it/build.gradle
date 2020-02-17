@@ -159,11 +159,11 @@ test {
   dependsOn 'streamJar'
 }
 
-def classOfCollieGroup = "com.island.ohara.it.category.CollieGroup"
-def classOfConnectorGroup = "com.island.ohara.it.category.ConnectorGroup"
-def classOfClientGroup = "com.island.ohara.it.category.ClientGroup"
-def classOfStreamGroup = "com.island.ohara.it.category.StreamGroup"
-def classOfPerformanceGroup = "com.island.ohara.it.category.PerformanceGroup"
+def classOfCollieGroup = "oharastream.ohara.it.category.CollieGroup"
+def classOfConnectorGroup = "oharastream.ohara.it.category.ConnectorGroup"
+def classOfClientGroup = "oharastream.ohara.it.category.ClientGroup"
+def classOfStreamGroup = "oharastream.ohara.it.category.StreamGroup"
+def classOfPerformanceGroup = "oharastream.ohara.it.category.PerformanceGroup"
 
 task collieIT(type: OharaTest) {
   useJUnit {

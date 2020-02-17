@@ -34,7 +34,7 @@ elif [ "$1" == "stop" ]; then
   SCRIPT="$BIN_DIR/stop-service.sh"
   shift 1
 elif [ "$1" == "-v" ] || [ "$1" == "-version" ]; then
-  "$BIN_DIR/run_java.sh" com.island.ohara.common.util.VersionUtils
+  "$BIN_DIR/run_java.sh" oharastream.ohara.common.util.VersionUtils
   java -version
   exit 0
 else

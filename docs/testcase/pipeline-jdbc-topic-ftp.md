@@ -43,10 +43,10 @@
 
 1. On the **Pipelines** list page, click the <kbd>NEW PIPLINE</kbd> button.
 2. Enter “secondpipeline” in the **Pipeline name** field and select “wk01” from the Workspace name dropdown. Then, click <kbd>ADD</kbd>.
-3. Click the **Add a source connector** icon and select **com.island.ohara.connector.jdbc.source.JDBCSourceConnector** from the list, then click <kbd>ADD</kbd>.
+3. Click the **Add a source connector** icon and select **oharastream.ohara.connector.jdbc.source.JDBCSourceConnector** from the list, then click <kbd>ADD</kbd>.
 4. Enter “jdbcsource” in the **myconnector** field and click <kbd>ADD</kbd>.
 5. Click the **Add a topic** icon and select **t3** from the dropdown and click <kbd>ADD</kbd>.
-6. Click the **Add a sink connector** icon and select **com.island.ohara.connector.ftp.FtpSink** from the list, then click <kbd>ADD</kbd>.
+6. Click the **Add a sink connector** icon and select **oharastream.ohara.connector.ftp.FtpSink** from the list, then click <kbd>ADD</kbd>.
 7. Enter “ftpsink” in the **myconnector** field and click <kbd>ADD</kbd> button.
 
 ## 連接 JDBC source -> Topic -> FTP sink

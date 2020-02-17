@@ -42,11 +42,11 @@ if [ "$service" == "manager" ]; then
   exec node ./start.js $ARGS
 else
   if [ "$service" == "configurator" ]; then
-    CLASS="com.island.ohara.configurator.Configurator"
+    CLASS="oharastream.ohara.configurator.Configurator"
   elif [ "$service" == "shabondi" ]; then
-    CLASS="com.island.ohara.shabondi.Boot"
+    CLASS="oharastream.ohara.shabondi.Boot"
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
-    CLASS="com.island.ohara.common.util.VersionUtils"
+    CLASS="oharastream.ohara.common.util.VersionUtils"
   elif [ "$service" == "help" ]; then
     echo "Usage:"
     echo "Option                                   Description"

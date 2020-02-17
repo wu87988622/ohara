@@ -66,7 +66,7 @@ task runImportData(type: JavaExec, dependsOn: 'classes') {
   boolean useOharaAPI = false
 
   classpath = sourceSets.test.runtimeClasspath
-  main = "com.island.ohara.streams.AirlineDataImporter"
+  main = "oharastream.ohara.streams.AirlineDataImporter"
 
   args = Arrays.asList("--bootstrapServers", servers, "--useOharaAPI", useOharaAPI)
 

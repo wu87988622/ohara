@@ -255,7 +255,7 @@ Execute FTP Instance
 
 .. code-block:: console
 
-   docker run --rm -p 10000-10011:10000-10011 oharastream/backend:$|version| com.island.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
+   docker run --rm -p 10000-10011:10000-10011 oharastream/backend:$|version| oharastream.ohara.testing.service.FtpServer --controlPort 10000 --dataPorts 10001-10011 --user ${UserName} --password ${Password} --hostname ${hostIP or hostName}
 
 -  controlPort: bound by FTP Server
 -  dataPorts: bound by data transportation in FTP Server

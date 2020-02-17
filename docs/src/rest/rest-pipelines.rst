@@ -207,7 +207,7 @@ Example Response 2
           "state": "RUNNING",
           "lastModified": 1578649620960,
           "tags": {},
-          "className": "com.island.ohara.connector.perf.PerfSource",
+          "className": "oharastream.ohara.connector.perf.PerfSource",
           "metrics": {
             "meters": [
               {

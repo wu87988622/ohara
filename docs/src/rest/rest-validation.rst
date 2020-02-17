@@ -73,7 +73,7 @@ Example Response
            },
            "value": {
              "key": "connector.class",
-             "value": "com.island.ohara.connector.perf.PerfSource",
+             "value": "oharastream.ohara.connector.perf.PerfSource",
              "errors": []
            }
          }

@@ -502,13 +502,13 @@ Example
   .. code-block:: text
 
     - Ohara issue link: :ohara-issue:`800`
-    - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java>`
+    - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/oharastream/ohara/streams/examples/PageViewRegionExample.java>`
     - Kafka issue: :kafka-issue:`8765`
     - Zookeeper issue: :zookeeper-issue:`2345`
     - Kubernetes issue: :k8s-issue:`2345`
 
   - Ohara issue link: :ohara-issue:`800`
-  - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/com/island/ohara/streams/examples/PageViewRegionExample.java>`
+  - Ohara source link: :ohara-source:`PageViewRegionExample <ohara-streams/src/test/java/oharastream/ohara/streams/examples/PageViewRegionExample.java>`
   - Kafka issue: :kafka-issue:`8765`
   - Zookeeper issue: :zookeeper-issue:`2345`
   - Kubernetes issue: :k8s-issue:`2345`
@@ -580,8 +580,8 @@ Code-block example
               url "https://dl.bintray.com/oharastream/ohara"
           }
       }
-     implementation "com.island.ohara:ohara-common:$|version|"
-     implementation "com.island.ohara:ohara-kafka:$|version|"
+     implementation "oharastream.ohara:ohara-common:$|version|"
+     implementation "oharastream.ohara:ohara-kafka:$|version|"
 
 
 Show code

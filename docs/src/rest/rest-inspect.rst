@@ -283,7 +283,7 @@ Example Response
             "group": "default",
             "name": "perf"
           },
-          "sourceClass": "com.island.ohara.connector.perf.PerfSourceTask",
+          "sourceClass": "oharastream.ohara.connector.perf.PerfSourceTask",
           "partition": 0,
           "offset": 0,
           "value": {
@@ -332,7 +332,7 @@ Example Response
       "classInfos": [
         {
           "classType": "sink",
-          "className": "com.island.ohara.it.connector.IncludeAllTypesSinkConnector",
+          "className": "oharastream.ohara.it.connector.IncludeAllTypesSinkConnector",
           "settingDefinitions": [
             {
               "blacklist": [],

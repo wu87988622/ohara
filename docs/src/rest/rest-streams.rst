@@ -172,7 +172,7 @@ Example Response
       "revision": "b303f3c2e52647ee5e79e55f9d74a5e51238a92c",
       "version": "$|version|",
       "aliveNodes": [],
-      "className": "com.island.ohara.it.stream.DumbStream",
+      "className": "oharastream.ohara.it.stream.DumbStream",
       "from": [
         {
           "group": "default",
@@ -235,7 +235,7 @@ Example Response
       "revision": "b303f3c2e52647ee5e79e55f9d74a5e51238a92c",
       "version": "$|version|",
       "aliveNodes": [],
-      "className": "com.island.ohara.it.stream.DumbStream",
+      "className": "oharastream.ohara.it.stream.DumbStream",
       "from": [
         {
           "group": "default",
@@ -301,7 +301,7 @@ Example Response
         "revision": "b303f3c2e52647ee5e79e55f9d74a5e51238a92c",
         "version": "$|version|",
         "aliveNodes": [],
-        "className": "com.island.ohara.it.stream.DumbStream",
+        "className": "oharastream.ohara.it.stream.DumbStream",
         "from": [
           {
             "group": "default",
@@ -401,7 +401,7 @@ Example Response
       "revision": "b303f3c2e52647ee5e79e55f9d74a5e51238a92c",
       "version": "$|version|",
       "aliveNodes": [],
-      "className": "com.island.ohara.it.stream.DumbStream",
+      "className": "oharastream.ohara.it.stream.DumbStream",
       "from": [
         {
           "group": "default",

@@ -8,7 +8,7 @@ target/
 .DS_Store
 build
 out
-ohara-common/src/main/java/com/island/ohara/common/util/VersionUtils.java
+ohara-common/src/main/java/oharastream/ohara/common/util/VersionUtils.java
 ohara-manager/scripts/servicesApi/service.json
 .attach_pid*
 .rej

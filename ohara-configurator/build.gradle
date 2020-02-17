@@ -60,7 +60,7 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     'Also, you can assign -Pbrokers, -Pworkers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
 
   classpath = sourceSets.main.runtimeClasspath
-  main = "com.island.ohara.configurator.Configurator"
+  main = "oharastream.ohara.configurator.Configurator"
 
   def keywords = [
     "hostname",

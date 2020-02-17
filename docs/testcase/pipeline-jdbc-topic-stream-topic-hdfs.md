@@ -217,7 +217,7 @@ cd ohara/
 Then `cd` to Stream DumbStream source folder.
 
 ```sh
-cd ohara-it/src/main/scala/com/island/ohara/it/stream/
+cd ohara-it/src/main/scala/oharastream/ohara/it/stream/
 ```
 
 Use Vi to edit **DumbStream.scala**
@@ -246,10 +246,10 @@ class DumbStream extends Stream {
 To
 
 ```
-import com.island.ohara.common.data.Row
-import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.streams.config.StreamSetting
-import com.island.ohara.streams.{OStream, Stream}
+import oharastream.ohara.common.data.Row
+import oharastream.ohara.common.setting.SettingDef
+import oharastream.ohara.streams.config.StreamSetting
+import oharastream.ohara.streams.{OStream, Stream}
 
 class DumbStream extends Stream {
 

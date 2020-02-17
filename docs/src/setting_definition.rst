@@ -498,7 +498,7 @@ deploy your code on the node which is using port 5555 as well. The legal value o
 Type.OBJECT_KEY
 ^^^^^^^^^^^^^^^
 
-object key represents a format of **com.island.ohara.common.setting.ObjectKey** for specific object.
+object key represents a format of **oharastream.ohara.common.setting.ObjectKey** for specific object.
 It consists "group" and "name" fields.
 In a custom application, you should check the request contains both fields.
 
@@ -514,7 +514,7 @@ In a custom application, you should check the request contains both fields.
 Type.OBJECT_KEYS
 ^^^^^^^^^^^^^^^^
 
-OBJECT_KEYS represents a list of **com.island.ohara.common.setting.Obj**.
+OBJECT_KEYS represents a list of **oharastream.ohara.common.setting.Obj**.
 Note the type of the plural char "s". It means the request value should pass a array.
 
 .. code-block::json

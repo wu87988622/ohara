@@ -85,7 +85,7 @@ Example Response
       "classInfos": [
         {
           "classType": "stream",
-          "className": "com.island.ohara.it.stream.DumbStream",
+          "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
               "blacklist": [],
@@ -131,7 +131,7 @@ Example Response
         "classInfos": [
           {
             "classType": "stream",
-            "className": "com.island.ohara.it.stream.DumbStream",
+            "className": "oharastream.ohara.it.stream.DumbStream",
             "settingDefinitions": [
               {
                 "blacklist": [],
@@ -197,7 +197,7 @@ Example Response
       "classInfos": [
         {
           "classType": "stream",
-          "className": "com.island.ohara.it.stream.DumbStream",
+          "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
               "blacklist": [],
@@ -255,7 +255,7 @@ Example Response
       "classInfos": [
         {
           "classType": "stream",
-          "className": "com.island.ohara.it.stream.DumbStream",
+          "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
               "blacklist": [],

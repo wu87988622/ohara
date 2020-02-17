@@ -46,13 +46,13 @@
 
 1. On the **Pipelines** list page, click the <kbd>NEW PIPELINE</kbd> button.
 2. Enter “firstpipeline” in the **Pipeline name** field and select “wk00” from the Workspace name dropdown. Then, click <kbd>ADD</kbd>.
-3. Click the **Add a source connector** icon and select **com.island.ohara.connector.ftp.FTPSource** from the list, then click <kbd>ADD</kbd>.
+3. Click the **Add a source connector** icon and select **oharastream.ohara.connector.ftp.FTPSource** from the list, then click <kbd>ADD</kbd>.
 4. Enter “ftpsource” in the **myconnector** field and click <kbd>ADD</kbd>.
 5. Click the **Add a topic** icon and select **t1** from the dropdown and click <kbd>ADD</kbd>.
 6. Click the **Add a stream app** icon and select **ohara-it-stream.jar** from the dropdown, then click <kbd>ADD</kbd>.
 7. Enter “dumb” in the **mystream** field and click <kbd>ADD</kbd>.
 8. Click the **Add a topic** icon and select **t2** from the dropdown, then click <kbd>ADD</kbd>.
-9. Click the **Add a sink connector** icon and select **com.island.ohara.connector.hdfs.sink.HDFSSink** from the list, then click <kbd>ADD</kbd>.
+9. Click the **Add a sink connector** icon and select **oharastream.ohara.connector.hdfs.sink.HDFSSink** from the list, then click <kbd>ADD</kbd>.
 10. Enter “hdfssink” in the **myconnector** field and click <kbd>ADD</kbd>.
 
 ## FTP source -> Topic -> Stream -> Topic -> HDFS sink
@@ -162,7 +162,7 @@ cd ohara/
 Then `cd` to Stream DumbStream source folder.
 
 ```sh
-cd ohara-it/src/main/scala/com/island/ohara/it/stream/
+cd ohara-it/src/main/scala/oharastream/ohara/it/stream/
 ```
 
 Use Vi to edit **DumbStream.scala**
@@ -209,11 +209,11 @@ To
  * limitations under the License.
  */
 
-package com.island.ohara.it.stream
-import com.island.ohara.common.data.Row
-import com.island.ohara.common.setting.SettingDef
-import com.island.ohara.streams.config.StreamSetting
-import com.island.ohara.streams.{OStream, Stream}
+package oharastream.ohara.it.stream
+import oharastream.ohara.common.data.Row
+import oharastream.ohara.common.setting.SettingDef
+import oharastream.ohara.streams.config.StreamSetting
+import oharastream.ohara.streams.{OStream, Stream}
 
 class DumbStream extends Stream {
 

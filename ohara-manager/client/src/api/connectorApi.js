@@ -24,19 +24,19 @@ import * as inspectApi from './inspectApi';
 const url = URL.CONNECTOR_URL;
 
 export const connectorSources = {
-  jdbc: 'com.island.ohara.connector.jdbc.source.JDBCSourceConnector',
-  json: 'com.island.ohara.connector.jio.JsonIn',
-  ftp: 'com.island.ohara.connector.ftp.FtpSource',
-  smb: 'com.island.ohara.connector.smb.SmbSource',
-  perf: 'com.island.ohara.connector.perf.PerfSource',
+  jdbc: 'oharastream.ohara.connector.jdbc.source.JDBCSourceConnector',
+  json: 'oharastream.ohara.connector.jio.JsonIn',
+  ftp: 'oharastream.ohara.connector.ftp.FtpSource',
+  smb: 'oharastream.ohara.connector.smb.SmbSource',
+  perf: 'oharastream.ohara.connector.perf.PerfSource',
 };
 
 export const connectorSinks = {
-  console: 'com.island.ohara.connector.console.ConsoleSink',
-  ftp: 'com.island.ohara.connector.ftp.FtpSink',
-  hdfs: 'com.island.ohara.connector.hdfs.sink.HDFSSink',
-  json: 'com.island.ohara.connector.jio.JsonOut',
-  smb: 'com.island.ohara.connector.smb.SmbSink',
+  console: 'oharastream.ohara.connector.console.ConsoleSink',
+  ftp: 'oharastream.ohara.connector.ftp.FtpSink',
+  hdfs: 'oharastream.ohara.connector.hdfs.sink.HDFSSink',
+  json: 'oharastream.ohara.connector.jio.JsonOut',
+  smb: 'oharastream.ohara.connector.smb.SmbSink',
 };
 
 export const create = async params => {

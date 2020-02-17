@@ -69,8 +69,8 @@ to help you to access kafka and design custom connector.
             url "https://dl.bintray.com/oharastream/ohara"
         }
     }
-   implementation "com.island.ohara:ohara-common:$|version|"
-   implementation "com.island.ohara:ohara-kafka:$|version|"
+   implementation "oharastream.ohara:ohara-common:$|version|"
+   implementation "oharastream.ohara:ohara-kafka:$|version|"
 
 .. note::
    The `releases <https://github.com/oharastream/ohara/releases>`__ page shows the available version of ohara
@@ -98,8 +98,8 @@ The above data can be converted to ohara row by following code.
 
 .. code-block:: java
 
-   import com.island.ohara.common.data.Row;
-   import com.island.ohara.common.data.Cell;
+   import oharastream.ohara.common.data.Row;
+   import oharastream.ohara.common.data.Cell;
    class ExampleOfRow {
        public static void main(String[] args) {
            Row row = Row.of(
@@ -119,8 +119,8 @@ The above data can be converted to ohara row by following code.
 
 .. code-block:: java
 
-   import com.island.ohara.common.data.Row;
-   import com.island.ohara.common.data.Cell;
+   import oharastream.ohara.common.data.Row;
+   import oharastream.ohara.common.data.Cell;
    class ExampleOfRow {
        public static void main(String[] args) {
            Row row = Row.of(
@@ -146,7 +146,7 @@ for following data types:
 
 .. note::
 
-   The default serializer is located at :ohara-source:`Here <ohara-common/src/main/java/com/island/ohara/common/data/Serializer.java>`
+   The default serializer is located at :ohara-source:`Here <ohara-common/src/main/java/oharastream/ohara/common/data/Serializer.java>`
 
 When you get the rows in connector, you should follow the **cell
 setting** to generate the output. The **cell setting** in ohara is
@@ -175,8 +175,8 @@ An example of converting data according to columns.
 
 .. code-block:: java
 
-   import com.island.ohara.common.data.Cell;
-   import com.island.ohara.common.data.Column;
+   import oharastream.ohara.common.data.Cell;
+   import oharastream.ohara.common.data.Column;
    class ExampleOfConverting {
        public static Object hello(Column column, String rawValue) {
            switch (column.dataType) {
@@ -1006,5 +1006,5 @@ Below we list the important methods in the Storage interface:
   }
 
 .. note::
-  You can read the :ohara-source:`FtpStorage <ohara-connector/src/main/scala/com/island/ohara/connector/ftp/FtpStorage.scala>`
+  You can read the :ohara-source:`FtpStorage <ohara-connector/src/main/scala/oharastream/ohara/connector/ftp/FtpStorage.scala>`
   as an example to see how to implement your own Storage.

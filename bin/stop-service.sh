@@ -32,7 +32,7 @@ if [ "$1" == "manager" ]; then
   yarn clean:process
   exit
 elif [ "$1" == "-v" ] || [ "$1" == "version" ] || [ "$1" == "-version" ]; then
-  "$BIN_DIR/run_java.sh" com.island.ohara.common.util.VersionUtils
+  "$BIN_DIR/run_java.sh" oharastream.ohara.common.util.VersionUtils
   exit 1
 elif [ "$1" == "help" ]; then
   echo "Usage:"
