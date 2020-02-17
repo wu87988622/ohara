@@ -37,7 +37,7 @@ export const createApi = context => {
       }
       return map(res.data, object => {
         return generateClusterResponse({
-          values: object.tags,
+          values: { ...object.tags, ...getKey(object) },
           stageValues: omit(object, 'tags'),
         });
       });
@@ -51,7 +51,7 @@ export const createApi = context => {
         });
       }
       return generateClusterResponse({
-        values: res.data.tags,
+        values: { ...res.data.tags, ...getKey(res.data) },
         stageValues: omit(res.data, 'tags'),
       });
     },
@@ -84,7 +84,9 @@ export const createApi = context => {
           title: `Save workspace ${values.name} failed.`,
         });
       }
-      return generateClusterResponse({ values: res.data.tags });
+      const data = generateClusterResponse({ values: res.data.tags });
+      const key = getKey(res.data);
+      return { ...data, ...key };
     },
     stage: async values => {
       validate(values);

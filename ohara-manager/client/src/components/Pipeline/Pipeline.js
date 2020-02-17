@@ -652,9 +652,9 @@ const Pipeline = () => {
       <NodeDialog />
       <PipelinePropertyDialog
         isOpen={isPropertyDialogOpen}
-        handleClose={closePropertyDialog}
+        onClose={closePropertyDialog}
         data={PropertyDialogData}
-        handleSubmit={handleSubmit}
+        onSubmit={handleSubmit}
       />
       <Dialog
         open={isOpen}

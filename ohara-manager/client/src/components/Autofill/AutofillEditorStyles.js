@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import styled, { css } from 'styled-components';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  AUTOFILL: 'autofill',
-  SETTINGS: 'settings',
-};
+export default styled.div(
+  ({ theme }) => css`
+    .setting {
+      display: flex;
+      align-items: flex-end;
 
-const SubTabs = {
-  SETTINGS: 'settings',
-  PLUGINS: 'plugins',
-  NODES: 'nodes',
-  NONE: 'none',
-};
+      .input {
+        padding-right: ${theme.spacing(1)}px;
+      }
+    }
 
-const Segments = {
-  WORKER: 'worker',
-  BROKER: 'broker',
-  ZOOKEEPER: 'zookeeper',
-  NONE: 'none',
-};
-
-export { EditWorkspace, Tabs, SubTabs, Segments };
+    .add-button {
+      margin-top: ${theme.spacing(2)}px;
+    }
+  `,
+);

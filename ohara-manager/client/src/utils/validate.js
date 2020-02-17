@@ -61,8 +61,11 @@ export const checkDuplicate = validateList => value => {
   );
 };
 
-export const composeValidators = (...validators) => value =>
-  validators.reduce((error, validator) => error || validator(value), undefined);
+export const composeValidators = (...validators) => (value, allValues, meta) =>
+  validators.reduce(
+    (error, validator) => error || validator(value, allValues, meta),
+    undefined,
+  );
 
 export const validWithDef = def => value => {
   const { necessary, regex, blacklist } = def;

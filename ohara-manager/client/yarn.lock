@@ -4728,6 +4728,11 @@ fill-range@^7.0.1:
   dependencies:
     to-regex-range "^5.0.1"
 
+final-form-arrays@3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/final-form-arrays/-/final-form-arrays-3.0.2.tgz#9f3bef778dec61432357744eb6f3abef7e7f3847"
+  integrity sha512-TfO8aZNz3RrsZCDx8GHMQcyztDNpGxSSi9w4wpSNKlmv2PfFWVVM8P7Yj5tj4n0OWax+x5YwTLhT5BnqSlCi+w==
+
 final-form@4.18.5:
   version "4.18.5"
   resolved "https://registry.yarnpkg.com/final-form/-/final-form-4.18.5.tgz#e359cfaf2892ef135d92fcf22e06b475dda3a885"
@@ -9286,6 +9291,13 @@ react-error-overlay@^6.0.5:
   resolved "https://registry.yarnpkg.com/react-error-overlay/-/react-error-overlay-6.0.5.tgz#55d59c2a3810e8b41922e0b4e5f85dcf239bd533"
   integrity sha512-+DMR2k5c6BqMDSMF8hLH0vYKtKTeikiFW+fj0LClN+XZg4N9b8QUAdHC62CGWNLTi/gnuuemNcNcTFrCvK1f+A==
 
+react-final-form-arrays@3.1.1:
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/react-final-form-arrays/-/react-final-form-arrays-3.1.1.tgz#39d23e7ede966e418cad209e8fde46da1d603e99"
+  integrity sha512-e6S1x9597cvI4QPniOPmllXXandDAqCCuBo4AvXstZYgcV8whsqzk8aCrmQEy6eEfy2tEhvn6f4VI1GY+JBRsg==
+  dependencies:
+    "@babel/runtime" "^7.4.5"
+
 react-final-form@6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/react-final-form/-/react-final-form-6.3.0.tgz#b85ae123a3796b3e0c8f56033c8a5037f4497e76"
@@ -11258,7 +11270,7 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
 
-uuid@^3.0.1, uuid@^3.3.2:
+uuid@3.4.0, uuid@^3.0.1, uuid@^3.3.2:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==

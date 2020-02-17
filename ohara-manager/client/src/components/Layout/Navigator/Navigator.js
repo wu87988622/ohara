@@ -118,6 +118,14 @@ const Navigator = () => {
           Files
         </MenuItem>
 
+        <MenuItem
+          className="autofill"
+          key={EditWorkspaceTabs.AUTOFILL}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.AUTOFILL)}
+        >
+          Autofill
+        </MenuItem>
+
         {/* Feature is disabled because it's not implemented in 0.9 */
 
         false && (

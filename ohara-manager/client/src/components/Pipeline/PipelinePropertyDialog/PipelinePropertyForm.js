@@ -15,7 +15,7 @@
  */
 
 import React, { useRef, Fragment, createRef } from 'react';
-import { capitalize } from 'lodash';
+import { capitalize, flatten } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
 import Typography from '@material-ui/core/Typography';
@@ -23,30 +23,43 @@ import Typography from '@material-ui/core/Typography';
 import RenderDefinition from 'components/common/Definitions/RenderDefinition';
 import { EDITABLE } from 'components/common/Definitions/Permission';
 
-const RenderDefinitions = props => {
+const scrollIntoViewOption = { behavior: 'smooth', block: 'start' };
+
+const PipelinePropertyForm = React.forwardRef((props, ref) => {
   const {
-    Definitions = [],
+    definitions = [],
+    files = [],
+    freePorts,
     initialValues = {},
     onSubmit,
     topics = [],
-    files = [],
-    freePorts,
   } = props;
-
   const formRef = useRef(null);
-  const formHandleSubmit = () =>
-    formRef.current.dispatchEvent(new Event('submit'));
+  const fieldRefs = {};
 
-  const refs = {};
+  // Apis
+  const apis = {
+    change: (key, value) => formRef.current.change(key, value),
+    getDefinitions: () => flatten(definitions),
+    scrollIntoView: key => {
+      if (fieldRefs[key].current)
+        fieldRefs[key].current.scrollIntoView(scrollIntoViewOption);
+    },
+    submit: () => formRef.current.submit(),
+    values: () => formRef.current.getState().values,
+  };
 
-  const RenderForm = (
+  React.useImperativeHandle(ref, () => apis);
+
+  return (
     <Form
       onSubmit={onSubmit}
       initialValues={initialValues}
       render={({ handleSubmit, form }) => {
+        formRef.current = form;
         return (
-          <form onSubmit={handleSubmit} ref={formRef}>
-            {Definitions.map(defs => {
+          <form onSubmit={handleSubmit}>
+            {definitions.map(defs => {
               const title = defs[0].group;
               return (
                 <Fragment key={title}>
@@ -54,12 +67,12 @@ const RenderDefinitions = props => {
                   {defs
                     .filter(def => !def.internal)
                     .map(def => {
-                      refs[def.key] = createRef();
+                      fieldRefs[def.key] = createRef();
                       return RenderDefinition({
                         def,
                         topics,
                         files,
-                        ref: refs[def.key],
+                        ref: fieldRefs[def.key],
                         defType: EDITABLE,
                         freePorts,
                       });
@@ -72,15 +85,15 @@ const RenderDefinitions = props => {
       }}
     />
   );
+});
 
-  return { RenderForm, formHandleSubmit, refs };
-};
-
-RenderDefinitions.propTypes = {
-  Definitions: PropTypes.array,
-  topics: PropTypes.array,
+PipelinePropertyForm.propTypes = {
+  definitions: PropTypes.array,
+  files: PropTypes.array,
+  freePorts: PropTypes.array,
+  initialValues: PropTypes.object,
   onSubmit: PropTypes.func,
-  id: PropTypes.string,
+  topics: PropTypes.array,
 };
 
-export default RenderDefinitions;
+export default PipelinePropertyForm;

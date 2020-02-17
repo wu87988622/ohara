@@ -32,6 +32,7 @@ import {
   useWorkspace,
 } from 'context';
 
+import { AutofillList } from 'components/Autofill';
 import { Tabs as WorkspaceTabs } from '.';
 import { FileUpload } from './File';
 import MoreActions from './MoreActions';
@@ -106,6 +107,10 @@ const EditWorkspace = () => {
 
             <Tab label={WorkspaceTabs.TOPICS} value={WorkspaceTabs.TOPICS} />
             <Tab label={WorkspaceTabs.FILES} value={WorkspaceTabs.FILES} />
+            <Tab
+              label={WorkspaceTabs.AUTOFILL}
+              value={WorkspaceTabs.AUTOFILL}
+            />
 
             {/* Feature is disabled because it's not implemented in 0.9 */
             false && (
@@ -149,6 +154,13 @@ const EditWorkspace = () => {
             className="tab-panel"
           >
             <FilesTab />
+          </TabPanel>
+          <TabPanel
+            value={tab}
+            index={WorkspaceTabs.AUTOFILL}
+            className="tab-panel"
+          >
+            <AutofillList />
           </TabPanel>
 
           {/* Feature is disabled because it's not implemented in 0.9 */

@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import styled, { css } from 'styled-components';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  AUTOFILL: 'autofill',
-  SETTINGS: 'settings',
-};
-
-const SubTabs = {
-  SETTINGS: 'settings',
-  PLUGINS: 'plugins',
-  NODES: 'nodes',
-  NONE: 'none',
-};
-
-const Segments = {
-  WORKER: 'worker',
-  BROKER: 'broker',
-  ZOOKEEPER: 'zookeeper',
-  NONE: 'none',
-};
-
-export { EditWorkspace, Tabs, SubTabs, Segments };
+export default styled.div(
+  ({ theme }) => css`
+    .MuiSvgIcon-root {
+      font-size: ${theme.spacing(2.5)}px;
+    }
+  `,
+);

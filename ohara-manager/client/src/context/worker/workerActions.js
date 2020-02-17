@@ -53,7 +53,7 @@ export const createActions = context => {
         // to decide workspace is dirties or not
         const data = {
           ...omit(createRes, ['classInfos']),
-          ...omit(startRes, ['stageSettings']),
+          ...omit(startRes, ['stagingSettings']),
         };
 
         dispatch(routine.success(data));

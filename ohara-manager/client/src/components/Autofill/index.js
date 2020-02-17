@@ -14,28 +14,8 @@
  * limitations under the License.
  */
 
-import EditWorkspace from './EditWorkspace';
+import AutofillEditor from './AutofillEditor';
+import AutofillList from './AutofillList';
+import AutofillSelector from './AutofillSelector';
 
-const Tabs = {
-  OVERVIEW: 'overview',
-  TOPICS: 'topics',
-  FILES: 'files',
-  AUTOFILL: 'autofill',
-  SETTINGS: 'settings',
-};
-
-const SubTabs = {
-  SETTINGS: 'settings',
-  PLUGINS: 'plugins',
-  NODES: 'nodes',
-  NONE: 'none',
-};
-
-const Segments = {
-  WORKER: 'worker',
-  BROKER: 'broker',
-  ZOOKEEPER: 'zookeeper',
-  NONE: 'none',
-};
-
-export { EditWorkspace, Tabs, SubTabs, Segments };
+export { AutofillEditor, AutofillList, AutofillSelector };

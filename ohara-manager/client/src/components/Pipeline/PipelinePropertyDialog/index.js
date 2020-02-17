@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import PipelinePropertyDialog from './PipelinePropetyDialog';
+import PipelinePropertyDialog from './PipelinePropertyDialog';
 
 export default PipelinePropertyDialog;

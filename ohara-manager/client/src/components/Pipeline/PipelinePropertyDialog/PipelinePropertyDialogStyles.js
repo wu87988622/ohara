@@ -43,6 +43,13 @@ export const StyleMuiDialogContent = styled(MuiDialogContent)(
   ({ theme }) => css`
     height: 100%;
     padding: ${theme.spacing(2)}px;
+
+    .speed-dial {
+      position: absolute;
+      bottom: ${theme.spacing(10)}px;
+      right: ${theme.spacing(4)}px;
+      z-index: ${theme.zIndex.speedDial};
+    }
   `,
 );
 

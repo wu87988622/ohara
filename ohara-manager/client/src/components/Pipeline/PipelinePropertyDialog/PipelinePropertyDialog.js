@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { find, filter, isEmpty, capitalize, has, isArray, get } from 'lodash';
 import Button from '@material-ui/core/Button';
@@ -29,7 +29,7 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
-import RenderDefinitions from './SettingDefinitions';
+import PipelinePropertyForm from './PipelinePropertyForm';
 import { KIND } from 'const';
 import {
   useConnectorState,
@@ -38,6 +38,7 @@ import {
   useFileState,
   useWorkspace,
 } from 'context';
+import PipelinePropertySpeedDial from './PipelinePropertySpeedDial';
 import {
   StyleTitle,
   StyleIconButton,
@@ -50,13 +51,7 @@ import {
 } from './PipelinePropertyDialogStyles';
 
 const PipelinePropertyDialog = props => {
-  const {
-    isOpen,
-    handleClose,
-    handleSubmit,
-    data = {},
-    maxWidth = 'md',
-  } = props;
+  const { isOpen, onClose, onSubmit, data = {}, maxWidth = 'md' } = props;
   const {
     title = '',
     classInfo = {},
@@ -71,6 +66,8 @@ const PipelinePropertyDialog = props => {
   const { data: currentStreams } = useStreamState();
   const { data: currentTopics } = useTopicState();
   const { data: currentFiles } = useFileState();
+
+  const formRef = useRef(null);
 
   let targetCell;
   switch (kind) {
@@ -130,7 +127,7 @@ const PipelinePropertyDialog = props => {
     }
   };
 
-  const onSubmit = async values => {
+  const handleSubmit = async values => {
     const topicCells = paperApi.getCells(KIND.topic);
     Object.keys(values).forEach(key => {
       switch (key) {
@@ -148,7 +145,7 @@ const PipelinePropertyDialog = props => {
       }
     });
     if (has(values, 'topicKeys') || has(values, 'to') || has(values, 'from')) {
-      handleSubmit(
+      onSubmit(
         {
           cell: cellData,
           topic: {
@@ -166,34 +163,25 @@ const PipelinePropertyDialog = props => {
         values,
         paperApi,
       );
-      handleClose();
+      onClose();
       return;
     }
 
-    handleSubmit({ cell: cellData }, values, paperApi);
-    handleClose();
+    onSubmit({ cell: cellData }, values, paperApi);
+    onClose();
   };
-
-  const { RenderForm, formHandleSubmit, refs } = RenderDefinitions({
-    topics: currentTopics,
-    files: currentFiles,
-    freePorts: get(currentWorker, 'freePorts', []),
-    Definitions: groups.sort(),
-    initialValues: targetCell,
-    onSubmit,
-  });
 
   const handleExpansionPanelChange = panel => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
   const DialogTitle = params => {
-    const { title, handleClose } = params;
+    const { title, onClose } = params;
     return (
       <StyleTitle disableTypography>
         <Typography variant="h4">{title}</Typography>
-        {handleClose && (
-          <StyleIconButton onClick={handleClose}>
+        {onClose && (
+          <StyleIconButton onClick={onClose}>
             <CloseIcon />
           </StyleIconButton>
         )}
@@ -201,27 +189,16 @@ const PipelinePropertyDialog = props => {
     );
   };
 
-  useEffect(() => {
-    if (selected) {
-      //in react useEffect componentDidUpdate default event is scrollToTop,so we need setTimeout wait to scroll.
-      setTimeout(() => {
-        if (refs[selected]) {
-          refs[selected].current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-        }
-      }, 100);
-    }
-  });
-
   const handleClick = async key => {
     setSelected(key);
+    setTimeout(() => {
+      if (formRef.current) formRef.current.scrollIntoView(key);
+    }, 100);
   };
 
   return (
-    <Dialog onClose={handleClose} open={isOpen} maxWidth={maxWidth} fullWidth>
-      <DialogTitle handleClose={handleClose} title={title} />
+    <Dialog onClose={onClose} open={isOpen} maxWidth={maxWidth} fullWidth>
+      <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
           <StyleFilter
@@ -280,10 +257,27 @@ const PipelinePropertyDialog = props => {
             })}
           </div>
         </LeftBody>
-        <RightBody>{RenderForm}</RightBody>
+        <RightBody>
+          <PipelinePropertyForm
+            definitions={groups.sort()}
+            files={currentFiles}
+            freePorts={get(currentWorker, 'freePorts', [])}
+            initialValues={targetCell}
+            onSubmit={handleSubmit}
+            ref={formRef}
+            topics={currentTopics}
+          />
+        </RightBody>
+        <div className="speed-dial">
+          <PipelinePropertySpeedDial formRef={formRef} />
+        </div>
       </StyleMuiDialogContent>
       <StyleMuiDialogActions>
-        <Button autoFocus onClick={() => formHandleSubmit()} color="primary">
+        <Button
+          autoFocus
+          onClick={() => formRef.current.submit()}
+          color="primary"
+        >
           Save changes
         </Button>
       </StyleMuiDialogActions>
@@ -295,8 +289,8 @@ PipelinePropertyDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   data: PropTypes.object,
   maxWidth: PropTypes.string,
-  handleClose: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 export default PipelinePropertyDialog;
