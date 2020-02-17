@@ -58,7 +58,7 @@ const EventLog = () => {
   return (
     <Wrapper>
       <EventLogHeader onFilter={handleFilter} />
-      <div className="logs">
+      <div className="logs" data-testid="event-logs">
         <EventLogList data={logs} isFetching={isFetching} />
       </div>
       <div className="status-bar">
