@@ -100,26 +100,26 @@ const Toolbox = props => {
     if (error) return showMessage(error);
   };
 
-  const removeTempCell = () => {
-    // Remove temporary cells
-    paperApi
-      .getCells()
-      .filter(cell => cell.isTemporary)
-      .forEach(cell => paperApi.removeElement(cell.id));
-  };
+  const handleAddGraph = async newName => {
+    if (!utils.checkUniqueName(newName, paperApi)) {
+      setIsOpen(false);
+      utils.removeTemporaryCell(paperApi);
+      return showMessage(
+        `The name ${newName} is already taken, please use a different name!`,
+      );
+    }
 
-  const handleAddGraph = async newGraphName => {
     const params = {
       ...cellInfo,
-      displayName: newGraphName,
+      displayName: newName,
     };
 
     switch (cellInfo.kind) {
       case KIND.stream:
         paperApi.addElement({
           ...params,
-          name: newGraphName,
-          displayName: newGraphName,
+          name: newName,
+          displayName: newName,
         });
 
         break;
@@ -128,17 +128,17 @@ const Toolbox = props => {
       case KIND.sink:
         paperApi.addElement({
           ...params,
-          name: newGraphName,
-          displayName: newGraphName,
+          name: newName,
+          displayName: newName,
         });
         break;
 
       default:
     }
 
-    removeTempCell();
-    showMessage(`${newGraphName} has been added`);
+    utils.removeTemporaryCell(paperApi);
     setIsOpen(false);
+    showMessage(`${newName} has been added`);
   };
 
   let sourceGraph = React.useRef(null);
@@ -202,14 +202,20 @@ const Toolbox = props => {
         toolPapers: [sourcePaper, sinkPaper, topicPaper, streamPaper],
         setCellInfo,
         setIsOpen,
-        currentPipeline,
-        topicsData,
         paperApi,
+        showMessage,
       });
     };
 
     renderToolbox();
-  }, [connectors, currentPipeline, paperApi, searchResults, topicsData]);
+  }, [
+    connectors,
+    currentPipeline,
+    paperApi,
+    searchResults,
+    showMessage,
+    topicsData,
+  ]);
 
   return (
     <Draggable
@@ -348,7 +354,7 @@ const Toolbox = props => {
           handleConfirm={handleAddGraph}
           handleClose={() => {
             setIsOpen(false);
-            removeTempCell();
+            utils.removeTemporaryCell(paperApi);
           }}
         />
       </StyledToolbox>

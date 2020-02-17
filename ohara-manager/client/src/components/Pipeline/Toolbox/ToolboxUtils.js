@@ -29,6 +29,23 @@ import { AddSharedTopicIcon } from 'components/common/Icon';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
+export const removeTemporaryCell = paperApi => {
+  // Remove temporary cells
+  paperApi
+    .getCells()
+    .filter(cell => cell.isTemporary)
+    .forEach(cell => paperApi.removeElement(cell.id));
+};
+
+export const checkUniqueName = (name, paperApi) => {
+  const isUnique = paperApi
+    .getCells()
+    .filter(cell => cell.cellType === 'html.Element')
+    .every(element => element.name !== name);
+
+  return Boolean(isUnique);
+};
+
 export const createToolboxList = params => {
   const {
     connectors,
@@ -186,6 +203,7 @@ export const enableDragAndDrop = params => {
     setCellInfo,
     setIsOpen: openAddConnectorDialog,
     paperApi,
+    showMessage,
   } = params;
 
   toolPapers.forEach(toolPaper => {
@@ -298,10 +316,16 @@ export const enableDragAndDrop = params => {
 
           if (isTopic) {
             if (isShared) {
-              paperApi.addElement({
-                ...params,
-                displayName: name,
-              });
+              if (!checkUniqueName(name, paperApi)) {
+                showMessage(
+                  `The name ${name} is already taken, please use a different name!`,
+                );
+              } else {
+                paperApi.addElement({
+                  ...params,
+                  displayName: name,
+                });
+              }
             } else {
               paperApi.addElement({
                 ...params,
@@ -329,9 +353,7 @@ export const enableDragAndDrop = params => {
           .off('mousemove.fly')
           .off('mouseup.fly');
         flyingShape.remove();
-
         $('.flying-paper').remove();
-
         $('.toolbox').css('pointer-events', 'auto');
       });
     });
