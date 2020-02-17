@@ -155,8 +155,8 @@ const createTopicCell = options => {
       return this;
     },
     updateElement(cellData) {
+      const { $box } = this;
       const { status } = cellData;
-      const $box = this.$box;
       $box.find('.display-name').text(displayName);
       $box.find('.topic-status').attr('fill', statusColors[status]);
 
@@ -183,7 +183,7 @@ const createTopicCell = options => {
   });
 
   return new joint.shapes.html.Element({
-    id: id ? id : undefined, // undefined -> id is controlled by JointJS
+    id,
     name,
     kind,
     className,

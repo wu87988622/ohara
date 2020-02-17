@@ -206,6 +206,8 @@ export const StyledPaper = styled.div(
       }
 
       .status-value {
+        text-transform: lowercase;
+
         &:first-letter {
           text-transform: capitalize;
         }

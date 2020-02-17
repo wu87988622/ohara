@@ -261,7 +261,7 @@ const createConnectorCell = options => {
   });
 
   return new joint.shapes.html.Element({
-    id: id ? id : undefined, // undefined -> id is controlled by JointJS
+    id,
     name,
     kind,
     className,
