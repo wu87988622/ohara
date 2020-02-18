@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 final class TestKafkaClient extends BasicShabondiTest {
-  import ConvertSupport._
+  import oharastream.ohara.shabondi.common.ConvertSupport._
 
   implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
   implicit val materializer: ActorMaterializer = ActorMaterializer()

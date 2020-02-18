@@ -23,6 +23,7 @@ import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.shabondi._
+import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
@@ -30,9 +31,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 final class TestSinkRoute extends BasicShabondiTest {
-  import DefaultDefinitions._
-  import oharastream.ohara.shabondi.JsonSupport._
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
+  import oharastream.ohara.shabondi.common.JsonSupport._
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
@@ -72,8 +72,8 @@ final class TestSinkRoute extends BasicShabondiTest {
     implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
 
     val topicKey1 = createTopicKey
-    val config    = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val webServer = new WebServer(config, SinkRouteHandler(config))
+    val config    = defaultSinkConfig(Seq(topicKey1))
+    val webServer = new WebServer(config)
     webServer.routes // create route handle first.
 
     try {
@@ -106,8 +106,8 @@ final class TestSinkRoute extends BasicShabondiTest {
     implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
 
     val topicKey1 = createTopicKey
-    val config    = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val webServer = new WebServer(config, SinkRouteHandler(config))
+    val config    = defaultSinkConfig(Seq(topicKey1))
+    val webServer = new WebServer(config)
     webServer.routes // create route handle first.
 
     try {
@@ -149,14 +149,13 @@ final class TestSinkRoute extends BasicShabondiTest {
     implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
 
     val topicKey1    = createTopicKey
-    val config       = defaultTestConfig(SERVER_TYPE_SINK, sinkFromTopics = Seq(topicKey1))
-    val routeHandler = SinkRouteHandler(config)
+    val config       = defaultSinkConfig(Seq(topicKey1))
     val intervalTime = JDuration.ofSeconds(2)
     val idleTime     = JDuration.ofSeconds(3)
-    routeHandler.scheduleFreeIdleGroups(intervalTime, idleTime)
 
-    val webServer  = new WebServer(config, routeHandler)
-    val dataGroups = routeHandler.dataGroups
+    val webServer = new WebServer(config)
+    webServer.routeHandler.scheduleFreeIdleGroups(intervalTime, idleTime)
+    val dataGroups = webServer.routeHandler.dataGroups
 
     try {
       log.debug("Start poll request...")

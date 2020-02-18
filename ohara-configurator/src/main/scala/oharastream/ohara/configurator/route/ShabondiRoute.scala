@@ -19,19 +19,19 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
-import oharastream.ohara.client.configurator.v0.{ShabondiApi}
+import oharastream.ohara.client.configurator.v0.ShabondiApi
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.setting.SettingDef.Necessary
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
 import spray.json.{JsString, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ShabondiRoute {
-  import oharastream.ohara.shabondi.DefaultDefinitions._
   import ShabondiApi._
 
   private[route] def necessaryContains(definition: SettingDef, settings: Map[String, JsValue]): Unit = {
@@ -46,26 +46,48 @@ private[configurator] object ShabondiRoute {
     }
   }
 
+  implicit private class ServerTypeHelper(serverType: ShabondiType) {
+    def defaultSettings(): Map[String, JsValue] = {
+      serverType match {
+        case ShabondiType.Source => extractDefaultValues(ShabondiDefinitions.sourceOnlyDefinitions)
+        case ShabondiType.Sink   => extractDefaultValues(ShabondiDefinitions.sinkOnlyDefinitions)
+      }
+    }
+  }
+
   private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
     implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
-    necessaryContains(SERVER_TYPE_DEFINITION, creation.settings)
-    val serverType = creation.serverType
+    import ShabondiDefinitions._
+    val serverType = ShabondiType(creation.serverClass)
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
       .topics {
-        serverType match {
-          case SERVER_TYPE_SOURCE => creation.sourceToTopics
-          case SERVER_TYPE_SINK   => creation.sinkFromTopics
-        }
+        if (serverType == ShabondiType.Source) {
+          val sourceToTopics = creation.sourceToTopics
+          if (sourceToTopics == null) {
+            throw new IllegalArgumentException(s"${SOURCE_TO_TOPICS_DEFINITION.key} is required.")
+          } else
+            sourceToTopics
+        } else
+          Set.empty
+      }
+      .topics {
+        if (serverType == ShabondiType.Sink) {
+          val sinkFromTopics = creation.sinkFromTopics
+          if (sinkFromTopics == null) {
+            throw new IllegalArgumentException(s"${SINK_FROM_TOPICS_DEFINITION.key} is required.")
+          } else
+            sinkFromTopics
+        } else
+          Set.empty
       }
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
-        val settings = ShabondiApi.access.request.settings(creation.settings).creation.settings
         ShabondiClusterInfo(
-          settings = settings,
+          settings = serverType.defaultSettings ++ creation.settings,
           aliveNodes = Set.empty,
           state = None,
           metrics = Metrics(Seq.empty),
@@ -99,7 +121,7 @@ private[configurator] object ShabondiRoute {
             .flatMap { _ =>
               val creation = ShabondiApi.access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, ShabondiApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.settings, ShabondiApi.ALL_DEFINITIONS))
                 .key(key)
                 .creation
               creationToClusterInfo(creation)
@@ -112,14 +134,15 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
     (clusterInfo: ShabondiClusterInfo, subName: String, params: Map[String, String]) => {
-      val checkTopics = clusterInfo.serverType match {
-        case SERVER_TYPE_SOURCE => clusterInfo.sourceToTopics
-        case SERVER_TYPE_SINK   => clusterInfo.sinkFromTopics
+      val serverType = ShabondiType(clusterInfo.serverClass)
+      val checkTopics = serverType match {
+        case ShabondiType.Source => clusterInfo.sourceToTopics
+        case ShabondiType.Sink   => clusterInfo.sinkFromTopics
       }
       if (checkTopics.isEmpty) {
-        val key = clusterInfo.serverType match {
-          case SERVER_TYPE_SOURCE => SOURCE_TO_TOPICS_DEFINITION.key
-          case SERVER_TYPE_SINK   => SINK_FROM_TOPICS_DEFINITION.key
+        val key = serverType match {
+          case ShabondiType.Source => ShabondiDefinitions.SOURCE_TO_TOPICS_DEFINITION.key
+          case ShabondiType.Sink   => ShabondiDefinitions.SINK_FROM_TOPICS_DEFINITION.key
         }
         throw new IllegalArgumentException(s"$key cannot be empty.")
       }

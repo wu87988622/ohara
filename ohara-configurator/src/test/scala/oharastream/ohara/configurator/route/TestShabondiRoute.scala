@@ -20,12 +20,12 @@ import java.time.{Duration => JDuration}
 
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, ShabondiApi, TopicApi}
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterCreation
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
-import oharastream.ohara.shabondi.DefaultDefinitions._
+import oharastream.ohara.shabondi.ShabondiDefinitions._
+import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers
 import spray.json._
@@ -75,7 +75,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
       shabondiApi.request
         .group(objectKey.group)
         .name(objectKey.name)
-        .serverType(SERVER_TYPE_SOURCE)
+        .serverClass(ShabondiType.Source.className)
         .clientPort(clientPort)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeName(nodeName)
@@ -85,14 +85,14 @@ class TestShabondiRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testShabondiSourceCreate(): Unit = {
+  def testSourceCreate(): Unit = {
     val objectKey                                    = ObjectKey.of("group-1", "name-1")
     val (clientPort, nodeName)                       = (CommonUtils.availablePort(), availableNodeNames(0))
-    val clusterInfo: ShabondiApi.ShabondiClusterInfo = createSourceShabondi(objectKey, clientPort, nodeName)
+    val clusterInfo: ShabondiApi.ShabondiClusterInfo = createShabondiSource(objectKey, clientPort, nodeName)
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.serverType should ===(SERVER_TYPE_SOURCE)
+    clusterInfo.serverClass should ===(ShabondiType.Source.className)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -102,15 +102,15 @@ class TestShabondiRoute extends OharaTest with Matchers {
   def testShabondiSourceUpdate(): Unit = {
     val objectKey              = ObjectKey.of("group-1", "name-1")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    val clusterInfo            = createSourceShabondi(objectKey, clientPort, nodeName)
+    val clusterInfo            = createShabondiSource(objectKey, clientPort, nodeName)
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.serverType should ===(SERVER_TYPE_SOURCE)
+    clusterInfo.serverClass should ===(ShabondiType.Source.className)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
-    clusterInfo.sourceToTopics should be(empty)
+    //clusterInfo.sourceToTopics should be(empty)
 
     val newClientPort = CommonUtils.availablePort()
     val updatedClusterInfo = await(
@@ -121,23 +121,24 @@ class TestShabondiRoute extends OharaTest with Matchers {
         .sourceToTopics(Set(topicKey))
         .settings(
           Map(
-            SINK_POLL_TIMEOUT_DEF.key   -> JsString(JDuration.ofSeconds(10).toString),
-            SINK_GROUP_IDLETIME_DEF.key -> JsString(JDuration.ofMinutes(30).toString)
+            SINK_POLL_TIMEOUT_DEFINITION.key -> JsString(JDuration.ofSeconds(10).toString),
+            SINK_GROUP_IDLETIME.key          -> JsString(JDuration.ofMinutes(30).toString)
           )
         )
         .update()
     )
     updatedClusterInfo.clientPort should be(newClientPort)
-    updatedClusterInfo.sourceToTopics should be(Set(topicKey))
-    updatedClusterInfo.settings should contain(SINK_POLL_TIMEOUT_DEF.key   -> JsString("PT10S"))
-    updatedClusterInfo.settings should contain(SINK_GROUP_IDLETIME_DEF.key -> JsString("PT30M"))
+    //updatedClusterInfo.sourceToTopics should be(Some(Set(topicKey)))
+    //updatedClusterInfo.sinkFromTopics should be(None)
+    updatedClusterInfo.settings should contain(SINK_POLL_TIMEOUT_DEFINITION.key -> JsString("PT10S"))
+    updatedClusterInfo.settings should contain(SINK_GROUP_IDLETIME.key          -> JsString("PT30M"))
   }
 
   @Test
-  def testShabondiSourceStart(): Unit = {
+  def testSourceStart(): Unit = {
     val objectKey              = ObjectKey.of("group-1", "name-1")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName)
+    createShabondiSource(objectKey, clientPort, nodeName)
 
     await(
       shabondiApi.request
@@ -151,15 +152,15 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
     val shabondiList = await(shabondiApi.list())
     shabondiList.size should ===(1)
-    shabondiList(0).sourceToTopics should ===(Set(topicKey))
+    //shabondiList(0).sourceToTopics should ===(Set(topicKey))
     shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
     shabondiList(0).aliveNodes.head should ===(nodeName)
   }
 
   @Test
-  def testShabondiSourceStop(): Unit = {
+  def testSourceStop(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(topicKey))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
 
     await(shabondiApi.start(objectKey))
     val shabondiList = await(shabondiApi.list())
@@ -177,7 +178,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
   @Test
   def testShabondiSourceCanDelete(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(topicKey))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     val shabondiList1 = await(shabondiApi.list())
@@ -185,9 +186,9 @@ class TestShabondiRoute extends OharaTest with Matchers {
   }
 
   @Test
-  def testShouldThrowExceptionIfShabondiIsRunningWhenSourceDelete(): Unit = {
+  def testSourceDeleteWhenRunning(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(topicKey))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
     await(shabondiApi.start(objectKey))
 
     an[IllegalArgumentException] should be thrownBy await(shabondiApi.delete(objectKey))
@@ -196,7 +197,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
   @Test
   def testShabondiSourceCanDeleteMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(topicKey))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     await(shabondiApi.delete(objectKey))
@@ -206,7 +207,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
   @Test
   def testShabondiSourceCanStopMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(topicKey))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
     await(shabondiApi.start(objectKey))
 
     await(shabondiApi.stop(objectKey))
@@ -220,12 +221,12 @@ class TestShabondiRoute extends OharaTest with Matchers {
     await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
 
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createSourceShabondi(objectKey, clientPort, nodeName, Set(notStartedTopic))
+    createShabondiSource(objectKey, clientPort, nodeName, Set(notStartedTopic))
 
     an[IllegalArgumentException] should be thrownBy await(shabondiApi.start(objectKey))
   }
 
-  private def createSourceShabondi(
+  private def createShabondiSource(
     key: ObjectKey,
     clientPort: Int,
     nodeName: String,
@@ -235,36 +236,12 @@ class TestShabondiRoute extends OharaTest with Matchers {
       shabondiApi.request
         .group(key.group)
         .name(key.name)
-        .serverType(SERVER_TYPE_SOURCE)
+        .serverClass(ShabondiType.Source.className)
         .clientPort(clientPort)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeName(nodeName)
         .sourceToTopics(topicKeys)
         .create()
     )
-  }
-
-  @Test
-  def testNecessaryContainInvalidValue(): Unit = {
-    val jsonObject = """
-        |{
-        |  "name": "shabondi00",
-        |  "group": "default",
-        |  "shabondi.serverType": "aaa",
-        |  "shabondi.client.port": 58456,
-        |  "brokerClusterKey": {
-        |  	"group": "default",
-        |  	"name": "bk00"
-        |  },
-        |  "nodeNames": [
-        |    "vito-ohara01"
-        |  ]
-        |}
-        |""".stripMargin.parseJson.asJsObject
-
-    val creation = new ShabondiClusterCreation(jsonObject.fields)
-    the[IllegalArgumentException] thrownBy {
-      ShabondiRoute.necessaryContains(SERVER_TYPE_DEFINITION, creation.settings)
-    } should have message ("Invalid value of shabondi.serverType, must be one of [source, sink]")
   }
 }

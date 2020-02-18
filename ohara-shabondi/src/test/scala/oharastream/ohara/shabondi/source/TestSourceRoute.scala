@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.source
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.kafka.Consumer
-import oharastream.ohara.shabondi.source.SourceRouteHandler
+import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 import spray.json._
+
 import scala.concurrent.duration._
 
-final class TestRoute extends BasicShabondiTest {
-  import DefaultDefinitions._
-  import JsonSupport._
-  import ShabondiRouteTestSupport._
+final class TestSourceRoute extends BasicShabondiTest {
+  import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
+  import oharastream.ohara.shabondi.common.JsonSupport._
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
@@ -42,8 +42,8 @@ final class TestRoute extends BasicShabondiTest {
   @Test
   def testSourceRoute(): Unit = {
     val topicKey1 = createTopicKey
-    val config    = defaultTestConfig(SERVER_TYPE_SOURCE, Seq(topicKey1))
-    val webServer = new WebServer(config, SourceRouteHandler(config))
+    val config    = defaultSourceConfig(Seq(topicKey1))
+    val webServer = new WebServer(config)
     try {
       val requestSize = 9
       (1 to requestSize).foreach { i =>

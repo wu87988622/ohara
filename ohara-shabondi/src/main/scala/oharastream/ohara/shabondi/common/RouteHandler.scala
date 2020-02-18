@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.Suite
-import org.scalatest.concurrent.ScalaFutures
+import akka.http.scaladsl.server.{Directives, Route}
+import oharastream.ohara.common.util.Releasable
 
-private[shabondi] object ShabondiRouteTestSupport extends Suite with ScalaFutures with ScalatestRouteTest
+trait RouteHandler extends Directives with Releasable {
+  def route(): Route
+}

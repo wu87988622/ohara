@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.Suite
-import org.scalatest.concurrent.ScalaFutures
+import java.util.concurrent.CompletableFuture
 
-private[shabondi] object ShabondiRouteTestSupport extends Suite with ScalaFutures with ScalatestRouteTest
+import scala.compat.java8.FutureConverters
+import scala.concurrent.Future
+
+private[shabondi] object ConvertSupport {
+  implicit class ScalaFutureConverter[T](completableFuture: java.util.concurrent.Future[T]) {
+    def toScala: Future[T] = {
+      FutureConverters.toScala(completableFuture.asInstanceOf[CompletableFuture[T]])
+    }
+  }
+}

@@ -24,8 +24,10 @@ import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.TopicAdmin
-import oharastream.ohara.shabondi.DefaultDefinitions._
 import oharastream.ohara.testing.WithBroker
+import oharastream.ohara.shabondi.common.ShabondiUtils
+import oharastream.ohara.shabondi.sink.SinkConfig
+import oharastream.ohara.shabondi.source.SourceConfig
 import com.typesafe.scalalogging.Logger
 import org.junit.After
 import org.scalatest.Matchers
@@ -71,24 +73,37 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
       .topicName(name)
       .create
 
-  protected def defaultTestConfig(
-    serverType: String,
-    sourceToTopics: Seq[TopicKey] = Seq.empty[TopicKey],
-    sinkFromTopics: Seq[TopicKey] = Seq.empty[TopicKey]
-  ): Config = {
+  protected def defaultSourceConfig(
+    sourceToTopics: Seq[TopicKey] = Seq.empty[TopicKey]
+  ): SourceConfig = {
+    import ShabondiDefinitions._
+    val serverClassName = oharastream.ohara.shabondi.source.Boot.getClass.getName.replaceAll("\\$", "")
     val args = mutable.ArrayBuffer(
-      s"$SERVER_TYPE_KEY=$serverType",
-      s"$CLIENT_PORT_KEY=8080",
-      s"$BROKERS_KEY=${testUtil.brokersConnProps}"
+      SERVER_CLASS_DEFINITION.key + "=" + serverClassName,
+      CLIENT_PORT_DEFINITION.key + "=8080",
+      BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
     )
     if (sourceToTopics.nonEmpty)
-      args += s"$SOURCE_TO_TOPICS_KEY=${TopicKey.toJsonString(sourceToTopics.asJava)}"
+      args += s"${SOURCE_TO_TOPICS_DEFINITION.key}=${TopicKey.toJsonString(sourceToTopics.asJava)}"
 
+    val rawConfig = ShabondiUtils.parseArgs(args.toArray)
+    new SourceConfig(rawConfig)
+  }
+
+  protected def defaultSinkConfig(
+    sinkFromTopics: Seq[TopicKey] = Seq.empty[TopicKey]
+  ): SinkConfig = {
+    import ShabondiDefinitions._
+    val serverClassName = oharastream.ohara.shabondi.sink.Boot.getClass.getName.replaceAll("\\$", "")
+    val args = mutable.ArrayBuffer(
+      SERVER_CLASS_DEFINITION.key + "=" + serverClassName,
+      CLIENT_PORT_DEFINITION.key + "=8080",
+      BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
+    )
     if (sinkFromTopics.nonEmpty)
-      args += s"$SINK_FROM_TOPICS_KEY=${TopicKey.toJsonString(sinkFromTopics.asJava)}"
-
-    val rawConfig = CommonUtils.parse(args.asJava)
-    Config(rawConfig.asScala.toMap)
+      args += s"${SINK_FROM_TOPICS_DEFINITION.key}=${TopicKey.toJsonString(sinkFromTopics.asJava)}"
+    val rawConfig = ShabondiUtils.parseArgs(args.toArray)
+    new SinkConfig(rawConfig)
   }
 
   protected def singleRow(columnSize: Int, rowId: Int = 0): Row =

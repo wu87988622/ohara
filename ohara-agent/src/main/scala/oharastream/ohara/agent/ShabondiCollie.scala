@@ -26,7 +26,7 @@ import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterCreation
 import oharastream.ohara.client.configurator.v0.{ClusterStatus, ShabondiApi}
 import oharastream.ohara.common.setting.ObjectKey
-import oharastream.ohara.shabondi.Config
+import oharastream.ohara.shabondi.common.ShabondiUtils
 import com.typesafe.scalalogging.Logger
 import spray.json._
 
@@ -99,7 +99,7 @@ trait ShabondiCollie extends Collie {
                   case (k, v) =>
                     val value = v match {
                       case JsString(s) => s
-                      case _           => Config.escape(v.toString)
+                      case _           => ShabondiUtils.escape(v.toString)
                     }
                     k + "=" + value
                 }.toSeq

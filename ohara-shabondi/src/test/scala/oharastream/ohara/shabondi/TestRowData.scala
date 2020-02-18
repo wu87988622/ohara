@@ -18,7 +18,7 @@ package oharastream.ohara.shabondi
 
 import oharastream.ohara.common.data.Cell
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.shabondi.JsonSupport._
+import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._
@@ -31,7 +31,7 @@ final class TestRowData extends OharaTest with Matchers {
         |{"col1":"hello", "col2": 200}
         |""".stripMargin
 
-    val rowData: RowData = JsonSupport.rowDataFormat.read(jsonData.parseJson)
+    val rowData: JsonSupport.RowData = JsonSupport.rowDataFormat.read(jsonData.parseJson)
 
     rowData("col1") should ===(JsString("hello"))
     rowData("col2") should ===(JsNumber(200))

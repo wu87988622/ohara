@@ -106,7 +106,6 @@ public interface WithDefinitions {
     SINK,
     PARTITIONER,
     STREAM,
-    SHABONDI,
     UNKNOWN;
 
     public String key() {
@@ -144,9 +143,11 @@ public interface WithDefinitions {
           do {
             switch (clz.getName()) {
               case "oharastream.ohara.kafka.connector.RowSourceConnector":
+              case "oharastream.ohara.shabondi.source.Boot":
                 kind = Type.SOURCE.key();
                 break;
               case "oharastream.ohara.kafka.connector.RowSinkConnector":
+              case "oharastream.ohara.shabondi.sink.Boot":
                 kind = Type.SINK.key();
                 break;
               case "oharastream.ohara.streams.Stream":

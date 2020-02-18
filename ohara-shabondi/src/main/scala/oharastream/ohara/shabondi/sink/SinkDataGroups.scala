@@ -18,60 +18,15 @@ package oharastream.ohara.shabondi.sink
 
 import java.time.{Duration => JDuration}
 import java.util.concurrent._
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-import java.util.{Queue => JQueue}
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.util.Releasable
-import oharastream.ohara.kafka.Consumer
-import oharastream.ohara.shabondi.Config
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 
-private[sink] class RowQueue(name: String) extends ConcurrentLinkedQueue[Row] {
-  private[sink] val lastTime = new AtomicLong(System.currentTimeMillis())
-
-  override def poll(): Row =
-    try {
-      super.poll()
-    } finally {
-      lastTime.set(System.currentTimeMillis())
-    }
-
-  def isIdle(idleTime: JDuration): Boolean =
-    System.currentTimeMillis() > (idleTime.toMillis + lastTime.get())
-}
-
-private[sink] class DataGroup(val name: String, brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration)
-    extends Releasable {
-  private val log          = Logger(classOf[RowQueue])
-  val queue                = new RowQueue(name)
-  val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout)
-  private[this] val closed = new AtomicBoolean(false)
-
-  def resume(): Unit =
-    if (!closed.get) {
-      producer.resume()
-    }
-
-  def pause(): Unit =
-    if (!closed.get) {
-      producer.pause()
-    }
-
-  def isIdle(idleTime: JDuration): Boolean = queue.isIdle(idleTime)
-
-  override def close(): Unit =
-    if (closed.compareAndSet(false, true)) {
-      producer.close()
-      log.info("Group {} closed.", name)
-    }
-}
-
 private[sink] object SinkDataGroups {
-  def apply(config: Config) =
+  def apply(config: SinkConfig) =
     new SinkDataGroups(config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka), config.sinkPollTimeout)
 }
 
@@ -124,71 +79,5 @@ private class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollT
         dataGroup.close()
     }
     threadPool.shutdown()
-  }
-}
-
-private[sink] class QueueProducer(
-  val groupName: String,
-  val queue: JQueue[Row],
-  val brokerProps: String,
-  val topicNames: Seq[String],
-  val pollTimeout: JDuration
-) extends Runnable
-    with Releasable {
-  private[this] val log                    = Logger(classOf[QueueProducer])
-  private[this] val paused: AtomicBoolean  = new AtomicBoolean(false)
-  private[this] val stopped: AtomicBoolean = new AtomicBoolean(false)
-
-  private[this] val consumer: Consumer[Row, Array[Byte]] = Consumer
-    .builder()
-    .keySerializer(Serializer.ROW)
-    .valueSerializer(Serializer.BYTES)
-    .offsetFromBegin()
-    .topicNames(topicNames.asJava)
-    .connectionProps(brokerProps)
-    .build()
-
-  override def run(): Unit = {
-    log.info(
-      "{} group `{}` start.(topics={}, brokerProps={})",
-      this.getClass.getSimpleName,
-      groupName,
-      topicNames.mkString(","),
-      brokerProps
-    )
-    try {
-      while (!stopped.get) {
-        if (!paused.get && queue.isEmpty) {
-          val rows: Seq[Row] = consumer.poll(pollTimeout).asScala.map(_.key.get)
-          rows.foreach(r => queue.add(r))
-          log.trace("    group[{}], queue: {}, rows: {}", groupName, queue.size, rows.size)
-        } else {
-          TimeUnit.MILLISECONDS.sleep(10)
-        }
-      } // while
-    } finally {
-      consumer.close()
-      log.info("stopped.")
-    }
-  }
-
-  override def close(): Unit = {
-    stop()
-  }
-
-  def stop(): Unit = {
-    stopped.set(true)
-  }
-
-  def pause(): Unit = {
-    if (paused.compareAndSet(false, true)) {
-      log.info("{} paused.", this.getClass.getSimpleName)
-    }
-  }
-
-  def resume(): Unit = {
-    if (paused.compareAndSet(true, false)) {
-      log.info("{} resumed.", this.getClass.getSimpleName)
-    }
   }
 }

@@ -21,22 +21,23 @@ import java.util.concurrent.{ExecutorService, Executors}
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
+import akka.stream.ActorMaterializer
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
-import oharastream.ohara.shabondi._
+import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
 
 import scala.concurrent.ExecutionContext
 
 private[shabondi] object SourceRouteHandler {
-  def apply(config: Config) = new SourceRouteHandler(config)
+  def apply(config: SourceConfig, materializer: ActorMaterializer) =
+    new SourceRouteHandler(config, materializer)
 }
+private[shabondi] class SourceRouteHandler(config: SourceConfig, materializer: ActorMaterializer) extends RouteHandler {
+  import oharastream.ohara.shabondi.common.JsonSupport._
 
-private[shabondi] class SourceRouteHandler(config: Config) extends RouteHandler {
-  import Boot._
-  import JsonSupport._
-
-  private val log = Logging(actorSystem, classOf[SourceRouteHandler])
+  private val actorSystem = materializer.system
+  private val log         = Logging(actorSystem, classOf[SourceRouteHandler])
 
   private val threadPool: ExecutorService = Executors.newFixedThreadPool(4)
   implicit private val ec                 = ExecutionContext.fromExecutorService(threadPool)
@@ -57,6 +58,7 @@ private[shabondi] class SourceRouteHandler(config: Config) extends RouteHandler 
   private val topicKeys = config.sourceToTopics
 
   override def route(): Route = {
+    implicit val _materializer = materializer
     (post & path("v0")) {
       handleExceptions(exceptionHandler) {
         entity(as[RowData]) { rowData =>

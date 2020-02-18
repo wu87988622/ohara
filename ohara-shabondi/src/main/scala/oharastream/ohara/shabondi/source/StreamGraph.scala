@@ -21,7 +21,7 @@ import akka.stream.scaladsl.{Flow, Keep, RunnableGraph, Sink, Source}
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.kafka.Producer
-import oharastream.ohara.shabondi.ConvertSupport
+import oharastream.ohara.shabondi.common.ConvertSupport
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}

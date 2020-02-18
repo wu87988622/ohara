@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.source
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.Suite
-import org.scalatest.concurrent.ScalaFutures
+import oharastream.ohara.common.setting.TopicKey
+import oharastream.ohara.shabondi.ShabondiDefinitions._
 
-private[shabondi] object ShabondiRouteTestSupport extends Suite with ScalaFutures with ScalatestRouteTest
+import scala.collection.JavaConverters._
+
+private[shabondi] class SourceConfig(raw: Map[String, String]) {
+  def serverClass: String = raw(SERVER_CLASS_DEFINITION.key).toString
+
+  def port: Int = raw(CLIENT_PORT_DEFINITION.key).toInt
+
+  def brokers: String = raw(BROKERS_DEFINITION.key)
+
+  def sourceToTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SOURCE_TO_TOPICS_DEFINITION.key)).asScala
+}

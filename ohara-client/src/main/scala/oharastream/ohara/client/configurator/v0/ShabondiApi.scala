@@ -23,8 +23,8 @@ import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
-import oharastream.ohara.common.util.{CommonUtils}
-import oharastream.ohara.shabondi.DefaultDefinitions
+import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.shabondi.ShabondiDefinitions
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -35,9 +35,11 @@ final object ShabondiApi {
   val SHABONDI_SERVICE_NAME = "shabondi"
   val SHABONDI_PREFIX_PATH  = "shabondis"
 
-  val IMAGE_NAME_DEFAULT: String = oharastream.ohara.shabondi.Config.IMAGE_NAME_DEFAULT
+  val IMAGE_NAME_DEFAULT: String = ShabondiDefinitions.IMAGE_NAME_DEFAULT
 
-  def DEFINITIONS: Seq[SettingDef] = DefaultDefinitions.all
+  def ALL_DEFINITIONS: Seq[SettingDef]        = (SOURCE_ALL_DEFINITIONS ++ SINK_ALL_DEFINITIONS).distinct
+  def SOURCE_ALL_DEFINITIONS: Seq[SettingDef] = ShabondiDefinitions.sourceDefinitions
+  def SINK_ALL_DEFINITIONS: Seq[SettingDef]   = ShabondiDefinitions.sinkDefinitions
 
   final case class ShabondiClusterInfo(
     settings: Map[String, JsValue],
@@ -51,7 +53,7 @@ final object ShabondiApi {
       new ShabondiClusterCreation(settings)
     override def kind: String       = KIND
     override def ports: Set[Int]    = settings.ports
-    def serverType: String          = settings.serverType
+    def serverClass: String         = settings.serverClass
     def clientPort: Int             = settings.clientPort
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
 
@@ -62,19 +64,20 @@ final object ShabondiApi {
   }
 
   final class ShabondiClusterCreation(val settings: Map[String, JsValue]) extends ClusterCreation {
-    private val updating              = new ShabondiClusterUpdating(noJsNull(settings))
-    override def ports: Set[Int]      = Set(clientPort)
-    def serverType: String            = updating.serverType.get
+    private val updating         = new ShabondiClusterUpdating(noJsNull(settings))
+    override def ports: Set[Int] = Set(clientPort)
+
+    def serverClass: String           = updating.serverClass.get
     def clientPort: Int               = updating.clientPort.get
     def brokerClusterKey: ObjectKey   = updating.brokerClusterKey.get
-    def sourceToTopics: Set[TopicKey] = updating.sourceToTopics.get
-    def sinkFromTopics: Set[TopicKey] = updating.sinkFromTopics.get
+    def sourceToTopics: Set[TopicKey] = updating.sourceToTopics.getOrElse(null)
+    def sinkFromTopics: Set[TopicKey] = updating.sinkFromTopics.getOrElse(null)
   }
 
   final class ShabondiClusterUpdating(val settings: Map[String, JsValue]) extends ClusterUpdating {
-    import oharastream.ohara.shabondi.DefaultDefinitions._
-    def serverType: Option[String] = noJsNull(settings).get(SERVER_TYPE_DEFINITION.key).map(_.convertTo[String])
-    def clientPort: Option[Int]    = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
+    import ShabondiDefinitions._
+    def serverClass: Option[String] = noJsNull(settings).get(SERVER_CLASS_DEFINITION.key).map(_.convertTo[String])
+    def clientPort: Option[Int]     = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
     def brokerClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
     def sourceToTopics: Option[Set[TopicKey]] =
@@ -98,7 +101,7 @@ final object ShabondiApi {
         override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): ShabondiClusterCreation = new ShabondiClusterCreation(json.asJsObject.fields)
       },
-      ShabondiApi.DEFINITIONS
+      ShabondiDefinitions.basicDefinitions
     )
 
   implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: OharaJsonFormat[ShabondiClusterUpdating] =
@@ -110,16 +113,19 @@ final object ShabondiApi {
     )
 
   trait Request extends ClusterRequest {
-    import DefaultDefinitions._
+    import ShabondiDefinitions._
+
+    def serverClass(className: String): Request.this.type =
+      setting(SERVER_CLASS_DEFINITION.key, JsString(className))
 
     def brokers(brokers: String): Request.this.type =
       setting(BROKERS_DEFINITION.key, JsString(brokers))
 
-    def serverType(typeName: String): Request.this.type =
-      setting(SERVER_TYPE_DEFINITION.key, JsString(CommonUtils.requireNonEmpty(typeName)))
-
     def clientPort(port: Int): Request.this.type =
       setting(CLIENT_PORT_DEFINITION.key, JsNumber(CommonUtils.requireBindPort(port)))
+
+    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type =
+      setting(BROKER_CLUSTER_KEY_DEFINITION.key, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
 
     def sourceToTopics(topicKeys: Set[TopicKey]): Request.this.type =
       setting(SOURCE_TO_TOPICS_DEFINITION.key, JsArray(topicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
@@ -128,11 +134,8 @@ final object ShabondiApi {
       setting(SINK_FROM_TOPICS_DEFINITION.key, JsArray(topicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
 
     def sinkPollTimeout(duration: JDuration): Request.this.type = {
-      setting(SINK_POLL_TIMEOUT_DEF.key, JsString(duration.toMillis + " milliseconds"))
+      setting(SINK_POLL_TIMEOUT_DEFINITION.key, JsString(duration.toMillis + " milliseconds"))
     }
-
-    def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type =
-      setting(BROKER_CLUSTER_KEY_DEFINITION.key, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
 
     def creation: ShabondiClusterCreation = {
       val jsValue = SHABONDI_CLUSTER_CREATION_JSON_FORMAT.write(new ShabondiClusterCreation(noJsNull(settings.toMap)))

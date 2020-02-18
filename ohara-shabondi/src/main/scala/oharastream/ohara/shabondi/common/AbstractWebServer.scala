@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -26,44 +26,23 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
-import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.common.util.Releasable
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{Failure, Success, Try}
 
-private[shabondi] trait RouteHandler extends Directives with Releasable {
-  def route(): Route
-}
-
-private[shabondi] class WebServer(val config: Config, routeHandler: RouteHandler)
-    extends AbstractWebServer
-    with Releasable {
-  import Boot._
-
-  def start(): Unit = {
-    start(CommonUtils.anyLocalAddress(), config.port, ServerSettings(actorSystem), Some(actorSystem))
-  }
-
-  override def routes: Route = routeHandler.route()
-
-  override protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit = {
-    super.postServerShutdown(attempt, system)
-    this.close()
-    system.terminate()
-  }
-
-  override def close(): Unit = {
-    Releasable.close(routeHandler)
-  }
-}
-
 /**
   * reference: akka.http.scaladsl.server.HttpApp
   */
-private abstract class AbstractWebServer extends Directives {
+abstract class AbstractWebServer extends Directives with Releasable {
   protected val actorSystemRef = new AtomicReference[ActorSystem]()
+
+  implicit private val actorSystem = ActorSystem(Logging.simpleName(this).replaceAll("\\$", ""))
+  actorSystemRef.set(actorSystem)
+
+  implicit protected val materializer: ActorMaterializer = ActorMaterializer()
 
   protected def routes: Route
 
@@ -95,18 +74,16 @@ private abstract class AbstractWebServer extends Directives {
     actorSystemRef.get().log.info("Shutting down the server")
   }
 
-  protected def start(host: String, port: Int, settings: ServerSettings): Unit = {}
+  def start(bindInterface: String, port: Int): Unit = {
+    start(bindInterface, port, ServerSettings(actorSystem))
+  }
 
-  protected def start(host: String, port: Int, settings: ServerSettings, system: Option[ActorSystem]): Unit = {
-    implicit val _actorSystem = system.getOrElse(ActorSystem(Logging.simpleName(this).replaceAll("\\$", "")))
-    actorSystemRef.set(_actorSystem)
-
-    implicit val materializer: ActorMaterializer            = ActorMaterializer()
-    implicit val executionContext: ExecutionContextExecutor = _actorSystem.dispatcher
+  def start(bindInterface: String, port: Int, settings: ServerSettings): Unit = {
+    implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
 
     val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(
       handler = routes,
-      interface = host,
+      interface = bindInterface,
       port = port,
       settings = settings
     )
@@ -119,15 +96,19 @@ private abstract class AbstractWebServer extends Directives {
     }
 
     Await.ready(
-      bindingFuture.flatMap(_ => waitForShutdownSignal(_actorSystem)),
+      bindingFuture.flatMap(_ => waitForShutdownSignal(actorSystem)),
       Duration.Inf
     )
 
     bindingFuture
       .flatMap(_.unbind())
       .onComplete(attempt => {
-        postServerShutdown(attempt, _actorSystem)
-        if (system.isEmpty) _actorSystem.terminate()
+        postServerShutdown(attempt, actorSystem)
+        actorSystemRef.get().terminate()
       })
+  }
+
+  override def close(): Unit = {
+    actorSystemRef.get.terminate()
   }
 }

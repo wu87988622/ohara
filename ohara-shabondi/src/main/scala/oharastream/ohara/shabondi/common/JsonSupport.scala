@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
-
-import java.util.concurrent.CompletableFuture
+package oharastream.ohara.shabondi.common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import oharastream.ohara.common.data.{Cell, Row}
 import spray.json._
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters
-import scala.concurrent.Future
 
 private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   type RowData = Map[String, JsValue] // column, value
@@ -105,13 +101,5 @@ private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonPr
         .map(toValue)
         .toList
     case obj: JsObject => toRow(obj)
-  }
-}
-
-private[shabondi] object ConvertSupport {
-  implicit class ScalaFutureConverter[T](completableFuture: java.util.concurrent.Future[T]) {
-    def toScala: Future[T] = {
-      FutureConverters.toScala(completableFuture.asInstanceOf[CompletableFuture[T]])
-    }
   }
 }
