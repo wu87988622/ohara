@@ -16,17 +16,17 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import * as joint from 'jointjs';
 import _ from 'lodash';
 import $ from 'jquery';
+import * as joint from 'jointjs';
 import { useTheme } from '@material-ui/core/styles';
 
 import { KIND } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import { createConnection, getCellData } from './PaperUtils';
 import { useSnackbar } from 'context';
 import { PipelineStateContext } from '../Pipeline';
+import * as paperUtils from './PaperUtils';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
@@ -91,7 +91,6 @@ const Paper = React.forwardRef((props, ref) => {
         // Grid settings
         gridSize: 10,
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
-
         background: { color: palette.common.white },
 
         // Tweak the default highlighting to match our theme
@@ -201,9 +200,9 @@ const Paper = React.forwardRef((props, ref) => {
               linkView.model.remove({ ui: true, tool: toolView.cid });
               onDisconnect(
                 {
-                  sourceElement: getCellData(source),
-                  link: getCellData(linkView),
-                  targetElement: getCellData(target),
+                  sourceElement: paperUtils.getCellData(source),
+                  link: paperUtils.getCellData(linkView),
+                  targetElement: paperUtils.getCellData(target),
                 },
                 paperApi,
               );
@@ -284,7 +283,7 @@ const Paper = React.forwardRef((props, ref) => {
       // Adding new link is not counted as an `add` event
       if (cell.isLink()) return;
 
-      const data = getCellData(cell);
+      const data = paperUtils.getCellData(cell);
       cellAddRef.current = cell;
 
       if (!cell.get('shouldSkipOnElementAdd')) {
@@ -324,11 +323,11 @@ const Paper = React.forwardRef((props, ref) => {
         .hideElement('status')
         .setIsSelected(true);
 
-      onCellSelect(getCellData(elementView), paperApi);
+      onCellSelect(paperUtils.getCellData(elementView), paperApi);
 
       const sourceLink = graph.getLinks().find(link => !link.get('target').id);
       if (sourceLink) {
-        const result = createConnection({
+        const result = paperUtils.createConnection({
           sourceLink,
           targetElementView: elementView,
           showMessage,
@@ -355,21 +354,20 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('element:start:button:pointerclick', elementView => {
-      onCellStart(getCellData(elementView), paperApi);
+      onCellStart(paperUtils.getCellData(elementView), paperApi);
     });
 
     paper.on('element:stop:button:pointerclick', elementView => {
-      onCellStop(getCellData(elementView), paperApi);
+      onCellStop(paperUtils.getCellData(elementView), paperApi);
     });
 
     paper.on('element:config:button:pointerclick', elementView => {
-      onCellConfig(getCellData(elementView), paperApi);
-
+      onCellConfig(paperUtils.getCellData(elementView), paperApi);
       hideMenu(elementView);
     });
 
     paper.on('element:remove:button:pointerclick', elementView => {
-      onCellRemove(getCellData(elementView), paperApi);
+      onCellRemove(paperUtils.getCellData(elementView), paperApi);
     });
 
     paper.on('blank:pointerclick', () => {
@@ -425,6 +423,9 @@ const Paper = React.forwardRef((props, ref) => {
       // behavior in UI
 
       $(document).off('mousemove.createlink');
+
+      // TODO: the event should be unsubscribed here, but doing so will cause
+      // paper losing all elements from the screen
 
       // Graph events
       // graph.off('add');
@@ -511,7 +512,7 @@ const Paper = React.forwardRef((props, ref) => {
         graph.addCell(cell);
         const targetCell = graph.getLastCell();
 
-        return getCellData(targetCell);
+        return paperUtils.getCellData(targetCell);
       },
       removeElement(id) {
         if (typeof id !== 'string') {
@@ -569,7 +570,7 @@ const Paper = React.forwardRef((props, ref) => {
         newLink.target({ id: targetId });
         graph.addCell(newLink);
 
-        return getCellData(newLink);
+        return paperUtils.getCellData(newLink);
       },
       removeLink(id) {
         if (typeof id !== 'string') {
@@ -587,7 +588,7 @@ const Paper = React.forwardRef((props, ref) => {
 
         const result = findCell(id);
 
-        if (result) return getCellData(result);
+        if (result) return paperUtils.getCellData(result);
       },
       getCells(kind) {
         if (kind) {
@@ -603,10 +604,10 @@ const Paper = React.forwardRef((props, ref) => {
           return graph
             .getCells()
             .filter(cell => cell.attributes.kind === kind)
-            .map(getCellData);
+            .map(paperUtils.getCellData);
         }
 
-        return graph.getCells().map(getCellData);
+        return graph.getCells().map(paperUtils.getCellData);
       },
       loadGraph(json) {
         json.cells
@@ -667,18 +668,14 @@ const Paper = React.forwardRef((props, ref) => {
         return this.getScale().sx;
       },
       center(id) {
-        if (typeof id !== 'string') {
-          throw new Error(`paperApi: center(id: string) invalid argument id!`);
-        }
-
-        const element = findCell(id);
-        const cellBbox = {
-          ...element.getBBox(),
-          ...element.getBBox().center(),
+        const elementView = findElementView(id);
+        const elementBbox = {
+          ...elementView.getBBox(),
+          ...elementView.getBBox().center(),
         };
 
         const scale = this.getScale().sx;
-        const contentLocalOrigin = paper.paperToLocalPoint(cellBbox);
+        const contentLocalOrigin = paper.paperToLocalPoint(elementBbox);
         const { tx, ty } = paper.translate();
         const { width, height } = this.getBbox();
         const fittingBbox = { x: tx, y: ty, width, height };
