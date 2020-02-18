@@ -79,31 +79,25 @@ const getTypeWithValueType = key => {
 
 export const getDefinition = params => {
   const settingDefinitions = get(params, 'settingDefinitions', []);
-  const definitionsObj = {};
-  settingDefinitions.forEach(definition => {
-    const obj = definition;
-    const keys = Object.keys(obj);
+  const newDefs = {};
+  settingDefinitions.forEach(def => {
+    const keys = Object.keys(def);
     keys
       .filter(key => key === 'key' || key === 'group')
       .forEach(key => {
-        switch (key) {
-          case 'key':
-            if (obj[key].indexOf('.') !== -1) {
-              obj[key] = obj[key].replace(/\./g, '__');
-            }
-            break;
+        // The value `.` doesn't work very well with final form
+        if (def[key].includes('.')) {
+          def[key] = def[key].replace(/\./g, '__');
+        }
 
-          case 'group':
-            obj.internal = true;
-            break;
-
-          default:
-            break;
+        // Group is hidden from our UI
+        if (def[key] === 'group') {
+          def.internal = true;
         }
       });
-    definitionsObj[obj.key] = obj;
+    newDefs[def.key] = def;
   });
-  return definitionsObj;
+  return newDefs;
 };
 
 export const createBody = params => {

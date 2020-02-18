@@ -161,7 +161,8 @@ const MuiTheme = createMuiTheme({
   },
   zIndex: {
     toolbox: 1210,
-    flyingPaper: 1220,
+    propertyView: 1250,
+    flyingPaper: 1300,
   },
 });
 
