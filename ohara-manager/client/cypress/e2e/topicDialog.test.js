@@ -68,7 +68,8 @@ describe('Topics Tab in Workspace Settings', () => {
       .contains('RUNNING')
       .should('exist');
 
-    cy.findByText(/delete/i)
+    cy.findAllByText(/^delete$/i)
+      .filter(':visible')
       .should('exist')
       .click();
     cy.contains('span', 'DELETE').click();

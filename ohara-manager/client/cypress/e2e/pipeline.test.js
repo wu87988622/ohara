@@ -30,6 +30,7 @@ const sinks = Object.values(connectorSinks).sort();
 let topics = [];
 
 Cypress.Commands.add('addElement', (name, kind, className) => {
+  cy.log(`add element: ${name} of ${kind} with className ${className}`);
   // toolbox: 272 width + navigator: 240 width + appBar: 64 width, we need to avoid covering it
   const initialX = 600;
   // the controllers tab has approximate 72 height, we need to avoid covering it
@@ -53,11 +54,12 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
     // the view of cells will be a [n, 2] matrix
     const x = size % 2 === 0 ? initialX : initialX + shiftWidth;
     const y = initialY + ~~(size / 2) * shiftHeight;
+    cy.log(`element position: ${x}, ${y}`);
 
     // wait a little time for the toolbox list rendered
     cy.wait(2000);
 
-    if (kind !== KIND.topic && kind !== KIND.stream) {
+    if (kind === KIND.source || kind === KIND.sink) {
       const elementIndex =
         kind === KIND.source
           ? sources.indexOf(className)
@@ -78,6 +80,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         .click();
     } else if (kind === KIND.topic) {
       topics.push(name);
+      cy.log(`Available topics in this pipeline: ${topics.join(',')}`);
       if (!name.startsWith('T')) {
         // create a shared topic
         cy.findByText('Add topics')
@@ -101,7 +104,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.findByText(name).should('exist');
 
         // wait a little time for the topic show in toolbox
-        cy.wait(1000);
+        cy.wait(3000);
 
         cy.findByTestId('toolbox-draggable')
           .find('g[data-type="html.Element"]:visible')
@@ -118,8 +121,20 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
           .dragAndDrop(x, y);
       }
     } else if (kind === KIND.stream) {
-      //TODO
-      cy.end();
+      cy.findByTestId('toolbox-draggable')
+        .find('g[data-type="html.Element"]:visible')
+        // we only got 1 class for the uploaded stream jar
+        // it's ok to assert the first element is the "stream class"
+        .eq(0)
+        .dragAndDrop(x, y);
+
+      // type the name and add
+      cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
+        name,
+      );
+      cy.findAllByText(/^add$/i)
+        .filter(':visible')
+        .click();
     }
 
     // wait a little time for the cell added
@@ -163,8 +178,8 @@ Cypress.Commands.add('cellAction', (name, action) => {
     });
 });
 
-describe('Pipeline Page', () => {
-  beforeEach(async () => await deleteAllServices());
+describe('ToolBox in Pipeline Page', () => {
+  before(async () => await deleteAllServices());
 
   it('create a empty pipeline should work normally', () => {
     cy.createWorkspace();
@@ -185,7 +200,8 @@ describe('Pipeline Page', () => {
   });
 
   it('check the toolbox works normally', () => {
-    cy.createWorkspace();
+    cy.visit('/');
+    cy.findAllByText(/^wo$/i).should('exist');
 
     // Add new pipeline
     cy.findByText(/^pipelines$/i)
@@ -264,7 +280,10 @@ describe('Pipeline Page', () => {
     cy.contains('span:visible', 'FtpSource').should('not.exist');
     cy.contains('span:visible', 'FtpSink').should('not.exist');
   });
+});
 
+describe('links in Pipeline Page', () => {
+  before(async () => await deleteAllServices());
   it('tests of connector and topic links in pipeline', () => {
     cy.createWorkspace();
 
@@ -282,7 +301,7 @@ describe('Pipeline Page', () => {
 
     cy.findByText(/^add$/i).click();
 
-    // force to reload the page in order to get the connectors
+    // force to reload the page in order to get the correct data in toolbox
     cy.reload();
 
     // check the toolbox
@@ -298,6 +317,13 @@ describe('Pipeline Page', () => {
       privateTopicName: 'T1',
     };
 
+    cy.log('add elements:');
+    cy.log(`element: perf source ${elements.perfSourceName}`);
+    cy.log(`element: ftp source ${elements.ftpSourceName}`);
+    cy.log(`element: shared topic ${elements.topicName}`);
+    cy.log(`element: console sink ${elements.consoleSinkName}`);
+    cy.log(`element: pipeline-only topic ${elements.privateTopicName}`);
+    cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
     cy.addElement(elements.perfSourceName, KIND.source, connectorSources.perf);
     cy.addElement(elements.ftpSourceName, KIND.source, connectorSources.ftp);
     cy.addElement(elements.topicName, KIND.topic, null);
@@ -313,77 +339,220 @@ describe('Pipeline Page', () => {
     cy.reload();
 
     // 1. cannot create link to a source
+    cy.log(`cannot create a link from perf source to ftp source`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link);
     cy.getCell(elements.ftpSourceName).click();
-    cy.findByText(`Target ${elements.ftpSourceName} is a source!`).should(
-      'exist',
-    );
+    cy.findByText(`Target ${elements.ftpSourceName} is a source!`)
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
 
     // 2. cannot create link from topic to topic
+    cy.log(`cannot create a link from shared topic to private topic`);
     cy.getCell(elements.topicName).trigger('mouseover');
     cy.cellAction(elements.topicName, ACTIONS.link);
     cy.getCell(elements.privateTopicName).click();
     cy.findByText(
       `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
 
     // 3. perf source -> topic -> hdfs sink
+    cy.log(`create a link from perf source to shared topic to hdfs sink`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link);
     cy.getCell(elements.privateTopicName).click();
     cy.getCell(elements.privateTopicName).trigger('mouseover');
     cy.cellAction(elements.privateTopicName, ACTIONS.link);
     cy.getCell(elements.hdfsSinkName).click();
-    // will auto create a pipeline-only topic and two lines
+    // will create two lines
     cy.get('g[data-type="standard.Link"]').should('have.length', 2);
 
     // 4. we don't allow multiple links for same cell
     // perf source -> console sink
+    cy.log(`cannot create a link from perf source to console sink`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link);
     cy.getCell(elements.consoleSinkName).click();
     cy.findByText(
       `The source ${elements.perfSourceName} is already connected to a target`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
+
     // ftp source -> hdfs sink
+    cy.log(`cannot create a link from ftp source to hdfs sink`);
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link);
     cy.getCell(elements.hdfsSinkName).click();
     cy.findByText(
       `The target ${elements.hdfsSinkName} is already connected to a source`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
 
     // perf source -> topic
+    cy.log(`cannot create a link from perf source to shared topic`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link);
     cy.getCell(elements.topicName).click();
     cy.findByText(
       `The source ${elements.perfSourceName} is already connected to a target`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
 
     // topic -> hdfs sink
+    cy.log(`cannot create a link from shared topic to hdfs sink`);
     cy.getCell(elements.topicName).trigger('mouseover');
     cy.cellAction(elements.topicName, ACTIONS.link);
     cy.getCell(elements.hdfsSinkName).click();
     cy.findByText(
       `The target ${elements.hdfsSinkName} is already connected to a source`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
 
     // we can force delete an used topic
+    cy.log(`force delete pipeline-only topic`);
     cy.getCell(elements.privateTopicName).trigger('mouseover');
     cy.cellAction(elements.privateTopicName, ACTIONS.remove);
-    cy.findByText(/^force delete$/i)
-      .should('exist')
-      .click();
-    cy.findByText(elements.privateTopicName).should('not.exist');
+    cy.findByText(/^force delete$/i).should('exist');
+    cy.contains('span:visible', /cancel/i).click();
+    cy.findAllByText(elements.privateTopicName).should('exist');
 
     // delete all elements
     Object.values(elements).forEach(element => {
-      // the private topic was removed by "force delete", skip it here
-      if (element === elements.privateTopicName) return;
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove);
+      cy.wait(1000);
     });
+
+    // clear the global topics
+    topics = [];
+  });
+
+  it('tests of stream, connector and topic links in pipeline', () => {
+    cy.visit('/');
+    cy.findAllByText(/^wo$/i).should('exist');
+
+    // Add new pipeline
+    cy.findByText(/^pipelines$/i)
+      .siblings('svg')
+      .first()
+      .click()
+      .findByText(/^add a new pipeline$/i)
+      .should('exist');
+
+    cy.findByTestId('new-pipeline-dialog')
+      .find('input')
+      .type('pipeline1');
+
+    cy.findByText(/^add$/i).click();
+
+    // force to reload the page in order to get the correct data in toolbox
+    cy.reload();
+
+    // check the toolbox
+    cy.findByText(/^toolbox$/i).should('exist');
+
+    // conditional tests of element link
+    const elements = {
+      perfSourceName: generate.serviceName({ prefix: 'source' }),
+      ftpSourceName: generate.serviceName({ prefix: 'source' }),
+      consoleSinkName: generate.serviceName({ prefix: 'sink' }),
+      hdfsSinkName: generate.serviceName({ prefix: 'sink' }),
+      topicName1: generate.serviceName({ prefix: 'topic' }),
+      streamName: generate.serviceName({ prefix: 'stream' }),
+      topicName2: generate.serviceName({ prefix: 'topic' }),
+    };
+
+    cy.log('add elements:');
+    cy.log(`element: perf source ${elements.perfSourceName}`);
+    cy.log(`element: ftp source ${elements.ftpSourceName}`);
+    cy.log(`element: console sink ${elements.consoleSinkName}`);
+    cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
+    cy.log(`element: shared topic 1 ${elements.topicName1}`);
+    cy.log(`element: stream ${elements.streamName}`);
+    cy.log(`element: shared topic 2 ${elements.topicName2}`);
+    cy.addElement(elements.perfSourceName, KIND.source, connectorSources.perf);
+    cy.addElement(elements.ftpSourceName, KIND.source, connectorSources.ftp);
+    cy.addElement(elements.consoleSinkName, KIND.sink, connectorSinks.console);
+    cy.addElement(elements.hdfsSinkName, KIND.sink, connectorSinks.hdfs);
+    cy.addElement(elements.topicName1, KIND.topic, null);
+    cy.addElement(elements.streamName, KIND.stream, null);
+    cy.addElement(elements.topicName2, KIND.topic, null);
+
+    // let the backend API makes effect
+    cy.wait(5000);
+
+    // to get the actual data-testid
+    // we need to refresh the paper again
+    cy.reload();
+
+    // 1. perf source -> topic1 -> stream -> topic2 -> hdfs sink
+    cy.log(
+      `create a link from perf source to topic 1 to stream to topic 2 to hdfs sink`,
+    );
+    cy.getCell(elements.perfSourceName).trigger('mouseover');
+    cy.cellAction(elements.perfSourceName, ACTIONS.link);
+    cy.getCell(elements.topicName1).click();
+
+    cy.getCell(elements.topicName1).trigger('mouseover');
+    cy.cellAction(elements.topicName1, ACTIONS.link);
+    cy.getCell(elements.streamName).click();
+
+    cy.getCell(elements.streamName).trigger('mouseover');
+    cy.cellAction(elements.streamName, ACTIONS.link);
+    cy.getCell(elements.topicName2).click();
+
+    cy.getCell(elements.topicName2).trigger('mouseover');
+    cy.cellAction(elements.topicName2, ACTIONS.link);
+    cy.getCell(elements.hdfsSinkName).click();
+    // will create four lines
+    cy.get('g[data-type="standard.Link"]').should('have.length', 4);
+
+    // 2. we don't allow multiple links for same cell
+    // perf source -> console sink
+    cy.log(`cannot create a link from perf source to console sink`);
+    cy.getCell(elements.perfSourceName).trigger('mouseover');
+    cy.cellAction(elements.perfSourceName, ACTIONS.link);
+    cy.getCell(elements.consoleSinkName).click();
+    cy.findByText(
+      `The source ${elements.perfSourceName} is already connected to a target`,
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
+
+    // ftp source -> stream
+    cy.log(`cannot create a link from ftp source to stream`);
+    cy.getCell(elements.ftpSourceName).trigger('mouseover');
+    cy.cellAction(elements.ftpSourceName, ACTIONS.link);
+    cy.getCell(elements.streamName).click();
+    cy.findByText(
+      `The target ${elements.streamName} is already connected to a source`,
+    )
+      .should('exist')
+      .siblings('div')
+      .first()
+      .click();
+
+    // clear the global topics
+    topics = [];
   });
 });

@@ -3,7 +3,8 @@
   "integrationFolder": "cypress/e2e",
   "reporterOptions": {
     "mochaFile": "../test-reports/e2eReport-[hash].xml",
-    "toConsole": true
+    "toConsole": true,
+    "jenkinsMode": true
   },
   "screenshotsFolder": "cypress/screenshots/e2e",
   "video": true,

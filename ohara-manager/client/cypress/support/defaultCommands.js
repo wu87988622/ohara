@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { hashByGroupAndName } from '../../src/utils/sha';
+
 const nodeHost = Cypress.env('nodeHost');
 const nodePort = Cypress.env('nodePort');
 const nodeUser = Cypress.env('nodeUser');
@@ -142,12 +144,36 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
   cy.contains('p:visible', 'Click here to select nodes').click();
   cy.addNode();
 
-  // Step3: add worker plugins (using default)
+  // Step3: add worker plugins
+  // we add a stream.jar for testing purpose
+  const workspaceKey = {
+    name: 'workspace1',
+    group: 'workspace',
+  };
+  const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
+  const stream = {
+    fixturePath: 'stream',
+    name: 'ohara-it-stream.jar',
+    group: fileGroup,
+  };
+  stream.tags = { parentKey: workspaceKey };
+  cy.contains('button', 'Add worker plugins')
+    .find('input')
+    .then(element => {
+      cy.createJar(stream).then(params => {
+        element[0].files = params.fileList;
+        cy.wrap(element).trigger('change', { force: true });
+      });
+    });
+  cy.wait(1000);
+  cy.contains('button', 'Add worker plugins').click();
+
   cy.findAllByText(/^next$/i)
     .filter(':visible')
     .click();
 
   // Step4: create workspace
+  cy.wait(1000);
   cy.findAllByText(/^finish$/i)
     .filter(':visible')
     .click();
