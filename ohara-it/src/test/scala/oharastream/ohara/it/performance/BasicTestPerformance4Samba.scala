@@ -17,14 +17,15 @@
 package oharastream.ohara.it.performance
 
 import java.io.{BufferedWriter, OutputStreamWriter}
-import java.util.concurrent.{Executors, TimeUnit}
-import java.util.concurrent.atomic.{AtomicBoolean, LongAdder}
+import java.util.concurrent.atomic.LongAdder
 
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.AssumptionViolatedException
 import spray.json.{JsNumber, JsString, JsValue}
+
 import collection.JavaConverters._
+import scala.concurrent.duration._
 
 abstract class BasicTestPerformance4Samba extends BasicTestPerformance {
   private[this] val sambaHostname: String = sys.env.getOrElse(
@@ -60,7 +61,8 @@ abstract class BasicTestPerformance4Samba extends BasicTestPerformance {
   private[this] val NEED_DELETE_DATA_KEY: String = PerformanceTestingUtils.DATA_CLEANUP_KEY
   protected[this] val needDeleteData: Boolean    = sys.env.getOrElse(NEED_DELETE_DATA_KEY, "true").toBoolean
 
-  private[this] val numberOfProducerThread = 2
+  private[this] val totalSizeInBytes = new LongAdder()
+  private[this] val count            = new LongAdder()
 
   protected val sambaSettings: Map[String, JsValue] = Map(
     oharastream.ohara.connector.smb.SMB_HOSTNAME_KEY   -> JsString(sambaHostname),
@@ -89,48 +91,36 @@ abstract class BasicTestPerformance4Samba extends BasicTestPerformance {
     finally Releasable.close(client)
   }
 
-  protected def setupInputData(dataSize: Long): (String, Long, Long) = {
+  override protected def setupInputData(timeout: Duration): (String, Long, Long) = {
     val cellNames: Set[String] = rowData().cells().asScala.map(_.name).toSet
+    val numberOfRowsToFlush    = 1000
+    val client                 = sambaClient()
 
-    val numberOfRowsToFlush = 1000
-    val pool                = Executors.newFixedThreadPool(numberOfProducerThread)
-    val closed              = new AtomicBoolean(false)
-    val count               = new LongAdder()
-    val sizeInBytes         = new LongAdder()
-
-    val client = sambaClient()
-    try if (!client.exists(csvOutputFolder)) createSambaFolder(csvOutputFolder)
-    finally Releasable.close(client)
-
+    val start = CommonUtils.current()
     try {
-      (0 until numberOfProducerThread).foreach { _ =>
-        pool.execute(() => {
-          val client = sambaClient()
-          try while (!closed.get() && sizeInBytes.longValue() <= dataSize) {
-            val file   = s"$csvOutputFolder/${CommonUtils.randomString()}"
-            val writer = new BufferedWriter(new OutputStreamWriter(client.create(file)))
-            try {
-              writer
-                .append(cellNames.mkString(","))
-                .append("\n")
-              (0 until numberOfRowsToFlush).foreach { _ =>
-                val content = rowData().cells().asScala.map(_.value).mkString(",")
-                count.increment()
-                sizeInBytes.add(content.length)
-                writer
-                  .append(content)
-                  .append("\n")
-              }
-            } finally Releasable.close(writer)
-          } finally Releasable.close(client)
-        })
+      if (!client.exists(csvOutputFolder)) createSambaFolder(csvOutputFolder)
+
+      while (totalSizeInBytes.longValue() <= sizeOfInputData &&
+             (CommonUtils.current() - start) <= timeout.toMillis) {
+        val file   = s"$csvOutputFolder/${CommonUtils.randomString()}"
+        val writer = new BufferedWriter(new OutputStreamWriter(client.create(file)))
+        try {
+          writer
+            .append(cellNames.mkString(","))
+            .append("\n")
+          (0 until numberOfRowsToFlush).foreach { _ =>
+            val content = rowData().cells().asScala.map(_.value).mkString(",")
+            count.increment()
+            totalSizeInBytes.add(content.length)
+            writer
+              .append(content)
+              .append("\n")
+          }
+        } finally Releasable.close(writer)
       }
-    } finally {
-      pool.shutdown()
-      pool.awaitTermination(durationOfPerformance.toMillis * 10, TimeUnit.MILLISECONDS)
-      closed.set(true)
-    }
-    (csvOutputFolder, count.longValue(), sizeInBytes.longValue())
+    } finally Releasable.close(client)
+
+    (csvOutputFolder, count.longValue(), totalSizeInBytes.longValue())
   }
 
   private[this] def sambaClient(): FileSystem =

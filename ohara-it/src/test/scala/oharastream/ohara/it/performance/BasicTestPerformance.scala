@@ -17,7 +17,7 @@
 package oharastream.ohara.it.performance
 
 import java.io.{File, FileWriter}
-import java.util.concurrent.atomic.{AtomicBoolean, LongAdder}
+import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
@@ -36,6 +36,7 @@ import spray.json.JsValue
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.control.Breaks.break
 
 /**
   * the basic infra to test performance for ohara components.
@@ -64,11 +65,16 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   //------------------------------[global properties]------------------------------//
   private[this] val durationOfPerformanceKey     = PerformanceTestingUtils.DURATION_KEY
-  private[this] val durationOfPerformanceDefault = 100 seconds
+  private[this] val durationOfPerformanceDefault = 120 seconds
   protected val durationOfPerformance: Duration =
     value(durationOfPerformanceKey).map(Duration.apply).getOrElse(durationOfPerformanceDefault)
 
-  private[this] val wholeTimeout = durationOfPerformance.toSeconds * 10
+  private[this] val timeoutOfInputDataKey               = PerformanceTestingUtils.INPUTDATA_TIMEOUT_KEY
+  private[this] val timeoutOfInputDataDefault: Duration = 30 seconds
+  protected val timeoutOfInputData: Duration =
+    value(timeoutOfInputDataKey).map(Duration(_)).getOrElse(timeoutOfInputDataDefault)
+
+  private[this] val wholeTimeout = (durationOfPerformance.toSeconds + timeoutOfInputData.toSeconds) * 2
 
   @Rule
   override def timeout: Timeout = Timeout.seconds(wholeTimeout)
@@ -85,16 +91,16 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   protected val logMetersFrequency: Duration =
     value(logMetersFrequencyKey).map(Duration(_)).getOrElse(logMetersFrequencyDefault)
 
+  private[this] val totalSizeInBytes              = new LongAdder()
+  private[this] val count                         = new LongAdder()
+  private[this] var produceDataThread: Releasable = _
+
   //------------------------------[topic properties]------------------------------//
+
   private[this] val megabytesOfInputDataKey           = PerformanceTestingUtils.DATA_SIZE_KEY
-  private[this] val megabytesOfInputDataDefault: Long = 100
+  private[this] val megabytesOfInputDataDefault: Long = 10000
   protected val sizeOfInputData: Long =
     1024L * 1024L * value(megabytesOfInputDataKey).map(_.toLong).getOrElse(megabytesOfInputDataDefault)
-
-  private[this] val kbytesOfDurationInputDataKey   = PerformanceTestingUtils.DURATION_DATA_SIZE_KEY
-  private[this] val kbytesOfInputDataDefault: Long = 1
-  protected val sizeOfDurationInputData: Long =
-    1024L * value(kbytesOfDurationInputDataKey).map(_.toLong).getOrElse(kbytesOfInputDataDefault)
 
   private[this] val numberOfPartitionsKey     = PerformanceTestingUtils.PARTITION_SIZE_KEY
   private[this] val numberOfPartitionsDefault = 1
@@ -109,6 +115,36 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   protected def value(key: String): Option[String] = sys.env.get(key)
   //------------------------------[helper methods]------------------------------//
+
+  private[this] var inputDataThread: Releasable = _
+
+  protected[this] def loopInputData(): Unit = {
+    inputDataThread = {
+      val pool = Executors.newSingleThreadExecutor()
+      pool.execute(() => {
+        while (!Thread.currentThread().isInterrupted()) {
+          try {
+            setupInputData(timeoutOfInputData)
+          } catch {
+            case interrupException: InterruptedException => {
+              log.error("interrup exception", interrupException)
+              break
+            }
+            case e: Throwable => throw e
+          }
+        }
+      })
+      () => {
+        pool.shutdownNow()
+        pool.awaitTermination(durationOfPerformance.toMillis * 10, TimeUnit.MILLISECONDS)
+      }
+    }
+  }
+
+  protected def setupInputData(timeoutOfInputData: Duration): (String, Long, Long) = {
+    throw new UnsupportedOperationException("Abstract not support setupInputData function")
+  }
+
   protected def mkdir(folder: File): File = {
     if (!folder.exists() && !folder.mkdirs()) throw new AssertionError(s"failed to create folder on $folder")
     if (folder.exists() && !folder.isDirectory) throw new AssertionError(s"$folder is not a folder")
@@ -180,12 +216,20 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
       val end = CommonUtils.current() + durationOfPerformance.toMillis
       while (CommonUtils.current() <= end) {
         val reports = connectorReports()
-        afterFrequencySleep(reports)
         fetchConnectorMetrics(reports)
+        inputDataMetrics()
         TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
       }
-    } finally fetchConnectorMetrics(connectorReports())
+    } finally {
+      val reports = connectorReports()
+      fetchConnectorMetrics(reports)
+      beforeEndSleepUntil(reports)
+    }
     durationOfPerformance.toMillis
+  }
+
+  protected def inputDataMetrics(): Unit = {
+    // nothing by default
   }
 
   /**
@@ -200,8 +244,9 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   /**
     * Duration running function for after sleep
     */
-  protected def afterFrequencySleep(reports: Seq[PerformanceReport]): Unit = {
-    // nothing by default
+  protected def beforeEndSleepUntil(reports: Seq[PerformanceReport]): Unit = {
+    Releasable.close(produceDataThread)
+    Releasable.close(inputDataThread)
   }
 
   /**
@@ -250,52 +295,68 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(connectorApi.get(connectorKey))
   }
 
-  protected def produce(topicInfo: TopicInfo, dataSize: Long): (TopicInfo, Long, Long) = {
+  protected[this] def loopProduceData(topicInfo: TopicInfo): Unit = {
+    produceDataThread = {
+      val pool = Executors.newSingleThreadExecutor()
+
+      pool.execute(() => {
+        while (!Thread.currentThread().isInterrupted()) {
+          try {
+            produce(topicInfo, timeoutOfInputData)
+          } catch {
+            case interrupException: InterruptedException => {
+              log.error("interrup exception", interrupException)
+              break
+            }
+            case e: Throwable => throw e
+          }
+        }
+      })
+
+      () => {
+        pool.shutdownNow()
+        pool.awaitTermination(durationOfPerformance.toMillis * 10, TimeUnit.MILLISECONDS)
+      }
+    }
+  }
+
+  protected def produce(topicInfo: TopicInfo, timeout: Duration): (TopicInfo, Long, Long) = {
     val cellNames: Set[String] = (0 until 10).map(index => s"c$index").toSet
     val numberOfRowsToFlush    = 2000
-    val numberOfProducerThread = 4
-    val pool                   = Executors.newFixedThreadPool(numberOfProducerThread)
-    val closed                 = new AtomicBoolean(false)
-    val count                  = new LongAdder()
-    val sizeInBytes            = new LongAdder()
+    val producer = Producer
+      .builder()
+      .keySerializer(Serializer.ROW)
+      .connectionProps(brokerClusterInfo.connectionProps)
+      .build()
+    var cachedRows = 0
+    val start      = CommonUtils.current()
+
     try {
-      (0 until numberOfProducerThread).foreach { _ =>
-        pool.execute(() => {
-          val producer = Producer
-            .builder()
-            .keySerializer(Serializer.ROW)
-            .connectionProps(brokerClusterInfo.connectionProps)
-            .build()
-          var cachedRows = 0
-          try while (!closed.get() && sizeInBytes.longValue() <= dataSize) {
-            producer
-              .sender()
-              .topicName(topicInfo.key.topicNameOnKafka())
-              .key(Row.of(cellNames.map { name =>
-                Cell.of(name, CommonUtils.randomString())
-              }.toSeq: _*))
-              .send()
-              .whenComplete {
-                case (meta, _) =>
-                  if (meta != null) {
-                    sizeInBytes.add(meta.serializedKeySize())
-                    count.add(1)
-                  }
+      while (totalSizeInBytes.longValue() <= sizeOfInputData &&
+             (CommonUtils.current() - start) <= timeout.toMillis) {
+        producer
+          .sender()
+          .topicName(topicInfo.key.topicNameOnKafka())
+          .key(Row.of(cellNames.map { name =>
+            Cell.of(name, CommonUtils.randomString())
+          }.toSeq: _*))
+          .send()
+          .whenComplete {
+            case (meta, _) =>
+              if (meta != null) {
+                totalSizeInBytes.add(meta.serializedKeySize())
+                count.add(1)
               }
-            cachedRows += 1
-            if (cachedRows >= numberOfRowsToFlush) {
-              producer.flush()
-              cachedRows = 0
-            }
-          } finally Releasable.close(producer)
-        })
+          }
+        cachedRows += 1
+        if (cachedRows >= numberOfRowsToFlush) {
+          producer.flush()
+          cachedRows = 0
+        }
       }
-    } finally {
-      pool.shutdown()
-      pool.awaitTermination(durationOfPerformanceDefault.toMillis * 10, TimeUnit.MILLISECONDS)
-      closed.set(true)
-    }
-    (topicInfo, count.longValue(), sizeInBytes.longValue())
+    } finally Releasable.close(producer)
+
+    (topicInfo, count.longValue(), totalSizeInBytes.longValue())
   }
 
   protected def rowData(): Row = {

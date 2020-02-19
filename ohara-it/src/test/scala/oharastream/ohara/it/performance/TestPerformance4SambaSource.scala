@@ -32,8 +32,10 @@ class TestPerformance4SambaSource extends BasicTestPerformance4Samba {
     createTopic()
     val completedPath = "completed"
     val errorPath     = "error"
-    val (path, _, _)  = setupInputData(sizeOfInputData)
+    val (path, _, _)  = setupInputData(timeoutOfInputData)
+
     try {
+      loopInputData()
       setupConnector(
         connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
         className = classOf[SmbSource].getName(),
@@ -48,9 +50,5 @@ class TestPerformance4SambaSource extends BasicTestPerformance4Samba {
       removeSambaFolder(completedPath)
       removeSambaFolder(errorPath)
     }
-  }
-
-  override protected def afterFrequencySleep(reports: Seq[PerformanceReport]): Unit = {
-    setupInputData(sizeOfDurationInputData)
   }
 }
