@@ -19,7 +19,7 @@ import * as generate from '../../src/utils/generate';
 
 const prefix = Cypress.env('servicePrefix');
 
-describe('Create workspaces', () => {
+describe('workspaceQuick', () => {
   beforeEach(async () => await deleteAllServices());
 
   it('using quick mode to create workspace', () => {

@@ -18,7 +18,7 @@ import { deleteAllServices } from '../utils';
 import * as fileApi from '../../src/api/fileApi';
 import { hashByGroupAndName } from '../../src/utils/sha';
 
-describe('Files Tab in Workspace Settings', () => {
+describe('FileTable of Workspace Settings', () => {
   beforeEach(async () => await deleteAllServices());
 
   it('file operations in workspace should be worked normally', () => {

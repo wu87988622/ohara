@@ -16,7 +16,7 @@
 
 import { deleteAllServices } from '../utils';
 
-describe('Event Log', () => {
+describe('EventLogDialog', () => {
   before(async () => await deleteAllServices());
 
   it('event log should be empty after removed', () => {

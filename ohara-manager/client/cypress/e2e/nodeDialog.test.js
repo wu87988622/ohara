@@ -25,7 +25,7 @@ const nodePort = Cypress.env('nodePort');
 const nodeUser = Cypress.env('nodeUser');
 const nodePass = Cypress.env('nodePass');
 
-describe('NodeDialog in AppBar', () => {
+describe('NodeDialog of AppBar', () => {
   beforeEach(async () => {
     await deleteAllServices();
     const res = await inspectApi.getConfiguratorInfo();
@@ -48,7 +48,7 @@ describe('NodeDialog in AppBar', () => {
     }
   });
 
-  it('add a random node should be worked in docker mode', () => {
+  it('add a random node should be worked', () => {
     if (mode === MODE.k8s) {
       cy.log('Add node not support in k8s mode');
       return;
@@ -228,14 +228,14 @@ describe('NodeDialog in AppBar', () => {
   });
 });
 
-describe('NodeDialog in workspaceQuick', () => {
+describe('NodeDialog of workspaceQuick', () => {
   beforeEach(async () => {
     await deleteAllServices();
     const res = await inspectApi.getConfiguratorInfo();
     mode = res.data.mode;
   });
 
-  it('nodes should be able to select and filter', () => {
+  it('nodes should be able to selected and filtered', () => {
     if (mode === MODE.k8s) {
       cy.log('Add node not support in k8s mode');
       return;
