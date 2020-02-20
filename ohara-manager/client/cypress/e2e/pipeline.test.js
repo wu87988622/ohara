@@ -316,9 +316,10 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link);
     cy.getCell(elements.ftpSourceName).click();
-    cy.findByText(`Target ${elements.ftpSourceName} is a source!`).should(
-      'exist',
-    );
+    cy.findByText(`Target ${elements.ftpSourceName} is a source!`)
+      .should('exist')
+      .siblings('div')
+      .click();
 
     // 2. cannot create link from topic to topic
     cy.getCell(elements.topicName).trigger('mouseover');
@@ -326,7 +327,10 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.privateTopicName).click();
     cy.findByText(
       `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .click();
 
     // 3. perf source -> topic -> hdfs sink
     cy.getCell(elements.perfSourceName).trigger('mouseover');
@@ -345,14 +349,20 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.consoleSinkName).click();
     cy.findByText(
       `The source ${elements.perfSourceName} is already connected to a target`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .click();
     // ftp source -> hdfs sink
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link);
     cy.getCell(elements.hdfsSinkName).click();
     cy.findByText(
       `The target ${elements.hdfsSinkName} is already connected to a source`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .click();
 
     // perf source -> topic
     cy.getCell(elements.perfSourceName).trigger('mouseover');
@@ -360,7 +370,10 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.topicName).click();
     cy.findByText(
       `The source ${elements.perfSourceName} is already connected to a target`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .click();
 
     // topic -> hdfs sink
     cy.getCell(elements.topicName).trigger('mouseover');
@@ -368,7 +381,10 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.hdfsSinkName).click();
     cy.findByText(
       `The target ${elements.hdfsSinkName} is already connected to a source`,
-    ).should('exist');
+    )
+      .should('exist')
+      .siblings('div')
+      .click();
 
     // we can force delete an used topic
     cy.getCell(elements.privateTopicName).trigger('mouseover');
@@ -376,7 +392,10 @@ describe('Pipeline Page', () => {
     cy.findByText(/^force delete$/i)
       .should('exist')
       .click();
-    cy.findByText(elements.privateTopicName).should('not.exist');
+
+    cy.wait(5000);
+
+    cy.findAllByText(elements.privateTopicName).should('not.exist');
 
     // delete all elements
     Object.values(elements).forEach(element => {
@@ -384,6 +403,13 @@ describe('Pipeline Page', () => {
       if (element === elements.privateTopicName) return;
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove);
+      cy.wait(1000);
+      cy.findAllByText(element)
+        .filter(':visible')
+        .should('not.exist');
     });
+
+    // clear the global topic variable for next retries
+    topics = [];
   });
 });
