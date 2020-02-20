@@ -22,8 +22,10 @@ const updateStreamRoutine = createRoutine('UPDATE_STREAM');
 const deleteStreamRoutine = createRoutine('DELETE_STREAM');
 const startStreamRoutine = createRoutine('START_STREAM');
 const stopStreamRoutine = createRoutine('STOP_STREAM');
+const initializeRoutine = createRoutine('INITIALIZE');
 
 export {
+  initializeRoutine,
   fetchStreamsRoutine,
   createStreamRoutine,
   updateStreamRoutine,

@@ -38,6 +38,7 @@ const pipeline = () => {
       .map(cell => {
         return { name: cell.name, kind: cell.kind };
       });
+
     updatePipeline({
       name: currentPipeline.name,
       endpoints,
@@ -128,7 +129,7 @@ const pipeline = () => {
       ...links,
     ];
 
-    if (updateTags.length > 0 || updateTags.length > 0) {
+    if (updateTags.length > 0 || updateEndpoints.length > 0) {
       updatePipeline({
         name: currentPipeline.name,
         endpoints: updateEndpoints,

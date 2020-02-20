@@ -30,7 +30,7 @@ const PipelineProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { pipelineApi } = useApi();
-  const { workspaceName } = useApp();
+  const { workspaceName, pipelineName } = useApp();
 
   React.useEffect(() => {
     if (!pipelineApi) return;
@@ -41,7 +41,7 @@ const PipelineProvider = ({ children }) => {
   // Reset pipeline state on workspace change
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
-  }, [workspaceName]);
+  }, [workspaceName, pipelineName]);
 
   return (
     <PipelineStateContext.Provider value={state}>
