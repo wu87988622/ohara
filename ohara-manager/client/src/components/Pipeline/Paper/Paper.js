@@ -158,6 +158,10 @@ const Paper = React.forwardRef((props, ref) => {
       setDragStartPosition(null);
     });
 
+    paper.on('blank:mouseover', () => {
+      findElementViews().forEach(hideMenu);
+    });
+
     paper.on('link:mouseenter', linkView => {
       const toolsView = new joint.dia.ToolsView({
         tools: [
@@ -231,9 +235,8 @@ const Paper = React.forwardRef((props, ref) => {
       const { left, top } = elementView.$box.offset();
       const { clientX, clientY } = event;
 
-      // TODO: #3995 Fix the mouseenter and mouseleave issue
       // mouseenter and mouseleave events both get triggered again when hovering
-      // on menu's buttons. This creates a flickering effect which a lot like a
+      // on menu's buttons. This creates a flickering effect which looks a lot like a
       // UI defect. Here, we're calculating if the mouse is still moving inside the
       // paper element, if so. We don't fire the event again. This does fix the issue
       // but if user's mouse moves too fast, the bug could be appeared.
@@ -454,6 +457,7 @@ const Paper = React.forwardRef((props, ref) => {
       paper.off('blank:pointerdown');
       paper.off('blank:pointerup');
       paper.off('blank:pointermove');
+      paper.off('blank:mouseover');
     };
   }, [
     dragStartPosition,

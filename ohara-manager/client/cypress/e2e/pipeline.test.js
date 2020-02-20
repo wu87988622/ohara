@@ -101,7 +101,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.findByText(name).should('exist');
 
         // wait a little time for the topic show in toolbox
-        cy.wait(1000);
+        cy.wait(3000);
 
         cy.findByTestId('toolbox-draggable')
           .find('g[data-type="html.Element"]:visible')
