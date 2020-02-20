@@ -91,9 +91,7 @@ export const usePipelineState = () => {
           isMetricsOn: !state.isMetricsOn,
         };
       case 'resetPipeline':
-        return {
-          ...state,
-        };
+        return initialState;
       default:
         return state;
     }

@@ -189,7 +189,7 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   const { isToolboxOpen, toolboxExpanded, toolboxKey } = pipelineState;
 
-  //We need wait all pipelineApi is ready ,next render pipeline.
+  //  If paper API is not ready, let's reset the pipeline state and re-render again
   useEffect(() => {
     if (isPaperApiReady) {
       pipelineDispatch({ type: 'resetPipeline' });
@@ -218,9 +218,6 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   useEffect(() => {
     if (!workspaceName || !pipelineName) return;
-    if (url) {
-      setUrl(`${workspaceName}/${pipelineName}`);
-    }
     if (url !== `${workspaceName}/${pipelineName}`) {
       setWorkspaceName(workspaceName);
       setPipelineName(pipelineName);
