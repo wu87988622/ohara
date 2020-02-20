@@ -73,7 +73,7 @@ const Toolbar = props => {
     stop: stopConnector,
   } = pipelineUtils.connector();
 
-  const { start: startStream, stop: stopStream } = pipelineUtils.connector();
+  const { start: startStream, stop: stopStream } = pipelineUtils.stream();
 
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
