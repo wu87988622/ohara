@@ -191,19 +191,10 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   //We need wait all pipelineApi is ready ,next render pipeline.
   useEffect(() => {
-    let timer;
-    timer = setInterval(async () => {
-      if (isPaperApiReady) {
-        clearInterval(timer);
-      } else {
-        pipelineDispatch({ type: 'resetPipeline' });
-      }
-    }, 250);
-
-    return () => {
-      clearInterval(timer);
-    };
-  });
+    if (isPaperApiReady) {
+      pipelineDispatch({ type: 'resetPipeline' });
+    }
+  }, [isPaperApiReady, pipelineDispatch]);
 
   useEffect(() => {
     let timer;
