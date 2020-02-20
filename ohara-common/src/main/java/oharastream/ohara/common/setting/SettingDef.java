@@ -57,7 +57,7 @@ public class SettingDef implements JsonObject, Serializable {
 
   private static final long serialVersionUID = 1L;
   // -------------------------------[groups]-------------------------------//
-  private static final String COMMON_GROUP = "common";
+  public static final String COMMON_GROUP = "common";
   public static final String ORDER_KEY = "order";
   public static final String COLUMN_NAME_KEY = "name";
   public static final String COLUMN_NEW_NAME_KEY = "newName";

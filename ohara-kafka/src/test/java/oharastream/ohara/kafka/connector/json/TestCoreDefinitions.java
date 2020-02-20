@@ -132,7 +132,7 @@ public class TestCoreDefinitions extends OharaTest {
     ConfigDef.ConfigKey key = sink.config().configKeys().get(WithDefinitions.KIND_KEY);
     Assert.assertEquals(WithDefinitions.KIND_KEY, key.name);
     Assert.assertEquals(WithDefinitions.KIND_ORDER, key.orderInGroup);
-    Assert.assertEquals(WithDefinitions.COMMON_GROUP, key.group);
+    Assert.assertEquals(WithDefinitions.META_GROUP, key.group);
     Assert.assertEquals(SettingDef.Type.STRING.name(), key.type.name());
   }
 

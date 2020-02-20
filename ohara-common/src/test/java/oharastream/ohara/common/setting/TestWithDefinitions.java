@@ -101,4 +101,9 @@ public class TestWithDefinitions {
             .get(WithDefinitions.KIND_KEY)
             .defaultString());
   }
+
+  @Test
+  public void testDefaultGroup() {
+    Assert.assertNotEquals(WithDefinitions.META_GROUP, SettingDef.COMMON_GROUP);
+  }
 }
