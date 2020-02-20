@@ -48,6 +48,12 @@ export const StyledToolbox = styled.div(
 
     .toolbox-body {
       overflow-y: auto;
+
+      /* 
+        Prevent the horizontal scrollbar from showing up during expanding/collapsing
+        a tool section
+      */
+      overflow-x: hidden;
     }
 
     .add-button {
