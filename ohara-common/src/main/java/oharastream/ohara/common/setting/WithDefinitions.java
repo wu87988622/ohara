@@ -32,7 +32,7 @@ import oharastream.ohara.common.util.VersionUtils;
  */
 public interface WithDefinitions {
 
-  String COMMON_GROUP = "common";
+  String META_GROUP = "meta";
 
   String AUTHOR_KEY = "author";
   int AUTHOR_ORDER = 0;
@@ -42,7 +42,7 @@ public interface WithDefinitions {
         .displayName(AUTHOR_KEY)
         .key(AUTHOR_KEY)
         .documentation(AUTHOR_KEY)
-        .group(COMMON_GROUP)
+        .group(META_GROUP)
         .optional(CommonUtils.requireNonEmpty(author))
         .orderInGroup(AUTHOR_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -59,7 +59,7 @@ public interface WithDefinitions {
         .displayName(VERSION_KEY)
         .key(VERSION_KEY)
         .documentation(VERSION_KEY)
-        .group(COMMON_GROUP)
+        .group(META_GROUP)
         .optional(CommonUtils.requireNonEmpty(version))
         .orderInGroup(VERSION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -76,7 +76,7 @@ public interface WithDefinitions {
         .displayName(REVISION_KEY)
         .key(REVISION_KEY)
         .documentation(REVISION_KEY)
-        .group(COMMON_GROUP)
+        .group(META_GROUP)
         .optional(CommonUtils.requireNonEmpty(revision))
         .orderInGroup(REVISION_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)
@@ -93,7 +93,7 @@ public interface WithDefinitions {
         .displayName(KIND_KEY)
         .key(KIND_KEY)
         .documentation(KIND_KEY)
-        .group(COMMON_GROUP)
+        .group(META_GROUP)
         .optional(CommonUtils.requireNonEmpty(kind))
         .orderInGroup(KIND_ORDER)
         .permission(SettingDef.Permission.READ_ONLY)

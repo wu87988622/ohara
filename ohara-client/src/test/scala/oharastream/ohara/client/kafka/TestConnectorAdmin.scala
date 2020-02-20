@@ -302,12 +302,12 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == WithDefinitions.REVISION_KEY)
       .head
-      .group() shouldBe "common"
+      .group() shouldBe "meta"
     settingDefinitionS.find(_.key() == WithDefinitions.REVISION_KEY).head.internal() shouldBe false
     settingDefinitionS.find(_.key() == WithDefinitions.REVISION_KEY).head.defaultString shouldBe VersionUtils.REVISION
 
     settingDefinitionS.exists(_.key() == WithDefinitions.KIND_KEY) shouldBe true
-    settingDefinitionS.find(_.key() == WithDefinitions.KIND_KEY).head.group() shouldBe WithDefinitions.COMMON_GROUP
+    settingDefinitionS.find(_.key() == WithDefinitions.KIND_KEY).head.group() shouldBe WithDefinitions.META_GROUP
     settingDefinitionS.find(_.key() == WithDefinitions.KIND_KEY).head.internal() shouldBe false
     (settingDefinitionS.find(_.key() == WithDefinitions.KIND_KEY).head.defaultString == "source"
     || settingDefinitionS.find(_.key() == WithDefinitions.KIND_KEY).head.defaultString == "sink") shouldBe true
