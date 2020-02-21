@@ -46,6 +46,7 @@ const Paper = React.forwardRef((props, ref) => {
 
   const showMessage = useSnackbar();
   const { palette } = useTheme();
+  const { isMetricsOn } = React.useContext(PipelineStateContext);
 
   const graphRef = React.useRef(null);
   const paperRef = React.useRef(null);
@@ -55,12 +56,10 @@ const Paper = React.forwardRef((props, ref) => {
   const cellAddRef = React.useRef(null);
   const cellChangeRef = React.useRef(null);
   const cellRemoveRef = React.useRef(null);
-
   // Prevent from getting stale event handlers
   const onCellEventRef = React.useRef(null);
 
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
-  const { isMetricsOn } = React.useContext(PipelineStateContext);
 
   const hoverHighlighter = {
     highlighter: {
@@ -192,7 +191,7 @@ const Paper = React.forwardRef((props, ref) => {
                 attributes: {
                   d: 'M -3 -3 3 3 M -3 3 3 -3',
                   fill: 'none',
-                  stroke: '#fff',
+                  stroke: palette.common.white,
                   'stroke-width': 2,
                   'pointer-events': 'none',
                 },
@@ -225,7 +224,15 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('element:mouseenter', elementView => {
-      showMenu(elementView, hoverHighlighter);
+      const hasHalfWayLink = graph
+        .getLinks()
+        .some(link => !link.get('target').id);
+
+      if (!hasHalfWayLink) {
+        return showMenu(elementView, hoverHighlighter);
+      }
+
+      elementView.highlight(null, hoverHighlighter);
     });
 
     paper.on('element:mouseleave', (elementView, event) => {
@@ -251,10 +258,7 @@ const Paper = React.forwardRef((props, ref) => {
     // Create a link that moves along with mouse cursor
     $(document).on('mousemove.createlink', event => {
       if (_.has(paperApi, 'state.isReady')) {
-        const link = graph
-          .getCells()
-          .filter(cell => cell.isLink())
-          .find(link => !link.get('target').id);
+        const link = graph.getLinks().find(link => !link.get('target').id);
 
         if (link) {
           const localPoint = paperApi.getLocalPoint();
@@ -472,6 +476,7 @@ const Paper = React.forwardRef((props, ref) => {
     onChange,
     onConnect,
     onDisconnect,
+    palette.common.white,
     palette.grey,
     paperApi,
     ref,
