@@ -25,6 +25,7 @@ import {
   stageConnectorRoutine,
   startConnectorRoutine,
   stopConnectorRoutine,
+  initializeRoutine,
 } from './connectorRoutines';
 
 const initialState = {
@@ -36,6 +37,9 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
+    case initializeRoutine.TRIGGER:
+      return initialState;
+
     case fetchConnectorsRoutine.REQUEST:
     case createConnectorRoutine.REQUEST:
     case updateConnectorRoutine.REQUEST:
