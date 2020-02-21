@@ -240,9 +240,7 @@ const createConnectorCell = options => {
       // Set the position and dimension of the box so that it covers the JointJS element.
       const { width, height, x, y } = this.getBBox({ useModelGeometry: true });
       const scale = paperApi.getScale();
-      const $box = this.$box;
-
-      $box.css({
+      this.$box.css({
         transform: 'scale(' + scale.sx + ',' + scale.sy + ')',
         transformOrigin: '0 0',
         width: width / scale.sx,
