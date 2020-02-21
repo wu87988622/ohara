@@ -305,6 +305,11 @@ const WorkspaceQuick = props => {
       setActiveStep(0);
       setFiles([]);
     } catch (e) {
+      eventLog.error({
+        title: `Failed to creates workspace ${workspaceName}.`,
+        message:
+          'Oops, it seems like our UI is not working as it should. For more information or reporting the bug, please go to https://github.com/oharastream/ohara/issues',
+      });
       // TODO: handle error to create, rollback the created services
     }
 

@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { min } from 'lodash';
+import { isPlainObject, min } from 'lodash';
 
 import * as context from 'context';
 import { useLocalStorage } from 'utils/hooks';
@@ -79,8 +79,21 @@ export const useEventLog = () => {
         if (!isEventLogDialogOpen) increaseInfoNotification();
         if (showSnackbar) showMessage(title);
       },
-      error: ({ title, status, errors, meta }, showSnackbar = true) => {
-        createEventLog({ title, status, errors, meta }, 'error');
+      /**
+       * @param {String|Object} message The message of error.
+       * @example
+       *
+       * error('Failed to create topic t1');
+       *
+       * error({title: 'Failed to create topic t1'});
+       */
+      error: (message, showSnackbar = true) => {
+        const title = isPlainObject(message) ? message.title : message;
+        if (isPlainObject(message)) {
+          createEventLog(message, 'error');
+        } else {
+          createEventLog({ title }, 'error');
+        }
         if (!isEventLogDialogOpen) increaseErrorNotification();
         if (showSnackbar) showMessage(title);
       },

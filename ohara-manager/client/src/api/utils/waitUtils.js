@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
+import { get, includes, isEmpty } from 'lodash';
 
-export const waitForConnectReady = res => {
-  const { classInfos } = res.data.result;
-  return !isEmpty(classInfos);
-};
+export const waitForConnectReady = res =>
+  !isEmpty(get(res, 'data.result.classInfos'));
 
-export const waitForRunning = res => {
-  const { state } = res.data.result;
-  return state === 'RUNNING';
-};
+export const waitForRunning = res =>
+  get(res, 'data.result.state') === 'RUNNING';
 
-export const waitForStop = res => {
-  const { state } = res.data.result;
-  return state === undefined;
-};
+export const waitForStop = res => get(res, 'data.result.state') === undefined;
 
 export const waitForClusterNonexistent = (res, params) => {
   const { name, group } = params;
@@ -53,12 +46,8 @@ export const waitForObjectNonexistent = (res, params) => {
   return !result;
 };
 
-export const waitForNodeReady = (res, node) => {
-  const nodeNames = res.data.result.nodeNames;
-  return nodeNames.includes(node);
-};
+export const waitForNodeReady = (res, node) =>
+  includes(get(res, 'data.result.nodeNames'), node);
 
-export const waitForNodeNonexistentInCluster = (res, node) => {
-  const nodeNames = res.data.result.nodeNames;
-  return !nodeNames.includes(node);
-};
+export const waitForNodeNonexistentInCluster = (res, node) =>
+  !waitForNodeReady(res, node);
