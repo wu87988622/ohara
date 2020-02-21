@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { get } from 'lodash';
 import { axiosInstance } from './utils/apiUtils';
 import { sleep as sleepApi } from './utils/apiUtils';
 
@@ -27,9 +28,11 @@ const wait = async params => {
     sleep = 2000,
   } = params;
   const res = await axiosInstance.get(url);
-  if (checkFn(res, paramRes)) {
+  if (get(res, 'data.isSuccess') && checkFn(res, paramRes) === true) {
     return res;
-  } else if (maxRetry <= retryCount) {
+  }
+
+  if (retryCount >= maxRetry) {
     return {
       data: {
         isSuccess: false,
@@ -37,9 +40,9 @@ const wait = async params => {
       },
       errors: ['exceed max retry'],
     };
-  } else {
-    await sleepApi(sleep);
-    return await wait({ ...params, retryCount: retryCount + 1 });
   }
+
+  await sleepApi(sleep);
+  return await wait({ ...params, retryCount: retryCount + 1 });
 };
 export default wait;

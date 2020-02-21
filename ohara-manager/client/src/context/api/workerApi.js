@@ -130,6 +130,7 @@ export const createApi = context => {
         });
       }
       const infoRes = await inspectApi.getWorkerInfo(params);
+      if (infoRes.errors) throw new ContextApiError(infoRes);
       return generateClusterResponse({
         values: res.data,
         inspectInfo: infoRes.data,
