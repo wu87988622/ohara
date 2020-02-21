@@ -17,10 +17,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useApi } from 'context';
+import { useApi, useApp } from 'context';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './streamActions';
 import { reducer, initialState } from './streamReducer';
+import { initializeRoutine } from './streamRoutines';
 
 const StreamStateContext = React.createContext();
 const StreamDispatchContext = React.createContext();
@@ -29,6 +30,11 @@ const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { streamApi } = useApi();
+  const { pipelineName } = useApp();
+
+  React.useEffect(() => {
+    dispatch(initializeRoutine.trigger());
+  }, [pipelineName]);
 
   React.useEffect(() => {
     if (!streamApi) return;

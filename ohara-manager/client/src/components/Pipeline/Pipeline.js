@@ -16,6 +16,7 @@
 
 import React, { useEffect, useRef, createContext } from 'react';
 import _ from 'lodash';
+import { useParams } from 'react-router-dom';
 
 import * as context from 'context';
 import Paper from './Paper';
@@ -104,6 +105,10 @@ const Pipeline = React.forwardRef((props, ref) => {
   const forceDeleteList = React.useRef({});
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectTopic, setSelectTopic] = React.useState(false);
+  const [url, setUrl] = React.useState(null);
+
+  const { workspaceName, pipelineName } = useParams();
+  const { setWorkspaceName, setPipelineName } = context.useApp();
 
   const handleDialogClose = () => {
     setIsOpen(false);
@@ -184,6 +189,13 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   const { isToolboxOpen, toolboxExpanded, toolboxKey } = pipelineState;
 
+  //  If paper API is not ready, let's reset the pipeline state and re-render again
+  useEffect(() => {
+    if (isPaperApiReady) {
+      pipelineDispatch({ type: 'resetPipeline' });
+    }
+  }, [isPaperApiReady, pipelineDispatch]);
+
   useEffect(() => {
     let timer;
     if (pipelineState.isMetricsOn) {
@@ -205,6 +217,17 @@ const Pipeline = React.forwardRef((props, ref) => {
   });
 
   useEffect(() => {
+    if (!workspaceName || !pipelineName) return;
+    if (url !== `${workspaceName}/${pipelineName}`) {
+      setWorkspaceName(workspaceName);
+      setPipelineName(pipelineName);
+      paperApiRef.current = null;
+      isInitialized.current = false;
+      setUrl(`${workspaceName}/${pipelineName}`);
+    }
+  }, [workspaceName, pipelineName, url, setWorkspaceName, setPipelineName]);
+
+  useEffect(() => {
     // Only run this once, there's no need to run this logic twice as
     // that's intentional
     if (!isPaperApiReady) return;
@@ -212,6 +235,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!connectorLastUpdated) return;
     if (!topicLastUpdated) return;
     if (!streamLastUpdated) return;
+    if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
     checkCells(paperApiRef.current);
 
@@ -219,7 +243,9 @@ const Pipeline = React.forwardRef((props, ref) => {
   }, [
     checkCells,
     connectorLastUpdated,
+    currentPipeline,
     isPaperApiReady,
+    pipelineName,
     streamLastUpdated,
     topicLastUpdated,
   ]);
