@@ -28,9 +28,12 @@ import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
+
+import scala.collection.JavaConverters._
 import spray.json.{JsArray, JsString, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 class TestConnectorApi extends OharaTest {
   @Test
   def nullKeyInGet(): Unit =
@@ -698,5 +701,34 @@ class TestConnectorApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_INFO_FORMAT.read(ConnectorApi.CONNECTOR_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
+
+  @Test
+  def testDataTypeInColumns(): Unit = {
+    DataType.all.asScala.foreach { dataType =>
+      val order    = Math.abs(Random.nextInt())
+      val name     = CommonUtils.randomString()
+      val newName  = CommonUtils.randomString()
+      val creation = CREATION_FORMAT.read(s"""
+                                               |{
+                                               |  "workerClusterKey": "wk00",
+                                               |  "connector.class": "myClass",
+                                               |  "topicKeys": ["tp00"],
+                                               |  "columns": [
+                                               |    {
+                                               |      "order":$order,
+                                               |      "dataType":"$dataType",
+                                               |      "name":"$name",
+                                               |      "newName":"$newName"
+                                               |    }
+                                               |  ]
+                                               |}
+      """.stripMargin.parseJson)
+      creation.columns.size shouldBe 1
+      creation.columns.head.order() shouldBe order
+      creation.columns.head.dataType() shouldBe dataType
+      creation.columns.head.name() shouldBe name
+      creation.columns.head.newName() shouldBe newName
+    }
   }
 }
