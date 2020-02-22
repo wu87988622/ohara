@@ -23,8 +23,10 @@ const stageConnectorRoutine = createRoutine('STAGE_CONNECTOR');
 const deleteConnectorRoutine = createRoutine('DELETE_CONNECTOR');
 const startConnectorRoutine = createRoutine('START_CONNECTOR');
 const stopConnectorRoutine = createRoutine('STOP_CONNECTOR');
+const initializeRoutine = createRoutine('INITIALIZE');
 
 export {
+  initializeRoutine,
   fetchConnectorsRoutine,
   createConnectorRoutine,
   updateConnectorRoutine,

@@ -22,10 +22,11 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useApi } from 'context';
+import { useApi, useApp } from 'context';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './connectorActions';
 import { reducer, initialState } from './connectorReducer';
+import { initializeRoutine } from './connectorRoutines';
 
 const ConnectorStateContext = createContext();
 const ConnectorDispatchContext = createContext();
@@ -34,6 +35,11 @@ const ConnectorProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { connectorApi } = useApi();
+  const { pipelineName } = useApp();
+
+  React.useEffect(() => {
+    dispatch(initializeRoutine.trigger());
+  }, [pipelineName]);
 
   useEffect(() => {
     if (!connectorApi) return;
