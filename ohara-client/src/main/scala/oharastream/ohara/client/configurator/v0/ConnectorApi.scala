@@ -133,7 +133,7 @@ object ConnectorApi {
               case e: DeserializationException => throw e
               case other: Throwable =>
                 throw DeserializationException(
-                  msg = s"the string to $COLUMNS_KEY is not correct format",
+                  msg = other.getMessage,
                   cause = other,
                   fieldNames = List(COLUMNS_KEY)
                 )
