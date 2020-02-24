@@ -250,7 +250,22 @@ const createConnectorCell = options => {
       });
       return this;
     },
-
+    active() {
+      this.$box.addClass('is-active');
+      return this;
+    },
+    unActive() {
+      this.$box.removeClass('is-active');
+      return this;
+    },
+    hover() {
+      this.$box.addClass('is-hover');
+      return this;
+    },
+    unHover() {
+      this.$box.removeClass('is-hover');
+      return this;
+    },
     // Keeping this handler here since when calling `cell.remove()` somehow
     // triggers this method
     onRemove() {

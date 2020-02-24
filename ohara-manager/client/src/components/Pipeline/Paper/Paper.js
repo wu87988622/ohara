@@ -61,21 +61,6 @@ const Paper = React.forwardRef((props, ref) => {
 
   const [dragStartPosition, setDragStartPosition] = React.useState(null);
 
-  const hoverHighlighter = {
-    highlighter: {
-      name: 'stroke',
-      options: {
-        padding: 2,
-        rx: 2,
-        ry: 2,
-        attrs: {
-          'stroke-width': 2,
-          stroke: palette.action.active,
-        },
-      },
-    },
-  };
-
   React.useEffect(() => {
     const namespace = joint.shapes;
     graphRef.current = new joint.dia.Graph({}, { cellNamespace: namespace });
@@ -92,7 +77,7 @@ const Paper = React.forwardRef((props, ref) => {
         drawGrid: { name: 'dot', args: { color: palette.grey[300] } },
         background: { color: palette.common.white },
 
-        // Tweak the default highlighting to match our theme
+        // default highlighter, this is only used on LinkView
         highlighting: {
           default: {
             name: 'stroke',
@@ -102,7 +87,7 @@ const Paper = React.forwardRef((props, ref) => {
               ry: 4,
               attrs: {
                 'stroke-width': 2,
-                stroke: palette.primary.main,
+                stroke: palette.action.active,
               },
             },
           },
@@ -119,7 +104,12 @@ const Paper = React.forwardRef((props, ref) => {
       },
       { cellNamespace: namespace },
     );
-  }, [palette.common.white, palette.grey, palette.primary.main]);
+  }, [
+    palette.action.active,
+    palette.common.white,
+    palette.grey,
+    palette.primary.main,
+  ]);
 
   // This paperApi should be passed into all event handlers as the second
   // parameter,  // e.g., onConnect(eventObject, paperApi)
@@ -215,24 +205,29 @@ const Paper = React.forwardRef((props, ref) => {
       });
 
       linkView.addTools(toolsView);
-      linkView.highlight(null, hoverHighlighter);
+      linkView.highlight();
     });
 
     paper.on('link:mouseleave', linkView => {
       paper.removeTools();
-      linkView.unhighlight(null, hoverHighlighter);
+      linkView.unhighlight();
     });
 
     paper.on('element:mouseenter', elementView => {
+      // Make sure all menus are hidden, this prevents a bug where two connectors
+      // are hovered
+      findElementViews().forEach(hideMenu);
+
       const hasHalfWayLink = graph
         .getLinks()
         .some(link => !link.get('target').id);
 
+      // Don't display the menu if the element is being connected
       if (!hasHalfWayLink) {
-        return showMenu(elementView, hoverHighlighter);
+        return showMenu(elementView);
       }
 
-      elementView.highlight(null, hoverHighlighter);
+      elementView.hover();
     });
 
     paper.on('element:mouseleave', (elementView, event) => {
@@ -324,7 +319,7 @@ const Paper = React.forwardRef((props, ref) => {
       resetElements();
 
       elementView
-        .highlight()
+        .active()
         .showElement('menu')
         .hideElement('metrics')
         .hideElement('status')
@@ -383,8 +378,8 @@ const Paper = React.forwardRef((props, ref) => {
       onCellDeselect(paperApi);
     });
 
-    function showMenu(elementView, highlighter) {
-      elementView.showElement('menu').highlight(null, highlighter);
+    function showMenu(elementView) {
+      elementView.showElement('menu').hover();
 
       if (elementView.model.get('isMetricsOn')) {
         return elementView.hideElement('metrics');
@@ -393,7 +388,7 @@ const Paper = React.forwardRef((props, ref) => {
     }
 
     function hideMenu(elementView) {
-      elementView.unhighlight(null, hoverHighlighter).hideElement('menu');
+      elementView.unHover().hideElement('menu');
 
       if (elementView.model.get('isMetricsOn')) {
         return elementView.showElement('metrics');
@@ -404,8 +399,8 @@ const Paper = React.forwardRef((props, ref) => {
     function resetElements() {
       findElementViews().forEach(elementView => {
         elementView
-          .unhighlight()
-          .unhighlight(null, hoverHighlighter)
+          .unActive()
+          .unHover()
           .hideElement('menu')
           .setIsSelected(false);
 
@@ -466,7 +461,6 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
-    hoverHighlighter,
     onCellConfig,
     onCellDeselect,
     onCellRemove,
@@ -727,12 +721,12 @@ const Paper = React.forwardRef((props, ref) => {
         if (elementView) {
           findElementViews().forEach(elementView =>
             elementView
-              .unhighlight()
-              .unhighlight(null, hoverHighlighter)
+              .unActive()
+              .unHover()
               .setIsSelected(false),
           );
 
-          elementView.highlight().setIsSelected(true);
+          elementView.active().setIsSelected(true);
         }
       },
 

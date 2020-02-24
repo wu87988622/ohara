@@ -82,8 +82,32 @@ export const StyledPaper = styled.div(
       border-radius: ${theme.shape.borderRadius}px;
       pointer-events: none;
 
-      &:hover {
-        box-shadow: 0 0 0 2px ${theme.palette.primary};
+      &.is-hover {
+        :before {
+          content: ' ';
+          position: absolute;
+          z-index: -1;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          border: 2px solid ${theme.palette.action.active};
+          border-radius: ${theme.shape.borderRadius}px;
+        }
+      }
+
+      &.is-active {
+        :before {
+          content: ' ';
+          position: absolute;
+          z-index: -1;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          border: 2px solid ${theme.palette.primary.main};
+          border-radius: ${theme.shape.borderRadius}px;
+        }
       }
 
       .menu {
@@ -222,6 +246,34 @@ export const StyledPaper = styled.div(
       flex-direction: column;
       align-items: center;
       padding-top: ${theme.spacing(1)}px;
+
+      &.is-hover {
+        :before {
+          content: ' ';
+          position: absolute;
+          z-index: -1;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          border: 2px solid ${theme.palette.action.active};
+          border-radius: ${theme.shape.borderRadius}px;
+        }
+      }
+
+      &.is-active {
+        :before {
+          content: ' ';
+          position: absolute;
+          z-index: -1;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          border: 2px solid ${theme.palette.primary.main};
+          border-radius: ${theme.shape.borderRadius}px;
+        }
+      }
 
       .display-name {
         font-size: ${theme.typography.h5};

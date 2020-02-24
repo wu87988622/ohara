@@ -177,6 +177,22 @@ const createTopicCell = options => {
         top: bBox.y,
       });
     },
+    active() {
+      this.$box.addClass('is-active');
+      return this;
+    },
+    unActive() {
+      this.$box.removeClass('is-active');
+      return this;
+    },
+    hover() {
+      this.$box.addClass('is-hover');
+      return this;
+    },
+    unHover() {
+      this.$box.removeClass('is-hover');
+      return this;
+    },
     onRemove() {
       this.$box.remove();
     },
