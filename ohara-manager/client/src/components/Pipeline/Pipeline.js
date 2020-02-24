@@ -225,14 +225,7 @@ const Pipeline = React.forwardRef((props, ref) => {
       isInitialized.current = false;
       setUrl(`${workspaceName}/${pipelineName}`);
     }
-  }, [
-    workspaceName,
-    pipelineName,
-    url,
-    setWorkspaceName,
-    setPipelineName,
-    pipelineDispatch,
-  ]);
+  }, [workspaceName, pipelineName, url, setWorkspaceName, setPipelineName]);
 
   useEffect(() => {
     // Only run this once, there's no need to run this logic twice as
