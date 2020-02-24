@@ -114,9 +114,9 @@ const stream = () => {
 
   const stop = async (params, paperApi) => {
     const { id, name } = params;
-    paperApi.enableMenu(id);
-    const res = await stopStream(name);
     paperApi.disableMenu(id);
+    const res = await stopStream(name);
+    paperApi.enableMenu(id);
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
