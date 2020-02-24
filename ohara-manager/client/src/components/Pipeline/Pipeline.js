@@ -189,12 +189,12 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   const { isToolboxOpen, toolboxExpanded, toolboxKey } = pipelineState;
 
-  //  If paper API is not ready, let's reset the pipeline state and re-render again
+  // If paper API is not ready, let's reset the pipeline state and re-render again
   useEffect(() => {
-    if (isPaperApiReady) {
+    if (!isPaperApiReady && pipelineName) {
       pipelineDispatch({ type: 'resetPipeline' });
     }
-  }, [isPaperApiReady, pipelineDispatch]);
+  });
 
   useEffect(() => {
     let timer;
@@ -225,7 +225,14 @@ const Pipeline = React.forwardRef((props, ref) => {
       isInitialized.current = false;
       setUrl(`${workspaceName}/${pipelineName}`);
     }
-  }, [workspaceName, pipelineName, url, setWorkspaceName, setPipelineName]);
+  }, [
+    workspaceName,
+    pipelineName,
+    url,
+    setWorkspaceName,
+    setPipelineName,
+    pipelineDispatch,
+  ]);
 
   useEffect(() => {
     // Only run this once, there's no need to run this logic twice as
