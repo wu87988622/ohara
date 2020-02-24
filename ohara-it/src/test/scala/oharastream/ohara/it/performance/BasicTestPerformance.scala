@@ -16,7 +16,6 @@
 
 package oharastream.ohara.it.performance
 
-import java.io.{File, FileWriter}
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
@@ -50,9 +49,11 @@ import scala.util.control.Breaks.break
   *    so please don't change it.
   */
 abstract class BasicTestPerformance extends WithRemoteWorkers {
-  protected val log: Logger            = Logger(classOf[BasicTestPerformance])
-  private[this] val topicKey: TopicKey = TopicKey.of("benchmark", CommonUtils.randomString(5))
+  protected val log: Logger              = Logger(classOf[BasicTestPerformance])
+  private[this] var inputDataInfos       = mutable.Seq[DataInfo]()
+  private[this] val setupStartTime: Long = CommonUtils.current()
 
+  private[this] val topicKey: TopicKey = TopicKey.of("benchmark", CommonUtils.randomString(5))
   protected val topicApi: TopicApi.Access =
     TopicApi.access
       .hostname(configuratorHostname)
@@ -74,27 +75,23 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   protected val timeoutOfInputData: Duration =
     value(timeoutOfInputDataKey).map(Duration(_)).getOrElse(timeoutOfInputDataDefault)
 
+  private[this] val numberOfRowsToFlushKey             = PerformanceTestingUtils.ROW_FLUSH_NUMBER_KEY
+  private[this] val numberOfRowsToFlushDefault: String = "2000"
+  protected val numberOfRowsToFlush: Int =
+    value(numberOfRowsToFlushKey).getOrElse(numberOfRowsToFlushDefault).toInt
+
   private[this] val wholeTimeout = (durationOfPerformance.toSeconds + timeoutOfInputData.toSeconds) * 2
 
   @Rule
   override def timeout: Timeout = Timeout.seconds(wholeTimeout)
-
-  private[this] val reportOutputFolderKey = PerformanceTestingUtils.REPORT_OUTPUT_KEY
-  private[this] val reportOutputFolder: File = mkdir(
-    new File(
-      value(reportOutputFolderKey).getOrElse("/tmp/performance")
-    )
-  )
 
   private[this] val logMetersFrequencyKey               = PerformanceTestingUtils.LOG_METERS_FREQUENCY_KEY
   private[this] val logMetersFrequencyDefault: Duration = 5 seconds
   protected val logMetersFrequency: Duration =
     value(logMetersFrequencyKey).map(Duration(_)).getOrElse(logMetersFrequencyDefault)
 
-  private[this] val totalSizeInBytes              = new LongAdder()
-  private[this] val count                         = new LongAdder()
-  private[this] var produceDataThread: Releasable = _
-
+  private[this] val totalSizeInBytes = new LongAdder()
+  private[this] val count            = new LongAdder()
   //------------------------------[topic properties]------------------------------//
 
   private[this] val megabytesOfInputDataKey           = PerformanceTestingUtils.DATA_SIZE_KEY
@@ -115,16 +112,15 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   protected def value(key: String): Option[String] = sys.env.get(key)
   //------------------------------[helper methods]------------------------------//
-
   private[this] var inputDataThread: Releasable = _
 
-  protected[this] def loopInputData(): Unit = {
+  protected[this] def loopInputDataThread(input: Duration => (Any, Long, Long)): Unit = {
     inputDataThread = {
       val pool = Executors.newSingleThreadExecutor()
       pool.execute(() => {
         while (!Thread.currentThread().isInterrupted()) {
           try {
-            setupInputData(timeoutOfInputData)
+            input(timeoutOfInputData)
           } catch {
             case interrupException: InterruptedException => {
               log.error("interrup exception", interrupException)
@@ -141,111 +137,18 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     }
   }
 
-  protected def setupInputData(timeoutOfInputData: Duration): (String, Long, Long) = {
-    throw new UnsupportedOperationException("Abstract not support setupInputData function")
-  }
-
-  protected def mkdir(folder: File): File = {
-    if (!folder.exists() && !folder.mkdirs()) throw new AssertionError(s"failed to create folder on $folder")
-    if (folder.exists() && !folder.isDirectory) throw new AssertionError(s"$folder is not a folder")
-    folder
-  }
-
-  /**
-    * cache all historical meters. we always create an new file with all meters so we have to cache them.
-    */
-  private[this] val reportBuilders = mutable.Map[ConnectorKey, PerformanceReport.Builder]()
-
-  private[this] def connectorReports(): Seq[PerformanceReport] = {
-    val connectorInfos = result(connectorApi.list())
-    connectorInfos.map { info =>
-      val duration = (info.metrics.meters.flatMap(_.duration) :+ 0L).max / 1000
-      val builder  = reportBuilders.getOrElseUpdate(info.key, PerformanceReport.builder)
-      builder.connectorKey(info.key)
-      builder.className(info.className)
-      info.metrics.meters.foreach(
-        meter =>
-          builder
-            .record(duration, meter.name, meter.value)
-            .record(duration, s"${meter.name}(inPerSec)", meter.valueInPerSec.getOrElse(0.0f))
-      )
-      builder.build
-    }
-  }
-
-  private[this] def logMeters(report: PerformanceReport): Unit = if (report.records.nonEmpty) {
-    def simpleName(className: String): String = {
-      val index = className.lastIndexOf(".")
-      if (index != -1) className.substring(index + 1)
-      else className
-    }
-
-    def path(className: String): File = {
-      new File(
-        mkdir(new File(mkdir(new File(reportOutputFolder, simpleName(className))), this.getClass.getSimpleName)),
-        s"${report.key.group()}-${report.key.name()}.csv"
-      )
-    }
-    // we have to fix the order of key-value
-    // if we generate line via map.keys and map.values, the order may be different ...
-    val headers = report.records.head._2.keySet.toList
-    report.records.values.foreach { items =>
-      headers.foreach(
-        name =>
-          if (!items.contains(name))
-            throw new RuntimeException(s"$name disappear?? current:${items.keySet.mkString(",")}")
-      )
-    }
-    val file = path(report.className)
-    if (file.exists() && !file.delete()) throw new RuntimeException(s"failed to remove file:$file")
-    val fileWriter = new FileWriter(file)
-    try {
-      fileWriter.write("duration," + headers.map(s => s"""\"$s\"""").mkString(","))
-      fileWriter.write("\n")
-      report.records.foreach {
-        case (duration, item) =>
-          val line = s"$duration," + headers.map(header => f"${item(header)}%.3f").mkString(",")
-          fileWriter.write(line)
-          fileWriter.write("\n")
-      }
-    } finally Releasable.close(fileWriter)
-  }
-
-  protected def sleepUntilEnd(): Long = {
-    try {
-      val end = CommonUtils.current() + durationOfPerformance.toMillis
-      while (CommonUtils.current() <= end) {
-        val reports = connectorReports()
-        fetchConnectorMetrics(reports)
-        inputDataMetrics()
-        TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
-      }
-    } finally {
-      val reports = connectorReports()
-      fetchConnectorMetrics(reports)
-      beforeEndSleepUntil(reports)
-    }
-    durationOfPerformance.toMillis
-  }
-
-  protected def inputDataMetrics(): Unit = {
-    // nothing by default
-  }
-
-  /**
-    * invoked after all metrics of connectors are recorded.
-    * Noted: it is always invoked even if we fail to record reports
-    * @param reports the stuff we record
-    */
-  protected def afterRecodingReports(reports: Seq[PerformanceReport]): Unit = {
-    // nothing by default
+  protected[this] def rowData(): Row = {
+    Row.of(
+      (0 until 10).map(index => {
+        Cell.of(s"c$index", CommonUtils.randomString())
+      }): _*
+    )
   }
 
   /**
     * Duration running function for after sleep
     */
   protected def beforeEndSleepUntil(reports: Seq[PerformanceReport]): Unit = {
-    Releasable.close(produceDataThread)
     Releasable.close(inputDataThread)
   }
 
@@ -253,7 +156,7 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     * create and start the topic.
     * @return topic info
     */
-  protected def createTopic(): TopicInfo = {
+  protected[this] def createTopic(): TopicInfo = {
     result(
       topicApi.request
         .key(topicKey)
@@ -295,76 +198,132 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     result(connectorApi.get(connectorKey))
   }
 
-  protected[this] def loopProduceData(topicInfo: TopicInfo): Unit = {
-    produceDataThread = {
-      val pool = Executors.newSingleThreadExecutor()
+  //------------------------------[metrics function]---------------------------//
+  private[this] val metricsFile = new PerformanceDataMetricsFile()
 
-      pool.execute(() => {
-        while (!Thread.currentThread().isInterrupted()) {
-          try {
-            produce(topicInfo, timeoutOfInputData)
-          } catch {
-            case interrupException: InterruptedException => {
-              log.error("interrup exception", interrupException)
-              break
-            }
-            case e: Throwable => throw e
-          }
-        }
-      })
+  /**
+    * cache all historical meters. we always create an new file with all meters so we have to cache them.
+    */
+  private[this] val reportBuilders = mutable.Map[ConnectorKey, PerformanceReport.Builder]()
 
-      () => {
-        pool.shutdownNow()
-        pool.awaitTermination(durationOfPerformance.toMillis * 10, TimeUnit.MILLISECONDS)
-      }
+  private[this] def connectorReports(): Seq[PerformanceReport] = {
+    val connectorInfos = result(connectorApi.list())
+    connectorInfos.map { info =>
+      val duration = (info.metrics.meters.flatMap(_.duration) :+ 0L).max / 1000
+      val builder  = reportBuilders.getOrElseUpdate(info.key, PerformanceReport.builder)
+      builder.connectorKey(info.key)
+      builder.className(info.className)
+      info.metrics.meters.foreach(
+        meter =>
+          builder
+            .record(duration, meter.name, meter.value)
+            .record(duration, s"${meter.name}(inPerSec)", meter.valueInPerSec.getOrElse(0.0f))
+      )
+      builder.build
     }
   }
 
-  protected def produce(topicInfo: TopicInfo, timeout: Duration): (TopicInfo, Long, Long) = {
-    val cellNames: Set[String] = (0 until 10).map(index => s"c$index").toSet
-    val numberOfRowsToFlush    = 2000
+  private[this] def fetchConnectorMetrics(reports: Seq[PerformanceReport]): Unit = {
+    try reports.foreach(metricsFile.logMeters)
+    catch {
+      case e: Throwable =>
+        log.error("failed to log meters", e)
+    } finally afterRecodingReports(reports)
+  }
+
+  private[this] def fetchDataInfoMetrics(inputDataInfos: Seq[DataInfo]): Unit = {
+    try metricsFile.logDataInfos(inputDataInfos)
+    catch {
+      case e: Throwable =>
+        log.error("failed to log input data metrics", e)
+    }
+  }
+
+  /**
+    * invoked after all metrics of connectors are recorded.
+    * Noted: it is always invoked even if we fail to record reports
+    * @param reports the stuff we record
+    */
+  protected def afterRecodingReports(reports: Seq[PerformanceReport]): Unit = {
+    // nothing by default
+  }
+
+  //------------------------------[core functions]------------------------------//
+
+  protected def produce(timeout: Duration): (TopicKey, Long, Long) = {
     val producer = Producer
       .builder()
       .keySerializer(Serializer.ROW)
       .connectionProps(brokerClusterInfo.connectionProps)
       .build()
-    var cachedRows = 0
-    val start      = CommonUtils.current()
-
     try {
-      while (totalSizeInBytes.longValue() <= sizeOfInputData &&
-             (CommonUtils.current() - start) <= timeout.toMillis) {
-        producer
-          .sender()
-          .topicName(topicInfo.key.topicNameOnKafka())
-          .key(Row.of(cellNames.map { name =>
-            Cell.of(name, CommonUtils.randomString())
-          }.toSeq: _*))
-          .send()
-          .whenComplete {
-            case (meta, _) =>
-              if (meta != null) {
-                totalSizeInBytes.add(meta.serializedKeySize())
-                count.add(1)
+      val result: (Long, Long) = generateData(
+        numberOfRowsToFlush,
+        timeout,
+        (rows: Seq[Row]) => {
+          val count       = new LongAdder()
+          val sizeInBytes = new LongAdder()
+          rows.foreach(row => {
+            producer
+              .sender()
+              .topicName(topicKey.topicNameOnKafka())
+              .key(row)
+              .send()
+              .whenComplete {
+                case (meta, _) =>
+                  if (meta != null) {
+                    sizeInBytes.add(meta.serializedKeySize())
+                    count.add(1)
+                  }
               }
-          }
-        cachedRows += 1
-        if (cachedRows >= numberOfRowsToFlush) {
+          })
           producer.flush()
-          cachedRows = 0
+          (count.longValue(), sizeInBytes.longValue())
         }
-      }
+      )
+      (topicKey, result._1, result._2)
     } finally Releasable.close(producer)
-
-    (topicInfo, count.longValue(), totalSizeInBytes.longValue())
   }
 
-  protected def rowData(): Row = {
-    Row.of(
-      (0 until 10).map(index => {
-        Cell.of(s"c$index", CommonUtils.randomString())
-      }): _*
-    )
+  final protected[this] def generateData(
+    numberOfRowsToFlush: Int,
+    timeout: Duration,
+    callback: (Seq[Row]) => (Long, Long)
+  ): (Long, Long) = {
+    val start    = CommonUtils.current()
+    var previous = CommonUtils.current()
+    while (totalSizeInBytes.longValue() <= sizeOfInputData &&
+           CommonUtils.current() - start <= timeout.toMillis) {
+      val value: (Long, Long) = callback((0 until numberOfRowsToFlush).map(_ => rowData()))
+      count.add(value._1)
+      totalSizeInBytes.add(value._2)
+      // Input data metrics write to the memory
+      if ((CommonUtils.current() - previous) >= logMetersFrequency.toMillis) {
+        inputDataInfos = inputDataInfos ++ Seq(
+          DataInfo(CommonUtils.current() - setupStartTime, count.longValue(), totalSizeInBytes.longValue())
+        )
+        previous = CommonUtils.current()
+      }
+    }
+    (count.longValue(), totalSizeInBytes.longValue())
+  }
+
+  protected def sleepUntilEnd(): Long = {
+    try {
+      val end = CommonUtils.current() + durationOfPerformance.toMillis
+      while (CommonUtils.current() <= end) {
+        val reports = connectorReports()
+        fetchConnectorMetrics(reports)
+        fetchDataInfoMetrics(inputDataInfos)
+        TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
+      }
+    } finally {
+      val reports = connectorReports()
+      fetchConnectorMetrics(reports)
+      fetchDataInfoMetrics(inputDataInfos)
+      beforeEndSleepUntil(reports)
+    }
+    durationOfPerformance.toMillis
   }
 
   /**
@@ -375,8 +334,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     * example delete data.
     */
   protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit = {}
-
-  //------------------------------[core functions]------------------------------//
 
   @After
   def record(): Unit = {
@@ -394,12 +351,6 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
     )
     afterStoppingConnectors(result(connectorApi.list()), result(topicApi.list()))
   }
-
-  private[this] def fetchConnectorMetrics(reports: Seq[PerformanceReport]): Unit = {
-    try reports.foreach(logMeters)
-    catch {
-      case e: Throwable =>
-        log.error("failed to log meters", e)
-    } finally afterRecodingReports(reports)
-  }
 }
+
+final case class DataInfo(duration: Long, messageNumber: Long, messageSize: Long)
