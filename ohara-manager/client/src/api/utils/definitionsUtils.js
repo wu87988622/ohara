@@ -24,7 +24,7 @@ import {
   option,
   generateValueWithDefaultValue,
 } from '../utils/validation';
-import { isArray, isFunction } from 'lodash';
+import { get, isArray, isFunction } from 'lodash';
 
 const necessaryType = {
   required: 'REQUIRED',
@@ -78,7 +78,7 @@ const getTypeWithValueType = key => {
 };
 
 export const getDefinition = params => {
-  const { settingDefinitions } = params;
+  const settingDefinitions = get(params, 'settingDefinitions', []);
   const definitionsObj = {};
   settingDefinitions.forEach(definition => {
     const obj = definition;

@@ -41,10 +41,14 @@ const VirtualizedList = props => {
     rowRenderer,
     autoScrollToBottom,
   } = props;
-  const cache = new CellMeasurerCache({
-    defaultHeight: 20,
-    fixedWidth: true,
-  });
+  // avoid duplicate creation of the cache data
+  // we initial cache once for each DOM rendering
+  const cache = React.useMemo(() => {
+    return new CellMeasurerCache({
+      defaultHeight: 20,
+      fixedWidth: true,
+    });
+  }, []);
 
   const RowRendererWrapper = ({
     index,

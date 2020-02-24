@@ -16,8 +16,10 @@
 
 import '@testing-library/cypress/add-commands';
 
-import * as generate from '../../src/utils/generate';
-import { sleep } from '../../src/api/utils/apiUtils';
+import { KIND } from '../../src/const';
+import wait from '../../src/api/waitApi';
+
+import * as waitUtil from '../../src/api/utils/waitUtils';
 import * as nodeApi from '../../src/api/nodeApi';
 import * as zkApi from '../../src/api/zookeeperApi';
 import * as bkApi from '../../src/api/brokerApi';
@@ -25,6 +27,9 @@ import * as wkApi from '../../src/api/workerApi';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as topicApi from '../../src/api/topicApi';
 import * as objectApi from '../../src/api/objectApi';
+import { sleep } from '../../src/api/utils/apiUtils';
+import * as URL from '../../src/api/utils/url';
+import * as generate from '../../src/utils/generate';
 import { hashByGroupAndName } from '../../src/utils/sha';
 
 // Get this environment for further usage
@@ -99,6 +104,19 @@ Cypress.Commands.add(
       // worker api will make sure the service is starting, we can skip the checking
       const wkRes = await wkApi.start(worker);
       if (!wkRes.errors) result.worker = wkRes.data;
+
+      // wait until the connector list show up
+      const waitRes = await wait({
+        url: `${URL.INSPECT_URL}/${KIND.worker}/${workspaceName}?group=${workerGroup}`,
+        checkFn: waitUtil.waitForConnectReady,
+        // we don't need to inspect too frequently
+        sleep: 5000,
+      });
+      if (waitRes.errors) {
+        throw new Error(
+          `Get connector list of worker ${workspaceName} failed.`,
+        );
+      }
 
       const workspace = {
         name: workspaceName,

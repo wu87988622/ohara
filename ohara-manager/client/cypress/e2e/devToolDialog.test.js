@@ -62,15 +62,14 @@ describe('DevToolDialog - Topics tab', () => {
         .should('exist');
 
       // Check the topic tab exist
-      cy.findByTitle('Developer Tools')
-        .click()
-        .findByTitle('Select topic')
+      cy.findByTitle('Developer Tools').click();
+      // Check the status bar of no data
+      cy.findByText(/^no topic data$/i).should('exist');
+
+      cy.findByTitle('Select topic')
         .click()
         .findByText(res.topic.name)
         .click();
-
-      // Check the status bar of no data
-      cy.findByText(/^no topic data$/i).should('exist');
 
       // Check the topic data detail view
       cy.findByTestId('view-topic-table')
@@ -113,6 +112,18 @@ describe('DevToolDialog - Topics tab', () => {
       cy.window()
         .its('open')
         .should('be.called');
+
+      // verify the switching tab operations work normally
+      cy.findByText(/^logs$/i).click();
+      cy.findByTestId('log-type-select').click();
+      cy.findByText(/^worker$/i).click();
+      cy.findByTestId('view-log-list').should('exist');
+      // switch back again should be ok
+      cy.findAllByText(/^topics$/i)
+        .parents('button')
+        .first()
+        .click();
+      cy.findByTestId('view-topic-table').should('exist');
 
       // close button
       cy.findByTitle('Close this panel').click();
