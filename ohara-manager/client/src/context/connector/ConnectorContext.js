@@ -35,11 +35,11 @@ const ConnectorProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { connectorApi } = useApi();
-  const { pipelineName } = useApp();
+  const { pipelineName, pipelineGroup } = useApp();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
-  }, [pipelineName]);
+  }, [pipelineName, pipelineGroup]);
 
   useEffect(() => {
     if (!connectorApi) return;

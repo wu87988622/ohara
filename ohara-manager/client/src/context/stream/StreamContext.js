@@ -30,11 +30,11 @@ const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { streamApi } = useApi();
-  const { pipelineName } = useApp();
+  const { pipelineName, pipelineGroup } = useApp();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());
-  }, [pipelineName]);
+  }, [pipelineName, pipelineGroup]);
 
   React.useEffect(() => {
     if (!streamApi) return;
