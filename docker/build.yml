@@ -29,6 +29,7 @@ services:
       args:
         BRANCH: master
         REPO: https://github.com/oharastream/ohara.git
+        OHARA_VERSION: ""
 
   manager:
     image: oharastream/manager:${TAG:-0.10.0-SNAPSHOT}
