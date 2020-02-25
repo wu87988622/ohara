@@ -68,22 +68,21 @@ const pipeline = () => {
 
     const legacyConnectors = checkCell(apiConnectors, paperConnectors);
     const legacyTopics = checkCell(apiTopics, paperTopics);
-    const legacyStream = checkCell(apiStreams, paperStreams);
-
-    for (const connector of legacyConnectors.legacyApiData) {
-      await stopConnector(connector);
-      await deleteConnector(connector);
+    const legacyStreams = checkCell(apiStreams, paperStreams);
+    for (const legacyConnector of legacyConnectors.legacyApiData) {
+      await stopConnector(legacyConnector);
+      await deleteConnector(legacyConnector);
     }
-    for (const topic of legacyTopics.legacyApiData) {
+    for (const legacyTopic of legacyTopics.legacyApiData) {
       const findSharedTopic = currentTopic
         .filter(topic => topic.tags.isShared)
-        .find(topic => topic.name === topic);
+        .find(topic => topic.name === legacyTopic);
       if (findSharedTopic) continue;
-      await deleteTopic(topic);
+      await deleteTopic(legacyTopic);
     }
-    for (const stream of legacyStream.legacyApiData) {
-      await stopStream(stream);
-      await deleteStream(stream);
+    for (const legacyStream of legacyStreams.legacyApiData) {
+      await stopStream(legacyStream);
+      await deleteStream(legacyStream);
     }
 
     const updateConnectorEndpoints = currentPipeline.endpoints.filter(
@@ -98,7 +97,7 @@ const pipeline = () => {
     );
     const updateStreamEndpoints = currentPipeline.endpoints.filter(
       endpoint =>
-        !legacyStream.legacyPaperData.includes(endpoint.name) &&
+        !legacyStreams.legacyPaperData.includes(endpoint.name) &&
         endpoint.kind === KIND.stream,
     );
     const updateEndpoints = [
@@ -117,7 +116,7 @@ const pipeline = () => {
       .map(cell => updateStatus(cell, currentTopic));
     const updateStreamsTags = _.get(currentPipeline, 'tags.cells', [])
       .filter(cell => cell.kind === KIND.stream)
-      .filter(cell => !legacyStream.legacyPaperData.includes(cell.name))
+      .filter(cell => !legacyStreams.legacyPaperData.includes(cell.name))
       .map(cell => updateStatus(cell, currentStream));
     const links = _.get(currentPipeline, 'tags.cells', []).filter(
       cell => cell.type === 'standard.Link',
