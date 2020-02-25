@@ -151,7 +151,6 @@ const AutofillEditor = props => {
                         type="text"
                         validate={composeValidators(required, duplicateKey)}
                         options={suggestiveKeys}
-                        freeSolo
                         closeIcon={<></>}
                       />
                       <Field
