@@ -43,8 +43,7 @@ const StyledDialogTitle = styled(DialogTitle)(
 );
 
 const StyledDialogActions = styled(DialogActions)`
-  padding: ${props => props.theme.spacing(1)}px
-    ${props => props.theme.spacing(3)}px ${props => props.theme.spacing(3)}px;
+  padding: ${props => props.theme.spacing(1, 3, 3, 3)};
 `;
 
 const ConfirmButtonWrapper = styled.div`
