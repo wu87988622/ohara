@@ -28,6 +28,7 @@ const stream = () => {
     stopStream,
     deleteStream,
   } = context.useStreamActions();
+  const { data: currentStreams } = context.useStreamState();
 
   const create = async (params, paperApi) => {
     const { id, name, className, jarKey } = params;
@@ -50,18 +51,52 @@ const stream = () => {
     }
   };
 
-  const update = async (cell, topic, values, paperApi) => {
+  const update = async (cell, topics, values, paperApi) => {
+    const cells = paperApi.getCells();
     const res = await updateStream({
       name: cell.name,
       ...values,
     });
 
-    if (!res.error && !_.isEmpty(topic)) {
-      if (values.to.length > 0) {
-        paperApi.addLink(cell.id, topic.id);
+    if (!res.error) {
+      const currentStream = currentStreams.find(
+        stream => stream.name === values.name,
+      );
+      const hasTo = _.get(values, 'to', []).length > 0;
+      const hasFrom = _.get(values, 'from', []).length > 0;
+      const currentHasTo = _.get(currentStream, 'to', []).length > 0;
+      const currentHasFrom = _.get(currentStream, 'from', []).length > 0;
+      if (currentHasTo) {
+        const streamId = paperApi.getCell(values.name).id;
+        const topicId = paperApi.getCell(currentStream.to[0].name).id;
+        const linkId = cells
+          .filter(cell => cell.cellType === 'standard.Link')
+          .find(cell => cell.sourceId === streamId && cell.targetId === topicId)
+          .id;
+
+        paperApi.removeLink(linkId);
       }
-      if (values.from.length > 0) {
-        paperApi.addLink(topic.id, cell.id);
+      if (currentHasFrom) {
+        const streamId = paperApi.getCell(values.name).id;
+        const topicId = paperApi.getCell(currentStream.from[0].name).id;
+        const linkId = cells
+          .filter(cell => cell.cellType === 'standard.Link')
+          .find(cell => cell.sourceId === topicId && cell.targetId === streamId)
+          .id;
+
+        paperApi.removeLink(linkId);
+      }
+      if (hasTo) {
+        paperApi.addLink(
+          cell.id,
+          topics.find(topic => topic.key === 'to').data.id,
+        );
+      }
+      if (hasFrom) {
+        paperApi.addLink(
+          topics.find(topic => topic.key === 'from').data.id,
+          cell.id,
+        );
       }
     }
     return res;

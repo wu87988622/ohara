@@ -28,6 +28,7 @@ const connector = () => {
     stopConnector,
     deleteConnector,
   } = context.useConnectorActions();
+  const { data: currentConnector } = context.useConnectorState();
 
   const create = async (params, paperApi) => {
     const { id, name, className } = params;
@@ -49,22 +50,58 @@ const connector = () => {
     }
   };
 
-  const update = async (cell, topic, values, paperApi) => {
+  const update = async (cell, topics, values, paperApi) => {
+    const cells = paperApi.getCells();
+    const targetConnector = currentConnector.find(
+      connector => connector.name === values.name,
+    );
+    if (!targetConnector) return;
     const res = await updateConnector({
       name: cell.name,
       ...values,
     });
 
-    if (!res.error && !_.isEmpty(topic)) {
-      switch (cell.kind) {
-        case KIND.source:
-          paperApi.addLink(cell.id, topic.id);
-          break;
-        case KIND.sink:
-          paperApi.addLink(topic.id, cell.id);
-          break;
-        default:
-          break;
+    if (!res.error) {
+      const hasTopicKey = values.topicKeys.length > 0;
+      const currentHasTopicKey =
+        _.get(targetConnector, 'topicKeys', []).length > 0;
+      if (currentHasTopicKey) {
+        const connectorId = paperApi.getCell(values.name).id;
+        const topicId = paperApi.getCell(targetConnector.topicKeys[0].name).id;
+        let linkId;
+        switch (cell.kind) {
+          case KIND.source:
+            linkId = cells
+              .filter(cell => cell.cellType === 'standard.Link')
+              .find(
+                cell =>
+                  cell.sourceId === connectorId && cell.targetId === topicId,
+              ).id;
+            break;
+          case KIND.sink:
+            linkId = cells
+              .filter(cell => cell.cellType === 'standard.Link')
+              .find(
+                cell =>
+                  cell.sourceId === topicId && cell.targetId === connectorId,
+              ).id;
+            break;
+          default:
+            break;
+        }
+        paperApi.removeLink(linkId);
+      }
+      if (hasTopicKey) {
+        switch (cell.kind) {
+          case KIND.source:
+            paperApi.addLink(cell.id, topics[0].data.id);
+            break;
+          case KIND.sink:
+            paperApi.addLink(topics[0].data.id, cell.id);
+            break;
+          default:
+            break;
+        }
       }
     }
     return res;

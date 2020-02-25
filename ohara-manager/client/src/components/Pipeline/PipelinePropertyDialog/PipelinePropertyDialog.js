@@ -16,7 +16,7 @@
 
 import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { find, filter, isEmpty, capitalize, has, isArray, get } from 'lodash';
+import { find, filter, isEmpty, capitalize, pick, isArray, get } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -107,7 +107,11 @@ const PipelinePropertyDialog = props => {
   const groups = groupBy(classInfo.settingDefinitions);
 
   const getTopicWithKey = (values, key) => {
-    if (values[key] === 'Please select...' || isArray(values[key])) return;
+    if (isArray(values[key])) return;
+    if (values[key] === 'Please select...') {
+      values[key] = [];
+      return;
+    }
     const isPipelineOnlyTopic = !isEmpty(
       filter(values[key], topicKey => topicKey.startsWith('T')),
     );
@@ -129,36 +133,35 @@ const PipelinePropertyDialog = props => {
 
   const handleSubmit = async values => {
     const topicCells = paperApi.getCells(KIND.topic);
-    Object.keys(values).forEach(key => {
-      switch (key) {
-        case 'topicKeys':
-          getTopicWithKey(values, key);
-          break;
-        case 'to':
-          getTopicWithKey(values, key);
-          break;
-        case 'from':
-          getTopicWithKey(values, key);
-          break;
-        default:
-          break;
+    let topics = [];
+    values.settingDefinitions.forEach(def => {
+      if (def.valueType === 'OBJECT_KEYS' && def.reference === 'TOPIC') {
+        if (def.key.length > 0) {
+          getTopicWithKey(values, def.key);
+          if (values[def.key].length === 0) {
+            return;
+          }
+          topics.push({
+            key: def.key,
+            data: topicCells.find(
+              topic => values[def.key][0].name === topic.name,
+            ),
+          });
+        }
+      }
+      if (def.valueType === 'TABLE') {
+        if (values[def.key].length > 0) {
+          const pickList = def.tableKeys.map(tableKey => tableKey.name);
+          values[def.key] = values[def.key].map(value => pick(value, pickList));
+        }
       }
     });
-    if (has(values, 'topicKeys') || has(values, 'to') || has(values, 'from')) {
+    topics = topics.filter(topic => topic.data !== undefined);
+    if (topics.length > 0) {
       onSubmit(
         {
           cell: cellData,
-          topic: {
-            ...topicCells.find(
-              topic => topic.name === get(values, 'topicKeys[0].name', null),
-            ),
-            ...topicCells.find(
-              topic => topic.name === get(values, 'to[0].name', null),
-            ),
-            ...topicCells.find(
-              topic => topic.name === get(values, 'from[0].name', null),
-            ),
-          },
+          topics,
         },
         values,
         paperApi,

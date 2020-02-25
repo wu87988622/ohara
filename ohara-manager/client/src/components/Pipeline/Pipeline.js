@@ -167,15 +167,15 @@ const Pipeline = React.forwardRef((props, ref) => {
   }, [currentPipeline, pipelineDispatch, prevPipeline]);
 
   const handleSubmit = (params, values, paperApi) => {
-    const { cell, topic = {} } = params;
+    const { cell, topics = [] } = params;
     const { kind } = cell;
     switch (kind) {
       case KIND.source:
       case KIND.sink:
-        updateConnector(cell, topic, values, paperApi);
+        updateConnector(cell, topics, values, paperApi);
         break;
       case KIND.stream:
-        updateStream(cell, topic, values, paperApi);
+        updateStream(cell, topics, values, paperApi);
         break;
       default:
         break;
