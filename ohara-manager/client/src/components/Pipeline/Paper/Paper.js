@@ -583,7 +583,7 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        graph.removeCells(graph.getLinks(id));
+        graph.removeCells(graph.getCell(id));
       },
       getCell(id) {
         if (typeof id !== 'string') {

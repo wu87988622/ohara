@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { isArray } from 'lodash';
 import PropTypes from 'prop-types';
 import MaterialTable from 'material-table';
 import { forwardRef } from 'react';
@@ -75,7 +76,11 @@ const Table = props => {
     tableKeys,
     refs,
   } = props;
-  const [state, setState] = React.useState({
+
+  const stateRef = React.useRef({});
+
+  if (!isArray(value)) return null;
+  stateRef.current = {
     columns: tableKeys.map(tableKey => {
       return {
         title: tableKey.name,
@@ -87,9 +92,8 @@ const Table = props => {
       };
     }),
     data: [...value],
-  });
+  };
 
-  //have some warnings in console when simply using the tabl, waiting for the fix https://github.com/mbrn/material-table/issues/1293
   return (
     <div ref={refs}>
       <MaterialTable
@@ -100,46 +104,49 @@ const Table = props => {
         name={name}
         icons={tableIcons}
         title={displayName}
-        columns={state.columns}
-        data={state.data}
+        columns={stateRef.current.columns}
+        data={stateRef.current.data}
         editable={{
           onRowAdd: newData =>
             new Promise(resolve => {
               setTimeout(() => {
                 resolve();
-                setState(prevState => {
-                  const data = [...prevState.data];
+                const newRow = () => {
+                  let data = [...stateRef.current.data];
                   data.push(newData);
-                  onChange(data);
-                  return { ...prevState, data };
-                });
-              }, 600);
+                  return data;
+                };
+                stateRef.current.data = newRow();
+                onChange(stateRef.current.data);
+              });
             }),
           onRowUpdate: (newData, oldData) =>
             new Promise(resolve => {
               setTimeout(() => {
                 resolve();
                 if (oldData) {
-                  setState(prevState => {
-                    const data = [...prevState.data];
+                  const newRow = () => {
+                    const data = [...stateRef.current.data];
                     data[data.indexOf(oldData)] = newData;
-                    onChange(data);
-                    return { ...prevState, data };
-                  });
+                    return data;
+                  };
+                  stateRef.current.data = newRow();
+                  onChange(stateRef.current.data);
                 }
-              }, 600);
+              });
             }),
           onRowDelete: oldData =>
             new Promise(resolve => {
               setTimeout(() => {
                 resolve();
-                setState(prevState => {
-                  const data = [...prevState.data];
+                const newRow = () => {
+                  const data = [...stateRef.current.data];
                   data.splice(data.indexOf(oldData), 1);
-                  onChange(data);
-                  return { ...prevState, data };
-                });
-              }, 600);
+                  return data;
+                };
+                stateRef.current.data = newRow();
+                onChange(stateRef.current.data);
+              });
             }),
         }}
       />
