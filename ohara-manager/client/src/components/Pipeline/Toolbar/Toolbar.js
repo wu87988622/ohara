@@ -63,7 +63,7 @@ const Toolbar = props => {
   const { selectedCell } = context.usePipelineState();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
-  const { steps, activeStep, deleteCells } = useDeleteCells(paperApi);
+  const { steps, activeStep, deleteCells } = useDeleteCells();
   const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
   const eventLog = useEventLog();
