@@ -219,7 +219,7 @@ const Toolbox = props => {
     topicsData,
   ]);
 
-  const handelScrllo = () => {
+  const handleScroll = () => {
     const scrollTop = toolboxBodyRef.current.scrollTop;
     scrollRef.current = scrollTop;
   };
@@ -265,7 +265,7 @@ const Toolbox = props => {
           className="toolbox-body"
           style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
           ref={toolboxBodyRef}
-          onScroll={handelScrllo}
+          onScroll={handleScroll}
         >
           <ExpansionPanel square expanded={expanded.source}>
             <ExpansionPanelSummary
