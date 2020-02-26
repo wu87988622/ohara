@@ -271,7 +271,7 @@ public final class ConnectorDefUtils {
       case POSITIVE_SHORT:
       case SHORT:
         return ConfigDef.Type.SHORT;
-      case PORT:
+      case REMOTE_PORT:
       case BINDING_PORT:
       case POSITIVE_INT:
       case INT:

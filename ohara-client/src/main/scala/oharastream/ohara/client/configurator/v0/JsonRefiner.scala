@@ -145,7 +145,7 @@ trait JsonRefiner[T] {
       case Type.DURATION =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultDuration.toString)
         if (!definition.internal()) requireType[Duration](definition.key())
-      case Type.PORT =>
+      case Type.REMOTE_PORT =>
         if (definition.hasDefault)
           nullToShort(definition.key(), definition.defaultShort)
         if (!definition.internal()) requireConnectionPort(definition.key())

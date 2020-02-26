@@ -23,7 +23,7 @@ import Duration from './Duration';
 import IntDef from './IntDef';
 import JdbcTable from './JdbcTable';
 import Password from './Password';
-import Port from './Port';
+import RemotePort from './RemotePort';
 import Reference from './Reference';
 import StringDef from './StringDef';
 import Table from './Table';
@@ -125,8 +125,8 @@ const RenderDefinition = props => {
         case 'STRING':
           return RenderField({ ...def, input: StringDef });
 
-        case 'PORT':
-          return RenderField({ ...def, input: Port });
+        case 'REMOTE_PORT':
+          return RenderField({ ...def, input: RemotePort });
 
         case 'INT':
           return RenderField({ ...def, input: IntDef });

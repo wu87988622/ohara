@@ -86,7 +86,7 @@ class TestFtpSourceDefinitions extends OharaTest {
     definition.permission() shouldBe Permission.EDITABLE
     definition.internal() shouldBe false
     definition.reference() shouldBe Reference.NONE
-    definition.valueType() shouldBe SettingDef.Type.PORT
+    definition.valueType() shouldBe SettingDef.Type.REMOTE_PORT
   }
 
   @Test

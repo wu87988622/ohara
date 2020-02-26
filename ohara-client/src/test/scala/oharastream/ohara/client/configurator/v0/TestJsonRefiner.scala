@@ -1009,7 +1009,7 @@ class TestJsonRefiner extends OharaTest {
         override def read(json: JsValue): JsObject = json.asJsObject
         override def write(obj: JsObject): JsValue = obj
       })
-      .definition(SettingDef.builder().key(key).required(SettingDef.Type.PORT).build())
+      .definition(SettingDef.builder().key(key).required(SettingDef.Type.REMOTE_PORT).build())
       .refine
 
     format.read(s"""

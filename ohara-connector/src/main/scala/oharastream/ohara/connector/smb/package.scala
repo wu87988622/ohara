@@ -41,7 +41,7 @@ package object smb {
     .key(SMB_PORT_KEY)
     .displayName("Port")
     .documentation("the port of SMB server")
-    .required(SettingDef.Type.PORT)
+    .required(SettingDef.Type.REMOTE_PORT)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
 

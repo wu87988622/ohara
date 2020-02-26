@@ -42,7 +42,7 @@ package object ftp {
     .builder()
     .displayName("Port of FTP Server")
     .documentation("port of ftp server")
-    .required(SettingDef.Type.PORT)
+    .required(SettingDef.Type.REMOTE_PORT)
     .key(FTP_PORT_KEY)
     .orderInGroup(COUNTER.getAndIncrement())
     .build()
