@@ -35,20 +35,23 @@ import scala.collection.JavaConverters._
 class TestFtpSourceTask extends OharaTest {
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()
 
+  private[this] val inputFolder     = "/input"
+  private[this] val completedFolder = "/backup"
+  private[this] val errorFolder     = "/error"
+
   private[this] val props = FtpSourceProps(
-    inputFolder = "/input",
-    completedFolder = Some("/completed"),
-    errorFolder = "/error",
     user = ftpServer.user,
     password = ftpServer.password,
     hostname = ftpServer.hostname,
-    port = ftpServer.port,
-    encode = "UTF-8"
+    port = ftpServer.port
   )
 
   private[this] val settings = props.toMap ++ Map(
-    CsvConnectorDefinitions.TASK_TOTAL_KEY -> "1",
-    CsvConnectorDefinitions.TASK_HASH_KEY  -> "0"
+    CsvConnectorDefinitions.INPUT_FOLDER_KEY     -> inputFolder,
+    CsvConnectorDefinitions.COMPLETED_FOLDER_KEY -> completedFolder,
+    CsvConnectorDefinitions.ERROR_FOLDER_KEY     -> errorFolder,
+    CsvConnectorDefinitions.TASK_TOTAL_KEY       -> "1",
+    CsvConnectorDefinitions.TASK_HASH_KEY        -> "0"
   )
 
   @Before
@@ -56,16 +59,16 @@ class TestFtpSourceTask extends OharaTest {
     val fileSystem = createFileSystem()
 
     try {
-      fileSystem.reMkdirs(props.inputFolder)
-      fileSystem.reMkdirs(props.completedFolder.get)
-      fileSystem.reMkdirs(props.errorFolder)
+      fileSystem.reMkdirs(inputFolder)
+      fileSystem.reMkdirs(completedFolder)
+      fileSystem.reMkdirs(errorFolder)
     } finally fileSystem.close()
   }
 
   private[this] def createFileSystem(): FileSystem = {
     val task   = createTask()
     val config = TaskSetting.of(settings.asJava)
-    task._fileSystem(config).asInstanceOf[FileSystem]
+    task.fileSystem(config).asInstanceOf[FileSystem]
   }
 
   private[this] def createTask() = {
@@ -113,27 +116,27 @@ class TestFtpSourceTask extends OharaTest {
   def testFileSystem(): Unit = {
     val task   = createTask()
     val config = TaskSetting.of(settings.asJava)
-    task._fileSystem(config) should not be (null)
+    task.fileSystem(config) should not be (null)
   }
 
   @Test
   def testFileSystem_WithEmptyConfig(): Unit = {
     val task = createTask()
     intercept[NoSuchElementException] {
-      task._fileSystem(TaskSetting.of(Collections.emptyMap()))
+      task.fileSystem(TaskSetting.of(Collections.emptyMap()))
     }
   }
 
   @Test
   def testListNonexistentInput(): Unit = {
     val fileSystem = createFileSystem()
-    try fileSystem.delete(props.inputFolder)
+    try fileSystem.delete(inputFolder)
     finally fileSystem.close()
 
     val fs = createFileSystem()
     // input folder doesn't exist should throw error
     intercept[IllegalArgumentException] {
-      fs.listFileNames(props.inputFolder).asScala.size shouldBe 0
+      fs.listFileNames(inputFolder).asScala.size shouldBe 0
     }
   }
 
@@ -144,12 +147,12 @@ class TestFtpSourceTask extends OharaTest {
     try {
       val data = (0 to 100).map(_.toString)
       (0 until numberOfInputs).foreach(
-        index => fileSystem.attach(CommonUtils.path(props.inputFolder, index.toString), data)
+        index => fileSystem.attach(CommonUtils.path(inputFolder, index.toString), data)
       )
     } finally fileSystem.close()
 
     val fs = createFileSystem()
-    fs.listFileNames(props.inputFolder).asScala.size shouldBe 3
+    fs.listFileNames(inputFolder).asScala.size shouldBe 3
   }
 
   @After

@@ -16,14 +16,9 @@
 
 package oharastream.ohara.connector.ftp
 
-import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.connector.TaskSetting
 
 case class FtpSourceProps(
-  inputFolder: String,
-  completedFolder: Option[String],
-  errorFolder: String,
-  encode: String,
   hostname: String,
   port: Int,
   user: String,
@@ -31,23 +26,15 @@ case class FtpSourceProps(
 ) {
   def toMap: Map[String, String] =
     Map(
-      INPUT_FOLDER_KEY     -> inputFolder,
-      COMPLETED_FOLDER_KEY -> completedFolder.getOrElse(""),
-      ERROR_FOLDER_KEY     -> errorFolder,
-      FILE_ENCODE_KEY      -> encode,
-      FTP_HOSTNAME_KEY     -> hostname,
-      FTP_PORT_KEY         -> port.toString,
-      FTP_USER_NAME_KEY    -> user,
-      FTP_PASSWORD_KEY     -> password
+      FTP_HOSTNAME_KEY  -> hostname,
+      FTP_PORT_KEY      -> port.toString,
+      FTP_USER_NAME_KEY -> user,
+      FTP_PASSWORD_KEY  -> password
     ).filter(_._2.nonEmpty)
 }
 
 object FtpSourceProps {
   def apply(settings: TaskSetting): FtpSourceProps = FtpSourceProps(
-    inputFolder = settings.stringValue(INPUT_FOLDER_KEY),
-    completedFolder = Option(settings.stringOption(COMPLETED_FOLDER_KEY).orElse(null)).filterNot(CommonUtils.isEmpty),
-    errorFolder = settings.stringValue(ERROR_FOLDER_KEY),
-    encode = settings.stringOption(FILE_ENCODE_KEY).orElse(FILE_ENCODE_DEFAULT),
     hostname = settings.stringValue(FTP_HOSTNAME_KEY),
     port = settings.intValue(FTP_PORT_KEY),
     user = settings.stringValue(FTP_USER_NAME_KEY),

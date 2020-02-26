@@ -19,46 +19,28 @@ package oharastream.ohara.connector.ftp
 import java.util
 
 import oharastream.ohara.client.filesystem.FileSystem
-import oharastream.ohara.common.data.Column
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector.csv.CsvSourceConnector
-import oharastream.ohara.kafka.connector.{RowSourceTask, TaskSetting}
-import org.slf4j.{Logger, LoggerFactory}
+import oharastream.ohara.kafka.connector.{RowSourceTask, TaskSetting, storage}
 
 import scala.collection.JavaConverters._
 
 class FtpSource extends CsvSourceConnector {
-  private[this] var settings: TaskSetting = _
-  private[this] var props: FtpSourceProps = _
-  private[this] var schema: Seq[Column]   = _
-
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[FtpSourceTask]
-
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
-
-  override protected[ftp] def _start(settings: TaskSetting): Unit = {
-    this.settings = settings
-    this.props = FtpSourceProps(settings)
-    this.schema = settings.columns.asScala
-    if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
-
-    val fileSystem =
-      FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
-    try {
-      if (fileSystem.nonExists(props.inputFolder))
-        throw new IllegalArgumentException(s"${props.inputFolder} doesn't exist")
-      if (fileSystem.nonExists(props.errorFolder)) fileSystem.mkdirs(props.errorFolder)
-      props.completedFolder.foreach(folder => if (fileSystem.nonExists(folder)) fileSystem.mkdirs(folder))
-    } finally fileSystem.close()
+  override def fileSystem(config: TaskSetting): storage.FileSystem = {
+    val props: FtpSourceProps = FtpSourceProps(config)
+    FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
+  private[this] var settings: TaskSetting = _
 
-  override protected def _stop(): Unit = {
+  override protected def taskClass(): Class[_ <: RowSourceTask] = classOf[FtpSourceTask]
+
+  override protected def csvTaskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+
+  override protected[ftp] def execute(settings: TaskSetting): Unit = this.settings = settings
+
+  override protected def terminate(): Unit = {
     //    do nothing
   }
 
-  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
-}
-
-object FtpSource {
-  val LOG: Logger = LoggerFactory.getLogger(classOf[FtpSource])
+  override protected def csvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

@@ -28,7 +28,6 @@ import oharastream.ohara.kafka.connector.json.ConnectorDefUtils;
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectorContext;
-import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 
 /** A wrap to SourceConnector. Currently, only Task is replaced by ohara object - RowSourceTask */
@@ -39,7 +38,8 @@ public abstract class RowSourceConnector extends SourceConnector implements With
    *
    * @return a RowSourceTask class
    */
-  protected abstract Class<? extends RowSourceTask> _taskClass();
+  @Override
+  public abstract Class<? extends RowSourceTask> taskClass();
 
   /**
    * Return the settings for source task.
@@ -47,18 +47,18 @@ public abstract class RowSourceConnector extends SourceConnector implements With
    * @param maxTasks number of tasks for this connector
    * @return a seq from settings
    */
-  protected abstract List<TaskSetting> _taskSettings(int maxTasks);
+  protected abstract List<TaskSetting> taskSettings(int maxTasks);
 
   /**
    * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
-   * just been instantiated and initialized or _stop() has been invoked.
+   * just been instantiated and initialized or stop() has been invoked.
    *
    * @param config configuration settings
    */
-  protected abstract void _start(TaskSetting config);
+  protected abstract void run(TaskSetting config);
 
   /** stop this connector */
-  protected abstract void _stop();
+  protected abstract void terminate();
 
   /**
    * Define the configuration for the connector.
@@ -103,13 +103,8 @@ public abstract class RowSourceConnector extends SourceConnector implements With
   // -------------------------------------------------[WRAPPED]-------------------------------------------------//
 
   @Override
-  public List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
-  }
-
-  @Override
-  public final Class<? extends Task> taskClass() {
-    return _taskClass();
+  public final List<Map<String, String>> taskConfigs(int maxTasks) {
+    return taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;
@@ -117,12 +112,12 @@ public abstract class RowSourceConnector extends SourceConnector implements With
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
-    _start(taskSetting);
+    run(taskSetting);
   }
 
   @Override
   public final void stop() {
-    _stop();
+    terminate();
   }
 
   /** @return custom definitions + core definitions */

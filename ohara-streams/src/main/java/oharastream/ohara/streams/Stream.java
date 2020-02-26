@@ -111,13 +111,13 @@ public abstract class Stream implements WithDefinitions {
    *
    * @return the defined settings
    */
-  protected Map<String, SettingDef> _definitions() {
+  protected Map<String, SettingDef> customSettingDefinitions() {
     return Collections.emptyMap();
   }
 
   @Override
   public final Map<String, SettingDef> settingDefinitions() {
-    return WithDefinitions.merge(this, StreamDefUtils.DEFAULT, _definitions());
+    return WithDefinitions.merge(this, StreamDefUtils.DEFAULT, customSettingDefinitions());
   }
 
   /** User defined initialization before running stream */

@@ -19,8 +19,12 @@ package oharastream.ohara.kafka.connector.csv;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import oharastream.ohara.kafka.connector.*;
+import oharastream.ohara.common.util.Releasable;
+import oharastream.ohara.kafka.connector.RowSinkRecord;
+import oharastream.ohara.kafka.connector.RowSinkTask;
+import oharastream.ohara.kafka.connector.TaskSetting;
+import oharastream.ohara.kafka.connector.TopicOffset;
+import oharastream.ohara.kafka.connector.TopicPartition;
 import oharastream.ohara.kafka.connector.csv.sink.CsvDataWriter;
 import oharastream.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 import oharastream.ohara.kafka.connector.csv.sink.DataWriter;
@@ -35,9 +39,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class CsvSinkTask extends RowSinkTask {
   private static final Logger log = LoggerFactory.getLogger(CsvSinkTask.class);
-
-  private FileSystem fileSystem;
-
   private DataWriter writer;
 
   /**
@@ -46,27 +47,28 @@ public abstract class CsvSinkTask extends RowSinkTask {
    * @param setting initial settings
    * @return a FileSystem instance
    */
-  public abstract FileSystem _fileSystem(TaskSetting setting);
+  public abstract FileSystem fileSystem(TaskSetting setting);
 
   @Override
-  protected void _start(TaskSetting setting) {
-    fileSystem = Objects.requireNonNull(_fileSystem(setting));
+  protected void run(TaskSetting setting) {
     writer =
-        new CsvDataWriter(CsvSinkConfig.of(setting, setting.columns()), rowContext, fileSystem);
+        new CsvDataWriter(
+            CsvSinkConfig.of(setting, setting.columns()), rowContext, fileSystem(setting));
   }
 
   @Override
-  protected void _open(List<TopicPartition> partitions) {
+  protected void openPartitions(List<TopicPartition> partitions) {
     writer.attach(partitions);
   }
 
   @Override
-  protected void _put(List<RowSinkRecord> records) {
+  protected void putRecords(List<RowSinkRecord> records) {
     writer.write(records);
   }
 
   @Override
-  public Map<TopicPartition, TopicOffset> _preCommit(Map<TopicPartition, TopicOffset> offsets) {
+  public Map<TopicPartition, TopicOffset> preCommitOffsets(
+      Map<TopicPartition, TopicOffset> offsets) {
     Map<TopicPartition, TopicOffset> offsetsToCommit = new HashMap<>();
 
     for (Map.Entry<TopicPartition, Long> entry : writer.getCommittedOffsetsAndReset().entrySet()) {
@@ -82,16 +84,14 @@ public abstract class CsvSinkTask extends RowSinkTask {
   }
 
   @Override
-  protected void _close(List<TopicPartition> partitions) {
+  protected void closePartitions(List<TopicPartition> partitions) {
     if (writer != null) {
       writer.detach(partitions);
     }
   }
 
   @Override
-  protected void _stop() {
-    if (writer != null) {
-      writer.close();
-    }
+  protected void terminate() {
+    Releasable.close(writer);
   }
 }

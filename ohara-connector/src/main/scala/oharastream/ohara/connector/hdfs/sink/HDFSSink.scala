@@ -18,6 +18,7 @@ package oharastream.ohara.connector.hdfs.sink
 
 import java.util
 
+import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector._
 import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
@@ -30,19 +31,21 @@ import scala.collection.JavaConverters._
 class HDFSSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _
 
-  override protected[hdfs] def _start(settings: TaskSetting): Unit = {
+  override def fileSystem(setting: TaskSetting): storage.FileSystem =
+    FileSystem.hdfsBuilder.url(HDFSSinkProps(setting).hdfsURL).build
+
+  override protected def execute(settings: TaskSetting): Unit = {
     this.settings = settings
   }
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     //TODO
   }
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[HDFSSinkTask]
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[HDFSSinkTask]
 
-  override protected[hdfs] def _taskSettings(maxTasks: Int): util.List[TaskSetting] = {
-    Seq.fill(maxTasks) { settings }.asJava
-  }
+  override protected[hdfs] def csvTaskSettings(maxTasks: Int): util.List[TaskSetting] =
+    Seq.fill(maxTasks)(settings).asJava
 
-  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
+  override protected def csvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

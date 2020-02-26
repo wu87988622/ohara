@@ -220,8 +220,7 @@ Source Connector
 
 Source connector is used to pull data from outside system and then push
 processed data to ohara topics. A basic implementation for a source
-connector only includes four methods - **_start**, **_stop**, **_taskClass**, and
-**_taskSetting**
+connector only includes four methods - **run**, **terminate**, **taskClass**, and **taskSetting**
 
 .. code-block:: java
 
@@ -231,7 +230,7 @@ connector only includes four methods - **_start**, **_stop**, **_taskClass**, an
       *
       * @return a RowSourceTask class
       */
-     protected abstract Class<? extends RowSourceTask> _taskClass();
+     protected abstract Class<? extends RowSourceTask> taskClass();
 
      /**
       * Return the settings for source task.
@@ -239,32 +238,24 @@ connector only includes four methods - **_start**, **_stop**, **_taskClass**, an
       * @param maxTasks number of tasks for this connector
       * @return a seq from settings
       */
-     protected abstract List<TaskSetting> _taskSetting(int maxTasks);
+     protected abstract List<TaskSetting> taskSetting(int maxTasks);
 
      /**
       * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
-      * just been instantiated and initialized or _stop() has been invoked.
+      * just been instantiated and initialized or terminate() has been invoked.
       *
       * @param taskSetting configuration settings
       */
-     protected abstract void _start(TaskSetting taskSetting);
+     protected abstract void run(TaskSetting taskSetting);
 
      /** stop this connector */
-     protected abstract void _stop();
+     protected abstract void terminate();
    }
-
-
-.. note::
-   The methods having prefix "_" belong to ohara connector. Ohara
-   connector is based on kafka connector. Ohara take control on all
-   kafka APIs in order to supply more powerful and friendly APIs to
-   ohara user. In order to distinguish the APIs between ohara and kafka,
-   we add prefix "_" to all ohara methods and make them be abstract.
 
 .. _connector-source-start:
 
-_start(TaskSetting)
-^^^^^^^^^^^^^^^^^^^
+run(TaskSetting)
+^^^^^^^^^^^^^^^^
 
   After instantizing a connector, the first method called by worker is **start()**.
   You should initialize your connector in **start** method, since it has a input
@@ -291,10 +282,10 @@ incorrect configs completely, but it save your time of fighting against
 wrong configs (have a great time with your family)
 
 
-.. _connector-source-stop:
+.. _connector-source-terminate:
 
-_stop()
-^^^^^^^
+terminate()
+^^^^^^^^^^^
 
   This method is invoked by calling :ref:`STOP API <rest-stop-stream>`.
   You can release the resources allocated by connector, or send a email to shout at someone.
@@ -304,7 +295,7 @@ _stop()
 
 .. _connector-source-taskclass:
 
-_taskClass()
+taskClass()
 ^^^^^^^^^^^^
 
   This method returns the java class of :ref:`RowSourceTask <connector-sourcetask>`
@@ -315,7 +306,7 @@ _taskClass()
 
 .. _connector-source-tasksetting:
 
-_taskSetting(int maxTasks)
+taskSetting(int maxTasks)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   Connector has to generate configs for each task. The value of
@@ -348,22 +339,22 @@ Source Task
       *
       * @param config initial configuration
       */
-     protected abstract void _start(TaskSetting config);
+     protected abstract void run(TaskSetting config);
 
      /**
       * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task
       * that it should stop trying to poll for new data and interrupt any outstanding poll() requests.
       * It is not required that the task has fully stopped. Note that this method necessarily may be
-      * invoked from a different thread than _poll() and _commit()
+      * invoked from a different thread than pollRecords() and commitOffsets()
       */
-     protected abstract void _stop();
+     protected abstract void terminate();
      /**
       * Poll this SourceTask for new records. This method should block if no data is currently
       * available.
       *
       * @return a array from RowSourceRecord
       */
-     protected abstract List<RowSourceRecord> _poll();
+     protected abstract List<RowSourceRecord> pollRecords();
    }  
 
 RowSourceTask is the unit of executing **poll**. A connector can invokes
@@ -372,12 +363,12 @@ RowSourceTask has similar lifecycle to Source connector. Worker cluster call **s
 initialize a task and call **stop** to terminate a task.
 
 
-.. _connector-sourcetask-pull:
+.. _connector-sourcetask-pull-records:
 
-_pull()
-^^^^^^^
+pullRecords()
+^^^^^^^^^^^^^
 
-  You can ignore all methods except for **_poll**. Worker cluster call **_poll** regularly to get **RowSourceRecord** s
+  You can ignore all methods except for **pollRecords**. Worker cluster call **pollRecords** regularly to get **RowSourceRecord** s
   and then save them to topics. Worker cluster does not care for your implementation. All you have to do is to put your data in
   **RowSourceRecord**. RowSourceRecord is a complicated object having many elements. Some elements are significant.
   For example, **partition** can impact the distribution of records. In order to be the best friend of programmer,
@@ -455,36 +446,36 @@ We can convert above json to **partition** and **offset** and then put them in *
 
 A news of **partition** and **offset** is that they are not stored with
 data in RowSourceRecord. If you want to know the commit of **partition**
-and **offset**, you can override the **_commit()**.
+and **offset**, you can override the **commitOffsets()**.
 
 .. code-block:: java
 
    public abstract class RowSourceTask extends SourceTask {
      /**
-      * Commit the offsets, up to the offsets that have been returned by _poll(). This method should
+      * Commit the offsets, up to the offsets that have been returned by pollRecords(). This method should
       * block until the commit is complete.
       *
       * <p>SourceTasks are not required to implement this functionality; Kafka Connect will record
       * offsets automatically. This hook is provided for systems that also need to store offsets
       * internally in their own system.
       */
-     protected void _commit() {
+     protected void commitOffsets() {
        // do nothing
      }
    }
 
 .. _connector-sourcetask-handle-exception:
 
-Handle Exception in _poll()
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Handle Exception in pollRecords()
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   Throwing exception make connector in **failure** state, and inactivate connector until you restart it. Hence, you SHOULD catch and handle the exception as best you can. However, swallowing all exception is also a weired behavior. You SHOULD fails the connector when encountering unrecoverable exception.
 
 
-Blocking Action Is Unwelcome In _poll()
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Blocking Action Is Unwelcome In pollRecords()
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  Task is executed on a separate thread and there are many remaining processing for data after _poll(). Hence, you should NOT block _poll(). On the contrary, returning an empty list can yield the resource to remaining processing.
+  Task is executed on a separate thread and there are many remaining processing for data after pollRecords(). Hence, you should NOT block pollRecords(). On the contrary, returning an empty list can yield the resource to remaining processing.
 
 .. note::
 
@@ -492,10 +483,10 @@ Blocking Action Is Unwelcome In _poll()
    null so please take away null from your code.
 
 
-Data From _poll() Are Committed Async
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Data From pollRecords() Are Committed Async
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  You don’t expect that the data you generated are commit at once, right? Committing data invokes a large latency since we need to sync data to multiple nodes and result in many disk I/O. Worker has another thread sending your data in background. If your connector needs to know the time of committing data, you can override the **_commitRecord(RowSourceRecord)**.
+  You don’t expect that the data you generated are commit at once, right? Committing data invokes a large latency since we need to sync data to multiple nodes and result in many disk I/O. Worker has another thread sending your data in background. If your connector needs to know the time of committing data, you can override the **commitOffsetsRecord(RowSourceRecord)**.
 
 .. code-block:: java
 
@@ -508,7 +499,7 @@ Data From _poll() Are Committed Async
       *
       * @param record RowSourceRecord that was successfully sent via the producer.
       */
-     protected void _commitRecord(RowSourceRecord record) {
+     protected void commitOffsetsRecord(RowSourceRecord record) {
        // do nothing
      }
    }
@@ -526,21 +517,21 @@ Sink Connector
 
      /**
       * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
-      * just been instantiated and initialized or _stop() has been invoked.
+      * just been instantiated and initialized or terminate() has been invoked.
       *
       * @param config configuration settings
       */
-     protected abstract void _start(TaskSetting config);
+     protected abstract void run(TaskSetting config);
 
      /** stop this connector */
-     protected abstract void _stop();
+     protected abstract void terminate();
 
      /**
       * Returns the RowSinkTask implementation for this Connector.
       *
       * @return a RowSinkTask class
       */
-     protected abstract Class<? extends RowSinkTask> _taskClass();
+     protected abstract Class<? extends RowSinkTask> taskClass();
 
      /**
       * Return the settings for source task. NOTED: It is illegal to assign different topics to
@@ -549,19 +540,19 @@ Sink Connector
       * @param maxTasks number of tasks for this connector
       * @return the settings for each tasks
       */
-     protected abstract List<TaskSetting> _taskSetting(int maxTasks);
+     protected abstract List<TaskSetting> taskSetting(int maxTasks);
    }
 
 Sink connector is similar to :ref:`source connector <connector-sourceconnector>`.
-It also have :ref:`_start(TaskSetting) <connector-source-start>`,
-:ref:`_stop() <connector-source-stop>`,
-:ref:`_taskClass() <connector-source-taskclass>`,
-:ref:`_taskSetting(int maxTasks) <connector-source-tasksetting>`,
+It also have :ref:`run(TaskSetting) <connector-source-start>`,
+:ref:`terminate() <connector-source-terminate>`,
+:ref:`taskClass() <connector-source-taskclass>`,
+:ref:`taskSetting(int maxTasks) <connector-source-tasksetting>`,
 :ref:`partition and offsets <connector-source-partition-offsets>`. The main difference
 between sink connector and source connector is that sink connector do
 pull data from topic and then push processed data to outside system.
-Hence, it does have :ref:`_put <connector-sinktask-put>` rather
-than :ref:`_pull <connector-sourcetask-pull>`
+Hence, it does have :ref:`pullRecords <connector-sinktask-put-records>` rather
+than :ref:`pullRecords <connector-sourcetask-pull-records>`
 
 .. note::
    Though sink connector and source connector have many identical
@@ -587,15 +578,15 @@ Sink Task
       *
       * @param config initial configuration
       */
-     protected abstract void _start(TaskSetting config);
+     protected abstract void run(TaskSetting config);
 
      /**
       * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once
-      * outstanding calls to other methods have completed (e.g., _put() has returned) and a final
+      * outstanding calls to other methods have completed (e.g., pullRecords() has returned) and a final
       * flush() and offset commit has completed. Implementations from this method should only need to
       * perform final cleanup operations, such as closing network connections to the sink system.
       */
-     protected abstract void _stop();
+     protected abstract void terminate();
 
      /**
       * Put the table record in the sink. Usually this should send the records to the sink
@@ -603,18 +594,18 @@ Sink Task
       *
       * @param records table record
       */
-     protected abstract void _put(List<RowSinkRecord> records);
+     protected abstract void pullRecords(List<RowSinkRecord> records);
    }  
 
 RowSinkTask is similar to :ref:`RowSourceTask <connector-sourcetask>` that both of
-them have **_start** and **_stop** phase. RowSinkTask is executed by a
+them have **run** and **stop** phase. RowSinkTask is executed by a
 separate thread on worker also.
 
 
-.. _connector-sinktask-put:
+.. _connector-sinktask-put-records:
 
-_put(List<RowSinkRecord> records)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pullRecords(List<RowSinkRecord> records)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Worker invokes a separate thread to fetch data from topic and put the
 data to sink task. The input data is called **RowSinkRecord** which
@@ -643,8 +634,8 @@ offset manually and then use RowSinkContext to change the offset of
 input data.
 
 
-Handle Exception In _put(List<RowSinkRecord>)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Handle Exception In pullRecords(List<RowSinkRecord>)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Any thrown exception will make this connector failed and stopped. You should handle the recoverable error and
 throw the exception which obstruct connector from running.
@@ -687,10 +678,10 @@ throw the exception which obstruct connector from running.
    Noted that data offset is a order in topic-partition so the input of RowSinkContext.offset consists of topic name and partition.
 
 
-Handle Exception In _put(List<RowSinkRecord>)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Handle Exception In pullRecords(List<RowSinkRecord>)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-see :ref:`handle exception in _poll() <connector-sourcetask-handle-exception>`
+see :ref:`handle exception in pollRecords() <connector-sourcetask-handle-exception>`
 
 
 Commit Your Output Data When Kafka Commit Input Data
@@ -698,7 +689,7 @@ Commit Your Output Data When Kafka Commit Input Data
 
 While feeding data into your sink task, kakfa also tries to commit
 previous data that make the data disappear from you. The method
-**_preCommit** is a callback of committing data offset. If you want to
+**preCommitOffsets** is a callback of committing data offset. If you want to
 manage the offsets, you can change what to commit by kafka. Another use
 case is that you have some stuff which needs to be committed also, and
 you can trigger the commit in this callback.
@@ -712,13 +703,13 @@ you can trigger the commit in this callback.
       * <p>The default implementation simply return the offsets and is thus able to assume all offsets
       * are safe to commit.
       *
-      * @param offsets the current offset state as from the last call to _put, provided for convenience
+      * @param offsets the current offset state as from the last call to pullRecords, provided for convenience
       *     but could also be determined by tracking all offsets included in the RowSourceRecord's
-      *     passed to _put.
+      *     passed to pullRecords.
       * @return an empty map if Connect-managed offset commit is not desired, otherwise a map from
       *     offsets by topic-partition that are safe to commit.
       */
-     protected Map<TopicPartition, TopicOffset> _preCommit(Map<TopicPartition, TopicOffset> offsets) {
+     protected Map<TopicPartition, TopicOffset> preCommitOffsets(Map<TopicPartition, TopicOffset> offsets) {
        return offsets;
      }
    }  
@@ -878,10 +869,10 @@ Csv Sink Connector
    :alt: Ohara CSV Sink Connector Inheritance Architecture
 
 Csv Sink connector inherits from :ref:`Row Sink Connector <connector-sink>`.
-It also have :ref:`_start(TaskSetting) <connector-source-start>`,
-:ref:`_stop() <connector-source-stop>`,
-:ref:`_taskClass() <connector-source-taskclass>`,
-:ref:`_taskSetting(int maxTasks) <connector-source-tasksetting>`,
+It also have :ref:`run(TaskSetting) <connector-source-start>`,
+:ref:`terminate() <connector-source-terminate>`,
+:ref:`taskClass() <connector-source-taskclass>`,
+:ref:`taskSetting(int maxTasks) <connector-source-tasksetting>`,
 :ref:`partition and offsets <connector-source-partition-offsets>`. The main difference
 between csv sink connector and row sink connector is that csv sink connector already
 has some default definitions.
@@ -894,7 +885,7 @@ Below is a list of default definitions for CsvSinkConnector:
 #. FILE_NEED_HEADER_DEFINITION: File need header for flush data
 #. FILE_ENCODE_DEFINITION: File encode for write to file
 
-Connector developers can override **_definitions** to add other additional definitions:
+Connector developers can override **customSettingDefinitions** to add other additional definitions:
 
 .. code-block:: java
 
@@ -904,7 +895,7 @@ Connector developers can override **_definitions** to add other additional defin
      *
      * @return The SettingDef for this connector.
      */
-    protected List<SettingDef> _definitions() {
+    protected List<SettingDef> customSettingDefinitions() {
       return Collections.emptyList();
     }
   }

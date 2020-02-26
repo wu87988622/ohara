@@ -48,22 +48,22 @@ public abstract class RowSourceTask extends SourceTask {
    *
    * @param settings initial configuration
    */
-  protected abstract void _start(TaskSetting settings);
+  protected abstract void run(TaskSetting settings);
 
   /**
    * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task
    * that it should stop trying to poll for new data and interrupt any outstanding poll() requests.
    * It is not required that the task has fully stopped. Note that this method necessarily may be
-   * invoked from a different thread than _poll() and _commit()
+   * invoked from a different thread than pollRecords() and commitOffsets()
    */
-  protected abstract void _stop();
+  protected abstract void terminate();
   /**
    * Poll this SourceTask for new records. This method should block if no data is currently
    * available.
    *
    * @return a array from RowSourceRecord
    */
-  protected abstract List<RowSourceRecord> _poll();
+  protected abstract List<RowSourceRecord> pollRecords();
 
   /**
    * Commit an individual RowSourceRecord when the callback from the producer client is received, or
@@ -79,8 +79,8 @@ public abstract class RowSourceTask extends SourceTask {
   }
 
   /**
-   * Commit the offsets, up to the offsets that have been returned by _poll(). This method should
-   * block until the commit is complete.
+   * Commit the offsets, up to the offsets that have been returned by pollRecords(). This method
+   * should block until the commit is complete.
    *
    * <p>SourceTasks are not required to implement this functionality; Kafka Connect will record
    * offsets automatically. This hook is provided for systems that also need to store offsets
@@ -88,16 +88,6 @@ public abstract class RowSourceTask extends SourceTask {
    */
   protected void commitOffsets() {
     // do nothing
-  }
-
-  /**
-   * Get the version from this task. Usually this should be the same as the corresponding Connector
-   * class's version.
-   *
-   * @return the version, formatted as a String
-   */
-  protected String _version() {
-    return VersionUtils.VERSION;
   }
 
   /**
@@ -151,7 +141,7 @@ public abstract class RowSourceTask extends SourceTask {
 
   @Override
   public final List<SourceRecord> poll() {
-    List<RowSourceRecord> records = _poll();
+    List<RowSourceRecord> records = pollRecords();
     // kafka connector doesn't support the empty list in testing. see
     // https://github.com/apache/kafka/pull/4958
     if (CommonUtils.isEmpty(records)) return null;
@@ -205,13 +195,13 @@ public abstract class RowSourceTask extends SourceTask {
     ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
     keyInBytes =
         ObjectKey.toJsonString(taskSetting.connectorKey()).getBytes(StandardCharsets.UTF_8);
-    _start(taskSetting);
+    run(taskSetting);
   }
 
   @Override
   public final void stop() {
     try {
-      _stop();
+      terminate();
     } finally {
       Releasable.close(messageNumberCounter);
       Releasable.close(messageSizeCounter);
@@ -247,7 +237,7 @@ public abstract class RowSourceTask extends SourceTask {
 
   @Override
   public final String version() {
-    return _version();
+    return VersionUtils.VERSION;
   }
 
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//

@@ -18,10 +18,10 @@ package oharastream.ohara.connector.smb
 
 import java.util
 
-import oharastream.ohara.client.filesystem.FileSystem
+import oharastream.ohara.client.filesystem
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
-import oharastream.ohara.kafka.connector.csv.sink.CsvSinkConfig
+import oharastream.ohara.kafka.connector.storage.FileSystem
 import oharastream.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 
 import scala.collection.JavaConverters._
@@ -29,40 +29,26 @@ import scala.collection.JavaConverters._
 class SmbSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[SmbSinkTask]
-
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
-
-  override protected[smb] def _start(settings: TaskSetting): Unit = {
-    this.settings = settings
-    val props  = SmbProps(settings)
-    val schema = settings.columns.asScala
-    if (schema.exists(_.order == 0)) throw new IllegalArgumentException("column order must be bigger than zero")
-
-    val fileSystem =
-      FileSystem.smbBuilder
-        .hostname(props.hostname)
-        .port(props.port)
-        .user(props.user)
-        .password(props.password)
-        .shareName(props.shareName)
-        .build()
-
-    try {
-      val csvSinkConfig = CsvSinkConfig.of(settings, settings.columns)
-      val topicsDir     = csvSinkConfig.outputFolder()
-      if (topicsDir.startsWith("/")) {
-        throw new IllegalArgumentException(s"The $topicsDir is invalid, we don't allow paths beginning with a slash.")
-      }
-      if (fileSystem.nonExists(topicsDir)) {
-        throw new IllegalArgumentException(s"${topicsDir} doesn't exist")
-      }
-    } finally fileSystem.close()
+  override def fileSystem(settings: TaskSetting): FileSystem = {
+    val props = SmbProps(settings)
+    filesystem.FileSystem.smbBuilder
+      .hostname(props.hostname)
+      .port(props.port)
+      .user(props.user)
+      .password(props.password)
+      .shareName(props.shareName)
+      .build()
   }
 
-  override protected def _stop(): Unit = {
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[SmbSinkTask]
+
+  override protected def csvTaskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+
+  override protected def execute(settings: TaskSetting): Unit = this.settings = settings
+
+  override protected def terminate(): Unit = {
     //    do nothing
   }
 
-  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
+  override protected def csvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

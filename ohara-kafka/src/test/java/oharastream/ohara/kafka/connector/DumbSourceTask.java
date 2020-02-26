@@ -21,13 +21,13 @@ import java.util.List;
 
 public class DumbSourceTask extends RowSourceTask {
   @Override
-  protected void _start(TaskSetting config) {}
+  protected void run(TaskSetting config) {}
 
   @Override
-  protected void _stop() {}
+  protected void terminate() {}
 
   @Override
-  protected List<RowSourceRecord> _poll() {
+  protected List<RowSourceRecord> pollRecords() {
     return Collections.emptyList();
   }
 }

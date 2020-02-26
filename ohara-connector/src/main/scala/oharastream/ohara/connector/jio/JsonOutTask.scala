@@ -43,7 +43,7 @@ class JsonOutTask extends RowSinkTask {
     * TODO: should we handle the BindException?
     * the tasks may be distributed on same node and it means the port will be re-bind. The exception will stop this task.
     */
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     props = JioProps(settings)
     blockingQueue = new ArrayBlockingQueue[JioData](props.bufferSize)
 
@@ -68,12 +68,12 @@ class JsonOutTask extends RowSinkTask {
     )
   }
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     Releasable.close(() => Await.result(httpServer.terminate(props.closeTimeout), props.closeTimeout))
     Releasable.close(() => Await.result(actorSystem.terminate(), props.closeTimeout))
   }
 
-  override protected def _put(records: util.List[RowSinkRecord]): Unit =
+  override protected def putRecords(records: util.List[RowSinkRecord]): Unit =
     records.asScala
       .map(_.row())
       .flatMap(

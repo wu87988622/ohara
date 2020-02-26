@@ -41,14 +41,14 @@ import scala.collection.JavaConverters._
 class JsonOut extends RowSinkConnector {
   private[this] var setting: TaskSetting = _
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[JsonOutTask]
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[JsonOutTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(setting).asJava
+  override protected def taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(setting).asJava
 
-  override protected def _start(config: TaskSetting): Unit =
+  override protected def run(config: TaskSetting): Unit =
     this.setting = config
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 

@@ -17,11 +17,11 @@
 package oharastream.ohara.connector.jdbc.source
 import java.sql.Timestamp
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.{Cell, Column, DataType, Row}
-import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
+import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.jdbc.util.ColumnInfo
 import oharastream.ohara.kafka.connector._
-import com.typesafe.scalalogging.Logger
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
@@ -41,7 +41,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @param settings initial configuration
     */
-  override protected[source] def _start(settings: TaskSetting): Unit = {
+  override protected[source] def run(settings: TaskSetting): Unit = {
     logger.info("Starting JDBC Source Connector")
     jdbcSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
 
@@ -59,7 +59,7 @@ class JDBCSourceTask extends RowSourceTask {
     *
     * @return a array from RowSourceRecord
     */
-  override protected[source] def _poll(): java.util.List[RowSourceRecord] =
+  override protected[source] def pollRecords(): java.util.List[RowSourceRecord] =
     try {
       val current                 = CommonUtils.current()
       val frequenceTime: Duration = jdbcSourceConnectorConfig.jdbcFrequenceTime
@@ -134,16 +134,9 @@ class JDBCSourceTask extends RowSourceTask {
   /**
     * Signal this SourceTask to stop. In SourceTasks, this method only needs to signal to the task that it should stop
     * trying to poll for new data and interrupt any outstanding poll() requests. It is not required that the task has
-    * fully stopped. Note that this method necessarily may be invoked from a different thread than _poll() and _commit()
+    * fully stopped. Note that this method necessarily may be invoked from a different thread than pollRecords() and commitOffsets()
     */
-  override protected def _stop(): Unit = Releasable.close(dbTableDataProvider)
-
-  /**
-    * Get the version from this task. Usually this should be the same as the corresponding Connector class's version.
-    *
-    * @return the version, formatted as a String
-    */
-  override protected def _version: String = VersionUtils.VERSION
+  override protected def terminate(): Unit = Releasable.close(dbTableDataProvider)
 
   private[source] def row(schema: Seq[Column], columns: Seq[ColumnInfo[_]]): Row = {
     Row.of(

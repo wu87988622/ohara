@@ -20,11 +20,11 @@ import java.util.List;
 
 public class DumbSinkTask extends RowSinkTask {
   @Override
-  protected void _start(TaskSetting config) {}
+  protected void run(TaskSetting config) {}
 
   @Override
-  protected void _stop() {}
+  protected void terminate() {}
 
   @Override
-  protected void _put(List<RowSinkRecord> records) {}
+  protected void putRecords(List<RowSinkRecord> records) {}
 }

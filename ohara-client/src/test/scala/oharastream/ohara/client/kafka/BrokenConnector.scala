@@ -21,15 +21,15 @@ import java.util
 import oharastream.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
 class BrokenConnector extends RowSourceConnector {
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[BrokenConnectorTask]
+  override protected def taskClass(): Class[_ <: RowSourceTask] = classOf[BrokenConnectorTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+  override protected def taskSettings(maxTasks: Int): util.List[TaskSetting] =
     throw new IllegalArgumentException("This is an unrunnable connector")
 
-  override protected def _start(settings: TaskSetting): Unit =
+  override protected def run(settings: TaskSetting): Unit =
     throw new IllegalArgumentException("This is an unrunnable connector")
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 }

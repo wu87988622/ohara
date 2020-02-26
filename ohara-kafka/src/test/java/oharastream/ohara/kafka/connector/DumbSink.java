@@ -33,18 +33,18 @@ public class DumbSink extends RowSinkConnector {
           Column.builder().name("cf1").dataType(DataType.BOOLEAN).order(1).build());
 
   @Override
-  protected void _start(TaskSetting config) {}
+  protected void run(TaskSetting config) {}
 
   @Override
-  protected void _stop() {}
+  protected void terminate() {}
 
   @Override
-  protected Class<? extends RowSinkTask> _taskClass() {
+  public Class<? extends RowSinkTask> taskClass() {
     return DumbSinkTask.class;
   }
 
   @Override
-  protected List<TaskSetting> _taskSettings(int maxTasks) {
+  protected List<TaskSetting> taskSettings(int maxTasks) {
     return Collections.singletonList(
         TaskSetting.of(
             ConnectorFormatter.of()

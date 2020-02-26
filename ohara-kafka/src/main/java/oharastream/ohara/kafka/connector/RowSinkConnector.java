@@ -28,7 +28,6 @@ import oharastream.ohara.kafka.connector.json.ConnectorDefUtils;
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectorContext;
-import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 
 /** A wrap to SinkConnector. Currently, only Task is replaced by ohara object - RowSinkTask */
@@ -36,21 +35,22 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
 
   /**
    * Start this Connector. This method will only be called on a clean Connector, i.e. it has either
-   * just been instantiated and initialized or _stop() has been invoked.
+   * just been instantiated and initialized or stop() has been invoked.
    *
    * @param config configuration settings
    */
-  protected abstract void _start(TaskSetting config);
+  protected abstract void run(TaskSetting config);
 
   /** stop this connector */
-  protected abstract void _stop();
+  protected abstract void terminate();
 
   /**
    * Returns the RowSinkTask implementation for this Connector.
    *
    * @return a RowSinkTask class
    */
-  protected abstract Class<? extends RowSinkTask> _taskClass();
+  @Override
+  public abstract Class<? extends RowSinkTask> taskClass();
 
   /**
    * Return the settings for source task. NOTED: It is illegal to assign different topics to
@@ -59,7 +59,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
    * @param maxTasks number of tasks for this connector
    * @return the settings for each tasks
    */
-  protected abstract List<TaskSetting> _taskSettings(int maxTasks);
+  protected abstract List<TaskSetting> taskSettings(int maxTasks);
 
   /**
    * Define the configuration for the connector.
@@ -105,12 +105,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
   /** We take over this method to disable user to use java collection. */
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return _taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
-  }
-
-  @Override
-  public final Class<? extends Task> taskClass() {
-    return _taskClass();
+    return taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;
@@ -118,12 +113,12 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
-    _start(taskSetting);
+    run(taskSetting);
   }
 
   @Override
   public final void stop() {
-    _stop();
+    terminate();
   }
 
   /** @return custom definitions + core definitions */

@@ -28,7 +28,7 @@ class SmbSourceTask extends CsvSourceTask {
     * @param config initial configuration
     * @return the SMB client
     */
-  override def _fileSystem(config: TaskSetting): FileSystem = {
+  override def fileSystem(config: TaskSetting): FileSystem = {
     val props = SmbProps(config)
     filesystem.FileSystem.smbBuilder
       .hostname(props.hostname)

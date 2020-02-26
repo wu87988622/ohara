@@ -101,7 +101,7 @@ public class PageViewRegionExample extends Stream {
   public static final String joinTopicKey = "joinTopicKey";
 
   @Override
-  protected Map<String, SettingDef> _definitions() {
+  protected Map<String, SettingDef> customSettingDefinitions() {
     return Collections.singletonMap(
         joinTopicKey, SettingDef.builder().key(joinTopicKey).group("default").build());
   }

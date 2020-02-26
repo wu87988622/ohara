@@ -36,7 +36,7 @@ class PerfSourceTask extends RowSourceTask {
     */
   private[this] var records: java.util.List[RowSourceRecord] = Collections.emptyList()
 
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
     this.topics = settings.topicNames().asScala
     this.schema = settings.columns.asScala
@@ -65,9 +65,9 @@ class PerfSourceTask extends RowSourceTask {
     )
   }
 
-  override protected def _stop(): Unit = {}
+  override protected def terminate(): Unit = {}
 
-  override protected def _poll(): java.util.List[RowSourceRecord] = {
+  override protected def pollRecords(): java.util.List[RowSourceRecord] = {
     val current = CommonUtils.current()
     if (current - lastPoll > props.freq.toMillis) {
       lastPoll = current

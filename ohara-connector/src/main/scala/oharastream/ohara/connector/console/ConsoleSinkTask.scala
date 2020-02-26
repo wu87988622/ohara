@@ -34,7 +34,7 @@ class ConsoleSinkTask extends RowSinkTask {
   private[console] var divider: String = CONSOLE_ROW_DIVIDER_DEFAULT
   @VisibleForTesting
   private[console] var lastLog: Long = -1
-  override protected def _start(config: TaskSetting): Unit = {
+  override protected def run(config: TaskSetting): Unit = {
     divider = config.stringOption(CONSOLE_ROW_DIVIDER).orElse(CONSOLE_ROW_DIVIDER_DEFAULT)
     freq = config
       .durationOption(CONSOLE_FREQUENCE)
@@ -42,11 +42,11 @@ class ConsoleSinkTask extends RowSinkTask {
       .toMillis milliseconds
   }
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 
-  override protected def _put(records: util.List[RowSinkRecord]): Unit =
+  override protected def putRecords(records: util.List[RowSinkRecord]): Unit =
     if (!records.isEmpty && (lastLog == -1 || CommonUtils.current() - lastLog >= freq.toMillis)) {
       try {
         LOG.info(records.asScala.map(_.row()).mkString(divider))

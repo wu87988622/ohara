@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 class SimpleRowSinkTask extends RowSinkTask {
   private[this] var outputTopic: String                  = _
   private[this] var producer: Producer[Row, Array[Byte]] = _
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     outputTopic = settings.stringValue(OUTPUT)
     producer = Producer.builder
       .connectionProps(settings.stringValue(BROKER))
@@ -37,8 +37,8 @@ class SimpleRowSinkTask extends RowSinkTask {
       .build()
   }
 
-  override protected def _stop(): Unit = Releasable.close(producer)
+  override protected def terminate(): Unit = Releasable.close(producer)
 
-  override protected def _put(records: util.List[RowSinkRecord]): Unit =
+  override protected def putRecords(records: util.List[RowSinkRecord]): Unit =
     records.asScala.foreach(r => producer.sender().key(r.row()).topicName(outputTopic).send())
 }

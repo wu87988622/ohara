@@ -24,16 +24,16 @@ import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSet
 import scala.collection.JavaConverters._
 
 class ConsoleSink extends RowSinkConnector {
-  private[this] var config: TaskSetting                    = _
-  override protected def _start(config: TaskSetting): Unit = this.config = config
+  private[this] var config: TaskSetting                 = _
+  override protected def run(config: TaskSetting): Unit = this.config = config
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[ConsoleSinkTask]
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[ConsoleSinkTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(config).asJava
+  override protected def taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(config).asJava
 
   override protected def customSettingDefinitions(): util.Map[String, SettingDef] =
     Map(

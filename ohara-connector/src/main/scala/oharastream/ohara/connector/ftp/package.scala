@@ -77,19 +77,10 @@ package object ftp {
     FTP_PASSWORD_DEFINITION
   ).map(d => d.key() -> d).toMap
 
-  @VisibleForTesting private[connector] val INPUT_FOLDER_KEY: String     = CsvConnectorDefinitions.INPUT_FOLDER_KEY
-  @VisibleForTesting private[connector] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY
-  @VisibleForTesting private[connector] val ERROR_FOLDER_KEY: String     = CsvConnectorDefinitions.ERROR_FOLDER_KEY
-  @VisibleForTesting private[connector] val OUTPUT_FOLDER_KEY: String    = CsvConnectorDefinitions.OUTPUT_FOLDER_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_KEY: String       = CsvConnectorDefinitions.FLUSH_SIZE_KEY
-  @VisibleForTesting private[connector] val FLUSH_SIZE_DEFAULT: Int      = CsvConnectorDefinitions.FLUSH_SIZE_DEFAULT
-  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_KEY: String =
-    CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY
-  @VisibleForTesting private[connector] val ROTATE_INTERVAL_MS_DEFAULT: Long =
-    CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFAULT
-  @VisibleForTesting private[connector] val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
-  @VisibleForTesting private[connector] val FILE_NEED_HEADER_DEFAULT: Boolean =
-    CsvConnectorDefinitions.FILE_NEED_HEADER_DEFAULT
-  @VisibleForTesting private[connector] val FILE_ENCODE_KEY: String     = CsvConnectorDefinitions.FILE_ENCODE_KEY
-  @VisibleForTesting private[connector] val FILE_ENCODE_DEFAULT: String = CsvConnectorDefinitions.FILE_ENCODE_DEFAULT
+  @VisibleForTesting private[ftp] val INPUT_FOLDER_KEY: String     = CsvConnectorDefinitions.INPUT_FOLDER_KEY
+  @VisibleForTesting private[ftp] val COMPLETED_FOLDER_KEY: String = CsvConnectorDefinitions.COMPLETED_FOLDER_KEY
+  @VisibleForTesting private[ftp] val ERROR_FOLDER_KEY: String     = CsvConnectorDefinitions.ERROR_FOLDER_KEY
+  @VisibleForTesting private[ftp] val OUTPUT_FOLDER_KEY: String    = CsvConnectorDefinitions.OUTPUT_FOLDER_KEY
+  @VisibleForTesting private[ftp] val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
+  @VisibleForTesting private[ftp] val FILE_ENCODE_KEY: String      = CsvConnectorDefinitions.FILE_ENCODE_KEY
 }

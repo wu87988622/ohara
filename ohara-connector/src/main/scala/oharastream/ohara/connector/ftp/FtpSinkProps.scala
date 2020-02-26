@@ -19,9 +19,6 @@ package oharastream.ohara.connector.ftp
 import oharastream.ohara.kafka.connector.TaskSetting
 
 case class FtpSinkProps(
-  topicsDir: String,
-  needHeader: Boolean,
-  encode: String,
   hostname: String,
   port: Int,
   user: String,
@@ -29,21 +26,15 @@ case class FtpSinkProps(
 ) {
   def toMap: Map[String, String] =
     Map(
-      OUTPUT_FOLDER_KEY    -> topicsDir,
-      FILE_NEED_HEADER_KEY -> needHeader.toString,
-      FILE_ENCODE_KEY      -> encode,
-      FTP_HOSTNAME_KEY     -> hostname,
-      FTP_PORT_KEY         -> port.toString,
-      FTP_USER_NAME_KEY    -> user,
-      FTP_PASSWORD_KEY     -> password
+      FTP_HOSTNAME_KEY  -> hostname,
+      FTP_PORT_KEY      -> port.toString,
+      FTP_USER_NAME_KEY -> user,
+      FTP_PASSWORD_KEY  -> password
     ).filter(_._2.nonEmpty)
 }
 
 object FtpSinkProps {
   def apply(settings: TaskSetting): FtpSinkProps = FtpSinkProps(
-    topicsDir = settings.stringValue(OUTPUT_FOLDER_KEY),
-    needHeader = settings.booleanOption(FILE_NEED_HEADER_KEY).orElse(FILE_NEED_HEADER_DEFAULT),
-    encode = settings.stringOption(FILE_ENCODE_KEY).orElse(FILE_ENCODE_DEFAULT),
     hostname = settings.stringValue(FTP_HOSTNAME_KEY),
     port = settings.intValue(FTP_PORT_KEY),
     user = settings.stringValue(FTP_USER_NAME_KEY),

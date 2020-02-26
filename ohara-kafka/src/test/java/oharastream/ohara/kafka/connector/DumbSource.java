@@ -33,12 +33,12 @@ public class DumbSource extends RowSourceConnector {
           Column.builder().name("cf1").dataType(DataType.BOOLEAN).order(1).build());
 
   @Override
-  protected Class<? extends RowSourceTask> _taskClass() {
+  public Class<? extends RowSourceTask> taskClass() {
     return DumbSourceTask.class;
   }
 
   @Override
-  protected List<TaskSetting> _taskSettings(int maxTasks) {
+  protected List<TaskSetting> taskSettings(int maxTasks) {
     return Collections.singletonList(
         TaskSetting.of(
             ConnectorFormatter.of()
@@ -50,8 +50,8 @@ public class DumbSource extends RowSourceConnector {
   }
 
   @Override
-  protected void _start(TaskSetting config) {}
+  protected void run(TaskSetting config) {}
 
   @Override
-  protected void _stop() {}
+  protected void terminate() {}
 }

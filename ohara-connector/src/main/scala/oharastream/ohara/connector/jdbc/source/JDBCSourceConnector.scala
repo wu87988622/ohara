@@ -32,11 +32,11 @@ class JDBCSourceConnector extends RowSourceConnector {
 
   /**
     * Start this Connector. This method will only be called on a clean Connector, i.e. it has
-    * either just been instantiated and initialized or _stop() has been invoked.
+    * either just been instantiated and initialized or stop() has been invoked.
     *
     * @param settings configuration settings
     */
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
 
     val jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = JDBCSourceConnectorConfig(settings)
@@ -57,7 +57,7 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @return a JDBCSourceTask class
     */
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = {
+  override protected def taskClass(): Class[_ <: RowSourceTask] = {
     classOf[JDBCSourceTask]
   }
 
@@ -66,7 +66,7 @@ class JDBCSourceConnector extends RowSourceConnector {
     *
     * @return a seq from settings
     */
-  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = {
+  override protected def taskSettings(maxTasks: Int): java.util.List[TaskSetting] = {
     //TODO
     Seq(settings).asJava
   }
@@ -74,7 +74,7 @@ class JDBCSourceConnector extends RowSourceConnector {
   /**
     * stop this connector
     */
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     //TODO
   }
 

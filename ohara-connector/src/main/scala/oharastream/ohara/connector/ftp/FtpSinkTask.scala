@@ -22,7 +22,7 @@ import oharastream.ohara.kafka.connector.csv.CsvSinkTask
 import oharastream.ohara.kafka.connector.storage
 
 class FtpSinkTask extends CsvSinkTask {
-  override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
+  override def fileSystem(setting: TaskSetting): storage.FileSystem = {
     val props = FtpSinkProps(setting)
     FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }

@@ -44,20 +44,20 @@ public class SourceWithNullableSetting extends RowSourceConnector {
   }
 
   @Override
-  protected Class<? extends RowSourceTask> _taskClass() {
+  public Class<? extends RowSourceTask> taskClass() {
     return null;
   }
 
   @Override
-  protected List<TaskSetting> _taskSettings(int maxTasks) {
+  protected List<TaskSetting> taskSettings(int maxTasks) {
     return null;
   }
 
   @Override
-  protected void _start(TaskSetting config) {}
+  protected void run(TaskSetting config) {}
 
   @Override
-  protected void _stop() {}
+  protected void terminate() {}
 
   @Override
   public Map<String, SettingDef> customSettingDefinitions() {
