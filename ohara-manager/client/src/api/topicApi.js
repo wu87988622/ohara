@@ -51,7 +51,7 @@ export const start = async params => {
   if (startRes.data.isSuccess) {
     const res = await wait({
       url: `${url}/${name}?group=${group}`,
-      checkFn: waitUtil.waitForRunning,
+      checkFn: waitUtil.waitForStart,
     });
     result = responseUtil(res, topic);
   } else {

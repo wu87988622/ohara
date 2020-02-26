@@ -34,11 +34,10 @@ const wait = async params => {
 
   if (retryCount >= maxRetry) {
     return {
-      data: {
-        isSuccess: false,
-        result: {},
-      },
-      errors: ['exceed max retry'],
+      ...res,
+      // this is a workaround to avoid UI break with undefined access
+      // will have another structure in #4131
+      data: { isSuccess: false, errorMessage: 'exceed max retry' },
     };
   }
 

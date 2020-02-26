@@ -19,8 +19,9 @@ import { get, includes, isEmpty } from 'lodash';
 export const waitForConnectReady = res =>
   !isEmpty(get(res, 'data.result.classInfos'));
 
-export const waitForRunning = res =>
-  get(res, 'data.result.state') === 'RUNNING';
+export const waitForStart = res =>
+  get(res, 'data.result.state') === 'RUNNING' ||
+  get(res, 'data.result.state') === 'FAILED';
 
 export const waitForStop = res => get(res, 'data.result.state') === undefined;
 
