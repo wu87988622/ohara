@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const Port = props => {
+const RemotePort = props => {
   const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
     'tableKeys',
   ]);
@@ -44,7 +44,7 @@ const Port = props => {
   );
 };
 
-Port.propTypes = {
+RemotePort.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
@@ -65,4 +65,4 @@ Port.propTypes = {
   refs: PropTypes.object,
 };
 
-export default Port;
+export default RemotePort;

@@ -244,7 +244,8 @@ public class TestSettingDef extends OharaTest {
 
   @Test
   public void testPortType() {
-    SettingDef s = SettingDef.builder().required(SettingDef.Type.PORT).key("port.key").build();
+    SettingDef s =
+        SettingDef.builder().required(SettingDef.Type.REMOTE_PORT).key("port.key").build();
     // pass
     s.checker().accept(100);
     assertException(OharaConfigException.class, () -> s.checker().accept(-1));
@@ -664,7 +665,7 @@ public class TestSettingDef extends OharaTest {
   public void testOptionalPort() {
     SettingDef def =
         SettingDef.builder().key(CommonUtils.randomString()).optionalPort(12345).build();
-    Assert.assertEquals(def.valueType(), SettingDef.Type.PORT);
+    Assert.assertEquals(def.valueType(), SettingDef.Type.REMOTE_PORT);
     Assert.assertEquals(def.defaultPort(), 12345);
   }
 

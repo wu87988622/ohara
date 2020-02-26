@@ -48,7 +48,7 @@ const getTypeWithValueType = key => {
     case 'INT':
     case 'LONG':
     case 'DOUBLE':
-    case 'PORT':
+    case 'REMOTE_PORT':
       return number;
 
     case 'POSITIVE_SHORT':

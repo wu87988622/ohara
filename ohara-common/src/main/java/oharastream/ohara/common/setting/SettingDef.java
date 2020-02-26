@@ -128,11 +128,14 @@ public class SettingDef implements JsonObject, Serializable {
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      */
     DURATION,
-    /** The legal range for port is [1, 65535]. */
-    PORT,
     /**
-     * The legal range for port is [1, 65535]. The difference between PORT and BINDING_PORT is that
-     * we will check the availability for the BINDING_PORT.
+     * The legal range for port is [1, 65535]. Usually you will need this type if you want to
+     * connect to a port in remote machine
+     */
+    REMOTE_PORT,
+    /**
+     * The legal range for port is [1, 65535]. The difference between REMOTE_PORT and BINDING_PORT
+     * is that we will check the availability for the BINDING_PORT.
      */
     BINDING_PORT,
     /** { "group": "g", "name":" n" } */
@@ -388,7 +391,7 @@ public class SettingDef implements JsonObject, Serializable {
           }
           break;
         case BINDING_PORT:
-        case PORT:
+        case REMOTE_PORT:
           try {
             int port = Integer.parseInt(String.valueOf(trueValue));
             if (!CommonUtils.isConnectionPort(port))
@@ -510,9 +513,10 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in short type
    */
   public int defaultPort() {
-    if (valueType == Type.PORT || valueType == Type.BINDING_PORT)
+    if (valueType == Type.REMOTE_PORT || valueType == Type.BINDING_PORT)
       return (int) Objects.requireNonNull(defaultValue);
-    throw new IllegalStateException("expected type: PORT/BINDING_PORT, but actual:" + valueType);
+    throw new IllegalStateException(
+        "expected type: REMOTE_PORT/BINDING_PORT, but actual:" + valueType);
   }
 
   /**
@@ -938,17 +942,17 @@ public class SettingDef implements JsonObject, Serializable {
     }
 
     /**
-     * set the type to PORT
+     * set the type to REMOTE_PORT
      *
      * @param defaultValue the default CLASS value
      * @return builder
      */
     public Builder optionalPort(int defaultValue) {
-      return checkAndSet(Type.PORT, Necessary.OPTIONAL, defaultValue);
+      return checkAndSet(Type.REMOTE_PORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
-     * set the type to binding PORT
+     * set the type to binding REMOTE_PORT
      *
      * @param defaultValue the default CLASS value
      * @return builder

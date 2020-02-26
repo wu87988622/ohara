@@ -79,8 +79,6 @@ describe('NodeDialog of AppBar', () => {
       .contains('Dead')
       .should('exist');
 
-    cy.findByText(/^zookeeper$/i).should('not.exist');
-
     // Edit the user name
     cy.findByText(/^edit$/i).click();
     cy.get('input[name=user]')

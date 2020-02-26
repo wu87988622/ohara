@@ -478,11 +478,11 @@ input both java.Duration and scala.Duration when starting connector.
 The value must be castable to **java.time.Duration** and it is based on the ISO-860 duration
 format PnDTnHnMn.nS
 
-Type.PORT
-^^^^^^^^^
+Type.REMOTE_PORT
+^^^^^^^^^^^^^^^^
 
-Port is a common property to connector. For example, the ftp connector
-needs port used to connect to source/target ftp server. Inputting a
+Remote port is a common property to connector. For example, the ftp connector
+needs port used to connect to source/target ftp server in remote . Inputting a
 illegal port can destroy connector easily. Declaring your type of value
 to Port involve a check that only the port which is small than 65536 and
 bigger than zero can be accepted. Other port value will be rejected in
