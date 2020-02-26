@@ -136,7 +136,7 @@ public class TestRowSourceRecord extends OharaTest {
     RowSourceTask task =
         new DumbSourceTask() {
           @Override
-          protected List<RowSourceRecord> _poll() {
+          protected List<RowSourceRecord> pollRecords() {
             return Collections.singletonList(record);
           }
         };

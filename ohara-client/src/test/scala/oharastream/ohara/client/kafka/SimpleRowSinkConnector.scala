@@ -23,17 +23,17 @@ import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSet
 import scala.collection.JavaConverters._
 class SimpleRowSinkConnector extends RowSinkConnector {
   private[this] var settings: TaskSetting = _
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
     // check the option
     settings.stringValue(OUTPUT)
     settings.stringValue(BROKER)
   }
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[SimpleRowSinkTask]
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[SimpleRowSinkTask]
 
-  override protected def _stop(): Unit = {}
+  override protected def terminate(): Unit = {}
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+  override protected def taskSettings(maxTasks: Int): util.List[TaskSetting] =
     new util.ArrayList[TaskSetting](Seq.fill(maxTasks)(settings).asJavaCollection)
 }

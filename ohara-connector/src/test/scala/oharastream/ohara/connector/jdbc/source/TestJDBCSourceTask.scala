@@ -104,9 +104,9 @@ class TestJDBCSourceTask extends OharaTest {
 
     when(taskSetting.columns).thenReturn(columns.asJava)
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
-    jdbcSourceTask._start(taskSetting)
+    jdbcSourceTask.run(taskSetting)
 
-    val rows1: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
+    val rows1: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
     rows1.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
     rows1.head.row.cell(1).value shouldBe "a11"
     rows1.head.row.cell(2).value shouldBe 1
@@ -145,8 +145,8 @@ class TestJDBCSourceTask extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:04.123456,0")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
 
-    jdbcSourceTask._start(taskSetting)
-    val rows2: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
+    jdbcSourceTask.run(taskSetting)
+    val rows2: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
     rows2.size shouldBe 1
   }
 
@@ -225,9 +225,9 @@ class TestJDBCSourceTask extends OharaTest {
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
     when(taskSetting.durationOption(JDBC_FREQUENCE_TIME))
       .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
-    jdbcSourceTask._start(taskSetting)
+    jdbcSourceTask.run(taskSetting)
 
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask._poll().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
     rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
     rows.head.row.cell(1).value shouldBe "a11"
     rows.head.row.cell(2).value shouldBe 1
@@ -253,17 +253,17 @@ class TestJDBCSourceTask extends OharaTest {
   def testIsRunningQuery(): Unit = {
     val jdbcSourceTask: JDBCSourceTask = new JDBCSourceTask()
     val frequenceTime                  = Duration("5 second")
-    // Test first call _poll function
+    // Test first call pollRecords function
     var currentTime: Long = System.currentTimeMillis()
     var lastTime: Long    = -1
     jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe true
 
-    // Test second call _poll function
+    // Test second call pollRecords function
     lastTime = currentTime
     currentTime = System.currentTimeMillis()
     jdbcSourceTask.isRunningQuery(currentTime, lastTime, frequenceTime) shouldBe false
 
-    // Test third call _poll function
+    // Test third call pollRecords function
     Thread.sleep(6000L)
     lastTime = currentTime
     currentTime = System.currentTimeMillis()

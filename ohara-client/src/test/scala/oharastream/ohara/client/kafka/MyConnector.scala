@@ -28,14 +28,14 @@ import scala.collection.JavaConverters._
 class MyConnector extends RowSourceConnector {
   private[this] var settings: TaskSetting = _
 
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[MyConnectorTask]
+  override protected def taskClass(): Class[_ <: RowSourceTask] = classOf[MyConnectorTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] =
+  override protected def taskSettings(maxTasks: Int): util.List[TaskSetting] =
     new util.ArrayList[TaskSetting](Seq.fill(maxTasks)(settings).asJavaCollection)
 
-  override protected def _start(settings: TaskSetting): Unit = this.settings = settings
+  override protected def run(settings: TaskSetting): Unit = this.settings = settings
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 

@@ -366,19 +366,6 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
   }
 
   @Test
-  def testInvalidSchema(): Unit = {
-    val newSchema = Seq(
-      // 0 is invalid
-      Column.builder().name("name").dataType(DataType.STRING).order(0).build(),
-      Column.builder().name("ranking").dataType(DataType.INT).order(2).build(),
-      Column.builder().name("single").dataType(DataType.BOOLEAN).order(3).build()
-    )
-    val (_, connectorKey) = createConnector(props, newSchema)
-
-    ConnectorTestUtils.assertFailedConnector(testUtil, connectorKey)
-  }
-
-  @Test
   def inputFilesShouldBeRemovedIfCompletedFolderIsNotDefined(): Unit = {
     val newProps                 = props - COMPLETED_FOLDER_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
@@ -403,6 +390,26 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       row1.cell(1) shouldBe rows(1).cell(1)
       row1.cell(2) shouldBe rows(1).cell(2)
     } finally result(connectorAdmin.delete(connectorKey))
+  }
+
+  @Test
+  def testCheckFolder(): Unit = {
+    val paths = Seq(
+      props(INPUT_FOLDER_KEY),
+      props(COMPLETED_FOLDER_KEY),
+      props(ERROR_FOLDER_KEY)
+    )
+    val connector = connectorClass.newInstance()
+    try connector.start(props.asJava)
+    finally connector.stop()
+    paths.foreach { p =>
+      fileSystem.delete(p, true)
+      intercept[IllegalArgumentException] {
+        val connector = connectorClass.newInstance()
+        try connector.start(props.asJava)
+        finally connector.stop()
+      }.getMessage should include("doesn't exist")
+    }
   }
 
   @After

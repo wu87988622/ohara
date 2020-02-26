@@ -25,21 +25,21 @@ class PerfSource extends RowSourceConnector {
   @VisibleForTesting
   private[perf] var settings: TaskSetting = _
 
-  override protected def _taskClass(): Class[_ <: RowSourceTask] = classOf[PerfSourceTask]
+  override protected def taskClass(): Class[_ <: RowSourceTask] = classOf[PerfSourceTask]
 
-  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+  override protected def taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
 
   /**
     * this method is exposed to test scope
     */
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     if (settings.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
     val props = PerfSourceProps(settings)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")
     this.settings = settings
   }
 
-  override protected def _stop(): Unit = {}
+  override protected def terminate(): Unit = {}
 
   override protected def customSettingDefinitions(): java.util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

@@ -17,16 +17,10 @@
 package oharastream.ohara.connector.hdfs.sink
 
 import oharastream.ohara.client.filesystem.FileSystem
-import oharastream.ohara.common.annotations.VisibleForTesting
-import oharastream.ohara.kafka.connector.{TaskSetting, storage}
 import oharastream.ohara.kafka.connector.csv.CsvSinkTask
+import oharastream.ohara.kafka.connector.{TaskSetting, storage}
 
 class HDFSSinkTask extends CsvSinkTask {
-  @VisibleForTesting
-  private[sink] var hdfsSinkProps: HDFSSinkProps = _
-
-  override def _fileSystem(setting: TaskSetting): storage.FileSystem = {
-    hdfsSinkProps = HDFSSinkProps(setting)
-    FileSystem.hdfsBuilder.url(hdfsSinkProps.hdfsURL).build
-  }
+  override def fileSystem(setting: TaskSetting): storage.FileSystem =
+    FileSystem.hdfsBuilder.url(HDFSSinkProps(setting).hdfsURL).build
 }

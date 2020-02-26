@@ -17,13 +17,17 @@
 package oharastream.ohara.kafka.connector.csv;
 
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.kafka.connector.RowSourceRecord;
 import oharastream.ohara.kafka.connector.RowSourceTask;
 import oharastream.ohara.kafka.connector.TaskSetting;
-import oharastream.ohara.kafka.connector.csv.source.*;
+import oharastream.ohara.kafka.connector.csv.source.CsvDataReader;
+import oharastream.ohara.kafka.connector.csv.source.CsvSourceConfig;
+import oharastream.ohara.kafka.connector.csv.source.DataReader;
 import oharastream.ohara.kafka.connector.storage.FileSystem;
 
 /**
@@ -43,17 +47,17 @@ public abstract class CsvSourceTask extends RowSourceTask {
    * @param config initial configuration
    * @return a FileSystem implementation
    */
-  public abstract FileSystem _fileSystem(TaskSetting config);
+  public abstract FileSystem fileSystem(TaskSetting config);
 
   @Override
-  public final void _start(TaskSetting setting) {
-    fs = _fileSystem(setting);
+  public final void run(TaskSetting setting) {
+    fs = fileSystem(setting);
     config = CsvSourceConfig.of(setting);
     dataReader = CsvDataReader.of(fs, config, rowContext);
   }
 
   @Override
-  public final List<RowSourceRecord> _poll() {
+  public final List<RowSourceRecord> pollRecords() {
     Iterator<String> fileNames = fs.listFileNames(config.inputFolder());
     if (fileNames.hasNext()) {
       String fileName = fileNames.next();
@@ -67,7 +71,7 @@ public abstract class CsvSourceTask extends RowSourceTask {
   }
 
   @Override
-  public final void _stop() {
+  public final void terminate() {
     Releasable.close(fs);
   }
 

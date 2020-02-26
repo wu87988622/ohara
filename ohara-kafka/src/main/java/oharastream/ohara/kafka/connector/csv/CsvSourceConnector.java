@@ -21,8 +21,8 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERRO
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFINITION;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_DEFINITION;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,6 +32,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.kafka.connector.RowSourceConnector;
+import oharastream.ohara.kafka.connector.TaskSetting;
+import oharastream.ohara.kafka.connector.storage.FileSystem;
 
 /**
  * A wrap to RowSourceConnector. The difference between CsvSourceConnector and RowSourceConnector is
@@ -45,28 +47,72 @@ import oharastream.ohara.kafka.connector.RowSourceConnector;
  * </ul>
  */
 public abstract class CsvSourceConnector extends RowSourceConnector {
+
+  /**
+   * Return the file system for this connector
+   *
+   * @param config initial configuration
+   * @return a FileSystem implementation
+   */
+  public abstract FileSystem fileSystem(TaskSetting config);
+
+  /**
+   * Return the settings for csv source task.
+   *
+   * @param maxTasks number of tasks for this connector
+   * @return a seq from settings
+   */
+  protected abstract List<TaskSetting> csvTaskSettings(int maxTasks);
+
+  private static void checkExist(FileSystem fs, String path) {
+    if (!fs.exists(path)) throw new IllegalArgumentException(path + " doesn't exist");
+  }
+
+  /**
+   * execute this connector. Noted: this method is invoked after all csv-related settings are
+   * confirmed.
+   *
+   * @param setting task setting
+   */
+  protected abstract void execute(TaskSetting setting);
+
   @Override
-  public List<Map<String, String>> taskConfigs(int maxTasks) {
-    List<Map<String, String>> taskConfigs = super.taskConfigs(maxTasks);
-    return IntStream.range(0, maxTasks)
+  protected final void run(TaskSetting setting) {
+    try (FileSystem fileSystem = fileSystem(setting)) {
+      checkExist(fileSystem, setting.stringValue(CsvConnectorDefinitions.INPUT_FOLDER_KEY));
+      setting
+          .stringOption(CsvConnectorDefinitions.COMPLETED_FOLDER_KEY)
+          .ifPresent(path -> checkExist(fileSystem, path));
+      setting
+          .stringOption(CsvConnectorDefinitions.ERROR_FOLDER_KEY)
+          .ifPresent(path -> checkExist(fileSystem, path));
+    } finally {
+      execute(setting);
+    }
+  }
+
+  @Override
+  public final List<TaskSetting> taskSettings(int maxTasks) {
+    List<TaskSetting> sub = csvTaskSettings(maxTasks);
+    return IntStream.range(0, sub.size())
         .mapToObj(
-            index -> {
-              Map<String, String> taskConfig = new HashMap<>(taskConfigs.get(index));
-              taskConfig.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(maxTasks));
-              taskConfig.put(CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(index));
-              return taskConfig;
-            })
+            index ->
+                sub.get(index)
+                    .append(
+                        ImmutableMap.of(
+                            CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(sub.size()),
+                            CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(index))))
         .collect(Collectors.toList());
   }
 
   /** @return custom setting definitions from sub csv connectors */
-  protected Map<String, SettingDef> customCsvSettingDefinitions() {
+  protected Map<String, SettingDef> csvSettingDefinitions() {
     return Collections.emptyMap();
   }
 
   @Override
   protected final Map<String, SettingDef> customSettingDefinitions() {
-    Map<String, SettingDef> finalDefinitions = new TreeMap<>(customCsvSettingDefinitions());
+    Map<String, SettingDef> finalDefinitions = new TreeMap<>(csvSettingDefinitions());
     finalDefinitions.putAll(
         Stream.of(
                 INPUT_FOLDER_DEFINITION,

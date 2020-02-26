@@ -20,12 +20,12 @@ import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSet
 
 import scala.collection.JavaConverters._
 class FallibleSink extends RowSinkConnector {
-  private[this] var settings: TaskSetting                                          = _
-  override protected def _taskClass(): Class[_ <: RowSinkTask]                     = classOf[FallibleSinkTask]
-  override protected def _taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
-  override protected def _start(settings: TaskSetting): Unit = {
+  private[this] var settings: TaskSetting                                         = _
+  override protected def taskClass(): Class[_ <: RowSinkTask]                     = classOf[FallibleSinkTask]
+  override protected def taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
+  override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
     if (settings.stringOption("you_should_fail").isPresent) throw new IllegalArgumentException
   }
-  override protected def _stop(): Unit = {}
+  override protected def terminate(): Unit = {}
 }

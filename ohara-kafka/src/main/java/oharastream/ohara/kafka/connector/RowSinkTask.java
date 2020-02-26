@@ -48,15 +48,15 @@ public abstract class RowSinkTask extends SinkTask {
    *
    * @param config initial configuration
    */
-  protected abstract void _start(TaskSetting config);
+  protected abstract void run(TaskSetting config);
 
   /**
    * Perform any cleanup to stop this task. In SinkTasks, this method is invoked only once
-   * outstanding calls to other methods have completed (e.g., _put() has returned) and a final
+   * outstanding calls to other methods have completed (e.g., put() has returned) and a final
    * flush() and offset commit has completed. Implementations from this method should only need to
    * perform final cleanup operations, such as closing network connections to the sink system.
    */
-  protected abstract void _stop();
+  protected abstract void terminate();
 
   /**
    * Put the table record in the sink. Usually this should send the records to the sink
@@ -64,17 +64,7 @@ public abstract class RowSinkTask extends SinkTask {
    *
    * @param records table record
    */
-  protected abstract void _put(List<RowSinkRecord> records);
-
-  /**
-   * Get the version from this task. Usually this should be the same as the corresponding Connector
-   * class's version.
-   *
-   * @return the version, formatted as a String
-   */
-  protected String _version() {
-    return VersionUtils.VERSION;
-  }
+  protected abstract void putRecords(List<RowSinkRecord> records);
 
   /**
    * The SinkTask use this method to create writers for newly assigned partitions in case from
@@ -85,7 +75,7 @@ public abstract class RowSinkTask extends SinkTask {
    * @param partitions The list from partitions that are now assigned to the task (may include
    *     partitions previously assigned to the task)
    */
-  protected void _open(List<TopicPartition> partitions) {
+  protected void openPartitions(List<TopicPartition> partitions) {
     // do nothing
   }
 
@@ -98,7 +88,7 @@ public abstract class RowSinkTask extends SinkTask {
    *
    * @param partitions The list from partitions that should be closed
    */
-  protected void _close(List<TopicPartition> partitions) {
+  protected void closePartitions(List<TopicPartition> partitions) {
     // do nothing
   }
 
@@ -108,13 +98,14 @@ public abstract class RowSinkTask extends SinkTask {
    * <p>The default implementation simply return the offsets and is thus able to assume all offsets
    * are safe to commit.
    *
-   * @param offsets the current offset state as from the last call to _put, provided for convenience
+   * @param offsets the current offset state as from the last call to put, provided for convenience
    *     but could also be determined by tracking all offsets included in the RowSourceRecord's
-   *     passed to _put.
+   *     passed to put.
    * @return an empty map if Connect-managed offset commit is not desired, otherwise a map from
    *     offsets by topic-partition that are safe to commit.
    */
-  protected Map<TopicPartition, TopicOffset> _preCommit(Map<TopicPartition, TopicOffset> offsets) {
+  protected Map<TopicPartition, TopicOffset> preCommitOffsets(
+      Map<TopicPartition, TopicOffset> offsets) {
     return offsets;
   }
 
@@ -173,7 +164,7 @@ public abstract class RowSinkTask extends SinkTask {
             .map(Pair::left)
             .collect(Collectors.toList());
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(records.size());
-    _put(records);
+    putRecords(records);
   }
 
   /**
@@ -196,13 +187,13 @@ public abstract class RowSinkTask extends SinkTask {
     messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
     ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());
     ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
-    _start(taskSetting);
+    run(taskSetting);
   }
 
   @Override
   public final void stop() {
     try {
-      _stop();
+      terminate();
     } finally {
       Releasable.close(messageNumberCounter);
       Releasable.close(messageSizeCounter);
@@ -213,13 +204,13 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final String version() {
-    return _version();
+    return VersionUtils.VERSION;
   }
 
   @Override
   public final void open(Collection<org.apache.kafka.common.TopicPartition> partitions) {
 
-    _open(
+    openPartitions(
         partitions.stream()
             .map(p -> new TopicPartition(p.topic(), (p.partition())))
             .collect(Collectors.toList()));
@@ -227,7 +218,7 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void close(Collection<org.apache.kafka.common.TopicPartition> partitions) {
-    _close(
+    closePartitions(
         partitions.stream()
             .map(p -> new TopicPartition(p.topic(), (p.partition())))
             .collect(Collectors.toList()));
@@ -237,7 +228,7 @@ public abstract class RowSinkTask extends SinkTask {
   public final Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> preCommit(
       Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> currentOffsets) {
 
-    return _preCommit(
+    return preCommitOffsets(
             currentOffsets.entrySet().stream()
                 .collect(
                     Collectors.toMap(

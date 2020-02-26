@@ -33,7 +33,7 @@ class SimpleRowSourceTask extends RowSourceTask {
   private[this] val queue                                = new LinkedBlockingQueue[RowSourceRecord]
   private[this] val closed                               = new AtomicBoolean(false)
   private[this] var consumer: Consumer[Row, Array[Byte]] = _
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
     this.consumer = Consumer
       .builder()
@@ -60,10 +60,10 @@ class SimpleRowSourceTask extends RowSourceTask {
     }
   }
 
-  override protected def _poll(): util.List[RowSourceRecord] =
+  override protected def pollRecords(): util.List[RowSourceRecord] =
     Iterator.continually(queue.poll()).takeWhile(_ != null).toSeq.asJava
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     closed.set(true)
     consumer.wakeup()
   }

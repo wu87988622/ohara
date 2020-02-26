@@ -117,6 +117,7 @@ public class CsvDataReader implements DataReader {
   }
 
   private void moveToAnotherFolder(String path, String targetFolder) {
+    if (!fs.exists(targetFolder)) fs.mkdirs(targetFolder);
     String fileName = Paths.get(path).getFileName().toString();
     String outputPath = Paths.get(targetFolder, fileName).toString();
     if (fs.exists(outputPath)) {

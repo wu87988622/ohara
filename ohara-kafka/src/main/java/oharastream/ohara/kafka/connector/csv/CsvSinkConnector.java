@@ -23,6 +23,7 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.OUTP
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_DEFINITION;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.kafka.connector.RowSinkConnector;
+import oharastream.ohara.kafka.connector.TaskSetting;
+import oharastream.ohara.kafka.connector.storage.FileSystem;
 
 /**
  * A wrap to RowSinkConnector. The difference between CsvSinkConnector and RowSinkConnector is that
@@ -44,15 +47,56 @@ import oharastream.ohara.kafka.connector.RowSinkConnector;
  * </ul>
  */
 public abstract class CsvSinkConnector extends RowSinkConnector {
+  /**
+   * Return the file system for this connector
+   *
+   * @param config initial configuration
+   * @return a FileSystem implementation
+   */
+  public abstract FileSystem fileSystem(TaskSetting config);
+
+  private static void checkExist(FileSystem fs, String path) {
+    if (!fs.exists(path)) throw new IllegalArgumentException(path + " doesn't exist");
+  }
+
+  /**
+   * execute this connector. Noted: this method is invoked after all csv-related settings are
+   * confirmed.
+   *
+   * @param setting task setting
+   */
+  protected abstract void execute(TaskSetting setting);
+
+  @Override
+  protected final void run(TaskSetting setting) {
+    try (FileSystem fileSystem = fileSystem(setting)) {
+      checkExist(fileSystem, setting.stringValue(CsvConnectorDefinitions.OUTPUT_FOLDER_KEY));
+    } finally {
+      execute(setting);
+    }
+  }
+
+  /**
+   * Return the settings for csv source task.
+   *
+   * @param maxTasks number of tasks for this connector
+   * @return a seq from settings
+   */
+  protected abstract List<TaskSetting> csvTaskSettings(int maxTasks);
+
+  @Override
+  public final List<TaskSetting> taskSettings(int maxTasks) {
+    return csvTaskSettings(maxTasks);
+  }
 
   /** @return custom setting definitions from sub csv connectors */
-  protected Map<String, SettingDef> customCsvSettingDefinitions() {
+  protected Map<String, SettingDef> csvSettingDefinitions() {
     return Collections.emptyMap();
   }
 
   @Override
   protected final Map<String, SettingDef> customSettingDefinitions() {
-    Map<String, SettingDef> finalDefinitions = new TreeMap<>(customCsvSettingDefinitions());
+    Map<String, SettingDef> finalDefinitions = new TreeMap<>(csvSettingDefinitions());
     finalDefinitions.putAll(
         Stream.of(
                 OUTPUT_FOLDER_DEFINITION,

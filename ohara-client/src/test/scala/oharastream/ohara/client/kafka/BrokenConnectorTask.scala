@@ -21,13 +21,13 @@ import java.util
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 class BrokenConnectorTask extends RowSourceTask {
-  override protected def _start(settings: TaskSetting): Unit = {
+  override protected def run(settings: TaskSetting): Unit = {
     // do nothing
   }
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 
-  override protected def _poll(): util.List[RowSourceRecord] = java.util.Collections.emptyList()
+  override protected def pollRecords(): util.List[RowSourceRecord] = java.util.Collections.emptyList()
 }

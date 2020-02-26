@@ -22,13 +22,7 @@ import oharastream.ohara.kafka.connector.csv.CsvSinkTask
 import oharastream.ohara.kafka.connector.storage.FileSystem
 
 class SmbSinkTask extends CsvSinkTask {
-  /**
-    * Returns the FileSystem implementation for this Task.
-    *
-    * @param settings initial settings
-    * @return a FileSystem instance
-    */
-  override def _fileSystem(settings: TaskSetting): FileSystem = {
+  override def fileSystem(settings: TaskSetting): FileSystem = {
     val props = SmbProps(settings)
     filesystem.FileSystem.smbBuilder
       .hostname(props.hostname)

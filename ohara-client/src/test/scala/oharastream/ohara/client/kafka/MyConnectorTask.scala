@@ -24,13 +24,13 @@ class MyConnectorTask extends RowSourceTask {
   private[this] var lastSent: Long    = 0
   private[this] var topicName: String = _
 
-  override protected def _start(settings: TaskSetting): Unit = this.topicName = settings.topicNames().get(0)
+  override protected def run(settings: TaskSetting): Unit = this.topicName = settings.topicNames().get(0)
 
-  override protected def _stop(): Unit = {
+  override protected def terminate(): Unit = {
     // do nothing
   }
 
-  override protected def _poll(): util.List[RowSourceRecord] = {
+  override protected def pollRecords(): util.List[RowSourceRecord] = {
     val current = System.currentTimeMillis()
     if (current - lastSent >= 1000) {
       lastSent = current

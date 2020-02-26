@@ -178,7 +178,7 @@ public class TestConnectorProps extends OharaTest {
           private boolean good = true;
 
           @Override
-          protected List<RowSourceRecord> _poll() {
+          protected List<RowSourceRecord> pollRecords() {
             try {
               return Collections.singletonList(
                   RowSourceRecord.builder()
@@ -240,7 +240,7 @@ public class TestConnectorProps extends OharaTest {
     RowSourceTask task2 =
         new DumbSourceTask() {
           @Override
-          protected List<RowSourceRecord> _poll() {
+          protected List<RowSourceRecord> pollRecords() {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)
@@ -266,7 +266,7 @@ public class TestConnectorProps extends OharaTest {
     RowSourceTask task3 =
         new DumbSourceTask() {
           @Override
-          protected List<RowSourceRecord> _poll() {
+          protected List<RowSourceRecord> pollRecords() {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)

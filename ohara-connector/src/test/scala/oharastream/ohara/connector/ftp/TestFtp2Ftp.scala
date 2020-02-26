@@ -56,34 +56,16 @@ class TestFtp2Ftp extends With3Brokers3Workers {
     .password(testUtil.ftpServer.password)
     .build()
 
-  private[this] val sourceProps = FtpSourceProps(
-    inputFolder = "/input",
-    completedFolder = Some("/backup"),
-    errorFolder = "/error",
-    user = testUtil.ftpServer.user,
-    password = testUtil.ftpServer.password,
-    hostname = testUtil.ftpServer.hostname,
-    port = testUtil.ftpServer.port,
-    encode = "UTF-8"
-  )
-
-  private[this] val sinkProps = FtpSinkProps(
-    topicsDir = "/output",
-    needHeader = true,
-    user = testUtil.ftpServer.user,
-    password = testUtil.ftpServer.password,
-    hostname = testUtil.ftpServer.hostname,
-    port = testUtil.ftpServer.port,
-    encode = "UTF-8"
-  )
+  private[this] val inputFolder     = "/input"
+  private[this] val completedFolder = "/backup"
+  private[this] val outputFolder    = "/output"
 
   @Before
   def setup(): Unit = {
-    TestFtp2Ftp.rebuild(fileSystem, sourceProps.inputFolder)
-    TestFtp2Ftp.rebuild(fileSystem, sourceProps.completedFolder.get)
-    TestFtp2Ftp.rebuild(fileSystem, sourceProps.errorFolder)
-    TestFtp2Ftp.rebuild(fileSystem, sinkProps.topicsDir)
-    TestFtp2Ftp.setupInput(fileSystem, sourceProps, header, data)
+    rebuild(fileSystem, inputFolder)
+    rebuild(fileSystem, completedFolder)
+    rebuild(fileSystem, outputFolder)
+    setupInput(fileSystem, inputFolder, header, data)
   }
 
   @Test
@@ -100,7 +82,15 @@ class TestFtp2Ftp extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(sinkConnectorKey)
         .columns(schema)
-        .settings(sinkProps.toMap)
+        .settings(
+          Map(
+            OUTPUT_FOLDER_KEY -> outputFolder,
+            FTP_HOSTNAME_KEY  -> testUtil.ftpServer.hostname(),
+            FTP_PORT_KEY      -> testUtil.ftpServer.port().toString,
+            FTP_USER_NAME_KEY -> testUtil.ftpServer.user(),
+            FTP_PASSWORD_KEY  -> testUtil.ftpServer.password
+          )
+        )
         .create(),
       10 seconds
     )
@@ -115,17 +105,26 @@ class TestFtp2Ftp extends With3Brokers3Workers {
             .numberOfTasks(1)
             .connectorKey(sourceConnectorKey)
             .columns(schema)
-            .settings(sourceProps.toMap)
+            .settings(
+              Map(
+                INPUT_FOLDER_KEY     -> inputFolder,
+                COMPLETED_FOLDER_KEY -> completedFolder,
+                FTP_HOSTNAME_KEY     -> testUtil.ftpServer.hostname(),
+                FTP_PORT_KEY         -> testUtil.ftpServer.port().toString,
+                FTP_USER_NAME_KEY    -> testUtil.ftpServer.user(),
+                FTP_PASSWORD_KEY     -> testUtil.ftpServer.password
+              )
+            )
             .create(),
           10 seconds
         )
         CommonUtils
-          .await(() => fileSystem.listFileNames(sourceProps.inputFolder).asScala.isEmpty, Duration.ofSeconds(30))
+          .await(() => fileSystem.listFileNames(inputFolder).asScala.isEmpty, Duration.ofSeconds(30))
         CommonUtils.await(
-          () => fileSystem.listFileNames(sourceProps.completedFolder.get).asScala.size == 1,
+          () => fileSystem.listFileNames(completedFolder).asScala.size == 1,
           Duration.ofSeconds(30)
         )
-        val committedFolder = CommonUtils.path(sinkProps.topicsDir, topicKey.topicNameOnKafka(), "partition0")
+        val committedFolder = CommonUtils.path(outputFolder, topicKey.topicNameOnKafka(), "partition0")
         CommonUtils.await(() => {
           if (fileSystem.exists(committedFolder))
             listCommittedFiles(committedFolder).size == 1
@@ -148,19 +147,12 @@ class TestFtp2Ftp extends With3Brokers3Workers {
     fileSystem.listFileNames(dir, (fileName: String) => !fileName.contains("_tmp"))
   }
 
-  @After
-  def tearDown(): Unit = {
-    Releasable.close(fileSystem)
-  }
-}
-
-object TestFtp2Ftp {
   /**
     * delete all stuffs in the path and then recreate it as a folder
     * @param fileSystem ftp client
     * @param path path on ftp server
     */
-  def rebuild(fileSystem: FileSystem, path: String): Unit = {
+  private[this] def rebuild(fileSystem: FileSystem, path: String): Unit = {
     if (fileSystem.exists(path)) {
       fileSystem
         .listFileNames(path)
@@ -173,10 +165,10 @@ object TestFtp2Ftp {
     fileSystem.mkdirs(path)
   }
 
-  def setupInput(fileSystem: FileSystem, props: FtpSourceProps, header: String, data: Seq[String]): Unit = {
+  private[this] def setupInput(fileSystem: FileSystem, inputFolder: String, header: String, data: Seq[String]): Unit = {
     val writer = new BufferedWriter(
       new OutputStreamWriter(
-        fileSystem.create(oharastream.ohara.common.util.CommonUtils.path(props.inputFolder, "abc"))
+        fileSystem.create(oharastream.ohara.common.util.CommonUtils.path(inputFolder, "abc"))
       )
     )
     try {
@@ -188,4 +180,7 @@ object TestFtp2Ftp {
       })
     } finally writer.close()
   }
+
+  @After
+  def tearDown(): Unit = Releasable.close(fileSystem)
 }

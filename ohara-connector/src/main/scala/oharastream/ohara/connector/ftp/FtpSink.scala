@@ -18,6 +18,7 @@ package oharastream.ohara.connector.ftp
 
 import java.util
 
+import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector._
 import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
@@ -26,22 +27,21 @@ import scala.collection.JavaConverters._
 
 class FtpSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _
-  private[this] var props: FtpSinkProps   = _
 
-  override protected[ftp] def _start(settings: TaskSetting): Unit = {
-    this.settings = settings
-    this.props = FtpSinkProps(settings)
-    if (settings.columns.asScala.exists(_.order == 0))
-      throw new IllegalArgumentException("column order must be bigger than zero")
+  override def fileSystem(setting: TaskSetting): storage.FileSystem = {
+    val props = FtpSinkProps(setting)
+    FileSystem.ftpBuilder.hostname(props.hostname).port(props.port).user(props.user).password(props.password).build()
   }
 
-  override protected def _stop(): Unit = {
+  override protected def execute(settings: TaskSetting): Unit = this.settings = settings
+
+  override protected def terminate(): Unit = {
     // do nothing
   }
 
-  override protected def _taskClass(): Class[_ <: RowSinkTask] = classOf[FtpSinkTask]
+  override protected def taskClass(): Class[_ <: RowSinkTask] = classOf[FtpSinkTask]
 
-  override protected def _taskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks) { settings }.asJava
+  override protected def csvTaskSettings(maxTasks: Int): util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
 
-  override protected def customCsvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
+  override protected def csvSettingDefinitions(): util.Map[String, SettingDef] = DEFINITIONS.asJava
 }

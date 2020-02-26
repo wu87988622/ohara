@@ -21,7 +21,7 @@ import java.util
 import oharastream.ohara.kafka.connector._
 
 class IncludeAllTypesSinkTask extends RowSinkTask {
-  override protected def _start(settings: TaskSetting): Unit           = {}
-  override protected def _stop(): Unit                                 = {}
-  override protected def _put(records: util.List[RowSinkRecord]): Unit = {}
+  override protected def run(settings: TaskSetting): Unit                    = {}
+  override protected def terminate(): Unit                                   = {}
+  override protected def putRecords(records: util.List[RowSinkRecord]): Unit = {}
 }
