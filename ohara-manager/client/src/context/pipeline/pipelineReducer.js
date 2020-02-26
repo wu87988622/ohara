@@ -60,7 +60,6 @@ const reducer = (state, action) => {
         isFetching: true,
       };
     case routines.fetchPipelinesRoutine.SUCCESS:
-    case routines.fetchPipelineRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -74,7 +73,7 @@ const reducer = (state, action) => {
         data: sort([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
-
+    case routines.fetchPipelineRoutine.SUCCESS:
     case routines.updatePipelineRoutine.SUCCESS:
       const newData = state.data.map(pipeline =>
         isKeyEqual(pipeline, action.payload)
