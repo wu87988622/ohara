@@ -72,6 +72,8 @@ const Toolbox = props => {
   const { streams } = useFiles();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
+  const toolboxBodyRef = React.useRef(null);
+  const scrollRef = React.useRef(0);
 
   const connectors = {
     sources,
@@ -217,6 +219,17 @@ const Toolbox = props => {
     topicsData,
   ]);
 
+  const handleScroll = () => {
+    const scrollTop = toolboxBodyRef.current.scrollTop;
+    scrollRef.current = scrollTop;
+  };
+
+  if (toolboxBodyRef.current) {
+    if (toolboxBodyRef.current.scrollTop !== scrollRef.current) {
+      toolboxBodyRef.current.scrollTop = scrollRef.current;
+    }
+  }
+
   return (
     <Draggable
       bounds="parent"
@@ -251,6 +264,8 @@ const Toolbox = props => {
         <div
           className="toolbox-body"
           style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
+          ref={toolboxBodyRef}
+          onScroll={handleScroll}
         >
           <ExpansionPanel square expanded={expanded.source}>
             <ExpansionPanelSummary
