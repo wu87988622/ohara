@@ -15,6 +15,7 @@
  */
 
 import React, { useEffect, useRef, createContext } from 'react';
+import SplitPane from 'react-split-pane';
 import _ from 'lodash';
 import { useParams } from 'react-router-dom';
 
@@ -22,6 +23,7 @@ import * as context from 'context';
 import Paper from './Paper';
 import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
+import PipelinePropertyView from './PipelinePropertyView';
 import NodeDialog from 'components/Node/NodeDialog';
 import IntroDialog from './IntroDialog';
 import PipelinePropertyDialog from './PipelinePropertyDialog';
@@ -58,6 +60,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     data: PropertyDialogData,
   } = context.usePipelinePropertyDialog();
   const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
+  const { selectedCell } = context.usePipelineState();
 
   const {
     data: streams,
@@ -339,6 +342,24 @@ const Pipeline = React.forwardRef((props, ref) => {
                         });
                       }}
                     />
+                  )}
+                  {selectedCell && (
+                    <>
+                      <SplitPane
+                        split="vertical"
+                        minSize={300}
+                        maxSize={500}
+                        defaultSize={320}
+                        primary="second"
+                      >
+                        <div></div>
+
+                        <PipelinePropertyView
+                          handleClose={() => setSelectedCell(null)}
+                          element={selectedCell}
+                        />
+                      </SplitPane>
+                    </>
                   )}
 
                   <PaperWrapper>

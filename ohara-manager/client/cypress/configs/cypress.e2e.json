@@ -11,6 +11,6 @@
   "requestTimeout": 30000,
   "defaultCommandTimeout": 60000,
   "watchForFileChanges": false,
-  "viewportWidth": 1280,
+  "viewportWidth": 1600,
   "viewportHeight": 800
 }
