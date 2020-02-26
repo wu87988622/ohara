@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { get } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
@@ -43,27 +43,29 @@ const Header = () => {
   const { isFetching: isFetchingTopic } = context.useTopicDataState();
 
   const prevSelectedCell = usePrevious(selectedCell);
+  const prevTab = usePrevious(tabName);
 
   React.useEffect(() => {
-    if (!selectedCell || !isOpen || prevSelectedCell === selectedCell) return;
+    if (!isOpen || (prevSelectedCell === selectedCell && prevTab === tabName))
+      return;
 
     const getService = kind => {
       if (kind === KIND.source || kind === KIND.sink) return KIND.worker;
       if (kind === KIND.topic) return KIND.broker;
       if (kind === KIND.stream) return KIND.stream;
+      return '';
     };
 
-    const kind = get(selectedCell, CELL_PROPS.kind, null);
+    const kind = get(selectedCell, CELL_PROPS.kind, '');
 
     if (kind === KIND.topic) {
       if (tabName === TAB.log) {
         logActions.setLogType(KIND.broker);
       } else {
-        topicDataActions.setName(
-          get(selectedCell, CELL_PROPS.displayName, null),
-        );
+        topicDataActions.setName(get(selectedCell, CELL_PROPS.displayName, ''));
       }
-    } else {
+    } else if (!isEmpty(kind)) {
+      // the selected cell is a source, sink, or stream
       setTabName(TAB.log);
       const service = getService(kind);
       logActions.setLogType(service);
@@ -74,13 +76,16 @@ const Header = () => {
     selectedCell,
     logActions,
     topicDataActions,
+    prevTab,
     tabName,
     setTabName,
   ]);
 
   const handleTabChange = (event, currentTab) => {
+    // handle the tab change directly
+    // we need to clear the select cell to avoid the following situation
+    // click log tab -> click source -> click topics tab will be disabled
     setSelectedCell(null);
-
     setTabName(currentTab);
   };
 

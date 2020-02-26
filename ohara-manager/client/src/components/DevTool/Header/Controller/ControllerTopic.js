@@ -33,6 +33,10 @@ import { StyledSearchBody } from './ControllerStyles';
 
 const ControllerTopic = () => {
   const { data: topics } = context.useTopicState();
+  const displayTopicNames = topics.map(topic => {
+    // pipeline only topic names are stored in tags, the name field is randomly generated.
+    return topic.tags.isShared ? topic.name : topic.tags.displayName;
+  });
 
   const { setName, setLimit, refetchTopic } = context.useTopicDataActions();
   const { query, isFetching, lastUpdated } = context.useTopicDataState();
@@ -49,8 +53,11 @@ const ControllerTopic = () => {
       // Only pipeline only topics are able to use capital letters as name
       name.startsWith('T') &&
       topics.find(topic => topic.tags.displayName === name);
+    const actualTopicName = pipelineOnlyTopic ? pipelineOnlyTopic.name : name;
+
+    if (!topics.map(topic => topic.name).includes(actualTopicName)) return;
     topicDataActions.fetchTopicData({
-      name: pipelineOnlyTopic ? pipelineOnlyTopic.name : name,
+      name: actualTopicName,
       limit,
     });
   }, [lastUpdated, limit, name, prevName, topicDataActions, topics]);
@@ -72,12 +79,9 @@ const ControllerTopic = () => {
     <>
       <Tooltip title="Select topic">
         <Select
-          value={name}
+          value={displayTopicNames.includes(name) ? name : ''}
           onChange={event => setName(event.target.value)}
-          list={topics.map(topic => {
-            // pipeline only topic names are stored in tags, the name field is randomly generated.
-            return topic.tags.isShared ? topic.name : topic.tags.displayName;
-          })}
+          list={displayTopicNames}
           disabled={isFetching}
         />
       </Tooltip>
