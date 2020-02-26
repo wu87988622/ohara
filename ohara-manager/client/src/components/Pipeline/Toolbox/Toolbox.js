@@ -105,7 +105,7 @@ const Toolbox = props => {
       setIsOpen(false);
       utils.removeTemporaryCell(paperApi);
       return showMessage(
-        `The name ${newName} is already taken, please use a different name!`,
+        `The name "${newName}" is already taken in this pipeline, please use a different name!`,
       );
     }
 
