@@ -318,7 +318,7 @@ export const enableDragAndDrop = params => {
             if (isShared) {
               if (!checkUniqueName(name, paperApi)) {
                 showMessage(
-                  `The name ${name} is already taken, please use a different name!`,
+                  `The name "${name}" is already taken in this pipeline, please use a different name!`,
                 );
               } else {
                 paperApi.addElement({
