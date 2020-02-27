@@ -34,7 +34,7 @@ import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import PropertyField from './PipelinePropertyViewField';
 
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Tooltip } from 'components/common/Tooltip';
 import { Dialog } from 'components/common/Dialog';
@@ -42,7 +42,12 @@ import * as context from 'context';
 import * as propertyUtils from './PipelinePropertyViewUtils';
 
 const PipelinePropertyView = props => {
-  const { handleClose, element } = props;
+  const { handleClose, element, cellsMetrics } = props;
+  const cellMetrics = cellsMetrics.find(cell => cell.name === element.name);
+  const metrics = _.isUndefined(cellMetrics)
+    ? { meters: [] }
+    : cellMetrics.metrics;
+
   const { data: currentConnector } = context.useConnectorState();
   const { data: currentStream } = context.useStreamState();
   const { data: currentTopic } = context.useTopicState();
@@ -56,8 +61,7 @@ const PipelinePropertyView = props => {
   const [isMetricsExpanded, setIsMetricsExpanded] = useState(false);
 
   if (!element) return null;
-  const { name: cellName, displayName, status: cellStatus } = element;
-
+  const { name: cellName, displayName } = element;
   let settings;
   switch (element.kind) {
     case KIND.source:
@@ -236,16 +240,20 @@ const PipelinePropertyView = props => {
       );
     }
   };
-
-  const { tasksStatus = [], metrics } = settings;
+  const { tasksStatus = [] } = settings;
   const hasNodesInfo = tasksStatus.length > 0;
   const hasMetrics = metrics.meters.length > 0;
-
   return (
     <Wrapper variant="outlined" square>
       <div className="title-wrapper">
         <div className="title-info">
-          <div className={`icon-wrapper ${cellStatus.toLowerCase()}`}>
+          <div
+            className={`icon-wrapper ${_.get(
+              settings,
+              'state',
+              CELL_STATUS.stopped,
+            ).toLowerCase()}`}
+          >
             {propertyUtils.renderIcon(element)}
           </div>
           <div className="title-text">
@@ -264,7 +272,7 @@ const PipelinePropertyView = props => {
                 variant="body2"
                 component="span"
               >
-                {cellStatus}
+                {_.get(settings, 'state', CELL_STATUS.stopped)}
               </Typography>
             </div>
           </div>
@@ -396,6 +404,7 @@ const PipelinePropertyView = props => {
 PipelinePropertyView.propTypes = {
   handleClose: PropTypes.func.isRequired,
   element: PropTypes.object,
+  cellsMetrics: PropTypes.array,
 };
 
 export default PipelinePropertyView;

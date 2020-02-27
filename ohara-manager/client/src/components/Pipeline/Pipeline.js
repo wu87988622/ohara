@@ -148,6 +148,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   };
 
   const paperApiRef = useRef(null);
+  const cellsMetricsRef = useRef([]);
   const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
 
   useRedirect();
@@ -205,9 +206,11 @@ const Pipeline = React.forwardRef((props, ref) => {
         timer = setInterval(async () => {
           const res = await fetchPipeline(currentPipeline.name);
           if (isPaperApiReady) {
-            paperApiRef.current.updateMetrics(
-              res.data[0].objects.filter(object => object.kind !== KIND.topic),
+            const metrics = res.data[0].objects.filter(
+              object => object.kind !== KIND.topic,
             );
+            paperApiRef.current.updateMetrics(metrics);
+            cellsMetricsRef.current = metrics;
           }
         }, 5000);
       }
@@ -358,6 +361,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           <PipelinePropertyView
                             handleClose={() => setSelectedCell(null)}
                             element={selectedCell}
+                            cellsMetrics={cellsMetricsRef.current}
                           />
                         </StyledSplitPane>
                       </>
