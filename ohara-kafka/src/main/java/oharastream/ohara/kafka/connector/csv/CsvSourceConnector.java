@@ -34,6 +34,7 @@ import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.kafka.connector.RowSourceConnector;
 import oharastream.ohara.kafka.connector.TaskSetting;
 import oharastream.ohara.kafka.connector.storage.FileSystem;
+import oharastream.ohara.kafka.connector.storage.FileType;
 
 /**
  * A wrap to RowSourceConnector. The difference between CsvSourceConnector and RowSourceConnector is
@@ -65,7 +66,8 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
   protected abstract List<TaskSetting> csvTaskSettings(int maxTasks);
 
   private static void checkExist(FileSystem fs, String path) {
-    if (!fs.exists(path)) throw new IllegalArgumentException(path + " doesn't exist");
+    if (fs.fileType(path) != FileType.FOLDER)
+      throw new IllegalArgumentException(path + " is NOT folder!!!");
   }
 
   /**

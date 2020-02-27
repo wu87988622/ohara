@@ -61,6 +61,6 @@ class TestHdfsFileSystem extends FileSystemTestBase {
     fileSystem.readLines(file) shouldBe data
     fileSystem.delete(file)
     fileSystem.exists(file) shouldBe false
-    fileSystem.listFileNames(rootDir, FileFilter.default).size shouldBe 0
+    fileSystem.listFileNames(rootDir, FileFilter.EMPTY).size shouldBe 0
   }
 }

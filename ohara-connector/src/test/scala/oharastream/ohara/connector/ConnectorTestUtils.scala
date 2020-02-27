@@ -19,11 +19,15 @@ package oharastream.ohara.connector
 import java.time.Duration
 
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
+import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.testing.OharaTestUtils
+import org.apache.kafka.connect.connector.Connector
+import org.scalatest.Matchers.{include, intercept, _}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -62,4 +66,35 @@ object ConnectorTestUtils {
       },
       TIMEOUT
     )
+
+  def nonexistentFolderShouldFail(
+    fileSystem: FileSystem,
+    connectorClass: Class[_ <: Connector],
+    props: Map[String, String],
+    path: String
+  ): Unit = {
+    fileSystem.delete(path, true)
+    intercept[NoSuchElementException] {
+      val connector = connectorClass.newInstance()
+      try connector.start(props.asJava)
+      finally connector.stop()
+    }.getMessage should include("doesn't exist")
+  }
+
+  def fileShouldFail(
+    fileSystem: FileSystem,
+    connectorClass: Class[_ <: Connector],
+    props: Map[String, String],
+    path: String
+  ): Unit = {
+    fileSystem.delete(path, true)
+    val output = fileSystem.create(path)
+    try output.write("fileShouldFail".getBytes)
+    finally output.close()
+    intercept[IllegalArgumentException] {
+      val connector = connectorClass.newInstance()
+      try connector.start(props.asJava)
+      finally connector.stop()
+    }.getMessage should include("NOT folder")
+  }
 }

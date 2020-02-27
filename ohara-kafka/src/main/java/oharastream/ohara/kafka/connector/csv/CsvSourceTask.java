@@ -29,6 +29,7 @@ import oharastream.ohara.kafka.connector.csv.source.CsvDataReader;
 import oharastream.ohara.kafka.connector.csv.source.CsvSourceConfig;
 import oharastream.ohara.kafka.connector.csv.source.DataReader;
 import oharastream.ohara.kafka.connector.storage.FileSystem;
+import oharastream.ohara.kafka.connector.storage.FileType;
 
 /**
  * CsvSourceTask moveFile files from file system to Kafka topics. The file format must be csv file,
@@ -59,13 +60,14 @@ public abstract class CsvSourceTask extends RowSourceTask {
   @Override
   public final List<RowSourceRecord> pollRecords() {
     Iterator<String> fileNames = fs.listFileNames(config.inputFolder());
-    if (fileNames.hasNext()) {
+    while (fileNames.hasNext()) {
       String fileName = fileNames.next();
-      // Avoid more than one Task processing the same file
-      if (fileName.hashCode() % config.total() == config.hash()) {
-        String path = Paths.get(config.inputFolder(), fileName).toString();
-        return dataReader.read(path);
-      }
+      String path = Paths.get(config.inputFolder(), fileName).toString();
+      // we skip the folder
+      if (fs.fileType(path) == FileType.FILE
+          &&
+          // Avoid more than one Task processing the same file
+          fileName.hashCode() % config.total() == config.hash()) return dataReader.read(path);
     }
     return Collections.emptyList();
   }

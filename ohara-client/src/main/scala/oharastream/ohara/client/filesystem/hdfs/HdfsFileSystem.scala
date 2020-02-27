@@ -20,9 +20,10 @@ import java.io.{InputStream, OutputStream}
 import java.nio.file.Paths
 import java.util
 
-import oharastream.ohara.client.filesystem.{FileFilter, FileSystem, FileType}
-import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.client.filesystem.{FileFilter, FileSystem}
+import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.kafka.connector.storage.FileType
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, RemoteIterator}
 
@@ -190,7 +191,11 @@ private[filesystem] object HdfsFileSystem {
         * @param path the path of file or folder
         * @return a type of the given path
         */
-      override def fileType(path: String): FileType = throw new UnsupportedOperationException
+      override def fileType(path: String): FileType = wrap { () =>
+        val p = new Path(path)
+        if (!hadoopFS.exists(p)) throw new NoSuchElementException(s"$path doesn't exist")
+        if (hadoopFS.getFileStatus(p).isDirectory) FileType.FOLDER else FileType.FILE
+      }
 
       /**
         * Get the working folder of account. An exception will be thrown if it fails to get working folder.
