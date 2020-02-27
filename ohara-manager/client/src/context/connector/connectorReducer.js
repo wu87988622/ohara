@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
+import { map, reject, omit } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 
 import {
@@ -75,7 +75,7 @@ const reducer = (state, action) => {
         isFetching: false,
         data: map(state.data, connector =>
           isKeyEqual(connector, action.payload)
-            ? { ...connector, ...action.payload }
+            ? { ...omit(connector, ['state']), ...action.payload }
             : connector,
         ),
         lastUpdated: new Date(),

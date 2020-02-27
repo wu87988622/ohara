@@ -147,6 +147,7 @@ const stream = () => {
     paperApi.updateElement(id, {
       status: CELL_STATUS.pending,
     });
+    paperApi.disableMenu(id);
     const res = await stopStream(name);
     if (!res.error) {
       const state = util.getCellState(res);
