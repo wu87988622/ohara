@@ -35,8 +35,8 @@ export const getConfiguratorLog = async (params = {}) => {
   );
   const result = responseUtil(res, log);
   result.title = result.errors
-    ? `Failed to get ${logServices.configurator} log ${name}.`
-    : `Successfully got ${logServices.configurator} log ${name}.`;
+    ? `Failed to get ${logServices.configurator} log from ${name}.`
+    : `Successfully got ${logServices.configurator} log from ${name}.`;
   return result;
 };
 
@@ -47,8 +47,8 @@ export const getZookeeperLog = async params => {
   );
   const result = responseUtil(res, log);
   result.title = result.errors
-    ? `Failed to get ${logServices.zookeeper} log ${name}.`
-    : `Successfully got ${logServices.zookeeper} log ${name}.`;
+    ? `Failed to get ${logServices.zookeeper} log from ${name}.`
+    : `Successfully got ${logServices.zookeeper} log from ${name}.`;
   return result;
 };
 
@@ -59,8 +59,8 @@ export const getBrokerLog = async params => {
   );
   const result = responseUtil(res, log);
   result.title = result.errors
-    ? `Failed to get ${logServices.broker} log ${name}.`
-    : `Successfully got ${logServices.broker} log ${name}.`;
+    ? `Failed to get ${logServices.broker} log from ${name}.`
+    : `Successfully got ${logServices.broker} log from ${name}.`;
   return result;
 };
 
@@ -71,8 +71,8 @@ export const getWorkerLog = async params => {
   );
   const result = responseUtil(res, log);
   result.title = result.errors
-    ? `Failed to get ${logServices.worker} log ${name}.`
-    : `Successfully got ${logServices.worker} log ${name}.`;
+    ? `Failed to get ${logServices.worker} log from ${name}.`
+    : `Successfully got ${logServices.worker} log from ${name}.`;
   return result;
 };
 
@@ -83,7 +83,7 @@ export const getStreamLog = async params => {
   );
   const result = responseUtil(res, log);
   result.title = result.errors
-    ? `Failed to get ${logServices.stream} log ${name}.`
-    : `Successfully got ${logServices.stream} log ${name}.`;
+    ? `Failed to get ${logServices.stream} log from ${name}. Do you forget to start first?`
+    : `Successfully got ${logServices.stream} log from ${name}.`;
   return result;
 };

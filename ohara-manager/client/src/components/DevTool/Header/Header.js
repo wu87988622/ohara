@@ -69,6 +69,9 @@ const Header = () => {
       setTabName(TAB.log);
       const service = getService(kind);
       logActions.setLogType(service);
+      if (kind === KIND.stream) {
+        logActions.setStreamName(get(selectedCell, CELL_PROPS.displayName, ''));
+      }
     }
   }, [
     isOpen,

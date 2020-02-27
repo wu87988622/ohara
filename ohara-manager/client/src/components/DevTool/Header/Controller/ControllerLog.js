@@ -182,7 +182,7 @@ const ControllerLog = () => {
         <Select
           value={streamName}
           onChange={event => logActions.setStreamName(event.target.value)}
-          list={streams}
+          list={streams.map(stream => stream.name)}
           disabled={isFetching}
         />
       )}
