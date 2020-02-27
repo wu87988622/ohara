@@ -21,6 +21,19 @@ import styled, { css } from 'styled-components';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 
+const convertUnit = value => {
+  const hasSeparator = value.length > 0 && value.includes(' ');
+
+  if (hasSeparator) {
+    // conversion: since backend will always give us millisecond, so we're doing
+    // milliseconds -> seconds (which is divided by 1000) here
+    const newValue = value.split(' ').shift();
+    return newValue / 1000;
+  }
+
+  return value;
+};
+
 const StyledTextField = styled(TextField)(
   () => css`
     .MuiFilledInput-root {
@@ -38,14 +51,23 @@ const Duration = props => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
+  const handleChange = event => {
+    // Does the conversion again here
+    const unit = 'milliseconds';
+    const value = `${event.target.value * 1000} ${unit}`;
+
+    // The converted value will be used when it's submitted
+    onChange(value);
+  };
+
   return (
     <StyledTextField
       {...rest}
       ref={refs}
       fullWidth
-      onChange={onChange}
+      onChange={handleChange}
       name={name}
-      value={value}
+      value={convertUnit(value)}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       type="number"
