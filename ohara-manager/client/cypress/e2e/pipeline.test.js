@@ -181,7 +181,7 @@ Cypress.Commands.add('cellAction', (name, action) => {
 describe('ToolBox of Pipeline', () => {
   before(async () => await deleteAllServices());
 
-  it('create a empty pipeline should work normally', () => {
+  it('create an empty pipeline should work normally', () => {
     cy.createWorkspace();
 
     // Add new pipeline
@@ -430,7 +430,7 @@ describe('Element Links of Pipeline', () => {
     cy.log(`force delete pipeline-only topic`);
     cy.getCell(elements.privateTopicName).trigger('mouseover');
     cy.cellAction(elements.privateTopicName, ACTIONS.remove).click();
-    cy.findByText(/^force delete$/i).should('exist');
+    cy.findByText(/^delete$/i).should('exist');
     cy.contains('span:visible', /cancel/i).click();
     cy.findAllByText(elements.privateTopicName).should('exist');
 
@@ -438,6 +438,7 @@ describe('Element Links of Pipeline', () => {
     Object.values(elements).forEach(element => {
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove).click();
+      cy.findByText(/^delete$/i).click();
       cy.findAllByText(element)
         .filter(':visible')
         .should('not.exist');
