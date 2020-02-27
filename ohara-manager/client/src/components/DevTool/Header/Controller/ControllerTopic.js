@@ -46,26 +46,35 @@ const ControllerTopic = () => {
 
   const prevName = usePrevious(name);
 
+  const pipelineOnlyTopic =
+    // Only pipeline only topics are able to use capital letters as name
+    name.startsWith('T') &&
+    topics.find(topic => topic.tags.displayName === name);
+  const actualTopicName = pipelineOnlyTopic ? pipelineOnlyTopic.name : name;
+
   React.useEffect(() => {
     if (lastUpdated && prevName === name) return;
     if (isEmpty(name)) return;
-    const pipelineOnlyTopic =
-      // Only pipeline only topics are able to use capital letters as name
-      name.startsWith('T') &&
-      topics.find(topic => topic.tags.displayName === name);
-    const actualTopicName = pipelineOnlyTopic ? pipelineOnlyTopic.name : name;
 
     if (!topics.map(topic => topic.name).includes(actualTopicName)) return;
     topicDataActions.fetchTopicData({
       name: actualTopicName,
       limit,
     });
-  }, [lastUpdated, limit, name, prevName, topicDataActions, topics]);
+  }, [
+    lastUpdated,
+    limit,
+    name,
+    actualTopicName,
+    prevName,
+    topicDataActions,
+    topics,
+  ]);
 
   const handleOpenNewWindow = () => {
     if (name)
       window.open(
-        `${window.location}/view?type=${TAB.topic}&topicName=${name}&topicLimit=${limit}`,
+        `${window.location}/view?type=${TAB.topic}&topicName=${actualTopicName}&topicLimit=${limit}`,
       );
   };
 

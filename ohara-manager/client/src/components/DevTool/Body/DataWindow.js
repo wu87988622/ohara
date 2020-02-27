@@ -170,10 +170,10 @@ const DataWindow = () => {
         logActions.fetchZookeeperLog(getTimeSeconds()).then(setHostName);
         break;
       case KIND.broker:
-        logActions.fetchBrokerLog(getTimeSeconds().then(setHostName));
+        logActions.fetchBrokerLog(getTimeSeconds()).then(setHostName);
         break;
       case KIND.worker:
-        logActions.fetchWorkerLog(getTimeSeconds().then(setHostName));
+        logActions.fetchWorkerLog(getTimeSeconds()).then(setHostName);
         break;
       case KIND.stream:
         if (isEmpty(streamName)) return;
