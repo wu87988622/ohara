@@ -35,14 +35,6 @@ trait FileSystem extends oharastream.ohara.kafka.connector.storage.FileSystem {
   def listFileNames(dir: String, filter: FileFilter): Seq[String]
 
   /**
-    * Get type of the given path
-    *
-    * @param path the path of file or folder
-    * @return a type of the given path
-    */
-  def fileType(path: String): FileType
-
-  /**
     * Get the working folder of account. An exception will be thrown if it fails to get working folder.
     * @return current working folder
     */

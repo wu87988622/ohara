@@ -42,6 +42,14 @@ public interface FileSystem extends Releasable {
   Iterator<String> listFileNames(String dir);
 
   /**
+   * Get type of the given path
+   *
+   * @param path the path of file or folder
+   * @return a type of the given path
+   */
+  FileType fileType(String path);
+
+  /**
    * Creates a new file in the given path, including any necessary but nonexistent parent folders
    *
    * @param path the path of the file

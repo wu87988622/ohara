@@ -31,10 +31,11 @@ import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
 import com.hierynomus.smbj.{SMBClient, SmbConfig}
-import oharastream.ohara.client.filesystem.{FileFilter, FileSystem, FileType}
+import oharastream.ohara.client.filesystem.{FileFilter, FileSystem}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.exception.OharaFileSystemException
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.kafka.connector.storage.FileType
 
 import scala.collection.JavaConverters._
 
@@ -152,7 +153,7 @@ private[filesystem] object SmbFileSystem {
         * @return the listing of the folder
         */
       override def listFileNames(dir: String): util.Iterator[String] =
-        listFileNames(dir, FileFilter.default).toIterator.asJava
+        listFileNames(dir, FileFilter.EMPTY).toIterator.asJava
 
       /**
         * Filter files in the given path using the user-supplied path filter
@@ -308,9 +309,8 @@ private[filesystem] object SmbFileSystem {
         if (exists(path)) {
           try {
             fileType(path) match {
-              case FileType.FILE        => shareRoot.rm(path)
-              case FileType.FOLDER      => shareRoot.rmdir(path, false)
-              case FileType.NONEXISTENT => throw new IllegalStateException(s"$path doesn't exist")
+              case FileType.FILE   => shareRoot.rm(path)
+              case FileType.FOLDER => shareRoot.rmdir(path, false)
             }
           } finally Releasable.close(shareRoot)
         }
@@ -327,7 +327,7 @@ private[filesystem] object SmbFileSystem {
       override def delete(path: String, recursive: Boolean): Unit = connectShare { shareRoot =>
         if (recursive) {
           if (fileType(path) == FileType.FOLDER)
-            listFileNames(path, FileFilter.default).foreach(fileName => {
+            listFileNames(path, FileFilter.EMPTY).foreach(fileName => {
               val child = CommonUtils.path(path, fileName)
               delete(child, recursive)
             })
@@ -373,12 +373,11 @@ private[filesystem] object SmbFileSystem {
         * @return a type of the given path
         */
       override def fileType(path: String): FileType = connectShare { shareRoot =>
-        if (exists(path)) {
-          val fi = shareRoot.getFileInformation(path)
-          val isFolder =
-            EnumWithValue.EnumUtils.isSet(fi.getBasicInformation.getFileAttributes, FILE_ATTRIBUTE_DIRECTORY)
-          if (isFolder) FileType.FOLDER else FileType.FILE
-        } else FileType.NONEXISTENT
+        if (!exists(path)) throw new NoSuchElementException(s"$path doesn't exist")
+        val fi = shareRoot.getFileInformation(path)
+        val isFolder =
+          EnumWithValue.EnumUtils.isSet(fi.getBasicInformation.getFileAttributes, FILE_ATTRIBUTE_DIRECTORY)
+        if (isFolder) FileType.FOLDER else FileType.FILE
       }
 
       /**

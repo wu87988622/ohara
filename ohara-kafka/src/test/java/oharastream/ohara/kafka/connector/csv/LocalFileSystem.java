@@ -27,6 +27,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 import oharastream.ohara.common.exception.OharaFileSystemException;
 import oharastream.ohara.kafka.connector.storage.FileSystem;
+import oharastream.ohara.kafka.connector.storage.FileType;
 
 public class LocalFileSystem implements FileSystem {
   public static LocalFileSystem of() {
@@ -48,6 +49,11 @@ public class LocalFileSystem implements FileSystem {
     } catch (IOException e) {
       throw new OharaFileSystemException(e);
     }
+  }
+
+  @Override
+  public FileType fileType(String path) {
+    return (new File(path)).isDirectory() ? FileType.FOLDER : FileType.FILE;
   }
 
   @Override

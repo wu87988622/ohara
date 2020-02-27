@@ -33,6 +33,7 @@ import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.kafka.connector.RowSinkConnector;
 import oharastream.ohara.kafka.connector.TaskSetting;
 import oharastream.ohara.kafka.connector.storage.FileSystem;
+import oharastream.ohara.kafka.connector.storage.FileType;
 
 /**
  * A wrap to RowSinkConnector. The difference between CsvSinkConnector and RowSinkConnector is that
@@ -56,7 +57,8 @@ public abstract class CsvSinkConnector extends RowSinkConnector {
   public abstract FileSystem fileSystem(TaskSetting config);
 
   private static void checkExist(FileSystem fs, String path) {
-    if (!fs.exists(path)) throw new IllegalArgumentException(path + " doesn't exist");
+    if (fs.fileType(path) != FileType.FOLDER)
+      throw new IllegalArgumentException(path + " is NOT folder!!!");
   }
 
   /**

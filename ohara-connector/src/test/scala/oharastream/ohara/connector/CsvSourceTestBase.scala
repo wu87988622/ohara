@@ -393,24 +393,28 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
   }
 
   @Test
-  def testCheckFolder(): Unit = {
-    val paths = Seq(
-      props(INPUT_FOLDER_KEY),
-      props(COMPLETED_FOLDER_KEY),
-      props(ERROR_FOLDER_KEY)
-    )
-    val connector = connectorClass.newInstance()
-    try connector.start(props.asJava)
-    finally connector.stop()
-    paths.foreach { p =>
-      fileSystem.delete(p, true)
-      intercept[IllegalArgumentException] {
-        val connector = connectorClass.newInstance()
-        try connector.start(props.asJava)
-        finally connector.stop()
-      }.getMessage should include("doesn't exist")
-    }
-  }
+  def testNonexistentInputFolder(): Unit =
+    ConnectorTestUtils.nonexistentFolderShouldFail(fileSystem, connectorClass, props, props(INPUT_FOLDER_KEY))
+
+  @Test
+  def testFileToInputFolder(): Unit =
+    ConnectorTestUtils.fileShouldFail(fileSystem, connectorClass, props, props(INPUT_FOLDER_KEY))
+
+  @Test
+  def testNonexistentErrorFolder(): Unit =
+    ConnectorTestUtils.nonexistentFolderShouldFail(fileSystem, connectorClass, props, props(ERROR_FOLDER_KEY))
+
+  @Test
+  def testFileToErrorFolder(): Unit =
+    ConnectorTestUtils.fileShouldFail(fileSystem, connectorClass, props, props(ERROR_FOLDER_KEY))
+
+  @Test
+  def testNonexistentCompleteFolder(): Unit =
+    ConnectorTestUtils.nonexistentFolderShouldFail(fileSystem, connectorClass, props, props(COMPLETED_FOLDER_KEY))
+
+  @Test
+  def testFileToCompleteFolder(): Unit =
+    ConnectorTestUtils.fileShouldFail(fileSystem, connectorClass, props, props(COMPLETED_FOLDER_KEY))
 
   @After
   def tearDown(): Unit = Releasable.close(fileSystem)

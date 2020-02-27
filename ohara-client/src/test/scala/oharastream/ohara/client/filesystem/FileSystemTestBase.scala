@@ -175,7 +175,7 @@ abstract class FileSystemTestBase extends OharaTest {
   def testReMkdirs(): Unit = {
     val dir = "input"
     fileSystem.reMkdirs(dir)
-    fileSystem.listFileNames(dir, FileFilter.default()).size shouldBe 0
+    fileSystem.listFileNames(dir, FileFilter.EMPTY).size shouldBe 0
   }
 
   @Test
@@ -188,6 +188,6 @@ abstract class FileSystemTestBase extends OharaTest {
     fileSystem.readLines(file) shouldBe data
     fileSystem.delete(file)
     fileSystem.exists(file) shouldBe false
-    fileSystem.listFileNames(rootDir, FileFilter.default).size shouldBe 0
+    fileSystem.listFileNames(rootDir, FileFilter.EMPTY).size shouldBe 0
   }
 }

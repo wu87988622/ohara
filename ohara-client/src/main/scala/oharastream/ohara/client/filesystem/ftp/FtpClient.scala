@@ -22,10 +22,10 @@ import java.nio.file.Files
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.filesystem.FileType
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import com.typesafe.scalalogging.Logger
+import oharastream.ohara.kafka.connector.storage.FileType
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
 import scala.concurrent.duration._
@@ -454,7 +454,6 @@ object FtpClient {
           val client = connectIfNeeded()
           if (!client.removeDirectory(path))
             throw new IllegalStateException(s"failed to delete $path because from ${client.getReplyCode}")
-        case FileType.NONEXISTENT => throw new IllegalStateException(s"$path doesn't exist")
       }
 
       override def delete(path: String, recursive: Boolean) = {
@@ -495,7 +494,7 @@ object FtpClient {
             case 250 => FileType.FOLDER
             case _   => FileType.FILE
           } finally client.cwd(current)
-        } else FileType.NONEXISTENT
+        } else throw new NoSuchElementException(s"$path doesn't exist")
 
       override def status(): String = connectIfNeeded().getStatus
 

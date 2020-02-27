@@ -21,13 +21,14 @@ import java.nio.file.Paths
 import java.util
 import java.util.Objects
 
-import oharastream.ohara.client.filesystem.{FileFilter, FileSystem, FileType}
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.client.filesystem.{FileFilter, FileSystem}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import com.typesafe.scalalogging.Logger
+import oharastream.ohara.kafka.connector.storage.FileType
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 
 private[filesystem] object FtpFileSystem {
   private[this] lazy val LOG = Logger(getClass.getName)
@@ -151,7 +152,7 @@ private[filesystem] object FtpFileSystem {
         * @return the listing of the folder
         */
       override def listFileNames(dir: String): util.Iterator[String] =
-        listFileNames(dir, FileFilter.default).toIterator.asJava
+        listFileNames(dir, FileFilter.EMPTY).toIterator.asJava
 
       /**
         * Filter files in the given path using the user-supplied path filter
@@ -223,7 +224,7 @@ private[filesystem] object FtpFileSystem {
       override def delete(path: String, recursive: Boolean): Unit = wrap { () =>
         if (exists(path)) if (recursive) {
           if (fileType(path) == FileType.FOLDER)
-            listFileNames(path, FileFilter.default).map(fileName => {
+            listFileNames(path, FileFilter.EMPTY).foreach(fileName => {
               val child = CommonUtils.path(path, fileName)
               delete(child, recursive)
             })
@@ -286,7 +287,7 @@ private[filesystem] object FtpFileSystem {
         * @return current working folder
         */
       override def workingFolder(): String = wrap { () =>
-        client.workingFolder
+        client.workingFolder()
       }
 
       /** Stop using this file system */

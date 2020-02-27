@@ -25,5 +25,5 @@ object FileFilter {
     * All pass
     * @return a file filter
     */
-  def default(): FileFilter = (_: String) => true
+  val EMPTY: FileFilter = (_: String) => true
 }

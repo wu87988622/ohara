@@ -301,22 +301,12 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
   }
 
   @Test
-  def testCheckFolder(): Unit = {
-    val paths = Seq(
-      props(OUTPUT_FOLDER_KEY)
-    )
-    val connector = connectorClass.newInstance()
-    try connector.start(props.asJava)
-    finally connector.stop()
-    paths.foreach { p =>
-      fileSystem.delete(p, true)
-      intercept[IllegalArgumentException] {
-        val connector = connectorClass.newInstance()
-        try connector.start(props.asJava)
-        finally connector.stop()
-      }.getMessage should include("doesn't exist")
-    }
-  }
+  def testNonexistentInputFolder(): Unit =
+    ConnectorTestUtils.nonexistentFolderShouldFail(fileSystem, connectorClass, props, props(OUTPUT_FOLDER_KEY))
+
+  @Test
+  def testFileToInputFolder(): Unit =
+    ConnectorTestUtils.fileShouldFail(fileSystem, connectorClass, props, props(OUTPUT_FOLDER_KEY))
 
   @After
   def tearDown(): Unit = Releasable.close(fileSystem)
