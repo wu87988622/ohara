@@ -134,6 +134,7 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('blank:pointermove', event => {
+      $('.toolbox').css('pointer-events', 'none');
       if (dragStartPosition) {
         paper.translate(
           event.offsetX - dragStartPosition.x,
@@ -144,6 +145,7 @@ const Paper = React.forwardRef((props, ref) => {
 
     paper.on('blank:pointerup', () => {
       setDragStartPosition(null);
+      $('.toolbox').css('pointer-events', 'auto');
     });
 
     paper.on('blank:mouseover', () => {
