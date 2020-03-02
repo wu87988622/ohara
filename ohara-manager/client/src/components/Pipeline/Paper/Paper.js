@@ -21,7 +21,7 @@ import $ from 'jquery';
 import * as joint from 'jointjs';
 import { useTheme } from '@material-ui/core/styles';
 
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
 import { useSnackbar } from 'context';
@@ -151,12 +151,25 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('link:mouseenter', linkView => {
+      const source = linkView.model.getSourceCell();
+      const target = linkView.model.getTargetCell();
+      const sourceStatus = source.get('status').toLowerCase();
+      const targetStatus = target.get('status').toLowerCase();
+      const hasRunningSource =
+        source.get('kind') !== KIND.topic &&
+        (sourceStatus === CELL_STATUS.running ||
+          sourceStatus === CELL_STATUS.failed);
+
+      const hasRunningTarget =
+        target.get('kind') !== KIND.topic &&
+        (targetStatus === CELL_STATUS.running ||
+          targetStatus === CELL_STATUS.failed);
+
       const toolsView = new joint.dia.ToolsView({
         tools: [
           // Allow users to add vertices on link view
           new joint.linkTools.Vertices(),
           new joint.linkTools.Segments(),
-          new joint.linkTools.TargetArrowhead(),
           new joint.linkTools.TargetAnchor({
             restrictArea: true,
             areaPadding: 100,
@@ -191,6 +204,7 @@ const Paper = React.forwardRef((props, ref) => {
               const source = linkView.model.getSourceElement();
               const target = linkView.model.getTargetElement();
               linkView.model.remove({ ui: true, tool: toolView.cid });
+
               onDisconnect(
                 {
                   sourceElement: paperUtils.getCellData(source),
@@ -204,7 +218,11 @@ const Paper = React.forwardRef((props, ref) => {
         ],
       });
 
-      linkView.addTools(toolsView);
+      // It's not allowed to update/remove the link if it has a connection
+      if (!hasRunningSource && !hasRunningTarget) {
+        linkView.addTools(toolsView);
+      }
+
       linkView.highlight();
     });
 
@@ -263,7 +281,6 @@ const Paper = React.forwardRef((props, ref) => {
           link.target({
             x: (event.pageX - offsetLeft) / scale.sx + localPoint.x,
             y: (event.pageY - offsetTop) / scale.sy + localPoint.y,
-            shouldSkipOnChange: true,
           });
 
           link.attr({
@@ -281,37 +298,39 @@ const Paper = React.forwardRef((props, ref) => {
     graph.on('add', cell => {
       if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellAddRef.current, cell)) return;
-
-      // Adding new link is not counted as an `add` event
-      if (cell.isLink()) return;
+      // half-way link is not counted in the `add` event
+      if (cell.isLink() && !cell.target().id) return;
 
       const data = paperUtils.getCellData(cell);
-      cellAddRef.current = cell;
 
       if (!cell.get('shouldSkipOnElementAdd')) {
         onCellEventRef.current.onElementAdd(data, paperApi);
       }
 
+      updateStatus(cell);
       // OnChange event handler is called on graph's `add`, `change` and `remove` events
       onChange(paperApi);
+      cellAddRef.current = cell;
     });
 
     graph.on('change', (cell, updates) => {
       if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellChangeRef.current, updates)) return;
-      if (_.has(cell, 'attributes.target.shouldSkipOnChange')) return;
+      if (cell.isLink() && !cell.target().id) return;
 
-      cellChangeRef.current = updates;
+      updateStatus(cell);
       onChange(paperApi);
+      cellChangeRef.current = updates;
     });
 
     graph.on('remove', cell => {
       if (!_.has(paperApi, 'state.isReady')) return;
       if (_.isEqual(cellRemoveRef.current, cell)) return;
-      if (_.has(cell, 'attributes.target.shouldSkipOnChange')) return;
+      if (cell.isLink() && !cell.target().id) return;
 
-      cellRemoveRef.current = cell;
+      updateStatus(cell);
       onChange(paperApi);
+      cellRemoveRef.current = cell;
     });
 
     // Paper events
@@ -420,6 +439,25 @@ const Paper = React.forwardRef((props, ref) => {
       }
     }
 
+    function updateStatus(cell) {
+      if (cell.isLink()) {
+        const link = cell;
+        const sourceId = link.source().id;
+        const targetId = link.target().id;
+
+        const source = paperApi.getCell(sourceId);
+        const target = paperApi.getCell(targetId);
+
+        if (source) {
+          paperApi.updateElement(sourceId, source);
+        }
+
+        if (target) {
+          paperApi.updateElement(targetId, target);
+        }
+      }
+    }
+
     return () => {
       // Event should all be cleaned in every render, or it will causes weird
       // behavior in UI
@@ -473,7 +511,6 @@ const Paper = React.forwardRef((props, ref) => {
     palette.common.white,
     palette.grey,
     paperApi,
-    ref,
     showMessage,
   ]);
 
@@ -513,9 +550,8 @@ const Paper = React.forwardRef((props, ref) => {
         }
 
         graph.addCell(cell);
-        const targetCell = graph.getLastCell();
-
-        return paperUtils.getCellData(targetCell);
+        const currentCell = graph.getLastCell();
+        return paperUtils.getCellData(currentCell);
       },
       removeElement(id) {
         if (typeof id !== 'string') {
@@ -534,15 +570,42 @@ const Paper = React.forwardRef((props, ref) => {
         graph.removeCells(cell);
       },
       updateElement(id, data) {
-        const targetCell = findElementViews().find(
-          cell => cell.model.id === id,
+        const elementView = findElementViews().find(
+          elementView => elementView.model.id === id,
         );
 
-        if (targetCell) {
-          targetCell.updateElement({
-            ...targetCell.model.attributes,
+        if (elementView) {
+          elementView.updateElement({
+            ...elementView.model.attributes,
             ...data,
           });
+
+          // Topic shouldn't be updated
+          if (elementView.model.get('kind') === KIND.topic) {
+            return;
+          }
+
+          // Update element status
+          const status = elementView.model.get('status').toLowerCase();
+          switch (status) {
+            case CELL_STATUS.running:
+            case CELL_STATUS.failed:
+              elementView.disableMenu(['link', 'config', 'remove']);
+              break;
+            case CELL_STATUS.stopped:
+              elementView.enableMenu();
+
+              if (graph.getConnectedLinks(elementView.model).length === 0) {
+                elementView.disableMenu(['start']);
+              }
+              break;
+            case CELL_STATUS.pending:
+              elementView.disableMenu();
+              break;
+            default:
+              elementView.enableMenu();
+              break;
+          }
         }
       },
       addLink(sourceId, targetId) {
@@ -613,7 +676,9 @@ const Paper = React.forwardRef((props, ref) => {
         return graph.getCells().map(paperUtils.getCellData);
       },
       loadGraph(json) {
+        // Clear the graph before loading
         graph.clear();
+
         json.cells
           // Elements should be render first, and then the links
           .sort((a, b) => a.type.localeCompare(b.type))
@@ -631,6 +696,14 @@ const Paper = React.forwardRef((props, ref) => {
               this.addLink(source.id, target.id);
             }
           });
+
+        // Disable running and failed elements action buttons
+        findElementViews().forEach(elementView =>
+          this.updateElement(
+            elementView.model.get('id'),
+            paperUtils.getCellData(elementView),
+          ),
+        );
       },
       setScale(sx, sy) {
         if (sx === undefined) {
@@ -728,16 +801,6 @@ const Paper = React.forwardRef((props, ref) => {
 
           elementView.active().setIsSelected(true);
         }
-      },
-
-      enableMenu(id, items) {
-        const elementView = findElementView(id);
-        elementView && elementView.enableMenu(items);
-      },
-
-      disableMenu(id, items) {
-        const elementView = findElementView(id);
-        elementView && elementView.disableMenu(items);
       },
 
       // TODO: the state here will be stale, we should update

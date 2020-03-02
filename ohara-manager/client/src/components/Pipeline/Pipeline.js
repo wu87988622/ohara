@@ -15,7 +15,6 @@
  */
 
 import React, { useEffect, useRef, createContext } from 'react';
-import SplitPane from 'react-split-pane';
 import _ from 'lodash';
 import { useParams } from 'react-router-dom';
 
@@ -29,7 +28,7 @@ import IntroDialog from './IntroDialog';
 import PipelinePropertyDialog from './PipelinePropertyDialog';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
-import { PaperWrapper } from './PipelineStyles';
+import { PaperWrapper, StyledSplitPane } from './PipelineStyles';
 import {
   usePipelineState as usePipelineReducerState,
   useRedirect,
@@ -365,26 +364,26 @@ const Pipeline = React.forwardRef((props, ref) => {
                       }}
                     />
                   )}
-                  {selectedCell && (
-                    <>
-                      <SplitPane
-                        split="vertical"
-                        minSize={300}
-                        maxSize={500}
-                        defaultSize={320}
-                        primary="second"
-                      >
-                        <div></div>
-
-                        <PipelinePropertyView
-                          handleClose={() => setSelectedCell(null)}
-                          element={selectedCell}
-                        />
-                      </SplitPane>
-                    </>
-                  )}
 
                   <PaperWrapper>
+                    {selectedCell && (
+                      <>
+                        <StyledSplitPane
+                          split="vertical"
+                          minSize={300}
+                          maxSize={500}
+                          defaultSize={320}
+                          primary="second"
+                        >
+                          <div></div>
+
+                          <PipelinePropertyView
+                            handleClose={() => setSelectedCell(null)}
+                            element={selectedCell}
+                          />
+                        </StyledSplitPane>
+                      </>
+                    )}
                     <Paper
                       ref={paperApiRef}
                       onCellSelect={element => setSelectedCell(element)}
@@ -699,6 +698,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                         setCurrentCellData(cellData);
                       }}
                     />
+
                     {isPaperApiReady && (
                       <Toolbox
                         isOpen={isToolboxOpen}

@@ -20,25 +20,10 @@ import Paper from '@material-ui/core/Paper';
 export const Wrapper = styled(Paper)(
   ({ theme }) => css`
     width: 100%;
-
-    /* 
-      72px -> Toolbar height, this gives us the correct height for displaying the scrollbar
-    */
-    height: calc(100% - 72px);
+    height: 100%;
     position: absolute;
     overflow-y: auto;
     z-index: ${theme.zIndex.propertyView};
-
-    /* 
-      TODO: Override react-scrollbars-custom's default styles with props or 
-      custom styles
-    */
-
-    .ScrollbarsCustom-TrackY {
-      top: 0 !important;
-      height: 100% !important;
-      width: 5px !important;
-    }
 
     .title-wrapper {
       display: flex;

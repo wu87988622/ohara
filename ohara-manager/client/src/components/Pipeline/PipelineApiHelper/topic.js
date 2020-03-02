@@ -37,8 +37,6 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
-    paperApi.disableMenu(id);
-
     const res = await createTopic({
       name,
       tags: {
@@ -47,8 +45,6 @@ const topic = () => {
         pipelineName: currentPipeline.name,
       },
     });
-
-    paperApi.enableMenu(id);
 
     if (!res.error) {
       const state = util.getCellState(res);
@@ -70,7 +66,6 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
-    paperApi.disableMenu(id);
     const stopRes = await stopTopic(name);
 
     if (!stopRes.error) {
@@ -78,15 +73,11 @@ const topic = () => {
       paperApi.updateElement(id, {
         status: state,
       });
-    } else {
-      paperApi.enableMenu(id);
     }
 
     const deleteRes = await deleteTopic(name);
     if (!deleteRes.error) {
       paperApi.removeElement(id);
-    } else {
-      paperApi.enableMenu(id);
     }
   };
 
