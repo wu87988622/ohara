@@ -189,8 +189,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     }
   };
 
-  const { isToolboxOpen, toolboxExpanded, toolboxKey } = pipelineState;
-
   // If paper API is not ready, let's reset the pipeline state and re-render again
   useEffect(() => {
     if (!isPaperApiReady && pipelineName) {
@@ -350,13 +348,19 @@ const Pipeline = React.forwardRef((props, ref) => {
                 <PaperContext.Provider value={{ ...paperApiRef.current }}>
                   {isPaperApiReady && (
                     <Toolbar
-                      isToolboxOpen={isToolboxOpen}
+                      isToolboxOpen={pipelineState.isToolboxOpen}
                       handleToolboxOpen={() =>
                         pipelineDispatch({ type: 'openToolbox' })
                       }
                       handleToolbarClick={panel => {
-                        // Open a particular panel
-                        pipelineDispatch({ type: 'resetToolbox' });
+                        const activePanel =
+                          pipelineState.toolboxExpanded[panel];
+
+                        // Toggle the panel if it's already open
+                        if (!activePanel) {
+                          pipelineDispatch({ type: 'resetToolbox' });
+                        }
+
                         pipelineDispatch({
                           type: 'setToolbox',
                           payload: panel,
@@ -701,10 +705,10 @@ const Pipeline = React.forwardRef((props, ref) => {
 
                     {isPaperApiReady && (
                       <Toolbox
-                        isOpen={isToolboxOpen}
-                        expanded={toolboxExpanded}
+                        isOpen={pipelineState.isToolboxOpen}
+                        expanded={pipelineState.toolboxExpanded}
                         pipelineDispatch={pipelineDispatch}
-                        toolboxKey={toolboxKey}
+                        toolboxKey={pipelineState.toolboxKey}
                       />
                     )}
                   </PaperWrapper>
