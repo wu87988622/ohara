@@ -471,40 +471,36 @@ const WorkspaceQuick = props => {
                 setFiles([]);
               }}
               children={
-                <form onSubmit={handleSubmit}>
-                  <StyleStepper activeStep={activeStep} orientation="vertical">
-                    {steps.map((label, index) => (
-                      <Step key={label}>
-                        <StepLabel>{label}</StepLabel>
-                        <StepContent>
-                          <StyledPaper>
-                            {getStepContent(index, values)}
-                          </StyledPaper>
-                          <StyleButton
-                            disabled={activeStep === 0}
-                            onClick={() => handleBack(activeStep)}
-                          >
-                            Back
-                          </StyleButton>
-                          <StyleButton
-                            variant="contained"
-                            color="primary"
-                            onClick={() =>
-                              activeStep === steps.length - 1
-                                ? handleSubmit(values)
-                                : handleNext(activeStep)
-                            }
-                            disabled={checkStepValue(values, activeStep)}
-                          >
-                            {activeStep === steps.length - 1
-                              ? 'Finish'
-                              : 'Next'}
-                          </StyleButton>
-                        </StepContent>
-                      </Step>
-                    ))}
-                  </StyleStepper>
-                </form>
+                <StyleStepper activeStep={activeStep} orientation="vertical">
+                  {steps.map((label, index) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                      <StepContent>
+                        <StyledPaper>
+                          {getStepContent(index, values)}
+                        </StyledPaper>
+                        <StyleButton
+                          disabled={activeStep === 0}
+                          onClick={() => handleBack(activeStep)}
+                        >
+                          Back
+                        </StyleButton>
+                        <StyleButton
+                          variant="contained"
+                          color="primary"
+                          onClick={() =>
+                            activeStep === steps.length - 1
+                              ? handleSubmit(values)
+                              : handleNext(activeStep)
+                          }
+                          disabled={checkStepValue(values, activeStep)}
+                        >
+                          {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                        </StyleButton>
+                      </StepContent>
+                    </Step>
+                  ))}
+                </StyleStepper>
               }
             />
           );
