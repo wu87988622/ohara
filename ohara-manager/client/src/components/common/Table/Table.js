@@ -24,15 +24,11 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TableFooter from '@material-ui/core/TableFooter';
-import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
 import { TableLoader } from 'components/common/Loader';
 
 const Wrapper = styled.div`
-  border: 1px solid ${props => props.theme.palette.grey[300]};
-  border-radius: ${props => props.theme.shape.borderRadius}px;
-
   &.has-title {
     h6 {
       padding: ${props => props.theme.spacing(2)}px;
@@ -85,32 +81,26 @@ const MuiTable = props => {
 
   return (
     <Wrapper className={`${titleClass}`}>
-      <Paper elevation={1}>
-        {hasTitle && <Typography variant="h6">{title}</Typography>}
-        <Table stickyHeader={fixedHeader} size="small" data-testid={testId}>
-          <StyledTableHead>
-            <TableRow>
-              {headers.map((header, idx) => {
-                // The last table cell should be aligned to right
-                const align = idx === lastIdx ? 'right' : 'left';
-                return isEmpty(header) ? (
-                  <TableCell
-                    className="empty-cell"
-                    align={align}
-                    key={header}
-                  />
-                ) : (
-                  <TableCell align={align} key={header}>
-                    {header}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </StyledTableHead>
-          <TableBody>{children}</TableBody>
-          {footer ? <StyledFooter>{footer}</StyledFooter> : null}
-        </Table>
-      </Paper>
+      {hasTitle && <Typography variant="h6">{title}</Typography>}
+      <Table stickyHeader={fixedHeader} size="small" data-testid={testId}>
+        <StyledTableHead>
+          <TableRow>
+            {headers.map((header, idx) => {
+              // The last table cell should be aligned to right
+              const align = idx === lastIdx ? 'right' : 'left';
+              return isEmpty(header) ? (
+                <TableCell className="empty-cell" align={align} key={header} />
+              ) : (
+                <TableCell align={align} key={header}>
+                  {header}
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        </StyledTableHead>
+        <TableBody>{children}</TableBody>
+        {footer ? <StyledFooter>{footer}</StyledFooter> : null}
+      </Table>
     </Wrapper>
   );
 };
