@@ -83,7 +83,18 @@ export const useZoom = () => {
 
   const setZoom = (scale, instruction) => {
     const fixedScale = Number((Math.floor(scale * 100) / 100).toFixed(2));
-    const allowedScales = [0.01, 0.03, 0.06, 0.12, 0.25, 0.5, 1.0, 2.0];
+    const allowedScales = [
+      0.25,
+      0.5,
+      0.67,
+      0.75,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.25,
+      1.5,
+    ];
     const isValidScale = allowedScales.includes(fixedScale);
 
     if (isValidScale) {
@@ -94,25 +105,21 @@ export const useZoom = () => {
         return setPaperScale(scale);
       }
 
-      // By default, the scale is multiply and divide by `2`
-      let newScale = 0;
+      const scaleIndex = allowedScales.indexOf(fixedScale);
+      let newScale;
 
+      // in => zoom in
+      // out => zoom out
       if (instruction === 'in') {
-        // Manipulate two special values here, they're not valid
-        // in our App:
-        // 0.02 -> 0.03
-        // 0.24 -> 0.25
-
-        if (fixedScale * 2 === 0.02) {
-          newScale = 0.03;
-        } else if (fixedScale * 2 === 0.24) {
-          newScale = 0.25;
-        } else {
-          // Handle other scale normally
-          newScale = fixedScale * 2;
-        }
+        newScale =
+          scaleIndex >= allowedScales.length
+            ? allowedScales[scaleIndex]
+            : allowedScales[scaleIndex + 1];
       } else {
-        newScale = fixedScale / 2;
+        newScale =
+          scaleIndex <= 0
+            ? allowedScales[scaleIndex]
+            : allowedScales[scaleIndex - 1];
       }
 
       paperApi.setScale(newScale);
@@ -120,7 +127,7 @@ export const useZoom = () => {
     }
 
     // Handle `none-valid` scales here
-    const defaultScales = [0.5, 1.0, 2.0];
+    const defaultScales = [0.5, 0.75, 1.0, 1.5];
     const closest = defaultScales.reduce((prev, curr) => {
       return Math.abs(curr - fixedScale) < Math.abs(prev - fixedScale)
         ? curr
@@ -130,16 +137,14 @@ export const useZoom = () => {
     let outScale;
     let inScale;
     if (closest === 0.5) {
-      // If the fixedScale is something like 0.46, we'd like the next `in` scale
-      // to be `0.5` not `1`
-      inScale = fixedScale <= 0.5 ? 0.5 : 1;
+      inScale = fixedScale <= 0.5 ? 0.5 : 0.75;
       outScale = 0.5;
+    } else if (closest === 0.75) {
+      inScale = fixedScale <= 0.75 ? 0.75 : 1;
+      outScale = fixedScale >= 0.75 ? 0.75 : 0.5;
     } else if (closest === 1) {
       inScale = 1;
-      outScale = 0.5;
-    } else {
-      inScale = 2;
-      outScale = 2;
+      outScale = 0.75;
     }
 
     const newScale = instruction === 'in' ? inScale : outScale;

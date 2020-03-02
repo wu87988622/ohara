@@ -197,7 +197,7 @@ const Toolbar = props => {
           <ButtonGroup size="small">
             <Button
               onClick={() => handleZoom(scale, 'out')}
-              disabled={scale <= 0.02}
+              disabled={scale <= 0.25}
             >
               <Tooltip title="Zoom out">
                 <RemoveIcon color="action" />
@@ -213,7 +213,7 @@ const Toolbar = props => {
             </Button>
             <Button
               onClick={() => handleZoom(scale, 'in')}
-              disabled={scale >= 2}
+              disabled={scale >= 1.5}
             >
               <Tooltip title="Zoom in">
                 <AddIcon color="action" />
@@ -231,11 +231,14 @@ const Toolbar = props => {
             <MenuItem onClick={() => handleZoom(0.5, 'fromDropdown')}>
               50%
             </MenuItem>
+            <MenuItem onClick={() => handleZoom(0.75, 'fromDropdown')}>
+              75%
+            </MenuItem>
             <MenuItem onClick={() => handleZoom(1, 'fromDropdown')}>
               100%
             </MenuItem>
-            <MenuItem onClick={() => handleZoom(2, 'fromDropdown')}>
-              200%
+            <MenuItem onClick={() => handleZoom(1.5, 'fromDropdown')}>
+              150%
             </MenuItem>
           </Menu>
         </div>
