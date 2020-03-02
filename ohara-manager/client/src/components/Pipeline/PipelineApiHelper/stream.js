@@ -149,6 +149,9 @@ const stream = () => {
 
   const stop = async (params, paperApi) => {
     const { id, name } = params;
+    paperApi.updateElement(id, {
+      status: CELL_STATUS.pending,
+    });
     paperApi.disableMenu(id);
     const res = await stopStream(name);
     paperApi.enableMenu(id);
