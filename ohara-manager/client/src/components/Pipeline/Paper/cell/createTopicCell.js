@@ -142,7 +142,7 @@ const createTopicCell = options => {
       }
 
       $buttons.each((index, button) => {
-        if (button.className.includes(items)) {
+        if (items.includes(button.className)) {
           $(button).addClass(cls);
         } else {
           $(button).removeClass(cls);

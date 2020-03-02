@@ -167,8 +167,11 @@ const createConnectorCell = options => {
         return $buttons.removeClass(cls);
       }
 
+      // Reset before adding new class name
+      $buttons.addClass(cls);
+
       $buttons.each((index, button) => {
-        if (button.className.includes(items)) {
+        if (items.includes(button.className)) {
           $(button).removeClass(cls);
         } else {
           $(button).addClass(cls);
@@ -184,8 +187,11 @@ const createConnectorCell = options => {
         return $buttons.addClass(cls);
       }
 
+      // Reset before adding new class name
+      $buttons.removeClass(cls);
+
       $buttons.each((index, button) => {
-        if (button.className.includes(items)) {
+        if (items.includes(button.className)) {
           $(button).addClass(cls);
         } else {
           $(button).removeClass(cls);
@@ -199,7 +205,11 @@ const createConnectorCell = options => {
     },
     toggleMetrics(isOpen) {
       const { $box, model } = this;
-      if (isOpen) {
+      const isRunning =
+        model.get('status').toLowerCase() === CELL_STATUS.running;
+
+      // Only display metrics related info when the component is running
+      if (isOpen && isRunning) {
         $box.find('.metrics').show();
         $box.find('.status').hide();
         model.set('isMetricsOn', true);
@@ -208,11 +218,13 @@ const createConnectorCell = options => {
         $box.find('.status').show();
         model.set('isMetricsOn', false);
       }
+
       return this;
     },
     updateMeters(newMetrics) {
+      const defaultMetrics = metrics;
       const meters = _.get(newMetrics, 'meters');
-      const displayMetrics = meters.length > 0 ? meters : metrics;
+      const displayMetrics = meters.length > 0 ? meters : defaultMetrics;
       const metricsData = getMetrics(displayMetrics);
       this.$box.find('.metrics').html(metricsData);
       return this;
@@ -221,7 +233,7 @@ const createConnectorCell = options => {
       const { $box, model } = this;
 
       // Status
-      const { status } = cellData;
+      const status = cellData.status.toLowerCase();
       $box.find('.status-value').text(status);
       model.set('status', status);
 

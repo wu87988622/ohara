@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+import SplitPane from 'react-split-pane';
 
 export const PaperWrapper = styled.div`
   position: relative;
@@ -22,3 +23,10 @@ export const PaperWrapper = styled.div`
   /* Subtract the height of Toolbar  */
   height: calc(100vh - 72px);
 `;
+
+export const StyledSplitPane = styled(SplitPane)(
+  () => css`
+    /* Ensure the PropertyView can be seen since it's default top is: auto */
+    top: 0;
+  `,
+);
