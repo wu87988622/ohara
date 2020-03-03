@@ -30,7 +30,7 @@ describe('Root route', () => {
       .should(location => {
         expect(location.pathname).to.be.eq('/');
       })
-      .findByText(/^quick start$/i)
+      .findByText(/^quick create$/i)
       .should('exist')
       .end();
   });
