@@ -121,11 +121,11 @@ export const useToolboxHeight = ({
       : searchResults;
 
     const panelHeights = {
-      source: itemHeight * sources.length + addButtonHeight,
+      source: itemHeight * sources.length,
       // +1 for the pipeline-only topic icon
       topic: itemHeight * topics.length + addButtonHeight,
       stream: itemHeight * streams.length + addButtonHeight,
-      sink: itemHeight * sinks.length + addButtonHeight,
+      sink: itemHeight * sinks.length,
     };
 
     const totalHeight = Object.keys(expanded)

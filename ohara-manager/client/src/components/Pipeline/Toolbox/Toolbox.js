@@ -282,11 +282,13 @@ const Toolbox = props => {
                 <div id="source-list" className="toolbox-list"></div>
               </List>
 
-              <ToolboxUploadButton
-                buttonText="Add source connectors"
-                onChange={handleFileSelect}
-                ref={panelAddButtonRef}
-              />
+              {false && (
+                <ToolboxUploadButton
+                  buttonText="Add source connectors"
+                  onChange={handleFileSelect}
+                  ref={panelAddButtonRef}
+                />
+              )}
             </ExpansionPanelDetails>
           </ExpansionPanel>
 
@@ -354,11 +356,13 @@ const Toolbox = props => {
                 <div id="sink-list" className="toolbox-list"></div>
               </List>
 
-              <ToolboxUploadButton
-                buttonText="Add sink connectors"
-                onChange={handleFileSelect}
-                ref={panelAddButtonRef}
-              />
+              {false && (
+                <ToolboxUploadButton
+                  buttonText="Add sink connectors"
+                  onChange={handleFileSelect}
+                  ref={panelAddButtonRef}
+                />
+              )}
             </ExpansionPanelDetails>
           </ExpansionPanel>
         </div>
