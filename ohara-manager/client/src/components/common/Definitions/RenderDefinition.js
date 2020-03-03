@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { Field } from 'react-final-form';
+import { toNumber } from 'lodash';
 
 import BindingPort from './BindingPort';
 import BooleanDef from './BooleanDef';
@@ -41,6 +42,7 @@ import PositiveLong from './PositiveLong';
 import PositiveShort from './PositiveShort';
 import { validWithDef } from 'utils/validate';
 import { CREATE_ONLY, EDITABLE } from './Permission';
+import { valueType } from 'api/utils/definitionsUtils';
 
 const RenderDefinition = props => {
   const {
@@ -68,6 +70,26 @@ const RenderDefinition = props => {
 
     return finalTopic;
   });
+
+  const parseValueByType = type => value => {
+    switch (type) {
+      // we only convert the necessary values to correct type
+      case valueType.short:
+      case valueType.int:
+      case valueType.long:
+      case valueType.double:
+      case valueType.positiveShort:
+      case valueType.positiveInt:
+      case valueType.positiveLong:
+      case valueType.positiveDouble:
+      case valueType.remotePort:
+      case valueType.bindingPort:
+        return toNumber(value);
+
+      default:
+        return value;
+    }
+  };
 
   const RenderField = params => {
     const {
@@ -112,6 +134,8 @@ const RenderDefinition = props => {
       disabled,
       required: necessary === 'REQUIRED',
       validate: validWithDef(params),
+      parse: parseValueByType(def.valueType),
+      type: def.valueType === valueType.boolean ? 'checkbox' : null,
     };
 
     if (ref) ensuredFieldProps.refs = ref;
@@ -122,67 +146,67 @@ const RenderDefinition = props => {
   const renderDefinitionField = () => {
     if (def.reference === 'NONE') {
       switch (def.valueType) {
-        case 'STRING':
+        case valueType.string:
           return RenderField({ ...def, input: StringDef });
 
-        case 'REMOTE_PORT':
+        case valueType.remotePort:
           return RenderField({ ...def, input: RemotePort });
 
-        case 'INT':
+        case valueType.int:
           return RenderField({ ...def, input: IntDef });
 
-        case 'CLASS':
+        case valueType.class:
           return RenderField({ ...def, input: ClassDef });
 
-        case 'PASSWORD':
+        case valueType.password:
           return RenderField({ ...def, input: Password });
 
-        case 'POSITIVE_INT':
+        case valueType.positiveInt:
           return RenderField({ ...def, input: PositiveInt });
 
-        case 'DURATION':
+        case valueType.duration:
           return RenderField({ ...def, input: Duration });
 
-        case 'BINDING_PORT':
+        case valueType.bindingPort:
           return RenderField({ ...def, input: BindingPort, list: freePorts });
 
-        case 'TAGS':
+        case valueType.tags:
           return RenderField({ ...def, input: Tags });
 
-        case 'JDBC_TABLE':
+        case valueType.jdbcTable:
           return RenderField({ ...def, input: JdbcTable });
 
-        case 'TABLE':
+        case valueType.table:
           return RenderField({ ...def, input: Table });
 
-        case 'BOOLEAN':
+        case valueType.boolean:
           return RenderField({ ...def, input: BooleanDef });
 
-        case 'LONG':
+        case valueType.long:
           return RenderField({ ...def, input: Long });
 
-        case 'SHORT':
+        case valueType.short:
           return RenderField({ ...def, input: Short });
 
-        case 'DOUBLE':
+        case valueType.double:
           return RenderField({ ...def, input: Double });
 
-        case 'ARRAY':
+        case valueType.array:
           return RenderField({ ...def, input: ArrayDef });
 
-        case 'POSITIVE_SHORT':
+        case valueType.positiveShort:
           return RenderField({ ...def, input: PositiveShort });
 
-        case 'POSITIVE_LONG':
+        case valueType.positiveLong:
           return RenderField({ ...def, input: PositiveLong });
 
-        case 'POSITIVE_DOUBLE':
+        case valueType.positiveDouble:
           return RenderField({ ...def, input: PositiveDouble });
 
-        case 'OBJECT_KEYS':
+        case valueType.objectKeys:
           return RenderField({ ...def, input: ObjectKeys });
 
-        case 'OBJECT_KEY':
+        case valueType.objectKey:
           return RenderField({ ...def, input: ObjectKey });
 
         default:

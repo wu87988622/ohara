@@ -32,41 +32,65 @@ const necessaryType = {
   randomValue: 'RANDOM_DEFAULT',
 };
 
+export const valueType = {
+  boolean: 'BOOLEAN',
+  string: 'STRING',
+  class: 'CLASS',
+  password: 'PASSWORD',
+  jdbcTable: 'JDBC_TABLE',
+  duration: 'DURATION',
+  short: 'SHORT',
+  int: 'INT',
+  long: 'LONG',
+  double: 'DOUBLE',
+  remotePort: 'REMOTE_PORT',
+  positiveShort: 'POSITIVE_SHORT',
+  positiveInt: 'POSITIVE_INT',
+  positiveLong: 'POSITIVE_LONG',
+  positiveDouble: 'POSITIVE_DOUBLE',
+  array: 'ARRAY',
+  bindingPort: 'BINDING_PORT',
+  objectKey: 'OBJECT_KEY',
+  objectKeys: 'OBJECT_KEYS',
+  table: 'TABLE',
+  tags: 'TAGS',
+};
+
 const getTypeWithValueType = key => {
   switch (key) {
-    case 'BOOLEAN':
+    case valueType.boolean:
       return boolean;
 
-    case 'STRING':
-    case 'CLASS':
-    case 'PASSWORD':
-    case 'JDBC_TABLE':
-    case 'DURATION':
+    case valueType.string:
+    case valueType.class:
+    case valueType.password:
+    case valueType.jdbcTable:
+    case valueType.duration:
       return string;
 
-    case 'SHORT':
-    case 'INT':
-    case 'LONG':
-    case 'DOUBLE':
-    case 'REMOTE_PORT':
+    case valueType.short:
+    case valueType.int:
+    case valueType.long:
+    case valueType.double:
+    case valueType.remotePort:
       return number;
 
-    case 'POSITIVE_SHORT':
-    case 'POSITIVE_INT':
-    case 'POSITIVE_LONG':
-    case 'POSITIVE_DOUBLE':
+    case valueType.positiveShort:
+    case valueType.positiveInt:
+    case valueType.positiveLong:
+    case valueType.positiveDouble:
       return positiveNumber;
 
-    case 'ARRAY':
-    case 'BINDING_PORT':
-    case 'OBJECT_KEYS':
+    case valueType.array:
+    case valueType.bindingPort:
+    case valueType.objectKeys:
       return array;
 
-    case 'TABLE':
-    case 'TAGS':
+    case valueType.table:
+    case valueType.tags:
       return object;
 
-    case 'OBJECT_KEY':
+    case valueType.objectKey:
       return {
         name: [string],
         group: [string],

@@ -31,15 +31,29 @@ const ObjectKey = props => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
+  const [objectKey, setObjectKey] = React.useState({
+    name: value.name ? value.name : '',
+    group: value.group ? value.group : '',
+  });
+
+  const handleChange = event => {
+    if (event.target.name.endsWith('Name')) {
+      setObjectKey({ ...objectKey, name: event.target.value });
+    } else {
+      setObjectKey({ ...objectKey, group: event.target.value });
+    }
+    onChange(objectKey);
+  };
+
   return (
     <>
       <TextField
         {...rest}
         ref={refs}
-        onChange={onChange}
+        onChange={handleChange}
         name={name + 'Name'}
         InputProps={restInput}
-        value={value}
+        value={objectKey.name}
         fullWidth
         label={label + ' (name)'}
         helperText={hasError ? meta.error : helperText}
@@ -47,10 +61,10 @@ const ObjectKey = props => {
       />
       <TextField
         {...rest}
-        onChange={onChange}
+        onChange={handleChange}
         name={name + 'Group'}
         InputProps={restInput}
-        value={value}
+        value={objectKey.group}
         fullWidth
         label={label + ' (group)'}
         helperText={hasError ? meta.error : helperText}

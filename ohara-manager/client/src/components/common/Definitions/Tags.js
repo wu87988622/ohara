@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { omit, isEqual } from 'lodash';
+import { omit, isObject } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
@@ -33,8 +33,9 @@ const Tags = props => {
   try {
     jsonValue = JSON.stringify(JSON.parse(value), 0, 2);
   } catch (error) {
-    if (isEqual(jsonValue, {})) {
-      jsonValue = '{}';
+    // to covert the initial value (from backend) which should be JSON object
+    if (isObject(jsonValue)) {
+      jsonValue = JSON.stringify(jsonValue, 0, 2);
     } else {
       hasError = true;
       meta.error = 'Invalid JSON format';

@@ -131,6 +131,15 @@ const PipelinePropertyDialog = props => {
     }
   };
 
+  const isJsonString = str => {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async values => {
     const topicCells = paperApi.getCells(KIND.topic);
     let topics = [];
@@ -150,10 +159,16 @@ const PipelinePropertyDialog = props => {
         }
       }
       if (def.valueType === 'TABLE') {
-        if (values[def.key].length > 0) {
+        if (
+          Object.keys(values).includes(def.key) &&
+          values[def.key].length > 0
+        ) {
           const pickList = def.tableKeys.map(tableKey => tableKey.name);
           values[def.key] = values[def.key].map(value => pick(value, pickList));
         }
+      }
+      if (def.valueType === 'TAGS' && isJsonString(values[def.key])) {
+        values[def.key] = JSON.parse(values[def.key]);
       }
     });
     topics = topics.filter(topic => topic.data !== undefined);
