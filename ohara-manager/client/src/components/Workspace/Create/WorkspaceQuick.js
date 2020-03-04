@@ -202,7 +202,7 @@ const WorkspaceQuick = props => {
     required,
     validServiceName,
     checkDuplicate(map(workspaces, 'name')),
-    // Configurator API only accept length < 25
+    // Configurator API only accept length <= 25
     // we use the same rules here
     maxLength(25),
   ];
@@ -325,7 +325,7 @@ const WorkspaceQuick = props => {
             name="workspaceName"
             label="Workspace name"
             margin="normal"
-            helperText="Assistive text"
+            placeholder="workspace1"
             component={StyledTextField}
             initialValue={defaultWorkspaceName}
             autoFocus

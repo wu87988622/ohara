@@ -187,7 +187,7 @@ const Navigator = ({ pipelineApi }) => {
                 type="text"
                 name="pipelineName"
                 label="Pipeline name"
-                placeholder="pipelinename"
+                placeholder="pipeline1"
                 component={InputField}
                 autoFocus
                 required

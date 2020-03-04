@@ -37,10 +37,15 @@ export const useTopics = () => {
       className: KIND.topic,
       name: topic.name,
       isShared: topic.tags.isShared,
+      status: topic.state,
     }))
     .filter(
-      // Pipeline-only topics are hidden from Toolbox
-      topic => topic.isShared || topic.name === 'Pipeline Only',
+      // Some type of topics are hidden from the Toolbox, this including:
+      // 1. Pipeline-only topics
+      // 2. Shared topics that are not started yet (without any status)
+      topic =>
+        topic.name === 'Pipeline Only' ||
+        (topic.isShared && topic.status !== undefined),
     );
 
   return [topics, topicsData];
