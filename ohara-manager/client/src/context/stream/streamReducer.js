@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { map, reject } from 'lodash';
+import { map, reject, omit } from 'lodash';
 import { isKeyEqual, sortByName } from 'utils/object';
 import * as routines from './streamRoutines';
 
@@ -55,27 +55,16 @@ const reducer = (state, action) => {
         data: sortByName([...state.data, action.payload]),
         lastUpdated: new Date(),
       };
+
     case routines.startStreamRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortByName([...state.data, action.payload]),
-        lastUpdated: new Date(),
-      };
     case routines.stopStreamRoutine.SUCCESS:
-      return {
-        ...state,
-        isFetching: false,
-        data: sortByName([...state.data, action.payload]),
-        lastUpdated: new Date(),
-      };
     case routines.updateStreamRoutine.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: map(state.data, stream =>
           isKeyEqual(stream, action.payload)
-            ? { ...stream, ...action.payload }
+            ? { ...omit(stream, ['state']), ...action.payload }
             : stream,
         ),
         lastUpdated: new Date(),
