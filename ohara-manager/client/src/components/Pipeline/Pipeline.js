@@ -36,7 +36,7 @@ import {
 import * as pipelineUtils from './PipelineApiHelper';
 import { CONNECTION_TYPE } from './PipelineApiHelper';
 import { KIND } from 'const';
-import { Dialog } from 'components/common/Dialog';
+import { DeleteDialog } from 'components/common/Dialog';
 
 export const PaperContext = createContext(null);
 export const PipelineStateContext = createContext(null);
@@ -106,7 +106,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   const isInitialized = React.useRef(false);
   const forceDeleteList = React.useRef({});
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selectTopic, setSelectTopic] = React.useState(false);
+  const [currentCellData, setCurrentCellData] = React.useState(null);
   const [url, setUrl] = React.useState(null);
 
   const { workspaceName, pipelineName } = useParams();
@@ -250,14 +250,16 @@ const Pipeline = React.forwardRef((props, ref) => {
     topicLastUpdated,
   ]);
 
-  const forceDelete = async () => {
+  const deleteTopic = async () => {
+    const paperApi = paperApiRef.current;
+
     const {
       connectors,
       toStreams,
       fromStreams,
       topic,
     } = forceDeleteList.current;
-    const paperApi = paperApiRef.current;
+
     await Promise.all(
       connectors
         .filter(connector => _.get(connector, 'state', null) === 'RUNNING')
@@ -290,8 +292,22 @@ const Pipeline = React.forwardRef((props, ref) => {
     });
 
     await removeTopic(topic, paperApi);
+  };
+
+  const handleElementDelete = async () => {
+    const paperApi = paperApiRef.current;
+    const { kind } = currentCellData;
+
+    if (kind === KIND.topic) {
+      await deleteTopic();
+      forceDeleteList.current = {};
+    } else if (kind === KIND.source || kind === KIND.sink) {
+      await removeConnector(currentCellData, paperApi);
+    } else if (kind === KIND.stream) {
+      await removeStream(currentCellData, paperApi);
+    }
+
     setIsOpen(false);
-    forceDeleteList.current = {};
   };
 
   React.useImperativeHandle(ref, () => {
@@ -315,6 +331,12 @@ const Pipeline = React.forwardRef((props, ref) => {
       },
     };
   });
+
+  const getCurrentCellName = cellData => {
+    if (cellData === null) return '';
+    if (cellData.kind !== KIND.topic) return cellData.name;
+    return cellData.isShared ? cellData.name : cellData.displayName;
+  };
 
   return (
     <>
@@ -643,63 +665,41 @@ const Pipeline = React.forwardRef((props, ref) => {
                             break;
                         }
                       }}
-                      onCellRemove={async (cellData, paperApi) => {
-                        switch (cellData.kind) {
-                          case KIND.sink:
-                          case KIND.source:
-                            removeConnector(cellData, paperApi);
-                            break;
+                      onCellRemove={async cellData => {
+                        if (cellData.kind === KIND.topic) {
+                          const topicConnectors = connectors.filter(connector =>
+                            connector.topicKeys.find(
+                              topic => topic.name === cellData.name,
+                            ),
+                          );
+                          const topicToStream = streams.filter(stream =>
+                            stream.to.find(
+                              topic => topic.name === cellData.name,
+                            ),
+                          );
+                          const topicFromStream = streams.filter(stream =>
+                            stream.from.find(
+                              topic => topic.name === cellData.name,
+                            ),
+                          );
 
-                          case KIND.stream:
-                            removeStream(cellData, paperApi);
-                            break;
+                          forceDeleteList.current = {
+                            connectors: topicConnectors,
+                            toStreams: topicToStream,
+                            fromStreams: topicFromStream,
+                            topic: cellData,
+                          };
 
-                          case KIND.topic:
-                            const hasTopicConnectors = connectors.filter(
-                              connector =>
-                                connector.topicKeys.find(
-                                  topic => topic.name === cellData.name,
-                                ),
-                            );
-                            const hasTopicToStream = streams.filter(stream =>
-                              stream.to.find(
-                                topic => topic.name === cellData.name,
-                              ),
-                            );
-                            const hasTopicFromStream = streams.filter(stream =>
-                              stream.from.find(
-                                topic => topic.name === cellData.name,
-                              ),
-                            );
-                            if (
-                              [
-                                ...hasTopicConnectors,
-                                ...hasTopicToStream,
-                                ...hasTopicFromStream,
-                              ].length > 0
-                            ) {
-                              forceDeleteList.current = {
-                                connectors: hasTopicConnectors,
-                                toStreams: hasTopicToStream,
-                                fromStreams: hasTopicFromStream,
-                                topic: cellData,
-                              };
-                              setSelectTopic(cellData.displayName);
-                              setIsOpen(true);
-                            } else {
-                              await removeTopic(cellData, paperApi);
-                            }
-
-                            if (cellData.isShared) {
-                              // If a shared topic is removed from the Paper, we should
-                              // re-render the Toolbox, so the topic can be re-added
-                              // into the Paper again
-                              pipelineDispatch({ type: 'setToolboxKey' });
-                            }
-                            break;
-                          default:
-                            break;
+                          if (cellData.isShared) {
+                            // If a shared topic is removed from the Paper, we should
+                            // re-render the Toolbox, so the topic can be re-added
+                            // into the Paper again
+                            pipelineDispatch({ type: 'setToolboxKey' });
+                          }
                         }
+
+                        setIsOpen(true);
+                        setCurrentCellData(cellData);
                       }}
                     />
 
@@ -727,13 +727,15 @@ const Pipeline = React.forwardRef((props, ref) => {
         data={PropertyDialogData}
         onSubmit={handleSubmit}
       />
-      <Dialog
+
+      <DeleteDialog
         open={isOpen}
-        title={'Force Delete Topic?'}
-        children={`Are you sure you want to delete the node: ${selectTopic} ? This action cannot be undone!`}
-        confirmText={'FORCE DELETE'}
+        title="Delete the element"
+        content={`Are you sure you want to delete the element: ${getCurrentCellName(
+          currentCellData,
+        )} ? This action cannot be undone!`}
         handleClose={handleDialogClose}
-        handleConfirm={forceDelete}
+        handleConfirm={handleElementDelete}
       />
     </>
   );

@@ -166,7 +166,7 @@ Cypress.Commands.add('cellAction', (name, action) => {
 describe('Pipeline Page', () => {
   beforeEach(async () => await deleteAllServices());
 
-  it('create a empty pipeline should work normally', () => {
+  it('create an empty pipeline should work normally', () => {
     cy.createWorkspace();
 
     // Add new pipeline
@@ -308,8 +308,7 @@ describe('Pipeline Page', () => {
     // let the backend API makes effect
     cy.wait(5000);
 
-    // to get the actual data-testid
-    // we need to refresh the paper again
+    // to get the actual data-testid we need to refresh the paper again
     cy.reload();
 
     // 1. cannot create link to a source
@@ -339,7 +338,7 @@ describe('Pipeline Page', () => {
     cy.getCell(elements.privateTopicName).trigger('mouseover');
     cy.cellAction(elements.privateTopicName, ACTIONS.link);
     cy.getCell(elements.hdfsSinkName).click();
-    // will auto create a pipeline-only topic and two lines
+    // // will auto create a pipeline-only topic and two lines
     cy.get('g[data-type="standard.Link"]').should('have.length', 2);
 
     // 4. we don't allow multiple links for same cell
@@ -386,10 +385,10 @@ describe('Pipeline Page', () => {
       .siblings('div')
       .click();
 
-    // we can force delete an used topic
+    // we can delete a used topic
     cy.getCell(elements.privateTopicName).trigger('mouseover');
     cy.cellAction(elements.privateTopicName, ACTIONS.remove);
-    cy.findByText(/^force delete$/i)
+    cy.findByText(/^delete$/i)
       .should('exist')
       .click();
 
@@ -399,11 +398,12 @@ describe('Pipeline Page', () => {
 
     // delete all elements
     Object.values(elements).forEach(element => {
-      // the private topic was removed by "force delete", skip it here
+      // the private topic was removed in the previous steps, so skip it here
       if (element === elements.privateTopicName) return;
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove);
       cy.wait(1000);
+      cy.findByText(/^delete$/i).click();
       cy.findAllByText(element)
         .filter(':visible')
         .should('not.exist');
