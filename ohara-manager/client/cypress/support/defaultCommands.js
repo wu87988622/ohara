@@ -114,17 +114,11 @@ Cypress.Commands.add('createWorkspace', workspaceName => {
     if (location.pathname === '/') {
       // first time in homepage, close the helper quickMode dialog
       cy.findByTestId('close-intro-button').click();
-
-      cy.findByTitle('Create a new workspace').click();
-      cy.findByText(/^quick start$/i)
-        .should('exist')
-        .click();
-    } else {
-      cy.findByTitle('Create a new workspace').click();
-      cy.findByText(/^quick create$/i)
-        .should('exist')
-        .click();
     }
+    cy.findByTitle('Create a new workspace').click();
+    cy.findByText(/^quick create$/i)
+      .should('exist')
+      .click();
   });
 
   // Step1: workspace name

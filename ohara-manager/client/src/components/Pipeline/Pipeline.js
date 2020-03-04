@@ -721,9 +721,7 @@ const Pipeline = React.forwardRef((props, ref) => {
         </>
       )}
 
-      <IntroDialog
-        quickModeText={workspaces.length > 0 ? 'QUICK CREATE' : 'QUICK START'}
-      />
+      <IntroDialog quickModeText={'QUICK CREATE'} />
       <NodeDialog />
       <PipelinePropertyDialog
         isOpen={isPropertyDialogOpen}

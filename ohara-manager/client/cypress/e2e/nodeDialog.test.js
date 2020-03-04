@@ -275,7 +275,7 @@ describe('NodeDialog of workspaceQuick', () => {
     cy.findByText(hostname3).should('exist');
 
     cy.visit('/');
-    cy.findByText(/^quick start$/i)
+    cy.findByText(/^quick create$/i)
       .should('exist')
       .click();
 
