@@ -20,6 +20,7 @@ import { CELL_STATUS } from 'const';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
+  const { currentPipeline } = context.useWorkspace();
   const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {
@@ -41,6 +42,7 @@ const topic = () => {
       tags: {
         isShared: false,
         displayName,
+        pipelineName: currentPipeline.name,
       },
     });
 
