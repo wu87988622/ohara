@@ -29,21 +29,25 @@ export const validServiceName = value => {
 export const minLength = min => value => {
   return value.length >= min
     ? undefined
-    : `The value must be greater than ${min} characters long`;
+    : `The value must be greater than or equal to ${min} characters long`;
 };
 
 export const maxLength = max => value => {
   return value.length <= max
     ? undefined
-    : `The value must be less than ${max} characters long`;
+    : `The value must be less than or equal to ${max} characters long`;
 };
 
 export const minNumber = min => value => {
-  return value >= min ? undefined : `The value must be greater than ${min}`;
+  return value >= min
+    ? undefined
+    : `The value must be greater than or equal to ${min}`;
 };
 
 export const maxNumber = max => value => {
-  return value <= max ? undefined : `The value must be less than ${max}`;
+  return value <= max
+    ? undefined
+    : `The value must be less than or equal to ${max}`;
 };
 
 export const validWithRegex = regex => value => {

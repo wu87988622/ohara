@@ -50,7 +50,7 @@ export const createActions = context => {
         const startRes = await brokerApi.start(values.name);
         // after created, we need the "settings" and "stageSettings" from creation payload
         // to decide workspace is dirties or not
-        const data = { ...startRes, ...createRes };
+        const data = { ...createRes, ...startRes };
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {

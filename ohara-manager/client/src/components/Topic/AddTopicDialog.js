@@ -16,26 +16,32 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
-import { useTopicState, useTopicActions, useAddTopicDialog } from 'context';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import {
   required,
   minNumber,
+  maxNumber,
   validServiceName,
   composeValidators,
 } from 'utils/validate';
+import * as context from 'context';
 
 const AddTopicDialog = props => {
   const { uniqueId } = props;
-  const { isFetching: isSaving } = useTopicState();
+  const { currentBroker } = context.useWorkspace();
+  const { isFetching: isSaving } = context.useTopicState();
+  const { createTopic } = context.useTopicActions();
+  const {
+    isOpen: isDialogOpen,
+    close: closeDialog,
+  } = context.useAddTopicDialog();
   const eventLog = useEventLog();
-  const { createTopic } = useTopicActions();
-
-  const { isOpen: isDialogOpen, close: closeDialog } = useAddTopicDialog();
+  const replicationFactor = _.get(currentBroker, 'aliveNodes', []);
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
@@ -111,7 +117,10 @@ const AddTopicDialog = props => {
                   min: '1',
                   step: '1',
                 }}
-                validate={minNumber(1)}
+                validate={composeValidators(
+                  minNumber(1),
+                  maxNumber(replicationFactor.length),
+                )}
               />
             </form>
           </Dialog>

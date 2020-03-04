@@ -53,55 +53,51 @@ describe('validServiceName()', () => {
 
 describe('minLength()', () => {
   const min = minLength(50);
-  it('returns `undefined` if the given value length is greater than 50', () => {
-    expect(min(generate.randomString({ length: 100 }))).toBeUndefined();
+  it('returns `undefined` if the given value length is greater than or equal to or equal to 50', () => {
+    expect(min(generate.randomString({ length: 51 }))).toBeUndefined();
+    expect(min(generate.randomString({ length: 50 }))).toBeUndefined();
   });
 
-  it('returns the error message if the given value is less than 50', () => {
-    const error = 'The value must be greater than 50 characters long';
-    expect(min(generate.randomString({ length: 21 }))).toBe(error);
-    expect(min(generate.randomString({ length: 49 }))).toBe(error);
-    expect(min(generate.randomString({ length: -1 }))).toBe(error);
+  it('returns the error message if the given value is less than or equal to 50', () => {
+    expect(min(generate.randomString({ length: 49 }))).toBe(
+      'The value must be greater than or equal to 50 characters long',
+    );
   });
 });
 
 describe('maxLength()', () => {
   const max = maxLength(50);
-  it('returns `undefined` if the given value length is less than 50', () => {
-    expect(max(generate.randomString({ length: 35 }))).toBeUndefined();
+  it('returns `undefined` if the given value length is less than or equal to 50', () => {
+    expect(max(generate.randomString({ length: 50 }))).toBeUndefined();
   });
 
-  it('returns the error message if the given value is greater than 50', () => {
-    const error = 'The value must be less than 50 characters long';
-    expect(max(generate.randomString({ length: 51 }))).toBe(error);
-    expect(max(generate.randomString({ length: 100 }))).toBe(error);
+  it('returns the error message if the given value is greater than or equal to 50', () => {
+    expect(max(generate.randomString({ length: 51 }))).toBe(
+      'The value must be less than or equal to 50 characters long',
+    );
   });
 });
 
-describe('minValue()', () => {
+describe('minNumber()', () => {
   const min = minNumber(50);
-  it('returns `undefined` if the given value is greater than 50', () => {
-    expect(min(100)).toBeUndefined();
+  it('returns `undefined` if the given value is greater than or equal to 50', () => {
+    expect(min(51)).toBeUndefined();
+    expect(min(50)).toBeUndefined();
   });
 
-  it('returns the error message if the given value is less than 50', () => {
-    const error = 'The value must be greater than 50';
-    expect(min(21)).toBe(error);
-    expect(min(49)).toBe(error);
-    expect(min(-1)).toBe(error);
+  it('returns an error message if the given value is less than or equal to 50', () => {
+    expect(min(49)).toBe('The value must be greater than or equal to 50');
   });
 });
 
-describe('maxValue()', () => {
+describe('maxNumber()', () => {
   const max = maxNumber(50);
-  it('returns `undefined` if the given value is less than 50', () => {
-    expect(max(35)).toBeUndefined();
+  it('returns `undefined` if the given value is less than or equal to 50', () => {
+    expect(max(50)).toBeUndefined();
   });
 
-  it('returns the error message if the given value is greater than 50', () => {
-    const error = 'The value must be less than 50';
-    expect(max(51)).toBe(error);
-    expect(max(100)).toBe(error);
+  it('returns the error message if the given value is greater than or equal to 50', () => {
+    expect(max(51)).toBe('The value must be less than or equal to 50');
   });
 });
 
