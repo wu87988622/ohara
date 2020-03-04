@@ -61,12 +61,34 @@ const PipelinePropertyDialog = props => {
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
-  const { currentWorker } = useWorkspace();
+  const { currentWorker, currentPipeline } = useWorkspace();
   const { data: currentConnectors } = useConnectorState();
   const { data: currentStreams } = useStreamState();
-  const { data: currentTopics } = useTopicState();
+  const { data: allTopics } = useTopicState();
   const { data: currentFiles } = useFileState();
 
+  // Display topics that are included in in the current pipeline
+  const getCurrentTopics = (pipeline, topics) => {
+    if (!pipeline || !topics) return [];
+
+    const validTopics = pipeline.endpoints
+      .filter(endpoint => endpoint.kind === KIND.topic)
+      .map(topic => topic.name);
+
+    const currentTopics = topics
+      .filter(topic => validTopics.includes(topic.name))
+      .sort((current, next) => {
+        const currentName = current.tags.isShared
+          ? current.name
+          : current.tags.displayName;
+        const nextName = next.tags.isShared ? next.name : next.tags.displayName;
+        return currentName.localeCompare(nextName);
+      });
+
+    return currentTopics;
+  };
+
+  const currentTopics = getCurrentTopics(currentPipeline, allTopics);
   const formRef = useRef(null);
 
   let targetCell;
