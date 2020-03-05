@@ -17,7 +17,7 @@
 import { useEffect, useState, useRef, useContext } from 'react';
 import { isEmpty } from 'lodash';
 
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 import { useTopicState, useFileActions, useFileState } from 'context';
 import { PaperContext } from '../Pipeline';
 
@@ -42,10 +42,17 @@ export const useTopics = () => {
     .filter(
       // Some type of topics are hidden from the Toolbox, this including:
       // 1. Pipeline-only topics
-      // 2. Shared topics that are not started yet (without any status)
-      topic =>
-        topic.name === 'Pipeline Only' ||
-        (topic.isShared && topic.status !== undefined),
+      // 2. "Shared" topics that are not running
+      topic => {
+        const { name, isShared, status } = topic;
+        const topicStatus =
+          typeof status === 'string' ? status.toLowerCase() : status;
+
+        return (
+          name === 'Pipeline Only' ||
+          (isShared && topicStatus === CELL_STATUS.running)
+        );
+      },
     );
 
   return [topics, topicsData];
