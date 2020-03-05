@@ -592,6 +592,8 @@ const Paper = React.forwardRef((props, ref) => {
           const status = elementView.model.get('status').toLowerCase();
           switch (status) {
             case CELL_STATUS.running:
+              elementView.disableMenu(['link', 'start', 'config', 'remove']);
+              break;
             case CELL_STATUS.failed:
               elementView.disableMenu(['link', 'config', 'remove']);
               break;
@@ -599,7 +601,7 @@ const Paper = React.forwardRef((props, ref) => {
               elementView.enableMenu();
 
               if (graph.getConnectedLinks(elementView.model).length === 0) {
-                elementView.disableMenu(['start']);
+                elementView.disableMenu(['start', 'stop']);
               }
               break;
             case CELL_STATUS.pending:
