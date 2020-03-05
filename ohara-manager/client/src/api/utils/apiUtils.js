@@ -296,7 +296,8 @@ const regularObject = (objs, originKey, changeKey) => {
       if (isObject(newObjs[i][key])) {
         const obj = regularObject(newObjs[i][key], originKey, changeKey);
         newObjs[i][key] = obj;
-      } else if (key.indexOf(originKey) !== -1) {
+      }
+      if (key.indexOf(originKey) !== -1) {
         const newKey = key.split(originKey).join(changeKey);
         newObjs[i][newKey] = newObjs[i][key];
         delete newObjs[i][key];

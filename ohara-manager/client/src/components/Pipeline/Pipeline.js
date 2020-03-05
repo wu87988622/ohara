@@ -55,7 +55,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     open: openPropertyDialog,
     isOpen: isPropertyDialogOpen,
     close: closePropertyDialog,
-    setData: setPropertyDialogData,
     data: PropertyDialogData,
   } = context.usePipelinePropertyDialog();
   const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
@@ -443,8 +442,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           default:
                             break;
                         }
-                        openPropertyDialog();
-                        setPropertyDialogData({
+                        openPropertyDialog({
                           title: `Edit the property of ${displayName} ${kind} connector`,
                           classInfo: targetCell[0],
                           cellData,

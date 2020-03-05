@@ -80,7 +80,8 @@ const ObjectKeys = props => {
     data: [...value],
   });
 
-  //have some warnings in console when simply using the tabl, waiting for the fix https://github.com/mbrn/material-table/issues/1293
+  // This currently throws some warnings in browser's console.
+  // We need to wait for the update:  https://github.com/mbrn/material-table/issues/1293
   return (
     <div ref={refs}>
       <MaterialTable
