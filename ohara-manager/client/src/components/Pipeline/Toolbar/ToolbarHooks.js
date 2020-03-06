@@ -16,13 +16,14 @@
 
 import React from 'react';
 
-import { KIND } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 import {
   useConnectorActions,
   useTopicActions,
   useStreamActions,
 } from 'context';
 import { PaperContext } from '../Pipeline';
+import { sleep } from 'utils/common';
 
 export const useDeleteCells = () => {
   const [steps, setSteps] = React.useState([]);
@@ -45,7 +46,7 @@ export const useDeleteCells = () => {
     let index = 0;
     while (index < cells.length) {
       const currentCell = cells[index];
-      const { kind, isShared, name } = currentCell;
+      const { kind, isShared, name, status } = currentCell;
 
       if (kind === KIND.source || kind === KIND.sink) {
         // To ensure services can be properly removed, we're stopping the services
@@ -67,6 +68,13 @@ export const useDeleteCells = () => {
 
       index++;
       setActiveStep(index);
+
+      // TODO: A temp fix as for deleting a bunch components from the Paper altogether
+      // often would cause trouble for backend, so we're making the request in a less
+      // frequent manner
+      if (status.toLowerCase() === CELL_STATUS.running) {
+        await sleep(1500);
+      }
     }
   };
 

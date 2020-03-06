@@ -99,7 +99,7 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
 
-  const { updateCells, checkCells } = pipelineUtils.pipeline();
+  const { updateCells, getUpdatedCells } = pipelineUtils.pipeline();
 
   const currentStreamRef = React.useRef(null);
   const isInitialized = React.useRef(false);
@@ -239,13 +239,13 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!streamLastUpdated) return;
     if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
-    checkCells(paperApiRef.current);
+    paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
 
     isInitialized.current = true;
   }, [
-    checkCells,
     connectorLastUpdated,
     currentPipeline,
+    getUpdatedCells,
     isPaperApiReady,
     pipelineName,
     streamLastUpdated,

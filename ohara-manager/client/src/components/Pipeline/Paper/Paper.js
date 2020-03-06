@@ -679,11 +679,11 @@ const Paper = React.forwardRef((props, ref) => {
 
         return graph.getCells().map(paperUtils.getCellData);
       },
-      loadGraph(json) {
+      loadGraph(cells) {
         // Clear the graph before loading
         graph.clear();
 
-        json.cells
+        cells
           // Elements should be render first, and then the links
           .sort((a, b) => a.type.localeCompare(b.type))
           .forEach(cell => {

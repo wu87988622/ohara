@@ -27,9 +27,9 @@ import * as wkApi from '../../src/api/workerApi';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as topicApi from '../../src/api/topicApi';
 import * as objectApi from '../../src/api/objectApi';
-import { sleep } from '../../src/api/utils/apiUtils';
 import * as URL from '../../src/api/utils/url';
 import * as generate from '../../src/utils/generate';
+import { sleep } from '../../src/utils/common';
 import { hashByGroupAndName } from '../../src/utils/sha';
 
 // Get this environment for further usage

@@ -422,7 +422,3 @@ const createAxios = () => {
 };
 
 export const axiosInstance = createAxios();
-
-export const sleep = ms => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
