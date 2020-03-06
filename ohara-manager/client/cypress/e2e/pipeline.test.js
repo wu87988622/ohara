@@ -313,22 +313,22 @@ describe('Element Links of Pipeline', () => {
       ftpSourceName: generate.serviceName({ prefix: 'source' }),
       consoleSinkName: generate.serviceName({ prefix: 'sink' }),
       hdfsSinkName: generate.serviceName({ prefix: 'sink' }),
-      topicName: generate.serviceName({ prefix: 'topic' }),
-      privateTopicName: 'T1',
+      pipelineOnlyTopicName1: 'T1',
+      pipelineOnlyTopicName2: 'T2',
     };
 
     cy.log('add elements:');
     cy.log(`element: perf source ${elements.perfSourceName}`);
     cy.log(`element: ftp source ${elements.ftpSourceName}`);
-    cy.log(`element: shared topic ${elements.topicName}`);
+    cy.log(`element: pipeline-only topic 1 ${elements.pipelineOnlyTopicName1}`);
     cy.log(`element: console sink ${elements.consoleSinkName}`);
-    cy.log(`element: pipeline-only topic ${elements.privateTopicName}`);
+    cy.log(`element: pipeline-only topic 2 ${elements.pipelineOnlyTopicName2}`);
     cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
     cy.addElement(elements.perfSourceName, KIND.source, connectorSources.perf);
     cy.addElement(elements.ftpSourceName, KIND.source, connectorSources.ftp);
-    cy.addElement(elements.topicName, KIND.topic, null);
+    cy.addElement(elements.pipelineOnlyTopicName1, KIND.topic, null);
     cy.addElement(elements.consoleSinkName, KIND.sink, connectorSinks.console);
-    cy.addElement(elements.privateTopicName, KIND.topic, null);
+    cy.addElement(elements.pipelineOnlyTopicName2, KIND.topic, null);
     cy.addElement(elements.hdfsSinkName, KIND.sink, connectorSinks.hdfs);
 
     // let the backend API makes effect
@@ -349,11 +349,11 @@ describe('Element Links of Pipeline', () => {
       .first()
       .click();
 
-    // 2. cannot create link from topic to topic
-    cy.log(`cannot create a link from shared topic to private topic`);
-    cy.getCell(elements.topicName).trigger('mouseover');
-    cy.cellAction(elements.topicName, ACTIONS.link).click();
-    cy.getCell(elements.privateTopicName).click();
+    // 2. cannot create a link between two topics
+    cy.log(`cannot create a link between two topics`);
+    cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
+    cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.link).click();
+    cy.getCell(elements.pipelineOnlyTopicName2).click();
     cy.findByText(
       `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
     )
@@ -362,18 +362,20 @@ describe('Element Links of Pipeline', () => {
       .first()
       .click();
 
-    // 3. perf source -> topic -> hdfs sink
-    cy.log(`create a link from perf source to shared topic to hdfs sink`);
+    // 3. perf source -> pipeline-only topic 1 -> hdfs sink
+    cy.log(
+      `create a link from a perf source to pipeline-only topic to hdfs sink`,
+    );
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
-    cy.getCell(elements.privateTopicName).click();
-    cy.getCell(elements.privateTopicName).trigger('mouseover');
-    cy.cellAction(elements.privateTopicName, ACTIONS.link).click();
+    cy.getCell(elements.pipelineOnlyTopicName1).click();
+    cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
+    cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
-    // will create two lines
+    // will create two links
     cy.get('g[data-type="standard.Link"]').should('have.length', 2);
 
-    // 4. we don't allow multiple links for same cell
+    // 4. we don't allow creating multiple links for same cell
     // perf source -> console sink
     cy.log(`cannot create a link from perf source to console sink`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
@@ -400,11 +402,11 @@ describe('Element Links of Pipeline', () => {
       .first()
       .click();
 
-    // perf source -> topic
-    cy.log(`cannot create a link from perf source to shared topic`);
+    //  perf source -> pipeline-only topic 2
+    cy.log(`cannot create a link from a perf source to pipeline-only topic`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
-    cy.getCell(elements.topicName).click();
+    cy.getCell(elements.pipelineOnlyTopicName2).click();
     cy.findByText(
       `The source ${elements.perfSourceName} is already connected to a target`,
     )
@@ -414,9 +416,9 @@ describe('Element Links of Pipeline', () => {
       .click();
 
     // topic -> hdfs sink
-    cy.log(`cannot create a link from shared topic to hdfs sink`);
-    cy.getCell(elements.topicName).trigger('mouseover');
-    cy.cellAction(elements.topicName, ACTIONS.link).click();
+    cy.log(`cannot create a link from pipeline-only topic to hdfs sink`);
+    cy.getCell(elements.pipelineOnlyTopicName2).trigger('mouseover');
+    cy.cellAction(elements.pipelineOnlyTopicName2, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
     cy.findByText(
       `The target ${elements.hdfsSinkName} is already connected to a source`,
@@ -426,13 +428,13 @@ describe('Element Links of Pipeline', () => {
       .first()
       .click();
 
-    // we can force delete an used topic
+    // we can force delete a connected topic
     cy.log(`force delete pipeline-only topic`);
-    cy.getCell(elements.privateTopicName).trigger('mouseover');
-    cy.cellAction(elements.privateTopicName, ACTIONS.remove).click();
+    cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
+    cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.remove).click();
     cy.findByText(/^delete$/i).should('exist');
     cy.contains('span:visible', /cancel/i).click();
-    cy.findAllByText(elements.privateTopicName).should('exist');
+    cy.findAllByText(elements.pipelineOnlyTopicName1).should('exist');
 
     // delete all elements
     Object.values(elements).forEach(element => {
