@@ -15,8 +15,9 @@
  */
 
 import { get } from 'lodash';
+
 import { axiosInstance } from './utils/apiUtils';
-import { sleep as sleepApi } from './utils/apiUtils';
+import * as commonUtils from '../utils/common';
 
 const wait = async params => {
   const {
@@ -41,7 +42,7 @@ const wait = async params => {
     };
   }
 
-  await sleepApi(sleep);
+  await commonUtils.sleep(sleep);
   return await wait({ ...params, retryCount: retryCount + 1 });
 };
 export default wait;
