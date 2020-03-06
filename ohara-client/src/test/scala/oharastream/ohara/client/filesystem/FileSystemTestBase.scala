@@ -190,4 +190,10 @@ abstract class FileSystemTestBase extends OharaTest {
     fileSystem.exists(file) shouldBe false
     fileSystem.listFileNames(rootDir, FileFilter.EMPTY).size shouldBe 0
   }
+
+  @Test
+  def testFileType(): Unit =
+    intercept[IllegalArgumentException](fileSystem.fileType(CommonUtils.randomString())).getMessage should include(
+      "exist"
+    )
 }

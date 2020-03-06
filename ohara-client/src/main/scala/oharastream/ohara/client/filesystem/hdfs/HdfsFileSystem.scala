@@ -30,7 +30,7 @@ import org.apache.hadoop.fs.{Path, RemoteIterator}
 import scala.collection.JavaConverters._
 
 private[filesystem] object HdfsFileSystem {
-  def builder(): Builder = new Builder
+  def builder: Builder = new Builder
 
   class Builder private[filesystem] extends oharastream.ohara.common.pattern.Builder[FileSystem] {
     private[this] val LOG         = Logger(classOf[FileSystem])
@@ -193,7 +193,7 @@ private[filesystem] object HdfsFileSystem {
         */
       override def fileType(path: String): FileType = wrap { () =>
         val p = new Path(path)
-        if (!hadoopFS.exists(p)) throw new NoSuchElementException(s"$path doesn't exist")
+        if (!hadoopFS.exists(p)) throw new IllegalArgumentException(s"$path doesn't exist")
         if (hadoopFS.getFileStatus(p).isDirectory) FileType.FOLDER else FileType.FILE
       }
 

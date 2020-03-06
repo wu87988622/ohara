@@ -74,7 +74,7 @@ object ConnectorTestUtils {
     path: String
   ): Unit = {
     fileSystem.delete(path, true)
-    intercept[NoSuchElementException] {
+    intercept[IllegalArgumentException] {
       val connector = connectorClass.newInstance()
       try connector.start(props.asJava)
       finally connector.stop()
