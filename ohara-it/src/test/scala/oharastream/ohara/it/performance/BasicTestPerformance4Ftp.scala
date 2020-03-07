@@ -70,8 +70,7 @@ abstract class BasicTestPerformance4Ftp extends BasicTestPerformance {
   protected val cleanupTestData: Boolean = value(cleanupTestDataKey).forall(_.toBoolean)
 
   private[this] def ftpClient() =
-    FtpClient
-      .builder()
+    FtpClient.builder
       .hostname(ftpHostname)
       .port(ftpPort)
       .user(ftpUser)

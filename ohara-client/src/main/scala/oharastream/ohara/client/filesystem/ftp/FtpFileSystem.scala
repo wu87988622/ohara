@@ -121,8 +121,7 @@ private[filesystem] object FtpFileSystem {
       val retryBackoff = Objects.requireNonNull(Builder.this.retryBackoff)
 
       new FtpFileSystemImpl(
-        FtpClient
-          .builder()
+        FtpClient.builder
           .hostname(hostname)
           .port(port)
           .user(user)

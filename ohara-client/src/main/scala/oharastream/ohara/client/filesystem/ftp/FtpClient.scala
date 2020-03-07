@@ -172,8 +172,8 @@ trait FtpClient extends Releasable {
 }
 
 object FtpClient {
-  private[this] val LOG  = Logger(classOf[FtpClient])
-  def builder(): Builder = new Builder
+  private[this] val LOG = Logger(classOf[FtpClient])
+  def builder: Builder  = new Builder
 
   class Builder private[FtpClient] extends oharastream.ohara.common.pattern.Builder[FtpClient] {
     private[this] var hostname: String = _
@@ -494,7 +494,7 @@ object FtpClient {
             case 250 => FileType.FOLDER
             case _   => FileType.FILE
           } finally client.cwd(current)
-        } else throw new NoSuchElementException(s"$path doesn't exist")
+        } else throw new IllegalArgumentException(s"$path doesn't exist")
 
       override def status(): String = connectIfNeeded().getStatus
 

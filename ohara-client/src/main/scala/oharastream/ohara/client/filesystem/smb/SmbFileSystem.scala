@@ -373,7 +373,7 @@ private[filesystem] object SmbFileSystem {
         * @return a type of the given path
         */
       override def fileType(path: String): FileType = connectShare { shareRoot =>
-        if (!exists(path)) throw new NoSuchElementException(s"$path doesn't exist")
+        if (!exists(path)) throw new IllegalArgumentException(s"$path doesn't exist")
         val fi = shareRoot.getFileInformation(path)
         val isFolder =
           EnumWithValue.EnumUtils.isSet(fi.getBasicInformation.getFileAttributes, FILE_ATTRIBUTE_DIRECTORY)
