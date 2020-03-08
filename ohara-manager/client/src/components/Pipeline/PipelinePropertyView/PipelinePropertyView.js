@@ -19,8 +19,6 @@ import _ from 'lodash';
 import PropTypes from 'prop-types';
 import TuneIcon from '@material-ui/icons/Tune';
 import CloseIcon from '@material-ui/icons/Close';
-import TreeView from '@material-ui/lab/TreeView';
-import TreeItem from '@material-ui/lab/TreeItem';
 import StorageIcon from '@material-ui/icons/Storage';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -29,17 +27,14 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import SignalCellularAltIcon from '@material-ui/icons/SignalCellularAlt';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import CodeIcon from '@material-ui/icons/Code';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import PropertyField from './PipelinePropertyViewField';
 
 import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
-import { Tooltip } from 'components/common/Tooltip';
 import { Dialog } from 'components/common/Dialog';
 import * as context from 'context';
 import * as propertyUtils from './PipelinePropertyViewUtils';
+import * as defUtils from 'api/utils/definitionsUtils';
 
 const PipelinePropertyView = props => {
   const { handleClose, element, cellsMetrics } = props;
@@ -79,9 +74,7 @@ const PipelinePropertyView = props => {
     default:
       break;
   }
-  const pipelineOnlyTopics = currentTopic.filter(topic => !topic.tags.isShared);
   if (!settings) return null;
-
   const ignoreList = settings.settingDefinitions
     .filter(def => def.internal)
     .map(def => def.key)
@@ -106,138 +99,69 @@ const PipelinePropertyView = props => {
 
   const renderSettings = (settings, key) => {
     const { settingDefinitions: defs } = settings;
-    const currentSetting = settings[key];
-
-    if (_.isObject(currentSetting) && !_.isArray(currentSetting)) {
-      if (key === 'tags') {
-        const dots = '...';
-        const value = JSON.stringify(currentSetting);
-        const displayValue =
-          value.length > 2 ? value.substring(0, 30) + dots + '}' : value;
-        const isTruncated = displayValue.endsWith(dots + '}');
-        const isPipelineTopic =
-          settings.classType === 'topic' && _.has(settings, 'tags.isShared');
-        const name = isPipelineTopic
+    const currentSetting =
+      key === 'name'
+        ? settings.tags?.displayName
           ? settings.tags.displayName
-          : settings.name;
-
-        return (
-          <PropertyField
-            key={key}
-            label={propertyUtils.getDisplayName(key, defs)}
-            value={displayValue}
-            slot={
-              isTruncated && (
-                <Tooltip className="settings-full-button" title="Full content">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleFullButtonClick(value, name)}
-                  >
-                    <CodeIcon fontSize="inherit" />
-                  </IconButton>
-                </Tooltip>
-              )
+          : settings[key]
+        : settings[key];
+    const defValueType = defUtils.valueType;
+    const valueType = defs.find(def => def.key === key).valueType;
+    switch (valueType) {
+      case defValueType.tags:
+        return propertyUtils.tags({
+          currentSetting,
+          settings,
+          key,
+          defs,
+          propertyUtils,
+          handleFullButtonClick,
+        });
+      case defValueType.remotePort:
+      case defValueType.bindingPort:
+        return propertyUtils.defaultField({
+          currentSetting,
+          settings,
+          key,
+          defs,
+          isPort: true,
+        });
+      case defValueType.objectKeys:
+        const objectArray = currentSetting
+          .map(value => value.name)
+          .map(value => {
+            if (currentTopic.map(topic => topic.name).includes(value)) {
+              const topic = currentTopic.find(topic => topic.name === value);
+              return topic.tags?.displayName
+                ? topic.tags?.displayName
+                : topic.name;
+            } else {
+              return value;
             }
-          />
-        );
-      } else {
-        return (
-          <div className="field-wrapper" key={key}>
-            <TreeView
-              defaultCollapseIcon={<ArrowRightIcon />}
-              defaultExpandIcon={<ArrowDropUpIcon />}
-            >
-              <TreeItem
-                nodeId={key}
-                label={propertyUtils.getDisplayName(key, defs)}
-              >
-                {Object.keys(currentSetting).map(objectKey => {
-                  return (
-                    <TreeItem
-                      key={objectKey}
-                      nodeId={objectKey}
-                      label={`${objectKey} : ${settings[objectKey]}`}
-                    />
-                  );
-                })}
-              </TreeItem>
-            </TreeView>
-          </div>
-        );
-      }
-    } else if (_.isArray(currentSetting)) {
-      const isPrimitive = currentSetting.every(setting => !_.isObject(setting));
-      if (isPrimitive) {
-        // need to do a conversion here, the value could be number
-        const value = String(currentSetting);
-        const displayValue = value ? value : '';
-        return (
-          <PropertyField
-            key={key}
-            label={propertyUtils.getDisplayName(key, defs)}
-            value={displayValue}
-          />
-        );
-      } else {
-        const checkValue = value => {
-          const pipelineOnlyTopic = pipelineOnlyTopics.find(
-            topic => topic.name === value,
-          );
-          return pipelineOnlyTopic ? pipelineOnlyTopic.tags.displayName : value;
-        };
-        return (
-          <div className="field-wrapper" key={key}>
-            <TreeView
-              defaultCollapseIcon={<ArrowRightIcon />}
-              defaultExpandIcon={<ArrowDropUpIcon />}
-            >
-              <TreeItem
-                nodeId={key}
-                label={`${propertyUtils.getDisplayName(key, defs)}`}
-              >
-                {currentSetting.map((item, index) => {
-                  return (
-                    <TreeItem key={index} nodeId={String(index)} label="Object">
-                      {Object.keys(item)
-                        .filter(key => key !== 'group')
-                        .map(objectKey => {
-                          return (
-                            <TreeItem
-                              nodeId={checkValue(item[objectKey])}
-                              key={objectKey}
-                              label={`${objectKey} : ${checkValue(
-                                item[objectKey],
-                              )}`}
-                            />
-                          );
-                        })}
-                    </TreeItem>
-                  );
-                })}
-              </TreeItem>
-            </TreeView>
-          </div>
-        );
-      }
-    } else {
-      // Rendering common field
-      // need to do a conversion here, the value could be number
-      const value = String(currentSetting);
-      const { documentation } = settings.settingDefinitions.find(
-        def => def.key === key,
-      );
-      const displayValue = value ? value : '';
-
-      // If the value is truncated, then users won't able to see the whole value
-      // therefore, we're using a tooltip here to display the full value
-      return (
-        <PropertyField
-          key={key}
-          label={propertyUtils.getDisplayName(key, defs)}
-          value={displayValue}
-          documentation={documentation}
-        />
-      );
+          });
+        return propertyUtils.defaultField({
+          currentSetting: objectArray,
+          settings,
+          key,
+          defs,
+        });
+      case defValueType.table:
+        return propertyUtils.objectKeys(key, defs, currentSetting);
+      case defValueType.password:
+        // Don't display the real password
+        return propertyUtils.defaultField({
+          currentSetting: '*'.repeat(9),
+          settings,
+          key,
+          defs,
+        });
+      default:
+        return propertyUtils.defaultField({
+          currentSetting,
+          settings,
+          key,
+          defs,
+        });
     }
   };
   const { tasksStatus = [] } = settings;

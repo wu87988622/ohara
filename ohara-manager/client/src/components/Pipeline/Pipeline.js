@@ -47,7 +47,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     workspaces,
     currentWorkspace,
     currentPipeline,
-    currentWorker,
   } = context.useWorkspace();
   const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
 
@@ -101,7 +100,6 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   const { updateCells, getUpdatedCells } = pipelineUtils.pipeline();
 
-  const currentStreamRef = React.useRef(null);
   const isInitialized = React.useRef(false);
   const forceDeleteList = React.useRef({});
   const [isOpen, setIsOpen] = React.useState(false);
@@ -115,10 +113,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     setIsOpen(false);
     forceDeleteList.current = {};
   };
-
-  useEffect(() => {
-    currentStreamRef.current = streams;
-  }, [streams]);
 
   const clean = (cells, paperApi, onlyRemoveLink = false) => {
     Object.keys(cells).forEach(key => {
@@ -203,11 +197,13 @@ const Pipeline = React.forwardRef((props, ref) => {
         timer = setInterval(async () => {
           const res = await fetchPipeline(currentPipeline.name);
           if (isPaperApiReady) {
-            const metrics = _.get(res, 'data[0].objects', []).filter(
+            const objects = _.get(res, 'data[0].objects', []);
+            const metrics = objects.filter(
               object => object.kind !== KIND.topic,
             );
+            // Topic metrics are not displayed in Paper.
             paperApiRef.current.updateMetrics(metrics);
-            cellsMetricsRef.current = metrics;
+            cellsMetricsRef.current = objects;
           }
         }, 5000);
       }
@@ -424,27 +420,26 @@ const Pipeline = React.forwardRef((props, ref) => {
                         }
                       }}
                       onCellConfig={(cellData, paperApi) => {
-                        const { displayName, className, kind, name } = cellData;
+                        const { displayName, kind, name } = cellData;
                         let targetCell;
                         switch (kind) {
                           case KIND.source:
                           case KIND.sink:
-                            const { classInfos } = currentWorker;
-                            targetCell = classInfos.filter(
-                              classInfo => classInfo.className === className,
+                            targetCell = connectors.find(
+                              connector => connector.name === name,
                             );
                             break;
                           case KIND.stream:
-                            targetCell = currentStreamRef.current.find(
+                            targetCell = streams.find(
                               stream => stream.name === name,
-                            ).classInfos;
+                            );
                             break;
                           default:
                             break;
                         }
                         openPropertyDialog({
                           title: `Edit the property of ${displayName} ${kind} connector`,
-                          classInfo: targetCell[0],
+                          classInfo: targetCell,
                           cellData,
                           paperApi,
                         });
