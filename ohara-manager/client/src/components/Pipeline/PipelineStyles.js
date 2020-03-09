@@ -21,7 +21,7 @@ export const PaperWrapper = styled.div`
   position: relative;
 
   /* Subtract the height of Toolbar  */
-  height: calc(100vh - 72px);
+  height: calc(100% - 72px);
 `;
 
 export const StyledSplitPane = styled(SplitPane)(
