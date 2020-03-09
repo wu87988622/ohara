@@ -47,6 +47,7 @@ const topic = () => {
     });
     if (!res) {
       paperApi.removeElement(id);
+      return;
     }
     if (!res.error) {
       const state = util.getCellState(res);
