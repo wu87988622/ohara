@@ -145,6 +145,8 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('blank:pointermove', event => {
+      // Prevent this event from interfering with Toolbox's drag and drop event
+      // We will re-enable it in `pointerup` event
       $('.toolbox').css('pointer-events', 'none');
       if (dragStartPosition) {
         paper.translate(
