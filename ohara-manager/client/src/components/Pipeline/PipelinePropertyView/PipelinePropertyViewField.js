@@ -24,13 +24,20 @@ import { Tooltip } from 'components/common/Tooltip';
 import { FieldWrapper } from './PipelinePropertyViewFieldStyles';
 
 const PipelinePropertyViewField = props => {
-  const { label, value, slot = null, documentation = '', ...rest } = props;
+  const {
+    label,
+    value,
+    slot = null,
+    documentation = '',
+    isPort,
+    ...rest
+  } = props;
 
   const hasDocs = documentation.length > 0;
 
   return (
     <FieldWrapper {...rest}>
-      <Field label={label} value={value} />
+      <Field label={label} value={value} isPort={isPort} />
       {slot}
 
       {hasDocs && (
@@ -53,16 +60,17 @@ PipelinePropertyViewField.propTypes = {
   ]).isRequired,
   slot: PropTypes.node,
   documentation: PropTypes.string,
+  isPort: PropTypes.bool,
 };
 
-function Field({ label, value }) {
+function Field({ label, value, isPort }) {
   return (
     <div className="field">
       <Typography variant="body2" className="field-label" component="span">
         {label}
       </Typography>
       <Typography variant="body2" className="field-value" component="span">
-        {isNaN(Number(value)) ? (
+        {isPort || isNaN(Number(value)) ? (
           value
         ) : (
           <NumberFormat
@@ -83,6 +91,7 @@ Field.propTypes = {
     PropTypes.number,
     PropTypes.object,
   ]).isRequired,
+  isPort: PropTypes.bool,
 };
 
 export default PipelinePropertyViewField;
