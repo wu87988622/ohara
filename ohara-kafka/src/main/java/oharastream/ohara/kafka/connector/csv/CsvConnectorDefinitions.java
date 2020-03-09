@@ -108,6 +108,19 @@ public final class CsvConnectorDefinitions {
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
+  public static final String FILE_CACHE_SIZE_KEY = "listfilequeue.number";
+  public static final int FILE_CACHE_SIZE_DEFAULT = 4096;
+  public static final SettingDef FILE_CACHE_SIZE_DEFINITION =
+      SettingDef.builder()
+          .displayName("Size of file cache")
+          .documentation(
+              "The files listed from remote server are cached in the connector "
+                  + " so as to reduce the count of sending expensive list operation.")
+          .key(FILE_CACHE_SIZE_KEY)
+          .positiveNumber(FILE_CACHE_SIZE_DEFAULT)
+          .orderInGroup(COUNTER.getAndIncrement())
+          .build();
+
   public static final String TASK_TOTAL_KEY = "task.total";
   public static final String TASK_HASH_KEY = "task.hash";
 

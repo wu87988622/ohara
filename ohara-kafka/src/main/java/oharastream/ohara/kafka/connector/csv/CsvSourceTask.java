@@ -20,6 +20,9 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.kafka.connector.RowSourceRecord;
@@ -41,6 +44,8 @@ public abstract class CsvSourceTask extends RowSourceTask {
   private CsvSourceConfig config;
   private DataReader dataReader;
   private FileSystem fs;
+  private int fileNameCacheCapacity;
+  private BlockingQueue<String> fileNameCache;
 
   /**
    * Return the file system for this connector
@@ -55,21 +60,37 @@ public abstract class CsvSourceTask extends RowSourceTask {
     fs = fileSystem(setting);
     config = CsvSourceConfig.of(setting);
     dataReader = CsvDataReader.of(fs, config, rowContext);
+    fileNameCacheCapacity = config.fileCacheSize();
+    fileNameCache = new ArrayBlockingQueue<String>(fileNameCacheCapacity);
   }
 
   @Override
   public final List<RowSourceRecord> pollRecords() {
-    Iterator<String> fileNames = fs.listFileNames(config.inputFolder());
-    while (fileNames.hasNext()) {
-      String fileName = fileNames.next();
-      String path = Paths.get(config.inputFolder(), fileName).toString();
-      // we skip the folder
-      if (fs.fileType(path) == FileType.FILE
-          &&
-          // Avoid more than one Task processing the same file
-          fileName.hashCode() % config.total() == config.hash()) return dataReader.read(path);
+    if (fileNameCache.isEmpty()) {
+      Iterator<String> fileNames = fs.listFileNames(config.inputFolder());
+      while (fileNames.hasNext()) {
+        if (fileNameCacheCapacity <= fileNameCache.size()) break;
+        else fileNameCache.offer(fileNames.next());
+      }
     }
-    return Collections.emptyList();
+
+    try {
+      String fileName = fileNameCache.poll(5, TimeUnit.SECONDS);
+      if (fileName != null) {
+        String path = Paths.get(config.inputFolder(), fileName).toString();
+
+        // we skip the folder
+        if (fs.fileType(path) == FileType.FILE
+            &&
+            // Avoid more than one Task processing the same file
+            fileName.hashCode() % config.total() == config.hash()) {
+          return dataReader.read(path);
+        }
+      }
+      return Collections.emptyList();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -78,7 +99,12 @@ public abstract class CsvSourceTask extends RowSourceTask {
   }
 
   @VisibleForTesting
-  public DataReader getDataReader() {
+  int fileNameCacheSize() {
+    return fileNameCache.size();
+  }
+
+  @VisibleForTesting
+  DataReader dataReader() {
     return dataReader;
   }
 }
