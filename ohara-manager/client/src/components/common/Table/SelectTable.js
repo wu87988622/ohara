@@ -88,6 +88,7 @@ const SelectTable = props => {
   const {
     rows,
     blockedRows,
+    unavailableRows,
     headCells,
     title,
     hasSelect = false,
@@ -104,7 +105,7 @@ const SelectTable = props => {
   };
 
   const handleClick = row => {
-    if (!hasSelect || isItemDisabled(row)) return;
+    if (!hasSelect || isItemDisabled(row) || isItemIndeterminate(row)) return;
 
     const selectedIndex = selected
       .map(select => select[Object.keys(select)[0]])
@@ -138,6 +139,15 @@ const SelectTable = props => {
     );
   };
 
+  const isItemIndeterminate = row => {
+    return (
+      !isEmpty(unavailableRows) &&
+      unavailableRows
+        .map(unavailableRow => unavailableRow.name)
+        .includes(row.name)
+    );
+  };
+
   return (
     <div>
       <Paper>
@@ -168,14 +178,21 @@ const SelectTable = props => {
                     aria-checked={isItemSelected}
                     tabIndex={-1}
                     key={row[keys[0]]}
-                    selected={isItemSelected}
+                    selected={
+                      isItemSelected ||
+                      isItemDisabled(row) ||
+                      isItemIndeterminate(row)
+                    }
                   >
                     {hasSelect && (
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={isItemSelected}
                           color="primary"
-                          disabled={isItemDisabled(row)}
+                          disabled={
+                            isItemDisabled(row) || isItemIndeterminate(row)
+                          }
+                          indeterminate={isItemIndeterminate(row)}
                         />
                       </TableCell>
                     )}
@@ -219,6 +236,7 @@ SelectTableToolbar.propTypes = {
 SelectTable.propTypes = {
   rows: PropTypes.array.isRequired,
   blockedRows: PropTypes.array,
+  unavailableRows: PropTypes.array,
   headCells: PropTypes.array.isRequired,
   title: PropTypes.string.isRequired,
   hasSelect: PropTypes.bool,
