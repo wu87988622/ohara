@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import Snackbar from '@material-ui/core/Snackbar';
 import IconButton from '@material-ui/core/IconButton';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
-import Slide from '@material-ui/core/Slide';
+import Fade from '@material-ui/core/Fade';
 import CloseIcon from '@material-ui/icons/Close';
 
 const SnackbarContext = createContext();
@@ -54,13 +54,13 @@ const SnackbarProvider = ({ children }) => {
     <SnackbarContext.Provider value={dispatch}>
       <Snackbar
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+          vertical: 'top',
+          horizontal: 'right',
         }}
         open={state.isOpen}
         autoHideDuration={5000}
         onClose={handleClose}
-        TransitionComponent={Slide}
+        TransitionComponent={Fade}
       >
         <SnackbarContent
           message={state.message}
