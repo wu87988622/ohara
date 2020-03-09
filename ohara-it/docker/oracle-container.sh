@@ -52,6 +52,7 @@ then
   echo "--password           Set oracle database password"
   echo "--port               Set connection port for client"
   echo "--sid                Set connection sid. example: --sid xe"
+  echo "--ssh_user           Set user name to login remote ssh server"
   echo "--host               Set host name to remote host the oracle database container"
   echo "--volume             Expose the container data folder to the host path. You can only use the named volume"
   exit 1
@@ -60,8 +61,8 @@ fi
 sid="xe"
 port="1521"
 containerName="oracle-benchmark-test"
-
-ARGUMENT_LIST=("user" "password" "port" "sid" "host" "volume")
+ssh_user=$USER
+ARGUMENT_LIST=("user" "password" "port" "sid" "ssh_user" "host" "volume")
 
 opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
@@ -87,6 +88,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --sid)
       sid=$2
+      shift 2
+      ;;
+    --ssh_user)
+      ssh_user=$2
       shift 2
       ;;
     --host)
@@ -129,17 +134,17 @@ fi
 if [[ "${stop}" == "true" ]];
 then
   echo "Stoping oracle database container"
-  ssh ohara@${host} docker rm -f ${containerName}
+  ssh $ssh_user@${host} docker rm -f ${containerName}
 fi
 
 if [[ "${start}" == "true" ]];
 then
   echo "Starting oracle database container"
   echo "Port is ${port}"
-  ssh ohara@${host} docker run -d ${volumeArg} -i --name ${containerName} --restart=always -p ${port}:1521 --env DB_SID=${sid} store/oracle/database-enterprise:12.2.0.1
+  ssh $ssh_user@${host} docker run -d ${volumeArg} -i --name ${containerName} --restart=always -p ${port}:1521 --env DB_SID=${sid} store/oracle/database-enterprise:12.2.0.1
 
   timeoutCount=0
-  while [[ -z $(ssh ohara@${host} docker logs ${containerName}|awk '/Completed:     alter pluggable database all save state/{print}') ]]
+  while [[ -z $(ssh $ssh_user@${host} docker logs ${containerName}|awk '/Completed:     alter pluggable database all save state/{print}') ]]
   do
     sleep 1m # Sleep the 1 minute
     ((timeoutCount+=1))
@@ -159,7 +164,7 @@ then
     sleep 1m
     ((timeoutCount+=1))
 
-    ssh ohara@${host} << EOF
+    ssh $ssh_user@${host} << EOF
     docker exec -i ${containerName} bash -c "source /home/oracle/.bashrc;echo -e 'alter session set \"_ORACLE_SCRIPT\"=true;\ncreate user ${user} identified by ${password};\nGRANT CONNECT, RESOURCE, DBA TO ${user};'|sqlplus sys/Oradoc_db1@${sid} as sysdba"
 EOF
 # EOF key word can't indentation in if statement
