@@ -64,6 +64,7 @@ const EditWorkspace = () => {
         title={`Workspace ${currentWorkspace.name}`}
         open={isEditWorkspaceDialogOpen}
         handleClose={closeEditWorkspaceDialog}
+        testId="edit-workspace-dialog"
       >
         <Wrapper>
           <Grid

@@ -97,7 +97,11 @@ function TopicList() {
           />
         </FormGroup>
       </Grid>
-      <Table headers={tableHeaders} title="All Topics">
+      <Table
+        testId="workspace-settings-topics-table"
+        headers={tableHeaders}
+        title="All Topics"
+      >
         {map(filteredTopics, topic => {
           return (
             <TableRow key={get(topic, 'name')}>

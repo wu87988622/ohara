@@ -30,22 +30,25 @@ import Divider from '@material-ui/core/Divider';
 import Link from '@material-ui/core/Link';
 import NumberFormat from 'react-number-format';
 
-import { useViewTopicDialog, useTopicState, useTopicActions } from 'context';
+import TopicChip from './TopicChip';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
-import TopicChip from './TopicChip';
 import { Wrapper } from './ViewTopicDialogStyles';
+import * as context from 'context';
 
 const ViewTopicDialog = () => {
   const {
     isOpen: isDialogOpen,
     close: closeDialog,
     data: topic,
-  } = useViewTopicDialog();
+  } = context.useViewTopicDialog();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const { isFetching: isDeleting } = useTopicState();
-  const { deleteTopic } = useTopicActions();
+  const { isFetching: isDeleting } = context.useTopicState();
+  const { deleteTopic } = context.useTopicActions();
+  const { data: pipelines } = context.usePipelineState();
   const eventLog = useEventLog();
+
+  if (!topic) return null;
 
   const handleDelete = async () => {
     const name = get(topic, 'name');
@@ -59,8 +62,10 @@ const ViewTopicDialog = () => {
   };
 
   const displayName = get(topic, 'displayName');
-  const usedByPipelines = []; // TODO: fetch pipelines
   const isShared = get(topic, 'isShared');
+  const usedByPipelines = pipelines.filter(pipeline =>
+    pipeline.objects.find(object => object.name === topic.name),
+  );
 
   return (
     <FullScreenDialog
@@ -68,6 +73,7 @@ const ViewTopicDialog = () => {
       open={isDialogOpen}
       handleClose={closeDialog}
       loading={isDeleting}
+      testId="view-topic-detail-dialog"
     >
       <Wrapper>
         <Grid container justify="space-between" alignItems="flex-end">
@@ -83,7 +89,7 @@ const ViewTopicDialog = () => {
             <Button
               variant="outlined"
               color="secondary"
-              disabled={isShared && !isEmpty(usedByPipelines)}
+              disabled={!isEmpty(usedByPipelines)}
               onClick={() => setIsConfirmOpen(true)}
             >
               Delete
@@ -95,6 +101,7 @@ const ViewTopicDialog = () => {
               handleClose={() => setIsConfirmOpen(false)}
               handleConfirm={handleDelete}
               isWorking={isDeleting}
+              testId="view-topic-detail-delete-dialog"
             />
           </Grid>
         </Grid>
@@ -137,7 +144,7 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={8}>
+          <Grid item xs={4}>
             <Card>
               <CardHeader title="Metrics" />
               <Divider />
@@ -171,32 +178,32 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          {/* Completed in the next version, so hide it first */}
-          {false && (
-            <Grid item xs={4}>
-              <Card>
-                <CardHeader title="Used by pipelines" />
-                <Divider />
-                <CardContent>
-                  <Table>
-                    <TableBody>
-                      {usedByPipelines.map(pipeline => {
-                        const pipelineName = get(pipeline, 'name');
-                        return (
-                          <TableRow>
-                            <TableCell>{pipelineName}</TableCell>
+          <Grid item xs={4}>
+            <Card>
+              <CardHeader title="Used by pipelines" />
+              <Divider />
+              <CardContent>
+                <Table>
+                  <TableBody>
+                    {usedByPipelines.map(pipeline => {
+                      const pipelineName = get(pipeline, 'name');
+                      return (
+                        <TableRow key={pipelineName}>
+                          <TableCell>{pipelineName}</TableCell>
+                          {/* Disabled in 0.9 as the feature is not yet done */}
+                          {false && (
                             <TableCell align="right">
                               <Link>Open</Link>
                             </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
       </Wrapper>
     </FullScreenDialog>
