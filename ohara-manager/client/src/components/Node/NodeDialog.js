@@ -73,7 +73,14 @@ const NodeDialog = () => {
       const found = node.resources.find(
         resource => resource.name === header.id,
       );
-      return found ? found : { name: header };
+      return found
+        ? found
+        : {
+            name: header.id,
+            used: null,
+            value: null,
+            unit: null,
+          };
     });
     return allResources.reduce(
       (obj, item) =>

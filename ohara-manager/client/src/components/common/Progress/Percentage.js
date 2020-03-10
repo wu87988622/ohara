@@ -25,7 +25,10 @@ const Percentage = (values, key) => {
   if (!isString(values)) {
     return values;
   }
-  if (values.indexOf(key) === -1) {
+  if (values.indexOf(key) < 0) {
+    if (values.indexOf('null') > -1) {
+      return 'NaN';
+    }
     return values;
   }
   const splitValues = values.split(key);
