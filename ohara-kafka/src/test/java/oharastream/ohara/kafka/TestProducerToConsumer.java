@@ -155,7 +155,7 @@ public class TestProducerToConsumer extends WithBroker {
             .topicName(topicName)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
-      List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
+      List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 100);
       Assert.assertEquals(100, records.size());
 
       Assert.assertEquals(0, records.get(0).offset());
