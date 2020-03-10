@@ -19,7 +19,7 @@ import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import Link from '@material-ui/core/Link';
 import styled from 'styled-components';
-import { get, round, isEmpty, flatMap, filter, noop } from 'lodash';
+import { get, round, isEmpty, flatMap, filter, noop, capitalize } from 'lodash';
 
 import { SelectTable } from 'components/common/Table';
 import { FullScreenDialog } from 'components/common/Dialog';
@@ -55,6 +55,7 @@ const NodeDialog = () => {
     data,
     setData,
   } = useListNodeDialog();
+
   const hasSelect = get(data, 'hasSelect', false);
   const hasSave = get(data, 'hasSave', false);
   const selected = get(data, 'selected', []);
@@ -118,6 +119,10 @@ const NodeDialog = () => {
         label: 'Services',
       },
       {
+        id: 'state',
+        label: 'State',
+      },
+      {
         id: 'actions',
         label: 'Actions',
       },
@@ -162,6 +167,7 @@ const NodeDialog = () => {
               </Link>
             </Typography>
           ),
+          state: capitalize(node.state),
           actions: viewButton(node),
         };
       });
@@ -211,6 +217,7 @@ const NodeDialog = () => {
           selected={selected}
           setSelected={rows => setData({ ...data, selected: rows })}
           blockedRows={blockedRows}
+          unavailableRows={rows.filter(row => row.state === 'UNAVAILABLE')}
         />
 
         <AddNodeDialog

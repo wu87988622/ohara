@@ -180,7 +180,7 @@ describe('NodeDialog of AppBar', () => {
       .click();
 
     // actual host should be alive
-    cy.findByText(/^state$/i)
+    cy.findAllByText(/^state$/i)
       .siblings('td')
       .contains('Alive')
       .should('exist');
