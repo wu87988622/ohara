@@ -50,6 +50,7 @@ then
   echo "--user               Set FTP server user name"
   echo "--password           Set FTP server password"
   echo "--port               Set FTP server port"
+  echo "--ssh_user           Set user name to login remote ssh server"
   echo "--host               Set host name to remote host the FTP server container"
   echo "--ip                 Set ftp server ip for passive mode"
   echo "--dataPortRange      Set ftp server data port range. example: --dataPortRange 30000-30004"
@@ -59,8 +60,8 @@ fi
 
 port="21"
 containerName="ftp-benchmark-test"
-
-ARGUMENT_LIST=("user" "password" "port" "host" "ip" "dataPortRange" "volume")
+ssh_user=$USER
+ARGUMENT_LIST=("user" "password" "port" "ssh_user" "host" "ip" "dataPortRange" "volume")
 
 opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
@@ -82,6 +83,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --port)
       port=$2
+      shift 2
+      ;;
+    --ssh_user)
+      ssh_user=$2
       shift 2
       ;;
     --host)
@@ -145,13 +150,13 @@ ftpDockerImageName="oharastream/ohara:ftp"
 if [[ "${start}" == "true" ]];
 then
   echo "Pull FTP server docker image"
-  ssh ohara@${host} docker pull ${ftpDockerImageName}
+  ssh $ssh_user@${host} docker pull ${ftpDockerImageName}
   echo "Starting FTP server container. user name is ${user}"
-  ssh ohara@${host} docker run -d ${volumeArg} --name ${containerName} --env FTP_USER_NAME=${user} --env FTP_USER_PASS=${password} --env FORCE_PASSIVE_IP=${ip} --env PASSIVE_PORT_RANGE=${dataPortRnage} -p ${port}:2121 -p ${dataPortRnage}:${dataPortRnage} ${ftpDockerImageName}
+  ssh $ssh_user@${host} docker run -d ${volumeArg} --name ${containerName} --env FTP_USER_NAME=${user} --env FTP_USER_PASS=${password} --env FORCE_PASSIVE_IP=${ip} --env PASSIVE_PORT_RANGE=${dataPortRnage} -p ${port}:2121 -p ${dataPortRnage}:${dataPortRnage} ${ftpDockerImageName}
 fi
 
 if [[ "${stop}" == "true" ]];
 then
   echo "Stoping FTP server container"
-  ssh ohara@${host} docker rm -f ${containerName}
+  ssh $ssh_user@${host} docker rm -f ${containerName}
 fi

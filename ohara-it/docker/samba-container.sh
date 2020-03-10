@@ -52,14 +52,15 @@ then
   echo "--password           Set Samba server password (required argument)"
   echo "--sport              Set Samba server ssn port (required argument)"
   echo "--dport              Set Samba server ds port (required argument)"
+  echo "--ssh_user           Set user name to login remote ssh server"
   echo "--host               Set host name to remote host the Samba server container (required argument)"
   echo "--volume             Expose the container folder to the host path"
   exit 1
 fi
 
 containerName="samba-benchmark-test"
-
-ARGUMENT_LIST=("user" "password" "sport" "dport" "host" "volume")
+ssh_user=$USER
+ARGUMENT_LIST=("user" "password" "sport" "dport" "ssh_user" "host" "volume")
 
 opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
@@ -85,6 +86,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dport)
       dport=$2
+      shift 2
+      ;;
+    --ssh_user)
+      ssh_user=$2
       shift 2
       ;;
     --host)
@@ -136,17 +141,22 @@ then
   exit 1
 fi
 
+if [[ ! -z ${ssh_user} ]];
+then
+  ssh_user=$USER
+fi
+
 sambaDockerImageName="oharastream/ohara:samba"
 if [[ "${start}" == "true" ]];
 then
   echo "Pull Samba server docker image"
-  ssh ohara@${host} docker pull ${sambaDockerImageName}
+  ssh $ssh_user@${host} docker pull ${sambaDockerImageName}
   echo "Starting Samba server container. user name is ${user}"
-  ssh ohara@${host} docker run -d ${volumeArg} --name ${containerName} --env SAMBA_USER_NAME=${user} --env SAMBA_USER_PASS=${password} -p ${sport}:139 -p ${dport}:445 ${sambaDockerImageName}
+  ssh $ssh_user@${host} docker run -d ${volumeArg} --name ${containerName} --env SAMBA_USER_NAME=${user} --env SAMBA_USER_PASS=${password} -p ${sport}:139 -p ${dport}:445 ${sambaDockerImageName}
 fi
 
 if [[ "${stop}" == "true" ]];
 then
   echo "Stoping Samba server container"
-  ssh ohara@${host} docker rm -f ${containerName}
+  ssh $ssh_user@${host} docker rm -f ${containerName}
 fi
