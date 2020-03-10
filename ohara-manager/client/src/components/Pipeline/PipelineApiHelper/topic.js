@@ -45,7 +45,10 @@ const topic = () => {
         pipelineName: currentPipeline.name,
       },
     });
-
+    if (!res) {
+      paperApi.removeElement(id);
+      return;
+    }
     if (!res.error) {
       const state = util.getCellState(res);
       paperApi.updateElement(id, {
