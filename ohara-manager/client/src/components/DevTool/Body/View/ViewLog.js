@@ -22,17 +22,17 @@ import { VirtualizedList } from 'components/common/List';
 import { useCurrentLogs } from 'components/DevTool/hooks';
 import { StyledLogDiv, StyledContent } from './ViewStyles';
 
+const rowRenderer = ({ rowData: log, style }) => {
+  return <StyledContent style={style}>{log}</StyledContent>;
+};
+rowRenderer.propTypes = {
+  rowData: PropTypes.object.isRequired,
+  style: PropTypes.object.isRequired,
+};
+
 const ViewLog = () => {
   const { isFetching } = context.useLogState();
   const currentLog = useCurrentLogs();
-
-  const rowRenderer = ({ rowData: log, style }) => {
-    return <StyledContent style={style}>{log}</StyledContent>;
-  };
-  rowRenderer.propTypes = {
-    rowData: PropTypes.object.isRequired,
-    style: PropTypes.object.isRequired,
-  };
 
   return (
     <StyledLogDiv data-testid="view-log-list">
