@@ -54,48 +54,56 @@ const ViewTopic = () => {
     const headers = getHeaders(topicData);
     // we skip the detail view header
     headers.shift();
-    return topicData.map((message, rowIdx) => (
-      <StyledTableRow key={rowIdx}>
-        {message.value ? (
-          <>
-            <StyledTableCell key={rowIdx + '_view'}>
-              <VisibilityIcon
-                data-testid={`detail-view-icon-${rowIdx}`}
-                onClick={() => {
-                  setViewTopicMessage(message);
-                }}
-              />
-            </StyledTableCell>
-            {headers.map((header, headerIdx) =>
-              message.value[header] ? (
-                <StyledTableCell key={rowIdx + '_' + headerIdx}>
-                  {message.value[header]}
-                </StyledTableCell>
-              ) : (
-                <StyledTableCell key={rowIdx + '_' + headerIdx} />
-              ),
-            )}
-          </>
-        ) : (
-          <>
-            <StyledTableErrorCell key={rowIdx + '_view'}>
-              <VisibilityIcon
-                onClick={() => {
-                  setViewTopicMessage(message);
-                }}
-              />
-            </StyledTableErrorCell>
-            <StyledTableErrorCell
-              className="error-message"
-              colSpan={headers.length}
-              key={rowIdx + '_error'}
-            >
-              {message.error}
-            </StyledTableErrorCell>
-          </>
-        )}
-      </StyledTableRow>
-    ));
+
+    const lastItem = headers.length - 1;
+    return topicData.map((message, rowIdx) => {
+      return (
+        <StyledTableRow key={rowIdx}>
+          {message.value ? (
+            <>
+              <StyledTableCell key={rowIdx + '_view'}>
+                <VisibilityIcon
+                  data-testid={`detail-view-icon-${rowIdx}`}
+                  onClick={() => {
+                    setViewTopicMessage(message);
+                  }}
+                />
+              </StyledTableCell>
+              {headers.map((header, headerIdx) => {
+                const align = headerIdx === lastItem ? 'right' : 'left';
+                return message.value[header] ? (
+                  <StyledTableCell align={align} key={rowIdx + '_' + headerIdx}>
+                    {message.value[header]}
+                  </StyledTableCell>
+                ) : (
+                  <StyledTableCell
+                    align={align}
+                    key={rowIdx + '_' + headerIdx}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <StyledTableErrorCell key={rowIdx + '_view'}>
+                <VisibilityIcon
+                  onClick={() => {
+                    setViewTopicMessage(message);
+                  }}
+                />
+              </StyledTableErrorCell>
+              <StyledTableErrorCell
+                className="error-message"
+                colSpan={headers.length}
+                key={rowIdx + '_error'}
+              >
+                {message.error}
+              </StyledTableErrorCell>
+            </>
+          )}
+        </StyledTableRow>
+      );
+    });
   };
 
   return (
