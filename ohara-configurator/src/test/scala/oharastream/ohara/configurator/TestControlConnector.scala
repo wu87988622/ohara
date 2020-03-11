@@ -17,12 +17,15 @@
 package oharastream.ohara.configurator
 
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.connector.ftp.FtpSource
+import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
+import spray.json.{JsBoolean, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -247,6 +250,178 @@ class TestControlConnector extends WithBrokerWorker {
     await(() => result(connectorApi.get(sink.key)).tasksStatus.nonEmpty)
     result(connectorApi.get(sink.key)).nodeName.get == CommonUtils.hostname()
     result(connectorApi.get(sink.key)).tasksStatus.foreach(_.nodeName shouldBe CommonUtils.hostname())
+  }
+  @Test
+  def failToRun(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+    result(topicApi.start(topic.key))
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[FallibleSink].getName)
+        .topicKey(topic.key)
+        .numberOfTasks(1)
+        .setting(FallibleSink.FAILURE_FLAG, JsBoolean(true))
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    )
+
+    result(connectorApi.start(connector.key))
+
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
+
+    result(connectorApi.get(connector.key)).state.get shouldBe State.FAILED
+    result(connectorApi.get(connector.key)).error should not be None
+
+    // test state in pipeline
+    val pipeline = result(
+      PipelineApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .name(CommonUtils.randomString(10))
+        .endpoints(
+          Seq(topic, connector)
+        )
+        .create()
+    )
+
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
+      .filter(_.key == connector.key)
+      .head
+      .state
+      .get shouldBe State.FAILED.name
+
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
+      .filter(_.key == connector.key)
+      .head
+      .error
+      .isDefined shouldBe true
+  }
+
+  @Test
+  def succeedToRun(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+    result(topicApi.start(topic.key))
+
+    val connector = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[FallibleSink].getName)
+        .topicKey(topic.key)
+        .numberOfTasks(1)
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    )
+
+    result(connectorApi.start(connector.key))
+
+    CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
+
+    result(connectorApi.get(connector.key)).state.get shouldBe State.RUNNING
+    result(connectorApi.get(connector.key)).error shouldBe None
+
+    // test state in pipeline
+    val pipeline = result(
+      PipelineApi.access
+        .hostname(configurator.hostname)
+        .port(configurator.port)
+        .request
+        .name(CommonUtils.randomString(10))
+        .endpoints(
+          Seq(topic, connector)
+        )
+        .create()
+    )
+
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
+      .filter(_.key == connector.key)
+      .head
+      .state
+      .get shouldBe State.RUNNING.name
+
+    result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).get(pipeline.key)).objects
+      .filter(_.key == connector.key)
+      .head
+      .error
+      .isEmpty shouldBe true
+  }
+
+  @Test
+  def testFtpSourceWithIllegalArguments(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+    result(topicApi.start(topic.key))
+
+    val source = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[FtpSource].getName)
+        .numberOfTasks(1)
+        .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
+        .setting(oharastream.ohara.connector.ftp.FTP_HOSTNAME_KEY, JsString(CommonUtils.randomString()))
+        .setting(oharastream.ohara.connector.ftp.FTP_PORT_KEY, JsNumber(CommonUtils.availablePort()))
+        .setting(oharastream.ohara.connector.ftp.FTP_USER_NAME_KEY, JsString(CommonUtils.randomString()))
+        .setting(oharastream.ohara.connector.ftp.FTP_PASSWORD_KEY, JsString(CommonUtils.randomString()))
+        .setting(CsvConnectorDefinitions.INPUT_FOLDER_KEY, JsString(CommonUtils.randomString()))
+        .create()
+    )
+
+    source.state shouldBe None
+
+    result(connectorApi.start(source.key))
+    await(() => result(connectorApi.get(source.key)).state.contains(State.FAILED))
+    await(() => result(connectorApi.get(source.key)).error.nonEmpty)
+    result(connectorApi.get(source.key)).tasksStatus.isEmpty
+  }
+  @Test
+  def testOnlyTaskFails(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+    result(topicApi.start(topic.key))
+    val source = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[FallibleSink].getName)
+        .topicKey(topic.key)
+        .numberOfTasks(1)
+        .setting(FallibleSinkTask.FAILURE_FLAG, JsBoolean(true))
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    )
+
+    result(connectorApi.start(source.key))
+    await(() => result(connectorApi.get(source.key)).state.contains(State.RUNNING))
+    await(() => result(connectorApi.get(source.key)).error.isEmpty)
+    await(() => result(connectorApi.get(source.key)).tasksStatus.nonEmpty)
+    result(connectorApi.get(source.key)).tasksStatus.foreach(_.state shouldBe State.FAILED)
   }
 
   @After

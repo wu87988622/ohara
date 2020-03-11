@@ -139,7 +139,7 @@ private[configurator] object ConnectorRoute {
           LOG.debug(s"failed to fetch stats for $connectorInfo", e)
           connectorInfo.copy(
             state = None,
-            error = None,
+            error = Some(e.getMessage),
             nodeName = None,
             tasksStatus = Seq.empty,
             metrics = Metrics.EMPTY
