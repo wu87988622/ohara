@@ -30,8 +30,8 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
-import { useWorkspace } from 'context';
 import { Dialog } from 'components/common/Dialog';
+import * as hooks from 'hooks';
 import Wrapper from './AutofillSelectorStyles';
 
 const AutofillSelector = props => {
@@ -39,7 +39,7 @@ const AutofillSelector = props => {
   const [expanded, setExpanded] = React.useState(false);
   const [selected, setSelected] = React.useState(null);
 
-  const { currentWorkspace } = useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
 
   const handleChange = name => (_, isExpanded) => {

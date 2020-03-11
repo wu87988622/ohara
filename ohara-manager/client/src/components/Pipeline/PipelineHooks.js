@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import { useReducer, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
-
-import * as context from 'context';
+import { useReducer } from 'react';
 import { useLocalStorage } from 'utils/hooks';
 
 export const usePipelineState = () => {
@@ -98,72 +95,4 @@ export const usePipelineState = () => {
   };
 
   return useReducer(reducer, initialState);
-};
-
-export const useRedirect = () => {
-  const { workspaceName, pipelineName } = context.useApp();
-  const history = useHistory();
-
-  const { workspaces } = context.useWorkspace();
-  const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
-  const {
-    data: pipelines,
-    lastUpdated: isPipelineReady,
-  } = context.usePipelineState();
-
-  useEffect(() => {
-    if (!isWorkspaceReady) return;
-
-    const hasWorkspace = workspaces.length > 0;
-    const hasPipeline = pipelines.length > 0;
-    const hasCurrentWorkspace = workspaces.some(
-      workspace => workspace.name === workspaceName,
-    );
-    const hasCurrentPipeline = pipelines.some(
-      pipeline => pipeline.name === pipelineName,
-    );
-
-    // pipelines exist in current workspace and pipeline name in path
-    if (pipelineName && isPipelineReady) {
-      // the pipeline name in path not exist
-      if (!hasCurrentPipeline) {
-        // redirect to default workspace and pipeline
-        if (!hasCurrentWorkspace) {
-          const url = hasPipeline
-            ? `/${workspaces[0].name}/${pipelines[0].name}`
-            : `/${workspaces[0].name}`;
-          history.push(url);
-          // redirect to current workspace and default pipeline
-        } else {
-          const url = hasPipeline
-            ? `/${workspaceName}/${pipelines[0].name}`
-            : `/${workspaceName}`;
-          history.push(url);
-        }
-      } else {
-        history.push(`/${workspaceName}/${pipelineName}`);
-      }
-      // pipelines exist in current workspace but pipeline name not in path
-    } else if (isPipelineReady && hasWorkspace && hasPipeline) {
-      history.push(`/${workspaceName}/${pipelines[0].name}`);
-      // only workspace in the path
-    } else if (workspaceName) {
-      if (!hasCurrentWorkspace) {
-        const url = hasWorkspace ? `/${workspaces[0].name}` : '/';
-        history.push(url);
-      } else {
-        history.push(`/${workspaceName}`);
-      }
-    } else if (hasWorkspace) {
-      history.push(`/${workspaces[0].name}`);
-    }
-  }, [
-    history,
-    isPipelineReady,
-    isWorkspaceReady,
-    pipelineName,
-    pipelines,
-    workspaceName,
-    workspaces,
-  ]);
 };

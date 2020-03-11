@@ -120,7 +120,7 @@ const ViewNodeDialog = props => {
   const { data: brokers } = context.useBrokerState();
   const { data: workers } = context.useWorkerState();
   const { data: streams } = context.useStreamState();
-  const { workspaceName } = context.useWorkspace();
+  const { workspaceName } = context.useApp();
 
   const [services, setServices] = useState([]);
 

@@ -29,9 +29,8 @@ import {
   useEditWorkspaceDialog,
   useAddTopicDialog,
   useEditWorkspace,
-  useWorkspace,
 } from 'context';
-
+import * as hooks from 'hooks';
 import { AutofillList } from 'components/Autofill';
 import { Tabs as WorkspaceTabs } from '.';
 import { FileUpload } from './File';
@@ -48,7 +47,7 @@ const EditWorkspace = () => {
     setData: setEditWorkspaceDialogData,
   } = useEditWorkspaceDialog();
   const { open: openAddTopicDialog } = useAddTopicDialog();
-  const { currentWorkspace } = useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const { dirties } = useEditWorkspace();
 
   const handleChange = (event, newTab) => {

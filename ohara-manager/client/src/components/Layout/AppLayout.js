@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import SplitPane from 'react-split-pane';
 
 import AppBar from './AppBar';
@@ -24,12 +24,15 @@ import EventLog from 'components/EventLog';
 import * as context from 'context';
 import { DevToolDialog } from 'components/DevTool';
 import { Wrapper } from './AppLayoutStyles';
+import * as hooks from 'hooks';
 
 const AppLayout = () => {
   const { isOpen: isDevToolOpen } = context.useDevToolDialog();
   const { isOpen: isEventLogOpen } = context.useEventLogDialog();
 
-  const pipelineApiRef = React.useRef(null);
+  hooks.useRedirect();
+
+  const pipelineApiRef = useRef(null);
 
   return (
     <Wrapper>

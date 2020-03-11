@@ -17,6 +17,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { get, map } from 'lodash';
+import { useDispatch } from 'redux-react-hook';
 
 import Step from '@material-ui/core/Step';
 import Card from '@material-ui/core/Card';
@@ -47,14 +48,14 @@ import SelectCard from '../Card/SelectCard';
 import WorkspaceCard from '../Card/WorkspaceCard';
 
 import {
-  useWorkspaceActions,
-  useWorkspace,
+  useApp,
   useWorkerActions,
   useBrokerActions,
   useZookeeperActions,
   useNodeActions,
   useListNodeDialog,
 } from 'context';
+import * as hooks from 'hooks';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
@@ -62,6 +63,7 @@ import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { hashByGroupAndName } from 'utils/sha';
 import { useUniqueName } from './hooks';
 import * as generate from 'utils/generate';
+import * as actions from 'store/actions';
 
 const StyledPaper = styled(Paper)(
   ({ theme }) => css`
@@ -96,6 +98,8 @@ const StyledTableRow = styled(TableRow)(
 );
 
 const WorkspaceQuick = props => {
+  const dispatch = useDispatch();
+  const { workspaceGroup } = useApp();
   const [activeStep, setActiveStep] = useState(0);
   const [files, setFiles] = useState([]);
   const [progressOpen, setProgressOpen] = useState(false);
@@ -104,12 +108,11 @@ const WorkspaceQuick = props => {
   const [dialogData, setDialogData] = React.useState({});
   const selectedNodes = get(dialogData, 'selected', []);
 
-  const { createWorkspace } = useWorkspaceActions();
   const { createWorker } = useWorkerActions();
   const { createBroker } = useBrokerActions();
   const { createZookeeper } = useZookeeperActions();
   const { refreshNodes } = useNodeActions();
-  const { workspaces } = useWorkspace();
+  const workspaces = hooks.useAllWorkspaces();
   const defaultWorkspaceName = useUniqueName();
   const eventLog = useEventLog();
 
@@ -258,11 +261,6 @@ const WorkspaceQuick = props => {
     if (result.error) throw new Error(result.error);
   };
 
-  const createWs = async values => {
-    const result = await createWorkspace(values);
-    if (result.error) throw new Error(result.error);
-  };
-
   const createQuickWorkspace = async (values, form) => {
     const { workspaceName } = values;
     const nodeNames = selectedNodes.map(select => select.name);
@@ -292,10 +290,15 @@ const WorkspaceQuick = props => {
         ],
       });
       setProgressActiveStep(3);
-      await createWs({
-        name: workspaceName,
-        nodeNames,
-      });
+
+      dispatch(
+        actions.createWorkspace.trigger({
+          group: workspaceGroup,
+          name: workspaceName,
+          nodeNames,
+        }),
+      );
+
       // after workspace creation successful, we need to refresh the node list
       // in order to get the newest service information of node
       await refreshNodes();

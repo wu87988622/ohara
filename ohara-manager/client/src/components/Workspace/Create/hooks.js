@@ -17,10 +17,10 @@
 import { useMemo } from 'react';
 import { some } from 'lodash';
 
-import { useWorkspace } from 'context';
+import * as hooks from 'hooks';
 
 export const useUniqueName = (prefix = 'workspace') => {
-  const { workspaces = [] } = useWorkspace();
+  const workspaces = hooks.useAllWorkspaces();
   return useMemo(() => {
     for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
       const name = `${prefix}${postfix}`;

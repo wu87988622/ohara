@@ -33,6 +33,7 @@ import ToolboxSearch from './ToolboxSearch';
 import ToolboxUploadButton from './ToolboxUploadButton';
 import * as utils from './ToolboxUtils';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
@@ -47,11 +48,9 @@ const Toolbox = props => {
     pipelineDispatch,
   } = props;
 
-  const {
-    currentWorker,
-    currentWorkspace,
-    currentPipeline,
-  } = context.useWorkspace();
+  const { currentWorker } = context.useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
   const { createFile } = context.useFileActions();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();

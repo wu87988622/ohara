@@ -33,6 +33,7 @@ import { KIND } from 'const';
 import { usePrevious } from 'utils/hooks';
 import * as topicApi from 'api/topicApi';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { Dialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import { Wrapper } from './WorkspaceListStyles';
@@ -62,7 +63,8 @@ Statistic.propTypes = {
 function WorkspaceList() {
   const history = useHistory();
   const { isOpen, close } = context.useListWorkspacesDialog();
-  const { workspaces, workspaceName } = context.useWorkspace();
+  const workspaces = hooks.useAllWorkspaces();
+  const { workspaceName } = context.useApp();
   const { data: currentTopics } = context.useTopicState();
   const [topics, setTopics] = React.useState(null);
 

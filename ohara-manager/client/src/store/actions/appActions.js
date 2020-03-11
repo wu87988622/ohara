@@ -16,16 +16,4 @@
 
 import { createRoutine } from 'redux-routines';
 
-const fetchWorkspacesRoutine = createRoutine('FETCH_WORKSPACES');
-const createWorkspaceRoutine = createRoutine('CREATE_WORKSPACE');
-const updateWorkspaceRoutine = createRoutine('UPDATE_WORKSPACE');
-const stageWorkspaceRoutine = createRoutine('STAGE_WORKSPACE');
-const deleteWorkspaceRoutine = createRoutine('DELETE_WORKSPACE');
-
-export {
-  fetchWorkspacesRoutine,
-  createWorkspaceRoutine,
-  updateWorkspaceRoutine,
-  stageWorkspaceRoutine,
-  deleteWorkspaceRoutine,
-};
+export const initializeApp = createRoutine('INITIALIZE_APP');

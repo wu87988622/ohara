@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { useParams, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
@@ -26,8 +26,8 @@ import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
-import { usePrevious } from 'utils/hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
@@ -35,9 +35,7 @@ import { Tooltip } from 'components/common/Tooltip';
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
-  const { workspaceName, pipelineName } = useParams();
-  const { setWorkspaceName, setPipelineName } = context.useApp();
-  const { workspaces } = context.useWorkspace();
+  const workspaces = hooks.useAllWorkspaces();
   const { setIsOpen: setIsNewWorkspaceOpen } = context.useNewWorkspace();
   const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
@@ -50,21 +48,6 @@ const AppBar = () => {
   } = context.useEventLogDialog();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const eventLogState = context.useEventLogState();
-
-  const prevWorkspaceName = usePrevious(workspaceName);
-  const prevPipelineName = usePrevious(pipelineName);
-
-  React.useEffect(() => {
-    if (workspaceName && workspaceName !== prevWorkspaceName) {
-      setWorkspaceName(workspaceName);
-    }
-  }, [prevWorkspaceName, setWorkspaceName, workspaceName]);
-
-  React.useEffect(() => {
-    if (pipelineName && pipelineName !== prevPipelineName) {
-      setPipelineName(pipelineName);
-    }
-  }, [pipelineName, prevPipelineName, setPipelineName]);
 
   return (
     <StyledAppBar>

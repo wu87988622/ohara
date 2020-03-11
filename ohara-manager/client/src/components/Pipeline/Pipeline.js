@@ -16,9 +16,9 @@
 
 import React, { useEffect, useRef, createContext } from 'react';
 import _ from 'lodash';
-import { useParams } from 'react-router-dom';
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import Paper from './Paper';
 import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
@@ -29,10 +29,7 @@ import PipelinePropertyDialog from './PipelinePropertyDialog';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
 import { PaperWrapper, StyledSplitPane } from './PipelineStyles';
-import {
-  usePipelineState as usePipelineReducerState,
-  useRedirect,
-} from './PipelineHooks';
+import { usePipelineState as usePipelineReducerState } from './PipelineHooks';
 import * as pipelineUtils from './PipelineApiHelper';
 import { CONNECTION_TYPE } from './PipelineApiHelper';
 import { KIND } from 'const';
@@ -43,12 +40,10 @@ export const PipelineStateContext = createContext(null);
 export const PipelineDispatchContext = createContext(null);
 
 const Pipeline = React.forwardRef((props, ref) => {
-  const {
-    workspaces,
-    currentWorkspace,
-    currentPipeline,
-  } = context.useWorkspace();
-  const { lastUpdated: isWorkspaceReady } = context.useWorkspaceState();
+  const isAppReady = hooks.useIsAppReady();
+  const currentWorkspace = hooks.useCurrentWorkspace();
+  const workspaces = hooks.useAllWorkspaces();
+  const currentPipeline = hooks.useCurrentPipeline();
 
   const {
     open: openPropertyDialog,
@@ -56,8 +51,9 @@ const Pipeline = React.forwardRef((props, ref) => {
     close: closePropertyDialog,
     data: PropertyDialogData,
   } = context.usePipelinePropertyDialog();
-  const { setSelectedCell, fetchPipeline } = context.usePipelineActions();
-  const { selectedCell } = context.usePipelineState();
+  const setSelectedCell = hooks.useSetSelectedCellAction();
+  const fetchPipeline = hooks.useFetchPipelineAction();
+  const selectedCell = hooks.useCurrentPipelineCell();
 
   const {
     data: streams,
@@ -106,8 +102,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   const [currentCellData, setCurrentCellData] = React.useState(null);
   const [url, setUrl] = React.useState(null);
 
-  const { workspaceName, pipelineName } = useParams();
-  const { setWorkspaceName, setPipelineName } = context.useApp();
+  const { workspaceName, pipelineName } = context.useApp();
 
   const handleDialogClose = () => {
     setIsOpen(false);
@@ -144,16 +139,14 @@ const Pipeline = React.forwardRef((props, ref) => {
   const cellsMetricsRef = useRef([]);
   const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
 
-  useRedirect();
-
   useEffect(() => {
-    if (!isWorkspaceReady) return;
+    if (!isAppReady) return;
     if (workspaces.length > 0) {
       return setIsNewWorkspaceDialogOpen(false);
     }
 
     setIsNewWorkspaceDialogOpen(true);
-  }, [isWorkspaceReady, setIsNewWorkspaceDialogOpen, workspaces.length]);
+  }, [isAppReady, setIsNewWorkspaceDialogOpen, workspaces.length]);
 
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states
@@ -217,19 +210,18 @@ const Pipeline = React.forwardRef((props, ref) => {
   useEffect(() => {
     if (!workspaceName || !pipelineName) return;
     if (url !== `${workspaceName}/${pipelineName}`) {
-      setWorkspaceName(workspaceName);
-      setPipelineName(pipelineName);
       paperApiRef.current = null;
       isInitialized.current = false;
       setUrl(`${workspaceName}/${pipelineName}`);
     }
-  }, [workspaceName, pipelineName, url, setWorkspaceName, setPipelineName]);
+  }, [workspaceName, pipelineName, url]);
 
   useEffect(() => {
     // Only run this once, there's no need to run this logic twice as
     // that's intentional
     if (!isPaperApiReady) return;
     if (isInitialized.current) return;
+    if (!paperApiRef.current) return;
     if (!connectorLastUpdated) return;
     if (!topicLastUpdated) return;
     if (!streamLastUpdated) return;

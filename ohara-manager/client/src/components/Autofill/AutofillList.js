@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { get, reject } from 'lodash';
-
+import { useDispatch } from 'redux-react-hook';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -28,19 +28,20 @@ import ClearIcon from '@material-ui/icons/Clear';
 import EditIcon from '@material-ui/icons/Edit';
 import FileCopyIcon from '@material-ui/icons/FileCopyOutlined';
 
-import { useWorkspace, useWorkspaceActions } from 'context';
 import { DeleteDialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import AutofillEditor, { MODE } from './AutofillEditor';
+import * as hooks from 'hooks';
+import * as actions from 'store/actions';
 
 const AutofillList = () => {
+  const dispatch = useDispatch();
   const [editorMode, setEditorMode] = useState(MODE.ADD);
   const [selectedData, setSelectedData] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const { updateWorkspace } = useWorkspaceActions();
-  const { currentWorkspace } = useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
 
   const handleAddButtonClick = () => {
@@ -66,16 +67,18 @@ const AutofillList = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     const name = get(selectedData, 'name');
     const workspaceName = get(currentWorkspace, 'name');
-    await updateWorkspace({
-      name: workspaceName,
-      settingFillings: reject(
-        settingFillings,
-        settingFilling => settingFilling.name === name,
-      ),
-    });
+    dispatch(
+      actions.updateWorkspace.trigger({
+        name: workspaceName,
+        settingFillings: reject(
+          settingFillings,
+          settingFilling => settingFilling.name === name,
+        ),
+      }),
+    );
     setIsDeleteConfirmOpen(false);
   };
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 
 const pipeline = () => {
-  const { updatePipeline } = context.usePipelineActions();
-  const { currentPipeline } = context.useWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
+  const updatePipeline = hooks.useUpdatePipelineAction();
 
   const updateCells = paperApi => {
     const cellsJson = {

@@ -17,6 +17,8 @@
 import { pick, sortBy, some, isEqual } from 'lodash';
 import { hashByGroupAndName } from './sha';
 
+export const getId = object => `${object?.group}_${object?.name}`;
+
 export const getKey = object => pick(object, ['group', 'name']);
 
 /**

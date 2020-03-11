@@ -17,6 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { get, filter, map, noop, some, values } from 'lodash';
+import { useDispatch } from 'redux-react-hook';
 import uuid from 'uuid';
 import { Form, Field } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
@@ -26,7 +27,8 @@ import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
 
-import { useWorkspace, useWorkspaceActions } from 'context';
+import * as hooks from 'hooks';
+import * as actions from 'store/actions';
 import { InputField, AutoComplete } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
@@ -42,9 +44,8 @@ export const MODE = {
 
 const AutofillEditor = props => {
   const { isOpen, mode, onClose, data } = props;
-
-  const { updateWorkspace } = useWorkspaceActions();
-  const { currentWorkspace } = useWorkspace();
+  const dispatch = useDispatch();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const workspaceName = get(currentWorkspace, 'name');
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
   const suggestiveKeys = useSuggestiveKeys();
@@ -62,35 +63,39 @@ const AutofillEditor = props => {
     }
   };
 
-  const saveNew = async values => {
+  const saveNew = values => {
     const newSettingFilling = {
       ...values,
       name: uuid.v4(),
       lastModified: new Date(),
     };
-    await updateWorkspace({
-      name: workspaceName,
-      settingFillings: [...settingFillings, newSettingFilling],
-    });
+    dispatch(
+      actions.updateWorkspace.trigger({
+        name: workspaceName,
+        settingFillings: [...settingFillings, newSettingFilling],
+      }),
+    );
   };
 
-  const save = async values => {
+  const save = values => {
     const newSettingFilling = { ...values, lastModified: new Date() };
-    await updateWorkspace({
-      name: workspaceName,
-      settingFillings: map(settingFillings, settingFilling =>
-        settingFilling.name === newSettingFilling.name
-          ? newSettingFilling
-          : settingFilling,
-      ),
-    });
+    dispatch(
+      actions.updateWorkspace.trigger({
+        name: workspaceName,
+        settingFillings: map(settingFillings, settingFilling =>
+          settingFilling.name === newSettingFilling.name
+            ? newSettingFilling
+            : settingFilling,
+        ),
+      }),
+    );
   };
 
-  const handleSubmit = async (values, form) => {
+  const handleSubmit = (values, form) => {
     if (mode === MODE.ADD || mode === MODE.COPY) {
-      await saveNew(values);
+      saveNew(values);
     } else {
-      await save(values);
+      save(values);
     }
     onClose();
     setTimeout(form.reset);

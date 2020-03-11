@@ -37,13 +37,13 @@ import {
   WorkspaceProvider,
   EditWorkspaceProvider,
   ZookeeperProvider,
-  PipelineProvider,
   ConfiguratorProvider,
   StreamProvider,
   ConnectorProvider,
   DevToolProvider,
   LogProvider,
   TopicDataProvider,
+  StoreProvider,
 } from './context';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { NewWorkspaceProvider } from './context/NewWorkspaceContext';
@@ -65,6 +65,7 @@ const AppProviders = ({ children }) => {
         <MuiThemeProvider theme={MuiTheme} children={children} />,
         <ThemeProvider theme={MuiTheme} children={children} />,
         <ErrorBoundary children={children} />,
+        <StoreProvider children={children} />,
         <AppProvider children={children} />,
         <DialogProvider children={children} />,
         <SnackbarProvider children={children} />,
@@ -72,7 +73,6 @@ const AppProviders = ({ children }) => {
         <ApiProvider children={children} />,
         <ConfiguratorProvider children={children} />,
         <NodeProvider children={children} />,
-        <PipelineProvider children={children} />,
         <ZookeeperProvider children={children} />,
         <BrokerProvider children={children} />,
         <WorkerProvider children={children} />,

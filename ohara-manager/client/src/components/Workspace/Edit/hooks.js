@@ -18,6 +18,7 @@ import { useEffect, useMemo } from 'react';
 import { get, isEqual, unionWith, some, find } from 'lodash';
 
 import { useWorkspace, useFileState, useFileActions } from 'context';
+import * as hooks from 'hooks';
 import { getDateFromTimestamp } from 'utils/date';
 import { getKey, isEqualByKey } from 'utils/object';
 
@@ -43,7 +44,7 @@ export const usePluginKeys = () => {
 };
 
 export const useFiles = () => {
-  const { currentWorkspace } = useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const { data: files = [] } = useFileState();
   const { fetchFiles } = useFileActions();
   const pluginKeys = usePluginKeys();

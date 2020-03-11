@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+const initialState = {
+  id: null,
+};
 
-export const initializeRoutine = createRoutine('INITIALIZE');
-export const fetchPipelinesRoutine = createRoutine('FETCH_PIPELINES');
-export const fetchPipelineRoutine = createRoutine('FETCH_PIPELINE');
-export const createPipelineRoutine = createRoutine('CREATE_PIPELINE');
-export const deletePipelineRoutine = createRoutine('DELETE_PIPELINE');
-export const updatePipelineRoutine = createRoutine('UPDATE_PIPELINE');
-export const setSelectedCellRoutine = createRoutine('SET_SELECTED_CELL');
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}

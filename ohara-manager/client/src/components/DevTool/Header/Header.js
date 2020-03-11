@@ -24,6 +24,7 @@ import Grid from '@material-ui/core/Grid';
 
 import { KIND, CELL_PROPS } from 'const';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { Tooltip } from 'components/common/Tooltip';
 import { TAB } from 'context/devTool/const';
 import { usePrevious } from 'utils/hooks';
@@ -34,11 +35,11 @@ const Header = () => {
   const { tabName, setTabName } = context.useDevTool();
   const { isOpen, close: closeDialog } = context.useDevToolDialog();
 
-  const { setSelectedCell } = context.usePipelineActions();
+  const setSelectedCell = hooks.useSetSelectedCellAction();
   const logActions = context.useLogActions();
   const topicDataActions = context.useTopicDataActions();
 
-  const { selectedCell } = context.usePipelineState();
+  const selectedCell = hooks.useCurrentPipelineCell();
   const { isFetching: isFetchingLog } = context.useLogState();
   const { isFetching: isFetchingTopic } = context.useTopicDataState();
 

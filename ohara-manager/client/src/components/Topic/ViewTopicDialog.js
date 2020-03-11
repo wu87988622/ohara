@@ -35,6 +35,7 @@ import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { Wrapper } from './ViewTopicDialogStyles';
 import * as context from 'context';
+import * as hooks from 'hooks';
 
 const ViewTopicDialog = () => {
   const {
@@ -45,7 +46,7 @@ const ViewTopicDialog = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { isFetching: isDeleting } = context.useTopicState();
   const { deleteTopic } = context.useTopicActions();
-  const { data: pipelines } = context.usePipelineState();
+  const pipelines = hooks.useCurrentPipelines();
   const eventLog = useEventLog();
 
   if (!topic) return null;

@@ -15,12 +15,13 @@
  */
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
 
 const topic = () => {
   const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
-  const { currentPipeline } = context.useWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
   const { data: topics } = context.useTopicState();
 
   const create = async (params, paperApi) => {

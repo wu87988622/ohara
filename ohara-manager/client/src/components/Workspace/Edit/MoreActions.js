@@ -22,6 +22,7 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 import Typography from '@material-ui/core/Typography';
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { KIND } from 'const';
 import { Dialog } from 'components/common/Dialog';
 import { Progress } from 'components/common/Progress';
@@ -32,11 +33,11 @@ function MoreActions() {
   const [isResetting, setIsResetting] = React.useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
   const {
-    currentPipeline,
     currentZookeeper,
     currentBroker,
     currentWorker,
   } = context.useWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
   const { stopConnector, startConnector } = context.useConnectorActions();
   const { stopTopic, startTopic } = context.useTopicActions();
   const { stopStream, startStream } = context.useStreamActions();

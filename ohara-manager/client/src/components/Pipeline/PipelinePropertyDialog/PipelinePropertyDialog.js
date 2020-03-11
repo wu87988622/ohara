@@ -38,6 +38,7 @@ import {
   useFileState,
   useWorkspace,
 } from 'context';
+import * as hooks from 'hooks';
 import PipelinePropertySpeedDial from './PipelinePropertySpeedDial';
 import {
   StyleTitle,
@@ -61,7 +62,8 @@ const PipelinePropertyDialog = props => {
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
-  const { currentWorker, currentPipeline } = useWorkspace();
+  const { currentWorker } = useWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
   const { data: currentConnectors } = useConnectorState();
   const { data: currentStreams } = useStreamState();
   const { data: allTopics } = useTopicState();

@@ -35,7 +35,7 @@ import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
 
 import * as context from 'context';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
+import * as hooks from 'hooks';
 import * as validate from 'utils/validate';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
@@ -57,11 +57,10 @@ const Navigator = ({ pipelineApi }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const { currentWorkspace } = context.useWorkspace();
+  const currentWorkspace = hooks.useCurrentWorkspace();
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
-  const { data: pipelines } = context.usePipelineState();
-  const { createPipeline } = context.usePipelineActions();
-  const eventLog = useEventLog();
+  const pipelines = hooks.useCurrentPipelines();
+  const createPipeline = hooks.useCreatePipelineAction();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -76,11 +75,11 @@ const Navigator = ({ pipelineApi }) => {
     handleClose();
   };
 
-  const onSubmit = async ({ pipelineName: name }, form) => {
-    const res = await createPipeline({ name });
-    if (!res.error) {
-      eventLog.info(`Successfully created pipeline ${name}.`);
-    }
+  const onSubmit = ({ pipelineName: name }, form) => {
+    createPipeline({ name });
+    // if (!res.error) {
+    //   eventLog.info(`Successfully created pipeline ${name}.`);
+    // }
     setTimeout(form.reset);
     setIsOpen(false);
   };
@@ -102,9 +101,7 @@ const Navigator = ({ pipelineApi }) => {
 
   if (!currentWorkspace) return null;
 
-  const {
-    settings: { name: workspaceName },
-  } = currentWorkspace;
+  const { name: workspaceName } = currentWorkspace;
 
   return (
     <StyledNavigator>

@@ -36,13 +36,12 @@ import _ from 'lodash';
 
 import { KIND } from 'const';
 import { Progress } from 'components/common/Progress';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { useDeleteCells, useZoom } from './ToolbarHooks';
 import { Tooltip } from 'components/common/Tooltip';
 import * as pipelineContext from '../Pipeline';
-import * as context from 'context';
+import * as hooks from 'hooks';
 import * as pipelineUtils from '../PipelineApiHelper';
 
 const Toolbar = props => {
@@ -58,15 +57,15 @@ const Toolbar = props => {
     pipelineContext.PipelineStateContext,
   );
 
-  const { deletePipeline } = context.usePipelineActions();
-  const { currentWorkspace, currentPipeline, error } = context.useWorkspace();
-  const { selectedCell } = context.usePipelineState();
+  const deletePipeline = hooks.useDeletePipelineAction();
+  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentPipeline = hooks.useCurrentPipeline();
+  const selectedCell = hooks.useCurrentPipelineCell();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
   const { steps, activeStep, deleteCells } = useDeleteCells();
   const { setZoom, scale, setScale } = useZoom();
   const history = useHistory();
-  const eventLog = useEventLog();
 
   const {
     start: startConnector,
@@ -140,13 +139,14 @@ const Toolbar = props => {
       .sort((a, b) => a.kind.localeCompare(b.kind));
 
     await deleteCells(cells);
-    const res = await deletePipeline(name);
-    if (!res.error) {
-      eventLog.info(`Successfully deleted pipeline ${name}.`);
-    }
+    deletePipeline(name);
+    //const res = await deletePipeline(name);
+    // if (!res.error) {
+    //   eventLog.info(`Successfully deleted pipeline ${name}.`);
+    // }
     setIsDeletingPipeline(false);
 
-    if (!error) history.push(`/${currentWorkspace.name}`);
+    history.push(`/${currentWorkspace.name}`);
   };
 
   const handlePipelineControlsClose = () => {
