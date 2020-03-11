@@ -67,7 +67,7 @@ private[configurator] object InspectRoute {
 
   private[this] def topicData(records: Seq[Record[Array[Byte], Array[Byte]]]): TopicData =
     TopicData(
-      records
+      records.reverse
         .filter(_.key().isPresent)
         .map(record => (record.partition(), record.offset(), record.key().get(), record.headers().asScala))
         .map {
