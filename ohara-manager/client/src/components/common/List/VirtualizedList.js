@@ -41,8 +41,7 @@ const VirtualizedList = props => {
     rowRenderer,
     autoScrollToBottom,
   } = props;
-  // avoid duplicate creation of the cache data
-  // we initial cache once for each DOM rendering
+  // Avoid duplicate creation of the cache data. And so we only initialize the cache once for each DOM rendering
   const cache = React.useMemo(() => {
     return new CellMeasurerCache({
       defaultHeight: 20,
@@ -99,7 +98,7 @@ const VirtualizedList = props => {
           rowHeight={cache.rowHeight}
           rowRenderer={RowRendererWrapper}
           overscanRowCount={0}
-          scrollToIndex={autoScrollToBottom ? data.length : 0}
+          scrollToIndex={autoScrollToBottom ? data.length : undefined}
           width={width}
         />
       )}
