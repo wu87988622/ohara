@@ -601,16 +601,33 @@ const Paper = React.forwardRef((props, ref) => {
             case CELL_STATUS.stopped:
               elementView.enableMenu();
 
+              // If a connector or stream doesn't have any connections yet,
+              // disable the `start` and `stop` action buttons
               if (graph.getConnectedLinks(elementView.model).length === 0) {
                 elementView.disableMenu(['start', 'stop']);
+              } else {
+                // For a source connector which has connection, the `link` action
+                // button should be disabled
+                const kind = elementView.model.get('kind');
+                if (kind === KIND.source) {
+                  elementView.disableMenu(['link']);
+                }
+
+                // Because stream could have more than one connection (in and out)
+                // so we need to make sure if it's a sink (Element is a leaf by
+                // JointJS' definition), then disable the `link` action button
+                // if it is NOT a sink
+                if (kind === KIND.stream && !graph.isSink(elementView.model)) {
+                  elementView.disableMenu(['link']);
+                }
               }
+
               break;
             case CELL_STATUS.pending:
               elementView.disableMenu();
               break;
             default:
-              elementView.enableMenu();
-              break;
+              throw new Error(`Unknown cell status: ${status}`);
           }
         }
       },
@@ -635,8 +652,7 @@ const Paper = React.forwardRef((props, ref) => {
             line: { stroke: 'translate' },
           });
 
-          graph.addCell(newLink);
-          return;
+          return graph.addCell(newLink);
         }
 
         newLink.target({ id: targetId });
@@ -723,7 +739,7 @@ const Paper = React.forwardRef((props, ref) => {
         paper.scale(sx, sy);
       },
       getScale() {
-        return paper.scale(); // getter
+        return paper.scale();
       },
       getBbox() {
         const { width, height } = paper.getComputedSize();
