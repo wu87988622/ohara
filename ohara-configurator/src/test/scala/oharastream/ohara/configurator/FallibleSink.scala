@@ -25,7 +25,12 @@ class FallibleSink extends RowSinkConnector {
   override protected def taskSettings(maxTasks: Int): java.util.List[TaskSetting] = Seq.fill(maxTasks)(settings).asJava
   override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
-    if (settings.stringOption("you_should_fail").isPresent) throw new IllegalArgumentException
+    if (settings.stringOption(FallibleSink.FAILURE_FLAG).isPresent)
+      throw new IllegalArgumentException("Someone hate me...")
   }
   override protected def terminate(): Unit = {}
+}
+
+object FallibleSink {
+  val FAILURE_FLAG = "connector_should_fail"
 }

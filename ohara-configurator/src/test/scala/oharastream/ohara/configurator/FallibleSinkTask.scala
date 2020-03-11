@@ -19,9 +19,16 @@ package oharastream.ohara.configurator
 import oharastream.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
 
 class FallibleSinkTask extends RowSinkTask {
-  override protected def run(settings: TaskSetting): Unit = {}
+  override protected def run(settings: TaskSetting): Unit = {
+    if (settings.stringOption(FallibleSinkTask.FAILURE_FLAG).isPresent)
+      throw new IllegalArgumentException("Someone hate me...")
+  }
 
   override protected def terminate(): Unit = {}
 
   override protected def putRecords(records: java.util.List[RowSinkRecord]): Unit = {}
+}
+
+object FallibleSinkTask {
+  val FAILURE_FLAG = "task_should_fail"
 }
