@@ -25,60 +25,82 @@ import oharastream.ohara.connector.ftp.FtpSource
 import oharastream.ohara.connector.hdfs.sink.HDFSSink
 import oharastream.ohara.it.category.PerformanceGroup
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
-import org.junit.{AssumptionViolatedException, Test}
+import org.junit.Test
 import org.junit.experimental.categories.Category
 import spray.json.{JsNumber, JsString}
 
 @Category(Array(classOf[PerformanceGroup]))
 class TestPerformance4FtpSourceToHDFSSink extends BasicTestPerformance4Ftp {
-  private[this] val hdfsURL: String = sys.env.getOrElse(
-    PerformanceTestingUtils.HDFS_URL_KEY,
-    throw new AssumptionViolatedException(s"${PerformanceTestingUtils.HDFS_URL_KEY} does not exists!!!")
-  )
-  private[this] val dataDir: String = "/tmp"
-  private[this] val completedPath   = "/completed"
-  private[this] val errorPath       = "/error"
-  private[this] val (path, _, _)    = setupInputData(timeoutOfInputData)
+  private[this] val ftpCompletedPath = "/completed"
+  private[this] val ftpErrorPath     = "/error"
+  private[this] val (path, _, _)     = setupInputData(timeoutOfInputData)
 
   @Test
   def test(): Unit = {
-    createTopic()
-    loopInputDataThread(setupInputData)
-    // Running FTP Source Connector
-    setupConnector(
-      connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
-      className = classOf[FtpSource].getName,
-      settings = ftpSettings
-        + (CsvConnectorDefinitions.INPUT_FOLDER_KEY     -> JsString(path))
-        + (CsvConnectorDefinitions.COMPLETED_FOLDER_KEY -> JsString(createFtpFolder(completedPath)))
-        + (CsvConnectorDefinitions.ERROR_FOLDER_KEY     -> JsString(createFtpFolder(errorPath)))
-    )
-
-    //Running HDFS Sink Connector
-    setupConnector(
-      connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
-      className = classOf[HDFSSink].getName(),
-      settings = Map(
-        oharastream.ohara.connector.hdfs.sink.HDFS_URL_KEY      -> JsString(hdfsURL),
-        oharastream.ohara.connector.hdfs.sink.FLUSH_SIZE_KEY    -> JsNumber(2000),
-        oharastream.ohara.connector.hdfs.sink.OUTPUT_FOLDER_KEY -> JsString(dataDir)
+    val ftp  = ftpClient()
+    val hdfs = hdfsClient()
+    try {
+      createTopic()
+      loopInputDataThread(setupInputData)
+      //Running FTP Source Connector
+      setupConnector(
+        connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
+        className = classOf[FtpSource].getName,
+        settings = ftpSettings
+          + (CsvConnectorDefinitions.INPUT_FOLDER_KEY -> JsString(path))
+          + (CsvConnectorDefinitions.COMPLETED_FOLDER_KEY -> JsString(
+            PerformanceTestingUtils.createFolder(ftp, ftpCompletedPath)
+          ))
+          + (CsvConnectorDefinitions.ERROR_FOLDER_KEY -> JsString(
+            PerformanceTestingUtils.createFolder(ftp, ftpErrorPath)
+          ))
       )
-    )
-    sleepUntilEnd()
+
+      //Running HDFS Sink Connector
+      setupConnector(
+        connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
+        className = classOf[HDFSSink].getName(),
+        settings = Map(
+          oharastream.ohara.connector.hdfs.sink.HDFS_URL_KEY   -> JsString(PerformanceTestingUtils.hdfsURL),
+          oharastream.ohara.connector.hdfs.sink.FLUSH_SIZE_KEY -> JsNumber(numberOfCsvFileToFlush),
+          oharastream.ohara.connector.hdfs.sink.OUTPUT_FOLDER_KEY -> JsString(
+            PerformanceTestingUtils.createFolder(hdfs, PerformanceTestingUtils.dataDir)
+          )
+        )
+      )
+      sleepUntilEnd()
+    } finally {
+      Releasable.close(hdfs)
+      Releasable.close(ftp)
+    }
   }
 
-  override protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit =
+  override protected def afterStoppingConnectors(
+    connectorInfos: Seq[ConnectorInfo],
+    topicInfos: Seq[TopicInfo]
+  ): Unit = {
     if (cleanupTestData) {
-      // Delete file for the FTP
-      removeFtpFolder(path)
-      removeFtpFolder(completedPath)
-      removeFtpFolder(errorPath)
+      //Delete file for the FTP
+      val ftp  = ftpClient()
+      val hdfs = hdfsClient()
+      try {
+        PerformanceTestingUtils.deleteFolder(ftp, path)
+        PerformanceTestingUtils.deleteFolder(ftp, ftpCompletedPath)
+        PerformanceTestingUtils.deleteFolder(ftp, ftpErrorPath)
 
-      // Delete file for the HDFS
-      val fileSystem = FileSystem.hdfsBuilder.url(hdfsURL).build
-      try topicInfos.foreach { topicInfo =>
-        val path = s"${dataDir}/${topicInfo.topicNameOnKafka}"
-        if (fileSystem.exists(path)) fileSystem.delete(path, true)
-      } finally Releasable.close(fileSystem)
+        //Delete file from the HDFS
+        topicInfos.foreach { topicInfo =>
+          val path = s"${PerformanceTestingUtils.dataDir}/${topicInfo.topicNameOnKafka}"
+          PerformanceTestingUtils.deleteFolder(hdfs, path)
+        }
+      } finally {
+        Releasable.close(hdfs)
+        Releasable.close(ftp)
+      }
     }
+  }
+
+  private[this] def hdfsClient(): FileSystem = {
+    FileSystem.hdfsBuilder.url(PerformanceTestingUtils.hdfsURL).build
+  }
 }

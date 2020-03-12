@@ -49,11 +49,13 @@ import scala.util.control.Breaks.break
   *    so please don't change it.
   */
 abstract class BasicTestPerformance extends WithRemoteWorkers {
-  protected val log: Logger              = Logger(classOf[BasicTestPerformance])
+  protected val log: Logger       = Logger(classOf[BasicTestPerformance])
+  protected val groupName: String = "benchmark"
+
   private[this] var inputDataInfos       = mutable.Seq[DataInfo]()
   private[this] val setupStartTime: Long = CommonUtils.current()
 
-  private[this] val topicKey: TopicKey = TopicKey.of("benchmark", CommonUtils.randomString(5))
+  private[this] val topicKey: TopicKey = TopicKey.of(groupName, CommonUtils.randomString(5))
   protected val topicApi: TopicApi.Access =
     TopicApi.access
       .hostname(configuratorHostname)
@@ -66,12 +68,12 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
 
   //------------------------------[global properties]------------------------------//
   private[this] val durationOfPerformanceKey     = PerformanceTestingUtils.DURATION_KEY
-  private[this] val durationOfPerformanceDefault = 120 seconds
+  private[this] val durationOfPerformanceDefault = 50 seconds
   protected val durationOfPerformance: Duration =
     value(durationOfPerformanceKey).map(Duration.apply).getOrElse(durationOfPerformanceDefault)
 
   private[this] val timeoutOfInputDataKey               = PerformanceTestingUtils.INPUTDATA_TIMEOUT_KEY
-  private[this] val timeoutOfInputDataDefault: Duration = 30 seconds
+  private[this] val timeoutOfInputDataDefault: Duration = 10 seconds
   protected val timeoutOfInputData: Duration =
     value(timeoutOfInputDataKey).map(Duration(_)).getOrElse(timeoutOfInputDataDefault)
 
@@ -79,6 +81,11 @@ abstract class BasicTestPerformance extends WithRemoteWorkers {
   private[this] val numberOfRowsToFlushDefault: String = "2000"
   protected val numberOfRowsToFlush: Int =
     value(numberOfRowsToFlushKey).getOrElse(numberOfRowsToFlushDefault).toInt
+
+  private[this] val numberOfCsvFileToFlushKey             = PerformanceTestingUtils.CSV_FILE_FLUSH_SIZE_KEY
+  private[this] val numberOfCsvFileToFlushDefault: String = "10000"
+  protected val numberOfCsvFileToFlush: Int =
+    value(numberOfCsvFileToFlushKey).getOrElse(numberOfCsvFileToFlushDefault).toInt
 
   private[this] val wholeTimeout = (durationOfPerformance.toSeconds + timeoutOfInputData.toSeconds) * 2
 

@@ -23,43 +23,53 @@ import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.hdfs.sink.HDFSSink
 import oharastream.ohara.it.category.PerformanceGroup
+import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import org.junit.experimental.categories.Category
 import spray.json.{JsNumber, JsString}
-import org.junit.{AssumptionViolatedException, Test}
+import org.junit.Test
 
 @Category(Array(classOf[PerformanceGroup]))
 class TestPerformance4HdfsSink extends BasicTestPerformance {
   private[this] val NEED_DELETE_DATA_KEY: String = PerformanceTestingUtils.DATA_CLEANUP_KEY
-  private[this] val dataDir: String              = "/tmp"
-  private[this] val hdfsURL: String = sys.env.getOrElse(
-    PerformanceTestingUtils.HDFS_URL_KEY,
-    throw new AssumptionViolatedException(s"${PerformanceTestingUtils.HDFS_URL_KEY} does not exists!!!")
-  )
-  private[this] val needDeleteData: Boolean = sys.env.getOrElse(NEED_DELETE_DATA_KEY, "true").toBoolean
+  private[this] val needDeleteData: Boolean      = sys.env.getOrElse(NEED_DELETE_DATA_KEY, "true").toBoolean
 
   @Test
   def test(): Unit = {
-    createTopic()
-    produce(timeoutOfInputData)
-    loopInputDataThread(produce)
-    setupConnector(
-      connectorKey = ConnectorKey.of("benchmark", CommonUtils.randomString(5)),
-      className = classOf[HDFSSink].getName(),
-      settings = Map(
-        oharastream.ohara.connector.hdfs.sink.HDFS_URL_KEY      -> JsString(hdfsURL),
-        oharastream.ohara.connector.hdfs.sink.FLUSH_SIZE_KEY    -> JsNumber(2000),
-        oharastream.ohara.connector.hdfs.sink.OUTPUT_FOLDER_KEY -> JsString(dataDir)
+    val hdfs = hdfsClient()
+    try {
+      createTopic()
+      produce(timeoutOfInputData)
+      loopInputDataThread(produce)
+      setupConnector(
+        connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
+        className = classOf[HDFSSink].getName(),
+        settings = Map(
+          CsvConnectorDefinitions.FLUSH_SIZE_KEY             -> JsNumber(numberOfCsvFileToFlush),
+          oharastream.ohara.connector.hdfs.sink.HDFS_URL_KEY -> JsString(PerformanceTestingUtils.hdfsURL),
+          oharastream.ohara.connector.hdfs.sink.OUTPUT_FOLDER_KEY -> JsString(
+            PerformanceTestingUtils.createFolder(hdfs, PerformanceTestingUtils.dataDir)
+          )
+        )
       )
-    )
-    sleepUntilEnd()
+      sleepUntilEnd()
+    } finally Releasable.close(hdfs)
   }
 
-  override protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit =
+  override protected def afterStoppingConnectors(
+    connectorInfos: Seq[ConnectorInfo],
+    topicInfos: Seq[TopicInfo]
+  ): Unit = {
     if (needDeleteData) {
-      val fileSystem = FileSystem.hdfsBuilder.url(hdfsURL).build
+      //Delete file from the HDFS
+      val hdfs = hdfsClient()
       try topicInfos.foreach { topicInfo =>
-        val path = s"${dataDir}/${topicInfo.topicNameOnKafka}"
-        if (fileSystem.exists(path)) fileSystem.delete(path, true)
-      } finally Releasable.close(fileSystem)
+        val path = s"${PerformanceTestingUtils.dataDir}/${topicInfo.topicNameOnKafka}"
+        PerformanceTestingUtils.deleteFolder(hdfs, path)
+      } finally Releasable.close(hdfs)
     }
+  }
+
+  private[this] def hdfsClient(): FileSystem = {
+    FileSystem.hdfsBuilder.url(PerformanceTestingUtils.hdfsURL).build
+  }
 }
