@@ -62,7 +62,6 @@ export const createConnection = params => {
   const sourceId = sourceLink.get(CELL_PROPS.source).id;
   const sourceType = graph.getCell(sourceId).attributes.kind;
   const sourceElement = graph.getCell(sourceId);
-  const sourceDisplayName = sourceElement.get(CELL_PROPS.displayName);
 
   const targetElement = targetElementView.model;
   const targetId = targetElement.get(CELL_PROPS.id);
@@ -100,10 +99,6 @@ export const createConnection = params => {
     handleError(`A connection is already in place for these two cells`);
   } else {
     const predecessors = graph.getPredecessors(targetElement);
-    const successors = graph.getSuccessors(sourceElement);
-    const sourceHasTarget = successors.some(
-      successor => successor.attributes.kind === KIND.topic,
-    );
     const targetHasSource = predecessors.some(
       predecessor => predecessor.attributes.kind === KIND.topic,
     );
@@ -112,11 +107,6 @@ export const createConnection = params => {
     // have different rules of whether or not it can be connected with
     // another cell
     if (sourceType === KIND.source && targetType === KIND.sink) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a target`,
-        );
-      }
       if (targetHasSource) {
         return handleError(
           `The target ${targetDisplayName} is already connected to a source`,
@@ -125,22 +115,9 @@ export const createConnection = params => {
     }
 
     if (sourceType === KIND.source && targetType === KIND.stream) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a target`,
-        );
-      }
       if (targetHasSource) {
         return handleError(
           `The target ${targetDisplayName} is already connected to a source`,
-        );
-      }
-    }
-
-    if (sourceType === KIND.source && targetType === KIND.topic) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a target`,
         );
       }
     }
@@ -161,21 +138,7 @@ export const createConnection = params => {
       }
     }
 
-    if (sourceType === KIND.stream && targetType === KIND.topic) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a target`,
-        );
-      }
-    }
-
     if (sourceType === KIND.stream && targetType === KIND.sink) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a sink`,
-        );
-      }
-
       if (targetHasSource) {
         return handleError(
           `The target ${targetDisplayName} is already connected to a source`,
@@ -184,12 +147,6 @@ export const createConnection = params => {
     }
 
     if (sourceType === KIND.stream && targetType === KIND.stream) {
-      if (sourceHasTarget) {
-        return handleError(
-          `The source ${sourceDisplayName} is already connected to a sink`,
-        );
-      }
-
       if (targetHasSource) {
         return handleError(
           `The target ${targetDisplayName} is already connected to a source`,

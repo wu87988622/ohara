@@ -318,7 +318,8 @@ describe('Pipeline Page', () => {
     // to get the actual data-testid we need to refresh the paper again
     cy.reload();
 
-    // 1. cannot create link to a source
+    // 1. perf source -> ftp source
+    cy.log(`cannot create a link from perf source to ftp source`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
     cy.getCell(elements.ftpSourceName).click();
@@ -327,8 +328,8 @@ describe('Pipeline Page', () => {
       .siblings('div')
       .click();
 
-    // 2. cannot create a link between two topics
-    cy.log(`cannot create a link between two topics`);
+    // 2. pipeline-only topic 1 -> pipeline-only topic 2
+    cy.log(`cannot create a link between pipeline-only topic 1 and 2`);
     cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
     cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.link).click();
     cy.getCell(elements.pipelineOnlyTopicName2).click();
@@ -339,9 +340,9 @@ describe('Pipeline Page', () => {
       .siblings('div')
       .click();
 
-    // 3. perf source -> pipeline-only topic 1 -> hdfs sink
+    // 3. pipeline-only topic 1 -> hdfs sink
     cy.log(
-      `create a link from a perf source to pipeline-only topic to hdfs sink`,
+      `create a link from a perf source to pipeline-only topic 1 to hdfs sink`,
     );
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
@@ -352,18 +353,8 @@ describe('Pipeline Page', () => {
     // will create two links
     cy.get('g[data-type="standard.Link"]').should('have.length', 2);
 
-    // 4. we don't allow creating multiple links for same cell
-    // perf source -> console sink
-    cy.getCell(elements.perfSourceName).trigger('mouseover');
-    cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
-    cy.getCell(elements.consoleSinkName).click();
-    cy.findByText(
-      `The source ${elements.perfSourceName} is already connected to a target`,
-    )
-      .should('exist')
-      .siblings('div')
-      .click();
-    // ftp source -> hdfs sink
+    // 4. ftp source -> hdfs sink
+    cy.log(`cannot create a link from ftp source to hdfs sink`);
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
@@ -374,19 +365,7 @@ describe('Pipeline Page', () => {
       .siblings('div')
       .click();
 
-    //  perf source -> pipeline-only topic 2
-    cy.log(`cannot create a link from a perf source to pipeline-only topic`);
-    cy.getCell(elements.perfSourceName).trigger('mouseover');
-    cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
-    cy.getCell(elements.pipelineOnlyTopicName2).click();
-    cy.findByText(
-      `The source ${elements.perfSourceName} is already connected to a target`,
-    )
-      .should('exist')
-      .siblings('div')
-      .click();
-
-    // topic -> hdfs sink
+    // 5. pipeline-only topic 2 -> hdfs sink
     cy.log(`cannot create a link from pipeline-only topic to hdfs sink`);
     cy.getCell(elements.pipelineOnlyTopicName2).trigger('mouseover');
     cy.cellAction(elements.pipelineOnlyTopicName2, ACTIONS.link).click();
