@@ -67,7 +67,7 @@ private[configurator] object ConnectorRoute {
           settings = extractDefaultValues(definitions) ++ creation.settings,
           // we don't need to fetch connector from kafka since it has not existed in kafka.
           state = None,
-          nodeName = None,
+          aliveNodes = Set.empty,
           error = None,
           tasksStatus = Seq.empty,
           metrics = Metrics.EMPTY,
@@ -93,7 +93,7 @@ private[configurator] object ConnectorRoute {
                 connectorInfo.copy(
                   state = None,
                   error = None,
-                  nodeName = None,
+                  aliveNodes = Set.empty,
                   tasksStatus = Seq.empty,
                   metrics = Metrics.EMPTY
                 )
@@ -103,17 +103,28 @@ private[configurator] object ConnectorRoute {
                 // we check the active connectors first to avoid exception :)
                 connectorAdmin.exist(connectorInfo.key).flatMap {
                   if (_) connectorAdmin.status(connectorInfo.key).map { connectorInfoFromKafka =>
-                    connectorInfo.copy(
-                      state = Some(State.forName(connectorInfoFromKafka.connector.state)),
+                    val allStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
+                      Status(
+                        state = State.forName(taskStatus.state),
+                        error = taskStatus.trace,
+                        nodeName = taskStatus.workerHostname,
+                        master = false
+                      )
+                    } :+ Status(
+                      state = State.forName(connectorInfoFromKafka.connector.state),
                       error = connectorInfoFromKafka.connector.trace,
-                      nodeName = Some(connectorInfoFromKafka.connector.workerHostname),
-                      tasksStatus = connectorInfoFromKafka.tasks.map { taskStatus =>
-                        Status(
-                          state = State.forName(taskStatus.state),
-                          error = taskStatus.trace,
-                          nodeName = taskStatus.workerHostname
-                        )
-                      },
+                      nodeName = connectorInfoFromKafka.connector.workerHostname,
+                      master = true
+                    )
+
+                    connectorInfo.copy(
+                      // this is the "summary" of this connector
+                      state =
+                        if (allStatus.exists(_.state == State.RUNNING)) Some(State.RUNNING)
+                        else allStatus.map(_.state).headOption,
+                      error = allStatus.flatMap(_.error).headOption,
+                      aliveNodes = allStatus.filter(_.state == State.RUNNING).map(_.nodeName).toSet,
+                      tasksStatus = allStatus,
                       metrics = Metrics(
                         meterCache
                           .meters(workerClusterInfo)
@@ -125,7 +136,7 @@ private[configurator] object ConnectorRoute {
                       connectorInfo.copy(
                         state = None,
                         error = None,
-                        nodeName = None,
+                        aliveNodes = Set.empty,
                         tasksStatus = Seq.empty,
                         metrics = Metrics.EMPTY
                       )
@@ -140,7 +151,7 @@ private[configurator] object ConnectorRoute {
           connectorInfo.copy(
             state = None,
             error = Some(e.getMessage),
-            nodeName = None,
+            aliveNodes = Set.empty,
             tasksStatus = Seq.empty,
             metrics = Metrics.EMPTY
           )

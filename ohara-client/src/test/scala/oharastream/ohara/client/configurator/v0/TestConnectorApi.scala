@@ -138,7 +138,7 @@ class TestConnectorApi extends OharaTest {
         NAME_KEY                   -> JsString(CommonUtils.randomString())
       ),
       state = None,
-      nodeName = None,
+      aliveNodes = Set.empty,
       error = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -159,7 +159,7 @@ class TestConnectorApi extends OharaTest {
         .creation
         .settings,
       state = None,
-      nodeName = None,
+      aliveNodes = Set.empty,
       error = None,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
@@ -681,7 +681,7 @@ class TestConnectorApi extends OharaTest {
       settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
       state = None,
       error = None,
-      nodeName = None,
+      aliveNodes = Set.empty,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
@@ -695,7 +695,7 @@ class TestConnectorApi extends OharaTest {
       settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
       state = None,
       error = None,
-      nodeName = None,
+      aliveNodes = Set.empty,
       tasksStatus = Seq.empty,
       metrics = Metrics.EMPTY,
       lastModified = CommonUtils.current()
