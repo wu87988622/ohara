@@ -399,7 +399,12 @@ package object v0 {
 
   private[v0] def flattenSettings(obj: JsObject): JsObject =
     JsObject(
-      noJsNull(obj.fields ++ obj.fields.get(SETTINGS_KEY).map(_.asJsObject.fields).getOrElse(Map.empty) - SETTINGS_KEY)
+      noJsNull(
+        obj.fields.get(SETTINGS_KEY).map(_.asJsObject.fields).getOrElse(Map.empty)
+        // we override the key in settings if it is conflict to runtime key
+          ++ obj.fields
+          - SETTINGS_KEY
+      )
     )
 
   private[this] val runtimeKeys = Set(
