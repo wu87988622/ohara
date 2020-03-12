@@ -46,7 +46,7 @@ Pip
     $ python get-pip.py --user
 
   .. note::
-    We recommend to use ``--user`` to install pip to avoid **Permisson denined** issue.
+    We recommend to use ``--user`` to install pip to avoid **Permission denied** issue.
 
   After successful pip installation, you can type following to look version:
 
@@ -66,7 +66,7 @@ Sphinx
     $ pip install --user --upgrade Sphinx
 
   .. note::
-    We recommend to use ``--user`` to install pip to avoid **Permisson denined** issue.
+    We recommend to use ``--user`` to install pip to avoid **Permission denied** issue.
 
 
   Sphinx provide some command-line tools. You can try the following command:
@@ -89,6 +89,13 @@ Other modules
 
 Build docs
 ----------------
+
+  First, you need to install the dependencies with pip
+
+  .. code-block:: console
+
+    [ohara]$ cd docs
+    [docs]$ pip install --user -r requirements.txt
 
   You can use `make` or `sphinx-build` to generate the html files:
 
@@ -113,7 +120,7 @@ Build docs
     ========================================
     Ohara version: $|version|
     Ohara branch/tag: master
-    Producton Mode: False
+    Production Mode: False
     ========================================
     loading pickled environment... done
     building [mo]: targets for 0 po files that are out of date
@@ -145,6 +152,6 @@ Build docs
 Quick Preview .rst file
 -----------------------
 
-If you need an quick preview tool while writing the doc,
-we recommand `restview <https://mg.pov.lt/restview/>`_.
+If you need a quick preview tool while writing the doc,
+we recommend `restview <https://mg.pov.lt/restview/>`_.
 

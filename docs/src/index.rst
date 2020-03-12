@@ -32,6 +32,7 @@ This section is for the ohara users who are going to install and then test offic
 you don't need to compile, build or write anything for ohara. All you have to read the :ref:`userguide`
 and then follow the advice of :ref:`installation section <userguide-installation>`.
 
+We now provide a quickstart VM for you to quickly start Ohara and play with it in a single VM. You can learn more from our `quickstart guide <https://ohara-quickstart.readthedocs.io/en/0.9.x/>`__
 
 For Developer
 -------------
