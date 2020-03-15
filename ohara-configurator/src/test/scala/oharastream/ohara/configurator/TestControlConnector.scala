@@ -102,7 +102,7 @@ class TestControlConnector extends WithBrokerWorker {
     (0 until 3).foreach(_ => result(connectorApi.start(sink.key)))
 
     result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
-    result(connectorApi.get(sink.key)).nodeName.get shouldBe CommonUtils.hostname()
+    result(connectorApi.get(sink.key)).aliveNodes should contain(CommonUtils.hostname())
     result(connectorApi.get(sink.key)).error shouldBe None
 
     val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
@@ -253,7 +253,7 @@ class TestControlConnector extends WithBrokerWorker {
   }
 
   @Test
-  def testNodeName(): Unit = {
+  def testAliveNodes(): Unit = {
     val topic = result(
       topicApi.request
         .name(CommonUtils.randomString(10))
@@ -277,9 +277,13 @@ class TestControlConnector extends WithBrokerWorker {
     result(connectorApi.start(sink.key))
     await(() => result(connectorApi.get(sink.key)).state.nonEmpty)
     await(() => result(connectorApi.get(sink.key)).tasksStatus.nonEmpty)
-    result(connectorApi.get(sink.key)).nodeName.get == CommonUtils.hostname()
+    result(connectorApi.get(sink.key)).aliveNodes should contain(CommonUtils.hostname())
+    await(() => result(connectorApi.get(sink.key)).tasksStatus.size == 2) // connector + task
+    result(connectorApi.get(sink.key)).tasksStatus.count(_.master) shouldBe 1
+    result(connectorApi.get(sink.key)).tasksStatus.filterNot(_.master).size shouldBe 1
     result(connectorApi.get(sink.key)).tasksStatus.foreach(_.nodeName shouldBe CommonUtils.hostname())
   }
+
   @Test
   def failToRun(): Unit = {
     val topic = result(
@@ -448,9 +452,10 @@ class TestControlConnector extends WithBrokerWorker {
 
     result(connectorApi.start(source.key))
     await(() => result(connectorApi.get(source.key)).state.contains(State.RUNNING))
-    await(() => result(connectorApi.get(source.key)).error.isEmpty)
+    await(() => result(connectorApi.get(source.key)).error.nonEmpty)
     await(() => result(connectorApi.get(source.key)).tasksStatus.nonEmpty)
-    result(connectorApi.get(source.key)).tasksStatus.foreach(_.state shouldBe State.FAILED)
+    result(connectorApi.get(source.key)).tasksStatus.filter(_.master).foreach(_.state shouldBe State.RUNNING)
+    result(connectorApi.get(source.key)).tasksStatus.filterNot(_.master).foreach(_.state shouldBe State.FAILED)
   }
 
   @After

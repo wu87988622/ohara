@@ -63,13 +63,14 @@ The following information are updated by Ohara.
 #. name (**string**) — connector’s name
 #. lastModified (**long**) — the last time to update this connector
 #. state (**option(string)**) — the state of a started connector
-#. nodeName (**option(string)**) — the node hosting this connector
+#. aliveNodes (**Set(string)**) — the nodes hosting this connector
 #. error (**option(string)**) — the error message from a failed connector. If the connector is fine or un-started, you won’t get this field.
 #. tasksStatus (**Array(object)**) — the tasks status of this connector
 
     - tasksStatus[i].state (**string**) — the state of a started task.
     - tasksStatus[i].nodeName (**string**) — the node hosting this task
     - tasksStatus[i].error (**option(string)**) — the error message from a failed task. If the task is fine or un-started, you won’t get this field.
+    - tasksStatus[i].master (**boolean**) — true if this status is master. otherwise, false
 
 #. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
 

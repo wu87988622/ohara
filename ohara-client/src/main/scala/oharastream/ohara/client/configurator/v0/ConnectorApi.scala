@@ -178,8 +178,8 @@ object ConnectorApi {
 
   import MetricsApi._
 
-  case class Status(state: State, nodeName: String, error: Option[String])
-  implicit val STATUS_FORMAT: RootJsonFormat[Status] = jsonFormat3(Status)
+  case class Status(state: State, nodeName: String, error: Option[String], master: Boolean)
+  implicit val STATUS_FORMAT: RootJsonFormat[Status] = jsonFormat4(Status)
 
   /**
     * this is what we store in configurator
@@ -187,7 +187,7 @@ object ConnectorApi {
   final case class ConnectorInfo(
     settings: Map[String, JsValue],
     state: Option[State],
-    nodeName: Option[String],
+    aliveNodes: Set[String],
     error: Option[String],
     tasksStatus: Seq[Status],
     metrics: Metrics,
@@ -223,7 +223,11 @@ object ConnectorApi {
     new RootJsonFormat[ConnectorInfo] {
       private[this] val format                        = jsonFormat7(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
-      override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+      override def write(obj: ConnectorInfo): JsValue =
+        if (obj.aliveNodes.isEmpty) flattenSettings(format.write(obj).asJsObject)
+        // TODO: remove this field (https://github.com/oharastream/ohara/issues/4320)
+        else
+          JsObject(flattenSettings(format.write(obj).asJsObject).fields + ("nodeName" -> JsString(obj.aliveNodes.head)))
     }
 
   /**
