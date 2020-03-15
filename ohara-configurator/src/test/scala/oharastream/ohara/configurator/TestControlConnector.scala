@@ -25,7 +25,7 @@ import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
-import spray.json.{JsBoolean, JsNumber, JsString}
+import spray.json.{JsArray, JsBoolean, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -46,6 +46,35 @@ class TestControlConnector extends WithBrokerWorker {
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
   ).head
+
+  @Test
+  def keysInSettingShouldBeOverridable(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+
+    // test idempotent start
+    result(topicApi.start(topic.key))
+
+    val sink = result(
+      connectorApi.request
+        .name(CommonUtils.randomString(10))
+        .className(classOf[FallibleSink].getName)
+        .numberOfTasks(1)
+        .topicKey(topic.key)
+        .workerClusterKey(workerClusterInfo.key)
+        .setting("tasksStatus", JsArray.empty)
+        .create()
+    )
+    result(connectorApi.start(sink.key))
+    await(() => result(connectorApi.get(sink.key)).tasksStatus.nonEmpty)
+    await(() => result(connectorApi.get(sink.key)).tasksStatus.forall(_.state == State.RUNNING))
+  }
 
   @Test
   def testNormalCase(): Unit = {
