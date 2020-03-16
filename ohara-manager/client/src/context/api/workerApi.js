@@ -16,14 +16,16 @@
 
 import { map } from 'lodash';
 
+import { KIND } from 'const';
+import wait from 'api/waitApi';
 import * as waitUtil from 'api/utils/waitUtils';
+import * as URL from 'api/utils/url';
 import * as inspectApi from 'api/inspectApi';
 import * as objectApi from 'api/objectApi';
 import * as workerApi from 'api/workerApi';
 import ContextApiError from 'context/ContextApiError';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { API, RESOURCE } from 'api/utils/apiUtils';
 
 export const createApi = context => {
   const { workerGroup, brokerGroup } = context;
@@ -115,10 +117,9 @@ export const createApi = context => {
       if (res.errors) throw new ContextApiError(res);
       // We need to wait the connectors are ready
       // before we assert this worker started actually
-      const waitRes = await waitUtil.wait({
-        api: new API(`${RESOURCE.INSPECT}/${inspectApi.INSPECT_KIND.worker}`),
-        objectKey: params,
-        checkFn: waitUtil.waitForClassInfosReady,
+      const waitRes = await wait({
+        url: `${URL.INSPECT_URL}/${KIND.worker}/${name}?group=${group}`,
+        checkFn: waitUtil.waitForConnectReady,
         // we don't need to inspect too frequently
         sleep: 5000,
       });
@@ -130,15 +131,8 @@ export const createApi = context => {
       }
       const infoRes = await inspectApi.getWorkerInfo(params);
       if (infoRes.errors) throw new ContextApiError(infoRes);
-      const wkRes = await waitUtil.wait({
-        api: new API(RESOURCE.WORKER),
-        objectKey: params,
-        checkFn: waitUtil.waitForRunning,
-        // we don't need to retry too frequently
-        sleep: 5000,
-      });
       return generateClusterResponse({
-        values: wkRes.data,
+        values: res.data,
         inspectInfo: infoRes.data,
       });
     },

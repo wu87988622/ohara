@@ -33,7 +33,7 @@ export const createApi = () => {
       return res.data;
     },
     fetch: async hostname => {
-      const res = await nodeApi.get(hostname);
+      const res = await nodeApi.get({ hostname });
       if (res.errors) throw new ContextApiError(res);
       return res.data;
     },
@@ -51,7 +51,7 @@ export const createApi = () => {
     },
     delete: async hostname => {
       const params = { hostname };
-      const res = await nodeApi.remove(hostname);
+      const res = await nodeApi.remove(params);
       if (res.errors) throw new ContextApiError(res);
       return params;
     },

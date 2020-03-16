@@ -24,12 +24,19 @@ const getGroupFromProps = (_, props) => props?.group;
 const getIdFromProps = (_, props) => props?.id;
 
 export const makeGetAllPipelines = () =>
-  createSelector([getEntities], entities => _.values(entities));
+  createSelector(
+    [getEntities],
+    entities => _.values(entities),
+  );
 
 export const makeFindPipelinesByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
-    _.values(entities).filter(pl => pl?.group === group),
+  createSelector(
+    [getEntities, getGroupFromProps],
+    (entities, group) => _.values(entities).filter(pl => pl?.group === group),
   );
 
 export const makeGetPipelineById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+  createSelector(
+    [getEntities, getIdFromProps],
+    (entities, id) => entities[id],
+  );

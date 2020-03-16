@@ -39,7 +39,7 @@ import {
 } from 'components/DevTool/hooks';
 import * as context from 'context';
 import { TIME_GROUP } from 'context/log/const';
-import { LOG_SERVICES } from 'api/apiInterface/logInterface';
+import { logServices } from 'api/logApi';
 import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody, StyledTextField } from './ControllerStyles';
 
@@ -174,7 +174,7 @@ const ControllerLog = () => {
           logActions.setLogType(event.target.value);
           logActions.setHostName('');
         }}
-        list={Object.keys(LOG_SERVICES)}
+        list={Object.keys(logServices)}
         disabled={isFetching}
         testId="log-type-select"
       />

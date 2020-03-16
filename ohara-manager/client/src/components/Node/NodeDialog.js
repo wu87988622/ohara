@@ -198,7 +198,7 @@ const NodeDialog = () => {
             />
           </Typography>
 
-          {configuratorInfo.mode === MODE.DOCKER && (
+          {configuratorInfo.mode === MODE.docker && (
             <Button
               className="add-node-button"
               onClick={() => setIsAddNodeDialogOpen(true)}

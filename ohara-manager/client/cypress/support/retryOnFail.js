@@ -19,5 +19,5 @@ const isE2eTest = Cypress.config('integrationFolder').includes('e2e');
 // Enable cypress to retry on fail end-to-end test
 if (isE2eTest) {
   require('cypress-plugin-retries');
-  Cypress.env('RETRIES', 1);
+  Cypress.env('RETRIES', 3);
 }

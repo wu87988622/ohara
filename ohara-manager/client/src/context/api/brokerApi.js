@@ -22,8 +22,6 @@ import * as brokerApi from 'api/brokerApi';
 import ContextApiError from 'context/ContextApiError';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
-import { API, RESOURCE } from 'api/utils/apiUtils';
-import { wait, waitForRunning } from 'api/utils/waitUtils';
 
 export const createApi = context => {
   const { brokerGroup, zookeeperGroup } = context;
@@ -114,14 +112,7 @@ export const createApi = context => {
     },
     start: async name => {
       const params = { name, group };
-      await brokerApi.start(params);
-      const res = await wait({
-        api: new API(RESOURCE.BROKER),
-        objectKey: params,
-        checkFn: waitForRunning,
-        // we don't need to retry too frequently
-        sleep: 5000,
-      });
+      const res = await brokerApi.start(params);
       if (res.errors) throw new ContextApiError(res);
       return generateClusterResponse({ values: res.data });
     },
