@@ -46,7 +46,8 @@ const run = async (apiRoot, serverPort = 5050) => {
   console.log('server.pid', server.pid);
 
   try {
-    await server;
+    const process = await server;
+    console.log(`server output: ${process.stdout}`);
   } catch (err) {
     console.log(err.message);
     process.exit(1);

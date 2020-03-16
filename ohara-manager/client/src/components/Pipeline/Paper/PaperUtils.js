@@ -90,7 +90,8 @@ export const createConnection = params => {
     handleError(`Target ${targetDisplayName} is a source!`);
   } else if (
     sourceType === targetType &&
-    (sourceType !== KIND.stream && targetType !== KIND.stream)
+    sourceType !== KIND.stream &&
+    targetType !== KIND.stream
   ) {
     handleError(
       `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
