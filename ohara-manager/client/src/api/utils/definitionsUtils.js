@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  string,
-  number,
-  positiveNumber,
-  array,
-  object,
-  boolean,
-  option,
-  generateValueWithDefaultValue,
-} from '../utils/validation';
-import { get, isArray, isFunction } from 'lodash';
-
-const necessaryType = {
-  required: 'REQUIRED',
-  optional: 'OPTIONAL',
-  randomValue: 'RANDOM_DEFAULT',
-};
+import { get } from 'lodash';
 
 export const valueType = {
   boolean: 'BOOLEAN',
@@ -54,51 +38,6 @@ export const valueType = {
   objectKeys: 'OBJECT_KEYS',
   table: 'TABLE',
   tags: 'TAGS',
-};
-
-const getTypeWithValueType = key => {
-  switch (key) {
-    case valueType.boolean:
-      return boolean;
-
-    case valueType.string:
-    case valueType.class:
-    case valueType.password:
-    case valueType.jdbcTable:
-    case valueType.duration:
-      return string;
-
-    case valueType.short:
-    case valueType.int:
-    case valueType.long:
-    case valueType.double:
-    case valueType.remotePort:
-      return number;
-
-    case valueType.positiveShort:
-    case valueType.positiveInt:
-    case valueType.positiveLong:
-    case valueType.positiveDouble:
-      return positiveNumber;
-
-    case valueType.array:
-    case valueType.bindingPort:
-    case valueType.objectKeys:
-      return array;
-
-    case valueType.table:
-    case valueType.tags:
-      return object;
-
-    case valueType.objectKey:
-      return {
-        name: [string],
-        group: [string],
-      };
-
-    default:
-      return;
-  }
 };
 
 export const getDefinition = params => {
@@ -142,37 +81,4 @@ export const getDefinition = params => {
     newDefs[def.key] = def;
   });
   return newDefs;
-};
-
-export const createBody = params => {
-  const bodyObj = {};
-  Object.keys(params).forEach(key => {
-    let body;
-    const type = getTypeWithValueType(params[key].valueType);
-    if (!isFunction(type)) {
-      body = {};
-      body = type;
-    } else {
-      body = [];
-      body.push(type);
-    }
-
-    if (
-      (params[key].necessary === necessaryType.optional ||
-        params[key].necessary === necessaryType.randomValue) &&
-      isArray(body)
-    ) {
-      body.push(option);
-    }
-
-    if (
-      params[key].necessary === necessaryType.optional &&
-      params[key].defaultValue &&
-      isArray(body)
-    ) {
-      body.push(generateValueWithDefaultValue(params[key].defaultValue, type));
-    }
-    bodyObj[key] = body;
-  });
-  return bodyObj;
 };

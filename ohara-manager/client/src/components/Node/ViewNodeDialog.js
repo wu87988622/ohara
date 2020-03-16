@@ -38,7 +38,7 @@ import * as context from 'context';
 import { MODE } from 'const';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Button } from 'components/common/Form';
-import { state } from '../../api/nodeApi';
+import { NODE_STATE } from 'api/apiInterface/nodeInterface';
 
 const Wrapper = styled.div(
   ({ theme }) => css`
@@ -70,7 +70,7 @@ const ServiceCell = styled(TableCell)`
 
 const StateIcon = curState => {
   const curColor = props => {
-    return curState === state.available
+    return curState === NODE_STATE.AVAILABLE
       ? props.theme.palette.success.main
       : props.theme.palette.error.main;
   };
@@ -91,8 +91,10 @@ const StateIcon = curState => {
 
   return (
     <StateDiv component="div">
-      {curState === state.available ? <CheckCircleIcon /> : <Error />}
-      <Typography>{curState === state.available ? 'Alive' : 'Dead'}</Typography>
+      {curState === NODE_STATE.AVAILABLE ? <CheckCircleIcon /> : <Error />}
+      <Typography>
+        {curState === NODE_STATE.AVAILABLE ? 'Alive' : 'Dead'}
+      </Typography>
     </StateDiv>
   );
 };
@@ -215,8 +217,8 @@ const ViewNodeDialog = props => {
             <ServiceCell key={rowIdx + '_status'}>
               {StateIcon(
                 service.status === 'RUNNING'
-                  ? state.available
-                  : state.unavailable,
+                  ? NODE_STATE.AVAILABLE
+                  : NODE_STATE.UNAVAILABLE,
               )}
             </ServiceCell>
           </>
@@ -243,7 +245,7 @@ const ViewNodeDialog = props => {
             </Typography>
           </Grid>
           <Grid item>
-            {configuratorInfo.mode === MODE.docker && (
+            {configuratorInfo.mode === MODE.DOCKER && (
               <>
                 <Button
                   variant="outlined"
@@ -278,7 +280,7 @@ const ViewNodeDialog = props => {
                       <TableCell>Hostname</TableCell>
                       <TableCell>{nodeName}</TableCell>
                     </TableRow>
-                    {mode === MODE.docker && (
+                    {mode === MODE.DOCKER && (
                       <>
                         <TableRow>
                           <TableCell>Port</TableCell>
@@ -320,7 +322,7 @@ const ViewNodeDialog = props => {
                     </TableRow>
                   </TableBody>
                 </Table>
-                {mode === MODE.docker && (
+                {mode === MODE.DOCKER && (
                   <Button
                     variant="text"
                     startIcon={<CreateIcon />}
@@ -366,4 +368,9 @@ const ViewNodeDialog = props => {
 ViewNodeDialog.propTypes = {
   mode: PropTypes.string.isRequired,
 };
+
+ViewNodeDialog.defaultProps = {
+  mode: MODE.K8S,
+};
+
 export default ViewNodeDialog;

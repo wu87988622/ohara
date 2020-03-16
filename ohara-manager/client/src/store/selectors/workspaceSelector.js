@@ -22,13 +22,7 @@ export const getEntities = state => state?.entities?.workspaces;
 const getIdFromProps = (_, props) => props?.id;
 
 export const makeGetAllWorkspaces = () =>
-  createSelector(
-    [getEntities],
-    entities => _.values(entities),
-  );
+  createSelector([getEntities], entities => _.values(entities));
 
 export const makeGetWorkspaceById = () =>
-  createSelector(
-    [getEntities, getIdFromProps],
-    (entities, id) => entities[id],
-  );
+  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);

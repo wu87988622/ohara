@@ -22,6 +22,8 @@ import * as zookeeperApi from 'api/zookeeperApi';
 import ContextApiError from 'context/ContextApiError';
 import { getKey } from 'utils/object';
 import { generateClusterResponse, validate } from './utils';
+import { API, RESOURCE } from 'api/utils/apiUtils';
+import { wait, waitForRunning } from 'api/utils/waitUtils';
 
 export const createApi = context => {
   const { zookeeperGroup } = context;
@@ -108,7 +110,14 @@ export const createApi = context => {
     },
     start: async name => {
       const params = { name, group };
-      const res = await zookeeperApi.start(params);
+      await zookeeperApi.start(params);
+      const res = await wait({
+        api: new API(RESOURCE.ZOOKEEPER),
+        objectKey: params,
+        checkFn: waitForRunning,
+        // we don't need to retry too frequently
+        sleep: 5000,
+      });
       if (res.errors) throw new ContextApiError(res);
       return generateClusterResponse({ values: res.data });
     },

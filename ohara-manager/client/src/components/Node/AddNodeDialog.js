@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { noop } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
@@ -80,7 +81,7 @@ const AddNodeDialog = props => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {mode === MODE.docker && (
+              {mode === MODE.DOCKER && (
                 <>
                   <Field
                     name="port"
@@ -138,4 +139,11 @@ AddNodeDialog.propTypes = {
   handleClose: PropTypes.func.isRequired,
   mode: PropTypes.string.isRequired,
 };
+
+AddNodeDialog.defaultProps = {
+  isOpen: false,
+  handleClose: noop,
+  mode: MODE.K8S,
+};
+
 export default AddNodeDialog;
