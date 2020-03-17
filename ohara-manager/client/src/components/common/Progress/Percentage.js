@@ -27,7 +27,7 @@ const Percentage = (values, key) => {
   }
   if (values.indexOf(key) < 0) {
     if (values.indexOf('null') > -1) {
-      return 'NaN';
+      return 'None';
     }
     return values;
   }

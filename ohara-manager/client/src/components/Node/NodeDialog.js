@@ -34,6 +34,7 @@ import {
 } from 'context';
 import { QuickSearch } from 'components/common/Search';
 import { MODE } from 'const';
+import { NODE_STATE } from 'api/apiInterface/nodeInterface';
 
 const Actions = styled.div`
   display: flex;
@@ -172,9 +173,13 @@ const NodeDialog = () => {
         };
       });
 
-  const blockedRows = rows.filter(row => {
-    return blockedNodes.map(node => node.hostname).includes(row.name);
-  });
+  const blockedRows = rows.filter(row =>
+    blockedNodes.map(node => node.hostname).includes(row.name),
+  );
+
+  const unavailableRows = rows.filter(
+    row => row.state.toUpperCase() === NODE_STATE.unavailable,
+  );
 
   return (
     <FullScreenDialog
@@ -217,7 +222,7 @@ const NodeDialog = () => {
           selected={selected}
           setSelected={rows => setData({ ...data, selected: rows })}
           blockedRows={blockedRows}
-          unavailableRows={rows.filter(row => row.state === 'UNAVAILABLE')}
+          unavailableRows={unavailableRows}
         />
 
         <AddNodeDialog
