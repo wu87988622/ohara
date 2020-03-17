@@ -252,7 +252,7 @@ const PipelinePropertyView = props => {
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             {tasksStatus
-              // UI now not support show master node.
+              // Master node is not displaying in the UI
               .filter(node => !node.master)
               .map(node => {
                 const { nodeName, state } = node;
