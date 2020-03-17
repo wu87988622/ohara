@@ -16,6 +16,10 @@
 
 FROM oharastream/ohara:deps as deps
 
+# add label to intermediate image so jenkins can find out this one to remove
+ARG STAGE="intermediate"
+LABEL stage=$STAGE
+
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
 ARG KAFKA_DIR=/opt/kafka

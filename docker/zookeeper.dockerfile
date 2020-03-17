@@ -16,6 +16,10 @@
 
 FROM centos:7.7.1908 as deps
 
+# add label to intermediate image so jenkins can find out this one to remove
+ARG STAGE="intermediate"
+LABEL stage=$STAGE
+
 # install tools
 RUN yum install -y \
   wget \

@@ -16,6 +16,10 @@
 
 FROM oharastream/ohara:deps as deps
 
+# add label to intermediate image so jenkins can find out this one to remove
+ARG STAGE="intermediate"
+LABEL stage=$STAGE
+
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
 ARG REPO="https://github.com/oharastream/ohara.git"
