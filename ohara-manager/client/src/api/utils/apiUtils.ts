@@ -263,13 +263,13 @@ export class API {
     queryParams = {},
     options = {},
   }: {
-    name: string;
+    name?: string;
     queryParams?: object;
     options?: { [k: string]: any };
   }): Promise<T> {
     try {
       const res = await this.axios.post<AxiosData>(
-        `/${this.resource}`,
+        name ? `/${this.resource}/${name}` : `/${this.resource}`,
         undefined,
         {
           params: queryParams,
@@ -277,12 +277,12 @@ export class API {
       );
       const title = options.title
         ? options.title
-        : `Inspect ${this.resource} "${name}" info successfully.`;
+        : `Inspect ${this.resource} info successfully.`;
       return this.convertResponse(res, title) as T;
     } catch (error) {
       const title = options.title
         ? options.title
-        : `Inspect ${this.resource} "${name}" info failed.`;
+        : `Inspect ${this.resource} info failed.`;
       throw this.constructError<T>(error, title);
     }
   }

@@ -147,13 +147,12 @@ export const getFileInfoWithoutUpload = (params: FileRequest) => {
 export const getTopicData = (params: inspect.InspectTopicRequest) => {
   return inspectApi(INSPECT_KIND.topic).query<inspect.InspectTopicResponse>({
     name: params.key.name,
-    queryParams: omit(params, ['key']),
+    queryParams: { group: params.key.group, ...omit(params, ['key']) },
   });
 };
 
 export const getRdbData = (params: inspect.InspectRdbRequest) => {
   return inspectApi(INSPECT_KIND.rdb).query<inspect.InspectRdbResponse>({
-    name: params.tableName,
     queryParams: params,
   });
 };

@@ -16,6 +16,7 @@
 
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-console */
 
 import '@testing-library/cypress/add-commands';
 
@@ -59,8 +60,8 @@ declare global {
         withTopic?: boolean;
       }) => Promise<Cypress.ServiceData>;
       produceTopicData: (
-        workspaceName: string,
-        topic: TopicResponse,
+        workspaceName?: string,
+        topic?: TopicResponse,
       ) => Chainable<void>;
     }
   }
@@ -217,7 +218,11 @@ Cypress.Commands.add(
 // make sure you have set enough timeout of defaultCommandTimeout in cypress.e2e.json
 Cypress.Commands.add(
   'produceTopicData',
-  async (workerName: string, topic: TopicResponse) => {
+  async (workerName?: string, topic?: TopicResponse) => {
+    if (!workerName || !topic) {
+      console.error('the workspaceName and topic are required fields');
+      return;
+    }
     const connector = {
       name: generate.serviceName({ prefix: 'perf' }),
       // it is ok to use random group here; we just need a temp connector to produce data

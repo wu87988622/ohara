@@ -100,8 +100,8 @@ export const createApi = context => {
     fetchData: async values => {
       validate(values);
       const params = {
+        key: { name: values.name, group },
         ...values,
-        group,
       };
       const res = await inspectApi.getTopicData(params);
       if (res.errors) throw new ContextApiError(res);
