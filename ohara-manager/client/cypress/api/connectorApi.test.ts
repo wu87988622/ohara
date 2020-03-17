@@ -20,10 +20,9 @@
 
 import * as generate from '../../src/utils/generate';
 import * as connectorApi from '../../src/api/connectorApi';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCES, State } from '../../src/api/apiInterface/connectorInterface';
 import * as topicApi from '../../src/api/topicApi';
 import { createServices, deleteAllServices } from '../utils';
-import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 
 const generateConnector = async () => {
   const { node, broker, worker } = await createServices({
@@ -68,7 +67,14 @@ describe('Connector API', () => {
     const connector = await generateConnector();
     const result = await connectorApi.create(connector);
 
-    const { metrics, lastModified, tasksStatus } = result.data;
+    const {
+      state,
+      aliveNodes,
+      error,
+      tasksStatus,
+      metrics,
+      lastModified,
+    } = result.data;
     const {
       columns,
       connector__class,
@@ -81,8 +87,13 @@ describe('Connector API', () => {
       tags,
     } = result.data;
 
+    // runtime information should be empty before starting
+    expect(state).to.be.undefined;
+    expect(aliveNodes).to.be.empty;
+    expect(error).to.be.undefined;
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
+    expect(metrics.meters).to.empty;
 
     expect(lastModified).to.be.a('number');
 
@@ -117,7 +128,14 @@ describe('Connector API', () => {
 
     const result = await connectorApi.get(connector);
 
-    const { metrics, lastModified, tasksStatus } = result.data;
+    const {
+      state,
+      aliveNodes,
+      error,
+      tasksStatus,
+      metrics,
+      lastModified,
+    } = result.data;
     const {
       columns,
       connector__class,
@@ -130,8 +148,13 @@ describe('Connector API', () => {
       tags,
     } = result.data;
 
+    // runtime information should be empty before starting
+    expect(state).to.be.undefined;
+    expect(aliveNodes).to.be.empty;
+    expect(error).to.be.undefined;
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
+    expect(metrics.meters).to.empty;
 
     expect(lastModified).to.be.a('number');
 
@@ -207,7 +230,14 @@ describe('Connector API', () => {
 
     const result = await connectorApi.update(newConnector);
 
-    const { metrics, lastModified, tasksStatus } = result.data;
+    const {
+      state,
+      aliveNodes,
+      error,
+      tasksStatus,
+      metrics,
+      lastModified,
+    } = result.data;
     const {
       columns,
       connector__class,
@@ -222,8 +252,13 @@ describe('Connector API', () => {
       tags,
     } = result.data;
 
+    // runtime information should be empty before starting
+    expect(state).to.be.undefined;
+    expect(aliveNodes).to.be.empty;
+    expect(error).to.be.undefined;
     expect(metrics).to.be.an('object');
     expect(metrics.meters).to.be.an('array');
+    expect(metrics.meters).to.empty;
 
     expect(lastModified).to.be.a('number');
 
@@ -267,8 +302,30 @@ describe('Connector API', () => {
 
     await connectorApi.start(connector);
     const runningConnectorRes = await connectorApi.get(connector);
-    expect(runningConnectorRes.data.state).to.eq(SERVICE_STATE.RUNNING);
-    expect(runningConnectorRes.data.nodeName).to.not.be.empty;
+
+    const {
+      state,
+      aliveNodes,
+      error,
+      tasksStatus,
+      metrics,
+      lastModified,
+    } = runningConnectorRes.data;
+
+    // runtime information should exist
+    expect(state).to.eq(State.RUNNING);
+    expect(aliveNodes).to.not.be.empty;
+    expect(error).to.be.undefined;
+
+    expect(metrics).to.be.an('object');
+    expect(metrics.meters).to.be.an('array');
+
+    expect(tasksStatus).to.be.not.empty;
+    expect(tasksStatus[0].error).to.be.undefined;
+    expect(tasksStatus[0].nodeName).to.be.not.empty;
+    expect(tasksStatus[0].state).to.eq(State.RUNNING);
+
+    expect(lastModified).to.be.a('number');
   });
 
   it('stopConnector', async () => {
@@ -280,7 +337,7 @@ describe('Connector API', () => {
 
     await connectorApi.start(connector);
     const runningConnectorRes = await connectorApi.get(connector);
-    expect(runningConnectorRes.data.state).to.eq(SERVICE_STATE.RUNNING);
+    expect(runningConnectorRes.data.state).to.eq(State.RUNNING);
     expect(runningConnectorRes.data.nodeName).to.not.be.empty;
 
     await connectorApi.stop(connector);

@@ -32,7 +32,7 @@ export enum SINKS {
   smb = 'oharastream.ohara.connector.smb.SmbSink',
 }
 
-enum State {
+export enum State {
   UNASSIGNED = 'UNASSIGNED',
   RUNNING = 'RUNNING',
   PAUSED = 'PAUSED',
@@ -43,10 +43,11 @@ interface Status {
   state: State;
   nodeName: string;
   error?: string;
+  master: boolean;
 }
 interface Data {
-  state?: string;
-  nodeName?: string;
+  state?: State;
+  aliveNodes: string[];
   error?: string;
   tasksStatus: Status[];
   metrics: Metrics;
