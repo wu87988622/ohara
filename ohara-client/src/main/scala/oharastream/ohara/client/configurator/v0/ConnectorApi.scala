@@ -223,11 +223,7 @@ object ConnectorApi {
     new RootJsonFormat[ConnectorInfo] {
       private[this] val format                        = jsonFormat7(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
-      override def write(obj: ConnectorInfo): JsValue =
-        if (obj.aliveNodes.isEmpty) flattenSettings(format.write(obj).asJsObject)
-        // TODO: remove this field (https://github.com/oharastream/ohara/issues/4320)
-        else
-          JsObject(flattenSettings(format.write(obj).asJsObject).fields + ("nodeName" -> JsString(obj.aliveNodes.head)))
+      override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
     }
 
   /**
