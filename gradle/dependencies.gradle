@@ -22,8 +22,8 @@ versions["hadoop"] = project.hasProperty('hadoop.version') ? project.properties[
 versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "2.4.0"
 versions["postgresql"] = project.hasProperty('postgresql.version') ? project.properties['postgresql.version'] : "9.1-901-1.jdbc4"
 versions["mockito"] = project.hasProperty('mockito.version') ? project.properties['mockito.version'] : "1.10.19"
-versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.12.10"
-if (versions["scala"] == "2.12") versions["scala"] = "2.12.10"
+versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : "2.12.11"
+if (versions["scala"] == "2.12") versions["scala"] = "2.12.11"
 if (versions["scala"].startsWith("2.12")) versions["scalaMinor"] = "2.12"
 else throw new GradleException("${versions["scala"]} is not supported. ohara requires scala 2.12")
 versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.5.26"
