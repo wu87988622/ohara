@@ -16,16 +16,17 @@
 
 package oharastream.ohara.common.exception;
 
-public class OharaInterruptedException extends OharaException {
+public class ExecutionException extends oharastream.ohara.common.exception.Exception {
+
   private static final long serialVersionUID = 1L;
 
-  public OharaInterruptedException() {}
+  public ExecutionException() {}
 
-  public OharaInterruptedException(Throwable e) {
+  public ExecutionException(Throwable e) {
     super(e);
   }
 
-  public OharaInterruptedException(String message, Throwable e) {
+  public ExecutionException(String message, Throwable e) {
     super(message, e);
   }
 }

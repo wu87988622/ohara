@@ -16,16 +16,21 @@
 
 package oharastream.ohara.common.exception;
 
-public class OharaTimeoutException extends OharaException {
-  public static final long serialVersionUID = 1L;
+public class Exception extends RuntimeException {
 
-  public OharaTimeoutException() {}
+  private static final long serialVersionUID = 1L;
 
-  public OharaTimeoutException(Throwable e) {
+  public Exception() {}
+
+  public Exception(String message) {
+    super(message);
+  }
+
+  public Exception(Throwable e) {
     super(e);
   }
 
-  public OharaTimeoutException(String message, Throwable e) {
+  public Exception(String message, Throwable e) {
     super(message, e);
   }
 }

@@ -25,13 +25,13 @@ public class TestExceptionHandler extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void addDuplicateFunction() {
     ExceptionHandler.builder()
-        .with(IOException.class, OharaException::new)
-        .with(IOException.class, OharaException::new);
+        .with(IOException.class, Exception::new)
+        .with(IOException.class, Exception::new);
   }
 
   @Test(expected = NullPointerException.class)
   public void nullClass() {
-    ExceptionHandler.builder().with(null, OharaException::new);
+    ExceptionHandler.builder().with(null, Exception::new);
   }
 
   @Test(expected = NullPointerException.class)
@@ -39,10 +39,10 @@ public class TestExceptionHandler extends OharaTest {
     ExceptionHandler.builder().with(IOException.class, null);
   }
 
-  @Test(expected = OharaTimeoutException.class)
+  @Test(expected = TimeoutException.class)
   public void testHandle() {
     ExceptionHandler.builder()
-        .with(IOException.class, OharaTimeoutException::new)
+        .with(IOException.class, TimeoutException::new)
         .build()
         .handle(
             () -> {
@@ -50,26 +50,26 @@ public class TestExceptionHandler extends OharaTest {
             });
   }
 
-  @Test(expected = OharaException.class)
+  @Test(expected = Exception.class)
   public void testDefaultHandle() {
     ExceptionHandler.builder()
-        .with(IOException.class, OharaTimeoutException::new)
+        .with(IOException.class, TimeoutException::new)
         .build()
         .handle(
             () -> {
-              throw new InterruptedException("HELLO WORLD");
+              throw new java.lang.InterruptedException("HELLO WORLD");
             });
   }
 
-  @Test(expected = OharaTimeoutException.class)
+  @Test(expected = TimeoutException.class)
   public void testManyHandlers() {
     ExceptionHandler.builder()
-        .with(InterruptedException.class, OharaTimeoutException::new)
-        .with(IOException.class, OharaExecutionException::new)
+        .with(java.lang.InterruptedException.class, TimeoutException::new)
+        .with(IOException.class, ExecutionException::new)
         .build()
         .handle(
             () -> {
-              throw new InterruptedException("HELLO WORLD");
+              throw new java.lang.InterruptedException("HELLO WORLD");
             });
   }
 }
