@@ -16,16 +16,6 @@
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 
-apply plugin: 'com.novoda.bintray-release'
-buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.novoda:bintray-release:0.9'
-  }
-}
-
 dependencies {
   implementation project(':ohara-common')
   implementation libs.slf4jApi
@@ -34,14 +24,4 @@ dependencies {
   testImplementation project(':ohara-testing-util')
   testImplementation project(path: ':ohara-testing-util', configuration: 'tests')
   testImplementation libs.junit
-}
-
-publish {
-  userOrg = property("userOrg")
-  repoName = property("repoName")
-  groupId = property("group")
-  artifactId = 'ohara-metrics'
-  publishVersion = project.version
-  desc = property("desc")
-  website = property("website")
 }
