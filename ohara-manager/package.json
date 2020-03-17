@@ -9,7 +9,7 @@
   "scripts": {
     "preinstall": "node ./scripts/checkYarnVersion.js",
     "setup": "yarn install --frozen-lockfile && yarn --cwd client setup",
-    "start": "cross-env NODE_ENV=development nodemon start.js --exec \"yarn lint:server && node\"",
+    "start": "cross-env NODE_ENV=development nodemon start.js --exec \"yarn lint:server && ts-node\"",
     "start:prod": "cross-env NODE_ENV=production node start.js",
     "start:client": "yarn --cwd client start",
     "lint": "run-s lint:server lint:client",
@@ -54,6 +54,8 @@
     "lodash": "4.17.15",
     "morgan": "1.9.1",
     "sha.js": "2.4.11",
+    "ts-node": "8.6.2",
+    "typescript": "3.8.3",
     "yargs": "14.2.0"
   },
   "devDependencies": {

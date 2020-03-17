@@ -4,6 +4,7 @@
     "outDir": "build",
     "target": "esnext",
     "module": "esnext",
+    "sourceMap": true,
     "strict": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
