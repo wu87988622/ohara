@@ -39,7 +39,7 @@ done
 
 if [ "$service" == "manager" ]; then
   cd "$PROJECT_HOME"
-  exec node ./start.js $ARGS
+  exec env NODE_ENV=production node ./start.js $ARGS
 else
   if [ "$service" == "configurator" ]; then
     CLASS="oharastream.ohara.configurator.Configurator"
