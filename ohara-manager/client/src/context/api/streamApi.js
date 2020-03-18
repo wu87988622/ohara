@@ -34,18 +34,41 @@ export const createApi = context => {
 
   const group = streamGroup;
   const brokerClusterKey = brokerKey;
+
+  const getDefinition = async params => {
+    const { name, className } = params;
+
+    const streamInfo = await inspectApi.getStreamsInfo({
+      group,
+      name,
+    });
+
+    if (streamInfo.errors) throw new ContextApiError(streamInfo);
+    const streamDef = streamInfo.data.classInfos
+      // the "connector__class" field is converted by "connector.class" from request
+      // each connector creation must assign connector.class
+      .find(param => param.className === className);
+    if (!streamDef)
+      throw new ContextApiError({
+        ...streamInfo,
+        title: `Cannot find required definitions of ${className}.`,
+      });
+
+    return streamDef;
+  };
+
   return {
     fetchAll: async () => {
       const params = { group };
       const res = await streamApi.getAll(params);
+
       if (res.errors) throw new ContextApiError(res);
       return await Promise.all(
         map(res.data, async stream => {
-          const infoRes = await inspectApi.getStreamsInfo(stream);
-          if (infoRes.errors) throw new ContextApiError(infoRes);
+          const info = await getDefinition(stream);
           return generateClusterResponse({
             values: stream,
-            inspectInfo: infoRes.data,
+            inspectInfo: info,
           });
         }),
       );
@@ -54,11 +77,11 @@ export const createApi = context => {
       const params = { name, group };
       const res = await streamApi.get(params);
       if (res.errors) throw new ContextApiError(res);
-      const infoRes = await inspectApi.getStreamsInfo(params);
-      if (infoRes.errors) throw new ContextApiError(infoRes);
+      const info = await getDefinition(res);
+
       return generateClusterResponse({
         values: res.data,
-        inspectInfo: infoRes.data,
+        inspectInfo: info,
       });
     },
     create: async values => {
@@ -71,11 +94,12 @@ export const createApi = context => {
       };
       const res = await streamApi.create(params);
       if (res.errors) throw new ContextApiError(res);
-      const infoRes = await inspectApi.getStreamsInfo(params);
-      if (infoRes.errors) throw new ContextApiError(infoRes);
+      const { connector__class: className, name } = values;
+      const info = await getDefinition({ className, name });
+      if (info.errors) throw new ContextApiError(info);
       return generateClusterResponse({
         values: res.data,
-        inspectInfo: infoRes.data,
+        inspectInfo: info,
       });
     },
     update: async values => {

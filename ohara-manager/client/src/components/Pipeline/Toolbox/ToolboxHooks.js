@@ -80,12 +80,12 @@ export const useFiles = () => {
       if (streamClasses.length > 0) {
         const results = streamClasses
           .map(streamClass => {
-            return streamClass.classInfos.map(calssInfo => {
-              const name = calssInfo.className.split('.').pop();
+            return streamClass.classInfos.map(classInfo => {
+              const name = classInfo.className.split('.').pop();
               return {
                 name,
                 kind: KIND.stream,
-                className: calssInfo.className,
+                className: classInfo.className,
                 jarKey: {
                   name: streamClass.name,
                   group: streamClass.group,
