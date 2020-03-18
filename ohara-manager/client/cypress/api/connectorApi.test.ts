@@ -337,8 +337,27 @@ describe('Connector API', () => {
 
     await connectorApi.start(connector);
     const runningConnectorRes = await connectorApi.get(connector);
-    expect(runningConnectorRes.data.state).to.eq(State.RUNNING);
-    expect(runningConnectorRes.data.nodeName).to.not.be.empty;
+
+    const {
+      state,
+      aliveNodes,
+      error,
+      tasksStatus,
+      metrics,
+    } = runningConnectorRes.data;
+
+    // runtime information should exist
+    expect(state).to.eq(State.RUNNING);
+    expect(aliveNodes).to.not.be.empty;
+    expect(error).to.be.undefined;
+
+    expect(metrics).to.be.an('object');
+    expect(metrics.meters).to.be.an('array');
+
+    expect(tasksStatus).to.be.not.empty;
+    expect(tasksStatus[0].error).to.be.undefined;
+    expect(tasksStatus[0].nodeName).to.be.not.empty;
+    expect(tasksStatus[0].state).to.eq(State.RUNNING);
 
     await connectorApi.stop(connector);
     const stopConnectorRes = await connectorApi.get(connector);
