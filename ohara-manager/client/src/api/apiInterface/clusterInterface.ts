@@ -35,7 +35,7 @@ interface ClusterData {
   aliveNodes: string[];
   deadNodes?: string[];
   lastModified: number;
-  state?: string;
+  state?: SERVICE_STATE;
   error?: string;
   [k: string]: any;
 }
