@@ -28,7 +28,7 @@ RUN yum install -y \
 # download kafka
 # WARN: Please don't change the value of KAFKA_DIR
 ARG KAFKA_DIR=/opt/kafka
-ARG KAFKA_VERSION=2.4.0
+ARG KAFKA_VERSION=2.4.1
 ARG SCALA_VERSION=2.12
 ARG MIRROR_SITE=https://archive.apache.org/dist
 RUN wget $MIRROR_SITE/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
