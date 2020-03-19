@@ -16,20 +16,10 @@
 
 import { createRoutine } from 'redux-routines';
 
-const fetchBrokersRoutine = createRoutine('FETCH_BROKERS');
-const createBrokerRoutine = createRoutine('CREATE_BROKER');
-const updateBrokerRoutine = createRoutine('UPDATE_BROKER');
-const stageBrokerRoutine = createRoutine('STAGE_BROKER');
-const deleteBrokerRoutine = createRoutine('DELETE_BROKER');
-const startBrokerRoutine = createRoutine('START_BROKER');
-const stopBrokerRoutine = createRoutine('STOP_BROKER');
-
-export {
-  fetchBrokersRoutine,
-  createBrokerRoutine,
-  updateBrokerRoutine,
-  stageBrokerRoutine,
-  deleteBrokerRoutine,
-  startBrokerRoutine,
-  stopBrokerRoutine,
-};
+export const fetchBrokers = createRoutine('FETCH_BROKERS');
+export const fetchBroker = createRoutine('FETCH_BROKER');
+export const createBroker = createRoutine('CREATE_BROKER');
+export const updateBroker = createRoutine('UPDATE_BROKER');
+export const startBroker = createRoutine('START_BROKER');
+export const stopBroker = createRoutine('STOP_BROKER');
+export const deleteBroker = createRoutine('DELETE_BROKER');

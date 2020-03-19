@@ -32,6 +32,8 @@ describe('workspaceQuick', () => {
 
     // we have two workspace now
     cy.findByTitle('Workspace list')
+      .children()
+      .should('not.be.disabled')
       .click()
       .findByText(/^showing 2 workspaces$/i)
       .should('exist');

@@ -16,7 +16,8 @@
 
 import { deleteAllServices } from '../utils';
 
-describe('EventLogDialog', () => {
+// TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
+describe.skip('EventLogDialog', () => {
   before(async () => await deleteAllServices());
 
   it('event log should be empty after removed', () => {

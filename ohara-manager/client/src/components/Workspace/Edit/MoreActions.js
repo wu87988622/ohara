@@ -32,18 +32,22 @@ function MoreActions() {
   const [isOpen, setIsOpne] = React.useState(false);
   const [isResetting, setIsResetting] = React.useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
-  const {
-    currentZookeeper,
-    currentBroker,
-    currentWorker,
-  } = context.useWorkspace();
+
+  const currentBroker = hooks.useCurrentBroker();
   const currentPipeline = hooks.useCurrentPipeline();
+  const currentWorker = hooks.useCurrentWorker();
+  const currentZookeeper = hooks.useCurrentZookeeper();
+
   const { stopConnector, startConnector } = context.useConnectorActions();
   const { stopTopic, startTopic } = context.useTopicActions();
   const { stopStream, startStream } = context.useStreamActions();
-  const { stopWorker, startWorker } = context.useWorkerActions();
-  const { stopBroker, startBroker } = context.useBrokerActions();
-  const { stopZookeeper, startZookeeper } = context.useZookeeperActions();
+
+  const startBroker = hooks.useStartBrokerAction();
+  const startWorker = hooks.useStartWorkerAction();
+  const startZookeeper = hooks.useStartZookeeperAction();
+  const stopBroker = hooks.useStopBrokerAction();
+  const stopWorker = hooks.useStopWorkerAction();
+  const stopZookeeper = hooks.useStopZookeeperAction();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);

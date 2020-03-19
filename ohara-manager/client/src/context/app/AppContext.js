@@ -80,6 +80,9 @@ const AppProvider = ({ children }) => {
         setWorkspaceName,
         pipelineName,
         setPipelineName,
+        brokerName: workspaceName,
+        workerName: workspaceName,
+        zookeeperName: workspaceName,
         // group
         brokerGroup,
         connectorGroup,

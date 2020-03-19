@@ -26,6 +26,7 @@ import { Typography } from '@material-ui/core';
 import { KIND } from 'const';
 import { usePrevious } from 'utils/hooks';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { TIME_GROUP } from 'context/log/const';
 import { TAB } from 'context/devTool/const';
 import { ViewTopic, ViewLog } from './View';
@@ -55,11 +56,9 @@ const DataWindow = () => {
   const { data: topics } = context.useTopicState();
   const topicActions = context.useTopicDataActions();
   const logActions = context.useLogActions();
-  const {
-    currentZookeeper,
-    currentBroker,
-    currentWorker,
-  } = context.useWorkspace();
+  const currentBroker = hooks.useCurrentBroker();
+  const currentWorker = hooks.useCurrentWorker();
+  const currentZookeeper = hooks.useCurrentZookeeper();
 
   const searchParams = new URLSearchParams(location.search);
 

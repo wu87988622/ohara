@@ -37,7 +37,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import DeleteIcon from '@material-ui/icons/Delete';
 
-import { useWorkspace } from 'context';
+import * as hooks from 'hooks';
 import ResourceItem from './ResourceItem';
 import ServiceItem from './ServiceItem';
 import ServiceSwitch from './ServiceSwitch';
@@ -48,7 +48,9 @@ import { DeleteDialog } from 'components/common/Dialog';
 import { useNodeState, useNodeActions } from 'context';
 
 const NodeCard = ({ node }) => {
-  const { currentWorker, currentBroker, currentZookeeper } = useWorkspace();
+  const currentBroker = hooks.useCurrentBroker();
+  const currentWorker = hooks.useCurrentWorker();
+  const currentZookeeper = hooks.useCurrentZookeeper();
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   const { isFetching: isDeleting } = useNodeState();
   const { deleteNode } = useNodeActions();

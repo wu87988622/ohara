@@ -21,6 +21,7 @@ import { StoreContext } from 'redux-react-hook';
 
 import { hashByGroupAndName } from 'utils/sha';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import * as pipelineHooks from './pipelineHooks';
 import * as workspaceHooks from './workspaceHooks';
 import { usePrevious } from 'utils/hooks';
@@ -40,6 +41,7 @@ export const useRedirect = () => {
   const { workspaceName, pipelineName } = useParams();
   const prevWorkspaceName = usePrevious(workspaceName);
   const prevPipelineName = usePrevious(pipelineName);
+  const switchWorkspace = hooks.useSwitchWorkspace();
 
   useEffect(() => {
     if (!isAppReady) return;
@@ -72,13 +74,23 @@ export const useRedirect = () => {
         history.push(`/`);
       }
     }
-  }, [isAppReady, workspaces, pipelines, workspaceName, pipelineName, history]);
+
+    if (workspaceName === validWorkspaceName) switchWorkspace(workspaceName);
+  }, [
+    history,
+    isAppReady,
+    pipelineName,
+    pipelines,
+    switchWorkspace,
+    workspaceName,
+    workspaces,
+  ]);
 
   useEffect(() => {
     if (workspaceName && workspaceName !== prevWorkspaceName) {
       setWorkspaceName(workspaceName);
     }
-  }, [workspaceName, prevWorkspaceName, setWorkspaceName]);
+  }, [isAppReady, prevWorkspaceName, setWorkspaceName, workspaceName]);
 
   useEffect(() => {
     if (pipelineName && pipelineName !== prevPipelineName) {

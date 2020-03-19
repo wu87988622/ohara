@@ -30,10 +30,11 @@ import {
   composeValidators,
 } from 'utils/validate';
 import * as context from 'context';
+import * as hooks from 'hooks';
 
 const AddTopicDialog = props => {
   const { uniqueId } = props;
-  const { currentBroker } = context.useWorkspace();
+  const currentBroker = hooks.useCurrentBroker();
   const { isFetching: isSaving } = context.useTopicState();
   const { createTopic } = context.useTopicActions();
   const {

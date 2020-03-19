@@ -364,7 +364,7 @@ export function getConnectorInfo(worker) {
   let sources = [];
   let sinks = [];
 
-  if (worker) {
+  if (worker && worker.classInfos) {
     worker.classInfos.forEach(info => {
       const { className, settingDefinitions: defs } = info;
       const kind = defs.find(def => def.key === 'kind').defaultValue;

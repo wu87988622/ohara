@@ -15,5 +15,8 @@
  */
 
 export * from './appActions';
+export * from './brokerActions';
 export * from './pipelineActions';
+export * from './workerActions';
 export * from './workspaceActions';
+export * from './zookeeperActions';

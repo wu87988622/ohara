@@ -27,7 +27,8 @@ import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import AddIcon from '@material-ui/icons/Add';
 
-import { useWorkspace, useAddPluginDialog, useWorkerActions } from 'context';
+import { useAddPluginDialog } from 'context';
+import * as hooks from 'hooks';
 import { QuickSearch } from 'components/common/Search';
 import {
   useCandidatePlugins,
@@ -44,11 +45,11 @@ import {
 import { someByKey } from 'utils/object';
 
 function PluginSelector() {
-  const { currentWorker } = useWorkspace();
+  const currentWorker = hooks.useCurrentWorker();
   const workerName = get(currentWorker, 'name');
 
   const { isOpen, close } = useAddPluginDialog();
-  const { stageWorker } = useWorkerActions();
+  const stageWorker = () => {};
 
   const candidatePlugins = useCandidatePlugins();
   const selectedPlugins = useSelectedPlugins();

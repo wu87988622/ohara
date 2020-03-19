@@ -16,6 +16,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useMappedState } from 'redux-react-hook';
+import { isEqual as isDeepEqual } from 'lodash';
 
 import { useApp } from 'context';
 import * as selectors from 'store/selectors';
@@ -45,4 +46,14 @@ export const useCurrentWorkspace = () => {
     ]),
   );
   return workspace;
+};
+
+export const useCreateWorkspaceProgress = () => {
+  const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
+  return useMappedState(mapState, isDeepEqual);
+};
+
+export const useCreateWorkspaceState = () => {
+  const mapState = useCallback(state => state.ui.createWorkspace, []);
+  return useMappedState(mapState, isDeepEqual);
 };

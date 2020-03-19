@@ -15,34 +15,20 @@
  */
 
 import { normalize } from 'normalizr';
-import { combineEpics, ofType } from 'redux-observable';
+import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
-import { switchMap, map, startWith, catchError } from 'rxjs/operators';
+import { catchError, map, switchMap, startWith } from 'rxjs/operators';
 
+import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
-import * as apiWrapper from 'store/apiWrapper';
 import * as schema from 'store/schema';
 
-const createWorkspaceEpic = action$ =>
-  action$.pipe(
-    ofType(actions.createWorkspace.TRIGGER),
-    map(action => action.payload),
-    switchMap(values =>
-      from(apiWrapper.wrapCreateWorkspace(values)).pipe(
-        map(res => normalize(res.data, schema.workspace)),
-        map(entities => actions.createWorkspace.success(entities)),
-        startWith(actions.createWorkspace.request()),
-        catchError(res => of(actions.createWorkspace.failure(res))),
-      ),
-    ),
-  );
-
-const updateWorkspaceEpic = action$ =>
+export default action$ =>
   action$.pipe(
     ofType(actions.updateWorkspace.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
-      from(apiWrapper.wrapUpdateWorkspace(values)).pipe(
+      from(workspaceApi.update(values)).pipe(
         map(res => normalize(res.data, schema.workspace)),
         map(entities => actions.updateWorkspace.success(entities)),
         startWith(actions.updateWorkspace.request()),
@@ -50,5 +36,3 @@ const updateWorkspaceEpic = action$ =>
       ),
     ),
   );
-
-export default combineEpics(createWorkspaceEpic, updateWorkspaceEpic);

@@ -40,7 +40,9 @@ describe('TopicDialog of Workspace Settings', () => {
 
     topics.forEach(topic => {
       cy.findByText(/^add topic$/i)
+        .parent()
         .should('exist')
+        .should('be.not.disabled')
         .click();
       cy.findByLabelText('topic name', { exact: false }).type(topic);
       cy.findByLabelText('partitions', { exact: false }).type('1');

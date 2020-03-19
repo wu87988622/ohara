@@ -16,20 +16,10 @@
 
 import { createRoutine } from 'redux-routines';
 
-const fetchWorkersRoutine = createRoutine('FETCH_WORKERS');
-const createWorkerRoutine = createRoutine('CREATE_WORKER');
-const updateWorkerRoutine = createRoutine('UPDATE_WORKER');
-const stageWorkerRoutine = createRoutine('STAGE_WORKER');
-const deleteWorkerRoutine = createRoutine('DELETE_WORKER');
-const startWorkerRoutine = createRoutine('START_WORKER');
-const stopWorkerRoutine = createRoutine('STOP_WORKER');
-
-export {
-  fetchWorkersRoutine,
-  createWorkerRoutine,
-  updateWorkerRoutine,
-  stageWorkerRoutine,
-  deleteWorkerRoutine,
-  startWorkerRoutine,
-  stopWorkerRoutine,
-};
+export const fetchZookeepers = createRoutine('FETCH_ZOOKEEPERS');
+export const fetchZookeeper = createRoutine('FETCH_ZOOKEEPER');
+export const createZookeeper = createRoutine('CREATE_ZOOKEEPER');
+export const updateZookeeper = createRoutine('UPDATE_ZOOKEEPER');
+export const startZookeeper = createRoutine('START_ZOOKEEPER');
+export const stopZookeeper = createRoutine('STOP_ZOOKEEPER');
+export const deleteZookeeper = createRoutine('DELETE_ZOOKEEPER');

@@ -50,16 +50,13 @@ describe('DevToolDialog - Topics tab', () => {
       withWorkspace: true,
       withTopic: true,
     }).then(res => {
-      cy.produceTopicData(res.workspaceName, res.topic)
-        .visit('/', {
-          onBeforeLoad(win) {
-            // to surveillance the window.open() event
-            // we stub it and do nothing
-            cy.stub(win, 'open');
-          },
-        })
-        .findByText(workspaceNameInAppBar)
-        .should('exist');
+      cy.produceTopicData(res.workspaceName, res.topic).visit('/', {
+        onBeforeLoad(win) {
+          // to surveillance the window.open() event
+          // we stub it and do nothing
+          cy.stub(win, 'open');
+        },
+      });
 
       // Check the topic tab exist
       cy.findByTitle('Developer Tools').click();
@@ -144,9 +141,7 @@ describe('DevToolDialog - Logs tab', () => {
           // we stub it and do nothing
           cy.stub(win, 'open');
         },
-      })
-        .findByText(workspaceNameInAppBar)
-        .should('exist');
+      });
 
       // Check the log tab exist
       cy.findByTitle('Developer Tools')

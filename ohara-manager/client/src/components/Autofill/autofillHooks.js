@@ -17,10 +17,10 @@
 import { useMemo } from 'react';
 import { get, replace } from 'lodash';
 
-import { useWorkspace } from 'context';
+import * as hooks from 'hooks';
 
 export const useSuggestiveKeys = () => {
-  const { currentWorker } = useWorkspace();
+  const currentWorker = hooks.useCurrentWorker();
 
   return useMemo(() => {
     const classInfos = get(currentWorker, 'classInfos', []);

@@ -15,8 +15,8 @@
  */
 
 import { omit } from 'lodash';
-import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
+import { ENTITY_TYPE } from 'store/schema';
 import { entity } from './index';
 
 export default function reducer(state = {}, action) {

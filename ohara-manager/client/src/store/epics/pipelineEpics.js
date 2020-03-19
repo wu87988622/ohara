@@ -19,8 +19,8 @@ import { combineEpics, ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
 import { map, startWith, switchMap, catchError } from 'rxjs/operators';
 
+import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
-import * as apiWrapper from 'store/apiWrapper';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
@@ -29,7 +29,7 @@ const fetchPipelineEpic = action$ =>
     ofType(actions.fetchPipeline.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
-      from(apiWrapper.wrapFetchPipeline(values)).pipe(
+      from(pipelineApi.get(values)).pipe(
         map(res => normalize(res.data, schema.pipeline)),
         map(entities => actions.fetchPipeline.success(entities)),
         startWith(actions.fetchPipeline.request()),
@@ -43,7 +43,7 @@ const createPipelineEpic = action$ =>
     ofType(actions.createPipeline.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
-      from(apiWrapper.wrapCreatePipeline(values)).pipe(
+      from(pipelineApi.create(values)).pipe(
         map(res => normalize(res.data, schema.pipeline)),
         map(entities => actions.createPipeline.success(entities)),
         startWith(actions.createPipeline.request()),
@@ -57,7 +57,7 @@ const updatePipelineEpic = action$ =>
     ofType(actions.updatePipeline.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
-      from(apiWrapper.wrapUpdatePipeline(values)).pipe(
+      from(pipelineApi.update(values)).pipe(
         map(res => normalize(res.data, schema.pipeline)),
         map(entities => actions.updatePipeline.success(entities)),
         startWith(actions.updatePipeline.request()),
@@ -71,7 +71,7 @@ const deletePipelineEpic = action$ =>
     ofType(actions.deletePipeline.TRIGGER),
     map(action => action.payload),
     switchMap(params =>
-      from(apiWrapper.wrapDeletePipeline(params)).pipe(
+      from(pipelineApi.remove(params)).pipe(
         map(params => getId(params)),
         map(id => actions.deletePipeline.success(id)),
         startWith(actions.deletePipeline.request()),

@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
 import { of, zip } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
+import * as pipelineApi from 'api/pipelineApi';
+import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import * as apiWrapper from 'store/apiWrapper';
 
 const initializeAppEpic = action$ =>
   action$.pipe(
     ofType(actions.initializeApp.TRIGGER),
     switchMap(() =>
-      zip(
-        apiWrapper.wrapFetchWorkspaces(),
-        apiWrapper.wrapFetchPipelines(),
-      ).pipe(
-        map(([wsRes, plRes]) => [
-          normalize(wsRes.data, [schema.workspace]),
+      zip(pipelineApi.getAll(), workspaceApi.getAll()).pipe(
+        map(([plRes, wsRes]) => [
           normalize(plRes.data, [schema.pipeline]),
+          normalize(wsRes.data, [schema.workspace]),
         ]),
-        mergeMap(([wsEntities, plEntities]) =>
+        mergeMap(([plEntities, wsEntities]) =>
           of(
-            actions.initializeApp.success(wsEntities),
-            actions.initializeApp.success(plEntities),
+            actions.initializeApp.success(merge(plEntities, wsEntities)),
             actions.initializeApp.fulfill(),
           ),
         ),

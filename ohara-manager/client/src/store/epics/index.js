@@ -15,8 +15,19 @@
  */
 
 import { combineEpics } from 'redux-observable';
-import appEpics from './appEpics';
-import pipelineEpics from './pipelineEpics';
-import workspaceEpics from './workspaceEpics';
 
-export default combineEpics(appEpics, pipelineEpics, workspaceEpics);
+import appEpics from './appEpics';
+import brokerEpics from './brokerEpics';
+import pipelineEpics from './pipelineEpics';
+import workerEpics from './workerEpics';
+import workspaceEpics from './workspace';
+import zookeeperEpics from './zookeeperEpics';
+
+export default combineEpics(
+  appEpics,
+  brokerEpics,
+  pipelineEpics,
+  workerEpics,
+  workspaceEpics,
+  zookeeperEpics,
+);

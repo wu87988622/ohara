@@ -48,6 +48,7 @@ const EditWorkspace = () => {
   } = useEditWorkspaceDialog();
   const { open: openAddTopicDialog } = useAddTopicDialog();
   const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentBroker = hooks.useCurrentBroker();
   const { dirties } = useEditWorkspace();
 
   const handleChange = (event, newTab) => {
@@ -77,6 +78,7 @@ const EditWorkspace = () => {
               color="primary"
               onClick={openAddTopicDialog}
               className="button"
+              disabled={currentBroker.state !== 'RUNNING'}
             >
               ADD TOPIC
             </Button>

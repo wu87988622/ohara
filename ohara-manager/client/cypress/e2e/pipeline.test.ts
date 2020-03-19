@@ -285,7 +285,8 @@ describe('ToolBox of Pipeline', () => {
 
 describe('Element Links of Pipeline', () => {
   before(async () => await deleteAllServices());
-  it('tests of connector and topic links in pipeline', () => {
+  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
+  it.skip('tests of connector and topic links in pipeline', () => {
     cy.createWorkspace({});
 
     // Add new pipeline
@@ -425,7 +426,8 @@ describe('Element Links of Pipeline', () => {
     topics = [];
   });
 
-  it('tests of stream, connector and topic links in pipeline', () => {
+  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
+  it.skip('tests of stream, connector and topic links in pipeline', () => {
     cy.visit('/');
 
     // check the toolbox
@@ -507,7 +509,8 @@ describe('Element Links of Pipeline', () => {
 
 describe('Topic Operations of Pipeline', () => {
   before(async () => await deleteAllServices());
-  it('connect two elements of pipeline should auto generate pipeline-only topic', () => {
+  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
+  it.skip('connect two elements of pipeline should auto generate pipeline-only topic', () => {
     cy.createWorkspace({});
 
     // Add new pipeline

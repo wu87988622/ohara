@@ -116,7 +116,6 @@ Cypress.Commands.add(
         nodeNames: [node.hostname],
       };
       await zkApi.create(zookeeper);
-      await objectApi.create(zookeeper);
       await zkApi.start(zookeeper);
       const zkRes = await waitFor(
         RESOURCE.ZOOKEEPER,
@@ -135,7 +134,6 @@ Cypress.Commands.add(
         },
       };
       await bkApi.create(broker);
-      await objectApi.create(broker);
       await bkApi.start(broker);
       const bkRes = await waitFor(
         RESOURCE.BROKER,
@@ -154,7 +152,6 @@ Cypress.Commands.add(
         },
       };
       await wkApi.create(worker);
-      await objectApi.create(worker);
       await wkApi.start(worker);
       const wkRes = await waitFor(
         RESOURCE.WORKER,

@@ -17,16 +17,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { get, size, xor, merge, filter, includes } from 'lodash';
-import { useWorkspace, useNodeState } from 'context';
+import { useNodeState } from 'context';
+import * as hooks from 'hooks';
 
 const EditWorkspaceContext = createContext();
 
 const EditWorkspaceProvider = ({ children }) => {
-  const {
-    currentWorker: currWk,
-    currentBroker: currBk,
-    currentZookeeper: currZk,
-  } = useWorkspace();
+  const currBk = hooks.useCurrentBroker();
+  const currWk = hooks.useCurrentWorker();
+  const currZk = hooks.useCurrentZookeeper();
   const { data: allNodesInOhara } = useNodeState();
 
   const [stagingNodes, setStagingNodes] = useState([]);

@@ -29,6 +29,8 @@ import * as context from 'context';
 import * as hooks from 'hooks';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { ReactComponent as Logo } from 'images/logo.svg';
+import IntroDialog from 'components/Pipeline/IntroDialog';
+import NodeDialog from 'components/Node/NodeDialog';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
 
@@ -48,6 +50,7 @@ const AppBar = () => {
   } = context.useEventLogDialog();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const eventLogState = context.useEventLogState();
+  const createWorkspaceState = hooks.useCreateWorkspaceState();
 
   return (
     <StyledAppBar>
@@ -91,6 +94,7 @@ const AppBar = () => {
                   ? setIsNewWorkspaceOpen(true)
                   : toggleWorkspaceList()
               }
+              disabled={createWorkspaceState?.loading}
             >
               <AppsIcon />
             </IconButton>
@@ -134,6 +138,8 @@ const AppBar = () => {
       </header>
 
       <ListWorkspacesDialog />
+      <IntroDialog quickModeText={'QUICK CREATE'} />
+      <NodeDialog />
     </StyledAppBar>
   );
 };

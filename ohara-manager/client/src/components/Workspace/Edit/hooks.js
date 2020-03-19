@@ -17,7 +17,7 @@
 import { useEffect, useMemo } from 'react';
 import { get, isEqual, unionWith, some, find } from 'lodash';
 
-import { useWorkspace, useFileState, useFileActions } from 'context';
+import { useFileState, useFileActions } from 'context';
 import * as hooks from 'hooks';
 import { getDateFromTimestamp } from 'utils/date';
 import { getKey, isEqualByKey } from 'utils/object';
@@ -31,7 +31,7 @@ const getOperation = (object, previousList, currentList) => {
 };
 
 export const usePluginKeys = () => {
-  const { currentWorker } = useWorkspace();
+  const currentWorker = hooks.useCurrentWorker();
   const prevKeys = get(currentWorker, 'pluginKeys');
   const currKeys = get(currentWorker, 'stagingSettings.pluginKeys');
   return useMemo(() => {

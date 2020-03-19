@@ -28,15 +28,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import WarningIcon from '@material-ui/icons/Warning';
-import {
-  useWorkerState,
-  useWorkerActions,
-  useBrokerState,
-  useBrokerActions,
-  useZookeeperState,
-  useZookeeperActions,
-  useWorkspace,
-} from 'context';
+import * as hooks from 'hooks';
 import { DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './RestartIndicatorStyles';
 
@@ -49,19 +41,15 @@ RestartIndicator.defaultProps = {
 };
 
 function RestartIndicator({ invisible }) {
-  const {
-    currentWorker: currWk,
-    currentBroker: currBk,
-    currentZookeeper: currZk,
-  } = useWorkspace();
-  const { isFetching: isWkFetching } = useWorkerState();
-  const { isFetching: isBkFetching } = useBrokerState();
-  const { isFetching: isZkFetching } = useZookeeperState();
-  const { updateStagingSettings: updateWkStagingSettings } = useWorkerActions();
-  const { updateStagingSettings: updateBkStagingSettings } = useBrokerActions();
-  const {
-    updateStagingSettings: updateZkStagingSettings,
-  } = useZookeeperActions();
+  const currWk = hooks.useCurrentWorker();
+  const currBk = hooks.useCurrentBroker();
+  const currZk = hooks.useCurrentZookeeper();
+  const isWkFetching = false;
+  const isBkFetching = false;
+  const isZkFetching = false;
+  const updateWkStagingSettings = () => {};
+  const updateBkStagingSettings = () => {};
+  const updateZkStagingSettings = () => {};
 
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const [isRestartConfirmOpen, setIsRestartConfirmOpen] = useState(false);

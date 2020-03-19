@@ -21,7 +21,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { Form } from 'react-final-form';
 
-import { useWorkspace } from 'context';
+import * as hooks from 'hooks';
 import { useEditWorkspaceDialog } from 'context';
 import { Segments } from 'components/Workspace/Edit';
 import { QuickSearch } from 'components/common/Search';
@@ -40,7 +40,10 @@ export const Wrapper = styled.div(
 const sortByOrder = (definitions = []) => sortBy(definitions, 'orderInGroup');
 
 const Settings = () => {
-  const { currentWorker, currentBroker, currentZookeeper } = useWorkspace();
+  const currentBroker = hooks.useCurrentBroker();
+  const currentWorker = hooks.useCurrentWorker();
+  const currentZookeeper = hooks.useCurrentZookeeper();
+
   const { data = {} } = useEditWorkspaceDialog();
   const { segment = Segments.WORKER } = data;
 

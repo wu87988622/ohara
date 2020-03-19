@@ -21,17 +21,12 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
 import { KIND } from 'const';
-import {
-  useWorkerActions,
-  useBrokerActions,
-  useZookeeperActions,
-} from 'context';
 import Badge from 'components/common/Badge';
 
 const ServiceSwitch = ({ cluster, nodeName, type }) => {
-  const { stageWorker } = useWorkerActions();
-  const { stageBroker } = useBrokerActions();
-  const { stageZookeeper } = useZookeeperActions();
+  const stageWorker = () => {};
+  const stageBroker = () => {};
+  const stageZookeeper = () => {};
 
   if (!cluster) return <></>;
 

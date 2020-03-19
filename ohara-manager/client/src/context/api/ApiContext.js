@@ -18,14 +18,10 @@ import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useApp } from 'context';
-import { createApi as createBrokerApi } from './brokerApi';
 import { createApi as createFileApi } from './fileApi';
 import { createApi as createNodeApi } from './nodeApi';
 import { createApi as createTopicApi } from './topicApi';
-import { createApi as createWorkerApi } from './workerApi';
 import { createApi as createConnectorApi } from './connectorApi';
-import { createApi as createWorkspaceApi } from './workspaceApi';
-import { createApi as createZookeeperApi } from './zookeeperApi';
 import { createApi as createLogApi } from './logApi';
 import { createApi as createPipelineApi } from './pipelineApi';
 import { createApi as createStreamApi } from './streamApi';
@@ -41,17 +37,11 @@ const ApiProvider = ({ children }) => {
     streamGroup,
     topicGroup,
     workerGroup,
-    workspaceGroup,
     zookeeperGroup,
     brokerKey,
     workerKey,
     workspaceKey,
   } = useApp();
-
-  const brokerApi = useMemo(
-    () => createBrokerApi({ brokerGroup, zookeeperGroup }),
-    [brokerGroup, zookeeperGroup],
-  );
 
   const connectorApi = useMemo(
     () => createConnectorApi({ connectorGroup, workerKey, topicGroup }),
@@ -91,23 +81,9 @@ const ApiProvider = ({ children }) => {
     [topicGroup, brokerKey, workspaceKey],
   );
 
-  const workerApi = useMemo(
-    () => createWorkerApi({ workerGroup, brokerGroup }),
-    [workerGroup, brokerGroup],
-  );
-
-  const workspaceApi = useMemo(() => createWorkspaceApi({ workspaceGroup }), [
-    workspaceGroup,
-  ]);
-
-  const zookeeperApi = useMemo(() => createZookeeperApi({ zookeeperGroup }), [
-    zookeeperGroup,
-  ]);
-
   return (
     <ApiContext.Provider
       value={{
-        brokerApi,
         connectorApi,
         fileApi,
         logApi,
@@ -115,9 +91,6 @@ const ApiProvider = ({ children }) => {
         pipelineApi,
         streamApi,
         topicApi,
-        workerApi,
-        workspaceApi,
-        zookeeperApi,
       }}
     >
       {children}

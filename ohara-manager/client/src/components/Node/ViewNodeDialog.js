@@ -35,6 +35,7 @@ import Divider from '@material-ui/core/Divider';
 
 import EditNodeDialog from './EditNodeDialog';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { MODE } from 'const';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
 import { Button } from 'components/common/Form';
@@ -118,9 +119,9 @@ const ViewNodeDialog = props => {
   const { deleteNode } = context.useNodeActions();
 
   const nodeData = find(nodes, node => node.hostname === nodeName);
-  const { data: zookeepers } = context.useZookeeperState();
-  const { data: brokers } = context.useBrokerState();
-  const { data: workers } = context.useWorkerState();
+  const zookeepers = hooks.useAllZookeepers();
+  const brokers = hooks.useAllBrokers();
+  const workers = hooks.useAllWorkers();
   const { data: streams } = context.useStreamState();
   const { workspaceName } = context.useApp();
 

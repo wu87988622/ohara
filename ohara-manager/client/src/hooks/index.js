@@ -15,5 +15,8 @@
  */
 
 export * from './appHooks';
+export * from './brokerHooks';
 export * from './pipelineHooks';
+export * from './workerHooks';
 export * from './workspaceHooks';
+export * from './zookeeperHooks';

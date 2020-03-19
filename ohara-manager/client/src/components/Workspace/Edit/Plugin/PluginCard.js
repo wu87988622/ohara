@@ -27,7 +27,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 
-import { useWorkspace, useWorkerActions } from 'context';
+import * as hooks from 'hooks';
 import { DeleteDialog } from 'components/common/Dialog';
 import { Wrapper } from './PluginCardStyles';
 
@@ -55,8 +55,8 @@ function PluginCard({ plugin }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting] = useState(false);
 
-  const { currentWorker } = useWorkspace();
-  const { stageWorker } = useWorkerActions();
+  const currentWorker = hooks.useCurrentWorker();
+  const stageWorker = () => {};
 
   const workerName = get(currentWorker, 'name');
   const pluginKeys = get(currentWorker, 'stagingSettings.pluginKeys');

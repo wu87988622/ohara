@@ -16,7 +16,6 @@
 
 export * from 'context/api/ApiContext';
 export * from 'context/app/AppContext';
-export * from 'context/broker/BrokerContext';
 export * from 'context/configurator/ConfiguratorContext';
 export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
@@ -26,10 +25,7 @@ export * from 'context/log/LogContext';
 export * from 'context/node/NodeContext';
 export * from 'context/stream/StreamContext';
 export * from 'context/topic/TopicContext';
-export * from 'context/worker/WorkerContext';
-export * from 'context/workspace/WorkspaceContext';
 export * from 'context/workspace/EditWorkspaceContext';
-export * from 'context/zookeeper/ZookeeperContext';
 export * from 'context/SnackbarContext';
 export * from 'context/NewWorkspaceContext';
 export * from 'context/devTool/DevToolContext';

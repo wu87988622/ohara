@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
+import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
 import { entity } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
+    case actions.deleteWorkspace.SUCCESS:
+      return omit(state, action.payload);
     default:
       return entity(ENTITY_TYPE.workspaces)(state, action);
   }

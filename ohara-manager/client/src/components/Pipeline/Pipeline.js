@@ -23,8 +23,6 @@ import Paper from './Paper';
 import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
 import PipelinePropertyView from './PipelinePropertyView';
-import NodeDialog from 'components/Node/NodeDialog';
-import IntroDialog from './IntroDialog';
 import PipelinePropertyDialog from './PipelinePropertyDialog';
 import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
@@ -181,7 +179,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!isPaperApiReady && pipelineName) {
       pipelineDispatch({ type: 'resetPipeline' });
     }
-  });
+  }, [isPaperApiReady, pipelineDispatch, pipelineName]);
 
   useEffect(() => {
     let timer;
@@ -708,8 +706,6 @@ const Pipeline = React.forwardRef((props, ref) => {
         </>
       )}
 
-      <IntroDialog quickModeText={'QUICK CREATE'} />
-      <NodeDialog />
       <PipelinePropertyDialog
         isOpen={isPropertyDialogOpen}
         onClose={closePropertyDialog}

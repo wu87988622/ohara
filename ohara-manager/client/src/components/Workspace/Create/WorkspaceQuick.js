@@ -47,19 +47,11 @@ import FileCard from '../Card/FileCard';
 import SelectCard from '../Card/SelectCard';
 import WorkspaceCard from '../Card/WorkspaceCard';
 
-import {
-  useApp,
-  useWorkerActions,
-  useBrokerActions,
-  useZookeeperActions,
-  useNodeActions,
-  useListNodeDialog,
-} from 'context';
+import { useApp, useListNodeDialog } from 'context';
 import * as hooks from 'hooks';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { hashByGroupAndName } from 'utils/sha';
 import { useUniqueName } from './hooks';
 import * as generate from 'utils/generate';
@@ -99,24 +91,17 @@ const StyledTableRow = styled(TableRow)(
 
 const WorkspaceQuick = props => {
   const dispatch = useDispatch();
-  const { workspaceGroup } = useApp();
+  const progress = hooks.useCreateWorkspaceProgress();
+  const { workspaceGroup, zookeeperGroup, brokerGroup, workerGroup } = useApp();
+
   const [activeStep, setActiveStep] = useState(0);
   const [files, setFiles] = useState([]);
-  const [progressOpen, setProgressOpen] = useState(false);
-  const [progressActiveStop, setProgressActiveStep] = useState(0);
   const { isOpen, open: openNodeDialog } = useListNodeDialog();
   const [dialogData, setDialogData] = React.useState({});
   const selectedNodes = get(dialogData, 'selected', []);
 
-  const { createWorker } = useWorkerActions();
-  const { createBroker } = useBrokerActions();
-  const { createZookeeper } = useZookeeperActions();
-  const { refreshNodes } = useNodeActions();
   const workspaces = hooks.useAllWorkspaces();
   const defaultWorkspaceName = useUniqueName();
-  const eventLog = useEventLog();
-
-  const progressSteps = ['Zookeeper', 'Broker', 'Worker'];
 
   const steps = [
     'About this workspace',
@@ -143,18 +128,10 @@ const WorkspaceQuick = props => {
     }
   };
 
-  // TODO: refactor this in https://github.com/oharastream/ohara/issues/3851
-  const GROUP = {
-    workspace: 'workspace',
-    zookeeper: 'zookeeper',
-    broker: 'broker',
-    worker: 'worker',
-  };
-
   const onDrop = async (file, values) => {
-    const parentKey = { group: GROUP.workspace, name: values.workspaceName };
+    const parentKey = { group: workspaceGroup, name: values.workspaceName };
     const result = await fileApi.create({
-      group: hashByGroupAndName(GROUP.workspace, values.workspaceName),
+      group: hashByGroupAndName(workspaceGroup, values.workspaceName),
       file: file[0],
       tags: { parentKey },
     });
@@ -239,28 +216,6 @@ const WorkspaceQuick = props => {
     return result;
   };
 
-  const createZk = async values => {
-    const randomNodeNames =
-      values.nodeNames.length > 3
-        ? getRandoms(values.nodeNames, 3)
-        : getRandoms(values.nodeNames, 1);
-    const result = await createZookeeper({
-      ...values,
-      nodeNames: randomNodeNames,
-    });
-    if (result.error) throw new Error(result.error);
-  };
-
-  const createBk = async values => {
-    const result = await createBroker(values);
-    if (result.error) throw new Error(result.error);
-  };
-
-  const createWk = async values => {
-    const result = await createWorker(values);
-    if (result.error) throw new Error(result.error);
-  };
-
   const createQuickWorkspace = async (values, form) => {
     const { workspaceName } = values;
     const nodeNames = selectedNodes.map(select => select.name);
@@ -271,51 +226,53 @@ const WorkspaceQuick = props => {
       };
     });
 
-    try {
-      setProgressOpen(true);
-      await createZk({ name: workspaceName, nodeNames });
-      setProgressActiveStep(1);
-      await createBk({ name: workspaceName, nodeNames });
-      setProgressActiveStep(2);
-      await createWk({
-        name: workspaceName,
-        nodeNames,
-        pluginKeys: plugins,
-        freePorts: [
-          generate.port(),
-          generate.port(),
-          generate.port(),
-          generate.port(),
-          generate.port(),
-        ],
-      });
-      setProgressActiveStep(3);
-
-      dispatch(
-        actions.createWorkspace.trigger({
+    dispatch(
+      actions.createWorkspace.trigger({
+        workspaceSettings: {
           group: workspaceGroup,
           name: workspaceName,
           nodeNames,
-        }),
-      );
+        },
+        zookeeperSettings: {
+          group: zookeeperGroup,
+          name: workspaceName,
+          nodeNames:
+            nodeNames.length > 3
+              ? getRandoms(nodeNames, 3)
+              : getRandoms(nodeNames, 1),
+        },
+        brokerSettings: {
+          group: brokerGroup,
+          name: workspaceName,
+          nodeNames,
+          zookeeperClusterKey: {
+            group: zookeeperGroup,
+            name: workspaceName,
+          },
+        },
+        workerSettings: {
+          group: workerGroup,
+          name: workspaceName,
+          nodeNames,
+          pluginKeys: plugins,
+          freePorts: [
+            generate.port(),
+            generate.port(),
+            generate.port(),
+            generate.port(),
+            generate.port(),
+          ],
+          brokerClusterKey: {
+            group: brokerGroup,
+            name: workspaceName,
+          },
+        },
+      }),
+    );
 
-      // after workspace creation successful, we need to refresh the node list
-      // in order to get the newest service information of node
-      await refreshNodes();
-
-      eventLog.info(`Successfully created workspace ${workspaceName}.`);
-      setTimeout(form.reset);
-      setActiveStep(0);
-      setFiles([]);
-    } catch (e) {
-      eventLog.error({
-        title: `Failed to creates workspace ${workspaceName}.`,
-        message:
-          'Oops, it seems like our UI is not working as it should. For more information or reporting the bug, please go to https://github.com/oharastream/ohara/issues',
-      });
-      // TODO: handle error to create, rollback the created services
-    }
-
+    // TODO: refreshNodes
+    setFiles([]);
+    setTimeout(form.reset);
     handelOpen(false);
   };
 
@@ -510,10 +467,10 @@ const WorkspaceQuick = props => {
         }}
       />
       <Progress
-        open={progressOpen}
-        steps={progressSteps}
+        open={progress.open}
+        steps={progress.steps}
         createTitle={'Create Workspace'}
-        activeStep={progressActiveStop}
+        activeStep={progress.activeStep}
       />
     </>
   );

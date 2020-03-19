@@ -18,14 +18,34 @@ import { schema } from 'normalizr';
 import { getId } from 'utils/object';
 
 export const ENTITY_TYPE = {
+  brokers: 'brokers',
+  infos: 'infos',
   pipelines: 'pipelines',
+  workers: 'workers',
   workspaces: 'workspaces',
+  zookeepers: 'zookeepers',
 };
+
+export const broker = new schema.Entity(ENTITY_TYPE.brokers, undefined, {
+  idAttribute: getId,
+});
+
+export const info = new schema.Entity(ENTITY_TYPE.infos, undefined, {
+  idAttribute: getId,
+});
 
 export const pipeline = new schema.Entity(ENTITY_TYPE.pipelines, undefined, {
   idAttribute: getId,
 });
 
+export const worker = new schema.Entity(ENTITY_TYPE.workers, undefined, {
+  idAttribute: getId,
+});
+
 export const workspace = new schema.Entity(ENTITY_TYPE.workspaces, undefined, {
+  idAttribute: getId,
+});
+
+export const zookeeper = new schema.Entity(ENTITY_TYPE.zookeepers, undefined, {
   idAttribute: getId,
 });
