@@ -88,7 +88,7 @@ ultimate_replacements = {
 # -- Project information -----------------------------------------------------
 
 project = u'Ohara'
-copyright = u'2019, is-land Systems'
+copyright = u'2019, is-land Systems. Version: ' + ohara_version + '(branch: ' + ohara_branch + ')'
 author = u'is-land Systems'
 
 # The short X.Y version
