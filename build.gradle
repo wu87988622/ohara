@@ -22,16 +22,14 @@ buildscript {
       url "https://plugins.gradle.org/m2/"
     }
   }
-  dependencies {
-    classpath "com.diffplug.spotless:spotless-plugin-gradle:3.26.0"
-    classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0"
-    classpath 'com.novoda:bintray-release:0.9.1'
-    classpath "org.gradle:test-retry-gradle-plugin:1.1.0"
-  }
 }
 
-apply plugin: "com.diffplug.gradle.spotless"
-apply plugin: "com.github.hierynomus.license"
+plugins {
+  id "com.diffplug.gradle.spotless" version "3.26.0" apply false
+  id "org.gradle.test-retry" version "1.1.3" apply false
+  id "com.jfrog.bintray" version "1.8.4" apply false
+  id "com.github.hierynomus.license" version "0.15.0"
+}
 
 def needHeaders() {
   return [
@@ -111,10 +109,6 @@ license {
   }
 }
 
-check {
-  dependsOn licenseTest
-}
-
 static def isJavaModule(String moduleName) {
   return moduleName == 'ohara-common' ||
           moduleName == 'ohara-metrics' ||
@@ -139,8 +133,6 @@ subprojects {
       targetCompatibility = 1.8
     }
     else apply plugin: 'scala'
-
-    apply plugin: 'maven'
   }
 
   // -------------------------------------------------[jUnit configs]-------------------------------------------------//
@@ -174,53 +166,73 @@ subprojects {
 
   // -------------------------------------------------[docs/tests/sources jar]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
+    String moduleName = it.name
     configurations {
       tests.extendsFrom archives
     }
 
     task testJar(type: Jar, dependsOn: testClasses) {
-      classifier 'tests'
       from sourceSets.test.output
+      classifier 'tests'
+    }
+
+    task sourcesJar(type: Jar) {
+      from sourceSets.main.output
+      classifier 'sources'
+    }
+
+    task docJar(type: Jar) {
+      if (isJavaModule(moduleName)) {
+        from javadoc
+        classifier 'javadoc'
+      } else {
+        from scaladoc
+        classifier 'scaladoc'
+      }
     }
 
     artifacts {
       archives testJar
+      archives sourcesJar
+      archives docJar
     }
   }
 
   // -------------------------------------------------[publication]-------------------------------------------------//
   if (it.name != 'ohara-manager' && it.name != 'ohara-it') {
     String moduleName = it.name
-    apply plugin: 'com.novoda.bintray-release'
-
-    publish {
-      userOrg = property("userOrg")
-      repoName = property("repoName")
-      groupId = property("group")
-      artifactId = moduleName
-      publishVersion = project.version
-      desc = property("desc")
-      website = property("website")
-    }
-
-    // this is a hacky workaround that we have to override the internal variables in order to deploy the sources/tests jar ... by chia
-    // see https://github.com/novoda/bintray-release/blob/master/plugin/core/src/main/groovy/com/novoda/gradle/release/MavenPublicationAttachments.groovy
-    // for the internal variables
-    tasks.whenTaskAdded { Task task ->
-      if (name == "generateSourcesJarForMavenPublication") {
-        from sourceSets.main.allSource
+    apply plugin: "com.jfrog.bintray"
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    publishing {
+      publications {
+        MyPublication(MavenPublication) {
+          from components.java
+          artifact testJar
+          artifact sourcesJar
+          artifact docJar
+          groupId 'oharastream.ohara'
+          artifactId moduleName
+          version project.version
+        }
       }
-      if (name == "generateJavadocsJarForMavenPublication") {
-        from "$rootDir/LICENSE"
-        if (isJavaModule(moduleName)) from javadoc.destinationDir
-        else {
-          dependsOn scaladoc
-          from scaladoc.destinationDir
-          // This plugin make hardcode on postfix of docs jar...
-          // this is a workaround of changing the final name of uploaded docs jar
-          doLast {
-            ((Jar) task).classifier = 'scaladoc'
-          }
+    }
+    bintray {
+      user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+      key = project.hasProperty('bintrayKey') ? project.property('bintrayKey') : System.getenv('BINTRAY_KEY')
+      publications = ['MyPublication']
+      publish = project.hasProperty('publish') ? project.property('publish').toString().toBoolean() : false
+      override = project.hasProperty('override') ? project.property('override').toString().toBoolean() : false
+      pkg {
+        repo = 'ohara'
+        name = moduleName
+        userOrg = 'oharastream'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/oharastream/ohara'
+        version {
+          name = project.version
+          vcsTag = project.version
+          released  = new Date()
         }
       }
     }

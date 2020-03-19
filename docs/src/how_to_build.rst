@@ -112,18 +112,24 @@ to simplify the development of ohara.
 
     .. code-block:: console
 
-      $ ./gradlew clean build -PskipManager -x test bintrayUpload -PbintrayUser=$user -PbintrayKey=$key -PdryRun=false -Poverride=true
+      $ ./gradlew clean bintrayUpload -PskipManager -PbintrayUser=$user -PbintrayKey=$key
 
     .. tip::
 
       - bintrayUser: the account that has write permission to the repository
       - bintrayKey: the account API Key
-      - dryRun: whether to publish artifacts (default is true)
-      - override: whether to override version artifacts already published
+      - public: whether to auto published after uploading. default is false
+      - override: whether to override version artifacts already published. default is false
 
     .. note::
 
        Only release manager has permission to upload artifacts
+
+  Publish Artifacts to local maven repository
+
+    .. code-block:: console
+
+      $ ./gradlew clean build publishToMavenLocal -PskipManager -x test
 
 
 Installation
