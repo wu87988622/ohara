@@ -59,8 +59,8 @@ class TestTestCases extends OharaTest {
     }
     if (invalidClasses.nonEmpty)
       throw new IllegalArgumentException(
-        s"${invalidClasses.mkString(",")}" +
-          s"don't inherit test interfaces:${validTestGroups.mkString(",")}"
+        s"${invalidClasses.map(_._1.getName).mkString(",")}" +
+          s" don't inherit test interfaces:${validTestGroups.mkString(",")}"
       )
   }
 

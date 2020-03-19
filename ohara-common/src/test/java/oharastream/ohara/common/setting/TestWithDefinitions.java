@@ -17,12 +17,13 @@
 package oharastream.ohara.common.setting;
 
 import java.util.Collections;
+import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.VersionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestWithDefinitions {
+public class TestWithDefinitions extends OharaTest {
 
   @Test
   public void authorShouldNotBeReplaced() {
