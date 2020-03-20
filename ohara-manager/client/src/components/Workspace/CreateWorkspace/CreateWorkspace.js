@@ -15,7 +15,6 @@
  */
 
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { get, map } from 'lodash';
 import { useDispatch } from 'redux-react-hook';
 
@@ -89,8 +88,10 @@ const StyledTableRow = styled(TableRow)(
   `,
 );
 
-const WorkspaceQuick = props => {
+const CreateWorkspace = () => {
   const dispatch = useDispatch();
+  const isOpen = hooks.useIsCreateWorkspaceOpen();
+  const close = hooks.useCloseCreateWorkspaceAction();
   const progress = hooks.useCreateWorkspaceProgress();
   const workspaceGroup = hooks.useWorkspaceGroup();
   const zookeeperGroup = hooks.useZookeeperGroup();
@@ -99,7 +100,10 @@ const WorkspaceQuick = props => {
 
   const [activeStep, setActiveStep] = useState(0);
   const [files, setFiles] = useState([]);
-  const { isOpen, open: openNodeDialog } = useListNodeDialog();
+  const {
+    isOpen: isNodesDialogOpen,
+    open: openNodeDialog,
+  } = useListNodeDialog();
   const [dialogData, setDialogData] = React.useState({});
   const selectedNodes = get(dialogData, 'selected', []);
 
@@ -112,7 +116,6 @@ const WorkspaceQuick = props => {
     'Upload or select worker plugins(Optional)',
     'Create this workspace',
   ];
-  const { open, handelOpen } = props;
 
   const handleNext = activeStep => {
     setActiveStep(activeStep + 1);
@@ -126,7 +129,7 @@ const WorkspaceQuick = props => {
     const newNodes = selectedNodes.filter(
       select => select[Object.keys(select)[0]] !== node[Object.keys(node)[0]],
     );
-    if (open) {
+    if (isOpen) {
       setDialogData({ ...dialogData, selected: newNodes });
     }
   };
@@ -276,7 +279,7 @@ const WorkspaceQuick = props => {
     // TODO: refreshNodes
     setFiles([]);
     setTimeout(form.reset);
-    handelOpen(false);
+    close();
   };
 
   const getStepContent = (step, values) => {
@@ -304,7 +307,7 @@ const WorkspaceQuick = props => {
               <>
                 {WorkspaceCard({
                   onClick: () => {
-                    if (!isOpen) {
+                    if (!isNodesDialogOpen) {
                       const data = {
                         ...dialogData,
                         hasSave: true,
@@ -330,7 +333,7 @@ const WorkspaceQuick = props => {
               <CardContent>
                 {WorkspaceCard({
                   onClick: () => {
-                    if (!isOpen) {
+                    if (!isNodesDialogOpen) {
                       const data = {
                         ...dialogData,
                         hasSave: true,
@@ -425,10 +428,9 @@ const WorkspaceQuick = props => {
           return (
             <FullScreenDialog
               title="Create workspace - Quick"
-              open={open}
+              open={isOpen}
               handleClose={() => {
-                handelOpen(false);
-
+                close();
                 form.reset();
                 setActiveStep(0);
                 setFiles([]);
@@ -479,9 +481,4 @@ const WorkspaceQuick = props => {
   );
 };
 
-WorkspaceQuick.propTypes = {
-  open: PropTypes.bool.isRequired,
-  handelOpen: PropTypes.func.isRequired,
-};
-
-export default WorkspaceQuick;
+export default CreateWorkspace;

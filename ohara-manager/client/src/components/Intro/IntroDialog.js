@@ -28,7 +28,6 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
-import WorkspaceQuick from 'components/Workspace/Create/WorkspaceQuick';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import * as hooks from 'hooks';
 
@@ -84,9 +83,7 @@ const StyledDialogActions = styled(DialogActions)(
 const MuiDialog = ({ quickModeText }) => {
   const isIntroOpen = hooks.useIsIntroOpen();
   const closeIntro = hooks.useCloseIntroAction();
-  const [isQuickModeDialogOpen, setIsQuickModeDialogOpen] = React.useState(
-    false,
-  );
+  const openCreateWorkspace = hooks.useOpenCreateWorkspaceAction();
 
   // Export mode, not implement yet
   const onClick = () => {};
@@ -127,7 +124,7 @@ const MuiDialog = ({ quickModeText }) => {
         <StyledDialogActions>
           <Button
             className="quick-mode-button"
-            onClick={() => setIsQuickModeDialogOpen(true)}
+            onClick={openCreateWorkspace}
             color="primary"
             variant="contained"
             autoFocus
@@ -143,10 +140,6 @@ const MuiDialog = ({ quickModeText }) => {
           </Button>
         </StyledDialogActions>
       </Dialog>
-      <WorkspaceQuick
-        open={isQuickModeDialogOpen}
-        handelOpen={setIsQuickModeDialogOpen}
-      />
     </>
   );
 };

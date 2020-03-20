@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import WorkspaceList from './WorkspaceList';
-import { EditWorkspace } from './Edit';
+import CreateWorkspace from './CreateWorkspace';
 
-export { EditWorkspace, WorkspaceList };
-export * from './CreateWorkspace';
+export { CreateWorkspace };

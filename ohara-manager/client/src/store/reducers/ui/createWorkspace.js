@@ -26,6 +26,7 @@ const defaultSteps = [
 ];
 
 const initialState = {
+  isOpen: false,
   loading: false,
   progress: {
     open: false,
@@ -38,6 +39,16 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
+    case actions.openCreateWorkspace.TRIGGER:
+      return {
+        ...state,
+        isOpen: true,
+      };
+    case actions.closeCreateWorkspace.TRIGGER:
+      return {
+        ...state,
+        isOpen: false,
+      };
     case actions.createWorkspace.TRIGGER:
       return {
         ...state,

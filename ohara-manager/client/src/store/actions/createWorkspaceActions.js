@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import WorkspaceList from './WorkspaceList';
-import { EditWorkspace } from './Edit';
+import { createRoutine } from 'redux-routines';
 
-export { EditWorkspace, WorkspaceList };
-export * from './CreateWorkspace';
+export const openCreateWorkspace = createRoutine('OPEN_CREATE_WORKSPACE');
+export const closeCreateWorkspace = createRoutine('CLOSE_CREATE_WORKSPACE');

@@ -15,8 +15,15 @@
  */
 
 import { useCallback } from 'react';
-import { useMappedState } from 'redux-react-hook';
+import { useDispatch, useMappedState } from 'redux-react-hook';
 import { isEqual as isDeepEqual } from 'lodash';
+
+import * as actions from 'store/actions';
+
+export const useIsCreateWorkspaceOpen = () => {
+  const mapState = useCallback(state => !!state.ui.createWorkspace.isOpen, []);
+  return useMappedState(mapState);
+};
 
 export const useCreateWorkspaceProgress = () => {
   const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
@@ -26,4 +33,18 @@ export const useCreateWorkspaceProgress = () => {
 export const useCreateWorkspaceState = () => {
   const mapState = useCallback(state => state.ui.createWorkspace, []);
   return useMappedState(mapState, isDeepEqual);
+};
+
+export const useOpenCreateWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(() => dispatch(actions.openCreateWorkspace.trigger()), [
+    dispatch,
+  ]);
+};
+
+export const useCloseCreateWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(() => dispatch(actions.closeCreateWorkspace.trigger()), [
+    dispatch,
+  ]);
 };

@@ -23,6 +23,12 @@ import Navigator from './Navigator';
 import EventLog from 'components/EventLog';
 import * as context from 'context';
 import { DevToolDialog } from 'components/DevTool';
+import {
+  WorkspaceList as ListWorkspacesDialog,
+  CreateWorkspace as CreateWorkspacesDialog,
+} from 'components/Workspace';
+import IntroDialog from 'components/Intro';
+import NodeDialog from 'components/Node/NodeDialog';
 import { Wrapper } from './AppLayoutStyles';
 import * as hooks from 'hooks';
 
@@ -60,6 +66,11 @@ const AppLayout = () => {
           <div />
         </SplitPane>
       </SplitPane>
+
+      <IntroDialog quickModeText={'QUICK CREATE'} />
+      <CreateWorkspacesDialog />
+      <ListWorkspacesDialog />
+      <NodeDialog />
     </Wrapper>
   );
 };

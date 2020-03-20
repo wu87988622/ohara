@@ -16,6 +16,7 @@
 
 export * from './appActions';
 export * from './brokerActions';
+export * from './createWorkspaceActions';
 export * from './introActions';
 export * from './pipelineActions';
 export * from './workerActions';

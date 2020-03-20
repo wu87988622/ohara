@@ -27,10 +27,7 @@ import Badge from '@material-ui/core/Badge';
 
 import * as context from 'context';
 import * as hooks from 'hooks';
-import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { ReactComponent as Logo } from 'images/logo.svg';
-import IntroDialog from 'components/Intro';
-import NodeDialog from 'components/Node/NodeDialog';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
 
@@ -131,10 +128,6 @@ const AppBar = () => {
           </Tooltip>
         </div>
       </header>
-
-      <ListWorkspacesDialog />
-      <IntroDialog quickModeText={'QUICK CREATE'} />
-      <NodeDialog />
     </StyledAppBar>
   );
 };
