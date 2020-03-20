@@ -24,7 +24,6 @@ import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
 import PipelinePropertyView from './PipelinePropertyView';
 import PipelinePropertyDialog from './PipelinePropertyDialog';
-import { useNewWorkspace } from 'context/NewWorkspaceContext';
 import { usePrevious } from 'utils/hooks';
 import { PaperWrapper, StyledSplitPane } from './PipelineStyles';
 import { usePipelineState as usePipelineReducerState } from './PipelineHooks';
@@ -38,11 +37,8 @@ export const PipelineStateContext = createContext(null);
 export const PipelineDispatchContext = createContext(null);
 
 const Pipeline = React.forwardRef((props, ref) => {
-  const isAppReady = hooks.useIsAppReady();
   const currentWorkspace = hooks.useWorkspace();
-  const workspaces = hooks.useWorkspaces();
   const currentPipeline = hooks.usePipeline();
-
   const {
     open: openPropertyDialog,
     isOpen: isPropertyDialogOpen,
@@ -62,9 +58,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     data: connectors,
   } = context.useConnectorState();
   const { lastUpdated: topicLastUpdated } = context.useTopicState();
-
-  const { setIsOpen: setIsNewWorkspaceDialogOpen } = useNewWorkspace();
-
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 
   const {
@@ -137,15 +130,6 @@ const Pipeline = React.forwardRef((props, ref) => {
   const paperApiRef = useRef(null);
   const cellsMetricsRef = useRef([]);
   const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
-
-  useEffect(() => {
-    if (!isAppReady) return;
-    if (workspaces.length > 0) {
-      return setIsNewWorkspaceDialogOpen(false);
-    }
-
-    setIsNewWorkspaceDialogOpen(true);
-  }, [isAppReady, setIsNewWorkspaceDialogOpen, workspaces.length]);
 
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states

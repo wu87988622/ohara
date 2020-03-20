@@ -17,12 +17,14 @@
 import { combineReducers } from 'redux';
 import app from './app';
 import createWorkspace from './createWorkspace';
+import intro from './intro';
 import pipeline from './pipeline';
 import workspace from './workspace';
 
 export default combineReducers({
   app,
   createWorkspace,
+  intro,
   pipeline,
   workspace,
 });

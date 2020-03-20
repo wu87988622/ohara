@@ -17,6 +17,7 @@
 export * from './appHooks';
 export * from './brokerHooks';
 export * from './createWorkspaceHooks';
+export * from './introHooks';
 export * from './pipelineHooks';
 export * from './workerHooks';
 export * from './workspaceHooks';

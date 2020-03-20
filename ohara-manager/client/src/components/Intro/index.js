@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import IntroDialog from './IntroDialog';
+
+export default IntroDialog;

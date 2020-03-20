@@ -29,7 +29,7 @@ import * as context from 'context';
 import * as hooks from 'hooks';
 import { WorkspaceList as ListWorkspacesDialog } from 'components/Workspace';
 import { ReactComponent as Logo } from 'images/logo.svg';
-import IntroDialog from 'components/Pipeline/IntroDialog';
+import IntroDialog from 'components/Intro';
 import NodeDialog from 'components/Node/NodeDialog';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
@@ -38,7 +38,7 @@ import { Tooltip } from 'components/common/Tooltip';
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
   const workspaces = hooks.useWorkspaces();
-  const { setIsOpen: setIsNewWorkspaceOpen } = context.useNewWorkspace();
+  const openIntro = hooks.useOpenIntroAction();
   const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
     toggle: toggleDevTool,
@@ -76,10 +76,7 @@ const AppBar = () => {
           })}
 
           <Tooltip title="Create a new workspace" placement="right">
-            <div
-              className="add-workspace item"
-              onClick={() => setIsNewWorkspaceOpen(true)}
-            >
+            <div className="add-workspace item" onClick={openIntro}>
               <AddIcon />
             </div>
           </Tooltip>
@@ -90,9 +87,7 @@ const AppBar = () => {
             <IconButton
               className="workspace-list item"
               onClick={() =>
-                isEmpty(workspaces)
-                  ? setIsNewWorkspaceOpen(true)
-                  : toggleWorkspaceList()
+                isEmpty(workspaces) ? openIntro() : toggleWorkspaceList()
               }
               disabled={createWorkspaceState?.loading}
             >

@@ -28,9 +28,9 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
-import WorkspaceQuick from '../Workspace/Create/WorkspaceQuick';
+import WorkspaceQuick from 'components/Workspace/Create/WorkspaceQuick';
 import { ReactComponent as Logo } from 'images/logo.svg';
-import { useNewWorkspace } from 'context/NewWorkspaceContext';
+import * as hooks from 'hooks';
 
 const Transition = React.forwardRef((props, ref) => {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -82,7 +82,8 @@ const StyledDialogActions = styled(DialogActions)(
 );
 
 const MuiDialog = ({ quickModeText }) => {
-  const { isOpen, setIsOpen } = useNewWorkspace();
+  const isIntroOpen = hooks.useIsIntroOpen();
+  const closeIntro = hooks.useCloseIntroAction();
   const [isQuickModeDialogOpen, setIsQuickModeDialogOpen] = React.useState(
     false,
   );
@@ -93,8 +94,8 @@ const MuiDialog = ({ quickModeText }) => {
   return (
     <>
       <Dialog
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
+        open={isIntroOpen}
+        onClose={closeIntro}
         maxWidth="sm"
         PaperComponent={DrabblePaper}
         TransitionComponent={Transition}
@@ -111,7 +112,7 @@ const MuiDialog = ({ quickModeText }) => {
           <IconButton
             data-testid="close-intro-button"
             className="close-button"
-            onClick={() => setIsOpen(false)}
+            onClick={closeIntro}
           >
             <CloseIcon />
           </IconButton>

@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect } from 'react';
-import { find, filter, head } from 'lodash';
+import { find, filter, head, isEmpty } from 'lodash';
 import { useHistory, useParams } from 'react-router-dom';
 import { useMappedState } from 'redux-react-hook';
 
@@ -26,6 +26,17 @@ import * as hooks from 'hooks';
 export const useIsAppReady = () => {
   const mapState = useCallback(state => !!state.ui.app.lastUpdated, []);
   return useMappedState(mapState);
+};
+
+export const useWelcome = () => {
+  const isAppReady = useIsAppReady();
+  const allWorkspaces = hooks.useAllWorkspaces();
+  const wasIntroOpened = hooks.useWasIntroOpened();
+  const openIntro = hooks.useOpenIntroAction();
+
+  useEffect(() => {
+    if (isAppReady && !wasIntroOpened && isEmpty(allWorkspaces)) openIntro();
+  }, [isAppReady, allWorkspaces, wasIntroOpened, openIntro]);
 };
 
 export const useRedirect = () => {

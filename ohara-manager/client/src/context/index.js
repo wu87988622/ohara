@@ -27,7 +27,6 @@ export * from 'context/stream/StreamContext';
 export * from 'context/topic/TopicContext';
 export * from 'context/workspace/EditWorkspaceContext';
 export * from 'context/SnackbarContext';
-export * from 'context/NewWorkspaceContext';
 export * from 'context/devTool/DevToolContext';
 export * from 'context/topicData/TopicDataContext';
 export * from './StoreContext';

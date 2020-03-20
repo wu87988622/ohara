@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import * as actions from 'store/actions';
+
+const initialState = {
+  isOpen: false,
+  opened: false,
+};
+
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    case actions.openIntro.TRIGGER:
+      return {
+        ...state,
+        isOpen: true,
+        opened: true,
+      };
+    case actions.closeIntro.TRIGGER:
+      return {
+        ...state,
+        isOpen: false,
+      };
+    default:
+      return state;
+  }
+}

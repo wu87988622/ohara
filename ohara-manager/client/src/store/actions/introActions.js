@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import { createRoutine } from 'redux-routines';
+
+export const openIntro = createRoutine('OPEN_INTRO');
+export const closeIntro = createRoutine('CLOSE_INTRO');

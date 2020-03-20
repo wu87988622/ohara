@@ -30,6 +30,7 @@ const AppLayout = () => {
   const { isOpen: isDevToolOpen } = context.useDevToolDialog();
   const { isOpen: isEventLogOpen } = context.useEventLogDialog();
 
+  hooks.useWelcome();
   hooks.useRedirect();
 
   const pipelineApiRef = useRef(null);
