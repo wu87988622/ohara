@@ -20,7 +20,7 @@ import { some } from 'lodash';
 import * as hooks from 'hooks';
 
 export const useUniqueName = (prefix = 'workspace') => {
-  const workspaces = hooks.useAllWorkspaces();
+  const workspaces = hooks.useWorkspaces();
   return useMemo(() => {
     for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
       const name = `${prefix}${postfix}`;

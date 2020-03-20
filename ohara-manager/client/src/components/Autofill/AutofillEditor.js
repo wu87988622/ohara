@@ -45,7 +45,7 @@ export const MODE = {
 const AutofillEditor = props => {
   const { isOpen, mode, onClose, data } = props;
   const dispatch = useDispatch();
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const workspaceName = get(currentWorkspace, 'name');
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
   const suggestiveKeys = useSuggestiveKeys();

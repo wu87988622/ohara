@@ -63,8 +63,8 @@ Statistic.propTypes = {
 function WorkspaceList() {
   const history = useHistory();
   const { isOpen, close } = context.useListWorkspacesDialog();
-  const workspaces = hooks.useAllWorkspaces();
-  const { workspaceName } = context.useApp();
+  const workspaces = hooks.useWorkspaces();
+  const workspaceName = hooks.useWorkspaceName();
   const { data: currentTopics } = context.useTopicState();
   const [topics, setTopics] = React.useState(null);
 

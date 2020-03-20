@@ -41,7 +41,7 @@ const AutofillList = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
 
   const handleAddButtonClick = () => {

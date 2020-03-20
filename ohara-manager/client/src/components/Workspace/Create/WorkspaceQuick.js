@@ -47,7 +47,7 @@ import FileCard from '../Card/FileCard';
 import SelectCard from '../Card/SelectCard';
 import WorkspaceCard from '../Card/WorkspaceCard';
 
-import { useApp, useListNodeDialog } from 'context';
+import { useListNodeDialog } from 'context';
 import * as hooks from 'hooks';
 import InputField from 'components/common/Form/InputField';
 import { Progress } from 'components/common/Progress';
@@ -92,7 +92,10 @@ const StyledTableRow = styled(TableRow)(
 const WorkspaceQuick = props => {
   const dispatch = useDispatch();
   const progress = hooks.useCreateWorkspaceProgress();
-  const { workspaceGroup, zookeeperGroup, brokerGroup, workerGroup } = useApp();
+  const workspaceGroup = hooks.useWorkspaceGroup();
+  const zookeeperGroup = hooks.useZookeeperGroup();
+  const brokerGroup = hooks.useBrokerGroup();
+  const workerGroup = hooks.useWorkerGroup();
 
   const [activeStep, setActiveStep] = useState(0);
   const [files, setFiles] = useState([]);
@@ -100,7 +103,7 @@ const WorkspaceQuick = props => {
   const [dialogData, setDialogData] = React.useState({});
   const selectedNodes = get(dialogData, 'selected', []);
 
-  const workspaces = hooks.useAllWorkspaces();
+  const workspaces = hooks.useWorkspaces();
   const defaultWorkspaceName = useUniqueName();
 
   const steps = [

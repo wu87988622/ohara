@@ -17,7 +17,7 @@
 import * as hooks from 'hooks';
 
 const pipeline = () => {
-  const currentPipeline = hooks.useCurrentPipeline();
+  const currentPipeline = hooks.usePipeline();
   const updatePipeline = hooks.useUpdatePipelineAction();
 
   const updateCells = paperApi => {

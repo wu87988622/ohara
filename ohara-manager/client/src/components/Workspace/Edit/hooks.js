@@ -31,7 +31,7 @@ const getOperation = (object, previousList, currentList) => {
 };
 
 export const usePluginKeys = () => {
-  const currentWorker = hooks.useCurrentWorker();
+  const currentWorker = hooks.useWorker();
   const prevKeys = get(currentWorker, 'pluginKeys');
   const currKeys = get(currentWorker, 'stagingSettings.pluginKeys');
   return useMemo(() => {
@@ -44,7 +44,7 @@ export const usePluginKeys = () => {
 };
 
 export const useFiles = () => {
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const { data: files = [] } = useFileState();
   const { fetchFiles } = useFileActions();
   const pluginKeys = usePluginKeys();

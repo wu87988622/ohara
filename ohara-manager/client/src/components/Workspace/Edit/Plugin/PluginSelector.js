@@ -45,7 +45,7 @@ import {
 import { someByKey } from 'utils/object';
 
 function PluginSelector() {
-  const currentWorker = hooks.useCurrentWorker();
+  const currentWorker = hooks.useWorker();
   const workerName = get(currentWorker, 'name');
 
   const { isOpen, close } = useAddPluginDialog();

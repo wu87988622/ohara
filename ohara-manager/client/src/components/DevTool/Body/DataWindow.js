@@ -44,7 +44,8 @@ const WindowDiv = styled.div`
 const DataWindow = () => {
   const location = useLocation();
   const { workspaceName, pipelineName } = useParams();
-  const { setWorkspaceName, setPipelineName } = context.useApp();
+  const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const switchPipeline = hooks.useSwitchPipelineAction();
   const {
     isFetching: isFetchingTopic,
     lastUpdated: lastUpdatedTopic,
@@ -56,9 +57,9 @@ const DataWindow = () => {
   const { data: topics } = context.useTopicState();
   const topicActions = context.useTopicDataActions();
   const logActions = context.useLogActions();
-  const currentBroker = hooks.useCurrentBroker();
-  const currentWorker = hooks.useCurrentWorker();
-  const currentZookeeper = hooks.useCurrentZookeeper();
+  const currentBroker = hooks.useBroker();
+  const currentWorker = hooks.useWorker();
+  const currentZookeeper = hooks.useZookeeper();
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -92,15 +93,15 @@ const DataWindow = () => {
 
   React.useEffect(() => {
     if (workspaceName && workspaceName !== prevWorkspaceName) {
-      setWorkspaceName(workspaceName);
+      switchWorkspace(workspaceName);
     }
-  }, [prevWorkspaceName, setWorkspaceName, workspaceName]);
+  }, [prevWorkspaceName, switchWorkspace, workspaceName]);
 
   React.useEffect(() => {
     if (pipelineName && pipelineName !== prevPipelineName) {
-      setPipelineName(pipelineName);
+      switchPipeline(pipelineName);
     }
-  }, [pipelineName, prevPipelineName, setPipelineName]);
+  }, [pipelineName, prevPipelineName, switchPipeline]);
 
   React.useEffect(() => {
     if (!topicActions || lastUpdatedTopic) return;

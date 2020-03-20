@@ -55,7 +55,7 @@ function PluginCard({ plugin }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting] = useState(false);
 
-  const currentWorker = hooks.useCurrentWorker();
+  const currentWorker = hooks.useWorker();
   const stageWorker = () => {};
 
   const workerName = get(currentWorker, 'name');

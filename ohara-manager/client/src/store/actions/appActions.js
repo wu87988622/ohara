@@ -17,3 +17,5 @@
 import { createRoutine } from 'redux-routines';
 
 export const initializeApp = createRoutine('INITIALIZE_APP');
+export const setWorkspaceName = createRoutine('SET_WORKSPACE_NAME');
+export const setPipelineName = createRoutine('SET_PIPELINE_NAME');

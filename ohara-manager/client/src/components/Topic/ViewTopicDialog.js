@@ -46,7 +46,7 @@ const ViewTopicDialog = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { isFetching: isDeleting } = context.useTopicState();
   const { deleteTopic } = context.useTopicActions();
-  const pipelines = hooks.useCurrentPipelines();
+  const pipelines = hooks.usePipelines();
   const eventLog = useEventLog();
 
   if (!topic) return null;

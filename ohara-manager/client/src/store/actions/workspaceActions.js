@@ -16,8 +16,8 @@
 
 import { createRoutine } from 'redux-routines';
 
-export const fetchWorkspaces = createRoutine('FETCH_WORKSPACES');
 export const createWorkspace = createRoutine('CREATE_WORKSPACE');
-export const updateWorkspace = createRoutine('UPDATE_WORKSPACE');
 export const deleteWorkspace = createRoutine('DELETE_WORKSPACE');
+export const fetchWorkspaces = createRoutine('FETCH_WORKSPACES');
+export const updateWorkspace = createRoutine('UPDATE_WORKSPACE');
 export const switchWorkspace = createRoutine('SWITCH_WORKSPACE');

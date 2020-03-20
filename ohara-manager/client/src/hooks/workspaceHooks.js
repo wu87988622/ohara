@@ -15,45 +15,50 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useMappedState } from 'redux-react-hook';
-import { isEqual as isDeepEqual } from 'lodash';
+import { useDispatch, useMappedState } from 'redux-react-hook';
 
-import { useApp } from 'context';
+import * as hooks from 'hooks';
+import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
 
-export const useCurrentWorkspaceId = () => {
-  const { workspaceGroup: group, workspaceName: name } = useApp();
-  return getId({ group, name });
+export const useWorkspaceGroup = () => 'workspace';
+
+export const useWorkspaceName = () => {
+  const mapState = useCallback(state => state.ui.workspace.name, []);
+  return useMappedState(mapState);
+};
+
+export const useSwitchWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.useWorkspaceGroup();
+  return useCallback(
+    name => dispatch(actions.switchWorkspace.trigger({ group, name })),
+    [dispatch, group],
+  );
 };
 
 export const useAllWorkspaces = () => {
   const getAllWorkspaces = useMemo(selectors.makeGetAllWorkspaces, []);
-  const workspaces = useMappedState(
+  return useMappedState(
     useCallback(state => getAllWorkspaces(state), [getAllWorkspaces]),
   );
+};
+
+export const useWorkspaces = () => {
+  const workspaces = useAllWorkspaces();
   return workspaces;
 };
 
-export const useCurrentWorkspace = () => {
-  const id = useCurrentWorkspaceId();
+export const useWorkspace = () => {
   const getWorkspaceById = useMemo(selectors.makeGetWorkspaceById, []);
-
-  const workspace = useMappedState(
+  const group = useWorkspaceGroup();
+  const name = useWorkspaceName();
+  const id = getId({ group, name });
+  return useMappedState(
     useCallback(state => getWorkspaceById(state, { id }), [
       getWorkspaceById,
       id,
     ]),
   );
-  return workspace;
-};
-
-export const useCreateWorkspaceProgress = () => {
-  const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
-  return useMappedState(mapState, isDeepEqual);
-};
-
-export const useCreateWorkspaceState = () => {
-  const mapState = useCallback(state => state.ui.createWorkspace, []);
-  return useMappedState(mapState, isDeepEqual);
 };

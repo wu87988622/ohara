@@ -14,12 +14,35 @@
  * limitations under the License.
  */
 
+import * as actions from 'store/actions';
+
 const initialState = {
-  id: null,
+  name: null,
+  loading: false,
+  lastUpdated: null,
+  error: null,
 };
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
+    case actions.switchWorkspace.REQUEST:
+      return {
+        ...state,
+        loading: true,
+      };
+    case actions.switchWorkspace.SUCCESS:
+      return {
+        ...state,
+        name: action.payload.name,
+        loading: false,
+        lastUpdated: new Date(),
+      };
+    case actions.switchWorkspace.FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
     default:
       return state;
   }

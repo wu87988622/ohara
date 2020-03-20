@@ -33,10 +33,10 @@ function MoreActions() {
   const [isResetting, setIsResetting] = React.useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
 
-  const currentBroker = hooks.useCurrentBroker();
-  const currentPipeline = hooks.useCurrentPipeline();
-  const currentWorker = hooks.useCurrentWorker();
-  const currentZookeeper = hooks.useCurrentZookeeper();
+  const currentZookeeper = hooks.useZookeeper();
+  const currentBroker = hooks.useBroker();
+  const currentWorker = hooks.useWorker();
+  const currentPipeline = hooks.usePipeline();
 
   const { stopConnector, startConnector } = context.useConnectorActions();
   const { stopTopic, startTopic } = context.useTopicActions();

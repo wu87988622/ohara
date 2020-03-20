@@ -23,9 +23,9 @@ import * as hooks from 'hooks';
 const EditWorkspaceContext = createContext();
 
 const EditWorkspaceProvider = ({ children }) => {
-  const currBk = hooks.useCurrentBroker();
-  const currWk = hooks.useCurrentWorker();
-  const currZk = hooks.useCurrentZookeeper();
+  const currBk = hooks.useBroker();
+  const currWk = hooks.useWorker();
+  const currZk = hooks.useZookeeper();
   const { data: allNodesInOhara } = useNodeState();
 
   const [stagingNodes, setStagingNodes] = useState([]);

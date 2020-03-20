@@ -16,7 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useApp, useApi } from 'context';
+import { useApi } from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './fileRoutines';
 import { createActions } from './fileActions';
@@ -27,7 +28,7 @@ const FileDispatchContext = React.createContext();
 
 const FileProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = useApp();
+  const workspaceName = hooks.useWorkspaceName();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());

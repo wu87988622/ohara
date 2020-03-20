@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-import { useDispatch } from 'redux-react-hook';
+import { ofType } from 'redux-observable';
+import { from, of } from 'rxjs';
+import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+
+import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 
-export const useSwitchWorkspace = () => {
-  const dispatch = useDispatch();
-  return name => dispatch(actions.switchWorkspace.trigger(name));
-};
+export default action$ =>
+  action$.pipe(
+    ofType(actions.deletePipeline.TRIGGER),
+    map(action => action.payload),
+    switchMap(params =>
+      from(pipelineApi.remove(params)).pipe(
+        map(() => actions.deletePipeline.success(params)),
+        startWith(actions.deletePipeline.request()),
+        catchError(res => of(actions.deletePipeline.failure(res))),
+      ),
+    ),
+  );

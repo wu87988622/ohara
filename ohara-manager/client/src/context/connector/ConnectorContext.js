@@ -22,7 +22,8 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useApi, useApp } from 'context';
+import { useApi } from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './connectorActions';
 import { reducer, initialState } from './connectorReducer';
@@ -35,7 +36,8 @@ const ConnectorProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { connectorApi } = useApi();
-  const { pipelineName, pipelineGroup } = useApp();
+  const pipelineGroup = hooks.usePipelineGroup();
+  const pipelineName = hooks.usePipelineName();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());

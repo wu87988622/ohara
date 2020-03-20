@@ -47,8 +47,8 @@ const EditWorkspace = () => {
     setData: setEditWorkspaceDialogData,
   } = useEditWorkspaceDialog();
   const { open: openAddTopicDialog } = useAddTopicDialog();
-  const currentWorkspace = hooks.useCurrentWorkspace();
-  const currentBroker = hooks.useCurrentBroker();
+  const currentWorkspace = hooks.useWorkspace();
+  const currentBroker = hooks.useBroker();
   const { dirties } = useEditWorkspace();
 
   const handleChange = (event, newTab) => {

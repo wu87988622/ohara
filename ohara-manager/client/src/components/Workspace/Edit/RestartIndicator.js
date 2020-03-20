@@ -41,9 +41,9 @@ RestartIndicator.defaultProps = {
 };
 
 function RestartIndicator({ invisible }) {
-  const currWk = hooks.useCurrentWorker();
-  const currBk = hooks.useCurrentBroker();
-  const currZk = hooks.useCurrentZookeeper();
+  const currWk = hooks.useWorker();
+  const currBk = hooks.useBroker();
+  const currZk = hooks.useZookeeper();
   const isWkFetching = false;
   const isBkFetching = false;
   const isZkFetching = false;

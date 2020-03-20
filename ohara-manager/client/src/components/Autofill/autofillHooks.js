@@ -20,7 +20,7 @@ import { get, replace } from 'lodash';
 import * as hooks from 'hooks';
 
 export const useSuggestiveKeys = () => {
-  const currentWorker = hooks.useCurrentWorker();
+  const currentWorker = hooks.useWorker();
 
   return useMemo(() => {
     const classInfos = get(currentWorker, 'classInfos', []);

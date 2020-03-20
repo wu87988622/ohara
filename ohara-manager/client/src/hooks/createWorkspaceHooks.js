@@ -14,5 +14,16 @@
  * limitations under the License.
  */
 
-export * from './workerActionHooks';
-export * from './workerStateHooks';
+import { useCallback } from 'react';
+import { useMappedState } from 'redux-react-hook';
+import { isEqual as isDeepEqual } from 'lodash';
+
+export const useCreateWorkspaceProgress = () => {
+  const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
+  return useMappedState(mapState, isDeepEqual);
+};
+
+export const useCreateWorkspaceState = () => {
+  const mapState = useCallback(state => state.ui.createWorkspace, []);
+  return useMappedState(mapState, isDeepEqual);
+};

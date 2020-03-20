@@ -17,7 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useApi, useApp } from 'context';
+import { useApi } from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './streamActions';
 import { reducer, initialState } from './streamReducer';
@@ -30,7 +31,8 @@ const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const eventLog = useEventLog();
   const { streamApi } = useApi();
-  const { pipelineName, pipelineGroup } = useApp();
+  const pipelineGroup = hooks.usePipelineGroup();
+  const pipelineName = hooks.usePipelineName();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());

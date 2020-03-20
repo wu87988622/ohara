@@ -89,10 +89,10 @@ export default (action$, state$) =>
     debounce(() => interval(1000)),
     withLatestFrom(state$),
     switchMap(([action, state]) => {
-      const name = action.payload;
+      const { name } = action.payload;
       const getWorkerByName = selectors.makeGetWorkerByName();
       const worker = getWorkerByName(state, { name });
-      if (worker) return of(actions.switchWorkspace.fulfill());
+      if (worker) return of(actions.switchWorkspace.success({ name }));
       return forkJoin(
         fetchWorkerObservable(name),
         fetchWorkerInfoObservable(name),
@@ -101,8 +101,10 @@ export default (action$, state$) =>
         fetchZookeeperObservable(name),
         fetchZookeeperInfoObservable(name),
       ).pipe(
-        map(entitiesAry => merge(...entitiesAry)),
-        map(mergedEntities => actions.switchWorkspace.success(mergedEntities)),
+        map(entitiesAry => merge(...entitiesAry, { name })),
+        map(nameAndEntities =>
+          actions.switchWorkspace.success(nameAndEntities),
+        ),
         startWith(actions.switchWorkspace.request()),
         catchError(res => of(actions.fetchWorker.failure(res))),
       );

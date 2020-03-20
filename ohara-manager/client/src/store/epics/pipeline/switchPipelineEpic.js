@@ -14,5 +14,20 @@
  * limitations under the License.
  */
 
-export * from './brokerActionHooks';
-export * from './brokerStateHooks';
+import { isEmpty } from 'lodash';
+import { ofType } from 'redux-observable';
+import { of, interval } from 'rxjs';
+import { debounce, filter, switchMap } from 'rxjs/operators';
+
+import * as actions from 'store/actions';
+
+export default action$ =>
+  action$.pipe(
+    ofType(actions.switchPipeline.TRIGGER),
+    filter(action => !isEmpty(action.payload)),
+    debounce(() => interval(1000)),
+    switchMap(action => {
+      const { name } = action.payload;
+      return of(actions.switchPipeline.success(name));
+    }),
+  );

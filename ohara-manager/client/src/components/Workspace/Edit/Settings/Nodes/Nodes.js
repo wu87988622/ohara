@@ -25,7 +25,7 @@ import AddNodeCard from './AddNodeCard';
 
 const Nodes = () => {
   const { stagingNodes } = useEditWorkspace();
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const { open: openListNodeDialog } = useListNodeDialog();
   const { data: allNodes } = useNodeState();
   const [dialogData, setDialogData] = React.useState({});

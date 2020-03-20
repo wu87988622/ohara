@@ -48,9 +48,9 @@ import { DeleteDialog } from 'components/common/Dialog';
 import { useNodeState, useNodeActions } from 'context';
 
 const NodeCard = ({ node }) => {
-  const currentBroker = hooks.useCurrentBroker();
-  const currentWorker = hooks.useCurrentWorker();
-  const currentZookeeper = hooks.useCurrentZookeeper();
+  const currentBroker = hooks.useBroker();
+  const currentWorker = hooks.useWorker();
+  const currentZookeeper = hooks.useZookeeper();
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   const { isFetching: isDeleting } = useNodeState();
   const { deleteNode } = useNodeActions();

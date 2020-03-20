@@ -17,7 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useApp, useApi } from 'context';
+import { useApi } from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './logRoutines';
 import { createActions } from './logActions';
@@ -28,7 +29,7 @@ const LogDispatchContext = React.createContext();
 
 const LogProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = useApp();
+  const workspaceName = hooks.useWorkspaceName();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());

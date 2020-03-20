@@ -17,31 +17,89 @@
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useMappedState } from 'redux-react-hook';
 
-import { useApp } from 'context';
+import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
+import { hashByGroupAndName } from 'utils/sha';
 
-export const useCurrentPipelineId = () => {
-  const { pipelineGroup: group, pipelineName: name } = useApp();
-  return getId({ group, name });
+export const usePipelineGroup = () => {
+  const workspaceGroup = hooks.useWorkspaceGroup();
+  const workspaceName = hooks.useWorkspaceName();
+  if (workspaceGroup && workspaceName)
+    return hashByGroupAndName(workspaceGroup, workspaceName);
+};
+
+export const usePipelineName = () => {
+  const mapState = useCallback(state => state.ui.pipeline.name, []);
+  return useMappedState(mapState);
+};
+
+export const useSwitchPipelineAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    name => dispatch(actions.switchPipeline.trigger({ group, name })),
+    [dispatch, group],
+  );
+};
+
+export const useFetchPipelineAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    name => dispatch(actions.fetchPipeline.trigger({ group, name })),
+    [dispatch, group],
+  );
+};
+
+export const useCreatePipelineAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    values => dispatch(actions.createPipeline.trigger({ ...values, group })),
+    [dispatch, group],
+  );
+};
+
+export const useUpdatePipelineAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    values => dispatch(actions.updatePipeline.trigger({ ...values, group })),
+    [dispatch, group],
+  );
+};
+
+export const useDeletePipelineAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    name => dispatch(actions.deletePipeline.trigger({ group, name })),
+    [dispatch, group],
+  );
+};
+
+export const useSetSelectedCellAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(cell => dispatch(actions.setSelectedCell.trigger(cell)), [
+    dispatch,
+  ]);
 };
 
 export const useAllPipelines = () => {
   const getAllPipelines = useMemo(selectors.makeGetAllPipelines, []);
-
-  const pipelines = useMappedState(
+  return useMappedState(
     useCallback(state => getAllPipelines(state), [getAllPipelines]),
   );
-  return pipelines;
 };
 
-export const useCurrentPipelines = () => {
+export const usePipelines = () => {
   const makeFindPipelinesByGroup = useMemo(
     selectors.makeFindPipelinesByGroup,
     [],
   );
-  const { pipelineGroup: group } = useApp();
+  const group = hooks.usePipelineGroup();
   const findPipelinesByGroup = useCallback(
     state => makeFindPipelinesByGroup(state, { group }),
     [makeFindPipelinesByGroup, group],
@@ -49,58 +107,17 @@ export const useCurrentPipelines = () => {
   return useMappedState(findPipelinesByGroup);
 };
 
-export const useCurrentPipeline = () => {
-  const id = useCurrentPipelineId();
+export const usePipeline = () => {
   const getPipelineById = useMemo(selectors.makeGetPipelineById, []);
-
-  const pipeline = useMappedState(
+  const group = usePipelineGroup();
+  const name = usePipelineName();
+  const id = getId({ group, name });
+  return useMappedState(
     useCallback(state => getPipelineById(state, { id }), [getPipelineById, id]),
   );
-  return pipeline;
 };
 
-export const useCurrentPipelineCell = () =>
-  useMappedState(useCallback(state => state?.ui?.pipeline?.selectedCell, []));
-
-export const useSetSelectedCellAction = () => {
-  const dispatch = useDispatch();
-  return function(cell) {
-    dispatch(actions.setSelectedCell.trigger(cell));
-  };
-};
-
-export const useFetchPipelineAction = () => {
-  const dispatch = useDispatch();
-  const { pipelineGroup } = useApp();
-  return function(name) {
-    const params = { name, group: pipelineGroup };
-    dispatch(actions.fetchPipeline.trigger(params));
-  };
-};
-
-export const useCreatePipelineAction = () => {
-  const dispatch = useDispatch();
-  const { pipelineGroup } = useApp();
-  return function(values) {
-    const finalValues = { ...values, group: pipelineGroup };
-    dispatch(actions.createPipeline.trigger(finalValues));
-  };
-};
-
-export const useUpdatePipelineAction = () => {
-  const dispatch = useDispatch();
-  const { pipelineGroup } = useApp();
-  return function(values) {
-    const finalValues = { ...values, group: pipelineGroup };
-    dispatch(actions.updatePipeline.trigger(finalValues));
-  };
-};
-
-export const useDeletePipelineAction = () => {
-  const dispatch = useDispatch();
-  const { pipelineGroup } = useApp();
-  return function(name) {
-    const params = { name, group: pipelineGroup };
-    dispatch(actions.deletePipeline.trigger(params));
-  };
+export const useCurrentPipelineCell = () => {
+  const mapState = useCallback(state => state.ui.pipeline.selectedCell, []);
+  return useMappedState(mapState);
 };

@@ -21,7 +21,7 @@ const getEntities = state => state?.entities?.brokers;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const makeGetAllBrokers = () =>
+export const makeGetBrokers = () =>
   createSelector([getEntities], entities => _.values(entities));
 
 export const makeGetBrokerById = () =>

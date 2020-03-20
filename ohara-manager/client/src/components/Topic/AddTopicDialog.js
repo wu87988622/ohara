@@ -34,7 +34,7 @@ import * as hooks from 'hooks';
 
 const AddTopicDialog = props => {
   const { uniqueId } = props;
-  const currentBroker = hooks.useCurrentBroker();
+  const currentBroker = hooks.useBroker();
   const { isFetching: isSaving } = context.useTopicState();
   const { createTopic } = context.useTopicActions();
   const {

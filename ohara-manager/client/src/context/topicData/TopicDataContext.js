@@ -18,6 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './topicDataRoutines';
 import { createActions } from './topicDataActions';
@@ -28,7 +29,7 @@ const TopicDataDispatchContext = React.createContext();
 
 const TopicDataProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const { workspaceName } = context.useApp();
+  const workspaceName = hooks.useWorkspaceName();
 
   React.useEffect(() => {
     dispatch(initializeRoutine.trigger());

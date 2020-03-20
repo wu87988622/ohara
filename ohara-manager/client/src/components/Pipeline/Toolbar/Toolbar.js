@@ -58,8 +58,8 @@ const Toolbar = props => {
   );
 
   const deletePipeline = hooks.useDeletePipelineAction();
-  const currentWorkspace = hooks.useCurrentWorkspace();
-  const currentPipeline = hooks.useCurrentPipeline();
+  const currentWorkspace = hooks.useWorkspace();
+  const currentPipeline = hooks.usePipeline();
   const selectedCell = hooks.useCurrentPipelineCell();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);

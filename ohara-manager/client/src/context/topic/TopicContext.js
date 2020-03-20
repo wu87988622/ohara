@@ -18,7 +18,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { initializeRoutine } from './topicRoutines';
-import { useApi, useApp } from 'context';
+import { useApi } from 'context';
+import * as hooks from 'hooks';
 import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './topicActions';
 import { reducer, initialState } from './topicReducer';
@@ -29,7 +30,7 @@ const TopicDispatchContext = React.createContext();
 const TopicProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
   const eventLog = useEventLog();
-  const { workspaceName } = useApp();
+  const workspaceName = hooks.useWorkspaceName();
   const { topicApi } = useApi();
 
   React.useEffect(() => {

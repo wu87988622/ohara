@@ -16,9 +16,10 @@
 
 import { createRoutine } from 'redux-routines';
 
-export const fetchPipelines = createRoutine('FETCH_PIPELINES');
-export const fetchPipeline = createRoutine('FETCH_PIPELINE');
 export const createPipeline = createRoutine('CREATE_PIPELINE');
-export const updatePipeline = createRoutine('UPDATE_PIPELINE');
 export const deletePipeline = createRoutine('DELETE_PIPELINE');
+export const fetchPipeline = createRoutine('FETCH_PIPELINE');
+export const fetchPipelines = createRoutine('FETCH_PIPELINES');
+export const updatePipeline = createRoutine('UPDATE_PIPELINE');
 export const setSelectedCell = createRoutine('SET_SELECTED_CELL');
+export const switchPipeline = createRoutine('SWITCH_PIPELINE');

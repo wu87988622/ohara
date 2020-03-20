@@ -39,9 +39,9 @@ export const PipelineDispatchContext = createContext(null);
 
 const Pipeline = React.forwardRef((props, ref) => {
   const isAppReady = hooks.useIsAppReady();
-  const currentWorkspace = hooks.useCurrentWorkspace();
-  const workspaces = hooks.useAllWorkspaces();
-  const currentPipeline = hooks.useCurrentPipeline();
+  const currentWorkspace = hooks.useWorkspace();
+  const workspaces = hooks.useWorkspaces();
+  const currentPipeline = hooks.usePipeline();
 
   const {
     open: openPropertyDialog,
@@ -100,7 +100,8 @@ const Pipeline = React.forwardRef((props, ref) => {
   const [currentCellData, setCurrentCellData] = React.useState(null);
   const [url, setUrl] = React.useState(null);
 
-  const { workspaceName, pipelineName } = context.useApp();
+  const workspaceName = hooks.useWorkspaceName();
+  const pipelineName = hooks.usePipelineName();
 
   const handleDialogClose = () => {
     setIsOpen(false);

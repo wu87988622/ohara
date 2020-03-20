@@ -39,7 +39,7 @@ const AutofillSelector = props => {
   const [expanded, setExpanded] = React.useState(false);
   const [selected, setSelected] = React.useState(null);
 
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
 
   const handleChange = name => (_, isExpanded) => {

@@ -61,8 +61,8 @@ const PipelinePropertyDialog = props => {
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
-  const currentWorker = hooks.useCurrentWorker();
-  const currentPipeline = hooks.useCurrentPipeline();
+  const currentWorker = hooks.useWorker();
+  const currentPipeline = hooks.usePipeline();
   const { data: currentConnectors } = useConnectorState();
   const { data: currentStreams } = useStreamState();
   const { data: allTopics } = useTopicState();

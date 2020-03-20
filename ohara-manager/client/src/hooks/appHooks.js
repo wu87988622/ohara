@@ -14,57 +14,59 @@
  * limitations under the License.
  */
 
-import { useContext, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { find, filter, head } from 'lodash';
 import { useHistory, useParams } from 'react-router-dom';
-import { StoreContext } from 'redux-react-hook';
+import { useMappedState } from 'redux-react-hook';
 
 import { hashByGroupAndName } from 'utils/sha';
 import * as context from 'context';
 import * as hooks from 'hooks';
-import * as pipelineHooks from './pipelineHooks';
-import * as workspaceHooks from './workspaceHooks';
-import { usePrevious } from 'utils/hooks';
 
 export const useIsAppReady = () => {
-  const store = useContext(StoreContext);
-  return !!store?.getState()?.ui?.app?.lastUpdated;
+  const mapState = useCallback(state => !!state.ui.app.lastUpdated, []);
+  return useMappedState(mapState);
 };
 
 export const useRedirect = () => {
   const isAppReady = useIsAppReady();
-  const workspaces = workspaceHooks.useAllWorkspaces();
-  const pipelines = pipelineHooks.useAllPipelines();
+  const allWorkspaces = hooks.useAllWorkspaces();
+  const allPipelines = hooks.useAllPipelines();
+  const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const switchPipeline = hooks.useSwitchPipelineAction();
+  const workspaceName = hooks.useWorkspaceName();
+  const pipelineName = hooks.usePipelineName();
   const { setWorkspaceName, setPipelineName } = context.useApp();
 
   const history = useHistory();
-  const { workspaceName, pipelineName } = useParams();
-  const prevWorkspaceName = usePrevious(workspaceName);
-  const prevPipelineName = usePrevious(pipelineName);
-  const switchWorkspace = hooks.useSwitchWorkspace();
+  const {
+    workspaceName: routedWorkspaceName,
+    pipelineName: routedPipelineName,
+  } = useParams();
 
   useEffect(() => {
     if (!isAppReady) return;
 
     const validWorkspace =
-      find(workspaces, wk => wk.name === workspaceName) || head(workspaces);
+      find(allWorkspaces, wk => wk.name === routedWorkspaceName) ||
+      head(allWorkspaces);
 
     const validPipelines = filter(
-      pipelines,
+      allPipelines,
       pl =>
         pl.group ===
         hashByGroupAndName(validWorkspace?.group, validWorkspace?.name),
     );
     const validPipeline =
-      find(validPipelines, pl => pl.name === pipelineName) ||
+      find(validPipelines, pl => pl.name === routedPipelineName) ||
       head(validPipelines);
 
     const validWorkspaceName = validWorkspace?.name;
     const validPipelineName = validPipeline?.name;
 
     if (
-      workspaceName !== validWorkspaceName ||
-      pipelineName !== validPipelineName
+      routedWorkspaceName !== validWorkspaceName ||
+      routedPipelineName !== validPipelineName
     ) {
       if (validWorkspaceName && validPipelineName) {
         history.push(`/${validWorkspaceName}/${validPipelineName}`);
@@ -74,27 +76,26 @@ export const useRedirect = () => {
         history.push(`/`);
       }
     }
-
-    if (workspaceName === validWorkspaceName) switchWorkspace(workspaceName);
   }, [
     history,
     isAppReady,
-    pipelineName,
-    pipelines,
-    switchWorkspace,
-    workspaceName,
-    workspaces,
+    allPipelines,
+    allWorkspaces,
+    routedPipelineName,
+    routedWorkspaceName,
   ]);
 
   useEffect(() => {
-    if (workspaceName && workspaceName !== prevWorkspaceName) {
-      setWorkspaceName(workspaceName);
+    if (routedWorkspaceName && routedWorkspaceName !== workspaceName) {
+      setWorkspaceName(routedWorkspaceName);
+      switchWorkspace(routedWorkspaceName);
     }
-  }, [isAppReady, prevWorkspaceName, setWorkspaceName, workspaceName]);
+  }, [workspaceName, routedWorkspaceName, setWorkspaceName, switchWorkspace]);
 
   useEffect(() => {
-    if (pipelineName && pipelineName !== prevPipelineName) {
-      setPipelineName(pipelineName);
+    if (routedPipelineName && routedPipelineName !== pipelineName) {
+      setPipelineName(routedPipelineName);
+      switchPipeline(routedPipelineName);
     }
-  }, [pipelineName, prevPipelineName, setPipelineName]);
+  }, [pipelineName, routedPipelineName, setPipelineName, switchPipeline]);
 };

@@ -40,9 +40,9 @@ export const Wrapper = styled.div(
 const sortByOrder = (definitions = []) => sortBy(definitions, 'orderInGroup');
 
 const Settings = () => {
-  const currentBroker = hooks.useCurrentBroker();
-  const currentWorker = hooks.useCurrentWorker();
-  const currentZookeeper = hooks.useCurrentZookeeper();
+  const currentBroker = hooks.useBroker();
+  const currentWorker = hooks.useWorker();
+  const currentZookeeper = hooks.useZookeeper();
 
   const { data = {} } = useEditWorkspaceDialog();
   const { segment = Segments.WORKER } = data;

@@ -48,9 +48,9 @@ const Toolbox = props => {
     pipelineDispatch,
   } = props;
 
-  const currentWorker = hooks.useCurrentWorker();
-  const currentWorkspace = hooks.useCurrentWorkspace();
-  const currentPipeline = hooks.useCurrentPipeline();
+  const currentWorker = hooks.useWorker();
+  const currentWorkspace = hooks.useWorkspace();
+  const currentPipeline = hooks.usePipeline();
   const { createFile } = context.useFileActions();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();

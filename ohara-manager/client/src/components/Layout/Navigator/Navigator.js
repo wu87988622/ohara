@@ -57,9 +57,9 @@ const Navigator = ({ pipelineApi }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const currentWorkspace = hooks.useCurrentWorkspace();
+  const currentWorkspace = hooks.useWorkspace();
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
-  const pipelines = hooks.useCurrentPipelines();
+  const pipelines = hooks.usePipelines();
   const createPipeline = hooks.useCreatePipelineAction();
 
   const handleClick = event => {

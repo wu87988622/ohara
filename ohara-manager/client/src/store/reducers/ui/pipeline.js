@@ -17,12 +17,33 @@
 import * as actions from 'store/actions';
 
 const initialState = {
-  id: null,
+  name: null,
+  loading: false,
+  lastUpdated: null,
+  error: null,
   selectedCell: null,
 };
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
+    case actions.switchPipeline.REQUEST:
+      return {
+        ...state,
+        loading: true,
+      };
+    case actions.switchPipeline.SUCCESS:
+      return {
+        ...state,
+        name: action.payload,
+        loading: false,
+        lastUpdated: new Date(),
+      };
+    case actions.switchPipeline.FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
     case actions.setSelectedCell.TRIGGER:
       return {
         ...state,

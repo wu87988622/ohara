@@ -37,7 +37,7 @@ import { Tooltip } from 'components/common/Tooltip';
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
-  const workspaces = hooks.useAllWorkspaces();
+  const workspaces = hooks.useWorkspaces();
   const { setIsOpen: setIsNewWorkspaceOpen } = context.useNewWorkspace();
   const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
