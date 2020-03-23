@@ -44,6 +44,7 @@ else
   if [ "$service" == "configurator" ]; then
     CLASS="oharastream.ohara.configurator.Configurator"
   elif [ "$service" == "shabondi" ]; then
+    # TODO: this main class does not exist (see https://github.com/oharastream/ohara/issues/4422)
     CLASS="oharastream.ohara.shabondi.Boot"
   elif [ "$service" == "-v" ] || [ "$service" == "version" ] || [ "$service" == "-version" ]; then
     CLASS="oharastream.ohara.common.util.VersionUtils"
