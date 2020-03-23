@@ -15,18 +15,18 @@
  */
 
 import { useCallback } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
 
 export const useIsIntroOpen = () => {
   const mapState = useCallback(state => !!state.ui.intro.isOpen, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };
 
 export const useWasIntroOpened = () => {
   const mapState = useCallback(state => !!state.ui.intro.opened, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };
 
 export const useOpenIntroAction = () => {

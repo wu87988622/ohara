@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { get, reject } from 'lodash';
-import { useDispatch } from 'redux-react-hook';
+import { useDispatch } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';

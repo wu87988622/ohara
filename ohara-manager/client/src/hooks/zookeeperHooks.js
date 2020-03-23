@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
 import * as hooks from 'hooks';
@@ -86,7 +86,7 @@ export const useDeleteZookeeperAction = () => {
 
 export const useZookeepers = () => {
   const getAllZookeepers = useMemo(selectors.makeGetAllZookeepers, []);
-  const zookeepers = useMappedState(
+  const zookeepers = useSelector(
     useCallback(state => getAllZookeepers(state), [getAllZookeepers]),
   );
   return zookeepers;
@@ -98,7 +98,7 @@ export const useZookeeper = () => {
   const group = useZookeeperGroup();
   const name = useZookeeperName();
   const id = getId({ group, name });
-  return useMappedState(
+  return useSelector(
     useCallback(
       state => {
         const zookeeper = getZookeeperById(state, { id });

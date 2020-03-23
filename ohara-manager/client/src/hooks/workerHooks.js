@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
 import * as hooks from 'hooks';
@@ -86,7 +86,7 @@ export const useDeleteWorkerAction = () => {
 
 export const useWorkers = () => {
   const getAllWorkers = useMemo(selectors.makeGetAllWorkers, []);
-  const workers = useMappedState(
+  const workers = useSelector(
     useCallback(state => getAllWorkers(state), [getAllWorkers]),
   );
   return workers;
@@ -98,7 +98,7 @@ export const useWorker = () => {
   const group = useWorkerGroup();
   const name = useWorkerName();
   const id = getId({ group, name });
-  return useMappedState(
+  return useSelector(
     useCallback(
       state => {
         const worker = getWorkerById(state, { id });

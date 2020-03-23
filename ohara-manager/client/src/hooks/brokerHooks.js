@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
 import * as hooks from 'hooks';
@@ -86,7 +86,7 @@ export const useDeleteBrokerAction = () => {
 
 export const useBrokers = () => {
   const getBrokers = useMemo(selectors.makeGetBrokers, []);
-  return useMappedState(useCallback(state => getBrokers(state), [getBrokers]));
+  return useSelector(useCallback(state => getBrokers(state), [getBrokers]));
 };
 
 export const useBroker = () => {
@@ -95,7 +95,7 @@ export const useBroker = () => {
   const group = useBrokerGroup();
   const name = useBrokerName();
   const id = getId({ group, name });
-  return useMappedState(
+  return useSelector(
     useCallback(
       state => {
         const broker = getBrokerById(state, { id });

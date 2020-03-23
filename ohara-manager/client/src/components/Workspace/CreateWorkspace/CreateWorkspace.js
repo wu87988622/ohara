@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { get, map } from 'lodash';
-import { useDispatch } from 'redux-react-hook';
+import { useDispatch } from 'react-redux';
 
 import Step from '@material-ui/core/Step';
 import Card from '@material-ui/core/Card';

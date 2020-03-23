@@ -16,7 +16,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useDispatch } from 'redux-react-hook';
+import { useDispatch } from 'react-redux';
 import { hashByGroupAndName } from 'utils/sha';
 import * as actions from 'store/actions';
 

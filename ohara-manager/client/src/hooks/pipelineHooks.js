@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
@@ -32,7 +32,7 @@ export const usePipelineGroup = () => {
 
 export const usePipelineName = () => {
   const mapState = useCallback(state => state.ui.pipeline.name, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };
 
 export const useSwitchPipelineAction = () => {
@@ -89,7 +89,7 @@ export const useSetSelectedCellAction = () => {
 
 export const useAllPipelines = () => {
   const getAllPipelines = useMemo(selectors.makeGetAllPipelines, []);
-  return useMappedState(
+  return useSelector(
     useCallback(state => getAllPipelines(state), [getAllPipelines]),
   );
 };
@@ -104,7 +104,7 @@ export const usePipelines = () => {
     state => makeFindPipelinesByGroup(state, { group }),
     [makeFindPipelinesByGroup, group],
   );
-  return useMappedState(findPipelinesByGroup);
+  return useSelector(findPipelinesByGroup);
 };
 
 export const usePipeline = () => {
@@ -112,12 +112,12 @@ export const usePipeline = () => {
   const group = usePipelineGroup();
   const name = usePipelineName();
   const id = getId({ group, name });
-  return useMappedState(
+  return useSelector(
     useCallback(state => getPipelineById(state, { id }), [getPipelineById, id]),
   );
 };
 
 export const useCurrentPipelineCell = () => {
   const mapState = useCallback(state => state.ui.pipeline.selectedCell, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };

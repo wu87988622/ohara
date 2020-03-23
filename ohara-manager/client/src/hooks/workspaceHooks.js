@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useMappedState } from 'redux-react-hook';
+import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
@@ -26,7 +26,7 @@ export const useWorkspaceGroup = () => 'workspace';
 
 export const useWorkspaceName = () => {
   const mapState = useCallback(state => state.ui.workspace.name, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };
 
 export const useSwitchWorkspaceAction = () => {
@@ -40,7 +40,7 @@ export const useSwitchWorkspaceAction = () => {
 
 export const useAllWorkspaces = () => {
   const getAllWorkspaces = useMemo(selectors.makeGetAllWorkspaces, []);
-  return useMappedState(
+  return useSelector(
     useCallback(state => getAllWorkspaces(state), [getAllWorkspaces]),
   );
 };
@@ -55,7 +55,7 @@ export const useWorkspace = () => {
   const group = useWorkspaceGroup();
   const name = useWorkspaceName();
   const id = getId({ group, name });
-  return useMappedState(
+  return useSelector(
     useCallback(state => getWorkspaceById(state, { id }), [
       getWorkspaceById,
       id,

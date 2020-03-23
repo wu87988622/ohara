@@ -17,7 +17,7 @@
 import { useCallback, useEffect } from 'react';
 import { find, filter, head, isEmpty } from 'lodash';
 import { useHistory, useParams } from 'react-router-dom';
-import { useMappedState } from 'redux-react-hook';
+import { useSelector } from 'react-redux';
 
 import { hashByGroupAndName } from 'utils/sha';
 import * as context from 'context';
@@ -25,7 +25,7 @@ import * as hooks from 'hooks';
 
 export const useIsAppReady = () => {
   const mapState = useCallback(state => !!state.ui.app.lastUpdated, []);
-  return useMappedState(mapState);
+  return useSelector(mapState);
 };
 
 export const useWelcome = () => {

@@ -16,14 +16,12 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { StoreContext } from 'redux-react-hook';
+import { Provider } from 'react-redux';
 import configureStore from 'store';
 
 const StoreProvider = ({ children }) => {
   const store = configureStore();
-  return (
-    <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
-  );
+  return <Provider store={store}>{children}</Provider>;
 };
 
 StoreProvider.propTypes = {

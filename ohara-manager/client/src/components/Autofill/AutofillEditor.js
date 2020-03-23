@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { get, filter, map, noop, some, values } from 'lodash';
-import { useDispatch } from 'redux-react-hook';
+import { useDispatch } from 'react-redux';
 import uuid from 'uuid';
 import { Form, Field } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
