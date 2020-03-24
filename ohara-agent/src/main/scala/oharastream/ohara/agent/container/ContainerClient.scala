@@ -62,6 +62,7 @@ trait ContainerClient extends Releasable {
 
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] = log(name, None)
   def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[(ContainerName, String)]
