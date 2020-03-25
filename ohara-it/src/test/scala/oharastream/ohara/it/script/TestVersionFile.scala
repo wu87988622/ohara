@@ -23,6 +23,7 @@ import oharastream.ohara.common.util.{Releasable, VersionUtils}
 import oharastream.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -34,39 +35,50 @@ class TestVersionFile extends IntegrationTest {
   private[this] val containerClient                 = DockerClient(DataCollie(nodes))
   protected val serviceNameHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient)
 
+  /**
+    * see VersionUtils for following fields
+    */
+  private[this] val expectedStrings = Set(
+    "version",
+    "revision",
+    "branch",
+    "user",
+    "date"
+  )
+
   @Test
   def testConfigurator(): Unit =
-    testVersion(s"oharastream/configurator:${VersionUtils.VERSION}", VersionUtils.REVISION)
+    testVersion(s"oharastream/configurator:${VersionUtils.VERSION}", expectedStrings)
 
   @Test
   def testWorker(): Unit =
-    testVersion(s"oharastream/connect-worker:${VersionUtils.VERSION}", VersionUtils.REVISION)
+    testVersion(s"oharastream/connect-worker:${VersionUtils.VERSION}", expectedStrings)
 
   @Test
   def testStream(): Unit =
-    testVersion(s"oharastream/stream:${VersionUtils.VERSION}", VersionUtils.REVISION)
+    testVersion(s"oharastream/stream:${VersionUtils.VERSION}", expectedStrings)
 
   @Test
   def testShabondi(): Unit =
-    testVersion(s"oharastream/shabondi:${VersionUtils.VERSION}", VersionUtils.REVISION)
+    testVersion(s"oharastream/shabondi:${VersionUtils.VERSION}", expectedStrings)
 
   @Test
   def testManager(): Unit =
-    testVersion(s"oharastream/manager:${VersionUtils.VERSION}", VersionUtils.REVISION)
+    testVersion(s"oharastream/manager:${VersionUtils.VERSION}", expectedStrings)
 
   /**
     * we don't embed any ohara code to zookeeper so zk image show only revision.
     */
   @Test
-  def testZookeeper(): Unit = testVersion(s"oharastream/zookeeper:${VersionUtils.VERSION}", VersionUtils.REVISION)
+  def testZookeeper(): Unit = testVersion(s"oharastream/zookeeper:${VersionUtils.VERSION}", Set("ohara"))
 
   /**
     * we don't embed any ohara code to broker so zk image show only revision.
     */
   @Test
-  def testBroker(): Unit = testVersion(s"oharastream/broker:${VersionUtils.VERSION}", VersionUtils.REVISION)
+  def testBroker(): Unit = testVersion(s"oharastream/broker:${VersionUtils.VERSION}", Set("ohara"))
 
-  private[this] def testVersion(imageName: String, expectedString: String): Unit = nodes.foreach { node =>
+  private[this] def testVersion(imageName: String, expectedStrings: Set[String]): Unit = nodes.foreach { node =>
     val key           = serviceNameHolder.generateClusterKey()
     val containerName = s"${key.group()}-${key.name()}"
     val versionString: String = result(
@@ -78,7 +90,7 @@ class TestVersionFile extends IntegrationTest {
         .create()
         .flatMap(_ => containerClient.log(containerName).map(_._2))
     )
-    versionString should include(expectedString)
+    expectedStrings.foreach(s => versionString should include(s))
   }
 
   @After
