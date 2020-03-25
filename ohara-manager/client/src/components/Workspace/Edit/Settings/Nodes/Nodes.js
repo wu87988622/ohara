@@ -18,7 +18,7 @@ import React from 'react';
 import { get, map } from 'lodash';
 
 import Grid from '@material-ui/core/Grid';
-import { useEditWorkspace, useListNodeDialog, useNodeState } from 'context';
+import { useEditWorkspace, useListNodeDialog } from 'context';
 import * as hooks from 'hooks';
 import NodeCard from './NodeCard';
 import AddNodeCard from './AddNodeCard';
@@ -27,7 +27,7 @@ const Nodes = () => {
   const { stagingNodes } = useEditWorkspace();
   const currentWorkspace = hooks.useWorkspace();
   const { open: openListNodeDialog } = useListNodeDialog();
-  const { data: allNodes } = useNodeState();
+  const allNodes = hooks.useAllNodes();
   const [dialogData, setDialogData] = React.useState({});
 
   const selectedNodes = get(

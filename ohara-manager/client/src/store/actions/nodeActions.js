@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './createWorkspaceHooks';
-export * from './introHooks';
-export * from './pipelineHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
-export * from './nodeHooks';
+import { createRoutine } from 'redux-routines';
+
+export const fetchNodes = createRoutine('FETCH_NODES');
+export const createNode = createRoutine('CREATE_NODE');
+export const updateNode = createRoutine('UPDATE_NODE');
+export const deleteNode = createRoutine('DELETE_NODE');

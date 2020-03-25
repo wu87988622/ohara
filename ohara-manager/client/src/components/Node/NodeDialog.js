@@ -30,11 +30,11 @@ import {
   useConfiguratorState,
   useListNodeDialog,
   useViewNodeDialog,
-  useNodeState,
 } from 'context';
 import { QuickSearch } from 'components/common/Search';
 import { MODE } from 'const';
 import { NODE_STATE } from 'api/apiInterface/nodeInterface';
+import * as hooks from 'hooks';
 
 const Actions = styled.div`
   display: flex;
@@ -48,7 +48,7 @@ const Actions = styled.div`
 
 const NodeDialog = () => {
   const { data: configuratorInfo } = useConfiguratorState();
-  const { data: nodes } = useNodeState();
+  const nodes = hooks.useAllNodes();
 
   const {
     isOpen: isListNodeDialogOpen,
@@ -67,6 +67,12 @@ const NodeDialog = () => {
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
   const [filteredNodes, setFilteredNodes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (isListNodeDialogOpen && isLoading) {
+    hooks.useFetchNodesAction()();
+    setIsLoading(false);
+  }
 
   const getResources = node => {
     const headers = getHeader();

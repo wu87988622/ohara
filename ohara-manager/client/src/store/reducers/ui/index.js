@@ -20,6 +20,7 @@ import createWorkspace from './createWorkspace';
 import intro from './intro';
 import pipeline from './pipeline';
 import workspace from './workspace';
+import node from './node';
 
 export default combineReducers({
   app,
@@ -27,4 +28,5 @@ export default combineReducers({
   intro,
   pipeline,
   workspace,
+  node,
 });

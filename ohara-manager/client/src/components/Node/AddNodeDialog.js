@@ -29,12 +29,12 @@ import {
   maxNumber,
   composeValidators,
 } from 'utils/validate';
-import { useNodeActions } from 'context';
+import * as hooks from 'hooks';
 
 const AddNodeDialog = props => {
   const { isOpen, handleClose, mode } = props;
 
-  const { createNode } = useNodeActions();
+  const createNode = hooks.useCreateNodeAction();
 
   const onSubmit = async (values, form) => {
     const { hostname, port, ...rest } = values;

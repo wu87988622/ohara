@@ -115,8 +115,8 @@ const ViewNodeDialog = props => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { open: openEditNodeDialog } = context.useEditNodeDialog();
   const { data: configuratorInfo } = context.useConfiguratorState();
-  const { data: nodes, isFetching: isDeleting } = context.useNodeState();
-  const { deleteNode } = context.useNodeActions();
+  const nodes = hooks.useAllNodes();
+  const deleteNode = hooks.useDeleteNodeAction();
 
   const nodeData = find(nodes, node => node.hostname === nodeName);
   const zookeepers = hooks.useZookeepers();
@@ -233,7 +233,6 @@ const ViewNodeDialog = props => {
       title="View node detail"
       open={isOpen}
       handleClose={closeViewNodeDialog}
-      loading={isDeleting}
     >
       <Wrapper>
         <Grid container justify="space-between" alignItems="flex-end">
@@ -263,7 +262,6 @@ const ViewNodeDialog = props => {
                   open={isConfirmOpen}
                   handleClose={() => setIsConfirmOpen(false)}
                   handleConfirm={handleDelete}
-                  isWorking={isDeleting}
                 />
               </>
             )}

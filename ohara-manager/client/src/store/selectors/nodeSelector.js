@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './createWorkspaceHooks';
-export * from './introHooks';
-export * from './pipelineHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
-export * from './nodeHooks';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+export const getEntities = state => state?.entities?.nodes;
+
+export const makeGetAllNodes = () =>
+  createSelector([getEntities], entities => _.values(entities));
