@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './createWorkspaceHooks';
-export * from './introHooks';
-export * from './pipelineHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
-export * from './nodeHooks';
+const initialState = {
+  id: null,
+};
+
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}

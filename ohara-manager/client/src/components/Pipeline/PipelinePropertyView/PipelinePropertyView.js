@@ -251,25 +251,28 @@ const PipelinePropertyView = props => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
-            {tasksStatus.map(node => {
-              const { nodeName, state } = node;
-              return (
-                <PropertyField
-                  key={nodeName}
-                  label="Name"
-                  value={nodeName}
-                  slot={
-                    <Typography
-                      variant="body2"
-                      className="node-status"
-                      component="span"
-                    >
-                      {state}
-                    </Typography>
-                  }
-                />
-              );
-            })}
+            {tasksStatus
+              // UI now not support show master node.
+              .filter(node => !node.master)
+              .map(node => {
+                const { nodeName, state } = node;
+                return (
+                  <PropertyField
+                    key={nodeName}
+                    label="Name"
+                    value={nodeName}
+                    slot={
+                      <Typography
+                        variant="body2"
+                        className="node-status"
+                        component="span"
+                      >
+                        {state}
+                      </Typography>
+                    }
+                  />
+                );
+              })}
           </ExpansionPanelDetails>
         </ExpansionPanel>
       )}

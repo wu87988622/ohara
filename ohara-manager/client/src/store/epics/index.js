@@ -22,12 +22,14 @@ import pipelineEpics from './pipeline';
 import workerEpics from './workerEpics';
 import workspaceEpics from './workspace';
 import zookeeperEpics from './zookeeperEpics';
+import nodeEpics from './nodeEpics';
 
 export default combineEpics(
   appEpics,
-  brokerEpics,
   pipelineEpics,
-  workerEpics,
   workspaceEpics,
+  brokerEpics,
+  workerEpics,
   zookeeperEpics,
+  nodeEpics,
 );

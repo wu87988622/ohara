@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './createWorkspaceHooks';
-export * from './introHooks';
-export * from './pipelineHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
-export * from './nodeHooks';
+import { ENTITY_TYPE } from 'store/schema';
+import * as actions from 'store/actions';
+import { omit } from 'lodash';
+import { entity } from './index';
+
+export default function reducer(state = {}, action) {
+  switch (action.type) {
+    case actions.deleteNode.SUCCESS:
+      return omit(state, action.payload);
+    default:
+      return entity(ENTITY_TYPE.nodes)(state, action);
+  }
+}

@@ -22,3 +22,4 @@ export * from './pipelineActions';
 export * from './workerActions';
 export * from './workspaceActions';
 export * from './zookeeperActions';
+export * from './nodeActions';

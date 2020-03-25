@@ -26,7 +26,8 @@ import {
   maxNumber,
   composeValidators,
 } from 'utils/validate';
-import { useNodeActions, useEditNodeDialog } from 'context';
+import { useEditNodeDialog } from 'context';
+import * as hooks from 'hooks';
 
 const EditNodeDialog = () => {
   const {
@@ -35,7 +36,7 @@ const EditNodeDialog = () => {
     data: node,
   } = useEditNodeDialog();
 
-  const { updateNode } = useNodeActions();
+  const updateNode = hooks.useUpdateNodeAction();
 
   const hostname = get(node, 'hostname', '');
   const port = get(node, 'port', '');

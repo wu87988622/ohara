@@ -20,3 +20,4 @@ export * from './pipelineSelector';
 export * from './workerSelector';
 export * from './workspaceSelector';
 export * from './zookeeperSelector';
+export * from './nodeSelector';
