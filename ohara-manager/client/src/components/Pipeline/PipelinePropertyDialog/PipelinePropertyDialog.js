@@ -38,6 +38,7 @@ import {
   useFileState,
 } from 'context';
 import * as hooks from 'hooks';
+import { Type, Reference } from 'api/apiInterface/definitionInterface';
 import PipelinePropertySpeedDial from './PipelinePropertySpeedDial';
 import {
   StyleTitle,
@@ -167,7 +168,10 @@ const PipelinePropertyDialog = props => {
     const topicCells = paperApi.getCells(KIND.topic);
     let topics = [];
     values.settingDefinitions.forEach(def => {
-      if (def.valueType === 'OBJECT_KEYS' && def.reference === 'TOPIC') {
+      if (
+        def.valueType === Type.OBJECT_KEYS &&
+        def.reference === Reference.TOPIC
+      ) {
         if (def.key.length > 0) {
           getTopicWithKey(values, def.key);
           if (values[def.key].length === 0) {
@@ -181,7 +185,7 @@ const PipelinePropertyDialog = props => {
           });
         }
       }
-      if (def.valueType === 'TABLE') {
+      if (def.valueType === Type.TABLE) {
         if (
           Object.keys(values).includes(def.key) &&
           values[def.key].length > 0
@@ -190,7 +194,7 @@ const PipelinePropertyDialog = props => {
           values[def.key] = values[def.key].map(value => pick(value, pickList));
         }
       }
-      if (def.valueType === 'TAGS' && isJsonString(values[def.key])) {
+      if (def.valueType === Type.TAGS && isJsonString(values[def.key])) {
         values[def.key] = JSON.parse(values[def.key]);
       }
     });

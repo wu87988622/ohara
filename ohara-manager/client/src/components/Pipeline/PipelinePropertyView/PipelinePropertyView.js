@@ -34,7 +34,7 @@ import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
 import * as context from 'context';
 import * as propertyUtils from './PipelinePropertyViewUtils';
-import * as defUtils from 'api/utils/definitionsUtils';
+import * as defUtils from 'api/apiInterface/definitionInterface';
 
 const PipelinePropertyView = props => {
   const { handleClose, element, cellsMetrics } = props;
@@ -105,10 +105,10 @@ const PipelinePropertyView = props => {
           ? settings.tags.displayName
           : settings[key]
         : settings[key];
-    const defValueType = defUtils.valueType;
+    const defValueType = defUtils.Type;
     const valueType = defs.find(def => def.key === key).valueType;
     switch (valueType) {
-      case defValueType.tags:
+      case defValueType.TAGS:
         return propertyUtils.tags({
           currentSetting,
           settings,
@@ -117,8 +117,8 @@ const PipelinePropertyView = props => {
           propertyUtils,
           handleFullButtonClick,
         });
-      case defValueType.remotePort:
-      case defValueType.bindingPort:
+      case defValueType.REMOTE_PORT:
+      case defValueType.BINDING_PORT:
         return propertyUtils.defaultField({
           currentSetting,
           settings,
@@ -126,7 +126,7 @@ const PipelinePropertyView = props => {
           defs,
           isPort: true,
         });
-      case defValueType.objectKeys:
+      case defValueType.OBJECT_KEYS:
         const objectArray = currentSetting
           .map(value => value.name)
           .map(value => {
@@ -145,9 +145,9 @@ const PipelinePropertyView = props => {
           key,
           defs,
         });
-      case defValueType.table:
+      case defValueType.TABLE:
         return propertyUtils.objectKeys(key, defs, currentSetting);
-      case defValueType.password:
+      case defValueType.PASSWORD:
         // Don't display the real password
         return propertyUtils.defaultField({
           currentSetting: '*'.repeat(9),

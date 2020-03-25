@@ -42,7 +42,11 @@ import PositiveLong from './PositiveLong';
 import PositiveShort from './PositiveShort';
 import { validWithDef } from 'utils/validate';
 import { CREATE_ONLY, EDITABLE } from './Permission';
-import { valueType } from 'api/utils/definitionsUtils';
+import {
+  Type,
+  Reference as ReferenceEnum,
+  isNumberType,
+} from 'api/apiInterface/definitionInterface';
 
 const RenderDefinition = props => {
   const {
@@ -72,23 +76,8 @@ const RenderDefinition = props => {
   });
 
   const parseValueByType = type => value => {
-    switch (type) {
-      // we only convert the necessary values to correct type
-      case valueType.short:
-      case valueType.int:
-      case valueType.long:
-      case valueType.double:
-      case valueType.positiveShort:
-      case valueType.positiveInt:
-      case valueType.positiveLong:
-      case valueType.positiveDouble:
-      case valueType.remotePort:
-      case valueType.bindingPort:
-        return toNumber(value);
-
-      default:
-        return value;
-    }
+    // we only convert the necessary values to correct type
+    return isNumberType(type) ? toNumber(value) : value;
   };
 
   const RenderField = params => {
@@ -135,7 +124,7 @@ const RenderDefinition = props => {
       required: necessary === 'REQUIRED',
       validate: validWithDef(params),
       parse: parseValueByType(def.valueType),
-      type: def.valueType === valueType.boolean ? 'checkbox' : null,
+      type: def.valueType === Type.boolean ? 'checkbox' : null,
     };
 
     if (ref) ensuredFieldProps.refs = ref;
@@ -144,69 +133,69 @@ const RenderDefinition = props => {
   };
 
   const renderDefinitionField = () => {
-    if (def.reference === 'NONE') {
+    if (def.reference === ReferenceEnum.NONE) {
       switch (def.valueType) {
-        case valueType.string:
+        case Type.string:
           return RenderField({ ...def, input: StringDef });
 
-        case valueType.remotePort:
+        case Type.remotePort:
           return RenderField({ ...def, input: RemotePort });
 
-        case valueType.int:
+        case Type.int:
           return RenderField({ ...def, input: IntDef });
 
-        case valueType.class:
+        case Type.class:
           return RenderField({ ...def, input: ClassDef });
 
-        case valueType.password:
+        case Type.password:
           return RenderField({ ...def, input: Password });
 
-        case valueType.positiveInt:
+        case Type.positiveInt:
           return RenderField({ ...def, input: PositiveInt });
 
-        case valueType.duration:
+        case Type.duration:
           return RenderField({ ...def, input: Duration });
 
-        case valueType.bindingPort:
+        case Type.bindingPort:
           return RenderField({ ...def, input: BindingPort, list: freePorts });
 
-        case valueType.tags:
+        case Type.tags:
           return RenderField({ ...def, input: Tags });
 
-        case valueType.jdbcTable:
+        case Type.jdbcTable:
           return RenderField({ ...def, input: JdbcTable });
 
-        case valueType.table:
+        case Type.table:
           return RenderField({ ...def, input: Table });
 
-        case valueType.boolean:
+        case Type.boolean:
           return RenderField({ ...def, input: BooleanDef });
 
-        case valueType.long:
+        case Type.long:
           return RenderField({ ...def, input: Long });
 
-        case valueType.short:
+        case Type.short:
           return RenderField({ ...def, input: Short });
 
-        case valueType.double:
+        case Type.double:
           return RenderField({ ...def, input: Double });
 
-        case valueType.array:
+        case Type.array:
           return RenderField({ ...def, input: ArrayDef });
 
-        case valueType.positiveShort:
+        case Type.positiveShort:
           return RenderField({ ...def, input: PositiveShort });
 
-        case valueType.positiveLong:
+        case Type.positiveLong:
           return RenderField({ ...def, input: PositiveLong });
 
-        case valueType.positiveDouble:
+        case Type.positiveDouble:
           return RenderField({ ...def, input: PositiveDouble });
 
-        case valueType.objectKeys:
+        case Type.objectKeys:
           return RenderField({ ...def, input: ObjectKeys });
 
-        case valueType.objectKey:
+        case Type.objectKey:
           return RenderField({ ...def, input: ObjectKey });
 
         default:
@@ -214,14 +203,14 @@ const RenderDefinition = props => {
       }
     } else {
       switch (def.reference) {
-        case 'TOPIC':
+        case ReferenceEnum.TOPIC:
           return RenderField({
             ...def,
             input: Reference,
             list: finalTopics,
           });
 
-        case 'FILE':
+        case ReferenceEnum.FILE:
           return RenderField({ ...def, input: Reference, list: files });
 
         default:

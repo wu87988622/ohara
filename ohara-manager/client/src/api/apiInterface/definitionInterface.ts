@@ -20,7 +20,7 @@ enum Necessary {
   RANDOM_DEFAULT = 'RANDOM_DEFAULT',
 }
 
-enum Reference {
+export enum Reference {
   NONE = 'NONE',
   TOPIC = 'TOPIC',
   ZOOKEEPER_CLUSTER = 'ZOOKEEPER_CLUSTER',
@@ -35,7 +35,7 @@ enum Permission {
   EDITABLE = 'EDITABLE',
 }
 
-enum Type {
+export enum Type {
   BOOLEAN = 'BOOLEAN',
   STRING = 'STRING',
   POSITIVE_SHORT = 'POSITIVE_SHORT',
@@ -57,6 +57,24 @@ enum Type {
   OBJECT_KEY = 'OBJECT_KEY',
   OBJECT_KEYS = 'OBJECT_KEYS',
   TAGS = 'TAGS',
+}
+
+export function isNumberType(type: Type) {
+  switch (type) {
+    case Type.POSITIVE_SHORT:
+    case Type.SHORT:
+    case Type.POSITIVE_INT:
+    case Type.INT:
+    case Type.POSITIVE_LONG:
+    case Type.LONG:
+    case Type.POSITIVE_DOUBLE:
+    case Type.DOUBLE:
+    case Type.REMOTE_PORT:
+    case Type.BINDING_PORT:
+      return true;
+    default:
+      return false;
+  }
 }
 
 interface TableColumn {

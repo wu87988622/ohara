@@ -15,30 +15,7 @@
  */
 
 import { get } from 'lodash';
-
-export const valueType = {
-  boolean: 'BOOLEAN',
-  string: 'STRING',
-  class: 'CLASS',
-  password: 'PASSWORD',
-  jdbcTable: 'JDBC_TABLE',
-  duration: 'DURATION',
-  short: 'SHORT',
-  int: 'INT',
-  long: 'LONG',
-  double: 'DOUBLE',
-  remotePort: 'REMOTE_PORT',
-  positiveShort: 'POSITIVE_SHORT',
-  positiveInt: 'POSITIVE_INT',
-  positiveLong: 'POSITIVE_LONG',
-  positiveDouble: 'POSITIVE_DOUBLE',
-  array: 'ARRAY',
-  bindingPort: 'BINDING_PORT',
-  objectKey: 'OBJECT_KEY',
-  objectKeys: 'OBJECT_KEYS',
-  table: 'TABLE',
-  tags: 'TAGS',
-};
+import { Type } from 'api/apiInterface/definitionInterface';
 
 export const getDefinition = params => {
   const settingDefinitions = get(params, 'settingDefinitions', []);
@@ -74,8 +51,8 @@ export const getDefinition = params => {
         // The value type of the stream's settingdefinition is BINDING_PORT.
         // We must change it to REMOTE_PORT.
         // Because BINDING_PORT is in the UI, We will associate it with worker free port, but in fact they are not.
-        if (isStream && def.valueType === 'BINDING_PORT') {
-          def.valueType = 'REMOTE_PORT';
+        if (isStream && def.valueType === Type.BINDING_PORT) {
+          def.valueType = Type.REMOTE_PORT;
         }
       });
     newDefs[def.key] = def;
