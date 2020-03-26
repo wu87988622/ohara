@@ -17,6 +17,7 @@
 package oharastream.ohara.kafka.connector;
 
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.metrics.basic.Counter;
 import org.junit.Assert;
@@ -26,12 +27,7 @@ public class TestCounterBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullGroup() {
-    CounterBuilder.of().group(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEmptyGroup() {
-    CounterBuilder.of().group("");
+    CounterBuilder.of().key(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -66,14 +62,13 @@ public class TestCounterBuilder extends OharaTest {
 
   @Test
   public void testSimpleBuild() {
-    String group = CommonUtils.randomString();
+    ObjectKey key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString());
     String name = CommonUtils.randomString();
     String unit = CommonUtils.randomString();
     String document = CommonUtils.randomString();
-    Counter counter =
-        CounterBuilder.of().group(group).name(name).unit(unit).document(document).build();
-    Assert.assertEquals(group, counter.group());
-    Assert.assertEquals(name, counter.name());
+    Counter counter = CounterBuilder.of().key(key).name(name).unit(unit).document(document).build();
+    Assert.assertEquals(key, counter.key());
+    Assert.assertEquals(name, counter.item());
     Assert.assertEquals(unit, counter.getUnit());
     Assert.assertEquals(document, counter.getDocument());
   }

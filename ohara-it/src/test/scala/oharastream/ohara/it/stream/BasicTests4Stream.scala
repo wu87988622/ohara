@@ -183,8 +183,8 @@ abstract class BasicTests4Stream extends IntegrationTest {
     res1.error shouldBe None
 
     // check the cluster has the metrics data (each stream cluster has two metrics : IN_TOPIC and OUT_TOPIC)
-    await(() => result(access.get(stream.key)).metrics.meters.nonEmpty)
-    result(access.get(stream.key)).metrics.meters.size shouldBe 2
+    await(() => result(access.get(stream.key)).meters.nonEmpty)
+    result(access.get(stream.key)).meters.size shouldBe 2
 
     // write some data into topic
     val producer = Producer
@@ -216,17 +216,17 @@ abstract class BasicTests4Stream extends IntegrationTest {
     } finally producer.close()
 
     // wait until the metrics cache data update
-    await(() => result(access.get(stream.key)).metrics.meters.forall(_.value > 0))
+    await(() => result(access.get(stream.key)).meters.forall(_.value > 0))
 
     // check the metrics data again
-    val metrics = result(access.get(stream.key)).metrics.meters
+    val metrics = result(access.get(stream.key)).meters
     metrics.foreach { metric =>
       metric.document should include("the number of rows")
       metric.value shouldBe 1d
     }
 
-    await(() => result(topicApi.get(from)).metrics.meters.nonEmpty)
-    await(() => result(topicApi.get(to)).metrics.meters.nonEmpty)
+    await(() => result(topicApi.get(from)).meters.nonEmpty)
+    await(() => result(topicApi.get(to)).meters.nonEmpty)
 
     //stop stream
     result(access.stop(stream.key))

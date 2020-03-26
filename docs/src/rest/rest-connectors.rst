@@ -72,7 +72,7 @@ The following information are updated by Ohara.
     - tasksStatus[i].error (**option(string)**) — the error message from a failed task. If the task is fine or un-started, you won’t get this field.
     - tasksStatus[i].master (**boolean**) — true if this status is master. otherwise, false
 
-#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from a running connector
+#. :ref:`nodeMetrics <connector-metrics>` (**object**) — the metrics from a running connector
 
   - meters (**array(object)**) — the metrics in meter type
 
@@ -141,8 +141,51 @@ Example Response
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],
-      "metrics": {
-        "meters": [],
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "number of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "messages",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "size (in bytes) of messages",
+              "lastModified": 1585068870445,
+              "name": "message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 8.19825E+8,
+              "valueInPerSec": 19094561.546523817
+            },
+            {
+              "document": "size of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "number of messages",
+              "lastModified": 1585068870445,
+              "name": "message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827508,
+              "unit": "messages",
+              "value": 1275000.0,
+              "valueInPerSec": 29694.66893355381
+            }
+          ]
+        }
       },
       "workerClusterKey": {
         "group": "default",
@@ -197,8 +240,51 @@ Example Response
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],
-      "metrics": {
-        "meters": [],
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "number of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "messages",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "size (in bytes) of messages",
+              "lastModified": 1585068870445,
+              "name": "message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 8.19825E+8,
+              "valueInPerSec": 19094561.546523817
+            },
+            {
+              "document": "size of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "number of messages",
+              "lastModified": 1585068870445,
+              "name": "message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827508,
+              "unit": "messages",
+              "value": 1275000.0,
+              "valueInPerSec": 29694.66893355381
+            }
+          ]
+        }
       },
       "workerClusterKey": {
         "group": "default",
@@ -250,9 +336,52 @@ Example Response
         "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
         "version": "$|version|",
         "columns": [],
-        "metrics": {
-          "meters": [],
-        },
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "number of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "messages",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "size (in bytes) of messages",
+              "lastModified": 1585068870445,
+              "name": "message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 8.19825E+8,
+              "valueInPerSec": 19094561.546523817
+            },
+            {
+              "document": "size of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "number of messages",
+              "lastModified": 1585068870445,
+              "name": "message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827508,
+              "unit": "messages",
+              "value": 1275000.0,
+              "valueInPerSec": 29694.66893355381
+            }
+          ]
+        }
+      },
         "workerClusterKey": {
           "group": "default",
           "name": "wk"
@@ -316,8 +445,51 @@ Example Response
       "revision": "baafe4a3d875e5e5028b686c4f74f26cfd8b1b66",
       "version": "$|version|",
       "columns": [],
-      "metrics": {
-        "meters": [],
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "number of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "messages",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "size (in bytes) of messages",
+              "lastModified": 1585068870445,
+              "name": "message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 8.19825E+8,
+              "valueInPerSec": 19094561.546523817
+            },
+            {
+              "document": "size of ignored messages",
+              "lastModified": 1585068827510,
+              "name": "ignored.message.size",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827510,
+              "unit": "bytes",
+              "value": 0.0,
+              "valueInPerSec": 0.0
+            },
+            {
+              "document": "number of messages",
+              "lastModified": 1585068870445,
+              "name": "message.number",
+              "queryTime": 1585068870341,
+              "startTime": 1585068827508,
+              "unit": "messages",
+              "value": 1275000.0,
+              "valueInPerSec": 29694.66893355381
+            }
+          ]
+        }
       },
       "workerClusterKey": {
         "group": "default",

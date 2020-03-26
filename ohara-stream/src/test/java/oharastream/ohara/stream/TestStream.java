@@ -42,7 +42,8 @@ public class TestStream extends OharaTest {
     Stream.execute(
         app.getClass(),
         java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestStream"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString()),
                 Pair.of(
                     StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),

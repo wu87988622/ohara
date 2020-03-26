@@ -17,6 +17,7 @@
 package oharastream.ohara.agent
 import java.util.Objects
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
@@ -27,11 +28,7 @@ import oharastream.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClust
 import oharastream.ohara.client.configurator.v0.{ClusterStatus, WorkerApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
-import oharastream.ohara.metrics.BeanChannel
-import oharastream.ohara.metrics.basic.CounterMBean
-import com.typesafe.scalalogging.Logger
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WorkerCollie extends Collie {
@@ -201,16 +198,6 @@ trait WorkerCollie extends Collie {
     workerClusterInfo: WorkerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[ConnectorAdmin] =
     cluster(workerClusterInfo.key).map(_ => ConnectorAdmin(workerClusterInfo))
-
-  /**
-    * Get all counter beans from specific worker cluster
-    * @param cluster cluster
-    * @return counter beans
-    */
-  def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
-    cluster.aliveNodes.flatMap { node =>
-      BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().counterMBeans().asScala
-    }.toSeq
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext

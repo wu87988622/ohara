@@ -70,7 +70,7 @@ Following information are written by Ohara.
      (eg, :ref:`topic <rest-topics>`), you won’t see this field
    - objects[i].error (**option(string)**) — the error message of this object
    - objects[i].lastModified (**long**) — the last time to update this object
-   - :ref:`metrics <connector-metrics>` (**object**) — the metrics from this object.
+   - :ref:`nodeMetrics <connector-metrics>` (**object**) — the metrics from this object.
      Not all objects in pipeline have metrics!
    - meters (**array(object)**) — the metrics in meter type
    - meters[i].value (**double**) — the number stored in meter
@@ -131,9 +131,7 @@ Example Response 1
           "state": "RUNNING",
           "lastModified": 1578635914746,
           "tags": {},
-          "metrics": {
-            "meters": []
-          },
+          "nodeMetrics": [],
           "kind": "topic",
           "group": "default"
         }
@@ -188,17 +186,7 @@ Example Response 2
           "state": "RUNNING",
           "lastModified": 1578649564486,
           "tags": {},
-          "metrics": {
-            "meters": [
-              {
-                "name": "BytesOutPerSec",
-                "document": "BytesOutPerSec",
-                "unit": "bytes / SECONDS",
-                "queryTime": 1578649704688,
-                "value": 0.0
-              }
-            ]
-          },
+          "nodeMetrics": [],
           "kind": "topic",
           "group": "default"
         },
@@ -208,18 +196,7 @@ Example Response 2
           "lastModified": 1578649620960,
           "tags": {},
           "className": "oharastream.ohara.connector.perf.PerfSource",
-          "metrics": {
-            "meters": [
-              {
-                "name": "ignored.message.size",
-                "startTime": 1578649656575,
-                "document": "size of ignored messages",
-                "unit": "bytes",
-                "queryTime": 1578649707752,
-                "value": 0.0
-              }
-            ]
-          },
+          "nodeMetrics": [],
           "kind": "source",
           "group": "default"
         }
@@ -271,9 +248,7 @@ Example Response
           "state": "RUNNING",
           "lastModified": 1578641231579,
           "tags": {},
-          "metrics": {
-            "meters": []
-          },
+          "nodeMetrics": [],
           "kind": "topic",
           "group": "default"
         }
@@ -323,9 +298,7 @@ Example Response
             "state": "RUNNING",
             "lastModified": 1578641231579,
             "tags": {},
-            "metrics": {
-              "meters": []
-            },
+            "nodeMetrics": [],
             "kind": "topic",
               "group": "default"
             }

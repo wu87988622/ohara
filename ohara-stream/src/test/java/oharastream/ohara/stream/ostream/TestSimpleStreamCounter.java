@@ -51,13 +51,13 @@ public class TestSimpleStreamCounter extends WithBroker {
 
   private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
-      Producer.<Row, byte[]>builder()
+      Producer.builder()
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
           .build();
   private final Consumer<Row, byte[]> consumer =
-      Consumer.<Row, byte[]>builder()
+      Consumer.builder()
           .topicName(toKey.topicNameOnKafka())
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
@@ -101,7 +101,8 @@ public class TestSimpleStreamCounter extends WithBroker {
     Stream.execute(
         app.getClass(),
         java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "metric-test"),
+                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestSimpleStreamCounter"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
                 Pair.of(
                     StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
@@ -121,7 +122,7 @@ public class TestSimpleStreamCounter extends WithBroker {
         .counterMBeans()
         .forEach(
             bean -> {
-              if (bean.name().equals(MetricFactory.IOType.TOPIC_IN.name()))
+              if (bean.item().equals(MetricFactory.IOType.TOPIC_IN.name()))
                 // input counter bean should have exactly two record size
                 Assert.assertEquals(2, Math.toIntExact(bean.getValue()));
               else

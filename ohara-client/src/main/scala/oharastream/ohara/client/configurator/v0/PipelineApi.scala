@@ -22,7 +22,7 @@ import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsValue, RootJsonFormat}
+import spray.json.{JsObject, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -71,6 +71,9 @@ object PipelineApi {
 
   import MetricsApi._
 
+  /**
+    * Metricsable offers many helper methods so we let ObjectAbstract extend it.
+    */
   final case class ObjectAbstract(
     group: String,
     name: String,
@@ -78,13 +81,24 @@ object PipelineApi {
     className: Option[String],
     state: Option[String],
     error: Option[String],
-    metrics: Metrics,
+    nodeMetrics: Map[String, Metrics],
     lastModified: Long,
     tags: Map[String, JsValue]
-  ) {
+  ) extends Metricsable {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = jsonFormat9(ObjectAbstract)
+
+  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = new RootJsonFormat[ObjectAbstract] {
+    private[this] val format                         = jsonFormat9(ObjectAbstract)
+    override def read(json: JsValue): ObjectAbstract = format.read(json)
+    override def write(obj: ObjectAbstract): JsValue = {
+      // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
+      val fields = format.write(obj).asJsObject.fields ++ Map(
+        "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
+      )
+      JsObject(fields)
+    }
+  }
 
   final case class Pipeline(
     group: String,

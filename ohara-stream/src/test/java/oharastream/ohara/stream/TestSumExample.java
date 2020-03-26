@@ -38,7 +38,7 @@ public class TestSumExample extends WithBroker {
   public void testCase() {
     final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
     final Producer<Row, byte[]> producer =
-        Producer.<Row, byte[]>builder()
+        Producer.builder()
             .connectionProps(client.connectionProps())
             .keySerializer(Serializer.ROW)
             .valueSerializer(Serializer.BYTES)
@@ -51,7 +51,8 @@ public class TestSumExample extends WithBroker {
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(10));
+    settings.putIfAbsent(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5));
+    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), "TestSumExample");
     settings.putIfAbsent(
         StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
         "[" + TopicKey.toJsonString(fromTopic) + "]");

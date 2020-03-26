@@ -16,8 +16,8 @@
 
 package oharastream.ohara.client.configurator.v0
 
-import java.util.Objects
 import java.time.{Duration => JDuration}
+import java.util.Objects
 
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
@@ -46,9 +46,10 @@ final object ShabondiApi {
     aliveNodes: Set[String],
     state: Option[String],
     error: Option[String],
-    metrics: Metrics,
+    nodeMetrics: Map[String, Metrics],
     lastModified: Long
-  ) extends ClusterInfo {
+  ) extends ClusterInfo
+      with Metricsable {
     private[this] implicit def creation(settings: Map[String, JsValue]): ShabondiClusterCreation =
       new ShabondiClusterCreation(settings)
     override def kind: String       = KIND

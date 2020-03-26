@@ -84,12 +84,10 @@ public class TestConnectorProps extends OharaTest {
       Assert.assertNotNull(task.ignoredMessageSizeCounter);
       Assert.assertNotNull(task.ignoredMessageNumberCounter);
 
-      Assert.assertEquals(task.messageNumberCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(task.messageSizeCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(
-          task.ignoredMessageSizeCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(
-          task.ignoredMessageNumberCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(task.messageNumberCounter.key(), connectorKey);
+      Assert.assertEquals(task.messageSizeCounter.key(), connectorKey);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.key(), connectorKey);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.key(), connectorKey);
 
       Assert.assertEquals(task.messageNumberCounter.getValue(), 0);
       Assert.assertEquals(task.messageSizeCounter.getValue(), 0);
@@ -204,12 +202,10 @@ public class TestConnectorProps extends OharaTest {
       Assert.assertNotNull(task.ignoredMessageNumberCounter);
       Assert.assertNotNull(task.ignoredMessageSizeCounter);
 
-      Assert.assertEquals(task.messageNumberCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(task.messageSizeCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(
-          task.ignoredMessageNumberCounter.group(), connectorKey.connectorNameOnKafka());
-      Assert.assertEquals(
-          task.ignoredMessageSizeCounter.group(), connectorKey.connectorNameOnKafka());
+      Assert.assertEquals(task.messageNumberCounter.key(), connectorKey);
+      Assert.assertEquals(task.messageSizeCounter.key(), connectorKey);
+      Assert.assertEquals(task.ignoredMessageNumberCounter.key(), connectorKey);
+      Assert.assertEquals(task.ignoredMessageSizeCounter.key(), connectorKey);
 
       Assert.assertEquals(task.messageNumberCounter.getValue(), 0);
       Assert.assertEquals(task.messageSizeCounter.getValue(), 0);

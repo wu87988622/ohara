@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.TopicKey;
 
@@ -72,6 +73,16 @@ public final class StreamSetting {
    */
   public Optional<String> string(String key) {
     return Optional.ofNullable(raw.get(key)).map(StreamSetting::fromEnvString);
+  }
+
+  public ObjectKey key() {
+    return ObjectKey.of(group(), name());
+  }
+
+  /** @return the name of this stream */
+  public String group() {
+    return string(StreamDefUtils.GROUP_DEFINITION.key())
+        .orElseThrow(() -> new RuntimeException("GROUP_DEFINITION not found in env."));
   }
 
   /** @return the name of this stream */

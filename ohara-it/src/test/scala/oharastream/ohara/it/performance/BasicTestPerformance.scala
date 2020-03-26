@@ -222,20 +222,20 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
   private[this] def connectorReports(): Seq[PerformanceReport] = {
     val connectorInfos = result(connectorApi.list())
     connectorInfos.map { info =>
-      val duration = (info.metrics.meters.flatMap(_.duration) :+ 0L).max / 1000
+      val duration = (info.meters.flatMap(_.duration) :+ 0L).max / 1000
       val builder  = reportBuilders.getOrElseUpdate(info.key, PerformanceReport.builder)
       builder.connectorKey(info.key)
       builder.className(info.className)
 
       // Different time get the metrics data, the metrics data maybe same.
       // Must clean the same metrics data, avoid duplication to sum for the metrics
-      info.metrics.meters.foreach(
+      info.meters.foreach(
         meter =>
           builder
             .resetValue(duration, meter.name)
             .resetValue(duration, s"${meter.name}(inPerSec)")
       )
-      info.metrics.meters.foreach(
+      info.meters.foreach(
         meter =>
           builder
             .record(duration, meter.name, meter.value)

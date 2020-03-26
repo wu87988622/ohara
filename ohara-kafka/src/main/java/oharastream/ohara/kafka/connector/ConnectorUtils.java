@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.Row;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.WithDefinitions;
 import oharastream.ohara.common.util.CommonUtils;
@@ -65,13 +66,13 @@ final class ConnectorUtils {
   /**
    * Create and register a row counter with specific group name.
    *
-   * @param group group name. It is normally equal to connector name
+   * @param key It is normally equal to connector key
    * @return row counter
    */
-  static Counter messageNumberCounter(String group) {
+  static Counter messageNumberCounter(ObjectKey key) {
     return Counter.builder()
-        .group(group)
-        .name("message.number")
+        .key(key)
+        .item("message.number")
         .unit("messages")
         .document("number of messages")
         .value(0)
@@ -81,13 +82,13 @@ final class ConnectorUtils {
   /**
    * Create and register a size counter with specific group name.
    *
-   * @param group group name. It is normally equal to connector name
+   * @param key It is normally equal to connector key
    * @return size counter
    */
-  static Counter messageSizeCounter(String group) {
+  static Counter messageSizeCounter(ObjectKey key) {
     return Counter.builder()
-        .group(group)
-        .name("message.size")
+        .key(key)
+        .item("message.size")
         .unit("bytes")
         .document("size (in bytes) of messages")
         .value(0)
@@ -97,13 +98,13 @@ final class ConnectorUtils {
   /**
    * Create and register a number counter for ignored messages
    *
-   * @param group group name. It is normally equal to connector name
+   * @param key It is normally equal to connector key
    * @return number counter
    */
-  static Counter ignoredMessageNumberCounter(String group) {
+  static Counter ignoredMessageNumberCounter(ObjectKey key) {
     return Counter.builder()
-        .group(group)
-        .name("ignored.message.number")
+        .key(key)
+        .item("ignored.message.number")
         .unit("messages")
         .document("number of ignored messages")
         .value(0)
@@ -113,13 +114,13 @@ final class ConnectorUtils {
   /**
    * Create and register a size counter for ignored messages
    *
-   * @param group group name. It is normally equal to connector name
+   * @param key It is normally equal to connector key
    * @return size counter
    */
-  static Counter ignoredMessageSizeCounter(String group) {
+  static Counter ignoredMessageSizeCounter(ObjectKey key) {
     return Counter.builder()
-        .group(group)
-        .name("ignored.message.size")
+        .key(key)
+        .item("ignored.message.size")
         .unit("bytes")
         .document("size of ignored messages")
         .value(0)

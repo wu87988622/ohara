@@ -413,6 +413,7 @@ package object v0 {
     "state",
     "error",
     "partitionInfos",
+    "nodeMetrics",
     "metrics",
     "status",
     "tasksStatus",

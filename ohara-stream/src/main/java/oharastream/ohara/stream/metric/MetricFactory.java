@@ -16,8 +16,8 @@
 
 package oharastream.ohara.stream.metric;
 
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.metrics.basic.Counter;
-import oharastream.ohara.stream.config.StreamDefUtils;
 
 /** This is a helper class to Get the desire bean object */
 public final class MetricFactory {
@@ -25,15 +25,14 @@ public final class MetricFactory {
   /**
    * Get counter beans.
    *
+   * @param key object key
    * @param type the {@code IOType}
    * @return counter bean
    */
-  public static Counter getCounter(IOType type) {
+  public static Counter getCounter(ObjectKey key, IOType type) {
     return Counter.builder()
-        // the group is individual for each stream
-        // so it is OK to use same group value
-        .group(StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT)
-        .name(type.name())
+        .key(key)
+        .item(type.name())
         .unit("row")
         .document(type.value + ": the number of rows")
         .value(0)

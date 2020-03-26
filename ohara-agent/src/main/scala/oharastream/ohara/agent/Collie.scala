@@ -23,7 +23,7 @@ import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Meter
+import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -245,27 +245,27 @@ trait Collie {
   /**
     * the fake mode take the metrics from local jvm.
     */
-  protected def topicMeters(cluster: ClusterInfo): Seq[TopicMeter] = cluster match {
+  protected def topicMeters(cluster: ClusterInfo): Map[String, Seq[TopicMeter]] = cluster match {
     case _: BrokerClusterInfo =>
-      cluster.aliveNodes.flatMap { hostname =>
-        BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().topicMeters().asScala
-      }.toSeq
-    case _ => Seq.empty
+      cluster.aliveNodes.map { hostname =>
+        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().topicMeters().asScala
+      }.toMap
+    case _ => Map.empty
   }
 
   /**
     * the fake mode take the metrics from local jvm.
     */
-  protected def counterMBeans(cluster: ClusterInfo): Seq[CounterMBean] = cluster match {
+  protected def counterMBeans(cluster: ClusterInfo): Map[String, Seq[CounterMBean]] = cluster match {
     case _: BrokerClusterInfo =>
       /**
         * the metrics we fetch from kafka are only topic metrics so we skip the other beans
         */
-      Seq.empty
+      Map.empty
     case _ =>
-      cluster.aliveNodes.flatMap { hostname =>
-        BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().counterMBeans().asScala
-      }.toSeq
+      cluster.aliveNodes.map { hostname =>
+        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().counterMBeans().asScala
+      }.toMap
   }
 
   /**
@@ -273,7 +273,9 @@ trait Collie {
     * @param key cluster key
     * @return counter beans. the key is mapped to the instance name and value is the meter
     */
-  final def counters(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Map[String, List[Meter]]] =
+  final def metrics(
+    key: ObjectKey
+  )(implicit executionContext: ExecutionContext): Future[Map[String, Map[ObjectKey, Metrics]]] =
     cluster(key)
       .flatMap { status =>
         (status.kind match {
@@ -283,37 +285,43 @@ trait Collie {
           case Kind.STREAM    => dataCollie.value[StreamClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
         }).map { clusterInfo =>
           counterMBeans(clusterInfo)
-            .groupBy(_.group())
             .map {
-              case (group, counters) =>
-                group -> counters.map { counter =>
-                  Meter(
-                    name = counter.name,
-                    value = counter.getValue,
-                    unit = counter.getUnit,
-                    document = counter.getDocument,
-                    queryTime = counter.getQueryTime,
-                    startTime = Some(counter.getStartTime),
-                    lastModified = Some(counter.getLastModified),
-                    valueInPerSec = Some(counter.valueInPerSec())
-                  )
-                }.toList // convert to serializable collection
+              case (hostname, counters) =>
+                hostname -> counters.groupBy(_.key()).map {
+                  case (key, counters) =>
+                    key -> Metrics(counters.map { counter =>
+                      Meter(
+                        name = counter.item,
+                        value = counter.getValue,
+                        unit = counter.getUnit,
+                        document = counter.getDocument,
+                        queryTime = counter.getQueryTime,
+                        startTime = Some(counter.getStartTime),
+                        lastModified = Some(counter.getLastModified),
+                        valueInPerSec = Some(counter.valueInPerSec())
+                      )
+                    })
+                }
             } ++ topicMeters(clusterInfo)
-            .groupBy(_.topicName())
             .map {
-              case (topicName, counters) =>
-                topicName -> counters.map { counter =>
-                  Meter(
-                    name = counter.catalog().name(),
-                    value = counter.count(),
-                    unit = s"${counter.eventType()} / ${counter.rateUnit().name()}",
-                    document = counter.catalog.name(),
-                    queryTime = counter.queryTime(),
-                    startTime = None,
-                    lastModified = None,
-                    valueInPerSec = None
-                  )
-                }.toList // convert to serializable collection
+              case (hostname, meters) =>
+                hostname -> meters.groupBy(_.topicName()).flatMap {
+                  case (plainName, meters) =>
+                    val key = ObjectKey.ofPlain(plainName)
+                    if (key.isPresent) Some(key.get() -> Metrics(meters.map { meter =>
+                      Meter(
+                        name = meter.catalog().name(),
+                        value = meter.count(),
+                        unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
+                        document = meter.catalog.name(),
+                        queryTime = meter.queryTime(),
+                        startTime = None,
+                        lastModified = None,
+                        valueInPerSec = None
+                      )
+                    }))
+                    else None
+                }
             }
         }
       }

@@ -20,7 +20,14 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
@@ -47,7 +54,6 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({"rawtypes"})
 public class TestPurchaseAnalysis extends With3Brokers {
   private static final Logger LOG = LoggerFactory.getLogger(TestPurchaseAnalysis.class);
-  private static final String appid = "test-purchase-analysis";
   private static final TopicKey resultTopic =
       TopicKey.of(CommonUtils.randomString(), "gender-amount");
   private static final TopicKey itemTopic = TopicKey.of(CommonUtils.randomString(), "items");
@@ -55,7 +61,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
   private static final TopicKey userTopic = TopicKey.of(CommonUtils.randomString(), "users");
   private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
-      Producer.<Row, byte[]>builder()
+      Producer.builder()
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
@@ -115,7 +121,8 @@ public class TestPurchaseAnalysis extends With3Brokers {
     Stream.execute(
         app.getClass(),
         java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appid),
+                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "test-purchase-analysis"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
                 Pair.of(
                     StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
@@ -140,7 +147,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
       // We initial a new OStream object to test functionality
       OStream<Row> ostream =
           OStream.builder()
-              .appId(streamSetting.name())
+              .key(streamSetting.key())
               .bootstrapServers(streamSetting.brokerConnectionProps())
               .fromTopic(
                   streamSetting.fromTopicKeys().stream()
@@ -199,11 +206,11 @@ public class TestPurchaseAnalysis extends With3Brokers {
                           Double.parseDouble(row.cell("quantity").value().toString())
                               * Double.parseDouble(row.cell("price").value().toString()))))
           .groupByKey(Collections.singletonList("gender"))
-          .reduce((Double r1, Double r2) -> r1 + r2, "amount")
+          .reduce(Double::sum, "amount")
           .start();
 
       Consumer<Row, byte[]> consumer =
-          Consumer.<Row, byte[]>builder()
+          Consumer.builder()
               .topicName(resultTopic.topicNameOnKafka())
               .connectionProps(streamSetting.brokerConnectionProps())
               .groupId("group-" + resultTopic.topicNameOnKafka())
@@ -316,7 +323,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
   private void assertResult(TopicAdmin client, String topic, int expectedSize) {
     Consumer<Row, byte[]> consumer =
-        Consumer.<Row, byte[]>builder()
+        Consumer.builder()
             .topicName(topic)
             .connectionProps(client.connectionProps())
             .groupId("group-" + CommonUtils.randomString(5))

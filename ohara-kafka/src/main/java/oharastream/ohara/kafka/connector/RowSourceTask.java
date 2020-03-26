@@ -183,16 +183,18 @@ public abstract class RowSourceTask extends SourceTask {
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return CounterBuilder.of().group(taskSetting.name());
+    return CounterBuilder.of().key(taskSetting.connectorKey());
   }
 
   @Override
   public final void start(Map<String, String> props) {
     taskSetting = TaskSetting.of(Collections.unmodifiableMap(props));
-    messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.name());
-    messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.name());
-    ignoredMessageNumberCounter = ConnectorUtils.ignoredMessageNumberCounter(taskSetting.name());
-    ignoredMessageSizeCounter = ConnectorUtils.ignoredMessageSizeCounter(taskSetting.name());
+    messageNumberCounter = ConnectorUtils.messageNumberCounter(taskSetting.connectorKey());
+    messageSizeCounter = ConnectorUtils.messageSizeCounter(taskSetting.connectorKey());
+    ignoredMessageNumberCounter =
+        ConnectorUtils.ignoredMessageNumberCounter(taskSetting.connectorKey());
+    ignoredMessageSizeCounter =
+        ConnectorUtils.ignoredMessageSizeCounter(taskSetting.connectorKey());
     keyInBytes =
         ObjectKey.toJsonString(taskSetting.connectorKey()).getBytes(StandardCharsets.UTF_8);
     run(taskSetting);

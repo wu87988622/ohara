@@ -18,25 +18,18 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent._
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi._
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
-  /**
-    * The group for a stream application metrics
-    * Since each stream has it's own metrics, it is OK to use same value
-    */
-  private[configurator] val STREAM_GROUP = StreamDefUtils.STREAM_METRICS_GROUP_DEFAULT
-
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
     serviceCollie: ServiceCollie,
@@ -93,7 +86,7 @@ private[configurator] object StreamRoute {
           settings = StreamApi.access.request.settings(creation.settings).className(className).creation.settings,
           aliveNodes = Set.empty,
           state = None,
-          metrics = Metrics(Seq.empty),
+          nodeMetrics = Map.empty,
           error = None,
           lastModified = CommonUtils.current()
         )
@@ -223,12 +216,11 @@ private[configurator] object StreamRoute {
     objectChecker: ObjectChecker,
     streamCollie: StreamCollie,
     serviceCollie: ServiceCollie,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     executionContext: ExecutionContext
   ): server.Route =
     clusterRoute[StreamClusterInfo, Creation, Updating](
       root = STREAM_PREFIX_PATH,
-      metricsKey = Some(STREAM_GROUP),
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

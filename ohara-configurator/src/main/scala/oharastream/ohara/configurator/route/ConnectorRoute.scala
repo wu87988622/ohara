@@ -17,18 +17,17 @@
 package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.WorkerCollie
 import oharastream.ohara.client.configurator.v0.ConnectorApi
 import oharastream.ohara.client.configurator.v0.ConnectorApi._
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
-import com.typesafe.scalalogging.Logger
 import spray.json.DeserializationException
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -70,7 +69,7 @@ private[configurator] object ConnectorRoute {
           aliveNodes = Set.empty,
           error = None,
           tasksStatus = Seq.empty,
-          metrics = Metrics.EMPTY,
+          nodeMetrics = Map.empty,
           lastModified = CommonUtils.current()
         )
       }
@@ -79,7 +78,7 @@ private[configurator] object ConnectorRoute {
     implicit executionContext: ExecutionContext,
     workerCollie: WorkerCollie,
     objectChecker: ObjectChecker,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): Future[ConnectorInfo] =
     objectChecker.checkList
       .workerCluster(connectorInfo.workerClusterKey)
@@ -95,7 +94,7 @@ private[configurator] object ConnectorRoute {
                   error = None,
                   aliveNodes = Set.empty,
                   tasksStatus = Seq.empty,
-                  metrics = Metrics.EMPTY
+                  nodeMetrics = Map.empty
                 )
               )
             case RUNNING =>
@@ -125,11 +124,7 @@ private[configurator] object ConnectorRoute {
                       error = allStatus.flatMap(_.error).headOption,
                       aliveNodes = allStatus.filter(_.state == State.RUNNING).map(_.nodeName).toSet,
                       tasksStatus = allStatus,
-                      metrics = Metrics(
-                        meterCache
-                          .meters(workerClusterInfo)
-                          .getOrElse(connectorInfo.key.connectorNameOnKafka, Seq.empty)
-                      )
+                      nodeMetrics = meterCache.meters(workerClusterInfo, connectorInfo.key)
                     )
                   } else
                     Future.successful(
@@ -138,7 +133,7 @@ private[configurator] object ConnectorRoute {
                         error = None,
                         aliveNodes = Set.empty,
                         tasksStatus = Seq.empty,
-                        metrics = Metrics.EMPTY
+                        nodeMetrics = Map.empty
                       )
                     )
                 }
@@ -153,7 +148,7 @@ private[configurator] object ConnectorRoute {
             error = Some(e.getMessage),
             aliveNodes = Set.empty,
             tasksStatus = Seq.empty,
-            metrics = Metrics.EMPTY
+            nodeMetrics = Map.empty
           )
       }
 
@@ -161,14 +156,14 @@ private[configurator] object ConnectorRoute {
     implicit workerCollie: WorkerCollie,
     objectChecker: ObjectChecker,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfGet[ConnectorInfo] = updateState
 
   private[this] def hookOfList(
     implicit workerCollie: WorkerCollie,
     objectChecker: ObjectChecker,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfList[ConnectorInfo] =
     (connectorDescriptions: Seq[ConnectorInfo]) => Future.sequence(connectorDescriptions.map(updateState))
 
@@ -331,7 +326,7 @@ private[configurator] object ConnectorRoute {
     objectChecker: ObjectChecker,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): server.Route =
     RouteBuilder[Creation, Updating, ConnectorInfo]()
       .root(CONNECTORS_PREFIX_PATH)

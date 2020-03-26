@@ -19,6 +19,7 @@ package oharastream.ohara.common.setting;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.json.JsonUtils;
 
@@ -43,6 +44,30 @@ public interface ObjectKey extends Comparable<ObjectKey> {
    */
   static ObjectKey of(String group, String name) {
     return new KeyImpl(group, name);
+  }
+
+  /**
+   * Try to parse the plain string. If the plain string is not correct, the None is returned.
+   *
+   * @param string normal string
+   * @return a serializable instance
+   */
+  static Optional<ObjectKey> ofPlain(String string) {
+    String[] splits = string.split("-");
+    if (splits.length != 2) return Optional.empty();
+    else return Optional.of(new KeyImpl(splits[0], splits[1]));
+  }
+
+  static ObjectKey requirePlain(String string) {
+    return ofPlain(string)
+        .orElseGet(
+            () -> {
+              throw new IllegalArgumentException(string + " is incorrect plain key");
+            });
+  }
+
+  default String toPlain() {
+    return group() + "-" + name();
   }
 
   static String toJsonString(ObjectKey key) {

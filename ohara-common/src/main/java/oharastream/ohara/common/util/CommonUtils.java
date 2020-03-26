@@ -32,6 +32,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Pair;
+import oharastream.ohara.common.setting.ObjectKey;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -319,6 +320,11 @@ public final class CommonUtils {
   }
 
   // ---------------------------------[Primitive Type Helper]--------------------------------- //
+
+  /** @return a key with random group and random name. */
+  public static ObjectKey randomKey() {
+    return ObjectKey.of(randomString(5), randomString(5));
+  }
 
   /**
    * a random string based on uuid without "-"

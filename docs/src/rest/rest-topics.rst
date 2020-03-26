@@ -56,7 +56,7 @@ The following information are tagged by ohara.
    - endOffset (**endOffset**) — the latest offset (Normally, it is the latest commit data)
 
 #. group (**string**) — the group value is always "default"
-#. :ref:`metrics <connector-metrics>` (**object**) — the metrics number of a running topic
+#. :ref:`nodeMetrics <connector-metrics>` (**object**) — the metrics number of a running topic
 #. lastModified (**long**) — the last time to update this ftp
    information
 
@@ -96,8 +96,32 @@ Example Response
       "lastModified": 1578537142950,
       "tags": {},
       "numberOfReplications": 1,
-      "metrics": {
-        "meters": []
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "BytesInPerSec",
+              "name": "BytesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "bytes / SECONDS",
+              "value": 2143210885
+            },
+            {
+              "document": "MessagesInPerSec",
+              "name": "MessagesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "messages / SECONDS",
+              "value": 2810000.0
+            },
+            {
+              "document": "TotalProduceRequestsPerSec",
+              "name": "TotalProduceRequestsPerSec",
+              "queryTime": 1585069111069,
+              "unit": "requests / SECONDS",
+              "value": 137416.0
+            }
+          ]
+        }
       },
       "group":"default",
       "numberOfPartitions": 1
@@ -134,8 +158,32 @@ Example Response
       "lastModified": 1578537915735,
       "tags": {},
       "numberOfReplications": 1,
-      "metrics": {
-        "meters": []
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "BytesInPerSec",
+              "name": "BytesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "bytes / SECONDS",
+              "value": 2143210885
+            },
+            {
+              "document": "MessagesInPerSec",
+              "name": "MessagesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "messages / SECONDS",
+              "value": 2810000.0
+            },
+            {
+              "document": "TotalProduceRequestsPerSec",
+              "name": "TotalProduceRequestsPerSec",
+              "queryTime": 1585069111069,
+              "unit": "requests / SECONDS",
+              "value": 137416.0
+            }
+          ]
+        }
       },
       "group": "default",
       "numberOfPartitions": 3
@@ -174,9 +222,33 @@ Example Response
         "lastModified": 1578537915735,
         "tags": {},
         "numberOfReplications": 1,
-        "metrics": {
-          "meters": []
-        },
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "BytesInPerSec",
+              "name": "BytesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "bytes / SECONDS",
+              "value": 2143210885
+            },
+            {
+              "document": "MessagesInPerSec",
+              "name": "MessagesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "messages / SECONDS",
+              "value": 2810000.0
+            },
+            {
+              "document": "TotalProduceRequestsPerSec",
+              "name": "TotalProduceRequestsPerSec",
+              "queryTime": 1585069111069,
+              "unit": "requests / SECONDS",
+              "value": 137416.0
+            }
+          ]
+        }
+      },
         "group": "default",
         "numberOfPartitions": 3
       }
@@ -217,8 +289,32 @@ Example Response
       "lastModified": 1578537915735,
       "tags": {},
       "numberOfReplications": 1,
-      "metrics": {
-        "meters": []
+      "nodeMetrics": {
+        "node00": {
+          "meters": [
+            {
+              "document": "BytesInPerSec",
+              "name": "BytesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "bytes / SECONDS",
+              "value": 2143210885
+            },
+            {
+              "document": "MessagesInPerSec",
+              "name": "MessagesInPerSec",
+              "queryTime": 1585069111069,
+              "unit": "messages / SECONDS",
+              "value": 2810000.0
+            },
+            {
+              "document": "TotalProduceRequestsPerSec",
+              "name": "TotalProduceRequestsPerSec",
+              "queryTime": 1585069111069,
+              "unit": "requests / SECONDS",
+              "value": 137416.0
+            }
+          ]
+        }
       },
       "group": "default",
       "numberOfPartitions": 3

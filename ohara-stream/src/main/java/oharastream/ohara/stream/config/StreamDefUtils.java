@@ -207,9 +207,6 @@ public final class StreamDefUtils {
           .optional(1024L)
           .build();
 
-  // this is the stream metric group definition
-  public static final String STREAM_METRICS_GROUP_DEFAULT = "stream";
-
   /**
    * Load configDefs from default definitions.
    *

@@ -38,19 +38,21 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"unchecked"})
 class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
   private static Topology topology = null;
-  private static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_OUT);
+  private final Counter counter;
 
   OStreamImpl(OStreamBuilder ob) {
     super(ob);
+    this.counter = counter(ob.key(), MetricFactory.IOType.TOPIC_OUT);
   }
 
   OStreamImpl(OStreamBuilder ob, KStream<Row, Row> stream, StreamsBuilder builder) {
     super(ob, stream, builder);
+    this.counter = counter(ob.key(), MetricFactory.IOType.TOPIC_OUT);
   }
 
   @Override

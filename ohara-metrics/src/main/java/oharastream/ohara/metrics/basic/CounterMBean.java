@@ -16,6 +16,7 @@
 
 package oharastream.ohara.metrics.basic;
 
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.metrics.BeanObject;
 
 public interface CounterMBean {
@@ -23,15 +24,16 @@ public interface CounterMBean {
   String TYPE_KEY = "type";
   String TYPE_VALUE = "counter";
   /**
-   * we have to put the name in properties in order to distinguish the metrics in GUI tool (for
+   * we have to put the key in properties in order to distinguish the metrics in GUI tool (for
    * example, jmc)
    */
-  String GROUP_KEY = "group";
+  String KEY_KEY = "key";
+
   /**
-   * we have to put the name in properties in order to distinguish the metrics in GUI tool (for
+   * we have to put the item in properties in order to distinguish the metrics in GUI tool (for
    * example, jmc)
    */
-  String NAME_KEY = "name";
+  String ITEM_KEY = "item";
 
   /** This is a internal property used to distinguish the counter. */
   String ID_KEY = "id";
@@ -45,8 +47,9 @@ public interface CounterMBean {
   static boolean is(BeanObject obj) {
     return obj.domainName().equals(DOMAIN)
         && TYPE_VALUE.equals(obj.properties().get(TYPE_KEY))
-        && obj.properties().containsKey(NAME_KEY)
-        && obj.properties().containsKey(GROUP_KEY)
+        && obj.properties().containsKey(ITEM_KEY)
+        && obj.properties().containsKey(KEY_KEY)
+        && ObjectKey.ofPlain(obj.properties().get(KEY_KEY)).isPresent()
         && obj.attributes().containsKey(START_TIME_KEY)
         && obj.attributes().containsKey(LAST_MODIFIED_KEY)
         && obj.attributes().containsKey(VALUE_KEY)
@@ -56,10 +59,10 @@ public interface CounterMBean {
 
   static CounterMBean of(BeanObject obj) {
     return Counter.builder()
-        // NOTED: group is NOT a part of attribute!!!!
-        .group(obj.properties().get(GROUP_KEY))
-        // NOTED: name is NOT a part of attribute!!!!
-        .name(obj.properties().get(NAME_KEY))
+        // NOTED: key is NOT a part of attribute!!!!
+        .key(ObjectKey.requirePlain(obj.properties().get(KEY_KEY)))
+        // NOTED: item is NOT a part of attribute!!!!
+        .item(obj.properties().get(ITEM_KEY))
         .startTime((long) obj.attributes().get(START_TIME_KEY))
         .lastModified((long) obj.attributes().get(LAST_MODIFIED_KEY))
         .queryTime(obj.queryTime())
@@ -74,14 +77,14 @@ public interface CounterMBean {
    *
    * @return name of this counter
    */
-  String group();
+  ObjectKey key();
 
   /**
    * NOTED: this is NOT a part of java beans!!!
    *
    * @return name of this counter
    */
-  String name();
+  String item();
 
   /**
    * NOTED: if you are going to change the method name, you have to rewrite the {@link

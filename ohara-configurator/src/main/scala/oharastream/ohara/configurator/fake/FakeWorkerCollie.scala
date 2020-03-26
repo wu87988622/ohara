@@ -23,8 +23,6 @@ import oharastream.ohara.client.configurator.v0.ClusterStatus
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
-import oharastream.ohara.metrics.BeanChannel
-import oharastream.ohara.metrics.basic.CounterMBean
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,10 +30,6 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectionProps: String)
     extends FakeCollie(dataCollie)
     with WorkerCollie {
-  override def counters(cluster: WorkerClusterInfo): Seq[CounterMBean] =
-    // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-    BeanChannel.local().counterMBeans().asScala
-
   /**
     * cache all connectors info in-memory so we should keep instance for each fake cluster.
     */

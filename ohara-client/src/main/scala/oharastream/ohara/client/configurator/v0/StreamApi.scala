@@ -19,7 +19,7 @@ import java.util.Objects
 
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
+import oharastream.ohara.client.configurator.v0.MetricsApi.{METRICS_JSON_FORMAT, Metrics}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
@@ -115,7 +115,7 @@ object StreamApi {
     * @param aliveNodes alive node list of the running containers from this cluster
     * @param state the state of stream (stopped stream does not have this field)
     * @param error the error message if the state was failed to fetch
-    * @param metrics the metrics bean
+    * @param nodeMetrics the metrics bean
     * @param lastModified this data change time
     */
   final case class StreamClusterInfo(
@@ -123,9 +123,10 @@ object StreamApi {
     aliveNodes: Set[String],
     state: Option[String],
     error: Option[String],
-    metrics: Metrics,
+    nodeMetrics: Map[String, Metrics],
     lastModified: Long
-  ) extends ClusterInfo {
+  ) extends ClusterInfo
+      with Metricsable {
     /**
       * reuse the parser from Creation.
       * @param settings settings
@@ -156,7 +157,13 @@ object StreamApi {
       .format(new RootJsonFormat[StreamClusterInfo] {
         private[this] val format                            = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: StreamClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+        override def write(obj: StreamClusterInfo): JsValue = {
+          // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
+          val fields = format.write(obj).asJsObject.fields ++ Map(
+            "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
+          )
+          flattenSettings(JsObject(fields))
+        }
       })
       .refine
 

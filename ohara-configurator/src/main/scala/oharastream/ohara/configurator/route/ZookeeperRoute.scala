@@ -26,7 +26,7 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.STOPPED
 import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -139,14 +139,13 @@ object ZookeeperRoute {
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     zookeeperCollie: ZookeeperCollie,
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
     clusterRoute[ZookeeperClusterInfo, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,
-      metricsKey = None,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

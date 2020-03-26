@@ -18,16 +18,16 @@ package oharastream.ohara.configurator.store
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.MetricsApi.Meter
+import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.store.MeterCache.RequestKey
+import oharastream.ohara.configurator.store.MetricsCache.RequestKey
 import org.junit.Test
 import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
-class TestMeterCache extends OharaTest {
+class TestMetricsCache extends OharaTest {
   @Test
   def testRequestKey(): Unit = {
     val key = RequestKey(
@@ -42,40 +42,45 @@ class TestMeterCache extends OharaTest {
 
   @Test
   def nullRefresher(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder.refresher(null)
+    an[NullPointerException] should be thrownBy MetricsCache.builder.refresher(null)
 
   @Test
   def nullFrequency(): Unit =
-    an[NullPointerException] should be thrownBy MeterCache.builder.frequency(null)
+    an[NullPointerException] should be thrownBy MetricsCache.builder.frequency(null)
 
   @Test
   def testRefresh(): Unit = {
     val data = Map(
-      "name" -> Seq(
-        Meter(
-          name = "name",
-          value = 1.1,
-          unit = "unit",
-          document = "document",
-          queryTime = CommonUtils.current(),
-          startTime = Some(CommonUtils.current()),
-          lastModified = Some(CommonUtils.current()),
-          valueInPerSec = None
+      ObjectKey.of("a", "b") -> Metrics(
+        Seq(
+          Meter(
+            name = "name",
+            value = 1.1,
+            unit = "unit",
+            document = "document",
+            queryTime = CommonUtils.current(),
+            startTime = Some(CommonUtils.current()),
+            lastModified = Some(CommonUtils.current()),
+            valueInPerSec = None
+          )
         )
       )
     )
     val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
-    val cache       = MeterCache.builder.refresher(() => Map(clusterInfo -> data)).frequency(2 seconds).build
+    val cache = MetricsCache.builder
+      .refresher(() => Map(clusterInfo -> Map(CommonUtils.hostname() -> data)))
+      .frequency(2 seconds)
+      .build
     try {
       cache.meters(clusterInfo) shouldBe Map.empty
       TimeUnit.SECONDS.sleep(3)
-      cache.meters(clusterInfo) shouldBe data
+      cache.meters(clusterInfo)(CommonUtils.hostname()) shouldBe data
     } finally cache.close()
   }
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = MeterCache.builder.refresher(() => Map.empty).frequency(2 seconds).build
+    val cache = MetricsCache.builder.refresher(() => Map.empty).frequency(2 seconds).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.meters(FakeClusterInfo(CommonUtils.randomString()))

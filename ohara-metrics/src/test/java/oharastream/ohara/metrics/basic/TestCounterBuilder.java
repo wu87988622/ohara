@@ -17,6 +17,7 @@
 package oharastream.ohara.metrics.basic;
 
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,22 +36,17 @@ public class TestCounterBuilder extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullGroup() {
-    Counter.builder().group(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEmptyGroup() {
-    Counter.builder().group("");
+    Counter.builder().key(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullName() {
-    Counter.builder().name(null);
+    Counter.builder().item(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyName() {
-    Counter.builder().name("");
+    Counter.builder().item("");
   }
 
   @Test(expected = NullPointerException.class)
@@ -74,17 +70,8 @@ public class TestCounterBuilder extends OharaTest {
   }
 
   @Test
-  public void testSetOnlyName() {
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).build()) {
-      CommonUtils.requireNonEmpty(counter.getDocument());
-      CommonUtils.requireNonEmpty(counter.getUnit());
-      Assert.assertEquals(counter.name(), counter.group());
-    }
-  }
-
-  @Test
   public void testSetters() {
-    String group = CommonUtils.randomString();
+    ObjectKey key = CommonUtils.randomKey();
     String name = CommonUtils.randomString();
     String document = CommonUtils.randomString();
     String unit = CommonUtils.randomString();
@@ -92,15 +79,15 @@ public class TestCounterBuilder extends OharaTest {
     long startTime = CommonUtils.current();
     try (Counter counter =
         Counter.builder()
-            .group(group)
-            .name(name)
+            .key(key)
+            .item(name)
             .value(value)
             .startTime(startTime)
             .document(document)
             .unit(unit)
             .build()) {
-      Assert.assertEquals(group, counter.group());
-      Assert.assertEquals(name, counter.name());
+      Assert.assertEquals(key, counter.key());
+      Assert.assertEquals(name, counter.item());
       Assert.assertEquals(document, counter.getDocument());
       Assert.assertEquals(value, counter.getValue());
       Assert.assertEquals(startTime, counter.getStartTime());

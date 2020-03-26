@@ -16,7 +16,6 @@
 
 package oharastream.ohara.client.configurator.v0
 
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef.Permission
@@ -62,7 +61,7 @@ class TestStreamApi extends OharaTest {
       aliveNodes = Set.empty,
       state = None,
       error = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     streamClusterInfo.newNodeNames(nodeNames).nodeNames shouldBe nodeNames
@@ -814,7 +813,7 @@ class TestStreamApi extends OharaTest {
         aliveNodes = Set.empty,
         state = None,
         error = None,
-        metrics = Metrics.EMPTY,
+        nodeMetrics = Map.empty,
         lastModified = CommonUtils.current()
       )
     )
@@ -880,7 +879,7 @@ class TestStreamApi extends OharaTest {
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     cluster.deadNodes shouldBe Set("n1")
@@ -945,7 +944,7 @@ class TestStreamApi extends OharaTest {
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
@@ -963,7 +962,7 @@ class TestStreamApi extends OharaTest {
       aliveNodes = Set("n0"),
       state = Some("running"),
       error = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     StreamApi.STREAM_CLUSTER_INFO_FORMAT.read(StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster

@@ -16,10 +16,6 @@
 
 package oharastream.ohara.common.setting;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * the key of connector object. It is almost same with {@link ObjectKey} excepting for the method
  * "connectorNameOnKafka". the method is a helper method used to generate the connector name on
@@ -40,10 +36,6 @@ public interface ConnectorKey extends ObjectKey {
     return ObjectKey.toJsonString(key);
   }
 
-  static String toJsonString(Collection<? extends ConnectorKey> key) {
-    return ObjectKey.toJsonString(key);
-  }
-
   /**
    * parse input json and then generate a ConnectorKey instance.
    *
@@ -57,25 +49,12 @@ public interface ConnectorKey extends ObjectKey {
   }
 
   /**
-   * parse input json and then generate a ConnectorKey instance.
-   *
-   * @see ObjectKey#toObjectKeys(String)
-   * @param json json representation
-   * @return a serializable instance
-   */
-  static List<ConnectorKey> toConnectorKeys(String json) {
-    return ObjectKey.toObjectKeys(json).stream()
-        .map(key -> ConnectorKey.of(key.group(), key.name()))
-        .collect(Collectors.toList());
-  }
-
-  /**
    * generate the connector name for kafka. Noted: kafka connector does not support group so we
    * generate the name composed of group and name.
    *
    * @return connector name for kafka
    */
   default String connectorNameOnKafka() {
-    return group() + "-" + name();
+    return toPlain();
   }
 }

@@ -18,14 +18,13 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.ShabondiApi
-import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.setting.SettingDef.Necessary
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
 import spray.json.{JsString, JsValue}
 
@@ -90,7 +89,7 @@ private[configurator] object ShabondiRoute {
           settings = serverType.defaultSettings ++ creation.settings,
           aliveNodes = Set.empty,
           state = None,
-          metrics = Metrics(Seq.empty),
+          nodeMetrics = Map.empty,
           error = None,
           lastModified = CommonUtils.current()
         )
@@ -170,21 +169,20 @@ private[configurator] object ShabondiRoute {
         }
     }
 
-  private[this] def hookBeforeStop(): HookOfAction[ShabondiClusterInfo] = (_, _, _) => Future.unit
+  private[this] def hookBeforeStop: HookOfAction[ShabondiClusterInfo] = (_, _, _) => Future.unit
 
-  private[this] def hookBeforeDelete(): HookBeforeDelete = _ => Future.unit
+  private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
     shabondiCollie: ShabondiCollie,
     serviceCollie: ServiceCollie,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     executionContext: ExecutionContext
   ): server.Route = {
     clusterRoute[ShabondiClusterInfo, ShabondiClusterCreation, ShabondiClusterUpdating](
       root = SHABONDI_PREFIX_PATH,
-      metricsKey = Some("shabondi"),
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

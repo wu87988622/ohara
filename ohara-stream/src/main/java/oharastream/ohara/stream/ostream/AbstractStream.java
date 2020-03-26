@@ -16,6 +16,9 @@
 
 package oharastream.ohara.stream.ostream;
 
+import java.util.HashMap;
+import java.util.Map;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.metrics.basic.Counter;
 import oharastream.ohara.stream.metric.MetricFactory;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -31,18 +34,50 @@ import org.apache.kafka.streams.kstream.KTable;
  * @param <K> key type of source stream
  * @param <V> value type of source stream
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"unchecked"})
 abstract class AbstractStream<K, V> {
+  private static final Map<ObjectKey, Counter> TOPIC_IN_COUNTERS = new HashMap<>();
+  private static final Map<ObjectKey, Counter> TOPIC_OUT_COUNTERS = new HashMap<>();
+
+  /**
+   * get or create global counter to record metrics for specific topic
+   *
+   * @param key object key of this stream
+   * @param type topic type
+   * @return an new counter. Or existent count
+   */
+  static Counter counter(ObjectKey key, MetricFactory.IOType type) {
+    final Map<ObjectKey, Counter> counters;
+    switch (type) {
+      case TOPIC_OUT:
+        counters = TOPIC_IN_COUNTERS;
+        break;
+      case TOPIC_IN:
+        counters = TOPIC_OUT_COUNTERS;
+        break;
+      default:
+        throw new RuntimeException("unknown type:" + type);
+    }
+    synchronized (counters) {
+      Counter counter = counters.get(key);
+      if (counter == null) {
+        counter = MetricFactory.getCounter(key, type);
+        counters.put(key, counter);
+      }
+      return counter;
+    }
+  }
 
   KTable<K, V> ktable;
   KStream<K, V> kstreams;
   KGroupedStream<K, V> kgroupstream;
   final OStreamBuilder builder;
   final StreamsBuilder innerBuilder;
-  private static final Counter counter = MetricFactory.getCounter(MetricFactory.IOType.TOPIC_IN);
+  private final Counter counter;
 
   @SuppressWarnings("unchecked")
   AbstractStream(final OStreamBuilder builder) {
+    this.counter = counter(builder.key(), MetricFactory.IOType.TOPIC_IN);
     StreamsBuilder newBuilder = new StreamsBuilder();
     this.kstreams =
         newBuilder.stream(builder.getFromTopic(), builder.getFromSerde().get())
@@ -62,6 +97,7 @@ abstract class AbstractStream<K, V> {
 
   AbstractStream(
       final OStreamBuilder builder, final KStream<K, V> kstreams, StreamsBuilder innerBuilder) {
+    this.counter = counter(builder.key(), MetricFactory.IOType.TOPIC_IN);
     this.builder = builder;
     this.kstreams = kstreams;
     this.innerBuilder = innerBuilder;
@@ -71,6 +107,7 @@ abstract class AbstractStream<K, V> {
       final OStreamBuilder builder,
       final KGroupedStream<K, V> kgroupstream,
       StreamsBuilder innerBuilder) {
+    this.counter = counter(builder.key(), MetricFactory.IOType.TOPIC_IN);
     this.builder = builder;
     this.kgroupstream = kgroupstream;
     this.innerBuilder = innerBuilder;
@@ -78,6 +115,7 @@ abstract class AbstractStream<K, V> {
 
   AbstractStream(
       final OStreamBuilder builder, final KTable<K, V> ktable, StreamsBuilder innerBuilder) {
+    this.counter = counter(builder.key(), MetricFactory.IOType.TOPIC_IN);
     this.builder = builder;
     this.ktable = ktable;
     this.innerBuilder = innerBuilder;

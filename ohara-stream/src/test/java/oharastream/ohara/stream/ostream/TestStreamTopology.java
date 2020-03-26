@@ -35,13 +35,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestStreamTopology extends OharaTest {
-
-  private static String appId = CommonUtils.randomString(5);
   private static TopicKey fromKey =
       TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
   private static TopicKey toKey =
       TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString());
-  private static String join = "join_topic";
+  private static final String join = "join_topic";
 
   @Test
   public void testGetTopology() {
@@ -49,7 +47,8 @@ public class TestStreamTopology extends OharaTest {
     Stream.execute(
         app.getClass(),
         java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), appId),
+                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
+                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestStreamTopology"),
                 Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), "fake"),
                 Pair.of(
                     StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),

@@ -20,8 +20,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
 import oharastream.ohara.common.json.JsonUtils;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
@@ -95,17 +93,5 @@ public class TestConnectorKey extends OharaTest {
     Assert.assertEquals(ObjectKey.of(group, name), ConnectorKey.of(group, name));
     Assert.assertEquals(TopicKey.of(group, name), ConnectorKey.of(group, name));
     Assert.assertEquals(ConnectorKey.of(group, name), ConnectorKey.of(group, name));
-  }
-
-  @Test
-  public void testToConnectorKeys() {
-    List<ConnectorKey> keys =
-        Arrays.asList(
-            ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString()),
-            ConnectorKey.of(CommonUtils.randomString(), CommonUtils.randomString()));
-
-    List<ConnectorKey> copy = ConnectorKey.toConnectorKeys(ConnectorKey.toJsonString(keys));
-
-    Assert.assertEquals(keys, copy);
   }
 }

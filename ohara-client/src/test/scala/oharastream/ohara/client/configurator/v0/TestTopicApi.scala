@@ -16,7 +16,6 @@
 
 package oharastream.ohara.client.configurator.v0
 
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.TopicApi._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
@@ -216,7 +215,7 @@ class TestTopicApi extends OharaTest {
       settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
       partitionInfos = Seq.empty,
       state = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     TopicApi.TOPIC_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
@@ -228,7 +227,7 @@ class TestTopicApi extends OharaTest {
       settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
       partitionInfos = Seq.empty,
       state = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     TopicApi.TOPIC_INFO_FORMAT.read(TopicApi.TOPIC_INFO_FORMAT.write(cluster)) shouldBe cluster

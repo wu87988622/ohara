@@ -91,7 +91,7 @@ class TestMetrics extends WithBrokerWorker {
 
     CommonUtils.await(
       () => {
-        val meters = result(topicApi.get(topic.key)).metrics.meters
+        val meters = result(topicApi.get(topic.key)).meters
         // metrics should have queryTime also
         meters.nonEmpty && meters.head.queryTime > 0
       },
@@ -126,13 +126,13 @@ class TestMetrics extends WithBrokerWorker {
         .create()
     )
 
-    sink.metrics.meters.size shouldBe 0
+    sink.meters.size shouldBe 0
 
     result(connectorApi.start(sink.key))
 
     CommonUtils.await(
       () => {
-        val meters = result(connectorApi.get(sink.key)).metrics.meters
+        val meters = result(connectorApi.get(sink.key)).meters
         // custom metrics should have queryTime and startTime also
         meters.nonEmpty &&
         meters.head.queryTime > 0 &&
@@ -146,7 +146,7 @@ class TestMetrics extends WithBrokerWorker {
     result(connectorApi.stop(sink.key))
 
     CommonUtils.await(() => {
-      result(connectorApi.get(sink.key)).metrics.meters.isEmpty
+      result(connectorApi.get(sink.key)).meters.isEmpty
     }, java.time.Duration.ofSeconds(20))
   }
 
@@ -179,12 +179,12 @@ class TestMetrics extends WithBrokerWorker {
       pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(topic).endpoint(sink).create()
     )
 
-    pipeline.objects.filter(_.key == sink.key).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == sink.key).head.meters.size shouldBe 0
     result(connectorApi.start(sink.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.meters.nonEmpty,
       java.time.Duration.ofSeconds(20)
     )
 
@@ -192,7 +192,7 @@ class TestMetrics extends WithBrokerWorker {
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == sink.key).head.meters.isEmpty,
       java.time.Duration.ofSeconds(20)
     )
   }
@@ -229,17 +229,17 @@ class TestMetrics extends WithBrokerWorker {
       pipelineApi.request.name(CommonUtils.randomString(10)).endpoint(topic).endpoint(source).create()
     )
 
-    pipeline.objects.filter(_.key == source.key).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == source.key).head.meters.size shouldBe 0
     result(connectorApi.start(source.key))
 
     // the connector is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.meters.nonEmpty,
       java.time.Duration.ofSeconds(20)
     )
 
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == topic.key).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == topic.key).head.meters.nonEmpty,
       java.time.Duration.ofSeconds(20)
     )
 
@@ -247,7 +247,7 @@ class TestMetrics extends WithBrokerWorker {
 
     // the connector is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == source.key).head.meters.isEmpty,
       java.time.Duration.ofSeconds(20)
     )
 
@@ -308,19 +308,19 @@ class TestMetrics extends WithBrokerWorker {
         .create()
     )
 
-    pipeline.objects.filter(_.key == stream.key).head.metrics.meters.size shouldBe 0
+    pipeline.objects.filter(_.key == stream.key).head.meters.size shouldBe 0
 
     result(streamApi.start(stream.key))
     // the stream is running so we should "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.nonEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.meters.nonEmpty,
       java.time.Duration.ofSeconds(20)
     )
 
     result(streamApi.stop(stream.key))
     // the stream is stopped so we should NOT "see" the beans.
     CommonUtils.await(
-      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.metrics.meters.isEmpty,
+      () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.meters.isEmpty,
       java.time.Duration.ofSeconds(20)
     )
   }

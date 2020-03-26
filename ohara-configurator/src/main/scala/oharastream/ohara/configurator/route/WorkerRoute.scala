@@ -26,7 +26,7 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
@@ -186,14 +186,13 @@ object WorkerRoute {
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     workerCollie: WorkerCollie,
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =
     clusterRoute[WorkerClusterInfo, Creation, Updating](
       root = WORKER_PREFIX_PATH,
-      metricsKey = None,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

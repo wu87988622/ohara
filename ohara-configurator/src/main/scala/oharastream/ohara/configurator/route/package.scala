@@ -22,7 +22,6 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import oharastream.ohara.agent._
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -39,7 +38,7 @@ import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import oharastream.ohara.configurator.route.hook._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.TopicAdmin
 import spray.json.{DeserializationException, JsArray, JsBoolean, JsNumber, JsString, JsValue, RootJsonFormat}
 
@@ -93,7 +92,6 @@ package object route {
     Updating <: ClusterUpdating
   ](
     root: String,
-    metricsKey: Option[String],
     hookOfCreation: HookOfCreation[Creation, Cluster],
     hookOfUpdating: HookOfUpdating[Updating, Cluster],
     hookOfStart: HookOfAction[Cluster],
@@ -102,7 +100,7 @@ package object route {
   )(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     collie: Collie,
     serviceCollie: ServiceCollie,
     rm: OharaJsonFormat[Creation],
@@ -114,13 +112,13 @@ package object route {
       .root(root)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
-      .hookOfGet(updateState[Cluster](_, metricsKey))
-      .hookOfList((clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster](_, metricsKey)))
+      .hookOfGet(updateState[Cluster])
+      .hookOfList((clusters: Seq[Cluster]) => Future.traverse(clusters)(updateState[Cluster]))
       .hookBeforeDelete(
         (key: ObjectKey) =>
           store.get[Cluster](key).flatMap {
             _.fold(Future.unit) { info =>
-              updateState[Cluster](info, metricsKey)
+              updateState[Cluster](info)
                 .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
                 .map(_.state)
                 .map {
@@ -301,9 +299,8 @@ package object route {
       }
 
   private[this] def updateState[Cluster <: ClusterInfo: ClassTag](
-    cluster: Cluster,
-    metricsKey: Option[String]
-  )(implicit meterCache: MeterCache, collie: Collie, executionContext: ExecutionContext): Future[Cluster] =
+    cluster: Cluster
+  )(implicit meterCache: MetricsCache, collie: Collie, executionContext: ExecutionContext): Future[Cluster] =
     collie
       .clusters()
       .map(
@@ -339,14 +336,14 @@ package object route {
                     state = None,
                     error = None,
                     // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-                    metrics = Metrics.EMPTY
+                    nodeMetrics = Map.empty
                   )
                 case c: ShabondiClusterInfo =>
                   c.copy(
                     aliveNodes = Set.empty,
                     state = None,
                     error = None,
-                    metrics = Metrics.EMPTY
+                    nodeMetrics = Map.empty
                   )
               }
             case Some(status) =>
@@ -383,8 +380,7 @@ package object route {
                     error = status.error,
                     lastModified = CommonUtils.current(),
                     // the cluster is stooped (all containers are gone) so we don't need to fetch metrics.
-                    metrics =
-                      Metrics(metricsKey.flatMap(key => meterCache.meters(cluster).get(key)).getOrElse(Seq.empty))
+                    nodeMetrics = meterCache.meters(c, c.key)
                   )
                 case c: ShabondiClusterInfo =>
                   c.copy(

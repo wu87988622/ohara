@@ -20,6 +20,7 @@ import java.util.Objects;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.pattern.Builder;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.stream.OStream;
 
@@ -27,11 +28,11 @@ import oharastream.ohara.stream.OStream;
  * This class is responsible for managing all the properties that will use in {@code OStream}. Use
  * this class to construct {@code OStream} only.
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes"})
 public final class OStreamBuilder implements Builder<OStream<Row>> {
 
+  private ObjectKey key = null;
   private String bootstrapServers = null;
-  private String appId = null;
   private String fromTopic = null;
   private String toTopic = null;
   private Class<? extends TimestampExtractor> extractor = null;
@@ -48,21 +49,17 @@ public final class OStreamBuilder implements Builder<OStream<Row>> {
 
   private OStreamBuilder() {}
 
+  public OStreamBuilder key(ObjectKey key) {
+    this.key = Objects.requireNonNull(key);
+    return this;
+  }
+
   /**
    * @param bootstrapServers broker list
    * @return this builder
    */
   public OStreamBuilder bootstrapServers(String bootstrapServers) {
     this.bootstrapServers = CommonUtils.requireNonEmpty(bootstrapServers);
-    return this;
-  }
-
-  /**
-   * @param appId the application.id you want to group stream for
-   * @return this builder
-   */
-  public OStreamBuilder appId(String appId) {
-    this.appId = CommonUtils.requireNonEmpty(appId);
     return this;
   }
 
@@ -128,8 +125,8 @@ public final class OStreamBuilder implements Builder<OStream<Row>> {
   }
 
   private void checkArguments() {
+    Objects.requireNonNull(key);
     CommonUtils.requireNonEmpty(bootstrapServers);
-    CommonUtils.requireNonEmpty(appId);
     CommonUtils.requireNonEmpty(fromTopic);
     CommonUtils.requireNonEmpty(toTopic);
   }
@@ -141,12 +138,16 @@ public final class OStreamBuilder implements Builder<OStream<Row>> {
   }
 
   // Getters
+  ObjectKey key() {
+    return Objects.requireNonNull(key);
+  }
+
   String getBootstrapServers() {
     return bootstrapServers;
   }
 
   String getAppId() {
-    return appId;
+    return Objects.requireNonNull(key).toPlain();
   }
 
   String getFromTopic() {

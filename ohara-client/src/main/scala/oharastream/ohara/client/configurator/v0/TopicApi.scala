@@ -237,10 +237,11 @@ object TopicApi {
   case class TopicInfo(
     settings: Map[String, JsValue],
     partitionInfos: Seq[PartitionInfo],
-    metrics: Metrics,
+    nodeMetrics: Map[String, Metrics],
     state: Option[State],
     lastModified: Long
-  ) extends Data {
+  ) extends Data
+      with Metricsable {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: TopicKey = TopicKey.of(group, name)
@@ -277,7 +278,13 @@ object TopicApi {
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
     private[this] val format                    = jsonFormat5(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(extractSetting(json.asJsObject))
-    override def write(obj: TopicInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+    override def write(obj: TopicInfo): JsValue = {
+      // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
+      val fields = format.write(obj).asJsObject.fields ++ Map(
+        "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
+      )
+      flattenSettings(JsObject(fields))
+    }
   }
 
   /**

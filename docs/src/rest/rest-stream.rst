@@ -77,7 +77,7 @@ The following are common settings to a stream app.
 #. state (**option(string)**) — only started/failed stream has state (DEAD if all containers are not running, else RUNNING)
 #. error (**option(string)**) — the error message from a failed stream.
    If the stream is fine or un-started, you won't get this field.
-#. :ref:`metrics <connector-metrics>` (**object**) — the metrics from this stream.
+#. :ref:`nodeMetrics <connector-metrics>` (**object**) — the metrics from this stream.
 
    - meters (**array(object)**) — the metrics in meter type
 
@@ -179,9 +179,7 @@ Example Response
           "name": "topic0"
         }
       ],
-      "metrics": {
-        "meters": []
-      },
+      "nodeMetrics": [],
       "jmxPort": 44914,
       "kind": "stream",
       "group": "default",
@@ -242,9 +240,7 @@ Example Response
           "name": "topic0"
         }
       ],
-      "metrics": {
-        "meters": []
-      },
+      "nodeMetrics": [],
       "jmxPort": 44914,
       "kind": "stream",
       "group": "default",
@@ -308,9 +304,7 @@ Example Response
             "name": "topic0"
           }
         ],
-        "metrics": {
-          "meters": []
-        },
+        "nodeMetrics": [],
         "jmxPort": 44914,
         "kind": "stream",
         "group": "default",
@@ -408,9 +402,7 @@ Example Response
           "name": "topic2"
         }
       ],
-      "metrics": {
-        "meters": []
-      },
+      "nodeMetrics": [],
       "jmxPort": 44914,
       "kind": "stream",
       "group": "default",

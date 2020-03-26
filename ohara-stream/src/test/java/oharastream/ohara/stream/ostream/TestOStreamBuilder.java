@@ -17,10 +17,13 @@
 package oharastream.ohara.stream.ostream;
 
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import org.junit.Test;
 
 public class TestOStreamBuilder extends OharaTest {
+
+  private final ObjectKey key = CommonUtils.randomKey();
 
   @Test(expected = NullPointerException.class)
   public void nullBootstrapServers() {
@@ -33,13 +36,8 @@ public class TestOStreamBuilder extends OharaTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullAppId() {
-    OStreamBuilder.builder().appId(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void emptyAppId() {
-    OStreamBuilder.builder().appId("");
+  public void nullKey() {
+    OStreamBuilder.builder().key(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -65,8 +63,8 @@ public class TestOStreamBuilder extends OharaTest {
   @Test
   public void minimumBuilder() {
     OStreamBuilder.builder()
+        .key(key)
         .bootstrapServers(CommonUtils.randomString())
-        .appId(CommonUtils.randomString())
         .fromTopic(CommonUtils.randomString())
         .toTopic(CommonUtils.randomString())
         .build();

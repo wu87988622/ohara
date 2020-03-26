@@ -25,26 +25,26 @@ import akka.http.scaladsl.server.Directives.{handleRejections, path, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent._
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Meter
+import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.route._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
-import com.typesafe.scalalogging.Logger
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import spray.json.DeserializationException
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.TimeoutException
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 import scala.util.control.Breaks._
 
 /**
@@ -156,12 +156,15 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
       }
       .result()
 
-  private[this] implicit val meterCache: MeterCache = {
-    def metrics(collie: Collie, clusterInfos: Seq[ClusterInfo]): Future[Map[ClusterInfo, Map[String, Seq[Meter]]]] =
+  private[this] implicit val meterCache: MetricsCache = {
+    def metrics(
+      collie: Collie,
+      clusterInfos: Seq[ClusterInfo]
+    ): Future[Map[ClusterInfo, Map[String, Map[ObjectKey, Metrics]]]] =
       Future
         .sequence(clusterInfos.map { clusterInfo =>
           collie
-            .counters(clusterInfo.key)
+            .metrics(clusterInfo.key)
             .map(m => Some(clusterInfo -> m))
             .recover {
               case e: Throwable =>
@@ -174,7 +177,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         })
         .map(_.flatten.toMap)
 
-    MeterCache.builder
+    MetricsCache.builder
       .refresher { () =>
         // we do the sync here to simplify the interface
         Await.result(

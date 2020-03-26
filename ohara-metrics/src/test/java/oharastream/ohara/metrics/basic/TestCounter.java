@@ -19,6 +19,7 @@ package oharastream.ohara.metrics.basic;
 import java.util.List;
 import java.util.Map;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.metrics.BeanChannel;
 import org.junit.Assert;
@@ -28,55 +29,95 @@ public class TestCounter extends OharaTest {
 
   @Test
   public void testIncrementAndGet() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(1, counter.incrementAndGet());
     }
   }
 
   @Test
   public void testGetAndIncrement() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(0, counter.getAndIncrement());
     }
   }
 
   @Test
   public void testDecrementAndGet() {
-    Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build();
+    Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build();
     Assert.assertEquals(-1, counter.decrementAndGet());
   }
 
   @Test
   public void testGetAndDecrement() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(0, counter.getAndDecrement());
     }
   }
 
   @Test
   public void testGetAndSet() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(0, counter.getAndSet(10));
     }
   }
 
   @Test
   public void testSetAndGet() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(10, counter.setAndGet(10));
     }
   }
 
   @Test
   public void testGetAndAdd() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(0, counter.getAndAdd(10));
     }
   }
 
   @Test
   public void testAddAndGet() {
-    try (Counter counter = Counter.builder().value(0).name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .value(0)
+            .item(CommonUtils.randomString(10))
+            .build()) {
       Assert.assertEquals(10, counter.addAndGet(10));
     }
   }
@@ -85,9 +126,10 @@ public class TestCounter extends OharaTest {
   public void testEquals() {
     try (Counter counter =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10))
+            .item(CommonUtils.randomString(10))
             .build()) {
       Assert.assertEquals(counter, counter);
     }
@@ -99,10 +141,10 @@ public class TestCounter extends OharaTest {
         Counter.builder()
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10))
-            .group(CommonUtils.randomString());
+            .item(CommonUtils.randomString(10))
+            .key(CommonUtils.randomKey());
     try (Counter c0 = builder.build();
-        Counter c1 = builder.group(CommonUtils.randomString()).build()) {
+        Counter c1 = builder.key(CommonUtils.randomKey()).build()) {
       Assert.assertNotEquals(c0, c1);
     }
   }
@@ -113,10 +155,10 @@ public class TestCounter extends OharaTest {
         Counter.builder()
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10))
-            .group(CommonUtils.randomString());
+            .item(CommonUtils.randomString(10))
+            .key(CommonUtils.randomKey());
     try (Counter c0 = builder.build();
-        Counter c1 = builder.group(CommonUtils.randomString()).build()) {
+        Counter c1 = builder.key(CommonUtils.randomKey()).build()) {
       Assert.assertNotEquals(c0.hashCode(), c1.hashCode());
     }
   }
@@ -125,9 +167,10 @@ public class TestCounter extends OharaTest {
   public void testEqualsOnDiffDocument() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.document(CommonUtils.randomString()).build()) {
       Assert.assertEquals(c0, c1);
@@ -138,9 +181,10 @@ public class TestCounter extends OharaTest {
   public void testHashCodesOnDiffDocument() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.document(CommonUtils.randomString()).build()) {
       Assert.assertEquals(c0.hashCode(), c1.hashCode());
@@ -151,9 +195,10 @@ public class TestCounter extends OharaTest {
   public void testNotEqualsOnDiffUnit() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.unit(CommonUtils.randomString()).build()) {
       Assert.assertNotEquals(c0, c1);
@@ -164,9 +209,10 @@ public class TestCounter extends OharaTest {
   public void testHashCodesOnDiffUnit() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.unit(CommonUtils.randomString()).build()) {
       Assert.assertNotEquals(c0.hashCode(), c1.hashCode());
@@ -177,9 +223,10 @@ public class TestCounter extends OharaTest {
   public void testNotEqualsOnDiffValue() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.value(CommonUtils.current() + 1000).build()) {
       Assert.assertNotEquals(c0, c1);
@@ -190,9 +237,10 @@ public class TestCounter extends OharaTest {
   public void testHashCodesOnDiffValue() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
         Counter c1 = builder.value(CommonUtils.current() + 1000).build()) {
       Assert.assertNotEquals(c0.hashCode(), c1.hashCode());
@@ -203,9 +251,10 @@ public class TestCounter extends OharaTest {
   public void testHashCode() {
     try (Counter counter =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10))
+            .item(CommonUtils.randomString(10))
             .build()) {
       Assert.assertEquals(counter.hashCode(), counter.hashCode());
     }
@@ -215,11 +264,12 @@ public class TestCounter extends OharaTest {
   public void testNotEqualsOnName() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
-        Counter c1 = builder.name(CommonUtils.randomString(10)).build()) {
+        Counter c1 = builder.item(CommonUtils.randomString(10)).build()) {
       Assert.assertNotEquals(c0, c1);
     }
   }
@@ -228,11 +278,12 @@ public class TestCounter extends OharaTest {
   public void testDiffHashCodeOnName() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c0 = builder.build();
-        Counter c1 = builder.name(CommonUtils.randomString(10)).build()) {
+        Counter c1 = builder.item(CommonUtils.randomString(10)).build()) {
       Assert.assertNotEquals(c0.hashCode(), c1.hashCode());
     }
   }
@@ -245,9 +296,10 @@ public class TestCounter extends OharaTest {
   public void testDuplicateRegisterWithDiffId() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10));
+            .item(CommonUtils.randomString(10));
     try (Counter c = builder.register();
         Counter c2 = builder.register()) {
       // good
@@ -259,9 +311,10 @@ public class TestCounter extends OharaTest {
   public void testDuplicateRegister() {
     Counter.Builder builder =
         Counter.builder()
+            .key(CommonUtils.randomKey())
             .value(CommonUtils.current())
             .startTime(CommonUtils.current())
-            .name(CommonUtils.randomString(10))
+            .item(CommonUtils.randomString(10))
             .id(CommonUtils.randomString());
     try (Counter c = builder.register();
         Counter c2 = builder.register()) {
@@ -271,21 +324,21 @@ public class TestCounter extends OharaTest {
 
   @Test
   public void testFromBean() {
-    String group = CommonUtils.randomString();
+    ObjectKey key = CommonUtils.randomKey();
     String name = CommonUtils.randomString();
     String document = CommonUtils.randomString();
     String unit = CommonUtils.randomString();
     try (Counter counter =
-        Counter.builder().group(group).name(name).document(document).unit(unit).register()) {
+        Counter.builder().key(key).item(name).document(document).unit(unit).register()) {
       List<CounterMBean> beans = BeanChannel.local().counterMBeans();
       Assert.assertNotEquals(0, beans.size());
-      CounterMBean bean = beans.stream().filter(c -> c.name().equals(name)).findFirst().get();
-      Assert.assertEquals(counter.group(), bean.group());
-      Assert.assertEquals(counter.name(), bean.name());
+      CounterMBean bean = beans.stream().filter(c -> c.item().equals(name)).findFirst().get();
+      Assert.assertEquals(counter.key(), bean.key());
+      Assert.assertEquals(counter.item(), bean.item());
       Assert.assertEquals(counter.getDocument(), bean.getDocument());
       Assert.assertEquals(counter.getUnit(), bean.getUnit());
-      Assert.assertEquals(group, bean.group());
-      Assert.assertEquals(name, bean.name());
+      Assert.assertEquals(key, bean.key());
+      Assert.assertEquals(name, bean.item());
       Assert.assertEquals(document, bean.getDocument());
       Assert.assertEquals(unit, bean.getUnit());
 
@@ -294,7 +347,7 @@ public class TestCounter extends OharaTest {
       CommonUtils.await(
           () ->
               BeanChannel.local().counterMBeans().stream()
-                      .filter(c -> c.name().equals(name))
+                      .filter(c -> c.item().equals(name))
                       .findFirst()
                       .get()
                       .getValue()
@@ -305,11 +358,16 @@ public class TestCounter extends OharaTest {
 
   @Test
   public void testProperties() {
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).register()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .item(CommonUtils.randomString(10))
+            .register()) {
       Assert.assertFalse(counter.properties.isEmpty());
       Assert.assertTrue(counter.needClose);
     }
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).build()) {
+    try (Counter counter =
+        Counter.builder().key(CommonUtils.randomKey()).item(CommonUtils.randomString(10)).build()) {
       Assert.assertFalse(counter.properties.isEmpty());
       Assert.assertFalse(counter.needClose);
     }
@@ -318,7 +376,11 @@ public class TestCounter extends OharaTest {
   @Test
   public void testClose() {
     Map<String, String> properties;
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).register()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .item(CommonUtils.randomString(10))
+            .register()) {
       Assert.assertEquals(
           1,
           BeanChannel.builder()
@@ -344,8 +406,8 @@ public class TestCounter extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void testZeroStartTime() {
     Counter.builder()
-        .group("group")
-        .name("name")
+        .key(CommonUtils.randomKey())
+        .item("name")
         .unit("unit")
         .document("document")
         .startTime(0)
@@ -355,8 +417,8 @@ public class TestCounter extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void testNegativeStartTime() {
     Counter.builder()
-        .group("group")
-        .name("name")
+        .key(CommonUtils.randomKey())
+        .item("name")
         .unit("unit")
         .document("document")
         .startTime(-999)
@@ -366,8 +428,8 @@ public class TestCounter extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void testZeroQueryTime() {
     Counter.builder()
-        .group("group")
-        .name("name")
+        .key(CommonUtils.randomKey())
+        .item("name")
         .unit("unit")
         .document("document")
         .queryTime(0)
@@ -386,7 +448,11 @@ public class TestCounter extends OharaTest {
 
   @Test
   public void testInPerSecond() {
-    try (Counter counter = Counter.builder().name(CommonUtils.randomString(10)).register()) {
+    try (Counter counter =
+        Counter.builder()
+            .key(CommonUtils.randomKey())
+            .item(CommonUtils.randomString(10))
+            .register()) {
       counter.addAndGet(100);
       Assert.assertNotEquals(0.0f, counter.valueInPerSec());
     }

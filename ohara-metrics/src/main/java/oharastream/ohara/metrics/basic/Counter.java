@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import oharastream.ohara.common.annotations.Optional;
 import oharastream.ohara.common.annotations.VisibleForTesting;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.ReleaseOnce;
 import oharastream.ohara.metrics.BeanChannel;
@@ -42,8 +43,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
 
   @VisibleForTesting final boolean needClose;
   @VisibleForTesting final Map<String, String> properties;
-  private final String group;
-  private final String name;
+  private final ObjectKey key;
+  private final String item;
   private final String document;
   private final String unit;
   private final AtomicLong value = new AtomicLong(0);
@@ -54,8 +55,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   private Counter(
       boolean needClose,
       Map<String, String> properties,
-      String group,
-      String name,
+      ObjectKey key,
+      String item,
       String document,
       String unit,
       long startTime,
@@ -65,8 +66,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     this.needClose = needClose;
     this.properties =
         Collections.unmodifiableMap(new HashMap<>(CommonUtils.requireNonEmpty(properties)));
-    this.group = CommonUtils.requireNonEmpty(group);
-    this.name = CommonUtils.requireNonEmpty(name);
+    this.key = Objects.requireNonNull(key);
+    this.item = CommonUtils.requireNonEmpty(item);
     this.document = CommonUtils.requireNonEmpty(document);
     this.unit = CommonUtils.requireNonEmpty(unit);
     this.startTime = startTime;
@@ -76,13 +77,13 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   }
 
   @Override
-  public String group() {
-    return group;
+  public ObjectKey key() {
+    return key;
   }
 
   @Override
-  public String name() {
-    return name;
+  public String item() {
+    return item;
   }
 
   @Override
@@ -232,8 +233,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
   public boolean equals(Object obj) {
     if (obj instanceof Counter) {
       Counter another = (Counter) obj;
-      return another.group().equals(group())
-          && another.name().equals(name())
+      return another.key().equals(key())
+          && another.item().equals(item())
           && another.getStartTime() == getStartTime()
           && another.getValue() == getValue()
           && another.getUnit().equals(getUnit())
@@ -245,15 +246,15 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
 
   @Override
   public int hashCode() {
-    return Objects.hash(group(), name(), getValue(), getStartTime(), getUnit(), getLastModified());
+    return Objects.hash(key(), item(), getValue(), getStartTime(), getUnit(), getLastModified());
   }
 
   @Override
   public String toString() {
-    return "group:"
-        + group()
-        + " name:"
-        + name()
+    return "key:"
+        + key()
+        + " item:"
+        + item()
         + " start:"
         + getStartTime()
         + " value:"
@@ -273,8 +274,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
 
   public static class Builder implements oharastream.ohara.common.pattern.Builder<Counter> {
     private String id;
-    private String group;
-    private String name;
+    private ObjectKey key;
+    private String item;
     private String unit = "N/A";
     private String document = "there is no document for this counter...";
     private long value = 0;
@@ -290,15 +291,13 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       return this;
     }
 
-    @Optional("default is equal to name")
-    public Builder group(String group) {
-      this.group = CommonUtils.requireNonEmpty(group);
+    public Builder key(ObjectKey key) {
+      this.key = Objects.requireNonNull(key);
       return this;
     }
 
-    public Builder name(String name) {
-      this.name = CommonUtils.requireNonEmpty(name);
-      if (CommonUtils.isEmpty(group)) group = this.name;
+    public Builder item(String item) {
+      this.item = CommonUtils.requireNonEmpty(item);
       return this;
     }
 
@@ -339,8 +338,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
     }
 
     private void checkArgument() {
-      CommonUtils.requireNonEmpty(group);
-      CommonUtils.requireNonEmpty(name);
+      Objects.requireNonNull(key);
+      CommonUtils.requireNonEmpty(item);
     }
 
     /**
@@ -379,9 +378,9 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       Map<String, String> properties = new HashMap<>();
       properties.put(TYPE_KEY, TYPE_VALUE);
       // the metrics tools (for example, jmc) can distinguish the counter via the name.
-      properties.put(GROUP_KEY, group);
+      properties.put(KEY_KEY, key.toPlain());
       // the metrics tools (for example, jmc) can distinguish the counter via the name.
-      properties.put(NAME_KEY, name);
+      properties.put(ITEM_KEY, item);
       // we use a random string to avoid duplicate jmx
       // This property is required since kafka worker may create multiple tasks on same worker node.
       // If we don't have this id, the multiple tasks will fail since the duplicate counters.
@@ -389,8 +388,8 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       return new Counter(
           needClose,
           properties,
-          group,
-          name,
+          key,
+          item,
           document,
           unit,
           startTime,

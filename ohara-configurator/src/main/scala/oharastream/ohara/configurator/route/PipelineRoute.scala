@@ -16,12 +16,12 @@
 
 package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
 import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi._
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ObjectApi.ObjectInfo
 import oharastream.ohara.client.configurator.v0.PipelineApi._
@@ -46,8 +46,7 @@ import oharastream.ohara.client.configurator.v0.{
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
-import com.typesafe.scalalogging.Logger
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +61,7 @@ private[configurator] object PipelineRoute {
     workerCollie: WorkerCollie,
     adminCleaner: AdminCleaner,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
       connectorAdmin(data.workerClusterKey).flatMap {
@@ -80,7 +79,7 @@ private[configurator] object PipelineRoute {
                   error = None,
                   // the group of counter is equal to connector's name (this is a part of kafka's core setting)
                   // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
-                  metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.key.connectorNameOnKafka, Seq.empty)),
+                  nodeMetrics = meterCache.meters(clusterInfo, data.key),
                   lastModified = data.lastModified,
                   tags = data.tags
                 )
@@ -123,7 +122,7 @@ private[configurator] object PipelineRoute {
                   state = state,
                   error = None,
                   // noted we create a topic with name rather than name
-                  metrics = Metrics(meterCache.meters(clusterInfo).getOrElse(data.topicNameOnKafka, Seq.empty)),
+                  nodeMetrics = meterCache.meters(clusterInfo, data.key),
                   lastModified = data.lastModified,
                   tags = data.tags
                 )
@@ -144,10 +143,9 @@ private[configurator] object PipelineRoute {
             },
             state = status.flatMap(_.state),
             error = status.flatMap(_.error),
-            metrics = data match {
-              case clusterInfo: StreamClusterInfo =>
-                Metrics(meterCache.meters(clusterInfo).getOrElse(StreamRoute.STREAM_GROUP, Seq.empty))
-              case _ => Metrics.EMPTY
+            nodeMetrics = data match {
+              case clusterInfo: StreamClusterInfo => meterCache.meters(clusterInfo, clusterInfo.key)
+              case _                              => Map.empty
             },
             lastModified = data.lastModified,
             tags = data.tags
@@ -162,7 +160,7 @@ private[configurator] object PipelineRoute {
           className = None,
           state = None,
           error = None,
-          metrics = Metrics.EMPTY,
+          nodeMetrics = Map.empty,
           lastModified = obj.lastModified,
           tags = obj.tags
         )
@@ -185,7 +183,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): Future[Pipeline] =
     Future
       .traverse(pipeline.endpoints) { d =>
@@ -232,7 +230,7 @@ private[configurator] object PipelineRoute {
               },
               state = None,
               error = Some(e.getMessage),
-              metrics = Metrics.EMPTY,
+              nodeMetrics = Map.empty,
               lastModified = obj.lastModified,
               tags = obj.tags
             )
@@ -264,7 +262,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfGet[Pipeline] = updateObjectsAndJarKeys(_)
 
   private[this] def hookOfList(
@@ -274,7 +272,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfList[Pipeline] =
     Future.traverse(_)(updateObjectsAndJarKeys)
 
@@ -285,7 +283,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfCreation[Creation, Pipeline] =
     (creation: Creation) =>
       updateObjectsAndJarKeys(
@@ -307,7 +305,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): HookOfUpdating[Updating, Pipeline] =
     (key: ObjectKey, update: Updating, previous: Option[Pipeline]) =>
       updateObjectsAndJarKeys(
@@ -381,7 +379,7 @@ private[configurator] object PipelineRoute {
     adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
-    meterCache: MeterCache
+    meterCache: MetricsCache
   ): server.Route =
     RouteBuilder[Creation, Updating, Pipeline]()
       .root(PIPELINES_PREFIX_PATH)

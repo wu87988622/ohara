@@ -16,12 +16,12 @@
 
 package oharastream.ohara.stream;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
+import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.TopicKey;
@@ -106,17 +106,18 @@ public class TestPageViewRegionExample extends WithBroker {
           .collect(Collectors.toList());
 
   private final Map<String, String> configs =
-      ImmutableMap.of(
-          StreamDefUtils.BROKER_DEFINITION.key(),
-          client.connectionProps(),
-          StreamDefUtils.NAME_DEFINITION.key(),
-          CommonUtils.randomString(),
-          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-          "[" + TopicKey.toJsonString(fromTopic) + "]",
-          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-          "[" + TopicKey.toJsonString(toTopic) + "]",
-          PageViewRegionExample.joinTopicKey,
-          joinTableTopic);
+      java.util.stream.Stream.of(
+              Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
+              Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestPageViewRegionExample"),
+              Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
+              Pair.of(
+                  StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                  "[" + TopicKey.toJsonString(fromTopic) + "]"),
+              Pair.of(
+                  StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                  "[" + TopicKey.toJsonString(toTopic) + "]"),
+              Pair.of(PageViewRegionExample.joinTopicKey, joinTableTopic))
+          .collect(Collectors.toMap(Pair::left, Pair::right));
 
   @Before
   public void setup() {

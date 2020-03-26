@@ -30,7 +30,6 @@ import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, Nod
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.StreamRoute
 import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.{Counter, CounterMBean}
 import oharastream.ohara.metrics.kafka.TopicMeter
@@ -138,32 +137,37 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
 
   def forceRemoveCount: Int = _forceRemoveCount.get()
 
-  override protected def topicMeters(cluster: ClusterInfo): Seq[TopicMeter] = cluster match {
+  override protected def topicMeters(cluster: ClusterInfo): Map[String, Seq[TopicMeter]] = cluster match {
     case _: BrokerClusterInfo =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-      BeanChannel.local().topicMeters().asScala
-    case _ => Seq.empty
+      Map(CommonUtils.hostname() -> BeanChannel.local().topicMeters().asScala)
+    case _ => Map.empty
   }
 
-  override protected def counterMBeans(cluster: ClusterInfo): Seq[CounterMBean] = cluster match {
+  override protected def counterMBeans(cluster: ClusterInfo): Map[String, Seq[CounterMBean]] = cluster match {
     case _: BrokerClusterInfo =>
       /**
         * the metrics we fetch from kafka are only topic metrics so we skip the other beans
         */
-      Seq.empty
+      Map.empty
     case _: StreamClusterInfo =>
       // we fake counters since stream is not really running in fake collie mode
-      Seq(
-        Counter
-          .builder()
-          .group(StreamRoute.STREAM_GROUP)
-          .name("fakeCounter")
-          .value(CommonUtils.randomInteger().toLong)
-          .build()
-      )
+      if (clusterCache.containsKey(cluster.key)) {
+        println(s"[CHIA] cluster.key.toPlain:${cluster.key.toPlain}")
+        Map(
+          CommonUtils.hostname() -> Seq(
+            Counter
+              .builder()
+              .key(cluster.key)
+              .item("fake counter")
+              .value(CommonUtils.randomInteger().toLong)
+              .build()
+          )
+        )
+      } else Map.empty
     case _ =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-      BeanChannel.local().counterMBeans().asScala
+      Map(CommonUtils.hostname() -> BeanChannel.local().counterMBeans().asScala)
   }
 
   override protected def doCreator(

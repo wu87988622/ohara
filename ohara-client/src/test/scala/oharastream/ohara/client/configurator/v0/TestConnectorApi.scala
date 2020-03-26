@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State._
 import oharastream.ohara.client.configurator.v0.ConnectorApi._
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef.Permission
@@ -28,10 +27,9 @@ import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
-
-import scala.collection.JavaConverters._
 import spray.json.{JsArray, JsString, _}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 class TestConnectorApi extends OharaTest {
@@ -141,7 +139,7 @@ class TestConnectorApi extends OharaTest {
       aliveNodes = Set.empty,
       error = None,
       tasksStatus = Seq.empty,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     // pass
@@ -162,7 +160,7 @@ class TestConnectorApi extends OharaTest {
       aliveNodes = Set.empty,
       error = None,
       tasksStatus = Seq.empty,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_INFO_FORMAT
@@ -683,7 +681,7 @@ class TestConnectorApi extends OharaTest {
       error = None,
       aliveNodes = Set.empty,
       tasksStatus = Seq.empty,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
@@ -697,7 +695,7 @@ class TestConnectorApi extends OharaTest {
       error = None,
       aliveNodes = Set.empty,
       tasksStatus = Seq.empty,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
     ConnectorApi.CONNECTOR_INFO_FORMAT.read(ConnectorApi.CONNECTOR_INFO_FORMAT.write(cluster)) shouldBe cluster

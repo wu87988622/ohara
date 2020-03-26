@@ -16,10 +16,9 @@
 
 package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.BrokerCollie
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi
 import oharastream.ohara.client.configurator.v0.TopicApi._
@@ -28,9 +27,8 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook._
-import oharastream.ohara.configurator.store.{DataStore, MeterCache}
+import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo
-import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
 import scala.collection.JavaConverters._
@@ -41,22 +39,12 @@ private[configurator] object TopicRoute {
   private[this] val LOG = Logger(TopicRoute.getClass)
 
   /**
-    * fetch the topic meters from broker cluster
-    * @param brokerCluster the broker cluster hosting the topic
-    * @param topicName topic name which used to filter the correct meter
-    * @return meters belong to the input topic
-    */
-  private[this] def metrics(brokerCluster: BrokerClusterInfo, topicName: String)(
-    implicit meterCache: MeterCache
-  ): Metrics = Metrics(meterCache.meters(brokerCluster).getOrElse(topicName, Seq.empty))
-
-  /**
     * update the metrics for input topic
     * @param topicInfo topic info
     * @return updated topic info
     */
   private[this] def updateState(topicInfo: TopicInfo)(
-    implicit meterCache: MeterCache,
+    implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
     objectChecker: ObjectChecker,
     brokerCollie: BrokerCollie,
@@ -71,7 +59,7 @@ private[configurator] object TopicRoute {
           Future.successful(
             topicInfo.copy(
               partitionInfos = Seq.empty,
-              metrics = Metrics.EMPTY,
+              nodeMetrics = Map.empty,
               state = None
             )
           )
@@ -110,7 +98,7 @@ private[configurator] object TopicRoute {
                             )
                         ),
                         state = state,
-                        metrics = metrics(brokerClusterInfo, topicInfo.key.topicNameOnKafka)
+                        nodeMetrics = meterCache.meters(brokerClusterInfo, topicInfo.key)
                       )
                   }
               }
@@ -121,13 +109,13 @@ private[configurator] object TopicRoute {
           LOG.debug(s"failed to fetch stats for $topicInfo", e)
           topicInfo.copy(
             partitionInfos = Seq.empty,
-            metrics = Metrics.EMPTY,
+            nodeMetrics = Map.empty,
             state = None
           )
       }
 
   private[this] def hookOfGet(
-    implicit meterCache: MeterCache,
+    implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
     objectChecker: ObjectChecker,
     brokerCollie: BrokerCollie,
@@ -135,7 +123,7 @@ private[configurator] object TopicRoute {
   ): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) => updateState(topicInfo)
 
   private[this] def hookOfList(
-    implicit meterCache: MeterCache,
+    implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
     objectChecker: ObjectChecker,
     brokerCollie: BrokerCollie,
@@ -150,7 +138,7 @@ private[configurator] object TopicRoute {
       TopicInfo(
         settings = creation.settings,
         partitionInfos = Seq.empty,
-        metrics = Metrics.EMPTY,
+        nodeMetrics = Map.empty,
         state = None,
         lastModified = CommonUtils.current()
       )
@@ -301,7 +289,7 @@ private[configurator] object TopicRoute {
                   .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
                   .check()
                   .map(_.runningBrokers.head)
-                  .flatMap(topicAdmin)
+                  .flatMap(b => topicAdmin(b))
                   .flatMap { topicAdmin =>
                     topicAdmin
                       .deleteTopic(topicInfo.key)
@@ -315,7 +303,7 @@ private[configurator] object TopicRoute {
     implicit store: DataStore,
     objectChecker: ObjectChecker,
     adminCleaner: AdminCleaner,
-    meterCache: MeterCache,
+    meterCache: MetricsCache,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): server.Route =

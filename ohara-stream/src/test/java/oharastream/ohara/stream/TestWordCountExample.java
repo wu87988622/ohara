@@ -51,7 +51,8 @@ public class TestWordCountExample extends WithBroker {
     // prepare ohara environment
     Map<String, String> settings = new HashMap<>();
     settings.putIfAbsent(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps());
-    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), CommonUtils.randomString(10));
+    settings.putIfAbsent(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5));
+    settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), "TestWordCountExample");
     settings.putIfAbsent(
         StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
         "[" + TopicKey.toJsonString(fromTopic) + "]");

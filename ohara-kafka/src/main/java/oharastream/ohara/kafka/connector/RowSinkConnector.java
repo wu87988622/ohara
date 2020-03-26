@@ -80,7 +80,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
   protected CounterBuilder counterBuilder() {
     if (taskSetting == null)
       throw new IllegalArgumentException("you can't create a counter before starting connector");
-    return CounterBuilder.of().group(taskSetting.name());
+    return CounterBuilder.of().key(taskSetting.connectorKey());
   }
 
   /**

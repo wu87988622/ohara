@@ -17,6 +17,7 @@
 package oharastream.ohara.kafka.connector;
 
 import oharastream.ohara.common.pattern.Builder;
+import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.metrics.basic.Counter;
 
 /**
@@ -37,16 +38,16 @@ public final class CounterBuilder implements Builder<Counter> {
    * We hind group from connector developer since the group must be the id of connector. Otherwise,
    * Ohara Configurator can't fetch metrics for specific connectors.
    *
-   * @param group group and it must be equal with connector's id
+   * @param key it must be equal with connector's key
    * @return this builder
    */
-  CounterBuilder group(String group) {
-    builder.group(group);
+  CounterBuilder key(ObjectKey key) {
+    builder.key(key);
     return this;
   }
 
   public CounterBuilder name(String name) {
-    builder.name(name);
+    builder.item(name);
     return this;
   }
 

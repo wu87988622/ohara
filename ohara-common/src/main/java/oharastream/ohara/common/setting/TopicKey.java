@@ -86,6 +86,6 @@ public interface TopicKey extends ObjectKey {
    * @return topic name for kafka
    */
   default String topicNameOnKafka() {
-    return group() + "-" + name();
+    return toPlain();
   }
 }

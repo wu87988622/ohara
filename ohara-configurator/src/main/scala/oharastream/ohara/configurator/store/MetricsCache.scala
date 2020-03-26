@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ClusterInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Meter
+import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -32,11 +32,28 @@ import oharastream.ohara.common.util.Releasable
 
 import scala.concurrent.duration._
 
-trait MeterCache extends Releasable {
-  def meters(clusterInfo: ClusterInfo): Map[String, Seq[Meter]]
+trait MetricsCache extends Releasable {
+  /**
+    * get the metrics of specify cluster
+    * @param clusterInfo cluster
+    * @return node -> object key -> meters
+    */
+  def meters(clusterInfo: ClusterInfo): Map[String, Map[ObjectKey, Metrics]]
+
+  /**
+    * get the metrics of specify object from specify cluster
+    * @param clusterInfo cluster
+    * @return node -> meters
+    */
+  def meters(clusterInfo: ClusterInfo, key: ObjectKey): Map[String, Metrics] =
+    meters(clusterInfo)
+      .map {
+        case (hostname, keyAndMeters) =>
+          hostname -> keyAndMeters.getOrElse(key, Metrics.EMPTY)
+      }
 }
 
-object MeterCache {
+object MetricsCache {
   def builder: Builder = new Builder()
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
@@ -50,11 +67,11 @@ object MeterCache {
     override def toString: String = s"key:$key, service:$service"
   }
 
-  class Builder private[MeterCache] extends oharastream.ohara.common.pattern.Builder[MeterCache] {
-    private[this] var refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]] = _
-    private[this] var frequency: Duration                                        = 5 seconds
+  class Builder private[MetricsCache] extends oharastream.ohara.common.pattern.Builder[MetricsCache] {
+    private[this] var refresher: () => Map[ClusterInfo, Map[String, Map[ObjectKey, Metrics]]] = _
+    private[this] var frequency: Duration                                                     = 5 seconds
 
-    def refresher(refresher: () => Map[ClusterInfo, Map[String, Seq[Meter]]]): Builder = {
+    def refresher(refresher: () => Map[ClusterInfo, Map[String, Map[ObjectKey, Metrics]]]): Builder = {
       this.refresher = Objects.requireNonNull(refresher)
       this
     }
@@ -65,12 +82,12 @@ object MeterCache {
       this
     }
 
-    override def build: MeterCache = new MeterCache {
+    override def build: MetricsCache = new MetricsCache {
       import scala.collection.JavaConverters._
       private[this] val refresher = Objects.requireNonNull(Builder.this.refresher)
       private[this] val closed    = new AtomicBoolean(false)
       private[this] val cache = RefreshableCache
-        .builder[RequestKey, Map[String, Seq[Meter]]]()
+        .builder[RequestKey, Map[String, Map[ObjectKey, Metrics]]]()
         .supplier(
           () =>
             refresher().map {
@@ -92,7 +109,7 @@ object MeterCache {
         }
       )
 
-      override def meters(clusterInfo: ClusterInfo): Map[String, Seq[Meter]] =
+      override def meters(clusterInfo: ClusterInfo): Map[String, Map[ObjectKey, Metrics]] =
         cache.get(key(clusterInfo)).orElse(Map.empty)
 
       override def close(): Unit = if (closed.compareAndSet(false, true)) Releasable.close(cache)

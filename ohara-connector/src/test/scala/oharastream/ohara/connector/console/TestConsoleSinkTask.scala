@@ -20,24 +20,33 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.rule.OharaTest
+import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import org.apache.kafka.connect.sink.SinkRecord
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.concurrent.duration._
 class TestConsoleSinkTask extends OharaTest {
+  private[this] val connectorKey = ConnectorKey.of("group", "TestConsoleSinkTask")
   private[this] def configs(key: String, value: String): java.util.Map[String, String] =
     Map(
-      "name" -> CommonUtils.randomString(),
-      key    -> value
+      ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()  -> ConnectorKey.toJsonString(connectorKey),
+      ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> CommonUtils.randomString(),
+      key                                               -> value
     ).asJava
 
   @Test
   def testEmptySetting(): Unit = {
     val task = new ConsoleSinkTask()
-    task.start(java.util.Collections.singletonMap("name", CommonUtils.randomString()))
+    task.start(
+      Map(
+        ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()  -> ConnectorKey.toJsonString(connectorKey),
+        ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> CommonUtils.randomString()
+      ).asJava
+    )
     task.freq shouldBe CONSOLE_FREQUENCE_DEFAULT
     task.divider shouldBe CONSOLE_ROW_DIVIDER_DEFAULT
   }

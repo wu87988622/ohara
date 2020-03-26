@@ -17,7 +17,6 @@
 package oharastream.ohara.agent
 
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.common.rule.OharaTest
@@ -42,7 +41,7 @@ class TestStreamCreator extends OharaTest {
       StreamClusterInfo(
         settings = creation.settings,
         aliveNodes = Set.empty,
-        metrics = Metrics.EMPTY,
+        nodeMetrics = Map.empty,
         state = None,
         error = None,
         lastModified = CommonUtils.current()
@@ -148,7 +147,7 @@ class TestStreamCreator extends OharaTest {
       aliveNodes = Set.empty,
       state = None,
       error = None,
-      metrics = Metrics.EMPTY,
+      nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
 

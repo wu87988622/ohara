@@ -59,7 +59,7 @@ public abstract class Stream implements WithDefinitions {
 
           OStream<Row> ostream =
               OStream.builder()
-                  .appId(streamSetting.name())
+                  .key(streamSetting.key())
                   .bootstrapServers(streamSetting.brokerConnectionProps())
                   // TODO: Currently, the number of from topics must be 1
                   // https://github.com/oharastream/ohara/issues/688

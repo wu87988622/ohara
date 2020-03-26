@@ -190,9 +190,10 @@ object ConnectorApi {
     aliveNodes: Set[String],
     error: Option[String],
     tasksStatus: Seq[Status],
-    metrics: Metrics,
+    nodeMetrics: Map[String, Metrics],
     lastModified: Long
-  ) extends Data {
+  ) extends Data
+      with Metricsable {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
 
     override def key: ConnectorKey = settings.key
@@ -223,7 +224,13 @@ object ConnectorApi {
     new RootJsonFormat[ConnectorInfo] {
       private[this] val format                        = jsonFormat7(ConnectorInfo)
       override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
-      override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+      override def write(obj: ConnectorInfo): JsValue = {
+        // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
+        val fields = format.write(obj).asJsObject.fields ++ Map(
+          "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
+        )
+        flattenSettings(JsObject(fields))
+      }
     }
 
   /**
