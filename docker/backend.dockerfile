@@ -41,12 +41,6 @@ RUN yum install -y \
 # export JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/jre
 
-# install dependencies for mysql
-# TODO: remove this !!! see https://github.com/oharastream/ohara/issues/182 ... by chia
-RUN yum install -y \
-  libaio \
-  numactl
-
 # add user
 ARG USER=ohara
 RUN groupadd $USER
