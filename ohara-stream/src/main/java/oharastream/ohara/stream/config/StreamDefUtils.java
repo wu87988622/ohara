@@ -108,7 +108,7 @@ public final class StreamDefUtils {
 
   public static final SettingDef CLASS_NAME_DEFINITION =
       SettingDef.builder()
-          .key("className")
+          .key("stream.class")
           .group(CORE_GROUP)
           .orderInGroup(ORDER_COUNTER.getAndIncrement())
           .displayName("the stream class you want to run")
