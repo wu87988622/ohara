@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 
 import { useApi } from 'context';
 import * as hooks from 'hooks';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './streamActions';
 import { reducer, initialState } from './streamReducer';
 import { initializeRoutine } from './streamRoutines';
@@ -29,7 +28,7 @@ const StreamDispatchContext = React.createContext();
 
 const StreamProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { streamApi } = useApi();
   const pipelineGroup = hooks.usePipelineGroup();
   const pipelineName = hooks.usePipelineName();
@@ -76,7 +75,7 @@ const useStreamDispatch = () => {
 const useStreamActions = () => {
   const state = useStreamState();
   const dispatch = useStreamDispatch();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { streamApi } = useApi();
   return React.useMemo(
     () => createActions({ state, dispatch, eventLog, streamApi }),

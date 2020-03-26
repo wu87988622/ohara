@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './createWorkspaceActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
-export * from './nodeActions';
-export * from './eventLogActions';
+import { ofType } from 'redux-observable';
+import { of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+
+import * as actions from 'store/actions';
+
+export default action$ =>
+  action$.pipe(
+    ofType(actions.clearNotifications.TRIGGER),
+    map(() => actions.clearNotifications.success()),
+    catchError(res => of(actions.clearNotifications.failure(res))),
+  );

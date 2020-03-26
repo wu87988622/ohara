@@ -21,7 +21,6 @@ import { Form, Field } from 'react-final-form';
 
 import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import {
   required,
   minNumber,
@@ -41,7 +40,7 @@ const AddTopicDialog = props => {
     isOpen: isDialogOpen,
     close: closeDialog,
   } = context.useAddTopicDialog();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const replicationFactor = _.get(currentBroker, 'aliveNodes', []);
 
   const onSubmit = async (values, form) => {

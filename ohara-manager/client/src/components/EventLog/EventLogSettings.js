@@ -27,21 +27,21 @@ import Typography from '@material-ui/core/Typography';
 import { InputField, Checkbox } from 'components/common/Form';
 import { minNumber, composeValidators } from 'utils/validate';
 import Wrapper from './EventLogSettingsStyles';
-import { useEventLogActions, useEventLogState } from 'context';
+import * as hooks from 'hooks';
 
 const EventLogSettings = props => {
-  const { updateSettings } = useEventLogActions();
-  const { settings } = useEventLogState();
+  const updateSettings = hooks.useUpdateEventSettings();
+  const { data: eventSettings } = hooks.useEventSettings();
 
-  const onSubmit = async values => {
-    await updateSettings(values);
+  const onSubmit = values => {
+    updateSettings(values);
     props.onSave();
   };
 
   return (
     <Form
       onSubmit={onSubmit}
-      initialValues={settings.data}
+      initialValues={eventSettings}
       render={({ handleSubmit, submitting, pristine, invalid, values }) => {
         return (
           <Wrapper>

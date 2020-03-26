@@ -23,7 +23,6 @@ import { Dialog } from 'components/common/Dialog';
 
 const EventLogContentDialog = () => {
   const { isOpen, close, data: log } = useEventLogContentDialog();
-
   return (
     <>
       <Dialog

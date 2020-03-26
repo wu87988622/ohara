@@ -30,9 +30,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     createConnector: async values => {
@@ -44,9 +44,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     updateConnector: async values => {
@@ -58,9 +58,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     stageConnector: async values => {
@@ -72,9 +72,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     deleteConnector: async name => {
@@ -86,9 +86,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     startConnector: async name => {
@@ -100,9 +100,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
     stopConnector: async name => {
@@ -114,9 +114,9 @@ export const createActions = context => {
         dispatch(routine.success(data));
         return action.success(data);
       } catch (e) {
-        eventLog.error(e.getPayload());
-        dispatch(routine.failure(e.message));
-        return action.failure(e.message);
+        eventLog.error(e);
+        dispatch(routine.failure(e.data.error));
+        return action.failure(e.data.error);
       }
     },
   };

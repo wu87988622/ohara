@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 
 import { useApi } from 'context';
 import * as hooks from 'hooks';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './logRoutines';
 import { createActions } from './logActions';
 import { reducer, initialState } from './logReducer';
@@ -67,7 +66,7 @@ LogProvider.propTypes = {
 const useLogActions = () => {
   const state = useLogState();
   const dispatch = useLogDispatch();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { logApi } = useApi();
   return React.useMemo(
     () => createActions({ state, dispatch, eventLog, logApi }),

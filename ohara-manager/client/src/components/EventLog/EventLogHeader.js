@@ -30,17 +30,14 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import { QuickSearch } from 'components/common/Search';
 import { Tooltip } from 'components/common/Tooltip';
 import Popover from 'components/common/Popover';
-import {
-  useEventLogActions,
-  useEventLogDialog,
-  useEventLogState,
-} from 'context';
+import { useEventLogDialog } from 'context';
+import * as hooks from 'hooks';
 import Wrapper from './EventLogHeaderStyles';
 import EventLogSettings from './EventLogSettings';
 
 const EventLogHeader = ({ onFilter }) => {
-  const { clearEventLogs } = useEventLogActions();
-  const { data: logs } = useEventLogState();
+  const clearEventLogs = hooks.useClearEventLogs();
+  const { data: logs } = hooks.useEventLogs();
   const { close } = useEventLogDialog();
   const settingsPopoverRef = useRef(null);
 

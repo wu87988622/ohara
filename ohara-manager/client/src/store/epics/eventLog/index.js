@@ -15,23 +15,20 @@
  */
 
 import { combineEpics } from 'redux-observable';
-
-import appEpics from './appEpics';
-import brokerEpics from './brokerEpics';
-import pipelineEpics from './pipeline';
-import workerEpics from './workerEpics';
-import workspaceEpics from './workspace';
-import zookeeperEpics from './zookeeperEpics';
-import nodeEpics from './nodeEpics';
-import eventLogEpics from './eventLog';
+import clearEventLogsEpic from './clearEventLogsEpic';
+import clearNotificationsEpic from './clearNotificationsEpic';
+import createEventLogEpic from './createEventLogEpic';
+import deleteEventLogsEpic from './deleteEventLogsEpic';
+import fetchEventLogsEpic from './fetchEventLogsEpic';
+import updateNotificationsEpic from './updateNotificationsEpic';
+import updateSettingsEpic from './updateSettingsEpic';
 
 export default combineEpics(
-  appEpics,
-  pipelineEpics,
-  workspaceEpics,
-  brokerEpics,
-  workerEpics,
-  zookeeperEpics,
-  nodeEpics,
-  eventLogEpics,
+  clearEventLogsEpic,
+  clearNotificationsEpic,
+  createEventLogEpic,
+  deleteEventLogsEpic,
+  fetchEventLogsEpic,
+  updateNotificationsEpic,
+  updateSettingsEpic,
 );

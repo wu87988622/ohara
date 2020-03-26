@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './createWorkspaceActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
-export * from './nodeActions';
-export * from './eventLogActions';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+const getEntities = state => state?.entities?.eventLogs;
+
+export const makeGetEventLogs = () =>
+  createSelector([getEntities], entities => entities);
+
+export const makeGetNotifications = () =>
+  createSelector([getEntities], entities => _.get(entities, 'notifications'));
+
+export const makeGetSettings = () =>
+  createSelector([getEntities], entities => _.get(entities, 'settings'));

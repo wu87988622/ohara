@@ -15,29 +15,50 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { delay, get, size } from 'lodash';
+import { isEmpty, delay, get, size, take } from 'lodash';
 
-import { useEventLogActions, useEventLogState } from 'context';
 import StatusBar from 'components/common/StatusBar';
 import EventLogList from './EventLogList';
 import EventLogHeader from './EventLogHeader';
 
 import Wrapper from './EventLogStyles';
+import * as hooks from 'hooks';
 
 const EventLog = () => {
+  // used to keep filtered log
   const [logs, setLogs] = useState([]);
-  const { isFetching, notifications, settings } = useEventLogState();
+  const { isFetching } = hooks.useEventLogs();
+  const { data: settings } = hooks.useEventSettings();
+  const { data: notifications } = hooks.useEventNotifications();
 
-  const { clearNotifications } = useEventLogActions();
+  const clearNotifications = hooks.useClearEventNotifications();
+  const fetchEventLogs = hooks.useFetchEventLogs();
+  const deleteEventLogs = hooks.useDeleteEventLogs();
   const [cleared, setCleared] = useState(false);
+
+  useEffect(() => {
+    fetchEventLogs();
+  }, [fetchEventLogs]);
+
+  React.useEffect(() => {
+    const unlimited = get(settings, 'unlimited');
+    const limit = get(settings, 'limit');
+
+    if (unlimited || isEmpty(logs)) return;
+
+    if (logs.length > limit) {
+      const keysToDelete = take(logs, logs.length - limit).map(log => log.key);
+      deleteEventLogs(keysToDelete);
+    }
+  }, [deleteEventLogs, logs, settings]);
 
   // When the event log page opens, should clear the event log notifications.
   useEffect(() => {
-    if (!cleared && notifications.data.error > 0) {
+    if (!cleared && notifications.error > 0) {
       delay(() => clearNotifications(), 250);
       setCleared(true);
     }
-  }, [cleared, clearNotifications, notifications.data.error, setCleared]);
+  }, [cleared, clearNotifications, notifications.error, setCleared]);
 
   const handleFilter = filteredLogs => setLogs(filteredLogs);
 

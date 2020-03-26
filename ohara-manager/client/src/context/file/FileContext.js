@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
 import * as hooks from 'hooks';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { initializeRoutine } from './fileRoutines';
 import { createActions } from './fileActions';
 import { reducer, initialState } from './fileReducer';
@@ -66,7 +65,7 @@ FileProvider.propTypes = {
 const useFileActions = () => {
   const state = useFileState();
   const dispatch = useFileDispatch();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { fileApi } = useApi();
   return React.useMemo(
     () => createActions({ state, dispatch, eventLog, fileApi }),

@@ -23,6 +23,7 @@ import workers from './workers';
 import workspaces from './workspaces';
 import zookeepers from './zookeepers';
 import nodes from './nodes';
+import eventLogs from './eventLogs';
 
 export const entity = type => (state = {}, action) => {
   const { payload } = action;
@@ -40,4 +41,5 @@ export default combineReducers({
   workspaces,
   zookeepers,
   nodes,
+  eventLogs,
 });

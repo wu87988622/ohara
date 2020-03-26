@@ -10264,6 +10264,13 @@ run-queue@^1.0.0, run-queue@^1.0.3:
   dependencies:
     aproba "^1.1.1"
 
+rxjs-watcher@1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/rxjs-watcher/-/rxjs-watcher-1.1.3.tgz#7995716218faddd6d404aa4e63119605b51eacb8"
+  integrity sha512-a34yFD6FvGiXVRopwJm2Lzw8CVc2o1W+yggYIzCtycsOm4ZTpkTN6FubFvBlymJyzAEWAfGznHMWcixQYK6F3w==
+  dependencies:
+    rxjs "^6.3.3"
+
 rxjs@6.5.4, rxjs@^6.3.3, rxjs@^6.5.3:
   version "6.5.4"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.5.4.tgz#e0777fe0d184cec7872df147f303572d414e211c"

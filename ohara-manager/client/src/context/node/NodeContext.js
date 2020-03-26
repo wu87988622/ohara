@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from 'context';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
+import * as hooks from 'hooks';
 import { createActions } from './nodeActions';
 import { reducer, initialState } from './nodeReducer';
 
@@ -26,7 +26,7 @@ const NodeDispatchContext = React.createContext();
 
 const NodeProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { nodeApi } = useApi();
 
   React.useEffect(() => {
@@ -67,7 +67,7 @@ const useNodeDispatch = () => {
 const useNodeActions = () => {
   const state = useNodeState();
   const dispatch = useNodeDispatch();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { nodeApi } = useApi();
   return React.useMemo(
     () => createActions({ state, dispatch, eventLog, nodeApi }),

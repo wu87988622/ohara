@@ -22,11 +22,12 @@ import Link from '@material-ui/core/Link';
 import { getDateFromTimestamp } from 'utils/date';
 
 import Row from './EventLogRowStyles';
+import { LOG_LEVEL } from 'hooks';
 
 const EventLogRow = ({ onClick, rowData: log, style }) => {
   const title = get(log, 'title');
-  const message = get(log, 'payload.errors[0].message', '');
-  const isError = get(log, 'type') === 'error';
+  const message = get(log, 'payload.error.message', '');
+  const isError = get(log, 'type') === LOG_LEVEL.error;
 
   return (
     <Row style={style} className={clx({ error: isError })}>

@@ -25,6 +25,7 @@ export const ENTITY_TYPE = {
   workspaces: 'workspaces',
   zookeepers: 'zookeepers',
   nodes: 'nodes',
+  eventLogs: 'eventLogs',
 };
 
 export const broker = new schema.Entity(ENTITY_TYPE.brokers, undefined, {
@@ -54,3 +55,5 @@ export const zookeeper = new schema.Entity(ENTITY_TYPE.zookeepers, undefined, {
 export const node = new schema.Entity(ENTITY_TYPE.nodes, undefined, {
   idAttribute: node => node.hostname,
 });
+
+export const eventLog = new schema.Entity(ENTITY_TYPE.eventLogs, undefined);

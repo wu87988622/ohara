@@ -23,3 +23,4 @@ export * from './workerHooks';
 export * from './workspaceHooks';
 export * from './zookeeperHooks';
 export * from './nodeHooks';
+export * from './eventLogHooks';

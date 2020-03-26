@@ -32,7 +32,6 @@ import NumberFormat from 'react-number-format';
 
 import TopicChip from './TopicChip';
 import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { Wrapper } from './ViewTopicDialogStyles';
 import * as context from 'context';
 import * as hooks from 'hooks';
@@ -47,7 +46,7 @@ const ViewTopicDialog = () => {
   const { isFetching: isDeleting } = context.useTopicState();
   const { deleteTopic } = context.useTopicActions();
   const pipelines = hooks.usePipelines();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
 
   if (!topic) return null;
 

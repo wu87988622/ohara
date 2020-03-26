@@ -21,3 +21,4 @@ export * from './workerSelector';
 export * from './workspaceSelector';
 export * from './zookeeperSelector';
 export * from './nodeSelector';
+export * from './eventLogSelector';

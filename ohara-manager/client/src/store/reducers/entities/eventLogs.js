@@ -15,7 +15,7 @@
  */
 
 import { reject, includes } from 'lodash';
-import * as routines from './eventLogRoutines';
+import * as actions from 'store/actions';
 
 const initialState = {
   isFetching: false,
@@ -42,31 +42,23 @@ const initialState = {
   },
 };
 
-const reducer = (state, action) => {
+export default function reducer(state = initialState, action) {
   switch (action.type) {
-    case routines.fetchEventLogsRoutine.REQUEST:
-    case routines.createEventLogRoutine.REQUEST:
-    case routines.clearEventLogsRoutine.REQUEST:
-      return {
-        ...state,
-        isFetching: true,
-        error: null,
-      };
-    case routines.fetchEventLogsRoutine.SUCCESS:
+    case actions.fetchEventLogs.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: action.payload || [],
         lastUpdated: new Date(),
       };
-    case routines.createEventLogRoutine.SUCCESS:
+    case actions.createEventLog.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: [...state.data, action.payload],
         lastUpdated: new Date(),
       };
-    case routines.deleteEventLogsRoutine.SUCCESS:
+    case actions.deleteEventLogs.SUCCESS:
       return {
         ...state,
         isFetching: false,
@@ -75,33 +67,14 @@ const reducer = (state, action) => {
         }),
         lastUpdated: new Date(),
       };
-    case routines.clearEventLogsRoutine.SUCCESS:
+    case actions.clearEventLogs.SUCCESS:
       return {
         ...state,
         isFetching: false,
         data: [],
         lastUpdated: new Date(),
       };
-    case routines.fetchEventLogsRoutine.FAILURE:
-    case routines.createEventLogRoutine.FAILURE:
-    case routines.clearEventLogsRoutine.FAILURE:
-      return {
-        ...state,
-        isFetching: false,
-        error: action.payload,
-      };
-    case routines.fetchSettingsRoutine.REQUEST:
-    case routines.updateSettingsRoutine.REQUEST:
-      return {
-        ...state,
-        settings: {
-          ...state.settings,
-          isFetching: true,
-          error: null,
-        },
-      };
-    case routines.fetchSettingsRoutine.SUCCESS:
-    case routines.updateSettingsRoutine.SUCCESS:
+    case actions.updateSettings.SUCCESS:
       return {
         ...state,
         settings: {
@@ -111,30 +84,7 @@ const reducer = (state, action) => {
           lastUpdated: new Date(),
         },
       };
-    case routines.fetchSettingsRoutine.FAILURE:
-    case routines.updateSettingsRoutine.FAILURE:
-      return {
-        ...state,
-        settings: {
-          ...state.settings,
-          isFetching: false,
-          error: action.payload,
-        },
-      };
-
-    case routines.fetchNotificationsRoutine.REQUEST:
-    case routines.updateNotificationsRoutine.REQUEST:
-    case routines.clearNotificationsRoutine.REQUEST:
-      return {
-        ...state,
-        notifications: {
-          ...state.notifications,
-          isFetching: true,
-          error: null,
-        },
-      };
-    case routines.fetchNotificationsRoutine.SUCCESS:
-    case routines.updateNotificationsRoutine.SUCCESS:
+    case actions.updateNotifications.SUCCESS:
       return {
         ...state,
         notifications: {
@@ -144,7 +94,7 @@ const reducer = (state, action) => {
           lastUpdated: new Date(),
         },
       };
-    case routines.clearNotificationsRoutine.SUCCESS:
+    case actions.clearNotifications.SUCCESS:
       return {
         ...state,
         notifications: {
@@ -154,9 +104,25 @@ const reducer = (state, action) => {
           lastUpdated: new Date(),
         },
       };
-    case routines.fetchNotificationsRoutine.FAILURE:
-    case routines.updateNotificationsRoutine.FAILURE:
-    case routines.clearNotificationsRoutine.FAILURE:
+    case actions.fetchEventLogs.FAILURE:
+    case actions.createEventLog.FAILURE:
+    case actions.clearEventLogs.FAILURE:
+      return {
+        ...state,
+        isFetching: false,
+        error: action.payload,
+      };
+    case actions.updateSettings.FAILURE:
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          isFetching: false,
+          error: action.payload,
+        },
+      };
+    case actions.updateNotifications.FAILURE:
+    case actions.clearNotifications.FAILURE:
       return {
         ...state,
         notifications: {
@@ -168,6 +134,4 @@ const reducer = (state, action) => {
     default:
       return state;
   }
-};
-
-export { reducer, initialState };
+}

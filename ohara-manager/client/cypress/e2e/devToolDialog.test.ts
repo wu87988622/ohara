@@ -16,11 +16,6 @@
 
 import { deleteAllServices } from '../utils';
 
-// It's uppercase in AppBar
-const workspaceNameInAppBar = Cypress.env('servicePrefix')
-  .substring(0, 2)
-  .toUpperCase();
-
 describe('DevToolDialog - Topics tab', () => {
   beforeEach(async () => await deleteAllServices());
 
@@ -57,6 +52,10 @@ describe('DevToolDialog - Topics tab', () => {
           cy.stub(win, 'open');
         },
       });
+
+      cy.findAllByText(`${res.workspaceName}`, { exact: false }).should(
+        'exist',
+      );
 
       // Check the topic tab exist
       cy.findByTitle('Developer Tools').click();
@@ -131,17 +130,21 @@ describe('DevToolDialog - Topics tab', () => {
 describe('DevToolDialog - Logs tab', () => {
   beforeEach(async () => await deleteAllServices());
 
-  it('with an exist workspace, configurator log of devTool should work normally', () => {
+  it.only('with an exist workspace, configurator log of devTool should work normally', () => {
     cy.createServices({
       withWorkspace: true,
-    }).then(() => {
-      cy.visit('/', {
+    }).then(res => {
+      cy.visit(`/${res.workspaceName}`, {
         onBeforeLoad(win) {
           // to surveillance the window.open() event
           // we stub it and do nothing
           cy.stub(win, 'open');
         },
       });
+
+      cy.findAllByText(`${res.workspaceName}`, { exact: false }).should(
+        'exist',
+      );
 
       // Check the log tab exist
       cy.findByTitle('Developer Tools')

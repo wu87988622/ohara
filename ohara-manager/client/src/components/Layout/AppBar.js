@@ -46,7 +46,7 @@ const AppBar = () => {
     close: closeEventLog,
   } = context.useEventLogDialog();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
-  const eventLogState = context.useEventLogState();
+  const { data: notifications } = hooks.useEventNotifications();
   const createWorkspaceState = hooks.useCreateWorkspaceState();
 
   return (
@@ -101,7 +101,7 @@ const AppBar = () => {
               }}
             >
               <Badge
-                badgeContent={get(eventLogState, 'notifications.data.error', 0)}
+                badgeContent={get(notifications, 'error', 0)}
                 color="secondary"
               >
                 <AssignmentIcon />

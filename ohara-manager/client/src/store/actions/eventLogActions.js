@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './createWorkspaceActions';
-export * from './introActions';
-export * from './pipelineActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
-export * from './nodeActions';
-export * from './eventLogActions';
+import { createRoutine } from 'redux-routines';
+
+export const fetchEventLogs = createRoutine('FETCH_EVENT_LOGS');
+export const createEventLog = createRoutine('CREATE_EVENT_LOG');
+export const deleteEventLogs = createRoutine('DELETE_EVENT_LOGS');
+export const clearEventLogs = createRoutine('CLEAR_EVENT_LOGS');
+
+export const updateSettings = createRoutine('UPDATE_SETTINGS');
+
+export const updateNotifications = createRoutine('UPDATE_NOTIFICATIONS');
+export const clearNotifications = createRoutine('CLEAR_NOTIFICATIONS');

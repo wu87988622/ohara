@@ -20,7 +20,6 @@ import PropTypes from 'prop-types';
 import { initializeRoutine } from './topicRoutines';
 import { useApi } from 'context';
 import * as hooks from 'hooks';
-import { useEventLog } from 'context/eventLog/eventLogHooks';
 import { createActions } from './topicActions';
 import { reducer, initialState } from './topicReducer';
 
@@ -29,7 +28,7 @@ const TopicDispatchContext = React.createContext();
 
 const TopicProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const workspaceName = hooks.useWorkspaceName();
   const { topicApi } = useApi();
 
@@ -76,7 +75,7 @@ TopicProvider.propTypes = {
 const useTopicActions = () => {
   const state = useTopicState();
   const dispatch = useTopicDispatch();
-  const eventLog = useEventLog();
+  const eventLog = hooks.useEventLog();
   const { topicApi } = useApi();
   return React.useMemo(
     () => createActions({ state, dispatch, eventLog, topicApi }),

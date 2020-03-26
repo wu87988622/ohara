@@ -36,6 +36,7 @@ import * as workspaceApi from 'api/workspaceApi';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'hooks';
 
 const createWorkspace$ = action =>
   from(workspaceApi.create(action.payload?.workspaceSettings));
@@ -133,6 +134,12 @@ export default (action$, state$) =>
                                                 actions.switchWorkspace.trigger(
                                                   workspaceRes.data.name,
                                                 ),
+                                                actions.createEventLog.trigger({
+                                                  log: {
+                                                    title: `Successfully created workspace ${workspaceRes.data.name}.`,
+                                                  },
+                                                  type: LOG_LEVEL.info,
+                                                }),
                                               ),
                                             ),
                                             startWith(

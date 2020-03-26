@@ -230,15 +230,12 @@ Cypress.Commands.add(
       .filter(':visible')
       .click();
 
-    // the default workspace name is "workspace1,workspace2,..."
-    // hence, the first two words should be "WO"
-    if (workspaceName) {
-      cy.findAllByText(workspaceName.substring(0, 2).toUpperCase()).should(
-        'exist',
-      );
-    } else {
-      cy.findAllByText(/^wo$/i).should('exist');
-    }
+    cy.findByTitle('Workspace list')
+      .children()
+      .should('not.be.disabled');
+
+    // we need to close the create dialog again...
+    cy.findByTestId('close-intro-button').click();
 
     cy.end();
   },
