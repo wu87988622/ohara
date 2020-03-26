@@ -14,30 +14,37 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import NumberFormat from 'react-number-format';
 import CheckIcon from '@material-ui/icons/Check';
 
+import * as hooks from 'hooks';
 import { Table } from 'components/common/Table';
 import { QuickSearch } from 'components/common/Search';
-import { useFiles } from 'components/Workspace/Edit/hooks';
 import FileActionsMenu from './FileActionsMenu';
 import { Wrapper } from './FileTableStyles';
 
+const tableHeaders = [
+  'Name',
+  'Used',
+  'File size(KB)',
+  'Last modified',
+  'Actions',
+];
+
 const FileTable = () => {
-  const files = useFiles();
+  const files = hooks.useFiles();
+  const fetchFiles = hooks.useFetchFilesAction();
+  const isLoaded = hooks.useIsFileLoaded();
+  const workspaceName = hooks.useWorkspaceName();
   const [filteredFiles, setFilteredFiles] = useState([]);
 
-  const tableHeaders = [
-    'Name',
-    'Used',
-    'File size(KB)',
-    'Last modified',
-    'Actions',
-  ];
+  useEffect(() => {
+    if (!isLoaded) fetchFiles(workspaceName);
+  }, [fetchFiles, isLoaded, workspaceName]);
 
   return (
     <Wrapper>

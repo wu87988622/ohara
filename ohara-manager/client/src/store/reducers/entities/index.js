@@ -18,6 +18,7 @@ import { combineReducers } from 'redux';
 import _ from 'lodash';
 import brokers from './brokers';
 import infos from './infos';
+import files from './files';
 import pipelines from './pipelines';
 import workers from './workers';
 import workspaces from './workspaces';
@@ -36,6 +37,7 @@ export const entity = type => (state = {}, action) => {
 export default combineReducers({
   brokers,
   infos,
+  files,
   pipelines,
   workers,
   workspaces,

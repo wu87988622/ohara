@@ -20,7 +20,7 @@ describe('EventLogDialog', () => {
   before(async () => await deleteAllServices());
 
   it('event log should be empty after removed', () => {
-    // Close the quickstart dialog
+    // Close the intro dialog
     cy.visit('/');
     cy.findByTestId('close-intro-button').click();
 
@@ -41,11 +41,11 @@ describe('EventLogDialog', () => {
         }
       });
 
-    // check the event log should be empty
+    // The event log message should be cleared by now
     cy.findByText('No log').should('exist');
   });
 
-  it('event log should be worked normally', () => {
+  it('event log should work', () => {
     cy.createWorkspace({});
 
     cy.findByTitle('Event logs').click();

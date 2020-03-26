@@ -16,6 +16,7 @@
 
 export * from './brokerSelector';
 export * from './infoSelector';
+export * from './fileSelector';
 export * from './pipelineSelector';
 export * from './workerSelector';
 export * from './workspaceSelector';

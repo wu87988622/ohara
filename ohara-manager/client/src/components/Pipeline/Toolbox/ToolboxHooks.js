@@ -15,10 +15,11 @@
  */
 
 import { useEffect, useState, useRef, useContext } from 'react';
-import { isEmpty } from 'lodash';
+import _ from 'lodash';
 
+import * as hooks from 'hooks';
 import { KIND, CELL_STATUS } from 'const';
-import { useTopicState, useFileActions, useFileState } from 'context';
+import { useTopicState } from 'context';
 import { PaperContext } from '../Pipeline';
 
 export const useTopics = () => {
@@ -58,59 +59,38 @@ export const useTopics = () => {
   return [topics, topicsData];
 };
 
-export const useFiles = () => {
-  const [streams, setStreams] = useState([]);
+const restructureStream = streamClass => {
+  const { name, group, classInfos } = streamClass;
+  const result = classInfos.map(classInfo => ({
+    name: classInfo.className.split('.').pop(),
+    kind: KIND.stream,
+    className: classInfo.className,
+    jarKey: { name, group },
+  }));
 
-  const { fetchFiles } = useFileActions();
-  const { data: files } = useFileState();
-  useEffect(() => {
-    const loadFiles = async () => {
-      await fetchFiles();
-      const streamClasses = files.map(file => {
-        return {
-          name: file.name,
-          group: file.group,
-          classInfos: file.classInfos.filter(
-            classInfo =>
-              classInfo.settingDefinitions.find(def => def.key === 'kind')
-                .defaultValue === KIND.stream,
-          ),
-        };
-      });
-      if (streamClasses.length > 0) {
-        const results = streamClasses
-          .map(streamClass => {
-            return streamClass.classInfos.map(classInfo => {
-              const name = classInfo.className.split('.').pop();
-              return {
-                name,
-                kind: KIND.stream,
-                className: classInfo.className,
-                jarKey: {
-                  name: streamClass.name,
-                  group: streamClass.group,
-                },
-              };
-            });
-          })
-          .sort((a, b) => a[0].className.localeCompare(b[0].className))
-          .reduce((acc, cur) => acc.concat(cur), []);
-        setStreams(results);
-      }
-    };
-
-    loadFiles();
-  }, [fetchFiles, files]);
-
-  return { streams, files };
+  return result;
 };
 
-export const useToolboxHeight = ({
-  expanded,
-  paper,
-  searchResults,
-  connectors,
-}) => {
+export const useStreams = () => {
+  const fetchFiles = hooks.useFetchFilesAction();
+  const isLoaded = hooks.useIsFileLoaded();
+  const workspaceName = hooks.useWorkspaceName();
+  const streamFiles = hooks.useStreamFiles();
+
+  useEffect(() => {
+    if (!isLoaded) fetchFiles(workspaceName);
+  }, [fetchFiles, isLoaded, workspaceName]);
+
+  const streams = streamFiles
+    .map(restructureStream)
+    .filter(stream => !_.isEmpty(stream))
+    .sort((a, b) => a[0].className.localeCompare(b[0].className))
+    .reduce((acc, cur) => acc.concat(cur), []);
+
+  return streams;
+};
+
+export const useToolboxHeight = ({ expanded, searchResults, connectors }) => {
   const [toolboxHeight, setToolboxHeight] = useState(0);
   const toolboxRef = useRef(null);
   const toolboxHeaderRef = useRef(null);
@@ -120,15 +100,15 @@ export const useToolboxHeight = ({
 
   useEffect(() => {
     const paperHeight = paperApi.getBbox().height;
-    const toolboxOffsetTop = toolboxRef.current.state.y + 8; // 8 is the offset top of toolbox
+    const toolboxOffsetTop = toolboxRef.current.state.y + 8; // offset top of toolbox
     const toolboxHeaderHeight = toolboxHeaderRef.current.clientHeight;
     const summaryHeight = panelSummaryRef.current.clientHeight * 4; // we have 4 summaries
-    const itemHeight = 40; // The item is added by JointJS, we cannot get the height thus hard coded
+    const itemHeight = 40; // The item is added by JointJS, we cannot get the height, therefore, the hard coded value
     const addButtonHeight = panelAddButtonRef.current.clientHeight;
     const toolbarHeight = 72;
 
     // When there's search result, we need to use it
-    let { sources, topics, streams, sinks } = isEmpty(searchResults)
+    let { sources, topics, streams, sinks } = _.isEmpty(searchResults)
       ? connectors
       : searchResults;
 
@@ -141,7 +121,7 @@ export const useToolboxHeight = ({
     };
 
     const totalHeight = Object.keys(expanded)
-      .filter(panel => Boolean(expanded[panel])) // Get active panels
+      .filter(panel => Boolean(expanded[panel])) // Get expanded panels
       .map(panel => panelHeights[panel])
       .reduce((acc, cur) => acc + cur, summaryHeight + toolboxHeaderHeight);
 
@@ -151,9 +131,9 @@ export const useToolboxHeight = ({
       return setToolboxHeight(newHeight);
     }
 
-    // Reset, value `0` would remove the scrollbar from Toolbox body
+    // Reset, value `0` will remove the scrollbar from Toolbox body
     return setToolboxHeight(0);
-  }, [connectors, expanded, paper, paperApi, searchResults]);
+  }, [connectors, expanded, paperApi, searchResults]);
 
   return {
     toolboxHeight,

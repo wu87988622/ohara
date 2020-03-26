@@ -58,7 +58,7 @@ describe('FileTable of Workspace Settings', () => {
 
     const files = [source, sink, stream];
 
-    // simulate the behavior of upload file by actually calling API
+    // simulate the behavior of uploading file by actually calling API
     files.forEach(file => {
       cy.createJar(file).then(params => fileApi.create(params));
     });

@@ -19,6 +19,7 @@ export * from './brokerActions';
 export * from './createWorkspaceActions';
 export * from './introActions';
 export * from './pipelineActions';
+export * from './fileActions';
 export * from './workerActions';
 export * from './workspaceActions';
 export * from './zookeeperActions';

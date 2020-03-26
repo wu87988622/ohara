@@ -18,20 +18,20 @@ import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
 import { catchError, map, switchMap, startWith } from 'rxjs/operators';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.deletePipeline.TRIGGER),
+    ofType(actions.deleteFile.TRIGGER),
     map(action => action.payload),
     switchMap(params =>
-      from(pipelineApi.remove(params)).pipe(
+      from(fileApi.remove(params)).pipe(
         map(() => getId(params)),
-        map(id => actions.deletePipeline.success(id)),
-        startWith(actions.deletePipeline.request()),
-        catchError(res => of(actions.deletePipeline.failure(res))),
+        map(id => actions.deleteFile.success(id)),
+        startWith(actions.deleteFile.request()),
+        catchError(err => of(actions.deleteFile.failure(err))),
       ),
     ),
   );

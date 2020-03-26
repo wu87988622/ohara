@@ -37,7 +37,7 @@ import * as hooks from 'hooks';
 import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { AddTopicDialog } from 'components/Topic';
-import { useFiles, useToolboxHeight, useTopics } from './ToolboxHooks';
+import { useStreams, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { PaperContext } from '../Pipeline';
 
 const Toolbox = props => {
@@ -51,7 +51,7 @@ const Toolbox = props => {
   const currentWorker = hooks.useWorker();
   const currentWorkspace = hooks.useWorkspace();
   const currentPipeline = hooks.usePipeline();
-  const { createFile } = context.useFileActions();
+  const createFile = hooks.useCreateFileAction();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const showMessage = context.useSnackbar();
@@ -68,7 +68,7 @@ const Toolbox = props => {
     },
   });
   const paperApi = React.useContext(PaperContext);
-  const { streams } = useFiles();
+  const streams = useStreams();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
   const [topics, topicsData] = useTopics(currentWorkspace);
   const toolboxBodyRef = React.useRef(null);
@@ -96,9 +96,7 @@ const Toolbox = props => {
   const handleFileSelect = async event => {
     const [file] = event.target.files;
 
-    if (!file) return;
-    const { error } = await createFile(file);
-    if (error) return showMessage(error);
+    if (file) createFile(file);
   };
 
   const handleAddGraph = async newName => {

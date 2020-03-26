@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
+import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import * as schema from 'store/schema';
 
-export default action$ =>
-  action$.pipe(
-    ofType(actions.deletePipeline.TRIGGER),
+export default action$ => {
+  return action$.pipe(
+    ofType(actions.createFile.TRIGGER),
     map(action => action.payload),
-    switchMap(params =>
-      from(pipelineApi.remove(params)).pipe(
-        map(() => getId(params)),
-        map(id => actions.deletePipeline.success(id)),
-        startWith(actions.deletePipeline.request()),
-        catchError(res => of(actions.deletePipeline.failure(res))),
+    switchMap(values =>
+      from(fileApi.create(values)).pipe(
+        map(res => normalize(res.data, schema.file)),
+        map(entities => actions.createFile.success(entities)),
+        startWith(actions.createFile.request()),
+        catchError(err => of(actions.createFile.failure(err))),
       ),
     ),
   );
+};

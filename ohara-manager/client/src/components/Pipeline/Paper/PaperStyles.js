@@ -200,6 +200,9 @@ export const StyledPaper = styled.div(
       .type {
         font-size: ${theme.typography.body2};
         color: ${theme.palette.text.secondary};
+        width: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .metrics {

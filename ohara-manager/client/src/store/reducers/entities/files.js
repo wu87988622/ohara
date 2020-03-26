@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import { omit } from 'lodash';
+import * as actions from 'store/actions';
+import { ENTITY_TYPE } from 'store/schema';
+import { entity } from './index';
 
-export const initializeRoutine = createRoutine('INITIALIZE');
-export const fetchFilesRoutine = createRoutine('FETCH_FILES');
-export const createFileRoutine = createRoutine('CREATE_FILE');
-export const deleteFileRoutine = createRoutine('DELETE_FILE');
+export default function reducer(state = {}, action) {
+  switch (action.type) {
+    case actions.deleteFile.SUCCESS:
+      return omit(state, action.payload);
+    default:
+      return entity(ENTITY_TYPE.files)(state, action);
+  }
+}

@@ -14,21 +14,9 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import app from './app';
-import createWorkspace from './createWorkspace';
-import intro from './intro';
-import pipeline from './pipeline';
-import file from './file';
-import workspace from './workspace';
-import node from './node';
+import { combineEpics } from 'redux-observable';
+import createFileEpic from './createFileEpic';
+import fetchFileEpic from './fetchFileEpic';
+import deleteFileEpic from './deleteFileEpic';
 
-export default combineReducers({
-  app,
-  createWorkspace,
-  intro,
-  pipeline,
-  file,
-  workspace,
-  node,
-});
+export default combineEpics(createFileEpic, fetchFileEpic, deleteFileEpic);

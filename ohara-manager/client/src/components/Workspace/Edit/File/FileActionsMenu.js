@@ -26,7 +26,7 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
-import { useFileState, useFileActions } from 'context';
+import * as hooks from 'hooks';
 import { DeleteDialog } from 'components/common/Dialog';
 import FileDownload from './FileDownload';
 
@@ -44,14 +44,14 @@ const FileActionsMenu = ({ file, deleteDisabled }) => {
   };
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { isFetching: deleting } = useFileState();
-  const { deleteFile } = useFileActions();
+  const isWorking = hooks.useIsFileLoading();
+  const deleteFile = hooks.useDeleteFileAction();
 
-  const { name: fileName, group, url: fileUrl } = file;
+  const { name, url: fileUrl } = file;
 
   const handleDelete = async () => {
-    if (fileName) {
-      deleteFile(fileName, group);
+    if (name) {
+      deleteFile(name);
       setIsDeleteDialogOpen(false);
     }
   };
@@ -88,14 +88,14 @@ const FileActionsMenu = ({ file, deleteDisabled }) => {
           <ListItemText primary="Delete" />
         </MenuItem>
       </Menu>
-      <FileDownload ref={downloadEl} url={fileUrl} name={fileName} />
+      <FileDownload ref={downloadEl} url={fileUrl} name={name} />
       <DeleteDialog
         title="Delete file?"
-        content={`Are you sure you want to delete the file: ${fileName} ? This action cannot be undone!`}
+        content={`Are you sure you want to delete the file: ${name} ? This action cannot be undone!`}
         open={isDeleteDialogOpen}
         handleClose={handleClose}
         handleConfirm={handleDelete}
-        working={deleting}
+        working={isWorking}
       />
     </>
   );

@@ -21,6 +21,7 @@ export const ENTITY_TYPE = {
   brokers: 'brokers',
   infos: 'infos',
   pipelines: 'pipelines',
+  files: 'files',
   workers: 'workers',
   workspaces: 'workspaces',
   zookeepers: 'zookeepers',
@@ -37,6 +38,10 @@ export const info = new schema.Entity(ENTITY_TYPE.infos, undefined, {
 });
 
 export const pipeline = new schema.Entity(ENTITY_TYPE.pipelines, undefined, {
+  idAttribute: getId,
+});
+
+export const file = new schema.Entity(ENTITY_TYPE.files, undefined, {
   idAttribute: getId,
 });
 

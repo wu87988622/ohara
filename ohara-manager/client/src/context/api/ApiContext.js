@@ -18,7 +18,6 @@ import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useApp } from 'context';
-import { createApi as createFileApi } from './fileApi';
 import { createApi as createNodeApi } from './nodeApi';
 import { createApi as createTopicApi } from './topicApi';
 import { createApi as createConnectorApi } from './connectorApi';
@@ -32,7 +31,6 @@ const ApiProvider = ({ children }) => {
   const {
     brokerGroup,
     connectorGroup,
-    fileGroup,
     pipelineGroup,
     streamGroup,
     topicGroup,
@@ -47,11 +45,6 @@ const ApiProvider = ({ children }) => {
     () => createConnectorApi({ connectorGroup, workerKey, topicGroup }),
     [connectorGroup, workerKey, topicGroup],
   );
-
-  const fileApi = useMemo(() => createFileApi({ fileGroup, workspaceKey }), [
-    fileGroup,
-    workspaceKey,
-  ]);
 
   const logApi = useMemo(
     () =>
@@ -85,7 +78,6 @@ const ApiProvider = ({ children }) => {
     <ApiContext.Provider
       value={{
         connectorApi,
-        fileApi,
         logApi,
         nodeApi,
         pipelineApi,

@@ -31,12 +31,7 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import PipelinePropertyForm from './PipelinePropertyForm';
 import { KIND } from 'const';
-import {
-  useConnectorState,
-  useTopicState,
-  useStreamState,
-  useFileState,
-} from 'context';
+import * as context from 'context';
 import * as hooks from 'hooks';
 import { Type, Reference } from 'api/apiInterface/definitionInterface';
 import PipelinePropertySpeedDial from './PipelinePropertySpeedDial';
@@ -64,10 +59,10 @@ const PipelinePropertyDialog = props => {
   const [selected, setSelected] = useState(null);
   const currentWorker = hooks.useWorker();
   const currentPipeline = hooks.usePipeline();
-  const { data: currentConnectors } = useConnectorState();
-  const { data: currentStreams } = useStreamState();
-  const { data: allTopics } = useTopicState();
-  const { data: currentFiles } = useFileState();
+  const files = hooks.useFiles();
+  const { data: currentConnectors } = context.useConnectorState();
+  const { data: currentStreams } = context.useStreamState();
+  const { data: allTopics } = context.useTopicState();
 
   // Display topics that are included in in the current pipeline
   const getCurrentTopics = (pipeline, topics) => {
@@ -305,7 +300,7 @@ const PipelinePropertyDialog = props => {
         <RightBody>
           <PipelinePropertyForm
             definitions={groups.sort()}
-            files={currentFiles}
+            files={files}
             freePorts={get(currentWorker, 'freePorts', [])}
             initialValues={targetCell}
             onSubmit={handleSubmit}

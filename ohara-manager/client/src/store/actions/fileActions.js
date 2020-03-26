@@ -14,21 +14,8 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import app from './app';
-import createWorkspace from './createWorkspace';
-import intro from './intro';
-import pipeline from './pipeline';
-import file from './file';
-import workspace from './workspace';
-import node from './node';
+import { createRoutine } from 'redux-routines';
 
-export default combineReducers({
-  app,
-  createWorkspace,
-  intro,
-  pipeline,
-  file,
-  workspace,
-  node,
-});
+export const fetchFiles = createRoutine('FETCH_FILES');
+export const createFile = createRoutine('CREATE_FILE');
+export const deleteFile = createRoutine('DELETE_FILE');
