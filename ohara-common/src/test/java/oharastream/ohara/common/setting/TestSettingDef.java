@@ -675,14 +675,27 @@ public class TestSettingDef extends OharaTest {
   }
 
   @Test
-  public void testCommonStringRegex() {
-    Assert.assertTrue("ab-_".matches(SettingDef.COMMON_STRING_REGEX));
+  public void testNameStringRegex() {
+    Assert.assertFalse("_".matches(SettingDef.NAME_STRING_REGEX));
+    Assert.assertFalse("-".matches(SettingDef.NAME_STRING_REGEX));
     // upper case is illegal
-    Assert.assertFalse("A".matches(SettingDef.COMMON_STRING_REGEX));
+    Assert.assertFalse("A".matches(SettingDef.NAME_STRING_REGEX));
     // dot is illegal
-    Assert.assertFalse("a.".matches(SettingDef.COMMON_STRING_REGEX));
+    Assert.assertTrue("a.".matches(SettingDef.NAME_STRING_REGEX));
     // the length limit is 25
-    Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.COMMON_STRING_REGEX));
+    Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.NAME_STRING_REGEX));
+  }
+
+  @Test
+  public void testGroupStringRegex() {
+    Assert.assertFalse("_".matches(SettingDef.GROUP_STRING_REGEX));
+    Assert.assertFalse("-".matches(SettingDef.GROUP_STRING_REGEX));
+    // upper case is illegal
+    Assert.assertFalse("A".matches(SettingDef.GROUP_STRING_REGEX));
+    // dot is illegal
+    Assert.assertTrue("a.".matches(SettingDef.GROUP_STRING_REGEX));
+    // the length limit is 25
+    Assert.assertFalse(CommonUtils.randomString(100).matches(SettingDef.GROUP_STRING_REGEX));
   }
 
   @Test

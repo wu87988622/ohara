@@ -52,7 +52,8 @@ public class SettingDef implements JsonObject, Serializable {
   }
 
   public static final int STRING_LENGTH_LIMIT = 25;
-  public static final String COMMON_STRING_REGEX = "[a-z0-9_\\-]{1," + STRING_LENGTH_LIMIT + "}$";
+  public static final String GROUP_STRING_REGEX = "[a-z0-9\\.]{1," + STRING_LENGTH_LIMIT + "}$";
+  public static final String NAME_STRING_REGEX = "[a-z0-9\\.]{1," + STRING_LENGTH_LIMIT + "}$";
   public static final String HOSTNAME_REGEX = "[a-zA-Z0-9.\\-]{1," + STRING_LENGTH_LIMIT + "}$";
 
   private static final long serialVersionUID = 1L;

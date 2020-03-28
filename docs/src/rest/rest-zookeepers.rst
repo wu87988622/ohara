@@ -32,8 +32,8 @@ room to enable you to overwrite somethings you do care.
 
 The properties which can be set by user are shown below.
 
-#. name (**string**) — cluster name
-#. group (**string**) — cluster group
+#. name (**string**) — cluster name. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. group (**string**) — cluster group. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. imageName (**string**) — docker image
 #. jmxPort (**int**) — zookeeper jmx port
 #. clientPort (**int**) — zookeeper client port

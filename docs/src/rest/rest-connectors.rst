@@ -34,8 +34,8 @@ write your connector.
 Apart from custom settings, common settings are required by all
 connectors. The common settings are shown below.
 
-#. group (**string**) — the value of group is always "default"
-#. name (**string**) — the name of this connector
+#. group (**string**) — the value of group is always "default". The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. name (**string**) — the name of this connector. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. connector.class (**class**) — class name of connector implementation
 #. topicKeys(**array(object)**) — the source topics or target topics for this connector
 #. columns (**array(object)**) — the schema of data for this connector

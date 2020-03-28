@@ -46,8 +46,8 @@ on a dead cluster will get an abstract with error state.
 
 The properties used in generating pipeline are shown below.
 
-#. group (**string**) — pipeline’s group
-#. name (**string**) — pipeline’s name
+#. group (**string**) — pipeline’s group. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. name (**string**) — pipeline’s name. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. endpoints (**array(object)**) — the relationship between objects
 
    - endpoints[i].group (**String**) — the group of this endpoint

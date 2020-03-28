@@ -211,7 +211,7 @@ class TestWorkerRoute extends OharaTest {
 
   @Test
   def testInvalidClusterName(): Unit = an[DeserializationException] should be thrownBy result(
-    workerApi.request.name("123123.").nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
+    workerApi.request.name("123123-").nodeNames(nodeNames).brokerClusterKey(brokerClusterKey).create()
   )
 
   @Test

@@ -1377,7 +1377,7 @@ class TestJsonRefiner extends OharaTest {
   }
 
   @Test
-  def testStringRestriction(): Unit = {
+  def testNameStringRestriction(): Unit = {
     val key = CommonUtils.randomString()
     val format = JsonRefiner[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1385,17 +1385,48 @@ class TestJsonRefiner extends OharaTest {
 
         override def write(obj: JsObject): JsValue = obj
       })
-      .definition(SettingDef.builder().key(key).regex(SettingDef.COMMON_STRING_REGEX).build())
+      .definition(SettingDef.builder().key(key).regex(SettingDef.NAME_STRING_REGEX).build())
       .refine
 
     // good case
-    Set("ab", "a-", "a_", "aaaaa-_").foreach(s => format.read(s"""
+    Set("ab", "a.", "123123").foreach(s => format.read(s"""
                                               |  {
                                               |    "$key": "$s"
                                               |  }
                                               |  """.stripMargin.parseJson))
 
-    Set("B", ".", "=", "~", CommonUtils.randomString(100))
+    Set("B", "-", "_", "=", "~", CommonUtils.randomString(100))
+      .foreach { s =>
+        withClue(s"input:$s") {
+          an[DeserializationException] should be thrownBy format.read(s"""
+                                                                         |  {
+                                                                         |    "$key": "$s"
+                                                                         |  }
+                                                                         |  """.stripMargin.parseJson)
+        }
+      }
+  }
+
+  @Test
+  def testGroupStringRestriction(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefiner[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .definition(SettingDef.builder().key(key).regex(SettingDef.GROUP_STRING_REGEX).build())
+      .refine
+
+    // good case
+    Set("ab", "a.", "123123").foreach(s => format.read(s"""
+                                                          |  {
+                                                          |    "$key": "$s"
+                                                          |  }
+                                                          |  """.stripMargin.parseJson))
+
+    Set("B", "-", "_", "=", "~", CommonUtils.randomString(100))
       .foreach { s =>
         withClue(s"input:$s") {
           an[DeserializationException] should be thrownBy format.read(s"""

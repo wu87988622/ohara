@@ -35,8 +35,8 @@ The File API upload jar file to use by the :ref:`Worker <rest-workers>` and :ref
 
 The properties stored by ohara are shown below.
 
-#. name (**string**) — the file name without extension
-#. group (**string**) — the group name (we use this field to separate different workspaces)
+#. name (**string**) — the file name without extension. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. group (**string**) — the group name (we use this field to separate different workspaces). The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. size (**long**) — file size
 #. url (**option(string)**) — url to download this jar from Ohara Configurator. Noted not all jars are downloadable to user.
 #. lastModified (**long**) — the time of uploading this file

@@ -24,8 +24,8 @@ no other way to store them.
 
 Similar to other APIs, the required fields are "name" and "group".
 
-#. name (**string**) — name of object.
-#. group (**string**) — group of object
+#. name (**string**) — name of object. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. group (**string**) — group of object. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. tags (**option(object)**) — the extra description to this object
 
 The following information are updated at run-time.

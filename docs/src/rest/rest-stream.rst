@@ -53,8 +53,8 @@ stream stored data
 
 The following are common settings to a stream app.
 
-#. name (**string**) — cluster name
-#. group (**string**) — cluster group
+#. name (**string**) — cluster name. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. group (**string**) — cluster group. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. jarKey (**object**) — the used jar key
 #. jmxPort (**int**) — expose port for jmx
 #. className (**string**) — the class to be executed. This field is optional and Configurator will pick up a class from

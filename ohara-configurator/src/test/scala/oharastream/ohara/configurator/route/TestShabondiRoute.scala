@@ -43,7 +43,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
   private[this] var availableNodeNames: Seq[String]                = _
 
   private[this] val topicKey  = TopicKey.of("g", CommonUtils.randomString(10))
-  private[this] val objectKey = ObjectKey.of("group-1", "name-1")
+  private[this] val objectKey = ObjectKey.of("group", "name")
 
   private[this] def await[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
@@ -69,7 +69,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
   @Test
   def testShouldThrowExceptionWhenCreateOnNonExistentNode(): Unit = {
-    val objectKey              = ObjectKey.of("group-1", "name-1")
+    val objectKey              = ObjectKey.of("group", "name")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), "non-existent-node")
     val clusterInfo: Future[ShabondiApi.ShabondiClusterInfo] =
       shabondiApi.request
@@ -86,7 +86,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
   @Test
   def testSourceCreate(): Unit = {
-    val objectKey                                    = ObjectKey.of("group-1", "name-1")
+    val objectKey                                    = ObjectKey.of("group", "name")
     val (clientPort, nodeName)                       = (CommonUtils.availablePort(), availableNodeNames(0))
     val clusterInfo: ShabondiApi.ShabondiClusterInfo = createShabondiSource(objectKey, clientPort, nodeName)
 
@@ -100,7 +100,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
   @Test
   def testShabondiSourceUpdate(): Unit = {
-    val objectKey              = ObjectKey.of("group-1", "name-1")
+    val objectKey              = ObjectKey.of("group", "name")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
     val clusterInfo            = createShabondiSource(objectKey, clientPort, nodeName)
 
@@ -136,7 +136,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
   @Test
   def testSourceStart(): Unit = {
-    val objectKey              = ObjectKey.of("group-1", "name-1")
+    val objectKey              = ObjectKey.of("group", "name")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
     createShabondiSource(objectKey, clientPort, nodeName)
 

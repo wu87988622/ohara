@@ -227,8 +227,8 @@ package object v0 {
     */
   private[v0] def limitsOfKey[T]: JsonRefiner[T] =
     JsonRefiner[T]
-      .stringRestriction(GROUP_KEY, SettingDef.COMMON_STRING_REGEX)
-      .stringRestriction(NAME_KEY, SettingDef.COMMON_STRING_REGEX)
+      .stringRestriction(GROUP_KEY, SettingDef.GROUP_STRING_REGEX)
+      .stringRestriction(NAME_KEY, SettingDef.NAME_STRING_REGEX)
 
   /**
     * use basic check rules of creation request for json refiner.

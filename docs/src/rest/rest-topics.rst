@@ -24,8 +24,8 @@ ohara will invoke a creation of kafka also. Also, the delete to ohara
 topic also invoke a delete request to kafka. The common properties in
 topic are shown below.
 
-#. group (**string**) — topic group.
-#. name (**string**) — topic name
+#. group (**string**) — topic group. The legal character is number, lowercase alphanumeric characters, or ‘.’
+#. name (**string**) — topic name. The legal character is number, lowercase alphanumeric characters, or ‘.’
 #. brokerClusterKey (**Object**) — target broker cluster.
 
    - brokerClusterKey.group (**option(string)**) — the group of cluster

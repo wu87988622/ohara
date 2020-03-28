@@ -43,7 +43,7 @@ download is oharastream/xxxx:$|version|.
 
 The properties used by describing a node are shown below.
 
-#. hostname (**string**) — hostname of node.
+#. hostname (**string**) — hostname of node. The legal character is number, lowercase alphanumeric characters, or ‘.’
 
    This hostname must be available on you DNS.
    It will cause a lot of troubles if Ohara Configurator is unable to
