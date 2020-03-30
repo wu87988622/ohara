@@ -20,7 +20,6 @@ export * from 'context/configurator/ConfiguratorContext';
 export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
 export * from 'context/log/LogContext';
-export * from 'context/node/NodeContext';
 export * from 'context/stream/StreamContext';
 export * from 'context/topic/TopicContext';
 export * from 'context/workspace/EditWorkspaceContext';

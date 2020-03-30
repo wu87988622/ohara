@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from, of, defer } from 'rxjs';
 import {
   switchMap,
   map,
@@ -27,7 +27,6 @@ import {
   delay,
   take,
 } from 'rxjs/operators';
-import { ajax } from 'rxjs/ajax';
 
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -76,10 +75,10 @@ const fetchNodesEpic = action$ =>
   );
 
 const checkNodes$ = values =>
-  // wait #4438 change axios to observers
-  ajax.get('/api/nodes').pipe(
+  // If the API needs retry, it must use the defer wrapper
+  defer(() => nodeApi.getAll()).pipe(
     map(res => {
-      if (res.response.find(node => node.hostname === values)) {
+      if (res.data.find(node => node.hostname === values)) {
         throw res;
       }
       return res;
@@ -96,9 +95,8 @@ const deleteNodesEpic = action$ =>
     map(action => action.payload),
     switchMap(values =>
       of(
-        from(nodeApi.remove({ hostname: values })).pipe(
+        from(nodeApi.remove(values)).pipe(
           map(() => actions.deleteNode.request()),
-          startWith(actions.deleteNode.request()),
           catchError(res => of(actions.deleteNode.failure(res))),
         ),
         checkNodes$(values),

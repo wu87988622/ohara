@@ -18,7 +18,6 @@ import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useApp } from 'context';
-import { createApi as createNodeApi } from './nodeApi';
 import { createApi as createTopicApi } from './topicApi';
 import { createApi as createConnectorApi } from './connectorApi';
 import { createApi as createLogApi } from './logApi';
@@ -58,8 +57,6 @@ const ApiProvider = ({ children }) => {
     [workspaceKey, brokerGroup, streamGroup, workerGroup, zookeeperGroup],
   );
 
-  const nodeApi = useMemo(() => createNodeApi(), []);
-
   const pipelineApi = useMemo(() => createPipelineApi({ pipelineGroup }), [
     pipelineGroup,
   ]);
@@ -79,7 +76,6 @@ const ApiProvider = ({ children }) => {
       value={{
         connectorApi,
         logApi,
-        nodeApi,
         pipelineApi,
         streamApi,
         topicApi,

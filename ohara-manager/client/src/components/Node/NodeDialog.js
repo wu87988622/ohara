@@ -49,6 +49,9 @@ const Actions = styled.div`
 const NodeDialog = () => {
   const { data: configuratorInfo } = useConfiguratorState();
   const nodes = hooks.useAllNodes();
+  const fetchNodes = hooks.useFetchNodesAction();
+  const isLoaded = hooks.useIsNodeLoaded();
+  const isLoading = hooks.useIsNodeLoading();
 
   const {
     isOpen: isListNodeDialogOpen,
@@ -67,11 +70,9 @@ const NodeDialog = () => {
 
   const [isAddNodeDialogOpen, setIsAddNodeDialogOpen] = useState(false);
   const [filteredNodes, setFilteredNodes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  if (isListNodeDialogOpen && isLoading) {
-    hooks.useFetchNodesAction()();
-    setIsLoading(false);
+  if (isListNodeDialogOpen && !isLoaded && !isLoading) {
+    fetchNodes();
   }
 
   const getResources = node => {
