@@ -90,9 +90,15 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
   protected def createConnector(props: Map[String, String], schema: Seq[Column]): (TopicKey, ConnectorKey) =
     createConnector(props, Some(schema))
 
-  protected def createConnector(props: Map[String, String], schema: Option[Seq[Column]]): (TopicKey, ConnectorKey) = {
-    val topicKey     = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-    val connectorKey = ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
+  protected def createConnector(props: Map[String, String], schema: Option[Seq[Column]]): (TopicKey, ConnectorKey) =
+    createConnector(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)), props, schema)
+
+  protected def createConnector(
+    connectorKey: ConnectorKey,
+    props: Map[String, String],
+    schema: Option[Seq[Column]]
+  ): (TopicKey, ConnectorKey) = {
+    val topicKey = TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
     result({
       val creator = connectorAdmin
         .connectorCreator()
@@ -101,14 +107,17 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
         .numberOfTasks(1)
         .connectorKey(connectorKey)
         .settings(props)
-      if (schema.isDefined) creator.columns(schema.get)
+      schema.foreach(creator.columns)
       creator.create()
     })
     (topicKey, connectorKey)
   }
 
-  private[this] def setupInput(): Unit = {
-    val writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(CommonUtils.path(inputDir, "abc"))))
+  private[this] def setupInput(): String = setupInput("abc")
+
+  private[this] def setupInput(fileName: String): String = {
+    val path   = CommonUtils.path(inputDir, fileName)
+    val writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(path)))
     try {
       writer.append(header)
       writer.newLine()
@@ -116,6 +125,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
         writer.append(line)
         writer.newLine()
       })
+      path
     } finally writer.close()
   }
 
@@ -136,10 +146,10 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     finally consumer.close()
   }
 
-  protected def checkFileCount(inputCount: Int, outputCount: Int, errorCount: Int): Unit = {
+  protected def checkFileCount(outputCount: Int, errorCount: Int): Unit = {
     CommonUtils.await(
       () => {
-        fileSystem.listFileNames(inputDir).asScala.size == inputCount &&
+        fileSystem.listFileNames(inputDir).asScala.isEmpty &&
           fileSystem.listFileNames(completedDir).asScala.size == outputCount &&
           fileSystem.listFileNames(errorDir).asScala.size == errorCount
       },
@@ -160,25 +170,28 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     fileSystem.listFileNames(inputDir).asScala.isEmpty shouldBe false
   }
 
+  private[this] def checkTopicData(topicKey: TopicKey): Unit = {
+    val records = pollData(topicKey)
+    records.size shouldBe data.length
+    val row0 = records.head.key.get
+    row0.size shouldBe 3
+    row0.cell(0) shouldBe rows.head.cell(0)
+    row0.cell(1) shouldBe rows.head.cell(1)
+    row0.cell(2) shouldBe rows.head.cell(2)
+    val row1 = records(1).key.get
+    row1.size shouldBe 3
+    row1.cell(0) shouldBe rows(1).cell(0)
+    row1.cell(1) shouldBe rows(1).cell(1)
+    row1.cell(2) shouldBe rows(1).cell(2)
+  }
+
   @Test
   def testNormalCase(): Unit = {
     val (topicKey, connectorKey) = setupConnector(props, schema)
 
     try {
-      checkFileCount(0, 1, 0)
-
-      val records = pollData(topicKey)
-      records.size shouldBe data.length
-      val row0 = records.head.key.get
-      row0.size shouldBe 3
-      row0.cell(0) shouldBe rows.head.cell(0)
-      row0.cell(1) shouldBe rows.head.cell(1)
-      row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).key.get
-      row1.size shouldBe 3
-      row1.cell(0) shouldBe rows(1).cell(0)
-      row1.cell(1) shouldBe rows(1).cell(1)
-      row1.cell(2) shouldBe rows(1).cell(2)
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -187,26 +200,56 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, schema)
 
     try {
-      checkFileCount(0, 1, 0)
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
 
-      var records = pollData(topicKey)
-      records.size shouldBe data.length
-      val row0 = records.head.key.get
-      row0.size shouldBe 3
-      row0.cell(0) shouldBe rows.head.cell(0)
-      row0.cell(1) shouldBe rows.head.cell(1)
-      row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).key.get
-      row1.size shouldBe 3
-      row1.cell(0) shouldBe rows(1).cell(0)
-      row1.cell(1) shouldBe rows(1).cell(1)
-      row1.cell(2) shouldBe rows(1).cell(2)
-
+      val duplicateCount = 5
       // put a duplicate file
-      setupInput()
-      checkFileCount(0, 2, 0)
-      records = pollData(topicKey, 10 second)
-      records.size shouldBe data.length
+      (2 to duplicateCount).foreach { fileCount =>
+        setupInput()
+        checkFileCount(fileCount, 0)
+        pollData(topicKey, 10 second).size shouldBe data.length
+      }
+
+      setupInput(CommonUtils.randomString(5))
+      checkFileCount(duplicateCount + 1, 0)
+      pollData(topicKey, 10 second).size shouldBe (data.length * 2)
+    } finally result(connectorAdmin.delete(connectorKey))
+  }
+
+  @Test
+  def testDeleteInputAndReAdd(): Unit = {
+    val (topicKey, connectorKey) = setupConnector(props, schema)
+
+    try {
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
+
+      // add new files
+      val fileNames = (1 to 5).map(_ => CommonUtils.randomString(5))
+      // loop chaos 10 times
+      (1 to 10).foreach { _ =>
+        CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, Duration.ofSeconds(20))
+        val files = fileNames.map(name => setupInput(name))
+        // remove a file
+        Releasable.close(() => fileSystem.delete(files((Math.random() * files.size).toInt)))
+      }
+      pollData(topicKey, 10 second).size shouldBe (data.length * (fileNames.size + 1))
+    } finally result(connectorAdmin.delete(connectorKey))
+  }
+
+  @Test
+  def testRestart(): Unit = {
+    val (topicKey, connectorKey) = setupConnector(props, schema)
+
+    try {
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
+
+      result(connectorAdmin.delete(connectorKey))
+      createConnector(connectorKey, props, Some(schema))
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -220,7 +263,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      checkFileCount(0, 1, 0)
+      checkFileCount(1, 0)
 
       val records = pollData(topicKey)
       records.size shouldBe data.length
@@ -253,20 +296,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      checkFileCount(0, 1, 0)
-
-      val records = pollData(topicKey)
-      records.size shouldBe data.length
-      val row0 = records.head.key.get
-      row0.size shouldBe 3
-      row0.cell(0) shouldBe rows.head.cell(0)
-      row0.cell(1) shouldBe rows.head.cell(1)
-      row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).key.get
-      row1.size shouldBe 3
-      row1.cell(0) shouldBe rows(1).cell(0)
-      row1.cell(1) shouldBe rows(1).cell(1)
-      row1.cell(2) shouldBe rows(1).cell(2)
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -275,7 +306,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, None)
 
     try {
-      checkFileCount(0, 1, 0)
+      checkFileCount(1, 0)
 
       val records = pollData(topicKey)
       records.size shouldBe data.length
@@ -300,20 +331,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
-      checkFileCount(0, 1, 0)
-
-      val records = pollData(topicKey)
-      records.size shouldBe data.length
-      val row0 = records.head.key.get
-      row0.size shouldBe 3
-      row0.cell(0) shouldBe rows.head.cell(0)
-      row0.cell(1) shouldBe rows.head.cell(1)
-      row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).key.get
-      row1.size shouldBe 3
-      row1.cell(0) shouldBe rows(1).cell(0)
-      row1.cell(1) shouldBe rows(1).cell(1)
-      row1.cell(2) shouldBe rows(1).cell(2)
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -324,7 +343,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      checkFileCount(0, 1, 0)
+      checkFileCount(1, 0)
 
       val records = pollData(topicKey)
       records.size shouldBe data.length
@@ -346,14 +365,14 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(props, newSchema)
 
     try {
-      checkFileCount(0, 0, 1)
+      checkFileCount(0, 1)
 
       val records = pollData(topicKey, 10 second)
       records.size shouldBe 0
 
       // add a file to input again
       setupInput()
-      checkFileCount(0, 0, 2)
+      checkFileCount(0, 2)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -371,24 +390,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
-      CommonUtils.await(
-        () => {
-          fileSystem.listFileNames(inputDir).asScala.isEmpty
-        },
-        Duration.ofSeconds(20)
-      )
-      val records = pollData(topicKey)
-      records.size shouldBe data.length
-      val row0 = records.head.key.get
-      row0.size shouldBe 3
-      row0.cell(0) shouldBe rows.head.cell(0)
-      row0.cell(1) shouldBe rows.head.cell(1)
-      row0.cell(2) shouldBe rows.head.cell(2)
-      val row1 = records(1).key.get
-      row1.size shouldBe 3
-      row1.cell(0) shouldBe rows(1).cell(0)
-      row1.cell(1) shouldBe rows(1).cell(1)
-      row1.cell(2) shouldBe rows(1).cell(2)
+      CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, Duration.ofSeconds(20))
+      checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
