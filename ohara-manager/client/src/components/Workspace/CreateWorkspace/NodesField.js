@@ -20,7 +20,7 @@ import { find, map, pull } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import FormHelperText from '@material-ui/core/FormHelperText';
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
 import SelectNodeDialog from 'components/Node/SelectNodeDialog';
@@ -39,7 +39,7 @@ const NodesField = props => {
     meta: { touched, error },
   } = props;
 
-  const { data: allNodes } = context.useNodeState();
+  const allNodes = hooks.useAllNodes();
 
   // nodeNames is an array of hostname, like ['dev01', 'dev02'].
   const [nodeNames, setNodeNames] = useState([...value]);

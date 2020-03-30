@@ -30,7 +30,6 @@ export default function reducer(state = initialState, action) {
         loading: true,
         error: null,
       };
-
     case actions.fetchNodes.SUCCESS:
       return {
         ...state,
