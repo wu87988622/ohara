@@ -17,7 +17,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { get, size, xor, merge, filter, includes } from 'lodash';
-import { useNodeState } from 'context';
+
 import * as hooks from 'hooks';
 
 const EditWorkspaceContext = createContext();
@@ -26,7 +26,7 @@ const EditWorkspaceProvider = ({ children }) => {
   const currBk = hooks.useBroker();
   const currWk = hooks.useWorker();
   const currZk = hooks.useZookeeper();
-  const { data: allNodesInOhara } = useNodeState();
+  const allNodesInOhara = hooks.useAllNodes();
 
   const [stagingNodes, setStagingNodes] = useState([]);
   const [dirties, setDirties] = useState(null);

@@ -45,15 +45,13 @@ import ServiceSwitch from './ServiceSwitch';
 import { Wrapper } from './NodeCardStyles';
 
 import { DeleteDialog } from 'components/common/Dialog';
-import { useNodeState, useNodeActions } from 'context';
 
 const NodeCard = ({ node }) => {
   const currentBroker = hooks.useBroker();
   const currentWorker = hooks.useWorker();
   const currentZookeeper = hooks.useZookeeper();
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
-  const { isFetching: isDeleting } = useNodeState();
-  const { deleteNode } = useNodeActions();
+  const deleteNode = hooks.useDeleteNodeAction();
 
   const [expanded, setExpanded] = React.useState(false);
   const [deletedPopoverEl, setDeletedPopoverEl] = React.useState(null);
@@ -140,7 +138,6 @@ const NodeCard = ({ node }) => {
           open={isConfirmOpen}
           handleClose={handleNodeClose}
           handleConfirm={handleNodeDelete}
-          isWorking={isDeleting}
         />
         <CardContent>
           {map(node.resources, resource => (

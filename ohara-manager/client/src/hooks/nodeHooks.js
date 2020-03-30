@@ -28,6 +28,16 @@ export const useAllNodes = () => {
   return nodes;
 };
 
+export const useIsNodeLoaded = () => {
+  const mapState = useCallback(state => !!state.ui.node?.lastUpdated, []);
+  return useSelector(mapState);
+};
+
+export const useIsNodeLoading = () => {
+  const mapState = useCallback(state => !!state.ui.node?.loading, []);
+  return useSelector(mapState);
+};
+
 export const useCreateNodeAction = () => {
   const dispatch = useDispatch();
   return function(values) {
