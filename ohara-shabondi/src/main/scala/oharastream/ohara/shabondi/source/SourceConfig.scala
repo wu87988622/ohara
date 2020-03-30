@@ -22,7 +22,7 @@ import oharastream.ohara.shabondi.ShabondiDefinitions._
 import scala.collection.JavaConverters._
 
 private[shabondi] class SourceConfig(raw: Map[String, String]) {
-  def serverClass: String = raw(SERVER_CLASS_DEFINITION.key).toString
+  def shabondiClass: String = raw(SHABONDI_CLASS_DEFINITION.key).toString
 
   def port: Int = raw(CLIENT_PORT_DEFINITION.key).toInt
 

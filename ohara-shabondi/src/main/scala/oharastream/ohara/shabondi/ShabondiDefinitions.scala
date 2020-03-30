@@ -72,16 +72,16 @@ object ShabondiDefinitions {
     .displayName("Image name")
     .documentation("The image name of this Shabondi running with")
     .optional(IMAGE_NAME_DEFAULT)
-    .permission(SettingDef.Permission.READ_ONLY) // In manager, user cannot change the image name
+    .permission(SettingDef.Permission.READ_ONLY) // TODO: #4061
     .build
     .registerTo(basicDefinitionMap)
 
-  val SERVER_CLASS_DEFINITION = SettingDef.builder
+  val SHABONDI_CLASS_DEFINITION = SettingDef.builder
     .group(CORE_GROUP)
-    .key("shabondi.serverClass")
+    .key("shabondi.class")
     .orderInGroup(orderInGroup())
     .required(Set(ShabondiType.Source.className, ShabondiType.Sink.className).asJava)
-    .documentation("the server class name of Shabondi service")
+    .documentation("the class name of Shabondi service")
     .permission(SettingDef.Permission.CREATE_ONLY)
     .build
     .registerTo(basicDefinitionMap)

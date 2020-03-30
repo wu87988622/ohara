@@ -75,7 +75,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
       shabondiApi.request
         .group(objectKey.group)
         .name(objectKey.name)
-        .serverClass(ShabondiType.Source.className)
+        .shabondiClass(ShabondiType.Source.className)
         .clientPort(clientPort)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeName(nodeName)
@@ -92,7 +92,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.serverClass should ===(ShabondiType.Source.className)
+    clusterInfo.shabondiClass should ===(ShabondiType.Source.className)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -106,7 +106,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.serverClass should ===(ShabondiType.Source.className)
+    clusterInfo.shabondiClass should ===(ShabondiType.Source.className)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -236,7 +236,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
       shabondiApi.request
         .group(key.group)
         .name(key.name)
-        .serverClass(ShabondiType.Source.className)
+        .shabondiClass(ShabondiType.Source.className)
         .clientPort(clientPort)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeName(nodeName)

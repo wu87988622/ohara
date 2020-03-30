@@ -77,9 +77,8 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
     sourceToTopics: Seq[TopicKey] = Seq.empty[TopicKey]
   ): SourceConfig = {
     import ShabondiDefinitions._
-    val serverClassName = oharastream.ohara.shabondi.source.Boot.getClass.getName.replaceAll("\\$", "")
     val args = mutable.ArrayBuffer(
-      SERVER_CLASS_DEFINITION.key + "=" + serverClassName,
+      SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Source.className,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
     )
@@ -94,9 +93,8 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
     sinkFromTopics: Seq[TopicKey] = Seq.empty[TopicKey]
   ): SinkConfig = {
     import ShabondiDefinitions._
-    val serverClassName = oharastream.ohara.shabondi.sink.Boot.getClass.getName.replaceAll("\\$", "")
     val args = mutable.ArrayBuffer(
-      SERVER_CLASS_DEFINITION.key + "=" + serverClassName,
+      SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Sink.className,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
     )

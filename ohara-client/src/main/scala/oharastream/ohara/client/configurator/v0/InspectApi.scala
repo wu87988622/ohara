@@ -60,6 +60,7 @@ object InspectApi {
   val BROKER_PREFIX_PATH: String    = "broker"
   val WORKER_PREFIX_PATH: String    = "worker"
   val STREAM_PREFIX_PATH: String    = "stream"
+  val SHABONDI_PREFIX_PATH: String  = "shabondi"
 
   //-------------[FILE]-------------//
   val FILE_PREFIX_PATH: String = FileInfoApi.FILE_PREFIX_PATH
@@ -207,6 +208,9 @@ object InspectApi {
 
     def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
       exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(STREAM_PREFIX_PATH).key(key).build())
+
+    def shabondiInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$SHABONDI_PREFIX_PATH")
 
     def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String             = _

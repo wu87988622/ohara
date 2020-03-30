@@ -54,7 +54,7 @@ final object ShabondiApi {
       new ShabondiClusterCreation(settings)
     override def kind: String       = KIND
     override def ports: Set[Int]    = settings.ports
-    def serverClass: String         = settings.serverClass
+    def shabondiClass: String       = settings.shabondiClass
     def clientPort: Int             = settings.clientPort
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
 
@@ -68,7 +68,7 @@ final object ShabondiApi {
     private val updating         = new ShabondiClusterUpdating(noJsNull(settings))
     override def ports: Set[Int] = Set(clientPort)
 
-    def serverClass: String           = updating.serverClass.get
+    def shabondiClass: String         = updating.shabondiClass.get
     def clientPort: Int               = updating.clientPort.get
     def brokerClusterKey: ObjectKey   = updating.brokerClusterKey.get
     def sourceToTopics: Set[TopicKey] = updating.sourceToTopics.getOrElse(null)
@@ -77,8 +77,8 @@ final object ShabondiApi {
 
   final class ShabondiClusterUpdating(val settings: Map[String, JsValue]) extends ClusterUpdating {
     import ShabondiDefinitions._
-    def serverClass: Option[String] = noJsNull(settings).get(SERVER_CLASS_DEFINITION.key).map(_.convertTo[String])
-    def clientPort: Option[Int]     = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
+    def shabondiClass: Option[String] = noJsNull(settings).get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
+    def clientPort: Option[Int]       = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
     def brokerClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
     def sourceToTopics: Option[Set[TopicKey]] =
@@ -116,8 +116,8 @@ final object ShabondiApi {
   trait Request extends ClusterRequest {
     import ShabondiDefinitions._
 
-    def serverClass(className: String): Request.this.type =
-      setting(SERVER_CLASS_DEFINITION.key, JsString(className))
+    def shabondiClass(className: String): Request.this.type =
+      setting(SHABONDI_CLASS_DEFINITION.key, JsString(className))
 
     def brokers(brokers: String): Request.this.type =
       setting(BROKERS_DEFINITION.key, JsString(brokers))

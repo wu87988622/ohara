@@ -32,6 +32,7 @@ import oharastream.ohara.client.configurator.v0.{
   BrokerApi,
   ErrorApi,
   InspectApi,
+  ShabondiApi,
   StreamApi,
   TopicApi,
   WorkerApi,
@@ -47,9 +48,10 @@ import oharastream.ohara.configurator.fake.FakeConnectorAdmin
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
-import oharastream.ohara.kafka.{TopicAdmin, Consumer, Header}
+import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
 import oharastream.ohara.stream.config.StreamDefUtils
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
 import spray.json.{DeserializationException, JsNull, JsObject}
 
 import scala.collection.JavaConverters._
@@ -309,6 +311,21 @@ private[configurator] object InspectRoute {
             imageName = StreamApi.IMAGE_NAME_DEFAULT,
             settingDefinitions = StreamDefUtils.DEFAULT.values().asScala.toSeq,
             classInfos = Seq.empty
+          )
+        )
+      }
+    } ~ pathPrefix(SHABONDI_PREFIX_PATH) {
+      path(Segment) { name =>
+        throw new NotImplementedError("Not implement yet.")
+      } ~ pathEnd {
+        complete(
+          ServiceDefinition(
+            imageName = ShabondiApi.IMAGE_NAME_DEFAULT,
+            settingDefinitions = ShabondiDefinitions.basicDefinitions,
+            classInfos = Seq(
+              ClassInfo(ShabondiType.Source.name, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
+              ClassInfo(ShabondiType.Sink.name, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
+            )
           )
         )
       }

@@ -19,13 +19,22 @@ package oharastream.ohara.configurator.route
 import java.io.FileOutputStream
 
 import oharastream.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
-import oharastream.ohara.client.configurator.v0.{BrokerApi, InspectApi, StreamApi, TopicApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{
+  BrokerApi,
+  InspectApi,
+  ShabondiApi,
+  StreamApi,
+  TopicApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.{Configurator, ReflectionUtils}
+import oharastream.ohara.shabondi.ShabondiType
 import oharastream.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
@@ -274,6 +283,20 @@ class TestInspectRoute extends OharaTest {
     // the jar is empty but we still see the default definitions
     info.settingDefinitions should not be Seq.empty
     info.classInfos shouldBe Seq.empty
+  }
+
+  @Test
+  def testShabondiInfo(): Unit = {
+    val info = result(inspectApi.shabondiInfo())
+    info.imageName shouldBe ShabondiApi.IMAGE_NAME_DEFAULT
+    info.settingDefinitions should not be Seq.empty
+    info.classInfos(0).classType shouldBe ShabondiType.Source.name
+    info.classInfos(0).className shouldBe ShabondiType.Source.className
+    info.classInfos(0).settingDefinitions should not be Seq.empty
+
+    info.classInfos(1).classType shouldBe ShabondiType.Sink.name
+    info.classInfos(1).className shouldBe ShabondiType.Sink.className
+    info.classInfos(1).settingDefinitions should not be Seq.empty
   }
 
   @After

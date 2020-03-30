@@ -59,7 +59,7 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
     import ShabondiDefinitions._
-    val serverType = ShabondiType(creation.serverClass)
+    val serverType = ShabondiType(creation.shabondiClass)
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
@@ -133,7 +133,7 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
     (clusterInfo: ShabondiClusterInfo, subName: String, params: Map[String, String]) => {
-      val serverType = ShabondiType(clusterInfo.serverClass)
+      val serverType = ShabondiType(clusterInfo.shabondiClass)
       val checkTopics = serverType match {
         case ShabondiType.Source => clusterInfo.sourceToTopics
         case ShabondiType.Sink   => clusterInfo.sinkFromTopics
