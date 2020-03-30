@@ -56,3 +56,19 @@ export enum CELL_PROPS {
   source = 'source',
   target = 'target',
 }
+
+export enum CREATE_WORKSPACE_MODE {
+  QUICK = 'quick',
+  EXPERT = 'expert',
+}
+
+export enum GROUP {
+  WORKSPACE = 'workspace',
+  ZOOKEEPER = 'zookeeper',
+  BROKER = 'broker',
+  WORKER = 'worker',
+}
+
+export enum FORM {
+  CREATE_WORKSPACE = 'createWorkspace',
+}

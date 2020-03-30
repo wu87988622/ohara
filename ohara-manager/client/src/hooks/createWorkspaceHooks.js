@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { isEqual as isDeepEqual } from 'lodash';
+import { isEqual as isDeepEqual, some } from 'lodash';
 
+import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 
-export const useIsCreateWorkspaceOpen = () => {
-  const mapState = useCallback(state => !!state.ui.createWorkspace.isOpen, []);
-  return useSelector(mapState);
-};
+export const useIsCreateWorkspaceDialogOpen = () =>
+  useSelector(state => !!state.ui.createWorkspace.isOpen);
+
+export const useCreateWorkspaceMode = () =>
+  useSelector(state => state.ui.createWorkspace.mode);
+
+export const useCreateWorkspaceStep = () =>
+  useSelector(state => state.ui.createWorkspace.step);
 
 export const useCreateWorkspaceProgress = () => {
   const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
@@ -35,16 +40,50 @@ export const useCreateWorkspaceState = () => {
   return useSelector(mapState, isDeepEqual);
 };
 
-export const useOpenCreateWorkspaceAction = () => {
+export const useUniqueWorkspaceName = (prefix = 'workspace') => {
+  const workspaces = hooks.useWorkspaces();
+  return useMemo(() => {
+    for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
+      const name = `${prefix}${postfix}`;
+      if (!some(workspaces, { name })) return name;
+    }
+  }, [prefix, workspaces]);
+};
+
+export const useOpenCreateWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.openCreateWorkspace.trigger()), [
     dispatch,
   ]);
 };
 
-export const useCloseCreateWorkspaceAction = () => {
+export const useCloseCreateWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.closeCreateWorkspace.trigger()), [
     dispatch,
   ]);
+};
+
+export const useSwitchCreateWorkspaceModeAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    mode => dispatch(actions.switchCreateWorkspaceMode.trigger(mode)),
+    [dispatch],
+  );
+};
+
+export const useSwitchCreateWorkspaceStepAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    step => dispatch(actions.switchCreateWorkspaceStep.trigger(step)),
+    [dispatch],
+  );
+};
+
+export const useCreateWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    values => dispatch(actions.createWorkspace.trigger(values)),
+    [dispatch],
+  );
 };

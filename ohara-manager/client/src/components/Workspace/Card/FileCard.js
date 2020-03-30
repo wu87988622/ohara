@@ -93,7 +93,7 @@ FileCard.propTypes = {
   sm: PropTypes.bool,
   title: PropTypes.string.isRequired,
   content: PropTypes.string.isRequired,
-  values: PropTypes.object.isRequired,
+  values: PropTypes.object,
 };
 
 export default FileCard;

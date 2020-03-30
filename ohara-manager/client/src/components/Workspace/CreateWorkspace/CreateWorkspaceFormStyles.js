@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react';
-import { some } from 'lodash';
+import styled, { css } from 'styled-components';
 
-import * as hooks from 'hooks';
-
-export const useUniqueName = (prefix = 'workspace') => {
-  const workspaces = hooks.useWorkspaces();
-  return useMemo(() => {
-    for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
-      const name = `${prefix}${postfix}`;
-      if (!some(workspaces, { name })) return name;
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    .MuiStepper-root {
+      background-color: transparent;
     }
-  }, [prefix, workspaces]);
-};
+
+    .fields {
+      padding: ${theme.spacing(2)}px;
+    }
+
+    .buttons {
+      margin-top: ${theme.spacing(2)}px;
+    }
+
+    .summary {
+      .MuiTableRow-root:nth-of-type(even) {
+        background-color: ${theme.palette.grey[100]};
+      }
+    }
+  `,
+);

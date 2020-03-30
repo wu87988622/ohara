@@ -20,6 +20,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 
+export const useIsNodeLoaded = () => {
+  const mapState = useCallback(state => !!state.ui.node?.lastUpdated, []);
+  return useSelector(mapState);
+};
+
+export const useIsNodeLoading = () => {
+  const mapState = useCallback(state => !!state.ui.node?.loading, []);
+  return useSelector(mapState);
+};
+
 export const useAllNodes = () => {
   const getAllNodes = useMemo(selectors.makeGetAllNodes, []);
   const nodes = useSelector(

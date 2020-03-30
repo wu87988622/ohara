@@ -18,12 +18,13 @@ import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
+import { GROUP } from 'const';
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
 
-export const useZookeeperGroup = () => 'zookeeper';
+export const useZookeeperGroup = () => GROUP.ZOOKEEPER;
 
 export const useZookeeperName = () => {
   const workspace = hooks.useWorkspaceName();

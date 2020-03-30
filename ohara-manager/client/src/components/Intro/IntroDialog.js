@@ -81,66 +81,57 @@ const StyledDialogActions = styled(DialogActions)(
 );
 
 const MuiDialog = ({ quickModeText }) => {
-  const isIntroOpen = hooks.useIsIntroOpen();
-  const closeIntro = hooks.useCloseIntroAction();
-  const openCreateWorkspace = hooks.useOpenCreateWorkspaceAction();
-
-  // Export mode, not implement yet
-  const onClick = () => {};
+  const isIntroDialogOpen = hooks.useIsIntroOpen();
+  const closeIntroDialog = hooks.useCloseIntroAction();
+  const openWorkspaceDialog = hooks.useOpenCreateWorkspaceDialogAction();
 
   return (
-    <>
-      <Dialog
-        open={isIntroOpen}
-        onClose={closeIntro}
-        maxWidth="sm"
-        PaperComponent={DrabblePaper}
-        TransitionComponent={Transition}
-        fullWidth
-        data-testid="dialog-container"
-      >
-        <StyledDialogTitle disableTypography>
-          <div className="brand">
-            <Logo width="38" height="38" />
-            <Typography variant="h3">
-              <span className="name">Ohara Stream</span>
-            </Typography>
-          </div>
-          <IconButton
-            data-testid="close-intro-button"
-            className="close-button"
-            onClick={closeIntro}
-          >
-            <CloseIcon />
-          </IconButton>
-        </StyledDialogTitle>
-        <StyledDialogContent>
-          <Typography variant="subtitle1">
-            Ohara is a scalable streaming platform that allows users to easily
-            organized their input, output, and streaming applications with a
-            clean and comprehensive GUI
+    <Dialog
+      open={isIntroDialogOpen}
+      onClose={closeIntroDialog}
+      maxWidth="sm"
+      PaperComponent={DrabblePaper}
+      TransitionComponent={Transition}
+      fullWidth
+      data-testid="dialog-container"
+    >
+      <StyledDialogTitle disableTypography>
+        <div className="brand">
+          <Logo width="38" height="38" />
+          <Typography variant="h3">
+            <span className="name">Ohara Stream</span>
           </Typography>
-        </StyledDialogContent>
-        <StyledDialogActions>
-          <Button
-            className="quick-mode-button"
-            onClick={openCreateWorkspace}
-            color="primary"
-            variant="contained"
-            autoFocus
-          >
-            {quickModeText}
-          </Button>
-          <Button
-            className="expert-mode-button"
-            onClick={onClick}
-            color="primary"
-          >
-            CREATE A WORKSPACE IN EXPERT MODE
-          </Button>
-        </StyledDialogActions>
-      </Dialog>
-    </>
+        </div>
+        <IconButton
+          data-testid="close-intro-button"
+          className="close-button"
+          onClick={closeIntroDialog}
+        >
+          <CloseIcon />
+        </IconButton>
+      </StyledDialogTitle>
+      <StyledDialogContent>
+        <Typography variant="subtitle1">
+          Ohara is a scalable streaming platform that allows users to easily
+          organized their input, output, and streaming applications with a clean
+          and comprehensive GUI
+        </Typography>
+      </StyledDialogContent>
+      <StyledDialogActions>
+        <Button
+          className="quick-mode-button"
+          onClick={openWorkspaceDialog}
+          color="primary"
+          variant="contained"
+          autoFocus
+        >
+          {quickModeText}
+        </Button>
+        <Button className="expert-mode-button" color="primary">
+          CREATE A WORKSPACE IN EXPERT MODE
+        </Button>
+      </StyledDialogActions>
+    </Dialog>
   );
 };
 

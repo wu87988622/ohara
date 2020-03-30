@@ -15,5 +15,6 @@
  */
 
 import CreateWorkspace from './CreateWorkspace';
+import CreateWorkspaceForm from './CreateWorkspaceForm';
 
-export { CreateWorkspace };
+export { CreateWorkspace, CreateWorkspaceForm };

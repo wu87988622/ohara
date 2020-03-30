@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import { includes, isSafeInteger } from 'lodash';
 import * as actions from 'store/actions';
+import { CREATE_WORKSPACE_MODE } from 'const';
 
 const defaultSteps = [
   'Create Zookeeper',
@@ -25,8 +27,12 @@ const defaultSteps = [
   'Start Worker',
 ];
 
+const { QUICK, EXPERT } = CREATE_WORKSPACE_MODE;
+
 const initialState = {
   isOpen: false,
+  mode: QUICK,
+  step: 0,
   loading: false,
   progress: {
     open: false,
@@ -49,13 +55,31 @@ export default function reducer(state = initialState, action) {
         ...state,
         isOpen: false,
       };
+    case actions.switchCreateWorkspaceMode.TRIGGER:
+      return {
+        ...state,
+        mode: includes([QUICK, EXPERT], action.payload)
+          ? action.payload
+          : QUICK,
+      };
+    case actions.switchCreateWorkspaceStep.TRIGGER:
+      return {
+        ...state,
+        step: isSafeInteger(action.payload) ? action.payload : 0,
+      };
     case actions.createWorkspace.TRIGGER:
       return {
         ...state,
         loading: true,
-        progress: { ...state.progress, open: true, activeStep: 0 },
+        progress: { ...state.progress, open: true },
         error: null,
       };
+    case actions.createWorkspace.SUCCESS:
+      return {
+        ...state,
+        progress: { ...state.progress, activeStep: 0 },
+      };
+
     case actions.createZookeeper.SUCCESS:
       return {
         ...state,
@@ -86,19 +110,20 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: { ...state.progress, activeStep: 6 },
       };
-    case actions.createWorkspace.SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        progress: { ...state.progress, open: false },
-        lastUpdated: new Date(),
-      };
+
     case actions.createWorkspace.FAILURE:
       return {
         ...state,
         loading: false,
         progress: { ...state.progress, open: false },
         error: action.payload,
+      };
+    case actions.createWorkspace.FULFILL:
+      return {
+        ...state,
+        loading: false,
+        progress: { ...state.progress, open: false },
+        lastUpdated: new Date(),
       };
     default:
       return state;

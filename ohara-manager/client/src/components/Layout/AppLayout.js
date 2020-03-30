@@ -25,7 +25,7 @@ import * as context from 'context';
 import { DevToolDialog } from 'components/DevTool';
 import {
   WorkspaceList as ListWorkspacesDialog,
-  CreateWorkspace as CreateWorkspacesDialog,
+  CreateWorkspace as CreateWorkspaceDialog,
 } from 'components/Workspace';
 import IntroDialog from 'components/Intro';
 import NodeDialog from 'components/Node/NodeDialog';
@@ -68,7 +68,7 @@ const AppLayout = () => {
       </SplitPane>
 
       <IntroDialog quickModeText={'QUICK CREATE'} />
-      <CreateWorkspacesDialog />
+      <CreateWorkspaceDialog />
       <ListWorkspacesDialog />
       <NodeDialog />
     </Wrapper>

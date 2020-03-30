@@ -20,6 +20,7 @@ export * from './createWorkspaceHooks';
 export * from './introHooks';
 export * from './fileHooks';
 export * from './pipelineHooks';
+export * from './reduxFormHooks';
 export * from './workerHooks';
 export * from './workspaceHooks';
 export * from './zookeeperHooks';

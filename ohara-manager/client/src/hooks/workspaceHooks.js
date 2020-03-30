@@ -17,12 +17,13 @@
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { GROUP } from 'const';
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
 
-export const useWorkspaceGroup = () => 'workspace';
+export const useWorkspaceGroup = () => GROUP.WORKSPACE;
 
 export const useWorkspaceName = () => {
   const mapState = useCallback(state => state.ui.workspace.name, []);
