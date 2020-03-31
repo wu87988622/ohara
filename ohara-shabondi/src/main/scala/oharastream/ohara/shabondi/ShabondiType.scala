@@ -65,7 +65,7 @@ object ShabondiType extends Enum[ShabondiType] {
     className match {
       case Source.className => Source
       case Sink.className   => Sink
-      case _                => throw new IllegalArgumentException("Unknown shabondi service type")
+      case _                => throw new IllegalArgumentException(s"Illegal Shabondi class name: $className")
     }
   }
 }

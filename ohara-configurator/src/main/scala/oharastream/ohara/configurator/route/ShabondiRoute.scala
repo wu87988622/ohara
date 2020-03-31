@@ -19,40 +19,17 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
 import oharastream.ohara.client.configurator.v0.ShabondiApi
-import oharastream.ohara.common.setting.SettingDef.Necessary
-import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
+import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
-import spray.json.{JsString, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ShabondiRoute {
   import ShabondiApi._
-
-  private[route] def necessaryContains(definition: SettingDef, settings: Map[String, JsValue]): Unit = {
-    if (definition.necessary() == Necessary.REQUIRED) {
-      if (!definition.recommendedValues.isEmpty) {
-        val value = settings(definition.key()).asInstanceOf[JsString].value
-        if (!definition.recommendedValues.contains(value))
-          throw new IllegalArgumentException(
-            s"Invalid value of ${definition.key}, must be one of ${definition.recommendedValues}"
-          )
-      }
-    }
-  }
-
-  implicit private class ServerTypeHelper(serverType: ShabondiType) {
-    def defaultSettings(): Map[String, JsValue] = {
-      serverType match {
-        case ShabondiType.Source => extractDefaultValues(ShabondiDefinitions.sourceOnlyDefinitions)
-        case ShabondiType.Sink   => extractDefaultValues(ShabondiDefinitions.sinkOnlyDefinitions)
-      }
-    }
-  }
 
   private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
     implicit objectChecker: ObjectChecker,
@@ -64,29 +41,30 @@ private[configurator] object ShabondiRoute {
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
       .topics {
-        if (serverType == ShabondiType.Source) {
-          val sourceToTopics = creation.sourceToTopics
-          if (sourceToTopics == null) {
-            throw new IllegalArgumentException(s"${SOURCE_TO_TOPICS_DEFINITION.key} is required.")
-          } else
-            sourceToTopics
-        } else
-          Set.empty
-      }
-      .topics {
-        if (serverType == ShabondiType.Sink) {
-          val sinkFromTopics = creation.sinkFromTopics
-          if (sinkFromTopics == null) {
-            throw new IllegalArgumentException(s"${SINK_FROM_TOPICS_DEFINITION.key} is required.")
-          } else
-            sinkFromTopics
-        } else
-          Set.empty
+        // Check required topic settings
+        serverType match {
+          case ShabondiType.Source =>
+            val sourceToTopics = creation.sourceToTopics
+            if (sourceToTopics != null) {
+              sourceToTopics
+            } else
+              throw new IllegalArgumentException(s"${SOURCE_TO_TOPICS_DEFINITION.key} is required.")
+          case ShabondiType.Sink =>
+            val sinkFromTopics = creation.sinkFromTopics
+            if (sinkFromTopics != null) {
+              sinkFromTopics
+            } else
+              throw new IllegalArgumentException(s"${SINK_FROM_TOPICS_DEFINITION.key} is required.")
+        }
       }
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
+        val defaultSettings = serverType match {
+          case ShabondiType.Source => extractDefaultValues(ShabondiDefinitions.sourceOnlyDefinitions)
+          case ShabondiType.Sink   => extractDefaultValues(ShabondiDefinitions.sinkOnlyDefinitions)
+        }
         ShabondiClusterInfo(
-          settings = serverType.defaultSettings ++ creation.settings,
+          settings = defaultSettings ++ creation.settings,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,
@@ -115,12 +93,19 @@ private[configurator] object ShabondiRoute {
             .creation
           creationToClusterInfo(creation)
         case Some(previous) =>
+          val serverType = ShabondiType(previous.shabondiClass)
           objectChecker.checkList
             .check()
             .flatMap { _ =>
               val creation = ShabondiApi.access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, ShabondiApi.ALL_DEFINITIONS))
+                .settings {
+                  serverType match {
+                    case ShabondiType.Source =>
+                      keepEditableFields(updating.settings, ShabondiApi.SOURCE_ALL_DEFINITIONS)
+                    case ShabondiType.Sink => keepEditableFields(updating.settings, ShabondiApi.SINK_ALL_DEFINITIONS)
+                  }
+                }
                 .key(key)
                 .creation
               creationToClusterInfo(creation)

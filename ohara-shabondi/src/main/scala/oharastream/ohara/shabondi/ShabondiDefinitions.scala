@@ -117,6 +117,26 @@ object ShabondiDefinitions {
     .build
     .registerTo(basicDefinitionMap)
 
+  val ROUTES_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("routes")
+    .orderInGroup(orderInGroup())
+    .optional(Type.TAGS)
+    .displayName("Routes")
+    .documentation("the extra routes to this service")
+    .build
+    .registerTo(basicDefinitionMap)
+
+  val TAGS_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("tags")
+    .orderInGroup(orderInGroup())
+    .optional(Type.TAGS)
+    .displayName("Tags")
+    .documentation("Tags of Shabondi")
+    .build
+    .registerTo(basicDefinitionMap)
+
   val VERSION_DEFINITION: SettingDef = WithDefinitions
     .versionDefinition(VersionUtils.VERSION)
     .registerTo(basicDefinitionMap)
