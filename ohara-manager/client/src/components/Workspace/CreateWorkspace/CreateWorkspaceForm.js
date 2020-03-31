@@ -17,13 +17,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { map, merge, shuffle, take, times } from 'lodash';
+import { reduxForm } from 'redux-form';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 
 import * as hooks from 'hooks';
-import { CREATE_WORKSPACE_MODE, GROUP } from 'const';
+import { CREATE_WORKSPACE_MODE, FORM, GROUP } from 'const';
 import * as generate from 'utils/generate';
 import { getKey } from 'utils/object';
 import { hashByGroupAndName } from 'utils/sha';
@@ -166,4 +167,14 @@ CreateWorkspaceForm.defaultProps = {
   onCancel: () => {},
 };
 
-export default CreateWorkspaceForm;
+export default reduxForm({
+  form: FORM.CREATE_WORKSPACE,
+  destroyOnUnmount: false,
+  forceUnregisterOnUnmount: true,
+  initialValues: {
+    workspace: {
+      nodeNames: [],
+    },
+    files: [],
+  },
+})(CreateWorkspaceForm);

@@ -42,7 +42,7 @@ const NodesField = props => {
   const allNodes = hooks.useAllNodes();
 
   // nodeNames is an array of hostname, like ['dev01', 'dev02'].
-  const [nodeNames, setNodeNames] = useState([...value]);
+  const [nodeNames, setNodeNames] = useState(value);
   const [isSelectNodeDialogOpen, setIsSelectNodeDialogOpen] = useState(false);
   const openSelectNodeDialog = () => setIsSelectNodeDialogOpen(true);
   const closeSelectNodeDialog = () => setIsSelectNodeDialogOpen(false);
@@ -75,13 +75,13 @@ const NodesField = props => {
           const node = find(allNodes, n => n.hostname === nodeName);
           if (node) {
             return (
-              <Grid item xs={4}>
+              <Grid item xs={4} key={nodeName}>
                 <SelectCard rows={node} handleClose={handleDelete(nodeName)} />
               </Grid>
             );
           }
         })}
-        <Grid item xs={nodeNames.length > 0 ? 4 : 12}>
+        <Grid item xs={nodeNames.length > 0 ? 4 : 12} key="select_nodes">
           <Card
             onClick={() => {
               onFocus();
@@ -114,7 +114,7 @@ NodesField.propTypes = {
     onBlur: PropTypes.func.isRequired,
     onChange: PropTypes.func.isRequired,
     onFocus: PropTypes.func.isRequired,
-    value: PropTypes.string.isRequired,
+    value: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
   meta: PropTypes.shape({
     error: PropTypes.string,

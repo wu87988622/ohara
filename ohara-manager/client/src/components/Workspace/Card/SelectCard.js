@@ -178,7 +178,7 @@ const SelectCard = props => {
 };
 
 SelectCard.propTypes = {
-  rows: PropTypes.array.isRequired,
+  rows: PropTypes.object.isRequired,
   handleClose: PropTypes.func.isRequired,
   filterKey: PropTypes.array,
 };
