@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.it
+package oharastream.ohara.it.performance
 
 import java.util.concurrent.TimeUnit
 
@@ -22,9 +22,10 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.DockerClient
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
+import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
-import org.junit.{After, AssumptionViolatedException, Before}
+import oharastream.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
+import org.junit.{After, Before}
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,26 +35,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * this stuff is also in charge of releasing the configurator after testing.
   */
 abstract class WithPerformanceRemoteConfigurator extends IntegrationTest {
-  private[this] val log: Logger = Logger(classOf[WithRemoteConfigurator])
+  private[this] val log: Logger = Logger(classOf[WithPerformanceRemoteConfigurator])
 
-  private[this] val CONFIURATOR_NODENAME_KEY = "ohara.it.performance.configurator.node"
-
-  private[this] val configuratorNodeInfo: String = sys.env.getOrElse(
-    CONFIURATOR_NODENAME_KEY,
-    throw new AssumptionViolatedException(s"$CONFIURATOR_NODENAME_KEY does not exists!!!")
-  )
-  private[this] val configuratorNode = Node(
-    hostname = configuratorNodeInfo.split("@").last.split(":").head,
-    port = Some(configuratorNodeInfo.split("@").last.split(":").last.toInt),
-    user = Some(configuratorNodeInfo.split(":").head),
-    password = Some(configuratorNodeInfo.split("@").head.split(":").last),
-    services = Seq.empty,
-    state = State.AVAILABLE,
-    error = None,
-    lastModified = CommonUtils.current(),
-    resources = Seq.empty,
-    tags = Map.empty
-  )
+  private[this] val configuratorNode = EnvTestingUtils.configuratorNode()
 
   private[this] val configuratorContainerClient = DockerClient(DataCollie(Seq(configuratorNode)))
   private[this] val configuratorServiceKeyHolder: ServiceKeyHolder =
@@ -102,17 +86,6 @@ abstract class WithPerformanceRemoteConfigurator extends IntegrationTest {
     containerClient = serviceInfo._2
 
     result(configuratorContainerClient.imageNames(configuratorHostname)) should contain(imageName)
-
-    val routes
-      : Map[String, String] = Map(configuratorNode.hostname -> CommonUtils.address(configuratorNode.hostname)) ++
-      nodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap ++
-      k8sURL
-        .map { url =>
-          val k8sMasterNodeName = url.split("http://").last.split(":").head
-          Map(k8sMasterNodeName -> CommonUtils.address(k8sMasterNodeName))
-        }
-        .getOrElse(Map.empty)
-
     result(
       configuratorContainerClient.containerCreator
         .nodeName(configuratorHostname)
@@ -122,7 +95,7 @@ abstract class WithPerformanceRemoteConfigurator extends IntegrationTest {
           s"--hostname $configuratorHostname --port $configuratorPort ${k8sURL.getOrElse("")}"
         )
         // add the routes manually since not all envs have deployed the DNS.
-        .routes(routes)
+        .routes(EnvTestingUtils.routes(nodes))
         .name(configuratorContainerName)
         .create()
     )

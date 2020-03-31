@@ -17,21 +17,17 @@
 package oharastream.ohara.it.client
 
 import oharastream.ohara.client.configurator.v0.NodeApi
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.common.util.Releasable
-import oharastream.ohara.configurator.Configurator
-import oharastream.ohara.it.{IntegrationTest, ServiceKeyHolder}
-import org.junit.{After, Test}
+import oharastream.ohara.it.category.ClientGroup
+import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class BasicTests4Node extends IntegrationTest {
-  protected def nodes: Seq[Node]
-  protected def configurator: Configurator
-  protected def nameHolder: ServiceKeyHolder
-
-  private[this] def nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+@Category(Array(classOf[ClientGroup]))
+class TestNodeResource(paltform: PaltformModeInfo) extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+  private[this] def nodeApi: NodeApi.Access = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
 
   @Test
   def testResources(): Unit = {
@@ -58,11 +54,5 @@ abstract class BasicTests4Node extends IntegrationTest {
       node.state shouldBe NodeApi.State.AVAILABLE
       node.error shouldBe None
     }
-  }
-
-  @After
-  def cleanAllContainers(): Unit = {
-    Releasable.close(configurator)
-    Releasable.close(nameHolder)
   }
 }

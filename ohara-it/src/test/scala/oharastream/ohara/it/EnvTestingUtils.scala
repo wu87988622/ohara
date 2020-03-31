@@ -26,26 +26,10 @@ import org.junit.AssumptionViolatedException
   * from each ITs.
   */
 object EnvTestingUtils {
-  val K8S_MASTER_KEY: String                          = "ohara.it.k8s"
-  private[this] val K8S_METRICS_SERVER_URL            = "ohara.it.k8s.metrics.server"
-  private[this] val K8S_NODES_KEY: String             = "ohara.it.k8s.nodename"
-  private[this] val K8S_NAMESPACE_KEY: String         = "ohara.it.k8s.namespace"
-  private[this] val CONFIGURATOR_HOSTNAME_KEY: String = "ohara.it.hostname"
-  private[this] val CONFIGURATOR_HOSTPORT_KEY: String = "ohara.it.port"
-
-  def configuratorHostName(): String =
-    sys.env.getOrElse(
-      CONFIGURATOR_HOSTNAME_KEY,
-      throw new AssumptionViolatedException(s"$CONFIGURATOR_HOSTNAME_KEY does not exists!!!")
-    )
-
-  def configuratorHostPort(): Int =
-    sys.env
-      .getOrElse(
-        CONFIGURATOR_HOSTPORT_KEY,
-        throw new AssumptionViolatedException(s"$CONFIGURATOR_HOSTPORT_KEY does not exists!!!")
-      )
-      .toInt
+  val K8S_MASTER_KEY: String                  = "ohara.it.k8s"
+  val K8S_METRICS_SERVER_URL                  = "ohara.it.k8s.metrics.server"
+  private[this] val K8S_NODES_KEY: String     = "ohara.it.k8s.nodename"
+  private[this] val K8S_NAMESPACE_KEY: String = "ohara.it.k8s.namespace"
 
   def k8sClient(): K8SClient = {
     val k8sApiServer =
@@ -84,23 +68,45 @@ object EnvTestingUtils {
   def dockerNodes(): Seq[Node] =
     sys.env
       .get(DOCKER_NODES_KEY)
-      .map(_.split(",").map { nodeInfo =>
-        val user     = nodeInfo.split(":").head
-        val password = nodeInfo.split("@").head.split(":").last
-        val hostname = nodeInfo.split("@").last.split(":").head
-        val port     = nodeInfo.split("@").last.split(":").last.toInt
-        Node(
-          hostname = hostname,
-          port = Some(port),
-          user = Some(user),
-          password = Some(password),
-          services = Seq.empty,
-          state = State.AVAILABLE,
-          error = None,
-          lastModified = CommonUtils.current(),
-          resources = Seq.empty,
-          tags = Map.empty
-        )
-      }.toSeq)
+      .map(_.split(",").map(nodeInfo => parserNode(nodeInfo)).toSeq)
       .getOrElse(throw new AssumptionViolatedException(s"$DOCKER_NODES_KEY does not exists!!!"))
+
+  val CONFIURATOR_NODENAME_KEY = "ohara.it.configurator.node"
+
+  def configuratorNode(): Node =
+    sys.env
+      .get(CONFIURATOR_NODENAME_KEY)
+      .map(parserNode(_))
+      .getOrElse(throw new AssumptionViolatedException(s"$CONFIURATOR_NODENAME_KEY does not exists!!!"))
+
+  def routes(nodes: Seq[Node]): Map[String, String] = {
+    Map(configuratorNode.hostname -> CommonUtils.address(configuratorNode.hostname)) ++
+      nodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap ++
+      sys.env
+        .get(K8S_MASTER_KEY)
+        .map { url =>
+          val k8sMasterNodeName = url.split("http://").last.split(":").head
+          Map(k8sMasterNodeName -> CommonUtils.address(k8sMasterNodeName))
+        }
+        .getOrElse(Map.empty)
+  }
+
+  private[this] def parserNode(nodeInfo: String): Node = {
+    val user     = nodeInfo.split(":").head
+    val password = nodeInfo.split("@").head.split(":").last
+    val hostname = nodeInfo.split("@").last.split(":").head
+    val port     = nodeInfo.split("@").last.split(":").last.toInt
+    Node(
+      hostname = hostname,
+      port = Some(port),
+      user = Some(user),
+      password = Some(password),
+      services = Seq.empty,
+      state = State.AVAILABLE,
+      error = None,
+      lastModified = CommonUtils.current(),
+      resources = Seq.empty,
+      tags = Map.empty
+    )
+  }
 }
