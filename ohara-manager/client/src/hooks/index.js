@@ -23,6 +23,7 @@ export * from './introHooks';
 export * from './nodeHooks';
 export * from './pipelineHooks';
 export * from './reduxFormHooks';
+export * from './snackbarHooks';
 export * from './topicHooks';
 export * from './workerHooks';
 export * from './workspaceHooks';

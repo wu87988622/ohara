@@ -53,7 +53,7 @@ const Toolbox = props => {
   const createFile = hooks.useCreateFileAction();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
-  const showMessage = context.useSnackbar();
+  const showMessage = hooks.useShowMessage();
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState(null);

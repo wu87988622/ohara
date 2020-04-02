@@ -48,7 +48,13 @@ export default action$ =>
     // we should not omit any event
     concatMap(values =>
       setLogToLocalForge$(values).pipe(
-        map(entity => actions.createEventLog.success(entity)),
+        concatMap(entity =>
+          from([
+            actions.createEventLog.success(entity),
+            // Trigger snackbar also
+            actions.showMessage.trigger(entity.title),
+          ]),
+        ),
         catchError(res => of(actions.createEventLog.failure(res))),
       ),
     ),

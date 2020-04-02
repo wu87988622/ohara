@@ -37,7 +37,6 @@ import {
   TopicDataProvider,
   StoreProvider,
 } from './context';
-import { SnackbarProvider } from './context/SnackbarContext';
 
 const ContextProviderComposer = ({ contextProviders, children }) => {
   return contextProviders.reduceRight(
@@ -59,7 +58,6 @@ const AppProviders = ({ children }) => {
         <StoreProvider children={children} />,
         <AppProvider children={children} />,
         <DialogProvider children={children} />,
-        <SnackbarProvider children={children} />,
         <ApiProvider children={children} />,
         <ConfiguratorProvider children={children} />,
         <EditWorkspaceProvider children={children} />,

@@ -18,7 +18,7 @@ import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { isPlainObject } from 'lodash';
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 import * as selectors from 'store/selectors';
 import * as actions from 'store/actions';
 
@@ -88,7 +88,7 @@ export const useEventLog = () => {
   const createEventLog = useCreateEventLog();
   const clearEventLogs = useClearEventLogs();
 
-  const showMessage = context.useSnackbar();
+  const showMessage = hooks.useShowMessage();
 
   return useMemo(() => {
     const eventLog = {

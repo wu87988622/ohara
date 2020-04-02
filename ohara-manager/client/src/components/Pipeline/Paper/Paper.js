@@ -24,7 +24,7 @@ import { useTheme } from '@material-ui/core/styles';
 import { KIND, CELL_STATUS } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import { useSnackbar } from 'context';
+import { useShowMessage } from 'hooks';
 import { PipelineStateContext } from '../Pipeline';
 import * as paperUtils from './PaperUtils';
 
@@ -44,7 +44,7 @@ const Paper = React.forwardRef((props, ref) => {
     onCellConfig = _.noop,
   } = props;
 
-  const showMessage = useSnackbar();
+  const showMessage = useShowMessage();
   const { palette } = useTheme();
   const { isMetricsOn } = React.useContext(PipelineStateContext);
 

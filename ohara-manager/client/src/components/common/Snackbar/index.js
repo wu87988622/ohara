@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import app from './app';
-import createWorkspace from './createWorkspace';
-import file from './file';
-import intro from './intro';
-import node from './node';
-import pipeline from './pipeline';
-import snackbar from './snackbar';
-import topic from './topic';
-import workspace from './workspace';
+import StyledSnackbar from './Snackbar';
 
-export default combineReducers({
-  app,
-  createWorkspace,
-  file,
-  intro,
-  node,
-  pipeline,
-  snackbar,
-  topic,
-  workspace,
-});
+export default StyledSnackbar;

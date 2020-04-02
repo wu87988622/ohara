@@ -16,16 +16,16 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useSnackbar } from 'context/SnackbarContext';
 import { fetchConfiguratorCreator } from './configuratorActions';
 import { reducer, initialState } from './configuratorReducer';
+import * as hooks from 'hooks';
 
 const ConfiguratorStateContext = React.createContext();
 const ConfiguratorDispatchContext = React.createContext();
 
 const ConfiguratorProvider = ({ children }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
-  const showMessage = useSnackbar();
+  const showMessage = hooks.useShowMessage();
 
   const fetchConfigurator = React.useCallback(
     fetchConfiguratorCreator(state, dispatch, showMessage),

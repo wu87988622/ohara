@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import app from './app';
-import createWorkspace from './createWorkspace';
-import file from './file';
-import intro from './intro';
-import node from './node';
-import pipeline from './pipeline';
-import snackbar from './snackbar';
-import topic from './topic';
-import workspace from './workspace';
+import { useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 
-export default combineReducers({
-  app,
-  createWorkspace,
-  file,
-  intro,
-  node,
-  pipeline,
-  snackbar,
-  topic,
-  workspace,
-});
+import * as actions from 'store/actions';
+
+export const useShowMessage = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    message => dispatch(actions.showMessage.trigger(message)),
+    [dispatch],
+  );
+};
+
+export const useHideMessage = () => {
+  const dispatch = useDispatch();
+  return useCallback(() => dispatch(actions.hideMessage.trigger()), [dispatch]);
+};

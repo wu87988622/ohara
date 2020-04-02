@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 
-import { combineReducers } from 'redux';
-import app from './app';
-import createWorkspace from './createWorkspace';
-import file from './file';
-import intro from './intro';
-import node from './node';
-import pipeline from './pipeline';
-import snackbar from './snackbar';
-import topic from './topic';
-import workspace from './workspace';
+import * as actions from 'store/actions';
 
-export default combineReducers({
-  app,
-  createWorkspace,
-  file,
-  intro,
-  node,
-  pipeline,
-  snackbar,
-  topic,
-  workspace,
-});
+const initialState = {
+  lastUpdated: null,
+  message: '',
+  isOpen: false,
+};
+
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    case actions.showMessage.SUCCESS:
+    case actions.hideMessage.SUCCESS:
+      return {
+        ...state,
+        ...action.payload,
+        lastUpdated: new Date(),
+      };
+    default:
+      return state;
+  }
+}
