@@ -16,10 +16,10 @@
 
 import { useMemo } from 'react';
 import { get } from 'lodash';
-import { useTopicState } from 'context';
+import * as hooks from 'hooks';
 
 export const useTopics = () => {
-  const { data: topics } = useTopicState();
+  const topics = hooks.useTopicsInWorkspace();
 
   return useMemo(() => {
     return topics.map(topic => {

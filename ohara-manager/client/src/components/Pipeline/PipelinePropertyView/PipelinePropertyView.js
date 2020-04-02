@@ -33,6 +33,7 @@ import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import * as propertyUtils from './PipelinePropertyViewUtils';
 import * as defUtils from 'api/apiInterface/definitionInterface';
 
@@ -45,7 +46,7 @@ const PipelinePropertyView = props => {
 
   const { data: currentConnector } = context.useConnectorState();
   const { data: currentStream } = context.useStreamState();
-  const { data: currentTopic } = context.useTopicState();
+  const currentTopics = hooks.useTopicsInPipeline();
   const [isOpen, setIsOpen] = useState(false);
   const [tags, setTags] = useState({
     json: null,
@@ -69,7 +70,7 @@ const PipelinePropertyView = props => {
       settings = currentStream.find(stream => stream.name === cellName);
       break;
     case KIND.topic:
-      settings = currentTopic.find(topic => topic.name === cellName);
+      settings = currentTopics.find(topic => topic.name === cellName);
       break;
     default:
       break;
@@ -130,8 +131,8 @@ const PipelinePropertyView = props => {
         const objectArray = currentSetting
           .map(value => value.name)
           .map(value => {
-            if (currentTopic.map(topic => topic.name).includes(value)) {
-              const topic = currentTopic.find(topic => topic.name === value);
+            if (currentTopics.map(topic => topic.name).includes(value)) {
+              const topic = currentTopics.find(topic => topic.name === value);
               return topic.tags?.displayName
                 ? topic.tags?.displayName
                 : topic.name;

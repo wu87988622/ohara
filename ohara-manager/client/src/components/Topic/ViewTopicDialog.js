@@ -43,22 +43,16 @@ const ViewTopicDialog = () => {
     data: topic,
   } = context.useViewTopicDialog();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const { isFetching: isDeleting } = context.useTopicState();
-  const { deleteTopic } = context.useTopicActions();
+  const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const pipelines = hooks.usePipelines();
-  const eventLog = hooks.useEventLog();
 
   if (!topic) return null;
 
   const handleDelete = async () => {
     const name = get(topic, 'name');
-    const group = get(topic, 'group');
-    const res = await deleteTopic(name, group);
-    if (!res.error) {
-      eventLog.info(`Successfully deleted topic ${name}.`);
-      setIsConfirmOpen(false);
-      closeDialog();
-    }
+    stopAndDeleteTopic({ name });
+    setIsConfirmOpen(false);
+    closeDialog();
   };
 
   const displayName = get(topic, 'displayName');
@@ -72,7 +66,6 @@ const ViewTopicDialog = () => {
       title="View topic detail"
       open={isDialogOpen}
       handleClose={closeDialog}
-      loading={isDeleting}
       testId="view-topic-detail-dialog"
     >
       <Wrapper>
@@ -100,7 +93,6 @@ const ViewTopicDialog = () => {
               open={isConfirmOpen}
               handleClose={() => setIsConfirmOpen(false)}
               handleConfirm={handleDelete}
-              isWorking={isDeleting}
               testId="view-topic-detail-delete-dialog"
             />
           </Grid>

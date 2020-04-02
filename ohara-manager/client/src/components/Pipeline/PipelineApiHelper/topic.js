@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-import * as context from 'context';
 import * as hooks from 'hooks';
-import * as util from './apiHelperUtils';
 import { CELL_STATUS } from 'const';
 
 const topic = () => {
-  const { createTopic, stopTopic, deleteTopic } = context.useTopicActions();
+  const createAndStartTopic = hooks.useCreateAndStartTopicAction();
+  const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const currentPipeline = hooks.usePipeline();
-  const { data: topics } = context.useTopicState();
+  const topics = hooks.useTopicsInPipeline();
 
-  const create = async (params, paperApi) => {
+  const createAndStart = (params, paperApi) => {
     const { id, name, displayName, isShared } = params;
 
     if (isShared) {
@@ -34,31 +33,19 @@ const topic = () => {
       });
     }
 
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-
-    const res = await createTopic({
+    createAndStartTopic({
+      id,
       name,
       tags: {
         isShared: false,
         displayName,
         pipelineName: currentPipeline.name,
       },
+      paperApi,
     });
-
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    } else {
-      paperApi.removeElement(id);
-    }
-    return res;
   };
 
-  const remove = async (params, paperApi) => {
+  const stopAndRemove = (params, paperApi) => {
     const { id, name, isShared } = params;
 
     if (isShared) return paperApi.removeElement(id);
@@ -67,22 +54,14 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
-    const stopRes = await stopTopic(name);
-
-    if (!stopRes.error) {
-      const state = util.getCellState(stopRes);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    }
-
-    const deleteRes = await deleteTopic(name);
-    if (!deleteRes.error) {
-      paperApi.removeElement(id);
-    }
+    stopAndDeleteTopic({
+      id,
+      name,
+      paperApi,
+    });
   };
 
-  return { create, remove };
+  return { createAndStart, stopAndRemove };
 };
 
 export default topic;

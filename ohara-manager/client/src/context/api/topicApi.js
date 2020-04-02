@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import { map } from 'lodash';
-
 import * as inspectApi from 'api/inspectApi';
-import * as topicApi from 'api/topicApi';
 import ContextApiError from 'context/ContextApiError';
 import { generateClusterResponse, validate } from './utils';
 
@@ -26,77 +23,7 @@ export const createApi = context => {
   if (!topicGroup || !brokerKey || !workspaceKey) return;
 
   const group = topicGroup;
-  const brokerClusterKey = brokerKey;
-  const parentKey = workspaceKey;
   return {
-    fetchAll: async () => {
-      const params = { group };
-      const res = await topicApi.getAll(params);
-      if (res.errors) throw new ContextApiError(res);
-      return await Promise.all(
-        map(res.data, async topic => {
-          const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-          if (infoRes.errors) throw new ContextApiError(infoRes);
-          return generateClusterResponse({
-            values: topic,
-            inspectInfo: infoRes.data.classInfos[0],
-          });
-        }),
-      );
-    },
-    fetch: async name => {
-      const params = { name, group };
-      const res = await topicApi.get(params);
-      if (res.errors) throw new ContextApiError(res);
-      const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-      if (infoRes.errors) throw new ContextApiError(infoRes);
-      return generateClusterResponse({
-        values: res.data,
-        inspectInfo: infoRes.data.classInfos[0],
-      });
-    },
-    create: async values => {
-      validate(values);
-      const params = {
-        ...values,
-        group,
-        brokerClusterKey,
-        tags: { ...values.tags, parentKey },
-      };
-      const res = await topicApi.create(params);
-      if (res.errors) throw new ContextApiError(res);
-      const infoRes = await inspectApi.getBrokerInfo(brokerClusterKey);
-      if (infoRes.errors) throw new ContextApiError(infoRes);
-      return generateClusterResponse({
-        values: res.data,
-        inspectInfo: infoRes.data.classInfos[0],
-      });
-    },
-    update: async values => {
-      validate(values);
-      const params = { ...values, group };
-      const res = await topicApi.update(params);
-      if (res.errors) throw new ContextApiError(res);
-      return generateClusterResponse({ values: res.data });
-    },
-    delete: async name => {
-      const params = { name, group };
-      const res = await topicApi.remove(params);
-      if (res.errors) throw new ContextApiError(res);
-      return params;
-    },
-    start: async name => {
-      const params = { name, group };
-      const res = await topicApi.start(params);
-      if (res.errors) throw new ContextApiError(res);
-      return generateClusterResponse({ values: res.data });
-    },
-    stop: async name => {
-      const params = { name, group };
-      const res = await topicApi.stop(params);
-      if (res.errors) throw new ContextApiError(res);
-      return generateClusterResponse({ values: res.data });
-    },
     fetchData: async values => {
       validate(values);
       const params = {

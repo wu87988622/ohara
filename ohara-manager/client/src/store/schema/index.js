@@ -19,17 +19,24 @@ import { getId } from 'utils/object';
 
 export const ENTITY_TYPE = {
   brokers: 'brokers',
-  infos: 'infos',
-  pipelines: 'pipelines',
+  eventLogs: 'eventLogs',
   files: 'files',
+  infos: 'infos',
+  nodes: 'nodes',
+  pipelines: 'pipelines',
+  topics: 'topics',
   workers: 'workers',
   workspaces: 'workspaces',
   zookeepers: 'zookeepers',
-  nodes: 'nodes',
-  eventLogs: 'eventLogs',
 };
 
 export const broker = new schema.Entity(ENTITY_TYPE.brokers, undefined, {
+  idAttribute: getId,
+});
+
+export const eventLog = new schema.Entity(ENTITY_TYPE.eventLogs, undefined);
+
+export const file = new schema.Entity(ENTITY_TYPE.files, undefined, {
   idAttribute: getId,
 });
 
@@ -37,11 +44,15 @@ export const info = new schema.Entity(ENTITY_TYPE.infos, undefined, {
   idAttribute: getId,
 });
 
+export const node = new schema.Entity(ENTITY_TYPE.nodes, undefined, {
+  idAttribute: node => node.hostname,
+});
+
 export const pipeline = new schema.Entity(ENTITY_TYPE.pipelines, undefined, {
   idAttribute: getId,
 });
 
-export const file = new schema.Entity(ENTITY_TYPE.files, undefined, {
+export const topic = new schema.Entity(ENTITY_TYPE.topics, undefined, {
   idAttribute: getId,
 });
 
@@ -56,9 +67,3 @@ export const workspace = new schema.Entity(ENTITY_TYPE.workspaces, undefined, {
 export const zookeeper = new schema.Entity(ENTITY_TYPE.zookeepers, undefined, {
   idAttribute: getId,
 });
-
-export const node = new schema.Entity(ENTITY_TYPE.nodes, undefined, {
-  idAttribute: node => node.hostname,
-});
-
-export const eventLog = new schema.Entity(ENTITY_TYPE.eventLogs, undefined);

@@ -17,14 +17,15 @@
 import { combineReducers } from 'redux';
 import _ from 'lodash';
 import brokers from './brokers';
-import infos from './infos';
+import eventLogs from './eventLogs';
 import files from './files';
+import infos from './infos';
+import nodes from './nodes';
 import pipelines from './pipelines';
+import topics from './topics';
 import workers from './workers';
 import workspaces from './workspaces';
 import zookeepers from './zookeepers';
-import nodes from './nodes';
-import eventLogs from './eventLogs';
 
 export const entity = type => (state = {}, action) => {
   const { payload } = action;
@@ -36,12 +37,13 @@ export const entity = type => (state = {}, action) => {
 
 export default combineReducers({
   brokers,
-  infos,
+  eventLogs,
   files,
+  infos,
+  nodes,
   pipelines,
+  topics,
   workers,
   workspaces,
   zookeepers,
-  nodes,
-  eventLogs,
 });

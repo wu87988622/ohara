@@ -17,18 +17,20 @@
 import { combineReducers } from 'redux';
 import app from './app';
 import createWorkspace from './createWorkspace';
-import intro from './intro';
-import pipeline from './pipeline';
 import file from './file';
-import workspace from './workspace';
+import intro from './intro';
 import node from './node';
+import pipeline from './pipeline';
+import topic from './topic';
+import workspace from './workspace';
 
 export default combineReducers({
   app,
   createWorkspace,
-  intro,
-  pipeline,
   file,
-  workspace,
+  intro,
   node,
+  pipeline,
+  topic,
+  workspace,
 });

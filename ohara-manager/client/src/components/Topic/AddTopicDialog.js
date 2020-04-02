@@ -34,18 +34,16 @@ import * as hooks from 'hooks';
 const AddTopicDialog = props => {
   const { uniqueId } = props;
   const currentBroker = hooks.useBroker();
-  const { isFetching: isSaving } = context.useTopicState();
-  const { createTopic } = context.useTopicActions();
+  const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const {
     isOpen: isDialogOpen,
     close: closeDialog,
   } = context.useAddTopicDialog();
-  const eventLog = hooks.useEventLog();
   const replicationFactor = _.get(currentBroker, 'aliveNodes', []);
 
   const onSubmit = async (values, form) => {
     const { name: topicName } = values;
-    const res = await createTopic({
+    createAndStartTopic({
       name: topicName,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
@@ -53,11 +51,8 @@ const AddTopicDialog = props => {
         isShared: true,
       },
     });
-    if (!res.error) {
-      eventLog.info(`Successfully created topic ${topicName}.`);
-      setTimeout(form.reset);
-      closeDialog();
-    }
+    setTimeout(form.reset);
+    closeDialog();
   };
 
   return (
@@ -73,7 +68,6 @@ const AddTopicDialog = props => {
               form.reset();
               closeDialog();
             }}
-            loading={isSaving}
             handleConfirm={handleSubmit}
             confirmBText="ADD"
             confirmDisabled={submitting || pristine || invalid}

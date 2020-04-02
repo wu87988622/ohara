@@ -54,7 +54,7 @@ const DataWindow = () => {
     isFetching: isFetchingLog,
     lastUpdated: lastUpdatedLog,
   } = context.useLogState();
-  const { data: topics } = context.useTopicState();
+  const { data: topics } = hooks.useAllTopics();
   const topicActions = context.useTopicDataActions();
   const logActions = context.useLogActions();
   const currentBroker = hooks.useBroker();

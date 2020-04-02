@@ -151,9 +151,7 @@ const finalize$ = params =>
     // Log a success message to Event Log
     of(
       actions.createEventLog.trigger({
-        log: {
-          title: `Successfully created workspace ${params.name}.`,
-        },
+        title: `Successfully created workspace ${params.name}.`,
         type: LOG_LEVEL.info,
       }),
     ),

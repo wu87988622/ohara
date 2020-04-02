@@ -18,12 +18,11 @@ import { useEffect, useState, useRef, useContext } from 'react';
 import _ from 'lodash';
 
 import * as hooks from 'hooks';
-import { KIND, CELL_STATUS } from 'const';
-import { useTopicState } from 'context';
+import { KIND } from 'const';
 import { PaperContext } from '../Pipeline';
 
 export const useTopics = () => {
-  const { data: topicsData } = useTopicState();
+  const topicsDataInToolBox = hooks.useTopicsInToolbox();
 
   // Pipeline-only topic
   const pipelineOnlyTopic = {
@@ -31,32 +30,16 @@ export const useTopics = () => {
     tags: { isShared: false, label: 'Pipeline Only' },
   };
 
-  const topics = [pipelineOnlyTopic, ...topicsData]
-    .map(topic => ({
-      displayName: topic.tags.displayName || '',
-      kind: KIND.topic,
-      className: KIND.topic,
-      name: topic.name,
-      isShared: topic.tags.isShared,
-      status: topic.state,
-    }))
-    .filter(
-      // Some type of topics are hidden from the Toolbox, this including:
-      // 1. Pipeline-only topics
-      // 2. "Shared" topics that are not running
-      topic => {
-        const { name, isShared, status } = topic;
-        const topicStatus =
-          typeof status === 'string' ? status.toLowerCase() : status;
+  const topics = [pipelineOnlyTopic, ...topicsDataInToolBox].map(topic => ({
+    displayName: topic.tags.displayName || '',
+    kind: KIND.topic,
+    className: KIND.topic,
+    name: topic.name,
+    isShared: topic.tags.isShared,
+    status: topic.state,
+  }));
 
-        return (
-          name === 'Pipeline Only' ||
-          (isShared && topicStatus === CELL_STATUS.running)
-        );
-      },
-    );
-
-  return [topics, topicsData];
+  return [topics, topicsDataInToolBox];
 };
 
 const restructureStream = streamClass => {

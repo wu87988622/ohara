@@ -80,8 +80,7 @@ export const useEventLog = () => {
   const useCreateEventLog = () => {
     const dispatch = useDispatch();
     return useCallback(
-      (log, type = LOG_LEVEL.info) =>
-        dispatch(actions.createEventLog.trigger({ log, type })),
+      values => dispatch(actions.createEventLog.trigger(values)),
       [dispatch],
     );
   };
@@ -94,7 +93,7 @@ export const useEventLog = () => {
   return useMemo(() => {
     const eventLog = {
       info: (title, showSnackbar = true) => {
-        createEventLog({ title }, LOG_LEVEL.info);
+        createEventLog({ title, type: LOG_LEVEL.info });
         if (showSnackbar) showMessage(title);
       },
       /**
@@ -110,7 +109,7 @@ export const useEventLog = () => {
         if (isPlainObject(message)) {
           createEventLog(message, LOG_LEVEL.error);
         } else {
-          createEventLog({ title }, LOG_LEVEL.error);
+          createEventLog({ title, type: LOG_LEVEL.error });
         }
         if (showSnackbar) showMessage(title);
       },

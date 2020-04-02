@@ -39,7 +39,8 @@ function MoreActions() {
   const currentPipeline = hooks.usePipeline();
 
   const { stopConnector, startConnector } = context.useConnectorActions();
-  const { stopTopic, startTopic } = context.useTopicActions();
+  const startTopic = hooks.useStartTopicAction();
+  const stopTopic = hooks.useStopTopicAction();
   const { stopStream, startStream } = context.useStreamActions();
 
   const startBroker = hooks.useStartBrokerAction();

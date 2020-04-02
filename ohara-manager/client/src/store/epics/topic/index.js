@@ -15,27 +15,22 @@
  */
 
 import { combineEpics } from 'redux-observable';
-
-import appEpics from './appEpics';
-import brokerEpics from './brokerEpics';
-import eventLogEpics from './eventLog';
-import fileEpics from './file';
-import nodeEpics from './nodeEpics';
-import pipelineEpics from './pipeline';
-import topicEpics from './topic';
-import workerEpics from './workerEpics';
-import workspaceEpics from './workspace';
-import zookeeperEpics from './zookeeperEpics';
+import fetchAllTopicsEpic from './fetchAllTopicsEpic';
+import createTopicEpic from './createTopicEpic';
+import deleteTopicEpic from './deleteTopicEpic';
+import updateTopicEpic from './updateTopicEpic';
+import startTopicEpic from './startTopicEpic';
+import stopTopicEpic from './stopTopicEpic';
+import createAndStartTopicEpic from './createAndStartTopicEpic';
+import stopAndDeleteTopicEpic from './stopAndDeleteTopicEpic';
 
 export default combineEpics(
-  appEpics,
-  brokerEpics,
-  eventLogEpics,
-  fileEpics,
-  nodeEpics,
-  pipelineEpics,
-  topicEpics,
-  workerEpics,
-  workspaceEpics,
-  zookeeperEpics,
+  fetchAllTopicsEpic,
+  createTopicEpic,
+  deleteTopicEpic,
+  updateTopicEpic,
+  startTopicEpic,
+  stopTopicEpic,
+  createAndStartTopicEpic,
+  stopAndDeleteTopicEpic,
 );

@@ -49,7 +49,6 @@ const Toolbox = props => {
   } = props;
 
   const currentWorker = hooks.useWorker();
-  const currentWorkspace = hooks.useWorkspace();
   const currentPipeline = hooks.usePipeline();
   const createFile = hooks.useCreateFileAction();
 
@@ -70,7 +69,7 @@ const Toolbox = props => {
   const paperApi = React.useContext(PaperContext);
   const streams = useStreams();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
-  const [topics, topicsData] = useTopics(currentWorkspace);
+  const [topics, topicsData] = useTopics();
   const toolboxBodyRef = React.useRef(null);
   const scrollRef = React.useRef(0);
 

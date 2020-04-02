@@ -21,7 +21,6 @@ export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
 export * from 'context/log/LogContext';
 export * from 'context/stream/StreamContext';
-export * from 'context/topic/TopicContext';
 export * from 'context/workspace/EditWorkspaceContext';
 export * from 'context/SnackbarContext';
 export * from 'context/devTool/DevToolContext';

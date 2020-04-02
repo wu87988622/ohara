@@ -23,6 +23,7 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import TextField from '@material-ui/core/TextField';
 
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { Tooltip } from 'components/common/Tooltip';
 import { Button } from 'components/common/Form';
 import Popover from 'components/common/Popover';
@@ -32,7 +33,7 @@ import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody } from './ControllerStyles';
 
 const ControllerTopic = () => {
-  const { data: topics } = context.useTopicState();
+  const topics = hooks.useTopicsInWorkspace();
   const displayTopicNames = topics.map(topic => {
     // pipeline only topic names are stored in tags, the name field is randomly generated.
     return topic.tags.isShared ? topic.name : topic.tags.displayName;

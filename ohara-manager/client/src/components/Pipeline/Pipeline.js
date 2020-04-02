@@ -57,7 +57,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     lastUpdated: connectorLastUpdated,
     data: connectors,
   } = context.useConnectorState();
-  const { lastUpdated: topicLastUpdated } = context.useTopicState();
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 
   const {
@@ -83,7 +82,10 @@ const Pipeline = React.forwardRef((props, ref) => {
     removeLinkFrom: removeStreamLinkFrom,
   } = pipelineUtils.stream();
 
-  const { create: createTopic, remove: removeTopic } = pipelineUtils.topic();
+  const {
+    createAndStart: createAndStartTopic,
+    stopAndRemove: stopAndRemoveTopic,
+  } = pipelineUtils.topic();
 
   const { updateCells, getUpdatedCells } = pipelineUtils.pipeline();
 
@@ -118,7 +120,7 @@ const Pipeline = React.forwardRef((props, ref) => {
           break;
         case 'topic':
           if (onlyRemoveLink) break;
-          removeTopic({ ...cells[key] }, paperApi);
+          stopAndRemoveTopic({ ...cells[key] }, paperApi);
           break;
 
         default:
@@ -206,7 +208,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (isInitialized.current) return;
     if (!paperApiRef.current) return;
     if (!connectorLastUpdated) return;
-    if (!topicLastUpdated) return;
     if (!streamLastUpdated) return;
     if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
@@ -220,7 +221,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     isPaperApiReady,
     pipelineName,
     streamLastUpdated,
-    topicLastUpdated,
   ]);
 
   const deleteTopic = async () => {
@@ -264,7 +264,7 @@ const Pipeline = React.forwardRef((props, ref) => {
       clean({ from: streamCell, paperApi });
     });
 
-    await removeTopic(topic, paperApi);
+    stopAndRemoveTopic(topic, paperApi);
   };
 
   const handleElementDelete = async () => {
@@ -387,7 +387,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                             break;
 
                           case KIND.topic:
-                            createTopic(cellData, paperApi);
+                            createAndStartTopic(cellData, paperApi);
                             break;
 
                           default:
@@ -431,7 +431,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                           firstLink,
                           secondeLink,
                         } = pipelineUtils.utils.getConnectionOrder(cells);
-                        let topicRes;
                         let sourceRes;
                         let sinkRes;
                         let toStreamRes;
@@ -462,7 +461,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                             );
                             break;
                           case CONNECTION_TYPE.SOURCE_TOPIC_SINK:
-                            topicRes = await createTopic(
+                            createAndStartTopic(
                               ({
                                 id: topic.id,
                                 name: topic.name,
@@ -470,9 +469,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                               } = topic),
                               paperApi,
                             );
-                            if (topicRes.error) {
-                              return;
-                            }
                             sourceRes = await updateLinkConnector(
                               { connector: source, topic, link: firstLink },
                               paperApi,
@@ -491,7 +487,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                             }
                             break;
                           case CONNECTION_TYPE.SOURCE_TOPIC_STREAM:
-                            topicRes = await createTopic(
+                            createAndStartTopic(
                               ({
                                 id: topic.id,
                                 name: topic.name,
@@ -499,9 +495,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                               } = topic),
                               paperApi,
                             );
-                            if (topicRes.error) {
-                              return;
-                            }
                             sourceRes = await updateLinkConnector(
                               { connector: source, topic, link: firstLink },
                               paperApi,
@@ -520,7 +513,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                             }
                             break;
                           case CONNECTION_TYPE.STREAM_TOPIC_SINK:
-                            topicRes = await createTopic(
+                            createAndStartTopic(
                               ({
                                 id: topic.id,
                                 name: topic.name,
@@ -528,9 +521,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                               } = topic),
                               paperApi,
                             );
-                            if (topicRes.error) {
-                              return;
-                            }
                             toStreamRes = await updateStreamLinkTo(
                               { toStream, topic, link },
                               paperApi,
@@ -549,7 +539,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                             }
                             break;
                           case CONNECTION_TYPE.STREAM_TOPIC_STREAM:
-                            topicRes = await createTopic(
+                            createAndStartTopic(
                               ({
                                 id: topic.id,
                                 name: topic.name,
@@ -557,9 +547,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                               } = topic),
                               paperApi,
                             );
-                            if (topicRes.error) {
-                              return;
-                            }
                             toStreamRes = await updateStreamLinkTo(
                               { toStream, topic, link },
                               paperApi,

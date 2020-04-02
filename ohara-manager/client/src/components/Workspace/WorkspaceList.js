@@ -30,8 +30,6 @@ import InputIcon from '@material-ui/icons/Input';
 import Typography from '@material-ui/core/Typography';
 
 import { KIND } from 'const';
-import { usePrevious } from 'utils/hooks';
-import * as topicApi from 'api/topicApi';
 import * as context from 'context';
 import * as hooks from 'hooks';
 import { Dialog } from 'components/common/Dialog';
@@ -65,23 +63,14 @@ function WorkspaceList() {
   const { isOpen, close } = context.useListWorkspacesDialog();
   const workspaces = hooks.useWorkspaces();
   const workspaceName = hooks.useWorkspaceName();
-  const { data: currentTopics } = context.useTopicState();
-  const [topics, setTopics] = React.useState(null);
-
-  const prevTopics = usePrevious(currentTopics);
+  const allTopics = hooks.useAllTopics();
+  const isTopicLoaded = hooks.useIsTopicLoaded();
+  const fetchAllTopics = hooks.useFetchAllTopicsAction();
 
   // we need to fetch all topic across all workspaces directly here
   React.useEffect(() => {
-    const fetchTopics = async () => {
-      const result = await topicApi.getAll();
-      setTopics(result.errors ? [] : result.data);
-    };
-    // if we add some topic into current workspace
-    // re-fetch all topics again
-    if (topics === null || prevTopics !== currentTopics) {
-      fetchTopics();
-    }
-  }, [currentTopics, prevTopics, topics]);
+    if (!isTopicLoaded) fetchAllTopics();
+  }, [fetchAllTopics, isTopicLoaded]);
 
   const handleClick = name => () => {
     history.push(`/${name}`);
@@ -126,7 +115,7 @@ function WorkspaceList() {
                 nodes: size(nodeNames),
                 pipelines: 0, // TODO: See the issue (https://github.com/oharastream/ohara/issues/3506)
                 topics: size(
-                  filter(topics, topic =>
+                  filter(allTopics, topic =>
                     isEqual(pickBrokerKey(topic), brokerKey),
                   ),
                 ),
