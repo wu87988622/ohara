@@ -17,7 +17,7 @@
 package oharastream.ohara.it.client
 
 import oharastream.ohara.client.configurator.v0.NodeApi
-import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
 import oharastream.ohara.it.category.ClientGroup
 import org.junit.Test
 import org.junit.experimental.categories.Category
@@ -26,7 +26,7 @@ import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[ClientGroup]))
-class TestListNode(paltform: PaltformModeInfo) extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+class TestListNode(platform: PlatformModeInfo) extends WithRemoteConfigurator(platform: PlatformModeInfo) {
   @Test
   def test(): Unit = {
     val services = result(NodeApi.access.hostname(configuratorHostname).port(configuratorPort).list()).head.services

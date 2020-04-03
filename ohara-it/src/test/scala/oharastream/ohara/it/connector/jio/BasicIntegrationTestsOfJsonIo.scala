@@ -19,7 +19,7 @@ package oharastream.ohara.it.connector.jio
 import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
 import org.junit.Before
 import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,8 +28,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * the test cases are placed at BasicTestsOfJsonIn, and this abstract class is used to implements the required methods
   * by the "true"env. The env is abstract since there are two "envs" to ohara - ssh and k8s.
   */
-abstract class BasicIntegrationTestsOfJsonIo(paltform: PaltformModeInfo)
-    extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+abstract class BasicIntegrationTestsOfJsonIo(platform: PlatformModeInfo)
+    extends WithRemoteConfigurator(platform: PlatformModeInfo) {
   protected val freePort: Int = CommonUtils.availablePort()
 
   private[this] def zkApi: ZookeeperApi.Access =

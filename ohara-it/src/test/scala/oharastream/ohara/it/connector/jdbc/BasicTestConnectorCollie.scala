@@ -29,7 +29,7 @@ import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.jdbc.source.{JDBCSourceConnector, JDBCSourceConnectorConfig}
-import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
 import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.connector.TaskSetting
@@ -41,8 +41,8 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-abstract class BasicTestConnectorCollie(paltform: PaltformModeInfo)
-    extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+abstract class BasicTestConnectorCollie(platform: PlatformModeInfo)
+    extends WithRemoteConfigurator(platform: PlatformModeInfo) {
   private[this] val log                    = Logger(classOf[BasicTestConnectorCollie])
   private[this] val JAR_FOLDER_KEY: String = "ohara.it.jar.folder"
   private[this] val jarFolderPath          = sys.env.getOrElse(JAR_FOLDER_KEY, "/jar")

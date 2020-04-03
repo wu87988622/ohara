@@ -26,10 +26,10 @@ import org.junit.AssumptionViolatedException
   * from each ITs.
   */
 object EnvTestingUtils {
-  val K8S_MASTER_KEY: String                  = "ohara.it.k8s"
-  val K8S_METRICS_SERVER_URL                  = "ohara.it.k8s.metrics.server"
-  private[this] val K8S_NODES_KEY: String     = "ohara.it.k8s.nodename"
-  private[this] val K8S_NAMESPACE_KEY: String = "ohara.it.k8s.namespace"
+  val K8S_MASTER_KEY: String    = "ohara.it.k8s"
+  val K8S_METRICS_SERVER_URL    = "ohara.it.k8s.metrics.server"
+  val K8S_NODES_KEY: String     = "ohara.it.k8s.nodename"
+  val K8S_NAMESPACE_KEY: String = "ohara.it.k8s.namespace"
 
   def k8sClient(): K8SClient = {
     val k8sApiServer =
@@ -49,14 +49,16 @@ object EnvTestingUtils {
     K8SClient.builder.apiServerURL(k8sApiServer).namespace(namespace).metricsApiServerURL(k8sMetricsServerURL).build()
   }
 
+  def k8sNode(plainString: String): Seq[Node] =
+    plainString
+      .split(",")
+      .map(Node.apply)
+      .toSeq
+
   def k8sNodes(): Seq[Node] =
     sys.env
       .get(K8S_NODES_KEY)
-      .map(
-        _.split(",")
-          .map(Node.apply)
-          .toSeq
-      )
+      .map(k8sNode)
       .getOrElse(throw new AssumptionViolatedException(s"$K8S_NODES_KEY does not exists!!!"))
 
   /**
@@ -65,18 +67,20 @@ object EnvTestingUtils {
     */
   val DOCKER_NODES_KEY = "ohara.it.docker"
 
+  def dockerNodes(plainString: String): Seq[Node] = plainString.split(",").map(parserNode).toSeq
+
   def dockerNodes(): Seq[Node] =
-    sys.env
-      .get(DOCKER_NODES_KEY)
-      .map(_.split(",").map(nodeInfo => parserNode(nodeInfo)).toSeq)
-      .getOrElse(throw new AssumptionViolatedException(s"$DOCKER_NODES_KEY does not exists!!!"))
+    dockerNodes(
+      sys.env
+        .getOrElse(DOCKER_NODES_KEY, throw new AssumptionViolatedException(s"$DOCKER_NODES_KEY does not exists!!!"))
+    )
 
   val CONFIURATOR_NODENAME_KEY = "ohara.it.configurator.node"
 
   def configuratorNode(): Node =
     sys.env
       .get(CONFIURATOR_NODENAME_KEY)
-      .map(parserNode(_))
+      .map(parserNode)
       .getOrElse(throw new AssumptionViolatedException(s"$CONFIURATOR_NODENAME_KEY does not exists!!!"))
 
   def routes(nodes: Seq[Node]): Map[String, String] = {

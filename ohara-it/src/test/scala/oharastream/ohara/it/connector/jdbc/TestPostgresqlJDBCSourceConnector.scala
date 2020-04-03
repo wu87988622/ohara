@@ -17,13 +17,13 @@
 package oharastream.ohara.it.connector.jdbc
 
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.it.PaltformModeInfo
+import oharastream.ohara.it.PlatformModeInfo
 import org.junit.experimental.categories.Category
 import oharastream.ohara.it.category.ConnectorGroup
 
 @Category(Array(classOf[ConnectorGroup]))
-class TestPostgresqlJDBCSourceConnector(paltform: PaltformModeInfo)
-    extends BasicTestConnectorCollie(paltform: PaltformModeInfo) {
+class TestPostgresqlJDBCSourceConnector(platform: PlatformModeInfo)
+    extends BasicTestConnectorCollie(platform: PlatformModeInfo) {
   private[this] val DB_URL_KEY: String       = "ohara.it.postgresql.db.url"
   private[this] val DB_USER_NAME_KEY: String = "ohara.it.postgresql.db.username"
   private[this] val DB_PASSWORD_KEY: String  = "ohara.it.postgresql.db.password"

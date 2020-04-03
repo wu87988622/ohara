@@ -28,7 +28,7 @@ import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.exception.{ExecutionException, TimeoutException}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
 import oharastream.ohara.kafka.{Consumer, Producer, TopicAdmin}
 import oharastream.ohara.metrics.BeanChannel
 import com.typesafe.scalalogging.Logger
@@ -52,7 +52,7 @@ import scala.concurrent.Future
   * Hence, you don't need to add "finally" hook to do the cleanup.
   */
 @Category(Array(classOf[CollieGroup]))
-class TestCollie(paltform: PaltformModeInfo) extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+class TestCollie(platform: PlatformModeInfo) extends WithRemoteConfigurator(platform: PlatformModeInfo) {
   private[this] val log              = Logger(classOf[TestCollie])
   private[this] val numberOfClusters = 2
 

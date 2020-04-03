@@ -18,15 +18,15 @@ package oharastream.ohara.it.collie
 
 import oharastream.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
 import oharastream.ohara.it.category.CollieGroup
-import oharastream.ohara.it.{PaltformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
 import org.junit.experimental.categories.Category
 import org.junit.{Before, Test}
 import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[CollieGroup]))
-class TestGetNodeWithRunningCluster(paltform: PaltformModeInfo)
-    extends WithRemoteConfigurator(paltform: PaltformModeInfo) {
+class TestGetNodeWithRunningCluster(platform: PlatformModeInfo)
+    extends WithRemoteConfigurator(platform: PlatformModeInfo) {
   @Before
   def setup(): Unit = {
     val images = result(containerClient.imageNames())
