@@ -25,8 +25,8 @@ object Boot {
 
   def main(args: Array[String]): Unit = {
     val newArgs = ShabondiUtils.parseArgs(args)
-    log.info("Arguments:")
-    newArgs.foreach { case (k, v) => log.info(s"    $k=$v") }
+    log.info("Shabondi arguments({}):", newArgs.size)
+    newArgs.foreach { case (k, v) => log.info(s"  $k=$v") }
 
     val config    = new SourceConfig(newArgs)
     val webServer = new WebServer(config)

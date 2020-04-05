@@ -21,5 +21,5 @@ cd $OHARA_HOME/bin
 if [[ "$1" == "-v" ]] || [[ "$1" == "-version" ]]; then
   exec $OHARA_HOME/bin/ohara.sh -v
 else
-  exec $OHARA_HOME/bin/ohara.sh start shabondi
+  exec $OHARA_HOME/bin/ohara.sh start "$@"
 fi

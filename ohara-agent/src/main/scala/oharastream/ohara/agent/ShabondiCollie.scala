@@ -103,7 +103,7 @@ trait ShabondiCollie extends Collie {
                     }
                     k + "=" + value
                 }.toSeq
-                doCreator(executionContext, containerInfo, newNode, routes, arguments)
+                doCreator(executionContext, containerInfo, newNode, routes, Seq(creation.shabondiClass) ++ arguments)
                   .map(_ => Some(containerInfo))
                   .recover {
                     case e: Throwable =>
