@@ -16,11 +16,9 @@
 
 package oharastream.ohara.it.script
 
-import oharastream.ohara.agent.DataCollie
-import oharastream.ohara.agent.docker.DockerClient
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.util.{Releasable, VersionUtils}
-import oharastream.ohara.it.{EnvTestingUtils, IntegrationTest, ServiceKeyHolder}
+import oharastream.ohara.it.{IntegrationTest, ContainerPlatform, ServiceKeyHolder}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
@@ -31,8 +29,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Noted: the "version" may be changed at runtime by jenkins so we check only revision.
   */
 class TestVersionFile extends IntegrationTest {
-  private[this] val nodes: Seq[Node]                = EnvTestingUtils.dockerNodes()
-  private[this] val containerClient                 = DockerClient(DataCollie(nodes))
+  private[this] val platform                        = ContainerPlatform.dockerMode
+  private[this] val nodes: Seq[Node]                = platform.nodes
+  private[this] val containerClient                 = platform.containerClient
   protected val serviceNameHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient)
 
   /**

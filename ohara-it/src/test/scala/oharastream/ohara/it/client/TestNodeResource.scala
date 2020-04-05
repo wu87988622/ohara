@@ -18,7 +18,7 @@ package oharastream.ohara.it.client
 
 import oharastream.ohara.client.configurator.v0.NodeApi
 import oharastream.ohara.it.category.ClientGroup
-import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import org.junit.Test
 import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
@@ -26,7 +26,7 @@ import org.scalatest.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[ClientGroup]))
-class TestNodeResource(platform: PlatformModeInfo) extends WithRemoteConfigurator(platform: PlatformModeInfo) {
+class TestNodeResource(platform: ContainerPlatform) extends WithRemoteConfigurator(platform: ContainerPlatform) {
   private[this] def nodeApi: NodeApi.Access = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
 
   @Test

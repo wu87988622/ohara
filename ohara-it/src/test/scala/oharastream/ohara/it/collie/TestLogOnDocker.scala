@@ -16,16 +16,16 @@
 
 package oharastream.ohara.it.collie
 
-import oharastream.ohara.agent.DataCollie
-import oharastream.ohara.agent.docker.DockerClient
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import oharastream.ohara.it.EnvTestingUtils
+import oharastream.ohara.it.ContainerPlatform
 import org.junit.After
+
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestLogOnDocker extends BasicTests4Log {
+  private[this] val platform     = ContainerPlatform.dockerMode
   private[this] val name         = CommonUtils.randomString(10)
-  private[this] val node         = EnvTestingUtils.dockerNodes().head
-  private[this] val dockerClient = DockerClient(DataCollie(EnvTestingUtils.dockerNodes()))
+  private[this] val node         = platform.nodes.head
+  private[this] val dockerClient = platform.containerClient
 
   override protected def createBusyBox(imageName: String, arguments: Seq[String]): Unit =
     result(

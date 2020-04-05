@@ -24,7 +24,7 @@ import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.connector.{IncludeAllTypesSinkConnector, IncludeAllTypesSourceConnector}
-import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import com.typesafe.scalalogging.Logger
 import org.junit.experimental.categories.Category
 import org.junit.Test
@@ -32,8 +32,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Category(Array(classOf[CollieGroup]))
-class TestLoadCustomJarToWorkerCluster(platform: PlatformModeInfo)
-    extends WithRemoteConfigurator(platform: PlatformModeInfo) {
+class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
+    extends WithRemoteConfigurator(platform: ContainerPlatform) {
   private[this] val log = Logger(classOf[TestLoadCustomJarToWorkerCluster])
 
   private[this] val zkApi = ZookeeperApi.access.hostname(configuratorHostname).port(configuratorPort)

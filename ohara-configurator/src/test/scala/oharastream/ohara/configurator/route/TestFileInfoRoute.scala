@@ -233,7 +233,6 @@ class TestFileInfoRoute extends OharaTest {
   @Test
   def testPartitionerJar(): Unit = {
     val fileInfo = result(fileApi.request.file(RouteUtils.partitionerFile).upload())
-    fileInfo.classInfos.foreach(classInfo => println(s"[CHIA] ${classInfo.classType} ${classInfo.className}"))
     fileInfo.partitionerClassInfos should not be Seq.empty
   }
 

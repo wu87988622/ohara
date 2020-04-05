@@ -22,7 +22,7 @@ import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.docker.{ContainerState, DockerClient}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import oharastream.ohara.it.{EnvTestingUtils, IntegrationTest}
+import oharastream.ohara.it.{IntegrationTest, ContainerPlatform}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
@@ -34,11 +34,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * $ ./gradlew clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
 class TestDockerClient extends IntegrationTest {
-  private[this] val webHost = "www.google.com.tw"
+  private[this] val platform = ContainerPlatform.dockerMode
+  private[this] val webHost  = "www.google.com.tw"
 
-  private[this] val nodes = EnvTestingUtils.dockerNodes()
+  private[this] val nodes = platform.nodes
 
-  private[this] val client: DockerClient = DockerClient(DataCollie(nodes))
+  private[this] val client: DockerClient = platform.containerClient.asInstanceOf[DockerClient]
 
   private[this] val remoteHostname: String = nodes.head.hostname
 

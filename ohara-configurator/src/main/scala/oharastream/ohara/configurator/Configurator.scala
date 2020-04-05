@@ -58,14 +58,18 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   val serviceCollie: ServiceCollie,
   val k8sClient: Option[K8SClient]
 ) extends ReleaseOnce {
+  private[this] val log = Logger(classOf[Configurator])
+
   private[this] val threadMax = {
-    val value = Runtime.getRuntime.availableProcessors()
-    if (value <= 1)
-      throw new IllegalArgumentException(
-        s"I'm sorry that your machine is too weak to run Ohara Configurator." +
-          s" The required number of core must be bigger than 2, but actual number is $value"
+    val min   = 2
+    val cores = Runtime.getRuntime.availableProcessors()
+    if (cores < min)
+      log.warn(
+        s"the number of cores is $cores and it is too small to Ohara Configurator. However, the problem could be" +
+          s" that current resource detection algorithm of JVM is not suitable to your container host. We will increase the " +
+          s" number of cores to $min to set up Ohara Configurator"
       )
-    value
+    Math.max(cores, min)
   }
 
   private[this] val threadPool = Executors.newFixedThreadPool(threadMax)
@@ -111,8 +115,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] val cleanupTimeout   = 10 seconds
 
   private[configurator] def size: Int = store.size()
-
-  private[this] val log = Logger(classOf[Configurator])
 
   private[this] implicit val zookeeperCollie: ZookeeperCollie = serviceCollie.zookeeperCollie
   private[this] implicit val brokerCollie: BrokerCollie       = serviceCollie.brokerCollie

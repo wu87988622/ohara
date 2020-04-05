@@ -153,7 +153,6 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     case _: StreamClusterInfo =>
       // we fake counters since stream is not really running in fake collie mode
       if (clusterCache.containsKey(cluster.key)) {
-        println(s"[CHIA] cluster.key.toPlain:${cluster.key.toPlain}")
         Map(
           CommonUtils.hostname() -> Seq(
             Counter

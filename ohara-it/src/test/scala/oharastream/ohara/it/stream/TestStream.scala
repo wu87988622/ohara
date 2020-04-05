@@ -25,7 +25,7 @@ import oharastream.ohara.client.configurator.v0.{ZookeeperApi, _}
 import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.it.{PlatformModeInfo, WithRemoteConfigurator}
+import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.kafka.Producer
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
@@ -34,7 +34,7 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TestStream(platform: PlatformModeInfo) extends WithRemoteConfigurator(platform: PlatformModeInfo) {
+class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(platform: ContainerPlatform) {
   private[this] val log = Logger(classOf[TestStream])
 
   private[this] var zkApi: ZookeeperApi.Access        = _
