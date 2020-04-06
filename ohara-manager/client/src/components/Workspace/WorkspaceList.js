@@ -16,7 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useHistory } from 'react-router-dom';
 import { get, toNumber, size, filter, isEqual } from 'lodash';
 import moment from 'moment';
 import Grid from '@material-ui/core/Grid';
@@ -59,9 +58,9 @@ Statistic.propTypes = {
 };
 
 function WorkspaceList() {
-  const history = useHistory();
+  const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const { isOpen, close } = context.useListWorkspacesDialog();
-  const workspaces = hooks.useWorkspaces();
+  const workspaces = hooks.useAllWorkspaces();
   const workspaceName = hooks.useWorkspaceName();
   const allTopics = hooks.useAllTopics();
   const isTopicLoaded = hooks.useIsTopicLoaded();
@@ -73,7 +72,7 @@ function WorkspaceList() {
   }, [fetchAllTopics, isTopicLoaded]);
 
   const handleClick = name => () => {
-    history.push(`/${name}`);
+    switchWorkspace(name);
     close();
   };
 

@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { get, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
 const getEntities = state => state?.entities?.brokers;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const makeGetBrokers = () =>
-  createSelector([getEntities], entities => _.values(entities));
+export const isBrokerLoaded = (state, props) =>
+  !!get(state, ['ui', 'brokers', props?.id, 'lastUpdated']);
 
-export const makeGetBrokerById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+export const isBrokerLoading = (state, props) =>
+  !!get(state, ['ui', 'brokers', props?.id, 'loading']);
+
+export const getAllBrokers = createSelector([getEntities], entities =>
+  sortBy(values(entities), 'name'),
+);
+
+export const getBrokerById = createSelector(
+  [getEntities, getIdFromProps],
+  (entities, id) => entities[id],
+);

@@ -15,8 +15,8 @@
  */
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
 import { get, isEmpty } from 'lodash';
+import clx from 'classnames';
 import AppsIcon from '@material-ui/icons/Apps';
 import DeveloperModeIcon from '@material-ui/icons/DeveloperMode';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -24,6 +24,7 @@ import StorageIcon from '@material-ui/icons/Storage';
 import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
+import Link from '@material-ui/core/Link';
 
 import * as context from 'context';
 import * as hooks from 'hooks';
@@ -34,7 +35,8 @@ import { Tooltip } from 'components/common/Tooltip';
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
-  const workspaces = hooks.useWorkspaces();
+  const workspaces = hooks.useAllWorkspaces();
+  const workspace = hooks.useWorkspace();
   const openIntro = hooks.useOpenIntroAction();
   const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
@@ -48,6 +50,7 @@ const AppBar = () => {
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const { data: notifications } = hooks.useEventNotifications();
   const createWorkspaceState = hooks.useCreateWorkspaceState();
+  const switchWorkspace = hooks.useSwitchWorkspaceAction();
 
   return (
     <StyledAppBar>
@@ -61,13 +64,16 @@ const AppBar = () => {
 
             return (
               <Tooltip key={name} title={name} placement="right">
-                <NavLink
-                  activeClassName="active-link"
-                  className="workspace-name item"
-                  to={`/${name}`}
+                <Link
+                  className={clx('workspace-name', 'item', {
+                    'active-link': name === workspace?.name,
+                  })}
+                  onClick={() => {
+                    if (name !== workspace?.name) switchWorkspace(name);
+                  }}
                 >
                   {displayName}
-                </NavLink>
+                </Link>
               </Tooltip>
             );
           })}

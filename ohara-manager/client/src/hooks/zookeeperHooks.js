@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
@@ -27,8 +27,58 @@ import { getId } from 'utils/object';
 export const useZookeeperGroup = () => GROUP.ZOOKEEPER;
 
 export const useZookeeperName = () => {
-  const workspace = hooks.useWorkspaceName();
-  return workspace;
+  const zookeeperName = hooks.useWorkspaceName();
+  return zookeeperName;
+};
+
+export const useZookeeperId = () => {
+  const group = hooks.useZookeeperGroup();
+  const name = hooks.useZookeeperName();
+  return getId({ group, name });
+};
+
+export const useIsZookeeperLoaded = () => {
+  const zookeeperId = hooks.useZookeeperId();
+  const selector = useCallback(
+    state => selectors.isZookeeperLoaded(state, { id: zookeeperId }),
+    [zookeeperId],
+  );
+  return useSelector(selector);
+};
+
+export const useIsZookeeperLoading = () => {
+  const zookeeperId = hooks.useZookeeperId();
+  const selector = useCallback(
+    state => selectors.isZookeeperLoading(state, { id: zookeeperId }),
+    [zookeeperId],
+  );
+  return useSelector(selector);
+};
+
+export const useZookeeper = () => {
+  const name = hooks.useZookeeperName();
+  const zookeeperId = hooks.useZookeeperId();
+  const isLoaded = hooks.useIsZookeeperLoaded();
+  const fetchZookeeper = hooks.useFetchZookeeperAction();
+
+  useEffect(() => {
+    if (!isLoaded && name) fetchZookeeper(name);
+  }, [isLoaded, fetchZookeeper, name]);
+
+  const selector = useCallback(
+    state =>
+      merge(
+        selectors.getZookeeperById(state, { id: zookeeperId }),
+        selectors.getInfoById(state, { id: zookeeperId }),
+      ),
+    [zookeeperId],
+  );
+  return useSelector(selector);
+};
+
+export const useAllZookeepers = () => {
+  const selector = useCallback(state => selectors.getAllZookeepers(state), []);
+  return useSelector(selector);
 };
 
 export const useFetchZookeeperAction = () => {
@@ -82,31 +132,5 @@ export const useDeleteZookeeperAction = () => {
   return useCallback(
     name => dispatch(actions.deleteZookeeper.trigger({ group, name })),
     [dispatch, group],
-  );
-};
-
-export const useZookeepers = () => {
-  const getAllZookeepers = useMemo(selectors.makeGetAllZookeepers, []);
-  const zookeepers = useSelector(
-    useCallback(state => getAllZookeepers(state), [getAllZookeepers]),
-  );
-  return zookeepers;
-};
-
-export const useZookeeper = () => {
-  const getZookeeperById = useMemo(selectors.makeGetZookeeperById, []);
-  const getInfoById = useMemo(selectors.makeGetInfoById, []);
-  const group = useZookeeperGroup();
-  const name = useZookeeperName();
-  const id = getId({ group, name });
-  return useSelector(
-    useCallback(
-      state => {
-        const zookeeper = getZookeeperById(state, { id });
-        const info = getInfoById(state, { id });
-        return merge(zookeeper, info);
-      },
-      [getZookeeperById, getInfoById, id],
-    ),
   );
 };

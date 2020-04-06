@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-import { createSelector } from 'reselect';
+import { combineEpics } from 'redux-observable';
 
-export const getEntities = state => state?.entities?.infos;
+import initializeAppEpic from './initializeAppEpic';
 
-const getIdFromProps = (_, props) => props?.id;
-
-export const getInfoById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
-);
-
-export const makeGetInfoById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+export default combineEpics(initializeAppEpic);

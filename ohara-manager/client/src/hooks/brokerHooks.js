@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
@@ -27,8 +27,58 @@ import { getId } from 'utils/object';
 export const useBrokerGroup = () => GROUP.BROKER;
 
 export const useBrokerName = () => {
-  const workspace = hooks.useWorkspaceName();
-  return workspace;
+  const brokerName = hooks.useWorkspaceName();
+  return brokerName;
+};
+
+export const useBrokerId = () => {
+  const group = hooks.useBrokerGroup();
+  const name = hooks.useBrokerName();
+  return getId({ group, name });
+};
+
+export const useIsBrokerLoaded = () => {
+  const brokerId = hooks.useBrokerId();
+  const selector = useCallback(
+    state => selectors.isBrokerLoaded(state, { id: brokerId }),
+    [brokerId],
+  );
+  return useSelector(selector);
+};
+
+export const useIsBrokerLoading = () => {
+  const brokerId = hooks.useBrokerId();
+  const selector = useCallback(
+    state => selectors.isBrokerLoading(state, { id: brokerId }),
+    [brokerId],
+  );
+  return useSelector(selector);
+};
+
+export const useBroker = () => {
+  const name = hooks.useBrokerName();
+  const brokerId = hooks.useBrokerId();
+  const isLoaded = hooks.useIsBrokerLoaded();
+  const fetchBroker = hooks.useFetchBrokerAction();
+
+  useEffect(() => {
+    if (!isLoaded && name) fetchBroker(name);
+  }, [isLoaded, fetchBroker, name]);
+
+  const selector = useCallback(
+    state =>
+      merge(
+        selectors.getBrokerById(state, { id: brokerId }),
+        selectors.getInfoById(state, { id: brokerId }),
+      ),
+    [brokerId],
+  );
+  return useSelector(selector);
+};
+
+export const useAllBrokers = () => {
+  const selector = useCallback(state => selectors.getAllBrokers(state), []);
+  return useSelector(selector);
 };
 
 export const useFetchBrokerAction = () => {
@@ -82,28 +132,5 @@ export const useDeleteBrokerAction = () => {
   return useCallback(
     name => dispatch(actions.deleteBroker.trigger({ group, name })),
     [dispatch, group],
-  );
-};
-
-export const useBrokers = () => {
-  const getBrokers = useMemo(selectors.makeGetBrokers, []);
-  return useSelector(useCallback(state => getBrokers(state), [getBrokers]));
-};
-
-export const useBroker = () => {
-  const getBrokerById = useMemo(selectors.makeGetBrokerById, []);
-  const getInfoById = useMemo(selectors.makeGetInfoById, []);
-  const group = useBrokerGroup();
-  const name = useBrokerName();
-  const id = getId({ group, name });
-  return useSelector(
-    useCallback(
-      state => {
-        const broker = getBrokerById(state, { id });
-        const info = getInfoById(state, { id });
-        return merge(broker, info);
-      },
-      [getBrokerById, getInfoById, id],
-    ),
   );
 };

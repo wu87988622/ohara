@@ -32,7 +32,7 @@ const SetupWorkspaceForm = props => {
   const change = hooks.useReduxFormChangeAction();
   const defaultWorkspaceName = hooks.useUniqueWorkspaceName();
   const formValues = hooks.useReduxFormValues(FORM.CREATE_WORKSPACE);
-  const workspaces = hooks.useWorkspaces();
+  const workspaces = hooks.useAllWorkspaces();
 
   React.useEffect(() => {
     if (!formValues?.workspace?.name)

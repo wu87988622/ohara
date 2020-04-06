@@ -16,17 +16,17 @@
 
 import { combineEpics } from 'redux-observable';
 
-import appEpics from './appEpics';
-import brokerEpics from './brokerEpics';
+import appEpics from './app';
+import brokerEpics from './broker';
 import eventLogEpics from './eventLog';
 import fileEpics from './file';
 import nodeEpics from './nodeEpics';
 import pipelineEpics from './pipeline';
 import snackbarEpics from './snackbarEpics';
 import topicEpics from './topic';
-import workerEpics from './workerEpics';
+import workerEpics from './worker';
 import workspaceEpics from './workspace';
-import zookeeperEpics from './zookeeperEpics';
+import zookeeperEpics from './zookeeper';
 
 export default combineEpics(
   appEpics,

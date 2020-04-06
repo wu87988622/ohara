@@ -16,6 +16,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import clx from 'classnames';
 import MenuItem from '@material-ui/core/MenuItem';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -31,8 +32,8 @@ import WavesIcon from '@material-ui/icons/Waves';
 import StorageIcon from '@material-ui/icons/Storage';
 import classNames from 'classnames';
 import Scrollbar from 'react-scrollbars-custom';
-import { NavLink } from 'react-router-dom';
 import { Form, Field } from 'react-final-form';
+import Link from '@material-ui/core/Link';
 
 import * as context from 'context';
 import * as hooks from 'hooks';
@@ -61,6 +62,8 @@ const Navigator = ({ pipelineApi }) => {
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
   const pipelines = hooks.usePipelines();
   const createPipeline = hooks.useCreatePipelineAction();
+  const currentPipeline = hooks.usePipeline();
+  const switchPipeline = hooks.useSwitchPipelineAction();
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
@@ -236,13 +239,19 @@ const Navigator = ({ pipelineApi }) => {
               <PipelineList>
                 {pipelines.map(pipeline => (
                   <li key={pipeline.name}>
-                    <NavLink
-                      activeClassName="active-link"
-                      to={`/${workspaceName}/${pipeline.name}`}
+                    <Link
+                      className={clx({
+                        'active-link': pipeline.name === currentPipeline?.name,
+                      })}
+                      onClick={() => {
+                        if (pipeline.name !== currentPipeline?.name) {
+                          switchPipeline(pipeline.name);
+                        }
+                      }}
                     >
                       <ShareIcon className="link-icon" />
                       {pipeline.name}
-                    </NavLink>
+                    </Link>
                   </li>
                 ))}
               </PipelineList>

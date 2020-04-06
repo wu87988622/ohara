@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { get, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
-import { getId } from 'utils/object';
 
 const getEntities = state => state?.entities?.workers;
+
 const getIdFromProps = (_, props) => props?.id;
-const getNameFromProps = (_, props) => props?.name;
 
-export const makeGetAllWorkers = () =>
-  createSelector([getEntities], entities => _.values(entities));
+export const isWorkerLoaded = (state, props) =>
+  !!get(state, ['ui', 'workers', props?.id, 'lastUpdated']);
 
-export const makeGetWorkerById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+export const isWorkerLoading = (state, props) =>
+  !!get(state, ['ui', 'workers', props?.id, 'loading']);
 
-export const makeGetWorkerByName = () =>
-  createSelector(
-    [getEntities, getNameFromProps],
-    (entities, name) => entities[getId({ group: 'worker', name })],
-  );
+export const getAllWorkers = createSelector([getEntities], entities =>
+  sortBy(values(entities), 'name'),
+);
+
+export const getWorkerById = createSelector(
+  [getEntities, getIdFromProps],
+  (entities, id) => entities[id],
+);

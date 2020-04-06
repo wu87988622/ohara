@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import { createSelector } from 'reselect';
+import { combineEpics } from 'redux-observable';
+import createZookeeperEpic from './createZookeeperEpic';
+import deleteZookeeperEpic from './deleteZookeeperEpic';
+import fetchZookeeperEpic from './fetchZookeeperEpic';
+import updateZookeeperEpic from './updateZookeeperEpic';
+import startZookeeperEpic from './startZookeeperEpic';
+import stopZookeeperEpic from './stopZookeeperEpic';
 
-export const getEntities = state => state?.entities?.infos;
-
-const getIdFromProps = (_, props) => props?.id;
-
-export const getInfoById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
+export default combineEpics(
+  createZookeeperEpic,
+  deleteZookeeperEpic,
+  fetchZookeeperEpic,
+  updateZookeeperEpic,
+  startZookeeperEpic,
+  stopZookeeperEpic,
 );
-
-export const makeGetInfoById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
