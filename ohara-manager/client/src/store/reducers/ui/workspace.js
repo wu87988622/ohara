@@ -33,7 +33,7 @@ export default function reducer(state = initialState, action) {
     case actions.switchWorkspace.SUCCESS:
       return {
         ...state,
-        name: action.payload,
+        name: action.payload.name,
         loading: false,
         lastUpdated: new Date(),
       };

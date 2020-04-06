@@ -16,7 +16,6 @@
 
 import React, { useRef } from 'react';
 import SplitPane from 'react-split-pane';
-import { useParams } from 'react-router-dom';
 
 import AppBar from './AppBar';
 import Pipeline from 'components/Pipeline';
@@ -35,12 +34,11 @@ import { Wrapper } from './AppLayoutStyles';
 import * as hooks from 'hooks';
 
 const AppLayout = () => {
-  const { workspaceName, pipelineName } = useParams();
-  hooks.useInitializeApp(workspaceName, pipelineName);
-  hooks.useWelcome();
-
   const { isOpen: isDevToolOpen } = context.useDevToolDialog();
   const { isOpen: isEventLogOpen } = context.useEventLogDialog();
+
+  hooks.useWelcome();
+  hooks.useRedirect();
 
   const pipelineApiRef = useRef(null);
 

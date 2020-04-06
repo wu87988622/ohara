@@ -119,9 +119,9 @@ const ViewNodeDialog = props => {
   const deleteNode = hooks.useDeleteNodeAction();
 
   const nodeData = find(nodes, node => node.hostname === nodeName);
-  const zookeepers = hooks.useAllZookeepers();
-  const brokers = hooks.useAllBrokers();
-  const workers = hooks.useAllWorkers();
+  const zookeepers = hooks.useZookeepers();
+  const brokers = hooks.useBrokers();
+  const workers = hooks.useWorkers();
   const { data: streams } = context.useStreamState();
   const workspaceName = hooks.useWorkspaceName();
 

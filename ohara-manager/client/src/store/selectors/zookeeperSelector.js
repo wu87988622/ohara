@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-import { get, sortBy, values } from 'lodash';
+import _ from 'lodash';
 import { createSelector } from 'reselect';
 
 export const getEntities = state => state?.entities?.zookeepers;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const isZookeeperLoaded = (state, props) =>
-  !!get(state, ['ui', 'zookeepers', props?.id, 'lastUpdated']);
+export const makeGetAllZookeepers = () =>
+  createSelector([getEntities], entities => _.values(entities));
 
-export const isZookeeperLoading = (state, props) =>
-  !!get(state, ['ui', 'zookeepers', props?.id, 'loading']);
-
-export const getAllZookeepers = createSelector([getEntities], entities =>
-  sortBy(values(entities), 'name'),
-);
-
-export const getZookeeperById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
-);
+export const makeGetZookeeperById = () =>
+  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);

@@ -15,22 +15,17 @@
  */
 
 import { useCallback, useEffect } from 'react';
-import { isEmpty } from 'lodash';
-import { useDispatch, useSelector } from 'react-redux';
+import { find, filter, head, isEmpty } from 'lodash';
+import { useHistory, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
+import { hashByGroupAndName } from 'utils/sha';
+import * as context from 'context';
 import * as hooks from 'hooks';
-import * as actions from 'store/actions';
 
-export const useIsAppReady = () =>
-  useSelector(useCallback(state => !!state.ui.app.lastUpdated, []));
-
-export const useInitializeApp = (workspaceName, pipelineName) => {
-  const isAppReady = useIsAppReady();
-  const dispatch = useDispatch();
-  useEffect(() => {
-    if (isAppReady) return;
-    dispatch(actions.initializeApp.trigger({ workspaceName, pipelineName }));
-  }, [dispatch, isAppReady, pipelineName, workspaceName]);
+export const useIsAppReady = () => {
+  const mapState = useCallback(state => !!state.ui.app.lastUpdated, []);
+  return useSelector(mapState);
 };
 
 export const useWelcome = () => {
@@ -42,4 +37,76 @@ export const useWelcome = () => {
   useEffect(() => {
     if (isAppReady && !wasIntroOpened && isEmpty(allWorkspaces)) openIntro();
   }, [isAppReady, allWorkspaces, wasIntroOpened, openIntro]);
+};
+
+export const useRedirect = () => {
+  const isAppReady = useIsAppReady();
+  const allWorkspaces = hooks.useAllWorkspaces();
+  const allPipelines = hooks.useAllPipelines();
+  const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const switchPipeline = hooks.useSwitchPipelineAction();
+  const workspaceName = hooks.useWorkspaceName();
+  const pipelineName = hooks.usePipelineName();
+  const { setWorkspaceName, setPipelineName } = context.useApp();
+
+  const history = useHistory();
+  const {
+    workspaceName: routedWorkspaceName,
+    pipelineName: routedPipelineName,
+  } = useParams();
+
+  useEffect(() => {
+    if (!isAppReady) return;
+
+    const validWorkspace =
+      find(allWorkspaces, wk => wk.name === routedWorkspaceName) ||
+      head(allWorkspaces);
+
+    const validPipelines = filter(
+      allPipelines,
+      pl =>
+        pl.group ===
+        hashByGroupAndName(validWorkspace?.group, validWorkspace?.name),
+    );
+    const validPipeline =
+      find(validPipelines, pl => pl.name === routedPipelineName) ||
+      head(validPipelines);
+
+    const validWorkspaceName = validWorkspace?.name;
+    const validPipelineName = validPipeline?.name;
+
+    if (
+      routedWorkspaceName !== validWorkspaceName ||
+      routedPipelineName !== validPipelineName
+    ) {
+      if (validWorkspaceName && validPipelineName) {
+        history.push(`/${validWorkspaceName}/${validPipelineName}`);
+      } else if (validWorkspaceName) {
+        history.push(`/${validWorkspaceName}`);
+      } else {
+        history.push(`/`);
+      }
+    }
+  }, [
+    history,
+    isAppReady,
+    allPipelines,
+    allWorkspaces,
+    routedPipelineName,
+    routedWorkspaceName,
+  ]);
+
+  useEffect(() => {
+    if (routedWorkspaceName && routedWorkspaceName !== workspaceName) {
+      setWorkspaceName(routedWorkspaceName);
+      switchWorkspace(routedWorkspaceName);
+    }
+  }, [workspaceName, routedWorkspaceName, setWorkspaceName, switchWorkspace]);
+
+  useEffect(() => {
+    if (routedPipelineName && routedPipelineName !== pipelineName) {
+      setPipelineName(routedPipelineName);
+      switchPipeline(routedPipelineName);
+    }
+  }, [pipelineName, routedPipelineName, setPipelineName, switchPipeline]);
 };

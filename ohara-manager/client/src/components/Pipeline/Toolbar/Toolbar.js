@@ -31,6 +31,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import { useHistory } from 'react-router-dom';
 import _ from 'lodash';
 
 import { KIND } from 'const';
@@ -57,14 +58,14 @@ const Toolbar = props => {
   );
 
   const deletePipeline = hooks.useDeletePipelineAction();
+  const currentWorkspace = hooks.useWorkspace();
   const currentPipeline = hooks.usePipeline();
   const selectedCell = hooks.useCurrentPipelineCell();
-  const currentWorkspace = hooks.useWorkspace();
-  const switchWorkspace = hooks.useSwitchWorkspaceAction();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
   const { steps, activeStep, deleteCells } = useDeleteCells();
   const { setZoom, scale, setScale } = useZoom();
+  const history = useHistory();
 
   const {
     start: startConnector,
@@ -145,7 +146,7 @@ const Toolbar = props => {
     // }
     setIsDeletingPipeline(false);
 
-    switchWorkspace(currentWorkspace?.name);
+    history.push(`/${currentWorkspace.name}`);
   };
 
   const handlePipelineControlsClose = () => {

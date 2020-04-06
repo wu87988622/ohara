@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-import { createBrowserHistory } from 'history';
 import { createStore, applyMiddleware } from 'redux';
 import { createEpicMiddleware } from 'redux-observable';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import rootEpic from './epics';
 import rootReducer from './reducers';
 
-const history = createBrowserHistory();
-
-const epicMiddleware = createEpicMiddleware({
-  dependencies: { history },
-});
+const epicMiddleware = createEpicMiddleware();
 
 export default function configureStore() {
   const middleware = [epicMiddleware];

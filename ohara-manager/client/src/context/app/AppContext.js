@@ -16,11 +16,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useDispatch } from 'react-redux';
 import { hashByGroupAndName } from 'utils/sha';
+import * as actions from 'store/actions';
 
 const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
+  const dispatch = useDispatch();
   const [workspaceName, setWorkspaceName] = useState(null);
   const [pipelineName, setPipelineName] = useState(null);
 
@@ -38,6 +41,10 @@ const AppProvider = ({ children }) => {
   const [workerKey, setWorkerKey] = useState(null);
   const [workspaceKey, setWorkspaceKey] = useState(null);
   const [zookeeperKey, setZookeeperKey] = useState(null);
+
+  useEffect(() => {
+    dispatch(actions.initializeApp.trigger());
+  }, [dispatch]);
 
   useEffect(() => {
     setBrokerKey(workspaceName && { group: brokerGroup, name: workspaceName });

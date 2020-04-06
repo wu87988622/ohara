@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-import { head, sortBy, values } from 'lodash';
+import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.workspaces;
-
-const getName = state => state?.ui?.workspace?.name;
+export const getEntities = state => state?.entities?.workspaces;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const getWorkspaceName = createSelector([getName], name => name);
+export const makeGetAllWorkspaces = () =>
+  createSelector([getEntities], entities => _.values(entities));
 
-export const getAllWorkspaces = createSelector([getEntities], entities =>
-  sortBy(values(entities), 'name'),
-);
-
-export const getWorkspaceById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
-);
-
-export const getHeadWorkspace = createSelector([getAllWorkspaces], workspaces =>
-  head(workspaces),
-);
+export const makeGetWorkspaceById = () =>
+  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);

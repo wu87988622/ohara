@@ -41,7 +41,7 @@ export const useCreateWorkspaceState = () => {
 };
 
 export const useUniqueWorkspaceName = (prefix = 'workspace') => {
-  const workspaces = hooks.useAllWorkspaces();
+  const workspaces = hooks.useWorkspaces();
   return useMemo(() => {
     for (var postfix = 1; postfix <= Number.MAX_SAFE_INTEGER; postfix++) {
       const name = `${prefix}${postfix}`;

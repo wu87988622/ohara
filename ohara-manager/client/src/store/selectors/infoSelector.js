@@ -20,10 +20,5 @@ export const getEntities = state => state?.entities?.infos;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const getInfoById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
-);
-
 export const makeGetInfoById = () =>
   createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
