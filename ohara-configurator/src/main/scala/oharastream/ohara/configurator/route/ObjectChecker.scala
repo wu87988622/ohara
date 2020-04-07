@@ -68,22 +68,6 @@ object ObjectChecker {
     def runningStreams: Seq[StreamClusterInfo]       = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
   }
 
-  final class ObjectCheckException(
-    val objectType: String,
-    val nonexistent: Set[ObjectKey],
-    val illegalObjs: Map[ObjectKey, Condition]
-  ) extends RuntimeException(
-        s"type:$objectType ${nonexistent.map(k => s"$k does not exist").mkString(",")} ${illegalObjs
-          .map {
-            case (key, condition) =>
-              condition match {
-                case STOPPED => s"$key MUST be stopped"
-                case RUNNING => s"$key MUST be running"
-              }
-          }
-          .mkString(",")}"
-      )
-
   trait CheckList {
     //---------------[topic]---------------//
 
@@ -306,14 +290,14 @@ object ObjectChecker {
 
     protected def shabondis(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
 
-    //---------------[final check]---------------//
     /**
       * throw exception if the input assurances don't pass. Otherwise, return the resources.
       * @param executionContext thread pool
+      * @throws oharastream.ohara.configurator.route.ObjectCheckException it contains the first unmatched objects.
+      *                                                                   You can seek the related information to address more follow-up actions.
       * @return resource
-      * @throws ObjectCheckException: it contains the first unmatched objects. You can seek the related information
-      *                             to address more follow-up actions.
       */
+    @throws(classOf[ObjectCheckException])
     def check()(implicit executionContext: ExecutionContext): Future[ObjectInfos]
   }
 

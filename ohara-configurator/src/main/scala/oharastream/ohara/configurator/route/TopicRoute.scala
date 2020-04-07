@@ -25,7 +25,6 @@ import oharastream.ohara.client.configurator.v0.TopicApi._
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
-import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo

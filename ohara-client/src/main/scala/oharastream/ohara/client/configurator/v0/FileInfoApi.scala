@@ -244,7 +244,7 @@ object FileInfoApi {
       exec.get[Seq[FileInfo], ErrorApi.Error](url)
 
     /**
-      * get file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
+      * get file info mapped to specific name. The group is GROUP_DEFAULT by default.
       * @param key file key
       * @param executionContext thread pool
       * @return file info
@@ -253,7 +253,7 @@ object FileInfoApi {
       exec.get[FileInfo, ErrorApi.Error](urlBuilder.key(key).build())
 
     /**
-      * delete file info mapped to specific name. The group is ${GROUP_DEFAULT} by default.
+      * delete file info mapped to specific name. The group is GROUP_DEFAULT by default.
       * @param key file key
       * @param executionContext thread pool
       * @return file info

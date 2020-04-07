@@ -60,13 +60,13 @@ package object route {
   /**
     * this is a variety to basic route of all APIs to access ohara's "cluster" data.
     * It implements 1) get, 2) list, 3) delete, 4) add, 5) update, 6) start and 7) stop function.
-    * The CREATION is routed to "POST  /$root"
-    * The UPDATE is routed to "PUT /$root/$name"
-    * The GET is routed to "GET /$root/$name"
-    * The LIST is routed to "GET /$root"
-    * The DELETE is routed to "DELETE /$root/$name"
-    * The START is routed to "PUT /$root/$name/start"
-    * The STOP is routed to "PUT /$root/$name/stop"
+    * The CREATION is routed to "POST  /root"
+    * The UPDATE is routed to "PUT /root/name"
+    * The GET is routed to "GET /root/name"
+    * The LIST is routed to "GET /root"
+    * The DELETE is routed to "DELETE /root/name"
+    * The START is routed to "PUT /root/name/start"
+    * The STOP is routed to "PUT /root/name/stop"
     *
     * The following routes are added autmatically.
     * The GET/LIST route auto-update the state of cluster

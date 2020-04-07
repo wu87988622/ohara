@@ -24,7 +24,6 @@ import oharastream.ohara.client.configurator.v0.ConnectorApi._
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
-import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils

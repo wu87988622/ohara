@@ -132,7 +132,13 @@ subprojects {
       sourceCompatibility = 1.8
       targetCompatibility = 1.8
     }
-    else apply plugin: 'scala'
+    else {
+      apply plugin: 'scala'
+      scala {
+        // https://github.com/sbt/zinc/releases
+        zincVersion = "1.3.5"
+      }
+    }
   }
 
   // -------------------------------------------------[jUnit configs]-------------------------------------------------//
@@ -292,8 +298,11 @@ subprojects {
 
     // -------------------------------------------------[gradle configs]-------------------------------------------------//
     configure(scalaCompileOptions.forkOptions) {
-      memoryMaximumSize = '1g'
-      jvmArgs = ['-XX:MaxMetaspaceSize=512m']
+      // the memory limit of scala compilation is higher than gradle daemon because gradle 6.x uses newest zinc which
+      // requires more memory in making incremental compilation.
+      // TODO: how to set suitable memory to scala compilation? by chia
+      memoryMaximumSize = '2g'
+      jvmArgs = ['-Xss2m', '-XX:MaxMetaspaceSize=1024m', '-XX:+HeapDumpOnOutOfMemoryError', '-Dfile.encoding=UTF-8']
     }
   }
 }

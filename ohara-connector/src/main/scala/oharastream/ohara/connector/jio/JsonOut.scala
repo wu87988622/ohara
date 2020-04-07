@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
 
 /**
   * JsonOut is a simple restful proxy which allow us to receive data from topic via json request. For example,
-  * GET /$path
+  * GET /path
   * [
   *   {
   *     "a": "b"

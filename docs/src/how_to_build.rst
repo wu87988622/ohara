@@ -25,12 +25,11 @@ Prerequisites
 -------------
 
 -  OpenJDK 1.8
--  Scala 2.12.9
--  Gradle 5.1+
+-  Scala 2.12.11
+-  Gradle 6.3.0
 -  Node.js 8.12.0
 -  Yarn 1.13.0 or greater
--  Docker 18.09 or greater (Official QA is on docker 18.09. Also, docker
-   multi-stage, which is supported by Docker 17.05 or higher, is
+-  Docker 19.03.8 (Docker multi-stage, which is supported by Docker 17.05 or higher, is
    required in building ohara images. see `Use multi-stage builds`_ for more details)
 -  Kubernetes 1.14.1 (Official QA uses the Kubernetes version is 1.14.1)
 

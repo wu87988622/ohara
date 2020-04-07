@@ -17,16 +17,15 @@
 package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.client.configurator.v0.NodeApi._
 import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
-import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.DataStore
-import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {

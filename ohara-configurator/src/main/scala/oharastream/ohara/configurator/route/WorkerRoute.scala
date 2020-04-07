@@ -24,7 +24,6 @@ import oharastream.ohara.client.configurator.v0.WorkerApi._
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
-import oharastream.ohara.configurator.route.ObjectChecker.ObjectCheckException
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
