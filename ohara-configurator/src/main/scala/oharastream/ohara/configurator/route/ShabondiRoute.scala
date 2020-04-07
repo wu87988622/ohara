@@ -36,13 +36,13 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
     import ShabondiDefinitions._
-    val serverType = ShabondiType(creation.shabondiClass)
+    val shabondiType = ShabondiType(creation.shabondiClass)
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
       .topics {
         // Check required topic settings
-        serverType match {
+        shabondiType match {
           case ShabondiType.Source =>
             val sourceToTopics = creation.sourceToTopics
             if (sourceToTopics != null) {
@@ -59,7 +59,7 @@ private[configurator] object ShabondiRoute {
       }
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
-        val defaultSettings = serverType match {
+        val defaultSettings = shabondiType match {
           case ShabondiType.Source => extractDefaultValues(ShabondiDefinitions.sourceOnlyDefinitions)
           case ShabondiType.Sink   => extractDefaultValues(ShabondiDefinitions.sinkOnlyDefinitions)
         }
@@ -93,14 +93,14 @@ private[configurator] object ShabondiRoute {
             .creation
           creationToClusterInfo(creation)
         case Some(previous) =>
-          val serverType = ShabondiType(previous.shabondiClass)
+          val shabondiType = ShabondiType(previous.shabondiClass)
           objectChecker.checkList
             .check()
             .flatMap { _ =>
               val creation = ShabondiApi.access.request
                 .settings(previous.settings)
                 .settings {
-                  serverType match {
+                  shabondiType match {
                     case ShabondiType.Source =>
                       keepEditableFields(updating.settings, ShabondiApi.SOURCE_ALL_DEFINITIONS)
                     case ShabondiType.Sink => keepEditableFields(updating.settings, ShabondiApi.SINK_ALL_DEFINITIONS)
@@ -118,13 +118,13 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
     (clusterInfo: ShabondiClusterInfo, subName: String, params: Map[String, String]) => {
-      val serverType = ShabondiType(clusterInfo.shabondiClass)
-      val checkTopics = serverType match {
+      val shabondiType = ShabondiType(clusterInfo.shabondiClass)
+      val checkTopics = shabondiType match {
         case ShabondiType.Source => clusterInfo.sourceToTopics
         case ShabondiType.Sink   => clusterInfo.sinkFromTopics
       }
       if (checkTopics.isEmpty) {
-        val key = serverType match {
+        val key = shabondiType match {
           case ShabondiType.Source => ShabondiDefinitions.SOURCE_TO_TOPICS_DEFINITION.key
           case ShabondiType.Sink   => ShabondiDefinitions.SINK_FROM_TOPICS_DEFINITION.key
         }

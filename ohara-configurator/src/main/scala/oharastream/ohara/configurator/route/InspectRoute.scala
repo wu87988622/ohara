@@ -120,6 +120,15 @@ private[configurator] object InspectRoute {
     )
   )
 
+  private[this] val shabondiDefinition = ServiceDefinition(
+    imageName = ShabondiApi.IMAGE_NAME_DEFAULT,
+    settingDefinitions = ShabondiDefinitions.basicDefinitions,
+    classInfos = Seq(
+      ClassInfo(ShabondiType.Source.name, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
+      ClassInfo(ShabondiType.Sink.name, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
+    )
+  )
+
   def apply(mode: Mode)(
     implicit brokerCollie: BrokerCollie,
     adminCleaner: AdminCleaner,
@@ -315,19 +324,12 @@ private[configurator] object InspectRoute {
         )
       }
     } ~ pathPrefix(SHABONDI_PREFIX_PATH) {
-      path(Segment) { name =>
-        throw new NotImplementedError("Not implement yet.")
+      path(Segment) { _ =>
+        parameters(GROUP_KEY ? GROUP_DEFAULT) { _ =>
+          complete(shabondiDefinition)
+        }
       } ~ pathEnd {
-        complete(
-          ServiceDefinition(
-            imageName = ShabondiApi.IMAGE_NAME_DEFAULT,
-            settingDefinitions = ShabondiDefinitions.basicDefinitions,
-            classInfos = Seq(
-              ClassInfo(ShabondiType.Source.name, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
-              ClassInfo(ShabondiType.Sink.name, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
-            )
-          )
-        )
+        complete(shabondiDefinition)
       }
     }
   }
