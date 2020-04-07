@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { merge } from 'lodash';
 
@@ -27,8 +27,58 @@ import { getId } from 'utils/object';
 export const useWorkerGroup = () => GROUP.WORKER;
 
 export const useWorkerName = () => {
-  const workspace = hooks.useWorkspaceName();
-  return workspace;
+  const workerName = hooks.useWorkspaceName();
+  return workerName;
+};
+
+export const useWorkerId = () => {
+  const group = hooks.useWorkerGroup();
+  const name = hooks.useWorkerName();
+  return getId({ group, name });
+};
+
+export const useIsWorkerLoaded = () => {
+  const workerId = hooks.useWorkerId();
+  const selector = useCallback(
+    state => selectors.isWorkerLoaded(state, { id: workerId }),
+    [workerId],
+  );
+  return useSelector(selector);
+};
+
+export const useIsWorkerLoading = () => {
+  const workerId = hooks.useWorkerId();
+  const selector = useCallback(
+    state => selectors.isWorkerLoading(state, { id: workerId }),
+    [workerId],
+  );
+  return useSelector(selector);
+};
+
+export const useWorker = () => {
+  const name = hooks.useWorkerName();
+  const workerId = hooks.useWorkerId();
+  const isLoaded = hooks.useIsWorkerLoaded();
+  const fetchWorker = hooks.useFetchWorkerAction();
+
+  useEffect(() => {
+    if (!isLoaded && name) fetchWorker(name);
+  }, [isLoaded, fetchWorker, name]);
+
+  const selector = useCallback(
+    state =>
+      merge(
+        selectors.getWorkerById(state, { id: workerId }),
+        selectors.getInfoById(state, { id: workerId }),
+      ),
+    [workerId],
+  );
+  return useSelector(selector);
+};
+
+export const useAllWorkers = () => {
+  const selector = useCallback(state => selectors.getAllWorkers(state), []);
+  return useSelector(selector);
 };
 
 export const useFetchWorkerAction = () => {
@@ -82,31 +132,5 @@ export const useDeleteWorkerAction = () => {
   return useCallback(
     name => dispatch(actions.deleteWorker.trigger({ group, name })),
     [dispatch, group],
-  );
-};
-
-export const useWorkers = () => {
-  const getAllWorkers = useMemo(selectors.makeGetAllWorkers, []);
-  const workers = useSelector(
-    useCallback(state => getAllWorkers(state), [getAllWorkers]),
-  );
-  return workers;
-};
-
-export const useWorker = () => {
-  const getWorkerById = useMemo(selectors.makeGetWorkerById, []);
-  const getInfoById = useMemo(selectors.makeGetInfoById, []);
-  const group = useWorkerGroup();
-  const name = useWorkerName();
-  const id = getId({ group, name });
-  return useSelector(
-    useCallback(
-      state => {
-        const worker = getWorkerById(state, { id });
-        const info = getInfoById(state, { id });
-        return merge(worker, info);
-      },
-      [getWorkerById, getInfoById, id],
-    ),
   );
 };

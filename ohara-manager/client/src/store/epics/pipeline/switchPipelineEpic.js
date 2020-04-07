@@ -14,20 +14,51 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
+import { get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, interval } from 'rxjs';
-import { debounce, filter, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { filter, switchMap, withLatestFrom } from 'rxjs/operators';
 
+import { GROUP } from 'const';
 import * as actions from 'store/actions';
+import * as selectors from 'store/selectors';
+import { getId } from 'utils/object';
+import { hashByGroupAndName } from 'utils/sha';
 
-export default action$ =>
+export default (action$, state$, { history }) =>
   action$.pipe(
     ofType(actions.switchPipeline.TRIGGER),
-    filter(action => !isEmpty(action.payload)),
-    debounce(() => interval(1000)),
-    switchMap(action => {
-      const { name } = action.payload;
-      return of(actions.switchPipeline.success(name));
+    withLatestFrom(state$),
+    filter(([, state]) => selectors.getWorkspaceName(state)),
+    switchMap(([action, state]) => {
+      const workspaceName = selectors.getWorkspaceName(state);
+      const pipelineGroup = get(
+        action.payload,
+        'group',
+        hashByGroupAndName(GROUP.WORKSPACE, workspaceName),
+      );
+      const pipelineName = get(action.payload, 'name');
+
+      const targetPipeline = selectors.getPipelineById(state, {
+        id: getId({ group: pipelineGroup, name: pipelineName }),
+      });
+
+      if (targetPipeline) {
+        history.push(`/${workspaceName}/${targetPipeline.name}`);
+        return of(actions.switchPipeline.success(targetPipeline.name));
+      }
+
+      const headPipeline = selectors.getHeadPipelineByGroup(state, {
+        group: pipelineGroup,
+      });
+
+      if (headPipeline) {
+        history.push(`/${workspaceName}/${headPipeline.name}`);
+      } else if (workspaceName) {
+        history.push(`/${workspaceName}`);
+      } else {
+        history.push('/');
+      }
+      return of(actions.switchPipeline.success(headPipeline?.name));
     }),
   );

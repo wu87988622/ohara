@@ -15,35 +15,40 @@
  */
 
 import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { defer, interval, of } from 'rxjs';
 import {
   catchError,
+  debounce,
+  exhaustMap,
   map,
-  mergeMap,
   startWith,
-  switchMap,
 } from 'rxjs/operators';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+
+export const createZookeeper$ = values => {
+  const zookeeperId = getId(values);
+  return defer(() => zookeeperApi.create(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.zookeeper)),
+    map(normalizedData => merge(normalizedData, { zookeeperId })),
+    map(normalizedData => actions.createZookeeper.success(normalizedData)),
+    startWith(actions.createZookeeper.request({ zookeeperId })),
+    catchError(error =>
+      of(actions.createZookeeper.failure(merge(error, { zookeeperId }))),
+    ),
+  );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.createPipeline.TRIGGER),
+    ofType(actions.createZookeeper.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(pipelineApi.create(values)).pipe(
-        map(res => normalize(res.data, schema.pipeline)),
-        mergeMap(entities =>
-          from([
-            actions.createPipeline.success(entities),
-            actions.switchPipeline({ name: values?.name }),
-          ]),
-        ),
-        startWith(actions.createPipeline.request()),
-        catchError(res => of(actions.createPipeline.failure(res))),
-      ),
-    ),
+    debounce(() => interval(1000)),
+    exhaustMap(values => createZookeeper$(values)),
   );

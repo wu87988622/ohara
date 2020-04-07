@@ -16,8 +16,8 @@
 
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
-import { combineEpics, ofType } from 'redux-observable';
-import { of, zip } from 'rxjs';
+import { ofType } from 'redux-observable';
+import { defer, of, from, forkJoin } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
 import * as pipelineApi from 'api/pipelineApi';
@@ -25,24 +25,31 @@ import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-const initializeAppEpic = action$ =>
+export default action$ =>
   action$.pipe(
     ofType(actions.initializeApp.TRIGGER),
-    switchMap(() =>
-      zip(pipelineApi.getAll(), workspaceApi.getAll()).pipe(
-        map(([plRes, wsRes]) => [
-          normalize(plRes.data, [schema.pipeline]),
-          normalize(wsRes.data, [schema.workspace]),
-        ]),
-        mergeMap(([plEntities, wsEntities]) =>
-          of(
-            actions.initializeApp.success(merge(plEntities, wsEntities)),
-            actions.initializeApp.fulfill(),
+    switchMap(action => {
+      const { workspaceName, pipelineName } = action.payload;
+      return forkJoin(
+        defer(() => workspaceApi.getAll()).pipe(map(res => res.data)),
+        defer(() => pipelineApi.getAll()).pipe(map(res => res.data)),
+      ).pipe(
+        map(([workspaces, pipelines]) =>
+          merge(
+            normalize(workspaces, [schema.workspace]),
+            normalize(pipelines, [schema.pipeline]),
           ),
         ),
+        mergeMap(normalizedData =>
+          from([
+            actions.initializeApp.success(normalizedData),
+            actions.switchWorkspace.trigger({
+              name: workspaceName,
+              pipelineName,
+            }),
+          ]),
+        ),
         catchError(res => of(actions.initializeApp.failure(res))),
-      ),
-    ),
+      );
+    }),
   );
-
-export default combineEpics(initializeAppEpic);

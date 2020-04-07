@@ -36,6 +36,7 @@
     "eslint-plugin-cypress": "2.7.0",
     "final-form": "4.18.5",
     "final-form-arrays": "3.0.2",
+    "history": "4.10.1",
     "jest-junit": "8.0.0",
     "jointjs": "3.1.1",
     "jquery": "3.4.1",

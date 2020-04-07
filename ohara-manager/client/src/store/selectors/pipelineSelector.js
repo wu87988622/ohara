@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { head, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
 const getEntities = state => state?.entities?.pipelines;
@@ -23,13 +23,21 @@ const getGroupFromProps = (_, props) => props?.group;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const makeGetAllPipelines = () =>
-  createSelector([getEntities], entities => _.values(entities));
+export const getAllPipelines = createSelector([getEntities], entities =>
+  sortBy(values(entities), 'name'),
+);
 
-export const makeFindPipelinesByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
-    _.values(entities).filter(pl => pl?.group === group),
-  );
+export const getPipelineById = createSelector(
+  [getEntities, getIdFromProps],
+  (entities, id) => entities[id],
+);
 
-export const makeGetPipelineById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+export const findPipelinesByGroup = createSelector(
+  [getAllPipelines, getGroupFromProps],
+  (pipelines, group) => pipelines.filter(p => p?.group === group),
+);
+
+export const getHeadPipelineByGroup = createSelector(
+  [findPipelinesByGroup],
+  pipelines => head(pipelines),
+);

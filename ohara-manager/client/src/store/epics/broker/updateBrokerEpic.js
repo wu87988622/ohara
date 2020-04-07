@@ -15,35 +15,40 @@
  */
 
 import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { defer, interval, of } from 'rxjs';
 import {
   catchError,
+  debounce,
   map,
-  mergeMap,
-  startWith,
   switchMap,
+  startWith,
 } from 'rxjs/operators';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+
+export const updateBroker$ = values => {
+  const brokerId = getId(values);
+  return defer(() => brokerApi.update(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.broker)),
+    map(normalizedData => merge(normalizedData, { brokerId })),
+    map(normalizedData => actions.updateBroker.success(normalizedData)),
+    startWith(actions.updateBroker.request({ brokerId })),
+    catchError(error =>
+      of(actions.updateBroker.failure(merge(error, { brokerId }))),
+    ),
+  );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.createPipeline.TRIGGER),
+    ofType(actions.updateBroker.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(pipelineApi.create(values)).pipe(
-        map(res => normalize(res.data, schema.pipeline)),
-        mergeMap(entities =>
-          from([
-            actions.createPipeline.success(entities),
-            actions.switchPipeline({ name: values?.name }),
-          ]),
-        ),
-        startWith(actions.createPipeline.request()),
-        catchError(res => of(actions.createPipeline.failure(res))),
-      ),
-    ),
+    debounce(() => interval(1000)),
+    switchMap(values => updateBroker$(values)),
   );

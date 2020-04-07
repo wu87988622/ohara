@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
@@ -31,8 +31,8 @@ export const usePipelineGroup = () => {
 };
 
 export const usePipelineName = () => {
-  const mapState = useCallback(state => state.ui.pipeline.name, []);
-  return useSelector(mapState);
+  const selector = useCallback(state => state.ui.pipeline.name, []);
+  return useSelector(selector);
 };
 
 export const useSwitchPipelineAction = () => {
@@ -88,36 +88,31 @@ export const useSetSelectedCellAction = () => {
 };
 
 export const useAllPipelines = () => {
-  const getAllPipelines = useMemo(selectors.makeGetAllPipelines, []);
-  return useSelector(
-    useCallback(state => getAllPipelines(state), [getAllPipelines]),
-  );
+  const selector = useCallback(state => selectors.getAllPipelines(state), []);
+  return useSelector(selector);
 };
 
 export const usePipelines = () => {
-  const makeFindPipelinesByGroup = useMemo(
-    selectors.makeFindPipelinesByGroup,
-    [],
-  );
   const group = hooks.usePipelineGroup();
-  const findPipelinesByGroup = useCallback(
-    state => makeFindPipelinesByGroup(state, { group }),
-    [makeFindPipelinesByGroup, group],
+  const selector = useCallback(
+    state => selectors.findPipelinesByGroup(state, { group }),
+    [group],
   );
-  return useSelector(findPipelinesByGroup);
+  return useSelector(selector);
 };
 
 export const usePipeline = () => {
-  const getPipelineById = useMemo(selectors.makeGetPipelineById, []);
   const group = usePipelineGroup();
   const name = usePipelineName();
-  const id = getId({ group, name });
-  return useSelector(
-    useCallback(state => getPipelineById(state, { id }), [getPipelineById, id]),
+  const pipelineId = getId({ group, name });
+  const selector = useCallback(
+    state => selectors.getPipelineById(state, { id: pipelineId }),
+    [pipelineId],
   );
+  return useSelector(selector);
 };
 
 export const useCurrentPipelineCell = () => {
-  const mapState = useCallback(state => state.ui.pipeline.selectedCell, []);
-  return useSelector(mapState);
+  const selector = useCallback(state => state.ui.pipeline.selectedCell, []);
+  return useSelector(selector);
 };

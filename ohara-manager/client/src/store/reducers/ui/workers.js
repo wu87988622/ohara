@@ -17,27 +17,26 @@
 import * as actions from 'store/actions';
 
 const initialState = {
-  name: null,
   loading: false,
   lastUpdated: null,
   error: null,
 };
 
-export default function reducer(state = initialState, action) {
+function worker(state = initialState, action) {
   switch (action.type) {
-    case actions.switchWorkspace.REQUEST:
+    case actions.fetchWorker.REQUEST:
       return {
         ...state,
         loading: true,
       };
-    case actions.switchWorkspace.SUCCESS:
+    case actions.fetchWorker.SUCCESS:
       return {
         ...state,
-        name: action.payload,
+        name: action.payload.name,
         loading: false,
         lastUpdated: new Date(),
       };
-    case actions.switchWorkspace.FAILURE:
+    case actions.fetchWorker.FAILURE:
       return {
         ...state,
         loading: false,
@@ -46,4 +45,14 @@ export default function reducer(state = initialState, action) {
     default:
       return state;
   }
+}
+
+export default function reducer(state = {}, action) {
+  if (action.payload?.workerId) {
+    return {
+      ...state,
+      [action.payload.workerId]: worker(state[action.payload.workerId], action),
+    };
+  }
+  return state;
 }

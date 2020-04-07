@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import { createSelector } from 'reselect';
+import { combineEpics } from 'redux-observable';
+import createBrokerEpic from './createBrokerEpic';
+import deleteBrokerEpic from './deleteBrokerEpic';
+import fetchBrokerEpic from './fetchBrokerEpic';
+import updateBrokerEpic from './updateBrokerEpic';
+import startBrokerEpic from './startBrokerEpic';
+import stopBrokerEpic from './stopBrokerEpic';
 
-export const getEntities = state => state?.entities?.infos;
-
-const getIdFromProps = (_, props) => props?.id;
-
-export const getInfoById = createSelector(
-  [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
+export default combineEpics(
+  createBrokerEpic,
+  deleteBrokerEpic,
+  fetchBrokerEpic,
+  updateBrokerEpic,
+  startBrokerEpic,
+  stopBrokerEpic,
 );
-
-export const makeGetInfoById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);

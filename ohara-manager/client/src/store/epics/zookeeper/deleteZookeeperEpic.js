@@ -14,36 +14,36 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { defer, interval, of } from 'rxjs';
 import {
   catchError,
+  debounce,
   map,
-  mergeMap,
-  startWith,
   switchMap,
+  startWith,
 } from 'rxjs/operators';
 
-import * as pipelineApi from 'api/pipelineApi';
+import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+
+export const deleteZookeeper$ = params => {
+  const zookeeperId = getId(params);
+  return defer(() => zookeeperApi.remove(params)).pipe(
+    map(() => actions.deleteZookeeper.success({ zookeeperId })),
+    startWith(actions.deleteZookeeper.request({ zookeeperId })),
+    catchError(error =>
+      of(actions.deleteZookeeper.failure(merge(error, { zookeeperId }))),
+    ),
+  );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.createPipeline.TRIGGER),
+    ofType(actions.deleteZookeeper.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(pipelineApi.create(values)).pipe(
-        map(res => normalize(res.data, schema.pipeline)),
-        mergeMap(entities =>
-          from([
-            actions.createPipeline.success(entities),
-            actions.switchPipeline({ name: values?.name }),
-          ]),
-        ),
-        startWith(actions.createPipeline.request()),
-        catchError(res => of(actions.createPipeline.failure(res))),
-      ),
-    ),
+    debounce(() => interval(1000)),
+    switchMap(params => deleteZookeeper$(params)),
   );

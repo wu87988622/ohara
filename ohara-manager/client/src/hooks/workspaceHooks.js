@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { GROUP } from 'const';
@@ -25,9 +25,13 @@ import { getId } from 'utils/object';
 
 export const useWorkspaceGroup = () => GROUP.WORKSPACE;
 
-export const useWorkspaceName = () => {
-  const mapState = useCallback(state => state.ui.workspace.name, []);
-  return useSelector(mapState);
+export const useWorkspaceName = () =>
+  useSelector(useCallback(state => selectors.getWorkspaceName(state), []));
+
+export const useWorkspaceId = () => {
+  const group = useWorkspaceGroup();
+  const name = useWorkspaceName();
+  return getId({ group, name });
 };
 
 export const useSwitchWorkspaceAction = () => {
@@ -39,27 +43,12 @@ export const useSwitchWorkspaceAction = () => {
   );
 };
 
-export const useAllWorkspaces = () => {
-  const getAllWorkspaces = useMemo(selectors.makeGetAllWorkspaces, []);
-  return useSelector(
-    useCallback(state => getAllWorkspaces(state), [getAllWorkspaces]),
-  );
-};
-
-export const useWorkspaces = () => {
-  const workspaces = useAllWorkspaces();
-  return workspaces;
-};
+export const useAllWorkspaces = () =>
+  useSelector(useCallback(state => selectors.getAllWorkspaces(state), []));
 
 export const useWorkspace = () => {
-  const getWorkspaceById = useMemo(selectors.makeGetWorkspaceById, []);
-  const group = useWorkspaceGroup();
-  const name = useWorkspaceName();
-  const id = getId({ group, name });
+  const id = hooks.useWorkspaceId();
   return useSelector(
-    useCallback(state => getWorkspaceById(state, { id }), [
-      getWorkspaceById,
-      id,
-    ]),
+    useCallback(state => selectors.getWorkspaceById(state, { id }), [id]),
   );
 };
