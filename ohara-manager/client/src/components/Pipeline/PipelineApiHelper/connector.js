@@ -14,173 +14,76 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
-
-import * as context from 'context';
-import * as util from './apiHelperUtils';
-import { CELL_STATUS, KIND } from 'const';
+import * as hooks from 'hooks';
 
 const connector = () => {
-  const {
-    createConnector,
-    updateConnector,
-    startConnector,
-    stopConnector,
-    deleteConnector,
-  } = context.useConnectorActions();
-  const { data: currentConnector } = context.useConnectorState();
+  const createConnector = hooks.useCreateConnectorAction();
+  const startConnector = hooks.useStartConnectorAction();
+  const stopConnector = hooks.useStopConnectorAction();
+  const deleteConnector = hooks.useDeleteConnectorAction();
+  const updateConnector = hooks.useUpdateConnectorAction();
+  const updateConnectorLink = hooks.useUpdateConnectorLinkAction();
+  const removeConnectorSourceLink = hooks.useRemoveSourceLinkAction();
+  const removeConnectorSinkLink = hooks.useRemoveSinkLinkAction();
+  const workerClusterKey = hooks.useWorkerClusterKey();
+  const topicGroup = hooks.useTopicGroup();
 
-  const create = async (params, paperApi) => {
-    const { id, name, className } = params;
-    const res = await createConnector({
-      name,
-      connector__class: className,
-    });
-
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    } else {
-      paperApi.removeElement(id);
-    }
+  const create = async (values, paperApi) => {
+    const { id, name, className } = values;
+    const params = { id, name, connector__class: className, workerClusterKey };
+    const options = { paperApi };
+    createConnector(params, options);
   };
 
   const update = async (cell, topics, values, paperApi) => {
-    const cells = paperApi.getCells();
-    const targetConnector = currentConnector.find(
-      connector => connector.name === values.name,
-    );
-    if (!targetConnector) return;
-    const res = await updateConnector({
-      name: cell.name,
-      ...values,
-    });
-
-    if (!res.error) {
-      const hasTopicKey = values.topicKeys.length > 0;
-      const currentHasTopicKey =
-        _.get(targetConnector, 'topicKeys', []).length > 0;
-      if (currentHasTopicKey) {
-        const connectorId = paperApi.getCell(values.name).id;
-        const topicId = paperApi.getCell(targetConnector.topicKeys[0].name).id;
-        let linkId;
-        switch (cell.kind) {
-          case KIND.source:
-            linkId = cells
-              .filter(cell => cell.cellType === 'standard.Link')
-              .find(
-                cell =>
-                  cell.sourceId === connectorId && cell.targetId === topicId,
-              ).id;
-            break;
-          case KIND.sink:
-            linkId = cells
-              .filter(cell => cell.cellType === 'standard.Link')
-              .find(
-                cell =>
-                  cell.sourceId === topicId && cell.targetId === connectorId,
-              ).id;
-            break;
-          default:
-            break;
-        }
-        paperApi.removeLink(linkId);
-      }
-      if (hasTopicKey) {
-        switch (cell.kind) {
-          case KIND.source:
-            paperApi.addLink(cell.id, topics[0].data.id);
-            break;
-          case KIND.sink:
-            paperApi.addLink(topics[0].data.id, cell.id);
-            break;
-          default:
-            break;
-        }
-      }
-    }
-    return res;
+    const params = { name: cell.name, ...values };
+    const options = { paperApi, cell, topics };
+    updateConnector(params, options);
   };
 
-  const start = async (params, paperApi) => {
-    const { id, name } = params;
-
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-    const res = await startConnector(name);
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    } else {
-      paperApi.updateElement(id, {
-        status: CELL_STATUS.stopped,
-      });
-    }
+  const start = async (values, paperApi) => {
+    const { id, name } = values;
+    const params = { id, name };
+    const options = { paperApi };
+    startConnector(params, options);
   };
 
-  const stop = async (params, paperApi) => {
-    const { id, name } = params;
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-    const res = await stopConnector(name);
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    }
+  const stop = async (values, paperApi) => {
+    const { id, name } = values;
+    const params = { id, name };
+    const options = { paperApi };
+    stopConnector(params, options);
   };
 
-  const remove = async (params, paperApi) => {
-    const { id, name } = params;
-    const res = await deleteConnector(name);
-    if (!res.error) {
-      paperApi.removeElement(id);
-    }
+  const remove = async (values, paperApi) => {
+    const { id, name } = values;
+    const params = { id, name };
+    const options = { paperApi };
+    deleteConnector(params, options);
   };
 
-  const updateLink = async (params, paperApi) => {
-    const { connector, topic, link } = params;
-
-    const res = await updateConnector({
+  const updateLink = async (values, paperApi) => {
+    const { connector, topic, link } = values;
+    const params = {
       name: connector.name,
-      topicKeys: [{ name: topic.name }],
-    });
-
-    if (res.error) {
-      paperApi.removeElement(link.id);
-    }
-    return res;
+      topicKeys: [{ name: topic.name, group: topicGroup }],
+    };
+    const options = { link, paperApi };
+    updateConnectorLink(params, options);
   };
 
-  const removeSourceLink = async (params, topic, paperApi) => {
-    const { name, id } = params;
-    const res = await updateConnector({
-      name,
-      topicKeys: [],
-    });
-
-    if (res.error) {
-      paperApi.addLink(id, topic.id);
-    }
+  const removeSourceLink = async (values, topic, paperApi) => {
+    const { name, id } = values;
+    const params = { name, id, topicKeys: [] };
+    const options = { topic, paperApi };
+    removeConnectorSourceLink(params, options);
   };
 
-  const removeSinkLink = async (params, topic, paperApi) => {
-    const { name, id } = params;
-    const res = await updateConnector({
-      name,
-      topicKeys: [],
-    });
-
-    if (res.error) {
-      paperApi.addLink(topic.id, id);
-    }
+  const removeSinkLink = async (values, topic, paperApi) => {
+    const { name, id } = values;
+    const params = { name, id, topicKeys: [] };
+    const options = { topic, paperApi };
+    removeConnectorSinkLink(params, options);
   };
 
   return {

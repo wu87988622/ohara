@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './connectorActions';
-export * from './createWorkspaceActions';
-export * from './devToolActions';
-export * from './eventLogActions';
-export * from './fileActions';
-export * from './introActions';
-export * from './nodeActions';
-export * from './pipelineActions';
-export * from './streamActions';
-export * from './snackbarActions';
-export * from './topicActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import { omit } from 'lodash';
+import * as actions from 'store/actions';
+import { ENTITY_TYPE } from 'store/schema';
+import { entity } from './index';
+
+export default function reducer(state = {}, action) {
+  switch (action.type) {
+    case actions.deleteConnector.SUCCESS:
+      return omit(state, action.payload);
+    default:
+      return entity(ENTITY_TYPE.connector)(state, action);
+  }
+}

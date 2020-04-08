@@ -17,6 +17,7 @@
 import { combineReducers } from 'redux';
 import app from './app';
 import brokers from './brokers';
+import connector from './connector';
 import createWorkspace from './createWorkspace';
 import file from './file';
 import intro from './intro';
@@ -32,6 +33,7 @@ import zookeepers from './zookeepers';
 export default combineReducers({
   app,
   brokers,
+  connector,
   createWorkspace,
   file,
   intro,

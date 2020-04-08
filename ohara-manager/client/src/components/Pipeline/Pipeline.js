@@ -52,7 +52,8 @@ const Pipeline = React.forwardRef((props, ref) => {
     data: propertyDialogData,
   } = context.usePipelinePropertyDialog();
 
-  const { data: connectors } = context.useConnectorState();
+  const connectorLastUpdated = hooks.useIsConnectorLoaded();
+  const connectors = hooks.useConnectors();
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 
   const {
@@ -189,15 +190,14 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (isInitialized.current) return;
     if (!paperApiRef.current) return;
 
-    // TODO: this is blocking Paper from correctly rendering
-    // if (!connectorLastUpdated) return;
-
+    if (!connectorLastUpdated) return;
     if (!isStreamLoaded) return;
     if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
     isInitialized.current = true;
   }, [
+    connectorLastUpdated,
     currentPipeline,
     getUpdatedCells,
     isPaperApiReady,

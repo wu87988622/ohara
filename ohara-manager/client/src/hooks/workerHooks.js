@@ -134,3 +134,12 @@ export const useDeleteWorkerAction = () => {
     [dispatch, group],
   );
 };
+
+export const useWorkerClusterKey = () => {
+  const group = useWorkerGroup();
+  const name = useWorkerName();
+  return {
+    name,
+    group,
+  };
+};

@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-export * from 'context/api/ApiContext';
-export * from 'context/app/AppContext';
 export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/connector/ConnectorContext';
 export * from 'context/dialog/DialogContext';
 export * from 'context/workspace/EditWorkspaceContext';
 export * from 'context/devTool/DevToolContext';

@@ -21,7 +21,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import Typography from '@material-ui/core/Typography';
 
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { KIND } from 'const';
 import { Dialog } from 'components/common/Dialog';
@@ -39,9 +38,11 @@ function MoreActions() {
   const currentPipeline = hooks.usePipeline();
   const startStream = hooks.useStartStreamAction();
   const stopStream = hooks.useStopStreamAction();
+
+  const startConnector = hooks.useStartConnectorAction();
+  const stopConnector = hooks.useStopConnectorAction();
   const startTopic = hooks.useStartTopicAction();
   const stopTopic = hooks.useStopTopicAction();
-  const { stopConnector, startConnector } = context.useConnectorActions();
 
   const startBroker = hooks.useStartBrokerAction();
   const startWorker = hooks.useStartWorkerAction();

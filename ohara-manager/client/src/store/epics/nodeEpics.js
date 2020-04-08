@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
-import { from, of, defer } from 'rxjs';
+import { from, of, defer, iif, throwError } from 'rxjs';
 import {
   switchMap,
   map,
@@ -25,7 +25,7 @@ import {
   concatAll,
   retryWhen,
   delay,
-  take,
+  concatMap,
 } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
@@ -77,13 +77,20 @@ const fetchNodesEpic = action$ =>
 const checkNodes$ = values =>
   // If the API needs retry, it must use the defer wrapper
   defer(() => nodeApi.getAll()).pipe(
-    map(res => {
-      if (res.data.find(node => node.hostname === values)) {
-        throw res;
-      }
-      return res;
-    }),
-    retryWhen(error => error.pipe(delay(2000), take(5))),
+    map(res =>
+      iif(
+        () => res.data.find(node => node.hostname === values),
+        throwError,
+        res,
+      ),
+    ),
+    retryWhen(error =>
+      error.pipe(
+        concatMap((e, i) =>
+          iif(() => i > 4, throwError(e), of(e).pipe(delay(2000))),
+        ),
+      ),
+    ),
     map(() => actions.deleteNode.success(values)),
     startWith(actions.fetchNodes.request()),
     catchError(res => of(actions.fetchNodes.failure(res))),
