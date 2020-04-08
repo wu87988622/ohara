@@ -248,9 +248,11 @@ package object route {
       .allBrokers()
       .allWorkers()
       .allStreams()
+      .allShabondis()
       .check()
       .map(
-        report => report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreams
+        report =>
+          report.runningZookeepers ++ report.runningBrokers ++ report.runningWorkers ++ report.runningStreams ++ report.runningShabondis
       )
       // check the docker images
       .flatMap { clusters =>
@@ -272,6 +274,7 @@ package object route {
           case _: BrokerClusterInfo    => s"broker cluster:${cluster.key}"
           case _: WorkerClusterInfo    => s"worker cluster:${cluster.key}"
           case _: StreamClusterInfo    => s"stream cluster:${cluster.key}"
+          case _: ShabondiClusterInfo  => s"shabondi cluster:${cluster.key}"
           case _                       => s"cluster:${cluster.key}"
         }
         // check name conflict

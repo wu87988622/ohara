@@ -66,6 +66,7 @@ object ObjectChecker {
     def runningBrokers: Seq[BrokerClusterInfo]       = brokerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningWorkers: Seq[WorkerClusterInfo]       = workerClusterInfos.filter(_._2 == RUNNING).keys.toSeq
     def runningStreams: Seq[StreamClusterInfo]       = streamClusterInfos.filter(_._2 == RUNNING).keys.toSeq
+    def runningShabondis: Seq[ShabondiClusterInfo]   = shabondiClusterInfos.filter(_._2 == RUNNING).keys.toSeq
   }
 
   trait CheckList {
@@ -284,6 +285,8 @@ object ObjectChecker {
 
     //---------------[shabondi]---------------//
 
+    def allShabondis(): CheckList
+
     def shabondi(key: ObjectKey): CheckList = shabondis(Set(key), None)
 
     def shabondi(key: ObjectKey, condition: Condition): CheckList = shabondis(Set(key), Some(condition))
@@ -326,6 +329,7 @@ object ObjectChecker {
         private[this] val requiredWorkers      = mutable.Map[ObjectKey, Option[Condition]]()
         private[this] var requireAllStreams    = false
         private[this] val requiredStreams      = mutable.Map[ObjectKey, Option[Condition]]()
+        private[this] var requireAllShabondis  = false
         private[this] val requiredShabondis    = mutable.Map[ObjectKey, Option[Condition]]()
 
         private[this] def checkCluster[C <: ClusterInfo: ClassTag](
@@ -415,10 +419,18 @@ object ObjectChecker {
         private[this] def checkShabondis()(
           implicit executionContext: ExecutionContext
         ): Future[Map[ShabondiClusterInfo, Condition]] =
-          checkClusters[ClusterStatus, ShabondiClusterInfo](
-            serviceCollie.shabondiCollie,
-            requiredShabondis.keys.toSet
-          )
+          if (requireAllShabondis)
+            store
+              .values[ShabondiClusterInfo]()
+              .map(_.map(_.key))
+              .flatMap(
+                keys => checkClusters[ClusterStatus, ShabondiClusterInfo](serviceCollie.shabondiCollie, keys.toSet)
+              )
+          else
+            checkClusters[ClusterStatus, ShabondiClusterInfo](
+              serviceCollie.shabondiCollie,
+              requiredShabondis.keys.toSet
+            )
 
         private[this] def checkTopic(
           key: TopicKey
@@ -672,6 +684,11 @@ object ObjectChecker {
 
         override def allStreams(): CheckList = {
           this.requireAllStreams = true
+          this
+        }
+
+        override def allShabondis(): CheckList = {
+          this.requireAllShabondis = true
           this
         }
       }

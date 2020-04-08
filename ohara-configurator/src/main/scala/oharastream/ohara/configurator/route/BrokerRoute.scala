@@ -20,6 +20,7 @@ import akka.http.scaladsl.server
 import oharastream.ohara.agent._
 import oharastream.ohara.client.configurator.v0.BrokerApi
 import oharastream.ohara.client.configurator.v0.BrokerApi.{Creation, _}
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -117,6 +118,7 @@ object BrokerRoute {
     brokerClusterInfo: BrokerClusterInfo,
     workerClusterInfos: Seq[WorkerClusterInfo],
     streamClusterInfos: Seq[StreamClusterInfo],
+    shabondiClusterInfos: Seq[ShabondiClusterInfo],
     topicInfos: Seq[TopicInfo]
   ): Unit = {
     val conflictWorkers = workerClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
@@ -124,15 +126,23 @@ object BrokerRoute {
       throw new IllegalArgumentException(
         s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by worker cluster:${conflictWorkers.map(_.key).mkString(",")}"
       )
+
     val conflictStreams = streamClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
         s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by stream cluster:${conflictStreams.map(_.key).mkString(",")}"
       )
+
+    val conflictShabondis = shabondiClusterInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
+    if (conflictShabondis.nonEmpty)
+      throw new IllegalArgumentException(
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by shabondi cluster:${conflictShabondis.map(_.key).mkString(",")}"
+      )
+
     val conflictTopics = topicInfos.filter(_.brokerClusterKey == brokerClusterInfo.key)
     if (conflictTopics.nonEmpty)
       throw new IllegalArgumentException(
-        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictStreams.map(_.key).mkString(",")}"
+        s"you can't remove broker cluster:${brokerClusterInfo.key} since it is used by topic:${conflictTopics.map(_.key).mkString(",")}"
       )
   }
 
@@ -144,12 +154,13 @@ object BrokerRoute {
       objectChecker.checkList
         .allWorkers()
         .allStreams()
+        .allShabondis()
         .allTopics()
         .check()
-        .map(report => (report.runningWorkers, report.runningStreams, report.runningTopics))
+        .map(report => (report.runningWorkers, report.runningStreams, report.runningShabondis, report.runningTopics))
         .map {
-          case (workerClusterInfos, streamClusterInfos, topicInfos) =>
-            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
+          case (workerClusterInfos, streamClusterInfos, shabondiClusterInfos, topicInfos) =>
+            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, shabondiClusterInfos, topicInfos)
         }
 
   private[this] def hookBeforeDelete(
@@ -160,16 +171,23 @@ object BrokerRoute {
       objectChecker.checkList
         .allWorkers()
         .allStreams()
+        .allShabondis()
         .allTopics()
         .brokerCluster(key, STOPPED)
         .check()
         .map(
           report =>
-            (report.brokerClusterInfos.head._1, report.runningWorkers, report.runningStreams, report.runningTopics)
+            (
+              report.brokerClusterInfos.head._1,
+              report.runningWorkers,
+              report.runningStreams,
+              report.runningShabondis,
+              report.runningTopics
+            )
         )
         .map {
-          case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos) =>
-            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, topicInfos)
+          case (brokerClusterInfo, workerClusterInfos, streamClusterInfos, shabondiClusterInfos, topicInfos) =>
+            checkConflict(brokerClusterInfo, workerClusterInfos, streamClusterInfos, shabondiClusterInfos, topicInfos)
         }
         .recover {
           // the duplicate deletes are legal to ohara

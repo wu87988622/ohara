@@ -19,6 +19,7 @@ import akka.http.scaladsl.server
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.BrokerCollie
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi
 import oharastream.ohara.client.configurator.v0.TopicApi._
@@ -28,6 +29,7 @@ import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, ST
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo
+import oharastream.ohara.shabondi.ShabondiType
 import spray.json.JsString
 
 import scala.collection.JavaConverters._
@@ -188,18 +190,32 @@ private[configurator] object TopicRoute {
   private[this] def checkConflict(
     topicInfo: TopicInfo,
     connectorInfos: Seq[ConnectorInfo],
-    streamClusterInfos: Seq[StreamClusterInfo]
+    streamClusterInfos: Seq[StreamClusterInfo],
+    shabondiClusterInfos: Seq[ShabondiClusterInfo]
   ): Unit = {
     val conflictConnectors = connectorInfos.filter(_.topicKeys.contains(topicInfo.key))
     if (conflictConnectors.nonEmpty)
       throw new IllegalArgumentException(
         s"topic:${topicInfo.key} is used by running connectors:${conflictConnectors.map(_.key).mkString(",")}"
       )
+
     val conflictStreams =
       streamClusterInfos.filter(s => s.fromTopicKeys.contains(topicInfo.key) || s.toTopicKeys.contains(topicInfo.key))
     if (conflictStreams.nonEmpty)
       throw new IllegalArgumentException(
         s"topic:${topicInfo.key} is used by running streams:${conflictStreams.map(_.key).mkString(",")}"
+      )
+
+    val conflictShabondis = shabondiClusterInfos.filter { clusterInfo =>
+      val shabondiType = ShabondiType(clusterInfo.shabondiClass)
+      shabondiType match {
+        case ShabondiType.Source => clusterInfo.sourceToTopics.contains(topicInfo.key)
+        case ShabondiType.Sink   => clusterInfo.sinkFromTopics.contains(topicInfo.key)
+      }
+    }
+    if (conflictShabondis.nonEmpty)
+      throw new IllegalArgumentException(
+        s"topic:${topicInfo.key} is used by running shabondis:${conflictShabondis.map(_.key).mkString(",")}"
       )
   }
 
@@ -217,7 +233,8 @@ private[configurator] object TopicRoute {
           checkConflict(
             report.topicInfos.head._1,
             report.connectorInfos.keys.toSeq,
-            report.streamClusterInfos.keys.toSeq
+            report.streamClusterInfos.keys.toSeq,
+            report.shabondiClusterInfos.keys.toSeq
           )
           Unit
         }
@@ -274,15 +291,19 @@ private[configurator] object TopicRoute {
       objectChecker.checkList
         .allConnectors()
         .allStreams()
+        .allShabondis()
         .topic(topicInfo.key)
         .check()
-        .map(report => (report.topicInfos.head._2, report.runningConnectors, report.runningStreams))
+        .map(
+          report =>
+            (report.topicInfos.head._2, report.runningConnectors, report.runningStreams, report.runningShabondis)
+        )
         .flatMap {
-          case (condition, runningConnectors, runningStreams) =>
+          case (condition, runningConnectors, runningStreams, runningShabondis) =>
             condition match {
               case STOPPED => Future.unit
               case RUNNING =>
-                checkConflict(topicInfo, runningConnectors, runningStreams)
+                checkConflict(topicInfo, runningConnectors, runningStreams, runningShabondis)
                 objectChecker.checkList
                 // topic is running so the related broker MUST be running
                   .brokerCluster(topicInfo.brokerClusterKey, RUNNING)

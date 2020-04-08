@@ -228,16 +228,31 @@ object NodeRoute {
             .allBrokers()
             .allWorkers()
             .allStreams()
+            .allShabondis()
             .check()
             .map(
-              report => (report.runningZookeepers, report.runningBrokers, report.runningWorkers, report.runningStreams)
+              report =>
+                (
+                  report.runningZookeepers,
+                  report.runningBrokers,
+                  report.runningWorkers,
+                  report.runningStreams,
+                  report.runningShabondis
+                )
             )
             .flatMap {
-              case (zookeeperClusterInfos, brokerClusterInfos, workerClusterInfos, streamClusterInfos) =>
+              case (
+                  zookeeperClusterInfos,
+                  brokerClusterInfos,
+                  workerClusterInfos,
+                  streamClusterInfos,
+                  shabondiClusterInfos
+                  ) =>
                 checkConflict(key.name, "zookeeper cluster", zookeeperClusterInfos)
                 checkConflict(key.name, "broker cluster", brokerClusterInfos)
                 checkConflict(key.name, "worker cluster", workerClusterInfos)
                 checkConflict(key.name, "stream cluster", streamClusterInfos)
+                checkConflict(key.name, "shabondi cluster", shabondiClusterInfos)
                 creationToNode(
                   Creation(
                     hostname = key.name(),
@@ -260,6 +275,7 @@ object NodeRoute {
         .allBrokers()
         .allWorkers()
         .allStreams()
+        .allShabondis()
         .node(key)
         .check()
         .map(
