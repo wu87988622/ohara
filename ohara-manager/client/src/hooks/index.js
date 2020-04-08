@@ -17,6 +17,7 @@
 export * from './appHooks';
 export * from './brokerHooks';
 export * from './createWorkspaceHooks';
+export * from './devToolHooks';
 export * from './eventLogHooks';
 export * from './fileHooks';
 export * from './introHooks';

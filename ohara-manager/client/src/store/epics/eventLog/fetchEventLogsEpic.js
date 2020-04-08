@@ -51,7 +51,7 @@ export default action$ =>
     ofType(actions.fetchEventLogs.TRIGGER),
     switchMap(() =>
       getLogFromLocalForge$().pipe(
-        map(entities => actions.fetchEventLogs.success(entities)),
+        map(data => actions.fetchEventLogs.success(data)),
         catchError(res => of(actions.fetchEventLogs.failure(res))),
       ),
     ),

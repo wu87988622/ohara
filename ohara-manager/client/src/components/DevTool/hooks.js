@@ -16,51 +16,32 @@
 
 import { useMemo } from 'react';
 import moment from 'moment';
-import { get, map, find, isEmpty, split } from 'lodash';
+import { get, map, find, isEmpty } from 'lodash';
 import * as context from 'context';
+import * as hooks from 'hooks';
 import { TAB } from 'context/devTool/const';
-import { usePrevious } from 'utils/hooks';
 
 export const useCurrentLogs = () => {
-  const { data, query } = context.useLogState();
-  const { logs: allLogs } = data;
+  const { data, query } = hooks.useDevToolLog();
   const { hostName } = query;
 
   return useMemo(() => {
-    const log = get(find(allLogs, { hostname: hostName }), 'value');
-    return isEmpty(log) ? [] : split(log, '\n');
-  }, [allLogs, hostName]);
+    return get(find(data, { name: hostName }), 'logs');
+  }, [data, hostName]);
 };
 
 export const useCurrentHosts = () => {
-  const { data } = context.useLogState();
-  const { logs: allLogs } = data;
-
+  const { data } = hooks.useDevToolLog();
   return useMemo(() => {
-    return map(allLogs, 'hostname');
-  }, [allLogs]);
-};
-
-export const useCurrentHostName = () => {
-  const { query, data } = context.useLogState();
-  const { logs: allLogs } = data;
-  const { hostName } = query;
-  const prevAllLogs = usePrevious(allLogs);
-
-  return useMemo(() => {
-    if (!isEmpty(allLogs) && prevAllLogs === allLogs) return hostName;
-    else {
-      if (isEmpty(allLogs)) return '';
-      else return allLogs[0].hostname;
-    }
-  }, [prevAllLogs, allLogs, hostName]);
+    return map(data, 'name');
+  }, [data]);
 };
 
 export const useStatusText = () => {
   const { tabName } = context.useDevTool();
-  const { query: logQuery } = context.useLogState();
+  const { query: logQuery } = hooks.useDevToolLog();
   const { timeGroup, timeRange, startTime, endTime } = logQuery;
-  const { data } = context.useTopicDataState();
+  const { data } = hooks.useDevToolTopicData();
   const messages = get(data, 'messages', []);
   const currentLog = useCurrentLogs();
 

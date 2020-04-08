@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 import { VirtualizedList } from 'components/common/List';
 import { useCurrentLogs } from 'components/DevTool/hooks';
 import { StyledLogDiv, StyledContent } from './ViewStyles';
@@ -31,7 +31,7 @@ rowRenderer.propTypes = {
 };
 
 const ViewLog = () => {
-  const { isFetching } = context.useLogState();
+  const { isFetching } = hooks.useDevToolLog();
   const currentLog = useCurrentLogs();
 
   return (

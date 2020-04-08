@@ -20,7 +20,7 @@ import { of } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 const increaseNotification$ = (type, state$) => {
   const { error, info } = state$.value.entities.eventLogs.notifications.data;

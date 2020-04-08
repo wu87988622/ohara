@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { get, merge, reject, filter } from 'lodash';
 
@@ -131,6 +131,13 @@ export const useStopAndDeleteTopicAction = () => {
 
 export const useAllTopics = () => {
   const getAllTopics = useMemo(selectors.makeGetAllTopics, []);
+  const isTopicLoaded = hooks.useIsTopicLoaded();
+  const fetchAllTopics = hooks.useFetchAllTopicsAction();
+
+  useEffect(() => {
+    if (!isTopicLoaded) fetchAllTopics();
+  }, [fetchAllTopics, isTopicLoaded]);
+
   return useSelector(useCallback(state => getAllTopics(state), [getAllTopics]));
 };
 

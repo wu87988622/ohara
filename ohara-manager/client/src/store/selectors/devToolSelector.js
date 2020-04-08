@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
 
-export const initializeRoutine = createRoutine('INITIALIZE');
-export const fetchTopicDataRoutine = createRoutine('FETCH_TOPIC_DATA');
+const getEntities = state => state?.entities?.devTool;
 
-export const setNameRoutine = createRoutine('SET_NAME');
-export const setLimitRoutine = createRoutine('SET_LIMIT');
+export const makeGetDevToolTopicData = () =>
+  createSelector([getEntities], entities => _.get(entities, 'topicData'));
 
-export const refetchTopicRoutine = createRoutine('REFETCH_TOPIC');
+export const makeGetDevToolLog = () =>
+  createSelector([getEntities], entities => _.get(entities, 'log'));

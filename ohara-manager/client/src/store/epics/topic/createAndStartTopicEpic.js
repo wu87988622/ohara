@@ -21,7 +21,7 @@ import { catchError, map, concatAll, mergeMap } from 'rxjs/operators';
 import * as actions from 'store/actions';
 import { createTopic$ } from './createTopicEpic';
 import { startTopic$ } from './startTopicEpic';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "create + start" for single creation request

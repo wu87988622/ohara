@@ -72,3 +72,13 @@ export enum GROUP {
 export enum FORM {
   CREATE_WORKSPACE = 'createWorkspace',
 }
+
+export enum LOG_LEVEL {
+  info = 'info',
+  error = 'error',
+}
+
+export enum LOG_TIME_GROUP {
+  latest = 'latest',
+  customize = 'customize',
+}

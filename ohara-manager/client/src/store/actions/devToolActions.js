@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-export const TIME_GROUP = {
-  latest: 'latest',
-  customize: 'customize',
-};
+import { createRoutine } from 'redux-routines';
+
+export const fetchDevToolTopicData = createRoutine('FETCH_DEV_TOOL_TOPIC_DATA');
+export const setDevToolTopicQueryParams = createRoutine(
+  'SET_DEV_TOOL_TOPIC_QUERY_PARAMS',
+);
+
+export const fetchDevToolLog = createRoutine('FETCH_DEV_TOOL_LOG');
+export const setDevToolLogQueryParams = createRoutine(
+  'SET_DEV_TOOL_LOG_QUERY_PARAMS',
+);

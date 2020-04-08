@@ -25,6 +25,11 @@ import { getId } from 'utils/object';
 
 export const useWorkspaceGroup = () => GROUP.WORKSPACE;
 
+export const useIsWorkspaceReady = () => {
+  const mapState = useCallback(state => !!state.ui.workspace.lastUpdated, []);
+  return useSelector(mapState);
+};
+
 export const useWorkspaceName = () =>
   useSelector(useCallback(state => selectors.getWorkspaceName(state), []));
 

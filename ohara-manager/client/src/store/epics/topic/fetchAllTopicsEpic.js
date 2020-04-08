@@ -29,7 +29,7 @@ export default action$ =>
     switchMap(() =>
       defer(() => topicApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.topic])),
-        map(entities => actions.fetchTopics.success(entities)),
+        map(normalizedData => actions.fetchTopics.success(normalizedData)),
         catchError(res => of(actions.fetchTopics.failure(res))),
       ),
     ),

@@ -36,7 +36,7 @@ import Wrapper from './EventLogHeaderStyles';
 import EventLogSettings from './EventLogSettings';
 
 const EventLogHeader = ({ onFilter }) => {
-  const clearEventLogs = hooks.useClearEventLogs();
+  const clearEventLogs = hooks.useClearEventLogsAction();
   const { data: logs } = hooks.useEventLogs();
   const { close } = useEventLogDialog();
   const settingsPopoverRef = useRef(null);

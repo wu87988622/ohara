@@ -16,7 +16,7 @@
 
 import React from 'react';
 import moment from 'moment';
-import { has, isEmpty } from 'lodash';
+import { get, isEmpty } from 'lodash';
 import IconButton from '@material-ui/core/IconButton';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import SearchIcon from '@material-ui/icons/Search';
@@ -26,112 +26,36 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import { KIND } from 'const';
+import { KIND, LOG_TIME_GROUP } from 'const';
 import { Tooltip } from 'components/common/Tooltip';
 import { Button } from 'components/common/Form';
 import Popover from 'components/common/Popover';
 import Select from 'components/common/Select';
 import { TAB } from 'context/devTool/const';
-import {
-  useCurrentLogs,
-  useCurrentHosts,
-  useCurrentHostName,
-} from 'components/DevTool/hooks';
+import { useCurrentLogs, useCurrentHosts } from 'components/DevTool/hooks';
 import * as hooks from 'hooks';
-import * as context from 'context';
-import { TIME_GROUP } from 'context/log/const';
 import { LOG_SERVICES } from 'api/apiInterface/logInterface';
-import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody, StyledTextField } from './ControllerStyles';
 
 const ControllerLog = () => {
   const streams = hooks.useStreams();
 
-  const logActions = context.useLogActions();
-  const { query, isFetching, lastUpdated } = context.useLogState();
+  const refetchLog = hooks.useRefetchDevToolLog();
+  const setLogQueryParams = hooks.useSetDevToolLogQueryParams();
+  const { query, isFetching } = hooks.useDevToolLog();
   const {
+    hostName,
     logType,
-    streamName,
+    streamKey,
     timeGroup,
     timeRange,
     startTime,
     endTime,
   } = query;
+  const streamName = get(streamKey, 'name', '');
 
   const currentLog = useCurrentLogs();
   const hosts = useCurrentHosts();
-  const hostname = useCurrentHostName();
-
-  const prevLogType = usePrevious(logType);
-
-  React.useEffect(() => {
-    if (lastUpdated && prevLogType === logType) return;
-    if (isEmpty(logType)) return;
-
-    const getTimeSeconds = () => {
-      if (timeGroup === TIME_GROUP.latest) {
-        // timeRange uses minute units
-        return timeRange * 60;
-      } else {
-        return Math.ceil(
-          moment.duration(moment(endTime).diff(moment(startTime))).asSeconds(),
-        );
-      }
-    };
-
-    const setHostName = result => {
-      if (has(result, 'data')) {
-        if (!isEmpty(result.data.logs)) {
-          logActions.setHostName(result.data.logs[0].hostname);
-        }
-      } else {
-        logActions.setHostName('');
-      }
-    };
-
-    switch (logType) {
-      case KIND.configurator:
-        logActions
-          .fetchConfiguratorLog(getTimeSeconds())
-          .then(result => setHostName(result));
-        break;
-      case KIND.zookeeper:
-        logActions
-          .fetchZookeeperLog(getTimeSeconds())
-          .then(result => setHostName(result));
-        break;
-      case KIND.broker:
-        logActions
-          .fetchBrokerLog(getTimeSeconds())
-          .then(result => setHostName(result));
-        break;
-      case KIND.worker:
-        logActions
-          .fetchWorkerLog(getTimeSeconds())
-          .then(result => setHostName(result));
-        break;
-      case KIND.stream:
-        if (isEmpty(streamName)) return;
-        logActions
-          .fetchStreamLog({
-            name: streamName,
-            sinceSeconds: getTimeSeconds(),
-          })
-          .then(result => setHostName(result));
-        break;
-      default:
-    }
-  }, [
-    endTime,
-    lastUpdated,
-    logActions,
-    logType,
-    prevLogType,
-    startTime,
-    streamName,
-    timeGroup,
-    timeRange,
-  ]);
 
   const handleOpenNewWindow = () => {
     if (currentLog) {
@@ -139,7 +63,7 @@ const ControllerLog = () => {
       const addSlash = window.location.pathname === '/' ? '' : '/';
       window.open(
         `${window.location}${addSlash}view?type=${TAB.log}&logType=${logType}`
-          .concat(`&hostname=${hostname}&streamName=${streamName}`)
+          .concat(`&hostname=${hostName}&streamName=${streamName}`)
           .concat(
             `&timeGroup=${timeGroup}&timeRange=${timeRange}&startTime=${startTime}&endTime=${endTime}`,
           ),
@@ -148,15 +72,15 @@ const ControllerLog = () => {
   };
 
   const handleRadioChange = event => {
-    logActions.setTimeGroup(event.target.value);
-    if (event.target.value === TIME_GROUP.customize && !startTime && !endTime) {
+    setLogQueryParams({ timeGroup: event.target.value });
+    if (event.target.value === LOG_TIME_GROUP.customize) {
       // for initial the form, we need to set value explicitly
-      logActions.setStartTime(
-        moment()
+      setLogQueryParams({
+        startTime: moment()
           .subtract(10, 'minutes')
           .format('YYYY-MM-DD[T]hh:mm'),
-      );
-      logActions.setEndTime(moment().format('YYYY-MM-DD[T]hh:mm'));
+      });
+      setLogQueryParams({ endTime: moment().format('YYYY-MM-DD[T]hh:mm') });
     }
   };
 
@@ -164,17 +88,14 @@ const ControllerLog = () => {
     // true -> disabled
     if (isFetching) return true;
     if (!logType) return true;
-    if (logType === KIND.stream && !streamName) return true;
+    if (logType === KIND.stream && !isEmpty(streamKey)) return true;
   };
 
   return (
     <>
       <Select
         value={logType}
-        onChange={event => {
-          logActions.setLogType(event.target.value);
-          logActions.setHostName('');
-        }}
+        onChange={event => setLogQueryParams({ logType: event.target.value })}
         list={Object.keys(LOG_SERVICES)}
         disabled={isFetching}
         testId="log-type-select"
@@ -182,7 +103,9 @@ const ControllerLog = () => {
       {logType === KIND.stream && (
         <Select
           value={streamName}
-          onChange={event => logActions.setStreamName(event.target.value)}
+          onChange={event =>
+            setLogQueryParams({ streamName: event.target.value })
+          }
           list={streams.map(stream => stream.name)}
           disabled={isFetching}
         />
@@ -191,19 +114,19 @@ const ControllerLog = () => {
       <Select
         disabled={
           !logType ||
-          (logType === KIND.stream && !streamName) ||
+          (logType === KIND.stream && !isEmpty(streamKey)) ||
           isFetching ||
-          isEmpty(hostname)
+          isEmpty(hostName)
         }
-        value={hostname}
-        onChange={event => logActions.setHostName(event.target.value)}
+        value={hostName}
+        onChange={event => setLogQueryParams({ hostName: event.target.value })}
         list={hosts}
       />
       <Tooltip title="Fetch the data again">
         <IconButton
           className="item"
           disabled={getDisableState()}
-          onClick={logActions.refetchLog}
+          onClick={refetchLog}
           size="small"
         >
           <RefreshIcon />
@@ -225,18 +148,18 @@ const ControllerLog = () => {
         <StyledSearchBody tab={TAB.log} data-testid="log-query-popover">
           <RadioGroup value={timeGroup} onChange={handleRadioChange}>
             <FormControlLabel
-              value={TIME_GROUP.latest}
+              value={LOG_TIME_GROUP.latest}
               control={<Radio color="primary" />}
               label="Latest"
               disabled={isEmpty(logType)}
             />
             <label>Minutes per query</label>
             <TextField
-              disabled={isEmpty(logType) || timeGroup !== TIME_GROUP.latest}
+              disabled={isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.latest}
               type="number"
               defaultValue={timeRange}
               onChange={event =>
-                logActions.setTimeRange(Number(event.target.value))
+                setLogQueryParams({ timeRange: Number(event.target.value) })
               }
             />
           </RadioGroup>
@@ -246,13 +169,15 @@ const ControllerLog = () => {
             onChange={handleRadioChange}
           >
             <FormControlLabel
-              value={TIME_GROUP.customize}
+              value={LOG_TIME_GROUP.customize}
               control={<Radio color="primary" />}
               label="Customize"
               disabled={isEmpty(logType)}
             />
             <StyledTextField
-              disabled={isEmpty(logType) || timeGroup !== TIME_GROUP.customize}
+              disabled={
+                isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.customize
+              }
               label="Start date"
               type="datetime-local"
               defaultValue={
@@ -261,10 +186,15 @@ const ControllerLog = () => {
                   .subtract(10, 'minutes')
                   .format('YYYY-MM-DD[T]hh:mm')
               }
+              inputProps={{
+                max: endTime,
+              }}
               InputLabelProps={{
                 shrink: true,
               }}
-              onChange={event => logActions.setStartTime(event.target.value)}
+              onChange={event =>
+                setLogQueryParams({ startTime: event.target.value })
+              }
             />
             <StyledTextField
               disabled
@@ -274,10 +204,12 @@ const ControllerLog = () => {
               InputLabelProps={{
                 shrink: true,
               }}
-              onChange={event => logActions.setEndTime(event.target.value)}
+              onChange={event =>
+                setLogQueryParams({ endTime: event.target.value })
+              }
             />
           </RadioGroup>
-          <Button onClick={logActions.refetchLog} disabled={isEmpty(logType)}>
+          <Button onClick={refetchLog} disabled={isEmpty(logType)}>
             QUERY
           </Button>
         </StyledSearchBody>

@@ -21,39 +21,35 @@ import { isPlainObject } from 'lodash';
 import * as hooks from 'hooks';
 import * as selectors from 'store/selectors';
 import * as actions from 'store/actions';
-
-export const LOG_LEVEL = {
-  info: 'info',
-  error: 'error',
-};
+import { LOG_LEVEL } from 'const';
 
 // action hooks
-export const useFetchEventLogs = () => {
+export const useFetchEventLogsAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.fetchEventLogs.trigger()), [
     dispatch,
   ]);
 };
-export const useDeleteEventLogs = () => {
+export const useDeleteEventLogsAction = () => {
   const dispatch = useDispatch();
   return useCallback(keys => dispatch(actions.deleteEventLogs.trigger(keys)), [
     dispatch,
   ]);
 };
-export const useClearEventLogs = () => {
+export const useClearEventLogsAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.clearEventLogs.trigger()), [
     dispatch,
   ]);
 };
-export const useUpdateEventSettings = () => {
+export const useUpdateEventSettingsAction = () => {
   const dispatch = useDispatch();
   return useCallback(
     values => dispatch(actions.updateSettings.trigger(values)),
     [dispatch],
   );
 };
-export const useClearEventNotifications = () => {
+export const useClearEventNotificationsAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.clearNotifications.trigger()), [
     dispatch,
@@ -77,7 +73,7 @@ export const useEventSettings = () => {
 };
 
 export const useEventLog = () => {
-  const useCreateEventLog = () => {
+  const useCreateEventLogAction = () => {
     const dispatch = useDispatch();
     return useCallback(
       values => dispatch(actions.createEventLog.trigger(values)),
@@ -85,8 +81,8 @@ export const useEventLog = () => {
     );
   };
 
-  const createEventLog = useCreateEventLog();
-  const clearEventLogs = useClearEventLogs();
+  const createEventLog = useCreateEventLogAction();
+  const clearEventLogs = useClearEventLogsAction();
 
   const showMessage = hooks.useShowMessage();
 

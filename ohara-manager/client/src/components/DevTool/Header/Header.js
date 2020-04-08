@@ -36,12 +36,12 @@ const Header = () => {
   const { isOpen, close: closeDialog } = context.useDevToolDialog();
 
   const setSelectedCell = hooks.useSetSelectedCellAction();
-  const logActions = context.useLogActions();
-  const topicDataActions = context.useTopicDataActions();
+  const setLogQueryParams = hooks.useSetDevToolLogQueryParams();
+  const setTopicQueryParams = hooks.useSetDevToolTopicQueryParams();
 
   const selectedCell = hooks.useCurrentPipelineCell();
-  const { isFetching: isFetchingLog } = context.useLogState();
-  const { isFetching: isFetchingTopic } = context.useTopicDataState();
+  const { isFetching: isFetchingLog } = hooks.useDevToolLog();
+  const { isFetching: isFetchingTopic } = hooks.useDevToolTopicData();
 
   const prevSelectedCell = usePrevious(selectedCell);
   const prevTab = usePrevious(tabName);
@@ -61,28 +61,30 @@ const Header = () => {
 
     if (kind === KIND.topic) {
       if (tabName === TAB.log) {
-        logActions.setLogType(KIND.broker);
+        setLogQueryParams({ logType: KIND.broker });
       } else {
-        topicDataActions.setName(get(selectedCell, CELL_PROPS.displayName, ''));
+        setTopicQueryParams(get(selectedCell, CELL_PROPS.displayName, ''));
       }
     } else if (!isEmpty(kind)) {
       // the selected cell is a source, sink, or stream
       setTabName(TAB.log);
       const service = getService(kind);
-      logActions.setLogType(service);
+      setLogQueryParams({ logType: service });
       if (kind === KIND.stream) {
-        logActions.setStreamName(get(selectedCell, CELL_PROPS.displayName, ''));
+        setLogQueryParams({
+          streamName: get(selectedCell, CELL_PROPS.displayName, ''),
+        });
       }
     }
   }, [
     isOpen,
     prevSelectedCell,
     selectedCell,
-    logActions,
-    topicDataActions,
     prevTab,
     tabName,
     setTabName,
+    setTopicQueryParams,
+    setLogQueryParams,
   ]);
 
   const handleTabChange = (event, currentTab) => {

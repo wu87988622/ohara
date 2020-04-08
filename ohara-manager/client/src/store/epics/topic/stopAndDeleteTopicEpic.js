@@ -19,7 +19,7 @@ import { from, of } from 'rxjs';
 import { catchError, map, mergeMap, concatAll } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 import { stopTopic$ } from './stopTopicEpic';
 import { deleteTopic$ } from './deleteTopicEpic';
 

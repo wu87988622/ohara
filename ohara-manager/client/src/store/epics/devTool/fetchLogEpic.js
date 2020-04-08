@@ -1,0 +1,113 @@
+/*
+ * Copyright 2019 is-land
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import moment from 'moment';
+import * as _ from 'lodash';
+import { ofType } from 'redux-observable';
+import { of, defer, from, queueScheduler } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
+import { KIND, LOG_TIME_GROUP, GROUP } from 'const';
+import * as logApi from 'api/logApi';
+import * as actions from 'store/actions';
+import * as selectors from 'store/selectors';
+
+export default (action$, state$) =>
+  action$.pipe(
+    ofType(actions.fetchDevToolLog.TRIGGER),
+    switchMap(() =>
+      defer(() => {
+        const getDevToolLog = selectors.makeGetDevToolLog();
+        const workspaceName = selectors.getWorkspaceName(state$.value);
+        const zkKey = () => ({
+          name: workspaceName,
+          group: GROUP.ZOOKEEPER,
+        });
+        const bkKey = () => ({
+          name: workspaceName,
+          group: GROUP.BROKER,
+        });
+        const wkKey = () => ({
+          name: workspaceName,
+          group: GROUP.WORKER,
+        });
+        const log = getDevToolLog(state$.value);
+        const {
+          logType,
+          streamKey,
+          timeGroup,
+          timeRange,
+          startTime,
+          endTime,
+        } = log.query;
+        const getTimeSeconds = () => {
+          if (timeGroup === LOG_TIME_GROUP.latest) {
+            // timeRange uses minute units
+            return timeRange * 60;
+          } else {
+            return Math.ceil(
+              moment
+                .duration(moment(endTime).diff(moment(startTime)))
+                .asSeconds(),
+            );
+          }
+        };
+
+        switch (logType) {
+          case KIND.configurator:
+            return logApi.getConfiguratorLog({
+              sinceSeconds: getTimeSeconds(),
+            });
+          case KIND.zookeeper:
+            return logApi.getZookeeperLog(zkKey(), {
+              sinceSeconds: getTimeSeconds(),
+            });
+          case KIND.broker:
+            return logApi.getBrokerLog(bkKey(), {
+              sinceSeconds: getTimeSeconds(),
+            });
+          case KIND.worker:
+            return logApi.getWorkerLog(wkKey(), {
+              sinceSeconds: getTimeSeconds(),
+            });
+          case KIND.stream:
+            return logApi.getStreamLog(streamKey, {
+              sinceSeconds: getTimeSeconds(),
+            });
+          default:
+            throw new Error('Unsupported logType');
+        }
+      }).pipe(
+        switchMap(res =>
+          from(
+            [
+              actions.fetchDevToolLog.success(
+                _.map(res.data.logs, log => ({
+                  name: log.hostname,
+                  logs: _.split(log.value, '\n'),
+                })),
+              ),
+              actions.setDevToolLogQueryParams.success({
+                hostName: _.get(res.data, 'logs[0].hostname', ''),
+              }),
+            ],
+            queueScheduler,
+          ),
+        ),
+        catchError(res => of(actions.fetchDevToolLog.failure(res))),
+      ),
+    ),
+  );

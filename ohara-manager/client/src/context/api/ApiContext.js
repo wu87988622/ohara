@@ -18,60 +18,28 @@ import React, { createContext, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 import { useApp } from 'context';
-import { createApi as createTopicApi } from './topicApi';
 import { createApi as createConnectorApi } from './connectorApi';
-import { createApi as createLogApi } from './logApi';
 import { createApi as createPipelineApi } from './pipelineApi';
 
 const ApiContext = createContext();
 
 const ApiProvider = ({ children }) => {
-  const {
-    brokerGroup,
-    connectorGroup,
-    pipelineGroup,
-    streamGroup,
-    topicGroup,
-    workerGroup,
-    zookeeperGroup,
-    brokerKey,
-    workerKey,
-    workspaceKey,
-  } = useApp();
+  const { connectorGroup, pipelineGroup, topicGroup, workerKey } = useApp();
 
   const connectorApi = useMemo(
     () => createConnectorApi({ connectorGroup, workerKey, topicGroup }),
     [connectorGroup, workerKey, topicGroup],
   );
 
-  const logApi = useMemo(
-    () =>
-      createLogApi({
-        workspaceKey,
-        brokerGroup,
-        streamGroup,
-        workerGroup,
-        zookeeperGroup,
-      }),
-    [workspaceKey, brokerGroup, streamGroup, workerGroup, zookeeperGroup],
-  );
-
   const pipelineApi = useMemo(() => createPipelineApi({ pipelineGroup }), [
     pipelineGroup,
   ]);
-
-  const topicApi = useMemo(
-    () => createTopicApi({ topicGroup, brokerKey, workspaceKey }),
-    [topicGroup, brokerKey, workspaceKey],
-  );
 
   return (
     <ApiContext.Provider
       value={{
         connectorApi,
-        logApi,
         pipelineApi,
-        topicApi,
       }}
     >
       {children}

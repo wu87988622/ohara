@@ -32,8 +32,6 @@ import {
   ConfiguratorProvider,
   ConnectorProvider,
   DevToolProvider,
-  LogProvider,
-  TopicDataProvider,
   StoreProvider,
 } from './context';
 
@@ -62,8 +60,6 @@ const AppProviders = ({ children }) => {
         <EditWorkspaceProvider children={children} />,
         <ConnectorProvider children={children} />,
         <DevToolProvider children={children} />,
-        <LogProvider children={children} />,
-        <TopicDataProvider children={children} />,
       ]}
     >
       {children}

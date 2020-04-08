@@ -15,6 +15,7 @@
  */
 
 export * from './brokerSelector';
+export * from './devToolSelector';
 export * from './eventLogSelector';
 export * from './fileSelector';
 export * from './infoSelector';

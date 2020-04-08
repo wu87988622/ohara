@@ -63,13 +63,6 @@ function WorkspaceList() {
   const workspaces = hooks.useAllWorkspaces();
   const workspaceName = hooks.useWorkspaceName();
   const allTopics = hooks.useAllTopics();
-  const isTopicLoaded = hooks.useIsTopicLoaded();
-  const fetchAllTopics = hooks.useFetchAllTopicsAction();
-
-  // we need to fetch all topic across all workspaces directly here
-  React.useEffect(() => {
-    if (!isTopicLoaded) fetchAllTopics();
-  }, [fetchAllTopics, isTopicLoaded]);
 
   const handleClick = name => () => {
     switchWorkspace(name);

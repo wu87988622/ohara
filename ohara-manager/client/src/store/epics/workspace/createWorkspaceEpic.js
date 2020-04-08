@@ -36,7 +36,7 @@ import * as workerApi from 'api/workerApi';
 import * as workspaceApi from 'api/workspaceApi';
 import * as zookeeperApi from 'api/zookeeperApi';
 import { FORM } from 'const';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getKey } from 'utils/object';

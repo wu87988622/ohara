@@ -20,7 +20,7 @@ import { catchError, map, switchMap, mergeMap } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 import { getId } from 'utils/object';
 
 const handleSuccess = values => {

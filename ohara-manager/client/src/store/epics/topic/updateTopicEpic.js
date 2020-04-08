@@ -30,7 +30,7 @@ export default action$ =>
     switchMap(values =>
       defer(() => topicApi.update(values)).pipe(
         map(res => normalize(res.data, schema.topic)),
-        map(entities => actions.updateTopic.success(entities)),
+        map(normalizedData => actions.updateTopic.success(normalizedData)),
         catchError(res => of(actions.updateTopic.failure(res))),
       ),
     ),

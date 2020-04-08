@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { reject, includes } from 'lodash';
+import { toString, reject, includes } from 'lodash';
 import * as actions from 'store/actions';
 
 const initialState = {
@@ -110,7 +110,7 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         isFetching: false,
-        error: action.payload,
+        error: toString(action.payload),
       };
     case actions.updateSettings.FAILURE:
       return {
@@ -118,7 +118,7 @@ export default function reducer(state = initialState, action) {
         settings: {
           ...state.settings,
           isFetching: false,
-          error: action.payload,
+          error: toString(action.payload),
         },
       };
     case actions.updateNotifications.FAILURE:
@@ -128,7 +128,7 @@ export default function reducer(state = initialState, action) {
         notifications: {
           ...state.notifications,
           isFetching: false,
-          error: action.payload,
+          error: toString(action.payload),
         },
       };
     default:

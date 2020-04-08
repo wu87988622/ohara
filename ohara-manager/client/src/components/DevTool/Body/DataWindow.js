@@ -15,21 +15,16 @@
  */
 
 import React from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { isEmpty } from 'lodash';
 import { useLocation, useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { Typography } from '@material-ui/core';
 
-import { KIND } from 'const';
 import { usePrevious } from 'utils/hooks';
-import * as context from 'context';
-import * as hooks from 'hooks';
-import { TIME_GROUP } from 'context/log/const';
 import { TAB } from 'context/devTool/const';
 import { ViewTopic, ViewLog } from './View';
+import * as hooks from 'hooks';
 
 // the react-virtualized <List> cached row style
 const cache = new CellMeasurerCache({
@@ -46,20 +41,11 @@ const DataWindow = () => {
   const { workspaceName, pipelineName } = useParams();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const {
-    isFetching: isFetchingTopic,
-    lastUpdated: lastUpdatedTopic,
-  } = context.useTopicDataState();
-  const {
-    isFetching: isFetchingLog,
-    lastUpdated: lastUpdatedLog,
-  } = context.useLogState();
-  const { data: topics } = hooks.useAllTopics();
-  const topicActions = context.useTopicDataActions();
-  const logActions = context.useLogActions();
-  const currentBroker = hooks.useBroker();
-  const currentWorker = hooks.useWorker();
-  const currentZookeeper = hooks.useZookeeper();
+  const isWorkspaceReady = hooks.useIsWorkspaceReady();
+  const isTopicDataQueried = hooks.useIsDevToolTopicDataQueried();
+  const isLogQueried = hooks.useIsDevToolLogQueried();
+  const setTopicQueryParams = hooks.useSetDevToolTopicQueryParams();
+  const setLogQueryParams = hooks.useSetDevToolLogQueryParams();
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -70,7 +56,7 @@ const DataWindow = () => {
   const topicLimit = searchParams.get('topicLimit') || 10;
   // logs tab query parameter
   const logType = searchParams.get('logType') || '';
-  const hostname = searchParams.get('hostname') || '';
+  const hostName = searchParams.get('hostname') || '';
   const streamName = searchParams.get('streamName') || '';
   const timeGroup = searchParams.get('timeGroup') || '';
   const timeRange = searchParams.get('timeRange') || '';
@@ -104,102 +90,40 @@ const DataWindow = () => {
   }, [pipelineName, prevPipelineName, switchPipeline]);
 
   React.useEffect(() => {
-    if (!topicActions || lastUpdatedTopic) return;
-
-    // do nothing if the query parameters not completed
-    if (
-      isEmpty(topics) ||
-      isEmpty(topicName) ||
-      isEmpty(topicLimit) ||
-      isFetchingTopic
-    )
-      return;
-
-    topicActions.fetchTopicData({
-      name: topicName,
-      limit: topicLimit,
-    });
+    if (isWorkspaceReady && !isTopicDataQueried) {
+      setTopicQueryParams({ name: topicName, limit: topicLimit });
+    }
   }, [
-    lastUpdatedTopic,
-    isFetchingTopic,
-    topicActions,
+    isTopicDataQueried,
+    isWorkspaceReady,
+    setTopicQueryParams,
     topicLimit,
     topicName,
-    topics,
   ]);
 
   React.useEffect(() => {
-    if (!logActions || lastUpdatedLog) return;
-
-    // do nothing if the query parameters not completed
-    if (
-      isFetchingLog ||
-      isEmpty(logType) ||
-      isEmpty(hostname) ||
-      isEmpty(timeGroup)
-    )
-      return;
-
-    // do nothing if logType was configurator and the context not ready
-    if (
-      logType !== KIND.configurator &&
-      (!currentZookeeper || !currentBroker || !currentWorker)
-    )
-      return;
-
-    const getTimeSeconds = () => {
-      if (timeGroup === TIME_GROUP.latest) {
-        // timeRange uses minute units
-        return timeRange * 60;
-      } else {
-        return Math.ceil(
-          moment.duration(moment(endTime).diff(moment(startTime))).asSeconds(),
-        );
-      }
-    };
-
-    const setHostName = () => {
-      logActions.setHostName(hostname);
-    };
-
-    switch (logType) {
-      case KIND.configurator:
-        logActions.fetchConfiguratorLog(getTimeSeconds()).then(setHostName);
-        break;
-      case KIND.zookeeper:
-        logActions.fetchZookeeperLog(getTimeSeconds()).then(setHostName);
-        break;
-      case KIND.broker:
-        logActions.fetchBrokerLog(getTimeSeconds()).then(setHostName);
-        break;
-      case KIND.worker:
-        logActions.fetchWorkerLog(getTimeSeconds()).then(setHostName);
-        break;
-      case KIND.stream:
-        if (isEmpty(streamName)) return;
-        logActions
-          .fetchStreamLog({
-            name: streamName,
-            sinceSeconds: getTimeSeconds(),
-          })
-          .then(setHostName);
-        break;
-      default:
+    if (isWorkspaceReady && !isLogQueried) {
+      setLogQueryParams({
+        logType,
+        hostName,
+        streamName,
+        timeGroup,
+        timeRange,
+        startTime,
+        endTime,
+      });
     }
   }, [
-    lastUpdatedLog,
     endTime,
-    hostname,
-    isFetchingLog,
-    logActions,
+    hostName,
+    isLogQueried,
+    isWorkspaceReady,
     logType,
+    setLogQueryParams,
     startTime,
     streamName,
     timeGroup,
     timeRange,
-    currentZookeeper,
-    currentBroker,
-    currentWorker,
   ]);
 
   if (!location.search) {

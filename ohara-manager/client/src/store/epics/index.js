@@ -18,6 +18,7 @@ import { combineEpics } from 'redux-observable';
 
 import appEpics from './app';
 import brokerEpics from './broker';
+import devToolEpics from './devTool';
 import eventLogEpics from './eventLog';
 import fileEpics from './file';
 import nodeEpics from './nodeEpics';
@@ -32,6 +33,7 @@ import zookeeperEpics from './zookeeper';
 export default combineEpics(
   appEpics,
   brokerEpics,
+  devToolEpics,
   eventLogEpics,
   fileEpics,
   nodeEpics,

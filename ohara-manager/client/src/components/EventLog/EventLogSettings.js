@@ -30,7 +30,7 @@ import Wrapper from './EventLogSettingsStyles';
 import * as hooks from 'hooks';
 
 const EventLogSettings = props => {
-  const updateSettings = hooks.useUpdateEventSettings();
+  const updateSettings = hooks.useUpdateEventSettingsAction();
   const { data: eventSettings } = hooks.useEventSettings();
 
   const onSubmit = values => {

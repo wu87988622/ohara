@@ -30,7 +30,7 @@ import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getCellState } from 'components/Pipeline/PipelineApiHelper/apiHelperUtils';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 const handleSuccess = (values, res) => {
   const { id, paperApi } = values;
@@ -66,7 +66,7 @@ export const startTopic$ = values =>
       handleSuccess(values, res);
       return normalize(res.data, schema.topic);
     }),
-    map(entities => actions.startTopic.success(entities)),
+    map(normalizedData => actions.startTopic.success(normalizedData)),
     catchError(res => {
       handleFail(values);
       return from([

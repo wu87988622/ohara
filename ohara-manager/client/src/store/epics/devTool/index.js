@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './createWorkspaceActions';
-export * from './devToolActions';
-export * from './eventLogActions';
-export * from './fileActions';
-export * from './introActions';
-export * from './nodeActions';
-export * from './pipelineActions';
-export * from './streamActions';
-export * from './snackbarActions';
-export * from './topicActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import { combineEpics } from 'redux-observable';
+import fetchTopicDataEpic from './fetchTopicDataEpic';
+import setDevToolTopicQueryParamsEpic from './setDevToolTopicQueryParamsEpic';
+import fetchLogEpic from './fetchLogEpic';
+import setDevToolLogQueryParamsEpic from './setDevToolLogQueryParamsEpic';
+
+export default combineEpics(
+  fetchTopicDataEpic,
+  setDevToolTopicQueryParamsEpic,
+  fetchLogEpic,
+  setDevToolLogQueryParamsEpic,
+);

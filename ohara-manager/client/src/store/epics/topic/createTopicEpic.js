@@ -23,7 +23,7 @@ import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { CELL_STATUS } from 'const';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 const handleSuccess = values => {
   const { id, paperApi } = values;
@@ -44,10 +44,10 @@ const handleFail = values => {
 export const createTopic$ = values =>
   defer(() => topicApi.create(values)).pipe(
     mergeMap(res => {
-      const entities = normalize(res.data, schema.topic);
+      const normalizedData = normalize(res.data, schema.topic);
       handleSuccess(values);
       return from([
-        actions.createTopic.success(entities),
+        actions.createTopic.success(normalizedData),
         actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
       ]);
     }),

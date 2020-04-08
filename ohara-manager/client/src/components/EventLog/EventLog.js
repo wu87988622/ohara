@@ -31,9 +31,9 @@ const EventLog = () => {
   const { data: settings } = hooks.useEventSettings();
   const { data: notifications } = hooks.useEventNotifications();
 
-  const clearNotifications = hooks.useClearEventNotifications();
-  const fetchEventLogs = hooks.useFetchEventLogs();
-  const deleteEventLogs = hooks.useDeleteEventLogs();
+  const clearNotifications = hooks.useClearEventNotificationsAction();
+  const fetchEventLogs = hooks.useFetchEventLogsAction();
+  const deleteEventLogs = hooks.useDeleteEventLogsAction();
   const [cleared, setCleared] = useState(false);
 
   useEffect(() => {

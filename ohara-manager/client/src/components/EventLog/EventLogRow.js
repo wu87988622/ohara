@@ -22,7 +22,7 @@ import Link from '@material-ui/core/Link';
 import { getDateFromTimestamp } from 'utils/date';
 
 import Row from './EventLogRowStyles';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 const EventLogRow = ({ onClick, rowData: log, style }) => {
   const title = get(log, 'title');

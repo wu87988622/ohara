@@ -22,7 +22,6 @@ import SearchIcon from '@material-ui/icons/Search';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import TextField from '@material-ui/core/TextField';
 
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { Tooltip } from 'components/common/Tooltip';
 import { Button } from 'components/common/Form';
@@ -39,11 +38,10 @@ const ControllerTopic = () => {
     return topic.tags.isShared ? topic.name : topic.tags.displayName;
   });
 
-  const { setName, setLimit, refetchTopic } = context.useTopicDataActions();
-  const { query, isFetching, lastUpdated } = context.useTopicDataState();
+  const setTopicQueryParams = hooks.useSetDevToolTopicQueryParams();
+  const refetchTopic = hooks.useRefetchDevToolTopicDataAction();
+  const { query, isFetching } = hooks.useDevToolTopicData();
   const { name, limit } = query;
-
-  const topicDataActions = context.useTopicDataActions();
 
   const prevName = usePrevious(name);
 
@@ -53,24 +51,21 @@ const ControllerTopic = () => {
     topics.find(topic => topic.tags.displayName === name);
   const actualTopicName = pipelineOnlyTopic ? pipelineOnlyTopic.name : name;
 
-  React.useEffect(() => {
-    if (lastUpdated && prevName === name) return;
-    if (isEmpty(name)) return;
+  // React.useEffect(() => {
+  //   if (lastUpdated && prevName === name) return;
+  //   if (isEmpty(name)) return;
 
-    if (!topics.map(topic => topic.name).includes(actualTopicName)) return;
-    topicDataActions.fetchTopicData({
-      name: actualTopicName,
-      limit,
-    });
-  }, [
-    lastUpdated,
-    limit,
-    name,
-    actualTopicName,
-    prevName,
-    topicDataActions,
-    topics,
-  ]);
+  //   if (!topics.map(topic => topic.name).includes(actualTopicName)) return;
+  //   fetchTopicData();
+  // }, [
+  //   lastUpdated,
+  //   limit,
+  //   name,
+  //   actualTopicName,
+  //   prevName,
+  //   topics,
+  //   fetchTopicData,
+  // ]);
 
   const handleOpenNewWindow = () => {
     if (name)
@@ -90,7 +85,10 @@ const ControllerTopic = () => {
       <Tooltip title="Select topic">
         <Select
           value={displayTopicNames.includes(name) ? name : ''}
-          onChange={event => setName(event.target.value)}
+          onChange={event =>
+            prevName !== event.target.value &&
+            setTopicQueryParams({ name: event.target.value })
+          }
           list={displayTopicNames}
           disabled={isFetching}
         />
@@ -123,7 +121,9 @@ const ControllerTopic = () => {
           <TextField
             type="number"
             defaultValue={limit}
-            onChange={event => setLimit(Number(event.target.value))}
+            onChange={event =>
+              setTopicQueryParams({ limit: Number(event.target.value) })
+            }
             disabled={isEmpty(name)}
           />
           <Button

@@ -19,7 +19,7 @@ import { get, isEmpty, capitalize } from 'lodash';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import ReactJson from 'react-json-view';
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 import { Table } from 'components/common/Table';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -31,7 +31,7 @@ import {
 const ViewTopic = () => {
   const [viewTopicMessage, setViewTopicMessage] = React.useState({});
 
-  const { data, isFetching } = context.useTopicDataState();
+  const { data, isFetching } = hooks.useDevToolTopicData();
   const messages = get(data, 'messages', []);
 
   const getHeaders = messages => {

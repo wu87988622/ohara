@@ -29,7 +29,7 @@ import {
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL } from 'hooks';
+import { LOG_LEVEL } from 'const';
 
 export const stopTopic$ = params =>
   zip(
@@ -45,7 +45,7 @@ export const stopTopic$ = params =>
     ),
   ).pipe(
     map(([, res]) => normalize(res.data, schema.topic)),
-    map(entities => actions.stopTopic.success(entities)),
+    map(normalizedData => actions.stopTopic.success(normalizedData)),
     catchError(res =>
       // Let the caller decides this Action should be terminated or trigger failure reducer
       throwError(res),
