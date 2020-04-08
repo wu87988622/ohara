@@ -51,7 +51,7 @@ describe('Topic API', () => {
     const topic = await generateTopic();
     const result = await topicApi.create(topic);
 
-    const { partitionInfos, metrics, state, lastModified } = result.data;
+    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -63,8 +63,7 @@ describe('Topic API', () => {
 
     expect(partitionInfos).to.be.an('array');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 
@@ -92,7 +91,7 @@ describe('Topic API', () => {
 
     const result = await topicApi.get(topic);
 
-    const { partitionInfos, metrics, state, lastModified } = result.data;
+    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -104,8 +103,7 @@ describe('Topic API', () => {
 
     expect(partitionInfos).to.be.an('array');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 
@@ -172,7 +170,7 @@ describe('Topic API', () => {
     await topicApi.create(topic);
     const result = await topicApi.update(newTopic);
 
-    const { partitionInfos, metrics, state, lastModified } = result.data;
+    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
     const {
       brokerClusterKey,
       numberOfPartitions,
@@ -184,8 +182,7 @@ describe('Topic API', () => {
 
     expect(partitionInfos).to.be.an('array');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 

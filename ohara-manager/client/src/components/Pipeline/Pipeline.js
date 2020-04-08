@@ -176,11 +176,11 @@ const Pipeline = React.forwardRef((props, ref) => {
           const res = await fetchPipeline(currentPipeline.name);
           if (isPaperApiReady) {
             const objects = _.get(res, 'data[0].objects', []);
-            const metrics = objects.filter(
+            const nodeMetrics = objects.filter(
               object => object.kind !== KIND.topic,
             );
             // Topic metrics are not displayed in Paper.
-            paperApiRef.current.updateMetrics(metrics);
+            paperApiRef.current.updateMetrics(nodeMetrics);
             cellsMetricsRef.current = objects;
           }
         }, 5000);

@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { get, isEmpty } from 'lodash';
+import { get, isEmpty, flatten, map } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -143,7 +143,15 @@ const ViewTopicDialog = () => {
               <CardContent>
                 <Table>
                   <TableBody>
-                    {get(topic, 'metrics.meters', []).map(metric => {
+                    {/* we need to display the metrics by each hostname
+                        https://github.com/oharastream/ohara/issues/4495
+                    */}
+                    {flatten(
+                      map(
+                        get(topic, 'nodeMetrics', {}),
+                        nodeMetric => nodeMetric.meters,
+                      ),
+                    ).map(metric => {
                       const document = get(metric, 'document');
                       const value = get(metric, 'value');
                       const unit = get(metric, 'unit');

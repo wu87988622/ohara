@@ -84,7 +84,7 @@ describe('Stream API', () => {
     const stream = await generateStream();
     const result = await streamApi.create(stream);
 
-    const { aliveNodes, lastModified, metrics, state, error } = result.data;
+    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
     const {
       name,
       group,
@@ -103,8 +103,7 @@ describe('Stream API', () => {
 
     expect(lastModified).to.be.a('number');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.a('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 
@@ -147,7 +146,7 @@ describe('Stream API', () => {
 
     const result = await streamApi.get(stream);
 
-    const { aliveNodes, lastModified, metrics, state, error } = result.data;
+    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
     const {
       name,
       group,
@@ -166,8 +165,7 @@ describe('Stream API', () => {
 
     expect(lastModified).to.be.a('number');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.a('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 
@@ -250,7 +248,7 @@ describe('Stream API', () => {
 
     const result = await streamApi.update(newStream);
 
-    const { aliveNodes, lastModified, metrics, state, error } = result.data;
+    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
     const {
       name,
       group,
@@ -269,8 +267,7 @@ describe('Stream API', () => {
 
     expect(lastModified).to.be.a('number');
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.a('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(state).to.be.undefined;
 

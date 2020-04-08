@@ -32,7 +32,9 @@ interface PartitionInfo {
 interface TopicData {
   state?: 'RUNNING';
   partitionInfos: PartitionInfo[];
-  metrics: Metrics;
+  nodeMetrics: {
+    [hostname: string]: Metrics;
+  };
   lastModified: number;
   [k: string]: any;
 }

@@ -28,7 +28,9 @@ interface ObjectAbstract {
   className?: string;
   state?: string;
   error?: string;
-  metrics: Metrics;
+  nodeMetrics: {
+    [hostname: string]: Metrics;
+  };
   lastModified: number;
   tags: {
     [k: string]: any;

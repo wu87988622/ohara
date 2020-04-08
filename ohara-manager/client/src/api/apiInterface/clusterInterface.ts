@@ -1,4 +1,4 @@
-import { BasicResponse, ObjectKey } from './basicInterface';
+import { BasicResponse, ObjectKey, Metrics } from './basicInterface';
 
 /*
  * Copyright 2019 is-land
@@ -37,6 +37,9 @@ interface ClusterData {
   lastModified: number;
   state?: SERVICE_STATE;
   error?: string;
+  nodeMetrics: {
+    [hostname: string]: Metrics;
+  };
   [k: string]: any;
 }
 export interface ClusterResponse extends BasicResponse {

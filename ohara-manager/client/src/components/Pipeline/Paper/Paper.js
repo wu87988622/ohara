@@ -801,7 +801,11 @@ const Paper = React.forwardRef((props, ref) => {
 
       updateMetrics(elementArray) {
         elementArray.map(element =>
-          findElementView(element.name).updateMeters(element.metrics),
+          // we need to display the metrics by each hostname
+          // https://github.com/oharastream/ohara/issues/4495
+          findElementView(element.name).updateMeters(
+            element[Object.keys(element)[0]].meters,
+          ),
         );
       },
 

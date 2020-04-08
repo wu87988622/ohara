@@ -72,7 +72,7 @@ describe('Connector API', () => {
       aliveNodes,
       error,
       tasksStatus,
-      metrics,
+      nodeMetrics,
       lastModified,
     } = result.data;
     const {
@@ -91,9 +91,7 @@ describe('Connector API', () => {
     expect(state).to.be.undefined;
     expect(aliveNodes).to.be.empty;
     expect(error).to.be.undefined;
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
-    expect(metrics.meters).to.empty;
+    expect(nodeMetrics).to.be.an('object');
 
     expect(lastModified).to.be.a('number');
 
@@ -133,7 +131,7 @@ describe('Connector API', () => {
       aliveNodes,
       error,
       tasksStatus,
-      metrics,
+      nodeMetrics,
       lastModified,
     } = result.data;
     const {
@@ -152,9 +150,7 @@ describe('Connector API', () => {
     expect(state).to.be.undefined;
     expect(aliveNodes).to.be.empty;
     expect(error).to.be.undefined;
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
-    expect(metrics.meters).to.empty;
+    expect(nodeMetrics).to.be.an('object');
 
     expect(lastModified).to.be.a('number');
 
@@ -235,7 +231,7 @@ describe('Connector API', () => {
       aliveNodes,
       error,
       tasksStatus,
-      metrics,
+      nodeMetrics,
       lastModified,
     } = result.data;
     const {
@@ -256,9 +252,7 @@ describe('Connector API', () => {
     expect(state).to.be.undefined;
     expect(aliveNodes).to.be.empty;
     expect(error).to.be.undefined;
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
-    expect(metrics.meters).to.empty;
+    expect(nodeMetrics).to.be.an('object');
 
     expect(lastModified).to.be.a('number');
 
@@ -308,7 +302,7 @@ describe('Connector API', () => {
       aliveNodes,
       error,
       tasksStatus,
-      metrics,
+      nodeMetrics,
       lastModified,
     } = runningConnectorRes.data;
 
@@ -317,8 +311,7 @@ describe('Connector API', () => {
     expect(aliveNodes).to.not.be.empty;
     expect(error).to.be.undefined;
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(tasksStatus).to.be.not.empty;
     expect(tasksStatus[0].error).to.be.undefined;
@@ -343,7 +336,7 @@ describe('Connector API', () => {
       aliveNodes,
       error,
       tasksStatus,
-      metrics,
+      nodeMetrics,
     } = runningConnectorRes.data;
 
     // runtime information should exist
@@ -351,8 +344,7 @@ describe('Connector API', () => {
     expect(aliveNodes).to.not.be.empty;
     expect(error).to.be.undefined;
 
-    expect(metrics).to.be.an('object');
-    expect(metrics.meters).to.be.an('array');
+    expect(nodeMetrics).to.be.an('object');
 
     expect(tasksStatus).to.be.not.empty;
     expect(tasksStatus[0].error).to.be.undefined;

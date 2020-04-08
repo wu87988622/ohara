@@ -50,7 +50,9 @@ interface Data {
   aliveNodes: string[];
   error?: string;
   tasksStatus: Status[];
-  metrics: Metrics;
+  nodeMetrics: {
+    [nodeName: string]: Metrics;
+  };
   lastModified: number;
   [k: string]: any;
 }
