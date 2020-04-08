@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-export * from './appActions';
-export * from './brokerActions';
-export * from './connectorActions';
-export * from './createWorkspaceActions';
-export * from './devToolActions';
-export * from './eventLogActions';
-export * from './fileActions';
-export * from './introActions';
-export * from './nodeActions';
-export * from './pipelineActions';
-export * from './streamActions';
-export * from './snackbarActions';
-export * from './topicActions';
-export * from './workerActions';
-export * from './workspaceActions';
-export * from './zookeeperActions';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+const getEntities = state => state?.entities?.connectors;
+const getIdFromProps = (_, props) => props?.id;
+const getGroupFromProps = (_, props) => props?.group;
+
+export const makeGetConnectorById = () =>
+  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+
+export const makeGetAllConnectorsByGroup = () =>
+  createSelector([getEntities, getGroupFromProps], (entities, group) =>
+    _.values(entities).filter(connector => connector.group === group),
+  );

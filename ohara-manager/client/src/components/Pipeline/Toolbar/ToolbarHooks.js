@@ -17,7 +17,6 @@
 import React from 'react';
 
 import { KIND, CELL_STATUS } from 'const';
-import { useConnectorActions } from 'context';
 import * as hooks from 'hooks';
 import { PaperContext } from '../Pipeline';
 import { sleep } from 'utils/common';
@@ -26,9 +25,10 @@ export const useDeleteCells = () => {
   const [steps, setSteps] = React.useState([]);
   const [activeStep, setActiveStep] = React.useState(0);
 
-  const { deleteConnector, stopConnector } = useConnectorActions();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const stopAndDeleteStream = hooks.useStopAndDeleteStreamAction();
+  const deleteConnector = hooks.useDeleteConnectorAction();
+  const stopConnector = hooks.useStopConnectorAction();
 
   const deleteCells = async cells => {
     const cellNames = cells.map(cell => {

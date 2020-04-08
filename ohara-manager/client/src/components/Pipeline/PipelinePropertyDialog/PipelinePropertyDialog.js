@@ -31,7 +31,6 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 
 import PipelinePropertyForm from './PipelinePropertyForm';
 import { KIND } from 'const';
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { Type, Reference } from 'api/apiInterface/definitionInterface';
 import PipelinePropertySpeedDial from './PipelinePropertySpeedDial';
@@ -60,8 +59,8 @@ const PipelinePropertyDialog = props => {
   const currentWorker = hooks.useWorker();
   const files = hooks.useFiles();
   const streams = hooks.useStreams();
+  const connectors = hooks.useConnectors();
   const currentTopics = hooks.useTopicsInPipeline();
-  const { data: connectors } = context.useConnectorState();
   const formRef = useRef(null);
 
   let targetCell;

@@ -33,7 +33,6 @@ import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
 import * as hooks from 'hooks';
-import * as context from 'context';
 import * as propertyUtils from './PipelinePropertyViewUtils';
 import * as defUtils from 'api/apiInterface/definitionInterface';
 
@@ -46,7 +45,7 @@ const PipelinePropertyView = props => {
 
   const topics = hooks.useTopicsInPipeline();
   const streams = hooks.useStreams();
-  const { data: connectors } = context.useConnectorState();
+  const connectors = hooks.useConnectors();
   const [isOpen, setIsOpen] = useState(false);
   const [tags, setTags] = useState({
     json: null,
