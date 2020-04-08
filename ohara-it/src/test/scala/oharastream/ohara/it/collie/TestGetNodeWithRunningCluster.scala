@@ -19,24 +19,15 @@ package oharastream.ohara.it.collie
 import oharastream.ohara.client.configurator.v0.{ContainerApi, NodeApi, ZookeeperApi}
 import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
+import org.junit.Test
 import org.junit.experimental.categories.Category
-import org.junit.{Before, Test}
 import org.scalatest.Matchers._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Category(Array(classOf[CollieGroup]))
 class TestGetNodeWithRunningCluster(platform: ContainerPlatform)
     extends WithRemoteConfigurator(platform: ContainerPlatform) {
-  @Before
-  def setup(): Unit = {
-    val images = result(containerClient.imageNames())
-    nodes.foreach { node =>
-      withClue(s"failed to find ${ZookeeperApi.IMAGE_NAME_DEFAULT}")(
-        images(node.hostname) should contain(ZookeeperApi.IMAGE_NAME_DEFAULT)
-      )
-    }
-  }
-
   @Test
   def test(): Unit = {
     val cluster = result(
@@ -44,8 +35,8 @@ class TestGetNodeWithRunningCluster(platform: ContainerPlatform)
         .hostname(configuratorHostname)
         .port(configuratorPort)
         .request
-        .key(serviceNameHolder.generateClusterKey())
-        .nodeNames(nodes.map(_.name).toSet)
+        .key(serviceKeyHolder.generateClusterKey())
+        .nodeNames(platform.nodeNames)
         .create()
         .flatMap(
           info =>

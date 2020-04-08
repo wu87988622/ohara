@@ -24,6 +24,10 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], containerName: String) extends K8SClient {
+  override def masterUrl: String = "fake url"
+
+  override def metricsUrl: Option[String] = None
+
   override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]] =
     Future.successful {
       Map("node1" -> Seq(ZookeeperApi.IMAGE_NAME_DEFAULT, BrokerApi.IMAGE_NAME_DEFAULT, WorkerApi.IMAGE_NAME_DEFAULT))

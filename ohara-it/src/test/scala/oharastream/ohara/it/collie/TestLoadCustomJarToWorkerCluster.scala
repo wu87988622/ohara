@@ -19,15 +19,16 @@ package oharastream.ohara.it.collie
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.connector.{IncludeAllTypesSinkConnector, IncludeAllTypesSourceConnector}
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
-import com.typesafe.scalalogging.Logger
-import org.junit.experimental.categories.Category
 import org.junit.Test
+import org.junit.experimental.categories.Category
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -67,8 +68,8 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
 
     val zkCluster = result(
       zkApi.request
-        .key(serviceNameHolder.generateClusterKey())
-        .nodeNames(nodes.map(_.name).toSet)
+        .key(serviceKeyHolder.generateClusterKey())
+        .nodeNames(platform.nodeNames)
         .create()
         .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key)))
     )
@@ -80,9 +81,9 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
     log.info(s"zkCluster:$zkCluster")
     val bkCluster = result(
       bkApi.request
-        .key(serviceNameHolder.generateClusterKey())
+        .key(serviceKeyHolder.generateClusterKey())
         .zookeeperClusterKey(zkCluster.key)
-        .nodeNames(nodes.map(_.name).toSet)
+        .nodeNames(platform.nodeNames)
         .create()
         .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key)))
     )
@@ -94,10 +95,10 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
     log.info(s"bkCluster:$bkCluster")
     val wkCluster = result(
       wkApi.request
-        .key(serviceNameHolder.generateClusterKey())
+        .key(serviceKeyHolder.generateClusterKey())
         .brokerClusterKey(bkCluster.key)
         .pluginKeys(jars.map(jar => ObjectKey.of(jar.group, jar.name)).toSet)
-        .nodeName(nodes.head.name)
+        .nodeName(platform.nodeNames.head)
         .create()
     )
     result(wkApi.start(wkCluster.key))
@@ -107,11 +108,11 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
       wkCluster.key
     )
     // add all remaining node to the running worker cluster
-    nodes.filterNot(n => wkCluster.nodeNames.contains(n.name)).foreach { n =>
-      result(wkApi.addNode(wkCluster.key, n.name))
+    platform.nodeNames.diff(wkCluster.nodeNames).foreach { hostname =>
+      result(wkApi.addNode(wkCluster.key, hostname))
     }
     // make sure all workers have loaded the test-purposed connector.
-    result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { name =>
+    result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { _ =>
       val connectorAdmin = ConnectorAdmin(wkCluster)
       await(
         () =>

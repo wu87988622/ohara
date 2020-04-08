@@ -19,6 +19,7 @@ package oharastream.ohara.it.connector.jdbc
 import java.io.File
 import java.sql.{PreparedStatement, Statement, Timestamp}
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -33,7 +34,6 @@ import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.connector.TaskSetting
-import com.typesafe.scalalogging.Logger
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
@@ -112,35 +112,35 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
   def testJDBCSourceConnector(): Unit = {
     val zkCluster = result(
       zk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(zk_start(zkCluster.key))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
     val bkCluster = result(
       bk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(bk_start(bkCluster.key))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
     log.info("[WORKER] start to test worker")
-    val nodeName = nodes.head.name
+    val nodeName = platform.nodeNames.head
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtils.availablePort()
     val jmxPort    = CommonUtils.availablePort()
     log.info("[WORKER] create ...")
     val wkCluster = result(
       wk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         clientPort = clientPort,
         jmxPort = jmxPort,
         brokerClusterKey = bkCluster.key,

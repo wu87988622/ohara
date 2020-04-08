@@ -32,13 +32,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @RunWith(value = classOf[Parameterized])
 class TestContainerClientLog(platform: ContainerPlatform) extends IntegrationTest {
   private[this] val name            = CommonUtils.randomString(10)
-  private[this] val node            = platform.nodes.head
-  private[this] val containerClient = platform.containerClient
+  private[this] val resourceRef     = platform.setup()
+  private[this] val containerClient = resourceRef.containerClient
 
   private[this] def createBusyBox(arguments: Seq[String]): Unit =
     result(
       containerClient.containerCreator
-        .nodeName(node.hostname)
+        .nodeName(platform.nodeNames.head)
         .name(name)
         .imageName("busybox")
         .arguments(arguments)
@@ -53,6 +53,8 @@ class TestContainerClientLog(platform: ContainerPlatform) extends IntegrationTes
 
   @Test
   def test(): Unit = {
+    // wait the container
+    await(() => log(None).contains("UTC"))
     val lastLine = log(None).split("\n").last
     TimeUnit.SECONDS.sleep(3)
     log(Some(1)) should not include lastLine
@@ -62,7 +64,7 @@ class TestContainerClientLog(platform: ContainerPlatform) extends IntegrationTes
   @After
   def tearDown(): Unit = {
     Releasable.close(() => result(containerClient.forceRemove(name)))
-    Releasable.close(containerClient)
+    Releasable.close(resourceRef)
   }
 }
 

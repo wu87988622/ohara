@@ -39,6 +39,8 @@ trait K8SClient extends ContainerClient {
   def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]]
   def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report]
   def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]]
+  def masterUrl: String
+  def metricsUrl: Option[String]
 }
 
 object K8SClient {
@@ -99,6 +101,8 @@ object K8SClient {
       CommonUtils.requireNonEmpty(k8sNamespace)
 
       new K8SClient() {
+        override def masterUrl: String          = k8sApiServerURL
+        override def metricsUrl: Option[String] = Option(k8sMetricsApiServerURL)
         override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
           HttpExecutor.SINGLETON
             .get[PodList, K8SErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods")

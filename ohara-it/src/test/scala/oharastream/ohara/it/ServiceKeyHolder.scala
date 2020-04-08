@@ -107,14 +107,7 @@ object ServiceKeyHolder {
     * @param client k8s client
     * @return name holder
     */
-  def apply(client: ContainerClient): ServiceKeyHolder = apply(client, true)
-
-  /**
-    * create a name holder based on k8s.
-    * @param client k8s client
-    * @return name holder
-    */
-  def apply(client: ContainerClient, needClose: Boolean): ServiceKeyHolder =
+  def apply(client: ContainerClient): ServiceKeyHolder =
     (clusterKey: Set[ObjectKey], excludedNodes: Set[String], finalClose: Boolean) =>
       try
       /**
@@ -144,5 +137,5 @@ object ServiceKeyHolder {
               case e: Throwable =>
                 LOG.error(s"failed to remove container ${container.name}", e)
             }
-          } finally if (needClose) Releasable.close(client)
+          } finally Releasable.close(client)
 }

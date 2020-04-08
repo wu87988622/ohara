@@ -46,7 +46,7 @@ abstract class BasicIntegrationTestsOfJsonIo(platform: ContainerPlatform)
     val nodes = result(NodeApi.access.hostname(configuratorHostname).port(configuratorPort).list())
     if (nodes.isEmpty) skipTest("are you kidding me? where is the nodes???")
     else {
-      val zkKey = serviceNameHolder.generateClusterKey()
+      val zkKey = serviceKeyHolder.generateClusterKey()
       result(
         zkApi.request
           .key(zkKey)
@@ -62,7 +62,7 @@ abstract class BasicIntegrationTestsOfJsonIo(platform: ContainerPlatform)
         }
       }
 
-      val bkKey = serviceNameHolder.generateClusterKey()
+      val bkKey = serviceKeyHolder.generateClusterKey()
       result(
         bkApi.request
           .key(bkKey)
@@ -79,7 +79,7 @@ abstract class BasicIntegrationTestsOfJsonIo(platform: ContainerPlatform)
         }
       }
 
-      val wkKey = serviceNameHolder.generateClusterKey()
+      val wkKey = serviceKeyHolder.generateClusterKey()
       result(
         wkApi.request
           .key(wkKey)

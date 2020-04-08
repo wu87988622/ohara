@@ -83,10 +83,8 @@ object DataCollie {
   def apply(objs: Seq[Data]): DataCollie = new DataCollie {
     private[this] def filter[T <: Data: ClassTag]: Seq[T] =
       objs.filter(_.getClass == classTag[T].runtimeClass).map(_.asInstanceOf[T])
-    override def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T] = {
-      println(s"[CHIA] query:$key existents:${objs.map(_.key).mkString(",")}")
+    override def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T] =
       Future.successful(filter[T].find(_.key == key).get)
-    }
     override def values[T <: Data: ClassTag]()(implicit executor: ExecutionContext): Future[Seq[T]] =
       Future.successful(filter[T])
   }

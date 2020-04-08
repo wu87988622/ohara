@@ -19,15 +19,14 @@ package oharastream.ohara.it.stream
 import java.io.File
 import java.util.concurrent.ExecutionException
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.ServiceState
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.{ZookeeperApi, _}
 import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.kafka.Producer
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
 import org.junit.{Before, Test}
 import org.scalatest.Matchers._
@@ -37,14 +36,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(platform: ContainerPlatform) {
   private[this] val log = Logger(classOf[TestStream])
 
-  private[this] var zkApi: ZookeeperApi.Access        = _
-  private[this] var bkApi: BrokerApi.Access           = _
-  private[this] var containerApi: ContainerApi.Access = _
-  private[this] var topicApi: TopicApi.Access         = _
-  private[this] var jarApi: FileInfoApi.Access        = _
-
-  private[this] var access: StreamApi.Access = _
-  private[this] var bkKey: ObjectKey         = _
+  private[this] val zkApi: ZookeeperApi.Access =
+    ZookeeperApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val bkApi: BrokerApi.Access = BrokerApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val containerApi: ContainerApi.Access =
+    ContainerApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val topicApi: TopicApi.Access = TopicApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val jarApi: FileInfoApi.Access =
+    FileInfoApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val access: StreamApi.Access = StreamApi.access.hostname(configuratorHostname).port(configuratorPort)
+  private[this] val bkKey: ObjectKey         = serviceKeyHolder.generateClusterKey()
   private[this] var brokerConnProps: String  = _
 
   private[this] def waitStopFinish(objectKey: ObjectKey): Unit = {
@@ -59,18 +60,10 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   @Before
   def setup(): Unit = {
-    zkApi = ZookeeperApi.access.hostname(configuratorHostname).port(configuratorPort)
-    bkApi = BrokerApi.access.hostname(configuratorHostname).port(configuratorPort)
-    containerApi = ContainerApi.access.hostname(configuratorHostname).port(configuratorPort)
-    topicApi = TopicApi.access.hostname(configuratorHostname).port(configuratorPort)
-    jarApi = FileInfoApi.access.hostname(configuratorHostname).port(configuratorPort)
-    access = StreamApi.access.hostname(configuratorHostname).port(configuratorPort)
-    nodes.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
-
     // create zookeeper cluster
     log.info("create zkCluster...start")
     val zkCluster = result(
-      zkApi.request.key(serviceNameHolder.generateClusterKey()).nodeNames(nodes.take(1).map(_.name).toSet).create()
+      zkApi.request.key(serviceKeyHolder.generateClusterKey()).nodeNames(Set(platform.nodeNames.head)).create()
     )
     result(zkApi.start(zkCluster.key))
     assertCluster(
@@ -84,12 +77,11 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     log.info("create bkCluster...start")
     val bkCluster = result(
       bkApi.request
-        .key(serviceNameHolder.generateClusterKey())
+        .key(bkKey)
         .zookeeperClusterKey(zkCluster.key)
-        .nodeNames(nodes.take(1).map(_.name).toSet)
+        .nodeNames(Set(platform.nodeNames.head))
         .create()
     )
-    bkKey = bkCluster.key
     result(bkApi.start(bkCluster.key))
     assertCluster(
       () => result(bkApi.list()),
@@ -124,10 +116,10 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     // create stream properties
     val stream = result(
       access.request
-        .key(serviceNameHolder.generateClusterKey())
+        .key(serviceKeyHolder.generateClusterKey())
         .jarKey(jarInfo.key)
         .brokerClusterKey(bkKey)
-        .nodeName(nodes.head.name)
+        .nodeName(platform.nodeNames.head)
         .fromTopicKey(topic1.key)
         .toTopicKey(topic2.key)
         .create()
@@ -217,7 +209,7 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   @Test
   def testDeadNodes(): Unit =
-    if (nodes.size < 2) skipTest(s"requires two nodes at least")
+    if (platform.nodeNames.size < 2) skipTest(s"requires two nodes at least")
     else {
       val from = TopicKey.of("default", CommonUtils.randomString(5))
       val to   = TopicKey.of("default", CommonUtils.randomString(5))
@@ -235,10 +227,10 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       // create stream properties
       val stream = result(
         access.request
-          .key(serviceNameHolder.generateClusterKey())
+          .key(serviceKeyHolder.generateClusterKey())
           .jarKey(ObjectKey.of(jarInfo.group, jarInfo.name))
           .brokerClusterKey(bkKey)
-          .nodeNames(nodes.map(_.hostname).toSet)
+          .nodeNames(platform.nodeNames)
           .fromTopicKey(topic1.key)
           .toTopicKey(topic2.key)
           .create()
@@ -251,24 +243,24 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         res.state.isDefined && res.state.get == ServiceState.RUNNING.name
       })
 
-      result(access.get(stream.key)).nodeNames shouldBe nodes.map(_.hostname).toSet
+      result(access.get(stream.key)).nodeNames shouldBe platform.nodeNames
       result(access.get(stream.key)).deadNodes shouldBe Set.empty
 
       // remove a container directly
-      val aliveNodes: Set[Node] = nodes.slice(1, nodes.size).toSet
-      val deadNodes             = nodes.toSet -- aliveNodes
-      serviceNameHolder.release(
+      val aliveNodes = platform.nodeNames.slice(1, platform.nodeNames.size)
+      val deadNodes  = platform.nodeNames -- aliveNodes
+      serviceKeyHolder.release(
         clusterKeys = Set(stream.key),
         // remove the container from first node
-        excludedNodes = aliveNodes.map(_.hostname)
+        excludedNodes = aliveNodes
       )
 
       result(access.get(stream.key)).state should not be None
 
       await { () =>
         val cluster = result(access.get(stream.key))
-        cluster.nodeNames == nodes.map(_.hostname).toSet &&
-        cluster.deadNodes == deadNodes.map(_.hostname)
+        cluster.nodeNames == platform.nodeNames &&
+        cluster.deadNodes == deadNodes
       }
     }
 }

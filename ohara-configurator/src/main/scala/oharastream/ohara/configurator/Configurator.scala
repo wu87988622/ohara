@@ -31,6 +31,7 @@ import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.v0.InspectApi.K8sUrls
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
@@ -268,7 +269,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         PipelineRoute.apply,
         ValidationRoute.apply,
         ConnectorRoute.apply,
-        InspectRoute.apply(mode),
+        InspectRoute.apply(mode, k8sClient.map(c => K8sUrls(c.masterUrl, c.metricsUrl))),
         StreamRoute.apply,
         ShabondiRoute.apply,
         NodeRoute.apply,

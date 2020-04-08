@@ -16,9 +16,8 @@
 
 package oharastream.ohara.it.script
 
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.util.{Releasable, VersionUtils}
-import oharastream.ohara.it.{IntegrationTest, ContainerPlatform, ServiceKeyHolder}
+import oharastream.ohara.it.{ContainerPlatform, IntegrationTest, ServiceKeyHolder}
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
@@ -29,10 +28,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Noted: the "version" may be changed at runtime by jenkins so we check only revision.
   */
 class TestVersionFile extends IntegrationTest {
-  private[this] val platform                        = ContainerPlatform.dockerMode
-  private[this] val nodes: Seq[Node]                = platform.nodes
-  private[this] val containerClient                 = platform.containerClient
-  protected val serviceNameHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient)
+  private[this] val platform                       = ContainerPlatform.dockerMode
+  private[this] val resourceRef                    = platform.setup()
+  private[this] val containerClient                = resourceRef.containerClient
+  protected val serviceKeyHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient)
 
   /**
     * see VersionUtils for following fields
@@ -77,21 +76,25 @@ class TestVersionFile extends IntegrationTest {
   @Test
   def testBroker(): Unit = testVersion(s"oharastream/broker:${VersionUtils.VERSION}", Set("ohara"))
 
-  private[this] def testVersion(imageName: String, expectedStrings: Set[String]): Unit = nodes.foreach { node =>
-    val key           = serviceNameHolder.generateClusterKey()
-    val containerName = s"${key.group()}-${key.name()}"
-    val versionString: String = result(
-      containerClient.containerCreator
-        .imageName(imageName)
-        .command("-v")
-        .name(containerName)
-        .nodeName(node.hostname)
-        .create()
-        .flatMap(_ => containerClient.log(containerName).map(_._2))
-    )
-    expectedStrings.foreach(s => versionString should include(s))
+  private[this] def testVersion(imageName: String, expectedStrings: Set[String]): Unit = platform.nodeNames.foreach {
+    hostname =>
+      val key           = serviceKeyHolder.generateClusterKey()
+      val containerName = s"${key.group()}-${key.name()}"
+      val versionString: String = result(
+        containerClient.containerCreator
+          .imageName(imageName)
+          .command("-v")
+          .name(containerName)
+          .nodeName(hostname)
+          .create()
+          .flatMap(_ => containerClient.log(containerName).map(_._2))
+      )
+      expectedStrings.foreach(s => versionString should include(s))
   }
 
   @After
-  def releaseConfigurator(): Unit = Releasable.close(serviceNameHolder)
+  def releaseConfigurator(): Unit = {
+    Releasable.close(serviceKeyHolder)
+    Releasable.close(resourceRef)
+  }
 }

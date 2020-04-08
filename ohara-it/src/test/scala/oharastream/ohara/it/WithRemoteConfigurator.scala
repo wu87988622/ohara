@@ -16,19 +16,14 @@
 
 package oharastream.ohara.it
 
-import java.util.concurrent.TimeUnit
-
 import oharastream.ohara.agent.container.ContainerClient
-import oharastream.ohara.client.configurator.v0.NodeApi
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
+import oharastream.ohara.common.util.Releasable
+import org.junit.After
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
-import org.junit.{After, Before}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * a basic setup offering a configurator running on remote node.
@@ -36,65 +31,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 @RunWith(value = classOf[Parameterized])
 abstract class WithRemoteConfigurator(platform: ContainerPlatform) extends IntegrationTest {
-  protected final val containerClient: ContainerClient    = platform.containerClient
-  protected[this] val nodes: Seq[Node]                    = platform.nodes
-  protected final val serviceNameHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient, false)
-  protected final val configuratorHostname: String        = platform.configuratorHostname
-  private[this] val configuratorContainerKey              = serviceNameHolder.generateClusterKey()
-  protected final val configuratorPort: Int               = CommonUtils.availablePort()
-
-  /**
-    * we have to combine the group and name in order to make name holder to delete related container.
-    */
-  private[this] val configuratorContainerName: String =
-    s"${configuratorContainerKey.group()}-${configuratorContainerKey.name()}"
-
-  private[this] val imageName = s"oharastream/configurator:${VersionUtils.VERSION}"
-
-  @Before
-  def setupConfigurator(): Unit = {
-    result(
-      containerClient.containerCreator
-        .nodeName(configuratorHostname)
-        .imageName(imageName)
-        .portMappings(Map(configuratorPort -> configuratorPort))
-        .arguments(
-          Seq(
-            "--hostname",
-            configuratorHostname,
-            "--port",
-            configuratorPort.toString
-          ) ++ platform.arguments
-        )
-        // add the routes manually since not all envs have deployed the DNS.
-        .routes(nodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap)
-        .name(configuratorContainerName)
-        .create()
-    )
-
-    // wait for configurator
-    TimeUnit.SECONDS.sleep(20)
-
-    val nodeApi = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
-    nodes.foreach { node =>
-      if (!result(nodeApi.list()).map(_.hostname).contains(node.hostname)) {
-        result(
-          nodeApi.request
-            .hostname(node.hostname)
-            .port(node.port.get)
-            .user(node.user.get)
-            .password(node.password.get)
-            .create()
-        )
-      }
-    }
-  }
+  protected[this] val nodeNames: Set[String]             = platform.nodeNames
+  protected final val resourceRef                        = platform.setup()
+  protected final val containerClient: ContainerClient   = resourceRef.containerClient
+  protected final val configuratorHostname: String       = resourceRef.configuratorHostname
+  protected final val configuratorPort: Int              = resourceRef.configuratorPort
+  protected final val serviceKeyHolder: ServiceKeyHolder = ServiceKeyHolder(containerClient)
 
   @After
   def releaseConfigurator(): Unit = {
-    Releasable.close(serviceNameHolder)
-    // the client is used by name holder so we have to close it later
-    Releasable.close(containerClient)
+    Releasable.close(serviceKeyHolder)
+    Releasable.close(resourceRef)
   }
 }
 

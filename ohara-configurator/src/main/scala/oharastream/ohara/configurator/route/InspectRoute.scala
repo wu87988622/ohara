@@ -129,7 +129,7 @@ private[configurator] object InspectRoute {
     )
   )
 
-  def apply(mode: Mode)(
+  def apply(mode: Mode, k8sUrls: Option[K8sUrls])(
     implicit brokerCollie: BrokerCollie,
     adminCleaner: AdminCleaner,
     dataStore: DataStore,
@@ -233,7 +233,8 @@ private[configurator] object InspectRoute {
             revision = VersionUtils.REVISION,
             date = VersionUtils.DATE
           ),
-          mode = mode.toString
+          mode = mode.toString,
+          k8sUrls = k8sUrls
         )
       )
     } ~ pathPrefix(WORKER_PREFIX_PATH) {

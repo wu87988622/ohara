@@ -19,6 +19,7 @@ package oharastream.ohara.it.collie
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -28,14 +29,13 @@ import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.exception.{ExecutionException, TimeoutException}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.kafka.{Consumer, Producer, TopicAdmin}
 import oharastream.ohara.metrics.BeanChannel
-import com.typesafe.scalalogging.Logger
-import oharastream.ohara.it.category.CollieGroup
 import org.apache.kafka.common.errors.InvalidReplicationFactorException
-import org.junit.experimental.categories.Category
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -211,8 +211,8 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
   @Test
   def testZk(): Unit = {
     log.info("start to run zookeeper cluster")
-    val nodeName: String = nodes.head.name
-    val clusterKey       = serviceNameHolder.generateClusterKey()
+    val nodeName: String = platform.nodeNames.head
+    val clusterKey       = serviceKeyHolder.generateClusterKey()
     result(zk_exist(clusterKey)) shouldBe false
     val jmxPort      = CommonUtils.availablePort()
     val clientPort   = CommonUtils.availablePort()
@@ -287,21 +287,21 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
   def testBroker(): Unit = {
     val zkCluster = result(
       zk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         jmxPort = CommonUtils.availablePort(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(zk_start(zkCluster.key))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
     log.info("[BROKER] start to run broker cluster")
-    val clusterKey = serviceNameHolder.generateClusterKey()
+    val clusterKey = serviceKeyHolder.generateClusterKey()
     result(bk_exist(clusterKey)) shouldBe false
     log.info(s"[BROKER] verify existence of broker cluster:$clusterKey...done")
-    val nodeName: String = nodes.head.name
+    val nodeName: String = platform.nodeNames.head
     val clientPort       = CommonUtils.availablePort()
     val jmxPort          = CommonUtils.availablePort()
     def assert(brokerCluster: BrokerClusterInfo): BrokerClusterInfo = {
@@ -375,11 +375,11 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
     await(() => result(bk_exist(previousCluster.key)))
-    log.info(s"[BROKER] nodes:$nodes previous:${previousCluster.nodeNames}")
+    log.info(s"[BROKER] nodes:${platform.nodeNames} previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
       bk_removeNode(previousCluster.key, previousCluster.nodeNames.head)
     )
-    val freeNodes = nodes.filterNot(node => previousCluster.nodeNames.contains(node.name))
+    val freeNodes = platform.nodeNames.diff(previousCluster.nodeNames)
     if (freeNodes.nonEmpty) {
       await { () =>
         // nothing happens if we add duplicate nodes
@@ -388,7 +388,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         // we always get IllegalArgumentException if we sent request by restful api
         // However, if we use collie impl, an NoSuchElementException will be thrown...
         an[Throwable] should be thrownBy result(bk_addNode(previousCluster.key, CommonUtils.randomString()))
-        val newNode = freeNodes.head.name
+        val newNode = freeNodes.head
         log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.key}")
         val newCluster = result(bk_addNode(previousCluster.key, newNode))
         log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.key}...done")
@@ -496,30 +496,30 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
   def testWorker(): Unit = {
     val zkCluster = result(
       zk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         jmxPort = CommonUtils.availablePort(),
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(zk_start(zkCluster.key))
     assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
     val bkCluster = result(
       bk_create(
-        clusterKey = serviceNameHolder.generateClusterKey(),
+        clusterKey = serviceKeyHolder.generateClusterKey(),
         clientPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(bk_start(bkCluster.key))
     assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
     log.info("[WORKER] start to test worker")
-    val nodeName   = nodes.head.name
-    val clusterKey = serviceNameHolder.generateClusterKey()
+    val nodeName   = platform.nodeNames.head
+    val clusterKey = serviceKeyHolder.generateClusterKey()
     result(wk_exist(clusterKey)) shouldBe false
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtils.availablePort()
@@ -640,9 +640,9 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     an[IllegalArgumentException] should be thrownBy result(
       wk_removeNode(previousCluster.key, previousCluster.nodeNames.head)
     )
-    val freeNodes = nodes.filterNot(node => previousCluster.nodeNames.contains(node.name))
+    val freeNodes = platform.nodeNames.diff(previousCluster.nodeNames)
     if (freeNodes.nonEmpty) {
-      val newNode = freeNodes.head.name
+      val newNode = freeNodes.head
       // it is ok to add duplicate nodes
       result(wk_addNode(previousCluster.key, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
@@ -694,8 +694,8 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   @Test
   def testMultiZkClustersOnSameNodes(): Unit = {
-    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
-    val keys = (0 until numberOfClusters).map(_ => serviceNameHolder.generateClusterKey())
+    if (platform.nodeNames.size < 2) skipTest("the size of nodes must be bigger than 1")
+    val keys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
     val zkClusters = keys.map { key =>
       result(
         zk_create(
@@ -704,7 +704,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
-          nodeNames = nodes.map(_.name).toSet
+          nodeNames = platform.nodeNames
         ).flatMap(info => zk_start(info.key).flatMap(_ => zk_cluster(info.key)))
       )
     }
@@ -725,7 +725,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       result(zk_logs(c.key)).foreach { log =>
         // If we start a single-node zk cluster, zk print a "error" warning to us to say that you are using a single-node,
         // and we won't see the connection exception since there is only a node.
-        if (nodes.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
+        if (platform.nodeNames.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
         // By contrast, if we start a true zk cluster, the exception ensues since the connections between nodes fail in beginning.
         else withClue(log)(log.toLowerCase.contains("- ERROR") shouldBe false)
         log.isEmpty shouldBe false
@@ -735,9 +735,9 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   @Test
   def testMultiBkClustersOnSameNodes(): Unit = {
-    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
-    val zkKeys = (0 until numberOfClusters).map(_ => serviceNameHolder.generateClusterKey())
-    val bkKeys = (0 until numberOfClusters).map(_ => serviceNameHolder.generateClusterKey())
+    if (platform.nodeNames.size < 2) skipTest("the size of nodes must be bigger than 1")
+    val zkKeys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
+    val bkKeys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
     // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
     val zkClusters = zkKeys.map { key =>
       result(
@@ -747,7 +747,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
           clientPort = CommonUtils.availablePort(),
           electionPort = CommonUtils.availablePort(),
           peerPort = CommonUtils.availablePort(),
-          nodeNames = Set(nodes.head.name)
+          nodeNames = Set(platform.nodeNames.head)
         ).flatMap(info => zk_start(info.key).flatMap(_ => zk_cluster(info.key)))
       )
     }
@@ -762,7 +762,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
             clientPort = CommonUtils.availablePort(),
             jmxPort = CommonUtils.availablePort(),
             zookeeperClusterKey = zk.key,
-            nodeNames = Set(nodes.head.name)
+            nodeNames = Set(platform.nodeNames.head)
           )
         )
         result(bk_start(bkCluster.key))
@@ -772,10 +772,10 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   @Test
   def testMultiWkClustersOnSameNodes(): Unit = {
-    if (nodes.size < 2) skipTest("the size of nodes must be bigger than 1")
-    val zkKey            = serviceNameHolder.generateClusterKey()
-    val bkKey            = serviceNameHolder.generateClusterKey()
-    val wkKeys           = (0 until numberOfClusters).map(_ => serviceNameHolder.generateClusterKey())
+    if (platform.nodeNames.size < 2) skipTest("the size of nodes must be bigger than 1")
+    val zkKey            = serviceKeyHolder.generateClusterKey()
+    val bkKey            = serviceKeyHolder.generateClusterKey()
+    val wkKeys           = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
     val groupIds         = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     val configTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     val offsetTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
@@ -788,7 +788,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         clientPort = CommonUtils.availablePort(),
         electionPort = CommonUtils.availablePort(),
         peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(zk_start(zkCluster.key))
@@ -800,7 +800,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         clientPort = CommonUtils.availablePort(),
         jmxPort = CommonUtils.availablePort(),
         zookeeperClusterKey = zkCluster.key,
-        nodeNames = Set(nodes.head.name)
+        nodeNames = Set(platform.nodeNames.head)
       )
     )
     result(bk_start(bkCluster.key))
@@ -818,7 +818,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
             configTopicName = configTopicNames(index),
             offsetTopicName = offsetTopicNames(index),
             statusTopicName = statusTopicNames(index),
-            nodeNames = nodes.map(_.hostname).toSet
+            nodeNames = platform.nodeNames
           )
         )
     }

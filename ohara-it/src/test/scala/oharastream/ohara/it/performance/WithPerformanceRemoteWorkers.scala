@@ -66,7 +66,7 @@ abstract class WithPerformanceRemoteWorkers extends WithPerformanceRemoteConfigu
   @Before
   def setupWorkers(): Unit = {
     val nodeNames: Seq[String] = nodes.map(_.hostname)
-    serviceKeyHolder = ServiceKeyHolder(containerClient, false)
+    serviceKeyHolder = ServiceKeyHolder(containerClient)
 
     val nodeApi = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
 

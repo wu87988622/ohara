@@ -43,11 +43,10 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
 
   @Before
   def setup(): Unit = {
-    nodes.forall(node => nodes.map(_.name).contains(node.name)) shouldBe true
     // create zookeeper cluster
     log.info("create zkCluster...start")
     val zkCluster = result(
-      zkApi.request.key(serviceNameHolder.generateClusterKey()).nodeNames(nodes.take(1).map(_.name).toSet).create()
+      zkApi.request.key(serviceKeyHolder.generateClusterKey()).nodeNames(Set(nodeNames.head)).create()
     )
     result(zkApi.start(zkCluster.key))
     assertCluster(
@@ -61,9 +60,9 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     log.info("create bkCluster...start")
     val bkCluster = result(
       bkApi.request
-        .key(serviceNameHolder.generateClusterKey())
+        .key(serviceKeyHolder.generateClusterKey())
         .zookeeperClusterKey(zkCluster.key)
-        .nodeNames(nodes.take(1).map(_.name).toSet)
+        .nodeNames(Set(nodeNames.head))
         .create()
     )
     bkKey = bkCluster.key
@@ -256,9 +255,9 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
 
   private def createShabondiService(shabondiType: ShabondiType, topicKey: TopicKey): ShabondiClusterInfo = {
     val request = shabondiApi.request
-      .key(serviceNameHolder.generateClusterKey())
+      .key(serviceKeyHolder.generateClusterKey())
       .brokerClusterKey(bkKey)
-      .nodeName(nodes.head.name)
+      .nodeName(nodeNames.head)
       .shabondiClass(shabondiType.className)
       .clientPort(CommonUtils.availablePort())
     shabondiType match {
@@ -279,8 +278,8 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     { // assert Shabondi Source cluster info
       val resultInfo = result(shabondiApi.get(clusterInfo.key))
       resultInfo.shabondiClass shouldBe shabondiType.className
-      resultInfo.nodeNames shouldBe Set(nodes.head.name)
-      resultInfo.aliveNodes shouldBe Set(nodes.head.name)
+      resultInfo.nodeNames shouldBe Set(nodeNames.head)
+      resultInfo.aliveNodes shouldBe Set(nodeNames.head)
       resultInfo.deadNodes shouldBe Set.empty
     }
 
@@ -295,7 +294,7 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     { // assert Shabondi Source cluster info
       val resultInfo = result(shabondiApi.get(clusterInfo.key))
       resultInfo.state shouldBe None
-      resultInfo.nodeNames shouldBe Set(nodes.head.name)
+      resultInfo.nodeNames shouldBe Set(nodeNames.head)
       resultInfo.aliveNodes shouldBe Set.empty
       resultInfo.deadNodes shouldBe Set.empty
     }

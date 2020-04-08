@@ -68,9 +68,11 @@ object InspectApi {
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
   implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
 
-  final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion, mode: String)
+  final case class K8sUrls(masterUrl: String, metricsUrl: Option[String])
+  implicit val K8S_URL_FORMAT: RootJsonFormat[K8sUrls] = jsonFormat2(K8sUrls)
+  final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion, mode: String, k8sUrls: Option[K8sUrls])
 
-  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat2(ConfiguratorInfo)
+  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat3(ConfiguratorInfo)
 
   case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef], classInfos: Seq[ClassInfo])
 
