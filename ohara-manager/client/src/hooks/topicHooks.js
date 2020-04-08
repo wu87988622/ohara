@@ -183,9 +183,11 @@ export const useTopicsInPipeline = () => {
           get(currentPipeline, 'endpoints', []),
           endpoint => endpoint.kind === KIND.topic,
         ).map(endpoint => ({ name: endpoint.name, group: endpoint.group }));
-        return filter(getTopicsByGroup(state, { group }), topic =>
-          topicKeys.includes({ name: topic.name, group: topic.group }),
-        ).sort((current, next) => {
+        return filter(getTopicsByGroup(state, { group }), topic => {
+          return topicKeys.some(
+            ({ name, group }) => name === topic.name && group === topic.group,
+          );
+        }).sort((current, next) => {
           const currentName = current.tags.isShared
             ? current.name
             : current.tags.displayName;

@@ -39,12 +39,11 @@ const FileTable = () => {
   const files = hooks.useFiles();
   const fetchFiles = hooks.useFetchFilesAction();
   const isLoaded = hooks.useIsFileLoaded();
-  const workspaceName = hooks.useWorkspaceName();
   const [filteredFiles, setFilteredFiles] = useState([]);
 
   useEffect(() => {
-    if (!isLoaded) fetchFiles(workspaceName);
-  }, [fetchFiles, isLoaded, workspaceName]);
+    if (!isLoaded) fetchFiles();
+  }, [fetchFiles, isLoaded]);
 
   return (
     <Wrapper>

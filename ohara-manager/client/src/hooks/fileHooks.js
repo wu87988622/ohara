@@ -56,11 +56,10 @@ export const useCreateFileAction = () => {
 export const useFetchFilesAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useFileGroup();
-  return useCallback(
-    workspaceName =>
-      dispatch(actions.fetchFiles.trigger({ group, workspaceName })),
-    [dispatch, group],
-  );
+  return useCallback(() => dispatch(actions.fetchFiles.trigger({ group })), [
+    dispatch,
+    group,
+  ]);
 };
 
 export const useDeleteFileAction = () => {

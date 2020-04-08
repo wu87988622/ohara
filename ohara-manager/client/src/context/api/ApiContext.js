@@ -22,7 +22,6 @@ import { createApi as createTopicApi } from './topicApi';
 import { createApi as createConnectorApi } from './connectorApi';
 import { createApi as createLogApi } from './logApi';
 import { createApi as createPipelineApi } from './pipelineApi';
-import { createApi as createStreamApi } from './streamApi';
 
 const ApiContext = createContext();
 
@@ -61,11 +60,6 @@ const ApiProvider = ({ children }) => {
     pipelineGroup,
   ]);
 
-  const streamApi = useMemo(
-    () => createStreamApi({ streamGroup, brokerKey, topicGroup }),
-    [streamGroup, brokerKey, topicGroup],
-  );
-
   const topicApi = useMemo(
     () => createTopicApi({ topicGroup, brokerKey, workspaceKey }),
     [topicGroup, brokerKey, workspaceKey],
@@ -77,7 +71,6 @@ const ApiProvider = ({ children }) => {
         connectorApi,
         logApi,
         pipelineApi,
-        streamApi,
         topicApi,
       }}
     >

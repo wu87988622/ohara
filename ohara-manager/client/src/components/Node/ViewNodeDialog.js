@@ -122,8 +122,8 @@ const ViewNodeDialog = props => {
   const zookeepers = hooks.useAllZookeepers();
   const brokers = hooks.useAllBrokers();
   const workers = hooks.useAllWorkers();
-  const { data: streams } = context.useStreamState();
   const workspaceName = hooks.useWorkspaceName();
+  const streams = hooks.useStreams();
 
   const [services, setServices] = useState([]);
 

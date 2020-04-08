@@ -348,8 +348,6 @@ const Paper = React.forwardRef((props, ref) => {
         .hideElement('status')
         .setIsSelected(true);
 
-      onCellSelect(paperUtils.getCellData(elementView), paperApi);
-
       const sourceLink = graph.getLinks().find(link => !link.get('target').id);
       if (sourceLink) {
         const result = paperUtils.createConnection({
@@ -368,8 +366,10 @@ const Paper = React.forwardRef((props, ref) => {
           return onConnect(result, paperApi);
         }
 
-        resetLinks();
+        return resetLinks();
       }
+
+      onCellSelect(paperUtils.getCellData(elementView), paperApi);
     });
 
     // Element button events, these are custom event binding down in the

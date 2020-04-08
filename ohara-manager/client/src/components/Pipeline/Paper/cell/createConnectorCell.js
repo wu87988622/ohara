@@ -246,6 +246,7 @@ const createConnectorCell = options => {
         .find('.icon')
         .removeClass()
         .addClass(`icon ${iconStatus}`);
+
       return this;
     },
     updatePosition() {

@@ -22,6 +22,7 @@ import eventLogEpics from './eventLog';
 import fileEpics from './file';
 import nodeEpics from './nodeEpics';
 import pipelineEpics from './pipeline';
+import streamEpics from './stream';
 import snackbarEpics from './snackbarEpics';
 import topicEpics from './topic';
 import workerEpics from './worker';
@@ -34,6 +35,7 @@ export default combineEpics(
   eventLogEpics,
   fileEpics,
   nodeEpics,
+  streamEpics,
   pipelineEpics,
   snackbarEpics,
   topicEpics,

@@ -22,6 +22,7 @@ import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
 import { hashByGroupAndName } from 'utils/sha';
+import { KIND } from 'const';
 
 export const usePipelineGroup = () => {
   const workspaceGroup = hooks.useWorkspaceGroup();
@@ -62,12 +63,48 @@ export const useCreatePipelineAction = () => {
   );
 };
 
+const updateEndpointGroup = ({
+  values,
+  streamAndConnectorGroup,
+  topicGroup,
+}) => {
+  return values.endpoints.map(endpoint => {
+    const { kind } = endpoint;
+    if (kind === KIND.source || kind === KIND.sink || kind === KIND.stream) {
+      return { ...endpoint, group: streamAndConnectorGroup };
+    } else if (kind === KIND.topic) {
+      return { ...endpoint, group: topicGroup };
+    }
+
+    return endpoint;
+  });
+};
+
 export const useUpdatePipelineAction = () => {
   const dispatch = useDispatch();
   const group = hooks.usePipelineGroup();
+
+  // Both connector and stream are using same group key
+  const streamAndConnectorGroup = hooks.useStreamGroup();
+  const topicGroup = hooks.useTopicGroup();
+
   return useCallback(
-    values => dispatch(actions.updatePipeline.trigger({ ...values, group })),
-    [dispatch, group],
+    values => {
+      const endpoints = updateEndpointGroup({
+        values,
+        streamAndConnectorGroup,
+        topicGroup,
+      });
+
+      dispatch(
+        actions.updatePipeline.trigger({
+          ...values,
+          group,
+          endpoints,
+        }),
+      );
+    },
+    [dispatch, group, streamAndConnectorGroup, topicGroup],
   );
 };
 

@@ -39,24 +39,20 @@ export const PipelineDispatchContext = createContext(null);
 const Pipeline = React.forwardRef((props, ref) => {
   const currentWorkspace = hooks.useWorkspace();
   const currentPipeline = hooks.usePipeline();
+  const setSelectedCell = hooks.useSetSelectedCellAction();
+  const fetchPipeline = hooks.useFetchPipelineAction();
+  const selectedCell = hooks.useCurrentPipelineCell();
+  const streams = hooks.useStreams();
+  const isStreamLoaded = hooks.useIsStreamLoaded();
+
   const {
     open: openPropertyDialog,
     isOpen: isPropertyDialogOpen,
     close: closePropertyDialog,
-    data: PropertyDialogData,
+    data: propertyDialogData,
   } = context.usePipelinePropertyDialog();
-  const setSelectedCell = hooks.useSetSelectedCellAction();
-  const fetchPipeline = hooks.useFetchPipelineAction();
-  const selectedCell = hooks.useCurrentPipelineCell();
 
-  const {
-    data: streams,
-    lastUpdated: streamLastUpdated,
-  } = context.useStreamState();
-  const {
-    lastUpdated: connectorLastUpdated,
-    data: connectors,
-  } = context.useConnectorState();
+  const { data: connectors } = context.useConnectorState();
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 
   const {
@@ -145,22 +141,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     pipelineDispatch({ type: 'setToolboxKey' });
   }, [currentPipeline, pipelineDispatch, prevPipeline]);
 
-  const handleSubmit = (params, values, paperApi) => {
-    const { cell, topics = [] } = params;
-    const { kind } = cell;
-    switch (kind) {
-      case KIND.source:
-      case KIND.sink:
-        updateConnector(cell, topics, values, paperApi);
-        break;
-      case KIND.stream:
-        updateStream(cell, topics, values, paperApi);
-        break;
-      default:
-        break;
-    }
-  };
-
   // If paper API is not ready, let's reset the pipeline state and re-render again
   useEffect(() => {
     if (!isPaperApiReady && pipelineName) {
@@ -202,26 +182,44 @@ const Pipeline = React.forwardRef((props, ref) => {
   }, [workspaceName, pipelineName, url]);
 
   useEffect(() => {
-    // Only run this once, there's no need to run this logic twice as
-    // that's intentional
+    // Only run this once since we only want to load the graph once and maintain
+    // the local state ever since
+
     if (!isPaperApiReady) return;
     if (isInitialized.current) return;
     if (!paperApiRef.current) return;
-    if (!connectorLastUpdated) return;
-    if (!streamLastUpdated) return;
+
+    // TODO: this is blocking Paper from correctly rendering
+    // if (!connectorLastUpdated) return;
+
+    if (!isStreamLoaded) return;
     if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
-
     isInitialized.current = true;
   }, [
-    connectorLastUpdated,
     currentPipeline,
     getUpdatedCells,
     isPaperApiReady,
+    isStreamLoaded,
     pipelineName,
-    streamLastUpdated,
   ]);
+
+  const handleSubmit = (params, values, paperApi) => {
+    const { cell, topics = [] } = params;
+    const { kind } = cell;
+    switch (kind) {
+      case KIND.source:
+      case KIND.sink:
+        updateConnector(cell, topics, values, paperApi);
+        break;
+      case KIND.stream:
+        updateStream(cell, topics, values, paperApi);
+        break;
+      default:
+        break;
+    }
+  };
 
   const deleteTopic = async () => {
     const paperApi = paperApiRef.current;
@@ -681,7 +679,7 @@ const Pipeline = React.forwardRef((props, ref) => {
       <PipelinePropertyDialog
         isOpen={isPropertyDialogOpen}
         onClose={closePropertyDialog}
-        data={PropertyDialogData}
+        data={propertyDialogData}
         onSubmit={handleSubmit}
       />
 

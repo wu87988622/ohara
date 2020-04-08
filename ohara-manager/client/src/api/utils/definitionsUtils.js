@@ -17,8 +17,7 @@
 import { get } from 'lodash';
 import { Type } from 'api/apiInterface/definitionInterface';
 
-export const getDefinition = params => {
-  const settingDefinitions = get(params, 'settingDefinitions', []);
+export const getDefinition = settingDefinitions => {
   const isStream =
     get(
       settingDefinitions.find(def => def.key === 'imageName'),
@@ -48,7 +47,7 @@ export const getDefinition = params => {
           def.internal = true;
         }
 
-        // The value type of the stream's settingdefinition is BINDING_PORT.
+        // The value type of the stream's setting definition is BINDING_PORT.
         // We must change it to REMOTE_PORT.
         // Because BINDING_PORT is in the UI, We will associate it with worker free port, but in fact they are not.
         if (isStream && def.valueType === Type.BINDING_PORT) {
@@ -57,5 +56,6 @@ export const getDefinition = params => {
       });
     newDefs[def.key] = def;
   });
-  return newDefs;
+
+  return Object.values(newDefs);
 };

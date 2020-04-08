@@ -57,12 +57,11 @@ const restructureStream = streamClass => {
 export const useStreams = () => {
   const fetchFiles = hooks.useFetchFilesAction();
   const isLoaded = hooks.useIsFileLoaded();
-  const workspaceName = hooks.useWorkspaceName();
   const streamFiles = hooks.useStreamFiles();
 
   useEffect(() => {
-    if (!isLoaded) fetchFiles(workspaceName);
-  }, [fetchFiles, isLoaded, workspaceName]);
+    if (!isLoaded) fetchFiles();
+  }, [fetchFiles, isLoaded]);
 
   const streams = streamFiles
     .map(restructureStream)

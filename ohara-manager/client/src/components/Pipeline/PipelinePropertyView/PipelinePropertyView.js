@@ -32,8 +32,8 @@ import PropertyField from './PipelinePropertyViewField';
 import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
-import * as context from 'context';
 import * as hooks from 'hooks';
+import * as context from 'context';
 import * as propertyUtils from './PipelinePropertyViewUtils';
 import * as defUtils from 'api/apiInterface/definitionInterface';
 
@@ -44,9 +44,9 @@ const PipelinePropertyView = props => {
     ? { meters: [] }
     : cellMetrics.metrics;
 
-  const { data: currentConnector } = context.useConnectorState();
-  const { data: currentStream } = context.useStreamState();
-  const currentTopics = hooks.useTopicsInPipeline();
+  const topics = hooks.useTopicsInPipeline();
+  const streams = hooks.useStreams();
+  const { data: connectors } = context.useConnectorState();
   const [isOpen, setIsOpen] = useState(false);
   const [tags, setTags] = useState({
     json: null,
@@ -62,15 +62,13 @@ const PipelinePropertyView = props => {
   switch (element.kind) {
     case KIND.source:
     case KIND.sink:
-      settings = currentConnector.find(
-        connector => connector.name === cellName,
-      );
+      settings = connectors.find(connector => connector.name === cellName);
       break;
     case KIND.stream:
-      settings = currentStream.find(stream => stream.name === cellName);
+      settings = streams.find(stream => stream.name === cellName);
       break;
     case KIND.topic:
-      settings = currentTopics.find(topic => topic.name === cellName);
+      settings = topics.find(topic => topic.name === cellName);
       break;
     default:
       break;
@@ -131,8 +129,8 @@ const PipelinePropertyView = props => {
         const objectArray = currentSetting
           .map(value => value.name)
           .map(value => {
-            if (currentTopics.map(topic => topic.name).includes(value)) {
-              const topic = currentTopics.find(topic => topic.name === value);
+            if (topics.map(topic => topic.name).includes(value)) {
+              const topic = topics.find(topic => topic.name === value);
               return topic.tags?.displayName
                 ? topic.tags?.displayName
                 : topic.name;

@@ -22,6 +22,7 @@ export * from './fileHooks';
 export * from './introHooks';
 export * from './nodeHooks';
 export * from './pipelineHooks';
+export * from './streamHooks';
 export * from './reduxFormHooks';
 export * from './snackbarHooks';
 export * from './topicHooks';

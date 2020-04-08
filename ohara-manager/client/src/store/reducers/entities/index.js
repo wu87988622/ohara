@@ -22,6 +22,7 @@ import files from './files';
 import infos from './infos';
 import nodes from './nodes';
 import pipelines from './pipelines';
+import streams from './streams';
 import topics from './topics';
 import workers from './workers';
 import workspaces from './workspaces';
@@ -29,9 +30,18 @@ import zookeepers from './zookeepers';
 
 export const entity = type => (state = {}, action) => {
   const { payload } = action;
-  if (payload && payload.entities) {
+
+  const hasEntities = payload?.entities || payload?.[0]?.entities;
+
+  if (hasEntities) {
+    if (_.isArray(payload)) {
+      const [result] = payload.map(p => _.merge({}, state, p.entities[type]));
+      return result;
+    }
+
     return _.merge({}, state, payload.entities[type]);
   }
+
   return state;
 };
 
@@ -42,6 +52,7 @@ export default combineReducers({
   infos,
   nodes,
   pipelines,
+  streams,
   topics,
   workers,
   workspaces,

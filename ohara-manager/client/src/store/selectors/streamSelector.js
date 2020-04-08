@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-export * from 'context/api/ApiContext';
-export * from 'context/app/AppContext';
-export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/connector/ConnectorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/log/LogContext';
-export * from 'context/workspace/EditWorkspaceContext';
-export * from 'context/devTool/DevToolContext';
-export * from 'context/topicData/TopicDataContext';
-export * from './StoreContext';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+const getEntities = state => state?.entities?.streams;
+
+const getGroupFromProps = (_, props) => props?.group;
+
+export const makeGetStreamsByGroup = () =>
+  createSelector([getEntities, getGroupFromProps], (entities, group) =>
+    _.values(entities).filter(stream => stream?.group === group),
+  );

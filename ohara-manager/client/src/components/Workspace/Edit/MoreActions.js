@@ -29,7 +29,7 @@ import { Progress } from 'components/common/Progress';
 
 function MoreActions() {
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const [isOpen, setIsOpne] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const [isResetting, setIsResetting] = React.useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
 
@@ -37,11 +37,11 @@ function MoreActions() {
   const currentBroker = hooks.useBroker();
   const currentWorker = hooks.useWorker();
   const currentPipeline = hooks.usePipeline();
-
-  const { stopConnector, startConnector } = context.useConnectorActions();
+  const startStream = hooks.useStartStreamAction();
+  const stopStream = hooks.useStopStreamAction();
   const startTopic = hooks.useStartTopicAction();
   const stopTopic = hooks.useStopTopicAction();
-  const { stopStream, startStream } = context.useStreamActions();
+  const { stopConnector, startConnector } = context.useConnectorActions();
 
   const startBroker = hooks.useStartBrokerAction();
   const startWorker = hooks.useStartWorkerAction();
@@ -59,7 +59,7 @@ function MoreActions() {
   };
 
   const handleDialogClose = () => {
-    setIsOpne(false);
+    setIsOpen(false);
   };
 
   const steps = [
@@ -88,7 +88,7 @@ function MoreActions() {
       await stopConnector(connector.name);
     }
     for (const stream of streams) {
-      await stopStream(stream.name);
+      await stopStream({ name: stream.name });
     }
     for (const topic of topics) {
       await stopTopic(topic.name);
@@ -111,11 +111,11 @@ function MoreActions() {
       await startConnector(connector.name);
     }
     for (const stream of streams) {
-      await startStream(stream.name);
+      await startStream({ name: stream.name });
     }
 
     setActiveStep(4);
-    setIsOpne(false);
+    setIsOpen(false);
     handleClose();
   };
   return (
@@ -135,7 +135,7 @@ function MoreActions() {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={() => setIsOpne(true)}>RESET WORKSPACE</MenuItem>
+        <MenuItem onClick={() => setIsOpen(true)}>RESET WORKSPACE</MenuItem>
         {/* Feature is disabled because it's not implemented in 0.9 */
         false && <MenuItem onClick={handleClose}>ADD PLUGINS</MenuItem>}
         {/* Feature is disabled because it's not implemented in 0.9 */

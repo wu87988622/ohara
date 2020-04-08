@@ -15,6 +15,7 @@
  */
 
 import { createSelector } from 'reselect';
+import { getDefinition } from '../../api/utils/definitionsUtils';
 
 export const getEntities = state => state?.entities?.infos;
 
@@ -26,4 +27,38 @@ export const getInfoById = createSelector(
 );
 
 export const makeGetInfoById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+  createSelector([getEntities, getIdFromProps], (entities, id) => {
+    const entity = entities[id];
+
+    if (!entity) return;
+
+    const { settingDefinitions, classInfos, classInfo } = entity;
+    const isCluster = Boolean(classInfos);
+
+    if (isCluster) {
+      const newClassInfos = classInfos.map(classInfo => {
+        return {
+          ...classInfo,
+          settingDefinitions: getDefinition(classInfo.settingDefinitions),
+        };
+      });
+
+      return {
+        ...entity,
+        classInfos: newClassInfos,
+        settingDefinitions: getDefinition(settingDefinitions),
+      };
+    }
+
+    if (classInfo) {
+      return {
+        ...entity,
+        classInfo: {
+          ...entity.classInfo,
+          settingDefinitions: getDefinition(classInfo.settingDefinitions),
+        },
+      };
+    }
+
+    return entity;
+  });

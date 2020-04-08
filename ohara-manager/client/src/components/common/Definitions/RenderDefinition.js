@@ -124,7 +124,7 @@ const RenderDefinition = props => {
       required: necessary === 'REQUIRED',
       validate: validWithDef(params),
       parse: parseValueByType(def.valueType),
-      type: def.valueType === Type.boolean ? 'checkbox' : null,
+      type: def.valueType === Type.BOOLEAN ? 'checkbox' : null,
     };
 
     if (ref) ensuredFieldProps.refs = ref;
@@ -135,67 +135,67 @@ const RenderDefinition = props => {
   const renderDefinitionField = () => {
     if (def.reference === ReferenceEnum.NONE) {
       switch (def.valueType) {
-        case Type.string:
+        case Type.STRING:
           return RenderField({ ...def, input: StringDef });
 
-        case Type.remotePort:
+        case Type.REMOTE_PORT:
           return RenderField({ ...def, input: RemotePort });
 
-        case Type.int:
+        case Type.INT:
           return RenderField({ ...def, input: IntDef });
 
-        case Type.class:
+        case Type.CLASS:
           return RenderField({ ...def, input: ClassDef });
 
-        case Type.password:
+        case Type.PASSWORD:
           return RenderField({ ...def, input: Password });
 
-        case Type.positiveInt:
+        case Type.POSITIVE_INT:
           return RenderField({ ...def, input: PositiveInt });
 
-        case Type.duration:
+        case Type.DURATION:
           return RenderField({ ...def, input: Duration });
 
-        case Type.bindingPort:
+        case Type.BINDING_PORT:
           return RenderField({ ...def, input: BindingPort, list: freePorts });
 
-        case Type.tags:
+        case Type.TAGS:
           return RenderField({ ...def, input: Tags });
 
-        case Type.jdbcTable:
+        case Type.JDBC_TABLE:
           return RenderField({ ...def, input: JdbcTable });
 
-        case Type.table:
+        case Type.TABLE:
           return RenderField({ ...def, input: Table });
 
-        case Type.boolean:
+        case Type.BOOLEAN:
           return RenderField({ ...def, input: BooleanDef });
 
-        case Type.long:
+        case Type.LONG:
           return RenderField({ ...def, input: Long });
 
-        case Type.short:
+        case Type.SHORT:
           return RenderField({ ...def, input: Short });
 
-        case Type.double:
+        case Type.DOUBLE:
           return RenderField({ ...def, input: Double });
 
-        case Type.array:
+        case Type.ARRAY:
           return RenderField({ ...def, input: ArrayDef });
 
-        case Type.positiveShort:
+        case Type.POSITIVE_SHORT:
           return RenderField({ ...def, input: PositiveShort });
 
-        case Type.positiveLong:
+        case Type.POSITIVE_LONG:
           return RenderField({ ...def, input: PositiveLong });
 
-        case Type.positiveDouble:
+        case Type.POSITIVE_DOUBLE:
           return RenderField({ ...def, input: PositiveDouble });
 
-        case Type.objectKeys:
+        case Type.OBJECT_KEYS:
           return RenderField({ ...def, input: ObjectKeys });
 
-        case Type.objectKey:
+        case Type.OBJECT_KEY:
           return RenderField({ ...def, input: ObjectKey });
 
         default:

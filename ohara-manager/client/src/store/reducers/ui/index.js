@@ -22,6 +22,7 @@ import file from './file';
 import intro from './intro';
 import node from './node';
 import pipeline from './pipeline';
+import stream from './stream';
 import snackbar from './snackbar';
 import topic from './topic';
 import workers from './workers';
@@ -36,6 +37,7 @@ export default combineReducers({
   intro,
   node,
   pipeline,
+  stream,
   snackbar,
   topic,
   workers,

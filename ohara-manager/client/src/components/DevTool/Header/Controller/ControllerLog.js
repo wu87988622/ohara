@@ -37,6 +37,7 @@ import {
   useCurrentHosts,
   useCurrentHostName,
 } from 'components/DevTool/hooks';
+import * as hooks from 'hooks';
 import * as context from 'context';
 import { TIME_GROUP } from 'context/log/const';
 import { LOG_SERVICES } from 'api/apiInterface/logInterface';
@@ -44,7 +45,7 @@ import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody, StyledTextField } from './ControllerStyles';
 
 const ControllerLog = () => {
-  const { data: streams } = context.useStreamState();
+  const streams = hooks.useStreams();
 
   const logActions = context.useLogActions();
   const { query, isFetching, lastUpdated } = context.useLogState();

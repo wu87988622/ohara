@@ -59,23 +59,23 @@ const PipelinePropertyDialog = props => {
   const [selected, setSelected] = useState(null);
   const currentWorker = hooks.useWorker();
   const files = hooks.useFiles();
-  const { data: currentConnectors } = context.useConnectorState();
-  const { data: currentStreams } = context.useStreamState();
+  const streams = hooks.useStreams();
   const currentTopics = hooks.useTopicsInPipeline();
+  const { data: connectors } = context.useConnectorState();
   const formRef = useRef(null);
 
   let targetCell;
   switch (kind) {
     case KIND.source:
     case KIND.sink:
-      targetCell = currentConnectors.find(
+      targetCell = connectors.find(
         connector =>
           connector.className === classInfo.className &&
           connector.name === cellData.name,
       );
       break;
     case KIND.stream:
-      targetCell = currentStreams.find(stream => stream.name === cellData.name);
+      targetCell = streams.find(stream => stream.name === cellData.name);
       break;
 
     default:

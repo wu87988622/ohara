@@ -16,7 +16,7 @@
 
 import { combineEpics } from 'redux-observable';
 import createFileEpic from './createFileEpic';
-import fetchFileEpic from './fetchFileEpic';
+import fetchFilesEpic from './fetchFilesEpic';
 import deleteFileEpic from './deleteFileEpic';
 
-export default combineEpics(createFileEpic, fetchFileEpic, deleteFileEpic);
+export default combineEpics(createFileEpic, fetchFilesEpic, deleteFileEpic);

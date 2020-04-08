@@ -14,178 +14,75 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
-
-import * as context from 'context';
-import * as util from './apiHelperUtils';
-import { CELL_STATUS } from 'const';
+import * as hooks from 'hooks';
 
 const stream = () => {
-  const {
-    createStream,
-    updateStream,
-    startStream,
-    stopStream,
-    deleteStream,
-  } = context.useStreamActions();
-  const { data: currentStreams } = context.useStreamState();
+  const updateStream = hooks.useUpdateStreamAction();
+  const createStream = hooks.useCreateStreamAction();
+  const deleteStream = hooks.useDeleteStreamAction();
+  const startStream = hooks.useStartStreamAction();
+  const stopStream = hooks.useStopStreamAction();
+  const removeStreamToLink = hooks.useRemoveStreamToLinkAction();
+  const removeStreamFromLink = hooks.useRemoveStreamFromLinkAction();
+  const updateStreamFromLink = hooks.useUpdateStreamFromLinkAction();
+  const updateStreamToLink = hooks.useUpdateStreamToLinkAction();
+  const currentStreams = hooks.useStreams();
 
-  const create = async (params, paperApi) => {
+  const create = (params, paperApi) => {
     const { id, name, className, jarKey } = params;
-    const res = await createStream({
-      name,
-      connector__class: className,
-      jarKey,
-    });
-
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    } else {
-      paperApi.removeElement(id);
-    }
+    const values = { name, stream__class: className, jarKey };
+    const options = { id, paperApi };
+    createStream(values, options);
   };
 
-  const update = async (cell, topics, values, paperApi) => {
-    const cells = paperApi.getCells();
-    const res = await updateStream({
-      name: cell.name,
-      ...values,
-    });
-
-    if (!res.error) {
-      const currentStream = currentStreams.find(
-        stream => stream.name === values.name,
-      );
-      const hasTo = _.get(values, 'to', []).length > 0;
-      const hasFrom = _.get(values, 'from', []).length > 0;
-      const currentHasTo = _.get(currentStream, 'to', []).length > 0;
-      const currentHasFrom = _.get(currentStream, 'from', []).length > 0;
-      if (currentHasTo) {
-        const streamId = paperApi.getCell(values.name).id;
-        const topicId = paperApi.getCell(currentStream.to[0].name).id;
-        const linkId = cells
-          .filter(cell => cell.cellType === 'standard.Link')
-          .find(cell => cell.sourceId === streamId && cell.targetId === topicId)
-          .id;
-
-        paperApi.removeLink(linkId);
-      }
-      if (currentHasFrom) {
-        const streamId = paperApi.getCell(values.name).id;
-        const topicId = paperApi.getCell(currentStream.from[0].name).id;
-        const linkId = cells
-          .filter(cell => cell.cellType === 'standard.Link')
-          .find(cell => cell.sourceId === topicId && cell.targetId === streamId)
-          .id;
-
-        paperApi.removeLink(linkId);
-      }
-      if (hasTo) {
-        paperApi.addLink(
-          cell.id,
-          topics.find(topic => topic.key === 'to').data.id,
-        );
-      }
-      if (hasFrom) {
-        paperApi.addLink(
-          topics.find(topic => topic.key === 'from').data.id,
-          cell.id,
-        );
-      }
-    }
-    return res;
+  const update = (cell, topics, values, paperApi) => {
+    const options = { topics, cell, currentStreams, paperApi };
+    updateStream(values, options);
   };
 
-  const updateLinkTo = async (params, paperApi) => {
-    const { toStream, topic, link } = params;
-    const res = await updateStream({
+  const updateLinkTo = ({ toStream, topic, link }, paperApi) => {
+    const params = {
       name: toStream.name,
       to: [{ name: topic.name }],
-    });
-    if (res.error) {
-      paperApi.removeElement(link.id);
-    }
-    return res;
+    };
+    const options = { link, paperApi };
+    updateStreamToLink(params, options);
   };
 
-  const updateLinkFrom = async (params, paperApi) => {
-    const { fromStream, topic, link } = params;
-    const res = await updateStream({
+  const updateLinkFrom = ({ fromStream, topic, link }, paperApi) => {
+    const params = {
       name: fromStream.name,
       from: [{ name: topic.name }],
-    });
-
-    if (res.error) {
-      paperApi.removeElement(link.id);
-    }
-    return res;
+    };
+    const options = { link, paperApi };
+    updateStreamFromLink(params, options);
   };
 
-  const start = async (params, paperApi) => {
+  const start = (params, paperApi) => {
     const { id, name } = params;
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-    const res = await startStream(name);
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    } else {
-      paperApi.updateElement(id, {
-        status: CELL_STATUS.stopped,
-      });
-    }
+    startStream(name, { id, paperApi });
   };
 
-  const stop = async (params, paperApi) => {
+  const stop = (params, paperApi) => {
     const { id, name } = params;
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-    const res = await stopStream(name);
-    if (!res.error) {
-      const state = util.getCellState(res);
-      paperApi.updateElement(id, {
-        status: state,
-      });
-    }
+    stopStream(name, { id, paperApi });
   };
 
-  const remove = async (params, paperApi) => {
+  const remove = (params, paperApi) => {
     const { id, name } = params;
-    const res = await deleteStream(name);
-    if (!res.error) {
-      paperApi.removeElement(id);
-    }
+    deleteStream(name, { id, paperApi });
   };
 
-  const removeLinkTo = async (params, topic, paperApi) => {
-    const { name, id } = params;
-    const res = await updateStream({
-      name,
-      to: [],
-    });
-
-    if (res.error) {
-      paperApi.addLink(id, topic.id);
-    }
+  const removeLinkTo = ({ id, name }, topic, paperApi) => {
+    const params = { name, to: [] };
+    const options = { id, topic, paperApi };
+    removeStreamToLink(params, options);
   };
 
-  const removeLinkFrom = async (params, topic, paperApi) => {
-    const { name, id } = params;
-    const res = await updateStream({
-      name,
-      from: [],
-    });
-
-    if (res.error) {
-      paperApi.addLink(topic.id, id);
-    }
+  const removeLinkFrom = ({ id, name }, topic, paperApi) => {
+    const params = { name, from: [] };
+    const options = { id, topic, paperApi };
+    removeStreamFromLink(params, options);
   };
 
   return {

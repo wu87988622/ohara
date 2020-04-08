@@ -24,6 +24,7 @@ export const ENTITY_TYPE = {
   infos: 'infos',
   nodes: 'nodes',
   pipelines: 'pipelines',
+  streams: 'streams',
   topics: 'topics',
   workers: 'workers',
   workspaces: 'workspaces',
@@ -49,6 +50,10 @@ export const node = new schema.Entity(ENTITY_TYPE.nodes, undefined, {
 });
 
 export const pipeline = new schema.Entity(ENTITY_TYPE.pipelines, undefined, {
+  idAttribute: getId,
+});
+
+export const stream = new schema.Entity(ENTITY_TYPE.streams, undefined, {
   idAttribute: getId,
 });
 

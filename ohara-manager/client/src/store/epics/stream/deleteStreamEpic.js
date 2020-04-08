@@ -14,25 +14,32 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
-import { switchMap, map, startWith, catchError } from 'rxjs/operators';
+import { catchError, map, switchMap, startWith } from 'rxjs/operators';
 
-import * as fileApi from 'api/fileApi';
+import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.fetchFiles.TRIGGER),
+    ofType(actions.deleteStream.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(fileApi.get(values)).pipe(
-        map(res => normalize(res.data, [schema.file])),
-        map(entities => actions.fetchFiles.success(entities)),
-        startWith(actions.fetchFiles.request()),
-        catchError(err => of(actions.fetchFiles.failure(err))),
-      ),
-    ),
+    switchMap(({ params, options }) => {
+      return from(streamApi.remove(params)).pipe(
+        map(() => {
+          handleSuccess(options);
+          return actions.deleteStream.success(params);
+        }),
+        startWith(actions.deleteStream.request()),
+        catchError(res => of(actions.deleteStream.failure(res))),
+      );
+    }),
   );
+
+function handleSuccess(options) {
+  const { id, paperApi } = options;
+  if (paperApi) {
+    paperApi.removeElement(id);
+  }
+}

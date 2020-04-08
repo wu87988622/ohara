@@ -17,7 +17,7 @@
 import React from 'react';
 
 import { KIND, CELL_STATUS } from 'const';
-import { useConnectorActions, useStreamActions } from 'context';
+import { useConnectorActions } from 'context';
 import * as hooks from 'hooks';
 import { PaperContext } from '../Pipeline';
 import { sleep } from 'utils/common';
@@ -27,8 +27,8 @@ export const useDeleteCells = () => {
   const [activeStep, setActiveStep] = React.useState(0);
 
   const { deleteConnector, stopConnector } = useConnectorActions();
-  const deleteTopic = hooks.useDeleteTopicAction();
-  const { deleteStream, stopStream } = useStreamActions();
+  const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
+  const stopAndDeleteStream = hooks.useStopAndDeleteStreamAction();
 
   const deleteCells = async cells => {
     const cellNames = cells.map(cell => {
@@ -53,14 +53,13 @@ export const useDeleteCells = () => {
       }
 
       if (kind === KIND.stream) {
-        await stopStream(name);
-        await deleteStream(name);
+        stopAndDeleteStream({ name });
       }
 
       // Only pipeline-only topics are belong to this Pipeline and so need to
       // be deleted along with this pipeline
       if (kind === KIND.topic && !isShared) {
-        await deleteTopic(name);
+        stopAndDeleteTopic({ name });
       }
 
       index++;
