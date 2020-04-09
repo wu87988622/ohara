@@ -18,7 +18,6 @@ import { BasicResponse, Metrics } from './basicInterface';
 
 export enum SOURCES {
   jdbc = 'oharastream.ohara.connector.jdbc.source.JDBCSourceConnector',
-  json = 'oharastream.ohara.connector.jio.JsonIn',
   ftp = 'oharastream.ohara.connector.ftp.FtpSource',
   smb = 'oharastream.ohara.connector.smb.SmbSource',
   perf = 'oharastream.ohara.connector.perf.PerfSource',
@@ -28,7 +27,6 @@ export enum SINKS {
   console = 'oharastream.ohara.connector.console.ConsoleSink',
   ftp = 'oharastream.ohara.connector.ftp.FtpSink',
   hdfs = 'oharastream.ohara.connector.hdfs.sink.HDFSSink',
-  json = 'oharastream.ohara.connector.jio.JsonOut',
   smb = 'oharastream.ohara.connector.smb.SmbSink',
 }
 
