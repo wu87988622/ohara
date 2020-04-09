@@ -48,7 +48,7 @@ class TestPerformance4FtpSource extends BasicTestPerformance4Ftp {
             + (CsvConnectorDefinitions.ERROR_FOLDER_KEY -> JsString(
               PerformanceTestingUtils.createFolder(ftp, errorPath)
             ))
-            + (CsvConnectorDefinitions.FILE_CACHE_SIZE_KEY -> JsNumber(fileNameCacheSize))
+            + (CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_KEY -> JsNumber(fileNameCacheSize))
         )
         sleepUntilEnd()
       } finally if (cleanupTestData) {

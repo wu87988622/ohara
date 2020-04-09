@@ -35,16 +35,21 @@ public class CsvRecordConverter implements RecordConverter {
   public static final String CSV_PARTITION_KEY = "csv.file.path";
   public static final String CSV_OFFSET_KEY = "csv.file.line";
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   private final String path;
   private final List<String> topics;
   private final List<Column> schema;
 
   private final Map<String, String> partition;
   private final OffsetCache cache;
+  private final int maximumNumberOfLines;
 
   @Override
   public List<RowSourceRecord> convert(Stream<String> lines) {
-    Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(lines);
+    Map<Integer, List<Cell<String>>> cellsAndIndex = toCells(lines, maximumNumberOfLines);
     Map<Integer, Row> rowsAndIndex = transform(cellsAndIndex);
     List<RowSourceRecord> records = toRecords(rowsAndIndex);
     // ok. all data are prepared. let's update the cache
@@ -52,9 +57,15 @@ public class CsvRecordConverter implements RecordConverter {
     return records;
   }
 
-  /** read all lines from a reader, and then convert them to cells. */
+  /**
+   * read all lines from a reader, and then convert them to cells.
+   *
+   * @param lines the input stream
+   * @param maximumNumberOfLines the max number of converted lines
+   * @return data
+   */
   @VisibleForTesting
-  Map<Integer, List<Cell<String>>> toCells(Stream<String> lines) {
+  Map<Integer, List<Cell<String>>> toCells(Stream<String> lines, int maximumNumberOfLines) {
     Map<Integer, String> lineAndIndex =
         StreamUtils.zipWithIndex(lines)
             .filter(
@@ -63,29 +74,30 @@ public class CsvRecordConverter implements RecordConverter {
                   if (index == 0) return true;
                   return cache.predicate(path, index);
                 })
+            // the header must be included.
+            // increase maximumNumberOfLines only if it is smaller than Integer.MAX
+            .limit(Math.max(maximumNumberOfLines, maximumNumberOfLines + 1))
             .collect(Collectors.toMap(Pair::left, Pair::right));
 
-    if (lineAndIndex.size() > 1) {
-      String[] header =
-          Arrays.stream(lineAndIndex.get(0).split(CSV_REGEX))
-              .map(String::trim)
-              .toArray(String[]::new);
+    if (lineAndIndex.isEmpty()) return Collections.emptyMap();
 
-      return lineAndIndex.entrySet().stream()
-          .filter(e -> e.getKey() > 0)
-          .collect(
-              Collectors.toMap(
-                  Map.Entry::getKey,
-                  e -> {
-                    String line = e.getValue();
-                    String[] items = line.split(CSV_REGEX);
-                    return IntStream.range(0, items.length)
-                        .mapToObj(i -> Cell.of(header[i], items[i].trim()))
-                        .collect(Collectors.toList());
-                  }));
-    }
+    String[] header =
+        Arrays.stream(lineAndIndex.get(0).split(CSV_REGEX))
+            .map(String::trim)
+            .toArray(String[]::new);
 
-    return Collections.emptyMap();
+    return lineAndIndex.entrySet().stream()
+        .filter(e -> e.getKey() > 0)
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                e -> {
+                  String line = e.getValue();
+                  String[] items = line.split(CSV_REGEX);
+                  return IntStream.range(0, items.length)
+                      .mapToObj(i -> Cell.of(header[i], items[i].trim()))
+                      .collect(Collectors.toList());
+                }));
   }
 
   /**
@@ -180,9 +192,12 @@ public class CsvRecordConverter implements RecordConverter {
     private String path;
     private List<String> topics;
     private OffsetCache offsetCache;
+    private int maximumNumberOfLines = Integer.MAX_VALUE;
 
     // Optional parameters - initialized to default values
     private List<Column> schema = Collections.emptyList();
+
+    private Builder() {}
 
     public Builder path(String val) {
       path = val;
@@ -194,6 +209,12 @@ public class CsvRecordConverter implements RecordConverter {
       return this;
     }
 
+    @oharastream.ohara.common.annotations.Optional("default is Integer.MAX")
+    public Builder maximumNumberOfLines(int maximumNumberOfLines) {
+      this.maximumNumberOfLines = CommonUtils.requirePositiveInt(maximumNumberOfLines);
+      return this;
+    }
+
     public Builder offsetCache(OffsetCache val) {
       offsetCache = val;
       return this;
@@ -201,13 +222,13 @@ public class CsvRecordConverter implements RecordConverter {
 
     @oharastream.ohara.common.annotations.Optional("default is empty")
     public Builder schema(List<Column> val) {
-      schema = Objects.requireNonNull(val);
+      schema = new ArrayList<>(Objects.requireNonNull(val));
       return this;
     }
 
     @Override
     public CsvRecordConverter build() {
-      Objects.requireNonNull(path);
+      CommonUtils.requireNonEmpty(path);
       CommonUtils.requireNonEmpty(topics);
       Objects.requireNonNull(offsetCache);
       return new CsvRecordConverter(this);
@@ -219,6 +240,7 @@ public class CsvRecordConverter implements RecordConverter {
     topics = builder.topics;
     schema = builder.schema;
     cache = builder.offsetCache;
+    maximumNumberOfLines = builder.maximumNumberOfLines;
     partition = Collections.singletonMap(CSV_PARTITION_KEY, builder.path);
   }
 }

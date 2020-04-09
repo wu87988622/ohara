@@ -122,7 +122,7 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -148,7 +148,7 @@ object ZookeeperApi {
       noJsNull(settings).get(DATA_DIR_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: JsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -185,14 +185,14 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_FORMAT: OharaJsonFormat[ZookeeperClusterInfo] =
-    JsonRefiner[ZookeeperClusterInfo]
+  private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_FORMAT: JsonFormat[ZookeeperClusterInfo] =
+    JsonFormatBuilder[ZookeeperClusterInfo]
       .format(new RootJsonFormat[ZookeeperClusterInfo] {
         private[this] val format                               = jsonFormat5(ZookeeperClusterInfo)
         override def read(json: JsValue): ZookeeperClusterInfo = format.read(extractSetting(json.asJsObject))
         override def write(obj: ZookeeperClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
-      .refine
+      .build
 
   /**
     * used to generate the payload and url for POST/PUT request.

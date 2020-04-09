@@ -16,6 +16,7 @@
 
 package oharastream.ohara.client.configurator.v0
 
+import oharastream.ohara.common.setting.SettingDef
 import spray.json.{JsValue, RootJsonFormat}
 
 /**
@@ -27,7 +28,29 @@ import spray.json.{JsValue, RootJsonFormat}
   * at both url and payload, and both of them must go through the same name string check.
   * @tparam T object
   */
-trait OharaJsonFormat[T] extends RootJsonFormat[T] {
+trait JsonFormat[T] extends RootJsonFormat[T] {
+  /**
+    * create another format based on this and more rules.
+    * @param definition definition
+    * @return new format
+    */
+  def more(definition: SettingDef): JsonFormat[T] = more(Seq(definition))
+
+  /**
+    * create another format based on this and more rules.
+    * @param definitions definitions
+    * @return new format
+    */
+  def more(definitions: Seq[SettingDef]): JsonFormat[T]
+
+  /**
+    * serialize and deseriailze the object. The input may be NOT same to output since the format rules may change something
+    * according to the definitions
+    * @param obj origin object
+    * @return defined object
+    */
+  def refine(obj: T): T = read(write(obj))
+
   /**
     * verify the input key and value. It always pass if the input key is not associated to any check rule.
     * @param key input key

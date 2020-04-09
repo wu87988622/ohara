@@ -118,7 +118,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
     value(numberOfConnectorTasksKey).map(_.toInt).getOrElse(numberOfConnectorTasksDefault)
 
   private[this] val fileNameCacheKey         = PerformanceTestingUtils.FILENAME_CACHE_SIZE_KEY
-  private[this] val fileNameCacheSizeDefault = CsvConnectorDefinitions.FILE_CACHE_SIZE_DEFAULT
+  private[this] val fileNameCacheSizeDefault = CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_DEFAULT
   protected val fileNameCacheSize: Int =
     value(fileNameCacheKey).map(_.toInt).getOrElse(fileNameCacheSizeDefault)
 

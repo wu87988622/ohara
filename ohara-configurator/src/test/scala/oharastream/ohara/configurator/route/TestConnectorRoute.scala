@@ -24,9 +24,10 @@ import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.kafka.RowDefaultPartitioner
+import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
-import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
+import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -51,6 +52,14 @@ class TestConnectorRoute extends OharaTest {
   private[this] val bkKey     = brokerClusterInfo.key
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
+
+  private[this] val fakeFtpSettings: Map[String, JsValue] = Map(
+    oharastream.ohara.connector.ftp.FTP_HOSTNAME_KEY  -> JsString("hostname"),
+    oharastream.ohara.connector.ftp.FTP_PORT_KEY      -> JsNumber(22),
+    oharastream.ohara.connector.ftp.FTP_USER_NAME_KEY -> JsString("user"),
+    oharastream.ohara.connector.ftp.FTP_PASSWORD_KEY  -> JsString("password"),
+    CsvConnectorDefinitions.OUTPUT_FOLDER_KEY         -> JsString("output")
+  )
 
   @Before
   def setupTopic(): Unit = {
@@ -179,6 +188,7 @@ class TestConnectorRoute extends OharaTest {
     val connector = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topicKey)
@@ -373,6 +383,7 @@ class TestConnectorRoute extends OharaTest {
     val connectorDesc = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .tags(tags)
         .workerClusterKey(workerClusterInfo.key)
         .topicKey(topicKey)
@@ -387,6 +398,7 @@ class TestConnectorRoute extends OharaTest {
     val connectorDesc2 = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .name(connectorDesc.name)
         .tags(tags2)
         .update()
@@ -406,6 +418,7 @@ class TestConnectorRoute extends OharaTest {
     val connectorDesc = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
         .create()
@@ -424,6 +437,7 @@ class TestConnectorRoute extends OharaTest {
     val connectorDesc = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
         .create()
@@ -442,6 +456,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .name(name)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
         .create()
@@ -451,6 +466,7 @@ class TestConnectorRoute extends OharaTest {
         result(
           connectorApi.request
             .className("oharastream.ohara.connector.ftp.FtpSink")
+            .settings(fakeFtpSettings)
             .topicKey(topic.key)
             .workerClusterKey(workerClusterInfo.key)
             .create()
@@ -470,6 +486,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .group(group)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .workerClusterKey(workerClusterInfo.key)
         .create()
@@ -479,6 +496,7 @@ class TestConnectorRoute extends OharaTest {
         result(
           connectorApi.request
             .className("oharastream.ohara.connector.ftp.FtpSink")
+            .settings(fakeFtpSettings)
             .topicKey(topic.key)
             .workerClusterKey(workerClusterInfo.key)
             .create()
@@ -503,6 +521,7 @@ class TestConnectorRoute extends OharaTest {
     val connectorInfo = result(
       connectorApi.request
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .topicKey(topic.key)
         .tags(tags)
         .workerClusterKey(workerClusterInfo.key)
@@ -513,6 +532,7 @@ class TestConnectorRoute extends OharaTest {
         result(
           connectorApi.request
             .className("oharastream.ohara.connector.ftp.FtpSink")
+            .settings(fakeFtpSettings)
             .topicKey(topic.key)
             .workerClusterKey(workerClusterInfo.key)
             .create()
@@ -539,6 +559,7 @@ class TestConnectorRoute extends OharaTest {
         result(
           connectorApi.request
             .className("oharastream.ohara.connector.ftp.FtpSink")
+            .settings(fakeFtpSettings)
             .topicKey(topic.key)
             .workerClusterKey(workerClusterInfo.key)
             .create()
@@ -566,6 +587,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .topicKey(topic.key)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .workerClusterKey(worker.key)
         .create()
     )
@@ -590,6 +612,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .topicKey(topic.key)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .workerClusterKey(workerClusterInfo.key)
         .create()
     )
@@ -614,6 +637,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .topicKey(topic.key)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .workerClusterKey(workerClusterInfo.key)
         .tags(tags1)
         .create()
@@ -626,6 +650,7 @@ class TestConnectorRoute extends OharaTest {
           connectorApi.request
             .topicKey(topic.key)
             .className("oharastream.ohara.connector.ftp.FtpSink")
+            .settings(fakeFtpSettings)
             .workerClusterKey(workerClusterInfo.key)
             .tags(tags2)
             .create()
@@ -646,6 +671,7 @@ class TestConnectorRoute extends OharaTest {
       connectorApi.request
         .topicKey(topic.key)
         .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
         .workerClusterKey(workerClusterInfo.key)
         .create()
     ).partitionClass shouldBe classOf[RowDefaultPartitioner].getName

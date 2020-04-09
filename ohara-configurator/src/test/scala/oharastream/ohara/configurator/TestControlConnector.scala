@@ -23,7 +23,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.ftp.FtpSource
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import oharastream.ohara.testing.WithBrokerWorker
-import org.junit.{After, Test}
+import org.junit.{After, Ignore, Test}
 import org.scalatest.Matchers._
 import spray.json.{JsArray, JsBoolean, JsNumber, JsString}
 
@@ -456,6 +456,53 @@ class TestControlConnector extends WithBrokerWorker {
     await(() => result(connectorApi.get(source.key)).tasksStatus.nonEmpty)
     result(connectorApi.get(source.key)).tasksStatus.filter(_.master).foreach(_.state shouldBe State.RUNNING)
     result(connectorApi.get(source.key)).tasksStatus.filterNot(_.master).foreach(_.state shouldBe State.FAILED)
+  }
+
+  @Ignore("this test case should be enabled by https://github.com/oharastream/ohara/issues/4506")
+  @Test
+  def testMaximumNumberOfLines(): Unit = {
+    val topic = result(
+      topicApi.request
+        .name(CommonUtils.randomString(10))
+        .brokerClusterKey(
+          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+        )
+        .create()
+    )
+    result(topicApi.start(topic.key))
+    intercept[IllegalArgumentException] {
+      result(
+        connectorApi.request
+          .className(classOf[FtpSource].getName)
+          .topicKey(topic.key)
+          .numberOfTasks(1)
+          .workerClusterKey(workerClusterInfo.key)
+          .setting(oharastream.ohara.connector.ftp.FTP_HOSTNAME_KEY, JsString("hostname"))
+          .setting(oharastream.ohara.connector.ftp.FTP_PORT_KEY, JsNumber(22))
+          .setting(oharastream.ohara.connector.ftp.FTP_USER_NAME_KEY, JsString("user"))
+          .setting(oharastream.ohara.connector.ftp.FTP_PASSWORD_KEY, JsString("password"))
+          .setting(CsvConnectorDefinitions.INPUT_FOLDER_KEY, JsString("input"))
+          .setting(CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY, JsNumber(-1))
+          .create()
+      )
+    }.getMessage should include(CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY)
+
+    intercept[IllegalArgumentException] {
+      result(
+        connectorApi.request
+          .className(classOf[FtpSource].getName)
+          .topicKey(topic.key)
+          .numberOfTasks(1)
+          .workerClusterKey(workerClusterInfo.key)
+          .setting(oharastream.ohara.connector.ftp.FTP_HOSTNAME_KEY, JsString("hostname"))
+          .setting(oharastream.ohara.connector.ftp.FTP_PORT_KEY, JsNumber(22))
+          .setting(oharastream.ohara.connector.ftp.FTP_USER_NAME_KEY, JsString("user"))
+          .setting(oharastream.ohara.connector.ftp.FTP_PASSWORD_KEY, JsString("password"))
+          .setting(CsvConnectorDefinitions.INPUT_FOLDER_KEY, JsString("input"))
+          .setting(CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY, JsNumber(0))
+          .create()
+      )
+    }.getMessage should include(CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY)
   }
 
   @After

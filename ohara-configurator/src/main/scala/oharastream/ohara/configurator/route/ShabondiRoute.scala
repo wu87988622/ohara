@@ -59,12 +59,20 @@ private[configurator] object ShabondiRoute {
       }
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
-        val defaultSettings = shabondiType match {
-          case ShabondiType.Source => extractDefaultValues(ShabondiDefinitions.sourceOnlyDefinitions)
-          case ShabondiType.Sink   => extractDefaultValues(ShabondiDefinitions.sinkOnlyDefinitions)
-        }
         ShabondiClusterInfo(
-          settings = defaultSettings ++ creation.settings,
+          settings = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
+            .more(
+              (shabondiType match {
+                case ShabondiType.Source => ShabondiDefinitions.sourceOnlyDefinitions
+                case ShabondiType.Sink   => ShabondiDefinitions.sinkOnlyDefinitions
+              })
+              // we should add definition having default value to complete Creation request but
+              // TODO: we should check all definitions in Creation phase
+              // https://github.com/oharastream/ohara/issues/4506
+                .filter(_.hasDefault)
+            )
+            .refine(creation)
+            .settings,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,

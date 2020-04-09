@@ -55,7 +55,7 @@ object ContainerPlatform {
     def containerClient: ContainerClient
   }
 
-  private[ContainerPlatform] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+  private[ContainerPlatform] def result[T](f: Future[T]): T = Await.result(f, 120 seconds)
 
   val K8S_MASTER_KEY: String    = "ohara.it.k8s"
   val K8S_METRICS_SERVER_URL    = "ohara.it.k8s.metrics.server"
@@ -295,23 +295,29 @@ object ContainerPlatform {
             .name(configuratorName)
             .create()
         )
-
-        val nodeApi = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
-        // wait configurator to run and update the nodes to configurator
-        CommonUtils.await(
-          () => {
-            val existentNodes = try result(nodeApi.list())
-            catch {
-              case _: Throwable => Seq.empty
-            }
-            nodes
-              .filterNot(node => existentNodes.exists(_.hostname == node.hostname))
-              .foreach(node => Releasable.close(() => result(nodeApi.request.node(node).create())))
-            existentNodes.size == nodes.size
-          },
-          java.time.Duration.ofSeconds(60)
-        )
-        (configuratorName, configuratorHostname, configuratorPort)
+        try {
+          val nodeApi = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
+          // wait configurator to run and update the nodes to configurator
+          CommonUtils.await(
+            () => {
+              val existentNodes = try result(nodeApi.list())
+              catch {
+                case _: Throwable => Seq.empty
+              }
+              nodes
+                .filterNot(node => existentNodes.exists(_.hostname == node.hostname))
+                .foreach(node => Releasable.close(() => result(nodeApi.request.node(node).create())))
+              existentNodes.size == nodes.size
+            },
+            java.time.Duration.ofSeconds(60)
+          )
+          (configuratorName, configuratorHostname, configuratorPort)
+        } catch {
+          case e: Throwable =>
+            Releasable.close(() => result(containerClient.forceRemove(configuratorName)))
+            Releasable.close(containerClient)
+            throw e
+        }
       } finally Releasable.close(containerClient)
 
     override def build: ContainerPlatform = {

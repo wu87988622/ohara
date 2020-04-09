@@ -20,6 +20,7 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMP
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_HASH_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_TOTAL_KEY;
 import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.COLUMNS_DEFINITION;
@@ -40,6 +41,12 @@ public class TestCsvSourceConfig extends OharaTest {
 
   private static CsvSourceConfig config(String key, String value) {
     return CsvSourceConfig.of(TaskSetting.of(Collections.singletonMap(key, value)));
+  }
+
+  @Test
+  public void testMaximumNumberOfLines() {
+    CsvSourceConfig config = config(MAXIMUM_NUMBER_OF_LINES_KEY, "10");
+    Assert.assertEquals(config.maximumNumberOfLines(), 10);
   }
 
   @Test

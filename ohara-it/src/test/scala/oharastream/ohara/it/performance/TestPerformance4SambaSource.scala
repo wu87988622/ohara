@@ -48,7 +48,7 @@ class TestPerformance4SambaSource extends BasicTestPerformance4Samba {
           + (CsvConnectorDefinitions.ERROR_FOLDER_KEY -> JsString(
             PerformanceTestingUtils.createFolder(samba, errorPath)
           ))
-          + (CsvConnectorDefinitions.FILE_CACHE_SIZE_KEY -> JsNumber(fileNameCacheSize))
+          + (CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_KEY -> JsNumber(fileNameCacheSize))
       )
       sleepUntilEnd()
     } finally if (needDeleteData) {

@@ -108,16 +108,29 @@ public final class CsvConnectorDefinitions {
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 
-  public static final String FILE_CACHE_SIZE_KEY = "listfilequeue.number";
-  public static final int FILE_CACHE_SIZE_DEFAULT = 4096;
-  public static final SettingDef FILE_CACHE_SIZE_DEFINITION =
+  public static final String SIZE_OF_FILE_CACHE_KEY = "size.of.file.cache";
+  public static final int SIZE_OF_FILE_CACHE_DEFAULT = 4096;
+  public static final SettingDef SIZE_OF_FILE_CACHE_DEFINITION =
       SettingDef.builder()
           .displayName("Size of file cache")
           .documentation(
               "The files listed from remote server are cached in the connector "
                   + " so as to reduce the count of sending expensive list operation.")
-          .key(FILE_CACHE_SIZE_KEY)
-          .positiveNumber(FILE_CACHE_SIZE_DEFAULT)
+          .key(SIZE_OF_FILE_CACHE_KEY)
+          .positiveNumber(SIZE_OF_FILE_CACHE_DEFAULT)
+          .orderInGroup(COUNTER.getAndIncrement())
+          .build();
+
+  public static final String MAXIMUM_NUMBER_OF_LINES_KEY = "maximum.number.of.lines";
+  public static final int MAXIMUM_NUMBER_OF_LINES_DEFAULT = 1000;
+  public static final SettingDef MAXIMUM_NUMBER_OF_LINES_DEFINITION =
+      SettingDef.builder()
+          .displayName("Maximum number of lines to be processed")
+          .documentation(
+              "the max number of lines can be process by each loop. If the csv files is too large, "
+                  + "the loop of processing file will take a long time to produce output.")
+          .key(MAXIMUM_NUMBER_OF_LINES_KEY)
+          .positiveNumber(MAXIMUM_NUMBER_OF_LINES_DEFAULT)
           .orderInGroup(COUNTER.getAndIncrement())
           .build();
 

@@ -27,7 +27,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions._
-import oharastream.ohara.kafka.connector.csv.CsvSourceConnector
+import oharastream.ohara.kafka.connector.csv.{CsvConnectorDefinitions, CsvSourceConnector}
 import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
@@ -52,7 +52,8 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
   )
   private[this] val rows: Seq[Row] = Seq(
     Row.of(Cell.of("name", "chia"), Cell.of("ranking", 1), Cell.of("single", false)),
-    Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true))
+    Row.of(Cell.of("name", "jack"), Cell.of("ranking", 99), Cell.of("single", true)),
+    Row.of(Cell.of("name", "girl"), Cell.of("ranking", 10000), Cell.of("single", false))
   )
   private[this] val header: String = rows.head.cells().asScala.map(_.name).mkString(",")
   private[this] val data: Seq[String] = rows.map(row => {
@@ -330,6 +331,16 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val newProps                 = props - FILE_ENCODE_KEY
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
+    try {
+      checkFileCount(1, 0)
+      checkTopicData(topicKey)
+    } finally result(connectorAdmin.delete(connectorKey))
+  }
+
+  @Test
+  def testMaximumNumberOfLines(): Unit = {
+    val (topicKey, connectorKey) =
+      setupConnector(props + (CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY -> "1"), schema)
     try {
       checkFileCount(1, 0)
       checkTopicData(topicKey)

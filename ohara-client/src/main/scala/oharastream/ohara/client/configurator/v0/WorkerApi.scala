@@ -203,7 +203,7 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -233,7 +233,7 @@ object WorkerApi {
     def freePorts: Option[Set[Int]] =
       noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
   }
-  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: JsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -289,14 +289,14 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val WORKER_CLUSTER_INFO_FORMAT: OharaJsonFormat[WorkerClusterInfo] =
-    JsonRefiner[WorkerClusterInfo]
+  private[ohara] implicit val WORKER_CLUSTER_INFO_FORMAT: JsonFormat[WorkerClusterInfo] =
+    JsonFormatBuilder[WorkerClusterInfo]
       .format(new RootJsonFormat[WorkerClusterInfo] {
         private[this] val format                            = jsonFormat5(WorkerClusterInfo)
         override def read(json: JsValue): WorkerClusterInfo = format.read(extractSetting(json.asJsObject))
         override def write(obj: WorkerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
-      .refine
+      .build
 
   /**
     * used to generate the payload and url for POST/PUT request.

@@ -54,7 +54,7 @@ object NodeApi {
     tags: Option[Map[String, JsValue]]
   )
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonRefiner[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().refine
+    JsonFormatBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().build
 
   case class Creation(
     hostname: String,
@@ -66,8 +66,8 @@ object NodeApi {
     override def group: String = GROUP_DEFAULT
     override def name: String  = hostname
   }
-  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
-    JsonRefiner[Creation]
+  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
+    JsonFormatBuilder[Creation]
       .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)
@@ -75,7 +75,7 @@ object NodeApi {
       .rejectEmptyString()
       .stringRestriction("hostname", SettingDef.HOSTNAME_REGEX)
       .nullToEmptyObject(TAGS_KEY)
-      .refine
+      .build
 
   case class NodeService(name: String, clusterKeys: Seq[ObjectKey])
   implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)

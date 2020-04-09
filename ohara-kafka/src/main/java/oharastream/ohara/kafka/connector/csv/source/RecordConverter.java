@@ -31,7 +31,8 @@ public interface RecordConverter {
    * exception.
    *
    * @param lines a stream of String
-   * @return a array from RowSourceRecord
+   * @return a array from RowSourceRecord. If nothing is readable (i.e EOF), an empty collection is
+   *     returned.
    */
   List<RowSourceRecord> convert(Stream<String> lines);
 }

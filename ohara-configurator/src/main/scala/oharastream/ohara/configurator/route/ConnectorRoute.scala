@@ -62,7 +62,16 @@ private[configurator] object ConnectorRoute {
       .map(_.find(_.className == creation.className).map(_.settingDefinitions).getOrElse(Seq.empty))
       .map { definitions =>
         ConnectorInfo(
-          settings = extractDefaultValues(definitions) ++ creation.settings,
+          settings = CREATION_FORMAT
+            .more(
+              definitions
+              // we should add definition having default value to complete Creation request but
+              // TODO: we should check all definitions in Creation phase
+              // https://github.com/oharastream/ohara/issues/4506
+                .filter(_.hasDefault)
+            )
+            .refine(creation)
+            .settings,
           // we don't need to fetch connector from kafka since it has not existed in kafka.
           state = None,
           aliveNodes = Set.empty,

@@ -26,13 +26,7 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{
-  ClusterCreation,
-  ClusterInfo,
-  ClusterUpdating,
-  ErrorApi,
-  OharaJsonFormat
-}
+import oharastream.ohara.client.configurator.v0.{ClusterCreation, ClusterInfo, ClusterUpdating, ErrorApi, JsonFormat}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
@@ -40,7 +34,7 @@ import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.TopicAdmin
-import spray.json.{DeserializationException, JsArray, JsBoolean, JsNumber, JsString, JsValue, RootJsonFormat}
+import spray.json.{DeserializationException, JsArray, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
@@ -103,7 +97,7 @@ package object route {
     meterCache: MetricsCache,
     collie: Collie,
     serviceCollie: ServiceCollie,
-    rm: OharaJsonFormat[Creation],
+    rm: JsonFormat[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Cluster],
     executionContext: ExecutionContext
@@ -453,27 +447,6 @@ package object route {
     adminCleaner: AdminCleaner,
     executionContext: ExecutionContext
   ): Future[TopicAdmin] = brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
-
-  def extractDefaultValues(settingDefs: Seq[SettingDef]): Map[String, JsValue] =
-    settingDefs
-      .filter(_.hasDefault)
-      .map { definition =>
-        val defaultValue = definition.defaultValue().get()
-        definition.key() -> (defaultValue match {
-          case s: String            => JsString(s)
-          case i: java.lang.Short   => JsNumber(i.toInt)
-          case i: java.lang.Integer => JsNumber(i)
-          case i: java.lang.Long    => JsNumber(i)
-          case i: java.lang.Float   => JsNumber(i.toDouble)
-          case i: java.lang.Double  => JsNumber(i)
-          case b: java.lang.Boolean => JsBoolean(b)
-          case _ =>
-            throw new UnsupportedOperationException(
-              s"this exception means that we have a new type(${defaultValue.getClass.getName}) added to SettingDef but our route doesn't understand it :("
-            )
-        })
-      }
-      .toMap
 
   /**
     * a helper method to Updating request that it remove all fields declared as non-updatable.

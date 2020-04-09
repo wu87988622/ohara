@@ -87,16 +87,16 @@ final object ShabondiApi {
       noJsNull(settings).get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
   }
 
-  implicit val SHABONDI_CLUSTER_INFO_JSON_FORMAT: OharaJsonFormat[ShabondiClusterInfo] =
-    JsonRefiner[ShabondiClusterInfo]
+  implicit val SHABONDI_CLUSTER_INFO_JSON_FORMAT: JsonFormat[ShabondiClusterInfo] =
+    JsonFormatBuilder[ShabondiClusterInfo]
       .format(new RootJsonFormat[ShabondiClusterInfo] {
         private[this] val format                              = jsonFormat6(ShabondiClusterInfo)
         override def write(obj: ShabondiClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
         override def read(json: JsValue): ShabondiClusterInfo = format.read(extractSetting(json.asJsObject))
       })
-      .refine
+      .build
 
-  implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: OharaJsonFormat[ShabondiClusterCreation] =
+  implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: JsonFormat[ShabondiClusterCreation] =
     rulesOfCreation[ShabondiClusterCreation](
       new RootJsonFormat[ShabondiClusterCreation] {
         override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.settings))
@@ -105,7 +105,7 @@ final object ShabondiApi {
       ShabondiDefinitions.basicDefinitions
     )
 
-  implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: OharaJsonFormat[ShabondiClusterUpdating] =
+  implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: JsonFormat[ShabondiClusterUpdating] =
     rulesOfUpdating[ShabondiClusterUpdating](
       new RootJsonFormat[ShabondiClusterUpdating] {
         override def write(obj: ShabondiClusterUpdating): JsValue = JsObject(noJsNull(obj.settings))

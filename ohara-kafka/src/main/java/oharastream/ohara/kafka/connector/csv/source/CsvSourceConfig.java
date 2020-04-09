@@ -16,7 +16,17 @@
 
 package oharastream.ohara.kafka.connector.csv.source;
 
-import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.*;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMPLETED_FOLDER_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFAULT;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_DEFAULT;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_DEFAULT;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_HASH_KEY;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_TOTAL_KEY;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +42,9 @@ public interface CsvSourceConfig {
 
   /** @return the hash of this task */
   int hash();
+
+  /** @return the max number of processed lines in each poll */
+  int maximumNumberOfLines();
 
   /** @return the folder containing the csv files */
   String inputFolder();
@@ -80,13 +93,20 @@ public interface CsvSourceConfig {
       }
 
       @Override
+      public int maximumNumberOfLines() {
+        return setting
+            .intOption(MAXIMUM_NUMBER_OF_LINES_KEY)
+            .orElse(MAXIMUM_NUMBER_OF_LINES_DEFAULT);
+      }
+
+      @Override
       public String inputFolder() {
         return setting.stringValue(INPUT_FOLDER_KEY);
       }
 
       @Override
       public int fileCacheSize() {
-        return setting.intOption(FILE_CACHE_SIZE_KEY).orElse(FILE_CACHE_SIZE_DEFAULT);
+        return setting.intOption(SIZE_OF_FILE_CACHE_KEY).orElse(SIZE_OF_FILE_CACHE_DEFAULT);
       }
 
       @Override

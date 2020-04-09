@@ -100,7 +100,7 @@ object ConnectorApi {
 
   val DEFINITIONS: Map[String, SettingDef] = ConnectorDefUtils.DEFAULT.asScala.toMap
 
-  implicit val CREATION_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_FORMAT: JsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -141,7 +141,7 @@ object ConnectorApi {
           case _ => // do nothing
         }
       )
-      .refine
+      .build
 
   final class Updating(val settings: Map[String, JsValue]) {
     private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
@@ -162,7 +162,7 @@ object ConnectorApi {
     def partitionerClass: Option[String] = noJsNull(settings).get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner[Updating]
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonFormatBuilder[Updating]
     .format(new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
@@ -174,7 +174,7 @@ object ConnectorApi {
         case _          => // do nothing
       }
     )
-    .refine
+    .build
 
   import MetricsApi._
 

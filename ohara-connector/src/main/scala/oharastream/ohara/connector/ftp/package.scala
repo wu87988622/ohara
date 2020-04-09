@@ -84,5 +84,5 @@ package object ftp {
   @VisibleForTesting private[ftp] val FILE_NEED_HEADER_KEY: String = CsvConnectorDefinitions.FILE_NEED_HEADER_KEY
   @VisibleForTesting private[ftp] val FILE_ENCODE_KEY: String      = CsvConnectorDefinitions.FILE_ENCODE_KEY
   @VisibleForTesting private[ftp] val FILE_CACHE_SIZE_KEY: String =
-    CsvConnectorDefinitions.FILE_CACHE_SIZE_KEY
+    CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_KEY
 }

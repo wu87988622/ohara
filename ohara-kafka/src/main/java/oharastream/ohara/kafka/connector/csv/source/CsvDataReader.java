@@ -16,7 +16,8 @@
 
 package oharastream.ohara.kafka.connector.csv.source;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -48,15 +49,17 @@ public class CsvDataReader implements DataReader {
     this.offsetCache = new CsvOffsetCache();
   }
 
+  @Override
   public List<RowSourceRecord> read(String path) {
     try {
       offsetCache.loadIfNeed(context, path);
       CsvRecordConverter converter =
-          new CsvRecordConverter.Builder()
+          CsvRecordConverter.builder()
               .path(path)
               .topics(config.topicNames())
               .offsetCache(offsetCache)
               .schema(config.columns())
+              .maximumNumberOfLines(config.maximumNumberOfLines())
               .build();
 
       List<RowSourceRecord> records;
@@ -66,7 +69,8 @@ public class CsvDataReader implements DataReader {
         records = converter.convert(reader.lines());
       }
 
-      handleCompletedFile(path);
+      // eof so we mark the file as "completed"
+      if (records.isEmpty()) handleCompletedFile(path);
       return records;
     } catch (Exception e) {
       LOG.error("failed to handle " + path, e);

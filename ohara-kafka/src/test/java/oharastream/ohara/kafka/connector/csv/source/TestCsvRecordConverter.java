@@ -16,10 +16,18 @@
 
 package oharastream.ohara.kafka.connector.csv.source;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.function.Supplier;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,7 +63,7 @@ public class TestCsvRecordConverter extends OharaTest {
   }
 
   private CsvRecordConverter createConverter() {
-    return new CsvRecordConverter.Builder()
+    return CsvRecordConverter.builder()
         .path(path)
         .topics(topicNames)
         .offsetCache(new FakeOffsetCache())
@@ -63,7 +71,7 @@ public class TestCsvRecordConverter extends OharaTest {
   }
 
   private CsvRecordConverter createConverter(List<Column> schema) {
-    return new CsvRecordConverter.Builder()
+    return CsvRecordConverter.builder()
         .path(path)
         .topics(topicNames)
         .offsetCache(new FakeOffsetCache())
@@ -73,17 +81,8 @@ public class TestCsvRecordConverter extends OharaTest {
 
   private BufferedReader createReader() throws IOException {
     return new BufferedReader(
-        new InputStreamReader(new FileInputStream(tempFile), Charset.forName("UTF-8")));
+        new InputStreamReader(new FileInputStream(tempFile), StandardCharsets.UTF_8));
   }
-
-  private Supplier<InputStreamReader> createReaderSupplier =
-      () -> {
-        try {
-          return new InputStreamReader(new FileInputStream(tempFile));
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
-        }
-      };
 
   private Map<Integer, List<Cell<String>>> setupInputData() {
     String[] header = new String[] {"cf1", "cf2", "cf3"};
@@ -144,7 +143,7 @@ public class TestCsvRecordConverter extends OharaTest {
   @Test
   public void testTransform_WithSingleColumn() {
     Column column = Column.builder().name("cf1").dataType(DataType.STRING).order(0).build();
-    converter = createConverter(Arrays.asList(column));
+    converter = createConverter(Collections.singletonList(column));
     data = setupInputData();
     Map<Integer, Row> transformedData = converter.transform(data);
     Assert.assertEquals(data.size(), transformedData.size());
@@ -161,7 +160,7 @@ public class TestCsvRecordConverter extends OharaTest {
     return data.entrySet().stream()
         .collect(
             Collectors.toMap(
-                e -> e.getKey(), e -> Row.of(e.getValue().stream().toArray(Cell[]::new))));
+                Map.Entry::getKey, e -> Row.of(e.getValue().stream().toArray(Cell[]::new))));
   }
 
   @Test
@@ -185,7 +184,7 @@ public class TestCsvRecordConverter extends OharaTest {
     Assert.assertTrue(converter.convertByType("4", DataType.FLOAT) instanceof Float);
     Assert.assertTrue(converter.convertByType("5", DataType.DOUBLE) instanceof Double);
     Assert.assertTrue(converter.convertByType("str", DataType.STRING) instanceof String);
-    Assert.assertTrue(converter.convertByType("obj", DataType.OBJECT) instanceof Object);
+    Assert.assertNotNull(converter.convertByType("obj", DataType.OBJECT));
   }
 
   @Test(expected = NumberFormatException.class)
@@ -238,8 +237,31 @@ public class TestCsvRecordConverter extends OharaTest {
     data = setupInputData();
     try (BufferedReader reader = createReader()) {
       Stream<String> lines = reader.lines();
-      Assert.assertEquals(data, converter.toCells(lines));
+      Assert.assertEquals(data, converter.toCells(lines, Integer.MAX_VALUE));
     }
+  }
+
+  @Test
+  public void testToCellsWithMaximumNumberOfLines() {
+    converter = createConverter();
+    data = setupInputData();
+    IntStream.range(0, data.size())
+        .forEach(
+            index -> {
+              int expectedLines = index + 1;
+              try (BufferedReader reader = createReader()) {
+                Stream<String> lines = reader.lines();
+                Map<Integer, List<Cell<String>>> converted =
+                    converter.toCells(lines, expectedLines);
+                Assert.assertEquals(expectedLines, converted.size());
+                IntStream.range(0, expectedLines)
+                    .forEach(
+                        cellsIndex ->
+                            Assert.assertEquals(data.get(cellsIndex), converted.get(cellsIndex)));
+              } catch (IOException e) {
+                throw new AssertionError(e);
+              }
+            });
   }
 
   @Test
@@ -256,7 +278,7 @@ public class TestCsvRecordConverter extends OharaTest {
   @Test
   public void testConvert_IfAllCached() throws IOException {
     converter =
-        new CsvRecordConverter.Builder()
+        CsvRecordConverter.builder()
             .path(path)
             .topics(topicNames)
             .offsetCache(
@@ -297,7 +319,7 @@ public class TestCsvRecordConverter extends OharaTest {
     Assert.assertEquals("5", splits2[2]);
   }
 
-  class FakeOffsetCache implements OffsetCache {
+  private static class FakeOffsetCache implements OffsetCache {
     @Override
     public void loadIfNeed(RowSourceContext context, String path) {
       // DO NOTHING

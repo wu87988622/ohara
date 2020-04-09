@@ -37,7 +37,7 @@ object ObjectApi {
 
     override def tags: Map[String, JsValue] = settings.tags.get
   }
-  private[ohara] implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
     rulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(obj.settings)
@@ -45,7 +45,7 @@ object ObjectApi {
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .nullToEmptyObject(TAGS_KEY)
-      .refine
+      .build
 
   final class Updating(val settings: Map[String, JsValue]) {
     // We use the update parser to get the name and group

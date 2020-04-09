@@ -72,7 +72,7 @@ object StreamApi {
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
   }
-  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -100,7 +100,7 @@ object StreamApi {
     def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
-  implicit val UPDATING_JSON_FORMAT: OharaJsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: JsonFormat[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -152,8 +152,8 @@ object StreamApi {
     override protected def raw: Map[String, JsValue] = STREAM_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
-  private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: OharaJsonFormat[StreamClusterInfo] =
-    JsonRefiner[StreamClusterInfo]
+  private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: JsonFormat[StreamClusterInfo] =
+    JsonFormatBuilder[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
         private[this] val format                            = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
@@ -165,7 +165,7 @@ object StreamApi {
           flattenSettings(JsObject(fields))
         }
       })
-      .refine
+      .build
 
   /**
     * used to generate the payload and url for POST/PUT request.

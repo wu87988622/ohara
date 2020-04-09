@@ -50,6 +50,8 @@ public class TestCsvDataReader extends WithFakeStorage {
     List<RowSourceRecord> records = dataReader.read(INPUT_FILE.toString());
 
     verifyRecords(records);
+    // read again and no data is return. Also, the input file is moved to completed.folder
+    Assert.assertEquals(0, dataReader.read(INPUT_FILE.toString()).size());
     verifyFileSize(0, 1, 0);
   }
 

@@ -83,6 +83,8 @@ private[configurator] object StreamRoute {
           throw DeserializationException(s"the class:$className is not in files:${fileInfos.map(_.key).mkString(",")}")
 
         StreamClusterInfo(
+          // TODO: we should check all definitions in Creation phase
+          // https://github.com/oharastream/ohara/issues/4506
           settings = StreamApi.access.request.settings(creation.settings).className(className).creation.settings,
           aliveNodes = Set.empty,
           state = None,

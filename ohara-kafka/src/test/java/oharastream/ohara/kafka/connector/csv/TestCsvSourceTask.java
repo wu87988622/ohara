@@ -46,7 +46,7 @@ public class TestCsvSourceTask extends OharaTest {
     settings.put(CsvConnectorDefinitions.ERROR_FOLDER_KEY, "/error");
     settings.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, "1");
     settings.put(CsvConnectorDefinitions.TASK_HASH_KEY, "10");
-    settings.put(CsvConnectorDefinitions.FILE_CACHE_SIZE_KEY, "3");
+    settings.put(CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_KEY, "3");
     settings.put(MockCsvSourceTask.MOCK_HOST_NAME_KEY, "host://");
   }
 

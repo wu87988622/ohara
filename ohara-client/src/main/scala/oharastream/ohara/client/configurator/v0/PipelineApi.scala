@@ -38,12 +38,12 @@ object PipelineApi {
   final case class Endpoint(group: String, name: String, kind: String) {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
-  implicit val ENDPOINT_JSON_FORMAT: OharaJsonFormat[Endpoint] =
-    JsonRefiner[Endpoint]
+  implicit val ENDPOINT_JSON_FORMAT: JsonFormat[Endpoint] =
+    JsonFormatBuilder[Endpoint]
       .format(jsonFormat3(Endpoint))
       .nullToString(GROUP_KEY, GROUP_DEFAULT)
       .rejectEmptyString()
-      .refine
+      .build
 
   final case class Updating(
     endpoints: Option[Set[Endpoint]],
@@ -51,7 +51,7 @@ object PipelineApi {
   )
 
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonRefiner[Updating].format(jsonFormat2(Updating)).rejectEmptyString().refine
+    JsonFormatBuilder[Updating].format(jsonFormat2(Updating)).rejectEmptyString().build
 
   final case class Creation(
     group: String,
@@ -60,14 +60,14 @@ object PipelineApi {
     tags: Map[String, JsValue]
   ) extends oharastream.ohara.client.configurator.v0.BasicCreation
 
-  implicit val CREATION_JSON_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     rulesOfKey[Creation]
       .format(jsonFormat4(Creation))
       .rejectEmptyString()
       .nullToEmptyObject(TAGS_KEY)
       .nullToEmptyArray("endpoints")
-      .refine
+      .build
 
   import MetricsApi._
 

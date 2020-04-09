@@ -111,7 +111,7 @@ package object v0 {
 
   private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 
-  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner[ObjectKey]
+  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonFormatBuilder[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
 
@@ -140,7 +140,7 @@ package object v0 {
     })
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
     .rejectEmptyString()
-    .refine
+    .build
 
   private[v0] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = new RootJsonFormat[TopicKey] {
     override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
@@ -214,7 +214,7 @@ package object v0 {
     * @tparam T type of object
     * @return json refiner object
     */
-  private[v0] def rulesOfKey[T]: JsonRefiner[T] =
+  private[v0] def rulesOfKey[T]: JsonFormatBuilder[T] =
     limitsOfKey[T]
     // we random a default name for this object
       .nullToString(NAME_KEY, () => CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
@@ -225,8 +225,8 @@ package object v0 {
     * NOTED: this rules don't include the default value to group!!!
     * @return refiner
     */
-  private[v0] def limitsOfKey[T]: JsonRefiner[T] =
-    JsonRefiner[T]
+  private[v0] def limitsOfKey[T]: JsonFormatBuilder[T] =
+    JsonFormatBuilder[T]
       .stringRestriction(GROUP_KEY, SettingDef.GROUP_STRING_REGEX)
       .stringRestriction(NAME_KEY, SettingDef.NAME_STRING_REGEX)
 
@@ -243,13 +243,13 @@ package object v0 {
   private[v0] def rulesOfCreation[T <: ClusterCreation](
     format: RootJsonFormat[T],
     definitions: Seq[SettingDef]
-  ): OharaJsonFormat[T] =
+  ): JsonFormat[T] =
     limitsOfKey[T]
       .format(format)
       .definitions(definitions)
       // for each field, we should reject any empty string
       .rejectEmptyString()
-      .refine
+      .build
 
   /**
     * use basic check rules of update request for json refiner.
@@ -259,8 +259,8 @@ package object v0 {
     * @tparam T type of update
     * @return json refiner object
     */
-  private[v0] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): OharaJsonFormat[T] =
-    JsonRefiner[T]
+  private[v0] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): JsonFormat[T] =
+    JsonFormatBuilder[T]
       .format(format)
       // for each field, we should reject any empty string
       .rejectEmptyString()
@@ -273,7 +273,7 @@ package object v0 {
       .rejectKeyword(START_COMMAND)
       .rejectKeyword(STOP_COMMAND)
       .toRefiner
-      .refine
+      .build
 
   private[this] def toJson(value: Any): JsValue = value match {
     //--------[primitive type]--------//

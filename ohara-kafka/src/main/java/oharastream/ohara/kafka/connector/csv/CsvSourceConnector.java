@@ -18,9 +18,10 @@ package oharastream.ohara.kafka.connector.csv;
 
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.COMPLETED_FOLDER_DEFINITION;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ERROR_FOLDER_DEFINITION;
-import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_CACHE_SIZE_DEFINITION;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.FILE_ENCODE_DEFINITION;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPUT_FOLDER_DEFINITION;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_DEFINITION;
+import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_DEFINITION;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -118,7 +119,8 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
     Map<String, SettingDef> finalDefinitions = new TreeMap<>(csvSettingDefinitions());
     finalDefinitions.putAll(
         Stream.of(
-                FILE_CACHE_SIZE_DEFINITION,
+                SIZE_OF_FILE_CACHE_DEFINITION,
+                MAXIMUM_NUMBER_OF_LINES_DEFINITION,
                 INPUT_FOLDER_DEFINITION,
                 COMPLETED_FOLDER_DEFINITION,
                 ERROR_FOLDER_DEFINITION,

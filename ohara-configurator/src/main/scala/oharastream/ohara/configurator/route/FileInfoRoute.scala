@@ -30,7 +30,7 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.client.configurator.v0.FileInfoApi._
-import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, OharaJsonFormat}
+import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonFormatBuilder, JsonFormat}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
@@ -190,12 +190,12 @@ private[configurator] object FileInfoRoute {
     override def tags: Map[String, JsValue] = throw new UnsupportedOperationException
   }
 
-  private[this] implicit val FAKE_FORMAT: OharaJsonFormat[FakeCreation] = JsonRefiner[FakeCreation]
+  private[this] implicit val FAKE_FORMAT: JsonFormat[FakeCreation] = JsonFormatBuilder[FakeCreation]
     .format(new RootJsonFormat[FakeCreation] {
       override def read(json: JsValue): FakeCreation = throw new UnsupportedOperationException
       override def write(obj: FakeCreation): JsValue = throw new UnsupportedOperationException
     })
-    .refine
+    .build
 
   def apply(
     implicit store: DataStore,

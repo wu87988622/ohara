@@ -135,12 +135,12 @@ object TopicApi {
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefiner[Updating]
+    JsonFormatBuilder[Updating]
       .format(new RootJsonFormat[Updating] {
         override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
         override def write(obj: Updating): JsValue = JsObject(obj.settings)
       })
-      .refine
+      .build
 
   final class Creation private[TopicApi] (val settings: Map[String, JsValue])
       extends oharastream.ohara.client.configurator.v0.BasicCreation {
@@ -160,7 +160,7 @@ object TopicApi {
     override def tags: Map[String, JsValue] = settings.tags.get
   }
 
-  implicit val CREATION_FORMAT: OharaJsonFormat[Creation] =
+  implicit val CREATION_FORMAT: JsonFormat[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -169,7 +169,7 @@ object TopicApi {
       })
       // TODO: topic definitions may be changed by different Broker images so this check is dangerous
       .definitions(DEFINITIONS)
-      .refine
+      .build
 
   import MetricsApi._
 
