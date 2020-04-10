@@ -22,7 +22,7 @@ import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsValue, RootJsonFormat}
+import spray.json.{JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -91,13 +91,7 @@ object PipelineApi {
   implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = new RootJsonFormat[ObjectAbstract] {
     private[this] val format                         = jsonFormat9(ObjectAbstract)
     override def read(json: JsValue): ObjectAbstract = format.read(json)
-    override def write(obj: ObjectAbstract): JsValue = {
-      // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
-      val fields = format.write(obj).asJsObject.fields ++ Map(
-        "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
-      )
-      JsObject(fields)
-    }
+    override def write(obj: ObjectAbstract): JsValue = format.write(obj)
   }
 
   final case class Pipeline(

@@ -157,13 +157,7 @@ object StreamApi {
       .format(new RootJsonFormat[StreamClusterInfo] {
         private[this] val format                            = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: StreamClusterInfo): JsValue = {
-          // TODO: remove the deprecated field "metrics" https://github.com/oharastream/ohara/issues/4434
-          val fields = format.write(obj).asJsObject.fields ++ Map(
-            "metrics" -> METRICS_JSON_FORMAT.write(obj.nodeMetrics.headOption.map(_._2).getOrElse(Metrics.EMPTY))
-          )
-          flattenSettings(JsObject(fields))
-        }
+        override def write(obj: StreamClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
       })
       .build
 
