@@ -93,7 +93,12 @@ trait ShabondiCollie extends Collie {
             if (newNodes.isEmpty) Future.successful(Seq.empty)
             else {
               Future.sequence(newNodes.map { newNode =>
-                val env           = Map.empty[String, String]
+                val env = Map(
+                  "JMX_PORT"        -> creation.jmxPort.toString,
+                  "JMX_HOSTNAME"    -> newNode.hostname,
+                  "OHARA_HEAP_OPTS" -> s"-Xms${creation.initHeap}M -Xmx${creation.maxHeap}M"
+                )
+
                 val containerInfo = newContainerInfo(newNode, creation, env)
                 val arguments = creation.settings.map {
                   case (k, v) =>

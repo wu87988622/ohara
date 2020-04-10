@@ -95,6 +95,16 @@ object ShabondiDefinitions {
     .build
     .registerTo(basicDefinitionMap)
 
+  val JMX_PORT_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("jmxPort")
+    .orderInGroup(orderInGroup())
+    .bindingPortWithRandomDefault()
+    .displayName("JMX export port")
+    .documentation("The port of this Shabondi service using to export jmx metrics")
+    .build
+    .registerTo(basicDefinitionMap)
+
   val BROKER_CLUSTER_KEY_DEFINITION = SettingDef.builder
     .group(CORE_GROUP)
     .key("brokerClusterKey")
@@ -134,6 +144,24 @@ object ShabondiDefinitions {
     .optional(Type.TAGS)
     .displayName("Tags")
     .documentation("Tags of Shabondi")
+    .build
+    .registerTo(basicDefinitionMap)
+
+  val MAX_HEAP_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("xmx")
+    .orderInGroup(orderInGroup())
+    .positiveNumber(1024L)
+    .documentation("maximum memory allocation (in MB)")
+    .build
+    .registerTo(basicDefinitionMap)
+
+  val INIT_HEAP_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("xms")
+    .orderInGroup(orderInGroup())
+    .positiveNumber(1024L)
+    .documentation("initial heap size (in MB)")
     .build
     .registerTo(basicDefinitionMap)
 

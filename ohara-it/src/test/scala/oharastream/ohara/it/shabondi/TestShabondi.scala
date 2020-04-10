@@ -20,10 +20,18 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.ServiceState
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ContainerApi, ShabondiApi, TopicApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{
+  BrokerApi,
+  ClusterInfo,
+  ContainerApi,
+  ShabondiApi,
+  TopicApi,
+  ZookeeperApi
+}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
+import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{Before, Test}
 import org.scalatest.Matchers._
@@ -128,7 +136,7 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
   }
 
   @Test
-  def testCheckBrokerDependencies_ShabondiSource(): Unit = {
+  def testCheckBrokerDependencies(): Unit = {
     val topic1 = startTopic()
 
     // we make sure the broker cluster exists again (for create topic)
@@ -139,25 +147,32 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     )
     log.info(s"assert broker cluster [$bkKey]...done")
 
-    // ----- create Shabondi Source
+    // ----- create Shabondi Source & Sink
     val shabondiSource: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Source, topic1.key)
-    log.info(s"shabondi creation [$shabondiSource]...done")
+    val shabondiSink: ShabondiApi.ShabondiClusterInfo   = createShabondiService(ShabondiType.Sink, topic1.key)
 
-    // ---- Start service
+    // ---- Start Shabondi Source & Sink
     result(shabondiApi.start(shabondiSource.key))
+    result(shabondiApi.start(shabondiSink.key))
+
+    // wait for source and sink ready
     await(() => {
-      val resultInfo = result(shabondiApi.get(shabondiSource.key))
-      resultInfo.state.isDefined && resultInfo.state.get == ServiceState.RUNNING.name
+      val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
+      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
+
+      val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
+      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
     })
 
     val thrown = the[IllegalArgumentException] thrownBy result(bkApi.stop(bkKey))
     log.info("thrown message: " + thrown.getMessage)
     thrown.getMessage should startWith(s"you can't remove broker cluster:" + bkKey.toString)
-    thrown.getMessage should endWith(s"it is used by shabondi cluster:" + shabondiSource.key.toString)
+    thrown.getMessage should include(shabondiSource.key.toString)
+    thrown.getMessage should include(shabondiSink.key.toString)
   }
 
   @Test
-  def testCheckBrokerDependencies_ShabondiSink(): Unit = {
+  def testCheckTopicDependencies(): Unit = {
     val topic1 = startTopic()
 
     // we make sure the broker cluster exists again (for create topic)
@@ -168,79 +183,27 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     )
     log.info(s"assert broker cluster [$bkKey]...done")
 
-    // ----- create Shabondi Sink
-    val shabondiSink: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Sink, topic1.key)
-    log.info(s"shabondi creation [$shabondiSink]...done")
-
-    // ---- Start service
-    result(shabondiApi.start(shabondiSink.key))
-    await(() => {
-      val resultInfo = result(shabondiApi.get(shabondiSink.key))
-      resultInfo.state.isDefined && resultInfo.state.get == ServiceState.RUNNING.name
-    })
-
-    val thrown = the[IllegalArgumentException] thrownBy result(bkApi.stop(bkKey))
-    log.info("thrown message: " + thrown.getMessage)
-    thrown.getMessage should startWith(s"you can't remove broker cluster:" + bkKey.toString)
-    thrown.getMessage should endWith(s"it is used by shabondi cluster:" + shabondiSink.key.toString)
-  }
-
-  @Test
-  def testCheckTopicDependencies_ShabondiSource(): Unit = {
-    val topic1 = startTopic()
-
-    // we make sure the broker cluster exists again (for create topic)
-    assertCluster(
-      () => result(bkApi.list()),
-      () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))),
-      bkKey
-    )
-    log.info(s"assert broker cluster [$bkKey]...done")
-
-    // ----- create Shabondi Source
+    // ----- create Shabondi Source & Sink
     val shabondiSource: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Source, topic1.key)
-    log.info(s"shabondi creation [$shabondiSource]...done")
+    val shabondiSink: ShabondiApi.ShabondiClusterInfo   = createShabondiService(ShabondiType.Sink, topic1.key)
 
-    // ---- Start service
+    // ---- Start Shabondi Source & Sink
     result(shabondiApi.start(shabondiSource.key))
-    await(() => {
-      val resultInfo = result(shabondiApi.get(shabondiSource.key))
-      resultInfo.state.isDefined && resultInfo.state.get == ServiceState.RUNNING.name
-    })
-
-    val thrown = the[IllegalArgumentException] thrownBy result(topicApi.stop(topic1.key))
-    log.info("thrown message: " + thrown.getMessage)
-    thrown.getMessage should startWith(s"topic:" + topic1.key.toString)
-    thrown.getMessage should endWith(s"is used by running shabondis:" + shabondiSource.key.toString)
-  }
-
-  @Test
-  def testCheckTopicDependencies_ShabondiSink(): Unit = {
-    val topic1 = startTopic()
-
-    // we make sure the broker cluster exists again (for create topic)
-    assertCluster(
-      () => result(bkApi.list()),
-      () => result(containerApi.get(bkKey).map(_.flatMap(_.containers))),
-      bkKey
-    )
-    log.info(s"assert broker cluster [$bkKey]...done")
-
-    // ----- create Shabondi Sink
-    val shabondiSink: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Sink, topic1.key)
-    log.info(s"shabondi creation [$shabondiSink]...done")
-
-    // ---- Start service
     result(shabondiApi.start(shabondiSink.key))
+
     await(() => {
-      val resultInfo = result(shabondiApi.get(shabondiSink.key))
-      resultInfo.state.isDefined && resultInfo.state.get == ServiceState.RUNNING.name
+      val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
+      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
+
+      val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
+      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
     })
 
     val thrown = the[IllegalArgumentException] thrownBy result(topicApi.stop(topic1.key))
     log.info("thrown message: " + thrown.getMessage)
     thrown.getMessage should startWith(s"topic:" + topic1.key.toString)
-    thrown.getMessage should endWith(s"is used by running shabondis:" + shabondiSink.key.toString)
+    thrown.getMessage should include(shabondiSource.key.toString)
+    thrown.getMessage should include(shabondiSink.key.toString)
   }
 
   private def startTopic(): TopicInfo = {
@@ -283,6 +246,8 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
       resultInfo.deadNodes shouldBe Set.empty
     }
 
+    testJmx(clusterInfo)
+
     // ---- Stop Shabondi service
     result(shabondiApi.stop(clusterInfo.key))
     await(() => {
@@ -299,4 +264,18 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
       resultInfo.deadNodes shouldBe Set.empty
     }
   }
+
+  private[this] def testJmx(cluster: ClusterInfo): Unit =
+    cluster.nodeNames.foreach(
+      node =>
+        await(
+          () =>
+            try BeanChannel.builder().hostname(node).port(cluster.jmxPort).build().nonEmpty()
+            catch {
+              // the jmx service may be not ready.
+              case _: Throwable =>
+                false
+            }
+        )
+    )
 }

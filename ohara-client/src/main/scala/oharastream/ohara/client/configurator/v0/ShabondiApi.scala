@@ -22,6 +22,7 @@ import java.util.Objects
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
+import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.shabondi.ShabondiDefinitions
@@ -66,7 +67,7 @@ final object ShabondiApi {
 
   final class ShabondiClusterCreation(val settings: Map[String, JsValue]) extends ClusterCreation {
     private val updating         = new ShabondiClusterUpdating(noJsNull(settings))
-    override def ports: Set[Int] = Set(clientPort)
+    override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     def shabondiClass: String         = updating.shabondiClass.get
     def clientPort: Int               = updating.clientPort.get
@@ -124,6 +125,10 @@ final object ShabondiApi {
 
     def clientPort(port: Int): Request.this.type =
       setting(CLIENT_PORT_DEFINITION.key, JsNumber(CommonUtils.requireBindPort(port)))
+
+    @Optional("the default port is random")
+    def jmxPort(jmxPort: Int): Request.this.type =
+      setting(JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireBindPort(jmxPort)))
 
     def brokerClusterKey(brokerClusterKey: ObjectKey): Request.this.type =
       setting(BROKER_CLUSTER_KEY_DEFINITION.key, OBJECT_KEY_FORMAT.write(Objects.requireNonNull(brokerClusterKey)))
