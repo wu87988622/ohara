@@ -36,8 +36,8 @@
     "build": "yarn --cwd client build",
     "format": "prettier --write \"**/*.*(js|json|html|md)\"",
     "format:check": "prettier --check \"**/*.*(js|json|html|md)\"",
-    "license:test": "cd .. && gradle licenseTest",
-    "license:apply": "cd .. && gradle licenseApply",
+    "license:test": "cd .. && cross-env ./gradlew licenseTest",
+    "license:apply": "cd .. && cross-env ./gradlew licenseApply",
     "prepush": "run-s clean:files setup lint test license:apply format"
   },
   "dependencies": {
