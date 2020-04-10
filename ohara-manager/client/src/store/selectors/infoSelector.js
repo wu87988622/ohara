@@ -32,33 +32,16 @@ export const makeGetInfoById = () =>
 
     if (!entity) return;
 
-    const { settingDefinitions, classInfos, classInfo } = entity;
-    const isCluster = Boolean(classInfos);
-
-    if (isCluster) {
-      const newClassInfos = classInfos.map(classInfo => {
-        return {
-          ...classInfo,
-          settingDefinitions: getDefinition(classInfo.settingDefinitions),
-        };
-      });
-
+    const newClassInfos = entity.classInfos.map(info => {
       return {
-        ...entity,
-        classInfos: newClassInfos,
-        settingDefinitions: getDefinition(settingDefinitions),
+        ...info,
+        settingDefinitions: getDefinition(info.settingDefinitions),
       };
-    }
+    });
 
-    if (classInfo) {
-      return {
-        ...entity,
-        classInfo: {
-          ...entity.classInfo,
-          settingDefinitions: getDefinition(classInfo.settingDefinitions),
-        },
-      };
-    }
-
-    return entity;
+    return {
+      ...entity,
+      classInfos: newClassInfos,
+      settingDefinitions: getDefinition(entity.settingDefinitions),
+    };
   });

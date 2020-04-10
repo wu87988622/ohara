@@ -25,16 +25,16 @@ export default action$ =>
   action$.pipe(
     ofType(actions.deleteStream.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) => {
-      return from(streamApi.remove(params)).pipe(
+    switchMap(({ params, options }) =>
+      from(streamApi.remove(params)).pipe(
         map(() => {
           handleSuccess(options);
           return actions.deleteStream.success(params);
         }),
         startWith(actions.deleteStream.request()),
         catchError(res => of(actions.deleteStream.failure(res))),
-      );
-    }),
+      ),
+    ),
   );
 
 function handleSuccess(options) {

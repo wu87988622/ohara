@@ -55,14 +55,7 @@ const restructureStream = streamClass => {
 };
 
 export const useStreams = () => {
-  const fetchFiles = hooks.useFetchFilesAction();
-  const isLoaded = hooks.useIsFileLoaded();
   const streamFiles = hooks.useStreamFiles();
-
-  useEffect(() => {
-    if (!isLoaded) fetchFiles();
-  }, [fetchFiles, isLoaded]);
-
   const streams = streamFiles
     .map(restructureStream)
     .filter(stream => !_.isEmpty(stream))

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
@@ -24,8 +24,7 @@ import { KIND } from 'const';
 import { hashByGroupAndName } from 'utils/sha';
 
 export const useIsFileLoaded = () => {
-  const mapState = useCallback(state => !!state.ui.file?.lastUpdated, []);
-  return useSelector(mapState);
+  return useSelector(useCallback(state => !!state.ui.file?.lastUpdated, []));
 };
 
 export const useIsFileLoading = () => {
@@ -43,7 +42,7 @@ export const useFileGroup = () => {
 
 export const useCreateFileAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useFileGroup();
+  const group = useFileGroup();
   return useCallback(
     file => {
       const { name } = file;
@@ -55,16 +54,12 @@ export const useCreateFileAction = () => {
 
 export const useFetchFilesAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useFileGroup();
-  return useCallback(() => dispatch(actions.fetchFiles.trigger({ group })), [
-    dispatch,
-    group,
-  ]);
+  return useCallback(() => dispatch(actions.fetchFiles.trigger()), [dispatch]);
 };
 
 export const useDeleteFileAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useFileGroup();
+  const group = useFileGroup();
   return useCallback(
     name => dispatch(actions.deleteFile.trigger({ group, name })),
     [dispatch, group],
@@ -72,13 +67,15 @@ export const useDeleteFileAction = () => {
 };
 
 export const useFiles = () => {
-  const makeFindFilesByGroup = useMemo(selectors.makeFindFilesByGroup, []);
-  const group = hooks.useFileGroup();
-  const findFilesByGroup = useCallback(
-    state => makeFindFilesByGroup(state, { group }),
-    [makeFindFilesByGroup, group],
-  );
-  return useSelector(findFilesByGroup);
+  const group = useFileGroup();
+  const isLoaded = useIsFileLoaded();
+  const fetchFiles = useFetchFilesAction();
+
+  useEffect(() => {
+    if (!isLoaded) fetchFiles();
+  }, [fetchFiles, isLoaded]);
+
+  return useSelector(state => selectors.getFilesByGroup(state, { group }));
 };
 
 export const useStreamFiles = () => {

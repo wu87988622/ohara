@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Grid from '@material-ui/core/Grid';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
@@ -37,13 +37,7 @@ const tableHeaders = [
 
 const FileTable = () => {
   const files = hooks.useFiles();
-  const fetchFiles = hooks.useFetchFilesAction();
-  const isLoaded = hooks.useIsFileLoaded();
   const [filteredFiles, setFilteredFiles] = useState([]);
-
-  useEffect(() => {
-    if (!isLoaded) fetchFiles();
-  }, [fetchFiles, isLoaded]);
 
   return (
     <Wrapper>

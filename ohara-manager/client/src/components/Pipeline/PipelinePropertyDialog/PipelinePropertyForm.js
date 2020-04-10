@@ -22,13 +22,15 @@ import Typography from '@material-ui/core/Typography';
 
 import RenderDefinition from 'components/common/Definitions/RenderDefinition';
 import { EDITABLE } from 'components/common/Definitions/Permission';
+import * as hooks from 'hooks';
 
 const scrollIntoViewOption = { behavior: 'smooth', block: 'start' };
 
 const PipelinePropertyForm = React.forwardRef((props, ref) => {
+  const files = hooks.useFiles();
+
   const {
     definitions = [],
-    files = [],
     freePorts,
     initialValues = {},
     onSubmit,
@@ -89,7 +91,6 @@ const PipelinePropertyForm = React.forwardRef((props, ref) => {
 
 PipelinePropertyForm.propTypes = {
   definitions: PropTypes.array,
-  files: PropTypes.array,
   freePorts: PropTypes.array,
   initialValues: PropTypes.object,
   onSubmit: PropTypes.func,

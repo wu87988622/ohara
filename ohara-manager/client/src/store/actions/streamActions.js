@@ -20,7 +20,6 @@ export const fetchStreams = createRoutine('FETCH_STREAMS');
 export const createStream = createRoutine('CREATE_STREAM');
 export const deleteStream = createRoutine('DELETE_STREAM');
 export const updateStream = createRoutine('UPDATE_STREAM');
-export const fetchStreamInfo = createRoutine('FETCH_STREAM_INFO');
 export const startStream = createRoutine('START_STREAM');
 export const stopStream = createRoutine('STOP_STREAM');
 export const removeStreamToLink = createRoutine('REMOVE_STREAM_TO_LINK');

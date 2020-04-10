@@ -14,13 +14,40 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { values } from 'lodash';
 import { createSelector } from 'reselect';
+import { getDefinition } from '../../api/utils/definitionsUtils';
 
 const getEntities = state => state?.entities?.files;
+
 const getGroupFromProps = (_, props) => props?.group;
 
-export const makeFindFilesByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
-    _.values(entities).filter(file => file?.group === group),
-  );
+const getJarKeyFromProps = (_, props) => props?.jarKey;
+
+const getClassNameFromProps = (_, props) => props?.className;
+
+export const getFilesByGroup = createSelector(
+  [getEntities, getGroupFromProps],
+  (entities, group) => values(entities).filter(file => file?.group === group),
+);
+
+export const getStreamInfo = createSelector(
+  [getEntities, getJarKeyFromProps, getClassNameFromProps],
+  (entities, jarKey, className) => {
+    const [streamInfo] = values(entities)
+      .filter(
+        entity => entity.group === jarKey.group && entity.name === jarKey.name,
+      )
+      .map(entity =>
+        entity.classInfos.find(info => info.className === className),
+      )
+      .map(entity => {
+        return {
+          ...entity,
+          settingDefinitions: getDefinition(entity.settingDefinitions),
+        };
+      });
+
+    return streamInfo;
+  },
+);

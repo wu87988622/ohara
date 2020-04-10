@@ -15,14 +15,13 @@
  */
 
 import _ from 'lodash';
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { hashByGroupAndName } from 'utils/sha';
-import { getId } from 'utils/object';
 
 export const useIsStreamLoaded = () => {
   const mapState = useCallback(state => !!state.ui.stream?.lastUpdated, []);
@@ -60,10 +59,8 @@ export const useCreateStreamAction = () => {
 
 export const useFetchStreamsAction = () => {
   const dispatch = useDispatch();
-  const group = useStreamGroup();
-  return useCallback(() => dispatch(actions.fetchStreams.trigger({ group })), [
+  return useCallback(() => dispatch(actions.fetchStreams.trigger()), [
     dispatch,
-    group,
   ]);
 };
 
@@ -117,30 +114,23 @@ export const useStopStreamAction = () => {
 };
 
 export const useStreams = () => {
-  const getStreamsByGroup = useMemo(selectors.makeGetStreamsByGroup, []);
-  const getInfoById = selectors.makeGetInfoById();
-  const group = useStreamGroup();
-
   const isAppReady = hooks.useIsAppReady();
+  const group = useStreamGroup();
   const fetchStreams = useFetchStreamsAction();
   const isStreamLoaded = useIsStreamLoaded();
-  const isStreamLoading = useIsStreamLoading();
 
   useEffect(() => {
-    if (isStreamLoaded || isStreamLoading) return;
-    if (!isAppReady || !group) return;
+    if (isStreamLoaded || !isAppReady || !group) return;
 
     fetchStreams();
-  }, [fetchStreams, group, isAppReady, isStreamLoaded, isStreamLoading]);
+  }, [fetchStreams, group, isAppReady, isStreamLoaded]);
 
   return useSelector(state => {
-    const streams = getStreamsByGroup(state, { group });
+    const streams = selectors.getStreamByGroup(state, { group });
     const results = streams.map(stream => {
-      const { stream__class: name, group } = stream;
-      const id = getId({ group, name });
-      const info = getInfoById(state, { id });
-      const settingDefinitions = info?.classInfo?.settingDefinitions || [];
-
+      const { stream__class: className, jarKey } = stream;
+      const info = selectors.getStreamInfo(state, { jarKey, className });
+      const settingDefinitions = info?.settingDefinitions || [];
       return _.merge(stream, { settingDefinitions });
     });
     return results;

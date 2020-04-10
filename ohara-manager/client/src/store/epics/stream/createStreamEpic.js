@@ -17,17 +17,10 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  switchMap,
-  concatAll,
-} from 'rxjs/operators';
+import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { CELL_STATUS } from 'const';
 import * as streamApi from 'api/streamApi';
-import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
@@ -36,47 +29,23 @@ export default action$ =>
     ofType(actions.createStream.TRIGGER),
     map(action => action.payload),
     switchMap(({ values, options }) => {
-      return of(createStream$(values, options), fetchInfo$(values)).pipe(
-        concatAll(),
+      const { paperApi, id } = options;
+
+      return from(streamApi.create(values)).pipe(
+        map(res => normalize(res.data, schema.stream)),
+        map(normalizedData => {
+          if (paperApi) {
+            paperApi.updateElement(id, CELL_STATUS.stopped);
+          }
+          return actions.createStream.success(normalizedData);
+        }),
+        startWith(actions.createStream.request()),
+        catchError(err => {
+          if (paperApi) {
+            paperApi.removeElement(id);
+          }
+          return of(actions.createStream.failure(err));
+        }),
       );
     }),
   );
-
-function createStream$(values, options) {
-  const { paperApi, id } = options;
-  return from(streamApi.create(values)).pipe(
-    map(res => normalize(res.data, schema.stream)),
-    map(normalizedData => {
-      if (paperApi) {
-        paperApi.updateElement(id, CELL_STATUS.stopped);
-      }
-      return actions.createStream.success(normalizedData);
-    }),
-    startWith(actions.createStream.request()),
-    catchError(err => {
-      if (paperApi) {
-        paperApi.removeElement(id);
-      }
-      return of(actions.createStream.failure(err));
-    }),
-  );
-}
-
-function fetchInfo$(values) {
-  const { group, stream__class, jarKey } = values;
-
-  return from(fileApi.get(jarKey)).pipe(
-    map(res => {
-      const { classInfos } = res.data;
-      const classInfo = classInfos.find(
-        // eslint-disable-next-line camelcase
-        classInfo => classInfo.className === stream__class,
-      );
-      return { classInfo, group, name: stream__class };
-    }),
-    map(file => normalize(file, schema.info)),
-    map(normalizedData => actions.fetchStreamInfo.success(normalizedData)),
-    startWith(actions.fetchStreamInfo.request()),
-    catchError(err => of(actions.fetchStreamInfo.failure(err))),
-  );
-}

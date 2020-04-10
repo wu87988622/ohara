@@ -57,7 +57,6 @@ const PipelinePropertyDialog = props => {
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);
   const currentWorker = hooks.useWorker();
-  const files = hooks.useFiles();
   const streams = hooks.useStreams();
   const connectors = hooks.useConnectors();
   const currentTopics = hooks.useTopicsInPipeline();
@@ -275,7 +274,6 @@ const PipelinePropertyDialog = props => {
         <RightBody>
           <PipelinePropertyForm
             definitions={groups.sort()}
-            files={files}
             freePorts={get(currentWorker, 'freePorts', [])}
             initialValues={targetCell}
             onSubmit={handleSubmit}

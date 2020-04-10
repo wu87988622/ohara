@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { get, isEqual, unionWith, some, find } from 'lodash';
 
 import * as hooks from 'hooks';
@@ -43,15 +43,8 @@ export const usePluginKeys = () => {
 };
 
 const useFiles = () => {
-  const currentWorkspace = hooks.useWorkspace();
   const files = hooks.useFiles();
-  const fetchFiles = hooks.useFetchFilesAction();
   const pluginKeys = usePluginKeys();
-
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    fetchFiles();
-  }, [fetchFiles, currentWorkspace]);
 
   return useMemo(() => {
     return files.map(file => {

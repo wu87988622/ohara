@@ -16,12 +16,13 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
@@ -30,9 +31,14 @@ export default action$ => {
     switchMap(values =>
       from(fileApi.create(values)).pipe(
         map(res => normalize(res.data, schema.file)),
-        map(entities => actions.createFile.success(entities)),
+        map(normalizedData => actions.createFile.success(normalizedData)),
         startWith(actions.createFile.request()),
-        catchError(err => of(actions.createFile.failure(err))),
+        catchError(err =>
+          from([
+            actions.createFile.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

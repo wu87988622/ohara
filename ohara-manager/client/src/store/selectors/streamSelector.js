@@ -21,7 +21,8 @@ const getEntities = state => state?.entities?.streams;
 
 const getGroupFromProps = (_, props) => props?.group;
 
-export const makeGetStreamsByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
+export const getStreamByGroup = createSelector(
+  [getEntities, getGroupFromProps],
+  (entities, group) =>
     _.values(entities).filter(stream => stream?.group === group),
-  );
+);

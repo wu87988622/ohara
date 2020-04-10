@@ -26,7 +26,6 @@ const stream = () => {
   const removeStreamFromLink = hooks.useRemoveStreamFromLinkAction();
   const updateStreamFromLink = hooks.useUpdateStreamFromLinkAction();
   const updateStreamToLink = hooks.useUpdateStreamToLinkAction();
-  const currentStreams = hooks.useStreams();
 
   const create = (params, paperApi) => {
     const { id, name, className, jarKey } = params;
@@ -35,8 +34,8 @@ const stream = () => {
     createStream(values, options);
   };
 
-  const update = (cell, topics, values, paperApi) => {
-    const options = { topics, cell, currentStreams, paperApi };
+  const update = (cell, topics, values, currentStreams, paperApi) => {
+    const options = { topics, cell, paperApi };
     updateStream(values, options);
   };
 
