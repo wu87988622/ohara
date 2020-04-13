@@ -201,7 +201,6 @@ describe('ToolBox of Pipeline', () => {
   });
 
   it('check the toolbox works normally', () => {
-    cy.visit('/');
     cy.findAllByText(/^wo$/i).should('exist');
 
     // Add new pipeline
@@ -217,9 +216,6 @@ describe('ToolBox of Pipeline', () => {
       .type('pipeline1');
 
     cy.findByText(/^add$/i).click();
-
-    // force to reload the page in order to get the connectors
-    cy.reload();
 
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
