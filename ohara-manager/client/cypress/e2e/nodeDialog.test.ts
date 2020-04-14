@@ -197,7 +197,7 @@ describe('NodeDialog of AppBar', () => {
 
     cy.createWorkspace({ workspaceName: generate.serviceName() });
     // wait for inspect worker
-    cy.wait(15000);
+    cy.wait(20000);
 
     // wait a little time for workspace ready
     cy.reload();

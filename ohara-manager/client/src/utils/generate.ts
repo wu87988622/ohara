@@ -27,7 +27,7 @@ export const port = ({ min = 5000, max = 65535 } = {}) => {
 };
 
 export const serviceName = ({
-  length = 10,
+  length = 5,
   prefix,
 }: {
   length?: number;
