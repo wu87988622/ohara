@@ -186,8 +186,6 @@ describe('NodeDialog of AppBar', () => {
       .contains('Alive')
       .should('exist');
 
-    cy.findByText(/^zookeeper$/i).should('not.exist');
-
     // press "ESC" back to node list
     cy.get('body:visible').trigger('keydown', { keyCode: 27, which: 27 });
     // press "ESC" again back to home page
@@ -197,7 +195,7 @@ describe('NodeDialog of AppBar', () => {
 
     cy.createWorkspace({ workspaceName: generate.serviceName() });
     // wait for inspect worker
-    cy.wait(20000);
+    cy.wait(15000);
 
     // wait a little time for workspace ready
     cy.reload();
