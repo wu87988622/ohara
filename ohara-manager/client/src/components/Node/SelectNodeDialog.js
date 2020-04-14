@@ -32,13 +32,13 @@ import {
   sortedUniq,
   uniq,
 } from 'lodash';
-import Table from 'material-table';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import VisibilityIcon from '@material-ui/icons/Visibility';
+import AddBox from '@material-ui/icons/AddBox';
 
 import { NODE_STATE } from 'api/apiInterface/nodeInterface';
 import { KIND, MODE } from 'const';
@@ -47,6 +47,7 @@ import { Dialog } from 'components/common/Dialog';
 import { useConfiguratorState, useViewNodeDialog } from 'context';
 import AddNodeDialog from './AddNodeDialog';
 import ViewNodeDialog from './ViewNodeDialog';
+import { MuiTable } from 'components/common/Table';
 
 const SelectNodeDialog = React.forwardRef((props, ref) => {
   const { initialValues = [], isOpen, onClose, onSubmit, title } = props;
@@ -138,10 +139,10 @@ const SelectNodeDialog = React.forwardRef((props, ref) => {
         title={title}
         maxWidth="md"
       >
-        <Table
+        <MuiTable
           actions={[
             {
-              icon: 'add',
+              icon: () => <AddBox />,
               tooltip: 'Add Node',
               hidden: configuratorInfo.mode === MODE.K8S,
               isFreeAction: true,

@@ -17,5 +17,6 @@
 import Table from './Table';
 import SortTable from './SortTable';
 import SelectTable from './SelectTable';
+import MuiTable from './MuiTable';
 
-export { Table, SortTable, SelectTable };
+export { Table, SortTable, SelectTable, MuiTable };

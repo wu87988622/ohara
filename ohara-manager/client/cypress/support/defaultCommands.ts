@@ -135,6 +135,8 @@ Cypress.Commands.add(
               cy.findByText(/^add$/i).click();
             }
             cy.findByText(nodeHost)
+              .siblings('td')
+              .find('input[type="checkbox"]')
               .click()
               .findByText(/^save$/i)
               .click();
@@ -144,6 +146,8 @@ Cypress.Commands.add(
           });
         } else {
           cy.findByText(nodeHost)
+            .siblings('td')
+            .find('input[type="checkbox"]')
             .click()
             .findByText(/^save$/i)
             .click();
@@ -226,16 +230,13 @@ Cypress.Commands.add(
 
     // Step4: create workspace
     cy.wait(1000);
-    cy.findAllByText(/^finish$/i)
+    cy.findAllByText(/^next$/i)
       .filter(':visible')
       .click();
 
     cy.findByTitle('Workspace list')
       .children()
       .should('not.be.disabled');
-
-    // we need to close the create dialog again...
-    cy.findByTestId('close-intro-button').click();
 
     cy.end();
   },
