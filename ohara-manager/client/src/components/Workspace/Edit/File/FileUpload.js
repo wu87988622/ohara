@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useRef, cloneElement } from 'react';
+import React, { useRef, cloneElement, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Button from '@material-ui/core/Button';
-
 import * as hooks from 'hooks';
 
 const Wrapper = styled.div`
@@ -27,25 +25,19 @@ const Wrapper = styled.div`
   }
 `;
 
-const FileUpload = ({ children, accept = '.jar' }) => {
+const FileUpload = React.forwardRef(({ children, accept = '.jar' }, ref) => {
   const createFile = hooks.useCreateFileAction();
   const inputEl = useRef(null);
 
   const Trigger = () => {
     const handleClick = () => inputEl.current.click();
-
     if (children) {
       // Add event handler to React.DOM element dynamically
       return cloneElement(children, {
         onClick: handleClick,
       });
     }
-
-    return (
-      <Button variant="outlined" color="primary" onClick={handleClick}>
-        UPLOAD FILE
-      </Button>
-    );
+    return null;
   };
 
   const handleFileSelect = event => {
@@ -56,6 +48,10 @@ const FileUpload = ({ children, accept = '.jar' }) => {
     // 2. the user is not at the file tab
     if (file) createFile(file);
   };
+
+  useImperativeHandle(ref, () => ({
+    click: () => inputEl.current.click(),
+  }));
 
   return (
     <Wrapper>
@@ -73,7 +69,7 @@ const FileUpload = ({ children, accept = '.jar' }) => {
       <Trigger />
     </Wrapper>
   );
-};
+});
 
 FileUpload.propTypes = {
   children: PropTypes.node,
