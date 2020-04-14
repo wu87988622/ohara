@@ -196,14 +196,17 @@ describe('NodeDialog of AppBar', () => {
       .trigger('keydown', { keyCode: 27, which: 27 });
 
     cy.createWorkspace({ workspaceName: generate.serviceName() });
+    // wait for inspect worker
+    cy.wait(15000);
 
     // wait a little time for workspace ready
-    cy.wait(6000);
     cy.reload();
+    cy.wait(6000);
 
     cy.findByTitle('Node list')
       .should('exist')
       .click();
+
     cy.findByText(nodeHost)
       .should('exist')
       .parent('tr')
