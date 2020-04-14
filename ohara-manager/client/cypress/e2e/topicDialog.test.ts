@@ -50,7 +50,7 @@ describe('TopicDialog of Workspace Settings', () => {
       cy.findByText(/^add$/i).click();
     });
 
-    // wait the topics all ready
+    // wait until all topics are ready
     cy.wait(5000);
 
     cy.findByText(topic1).should('exist');
