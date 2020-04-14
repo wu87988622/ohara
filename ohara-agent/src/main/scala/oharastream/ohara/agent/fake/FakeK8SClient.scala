@@ -16,7 +16,7 @@
 
 package oharastream.ohara.agent.fake
 
-import oharastream.ohara.agent.container.ContainerName
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
 import oharastream.ohara.agent.k8s._
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
@@ -57,7 +57,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
     }
 
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    Future.failed(new UnsupportedOperationException("FakeK8SClient not support remove function"))
+    Future.failed(new UnsupportedOperationException("FakeK8SClient does not support remove function"))
 
   override def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
@@ -68,16 +68,27 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
     Future.successful(Seq.empty)
 
   override def containerCreator: K8SClient.ContainerCreator =
-    throw new UnsupportedOperationException("FakeK8SClient not support containerCreator function")
+    throw new UnsupportedOperationException("FakeK8SClient does not support containerCreator function")
 
   override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    Future.failed(new UnsupportedOperationException("FakeK8SClient not support force remove function"))
+    Future.failed(new UnsupportedOperationException("FakeK8SClient does not support force remove function"))
 
   override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] =
-    throw new UnsupportedOperationException("FakeK8SClient not support force nodes function")
+    throw new UnsupportedOperationException("FakeK8SClient does not support force nodes function")
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[NodeApi.Resource]]] =
     Future.successful(Map.empty)
+
+  override def volumeCreator: ContainerClient.VolumeCreator =
+    throw new UnsupportedOperationException("FakeK8SClient does not support volumeCreator function")
+
+  override def volumes()(
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ContainerClient.ContainerVolume]] =
+    throw new UnsupportedOperationException("FakeK8SClient does not support volumes function")
+
+  override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    throw new UnsupportedOperationException("FakeK8SClient does not support removeVolume function")
 
   override def close(): Unit = {
     // do nothing

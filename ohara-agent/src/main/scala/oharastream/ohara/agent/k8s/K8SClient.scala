@@ -41,6 +41,20 @@ trait K8SClient extends ContainerClient {
   def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]]
   def masterUrl: String
   def metricsUrl: Option[String]
+
+  // TODO: https://github.com/oharastream/ohara/issues/4460
+  override def volumeCreator: ContainerClient.VolumeCreator =
+    throw new UnsupportedOperationException("K8SClient does not support volumeCreator function")
+
+  // TODO: https://github.com/oharastream/ohara/issues/4460
+  override def volumes()(
+    implicit executionContext: ExecutionContext
+  ): Future[Seq[ContainerClient.ContainerVolume]] =
+    throw new UnsupportedOperationException("K8SClient does not support volumes function")
+
+  // TODO: https://github.com/oharastream/ohara/issues/4460
+  override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+    throw new UnsupportedOperationException("K8SClient does not support volumes function")
 }
 
 object K8SClient {

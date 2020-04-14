@@ -43,6 +43,13 @@ trait ContainerPlatform {
   def setup(): ResourceRef
 
   /**
+    * setup only container client. If your IT requires only container client, please use this method as it is cheaper
+    * then setup().
+    * @return container client
+    */
+  def setupContainerClient(): ContainerClient
+
+  /**
     * @return the node names exists on Configurator
     */
   def nodeNames: Set[String]
@@ -181,8 +188,10 @@ object ContainerPlatform {
           }
           override lazy val containerClient: ContainerClient = clientCreator()
         }
-        override def nodeNames: Set[String] = nodes.map(_.hostname).toSet
-        override def toString: String       = "CUSTOM"
+
+        override def setupContainerClient(): ContainerClient = clientCreator()
+        override def nodeNames: Set[String]                  = nodes.map(_.hostname).toSet
+        override def toString: String                        = "CUSTOM"
       }
     case _ =>
       throw new RuntimeException(
@@ -218,6 +227,8 @@ object ContainerPlatform {
     override def toString: String = "EMPTY"
 
     override def setup(): ResourceRef = throw exception
+
+    override def setupContainerClient(): ContainerClient = throw exception
   }
 
   def builder = new Builder
@@ -335,6 +346,8 @@ object ContainerPlatform {
             override lazy val containerClient: ContainerClient = clientCreator()
           }
         }
+
+        override def setupContainerClient(): ContainerClient = clientCreator()
 
         override val nodeNames: Set[String] =
           CommonUtils.requireNonEmpty(Builder.this.nodes.asJava).asScala.map(_.hostname).toSet

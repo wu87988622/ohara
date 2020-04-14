@@ -26,6 +26,7 @@ import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Por
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent.container.ContainerClient.{ContainerVolume, VolumeCreator}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -97,6 +98,23 @@ object DockerClient {
   private[this] case class Info(NCPU: Int, MemTotal: Long)
 
   private[this] implicit val INFO_FORMAT: RootJsonFormat[Info] = jsonFormat2(Info)
+
+  private[this] val PATH_KEY = "path"
+  private[this] case class VolumeInfo(Driver: String, Labels: String, Name: String) {
+    def labels: Map[String, String] =
+      Labels
+        .split(",")
+        .flatMap { s =>
+          val ss = s.split("=")
+          if (ss.length < 2) None
+          else Some(ss(0) -> ss(1))
+        }
+        .toMap
+
+    def path: String = labels(PATH_KEY)
+  }
+
+  private[this] implicit val VOLUME_INFO_FORMAT: RootJsonFormat[VolumeInfo] = jsonFormat3(VolumeInfo)
 
   /**
     * this is a specific label to ohara docker. It is useful in filtering out what we created.
@@ -369,6 +387,56 @@ object DockerClient {
           )
         )
         .map(_.toMap)
+
+    override def volumeCreator: VolumeCreator =
+      (nodeName: String, name: String, path: String, executionContext: ExecutionContext) => {
+        implicit val pool: ExecutionContext = executionContext
+        agent(nodeName)
+          .map(
+            _.execute(
+              s"docker volume create --name $name" +
+                s" --label $LABEL_KEY=$LABEL_VALUE --label $PATH_KEY=$path" +
+                s" --opt type=none --opt device=$path --opt o=bind"
+            )
+          )
+          .map(_ => Unit)
+      }
+
+    override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] =
+      agents()
+        .map(_.flatMap { agent =>
+          try agent
+            .execute(s"docker volume ls --format '{{json .}}' --filter label=$LABEL_KEY=$LABEL_VALUE")
+            .map(_.split("\n"))
+            .map(
+              _.map(_.parseJson)
+                .map(VOLUME_INFO_FORMAT.read)
+                .map { info =>
+                  ContainerVolume(
+                    name = info.Name,
+                    driver = info.Driver,
+                    path = info.path,
+                    nodeName = agent.hostname
+                  )
+                }
+                .toSeq
+            )
+            .getOrElse(Seq.empty)
+          catch {
+            case e: Throwable =>
+              LOG.error(s"failed to get resources from ${agent.hostname}", e)
+              Seq.empty
+          }
+        })
+
+    override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      volume(name)
+        .flatMap(
+          volume =>
+            agent(volume.nodeName)
+              .map(_.execute(s"docker volume rm ${volume.name}"))
+        )
+        .map(_ => Unit)
 
     override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
       agents()

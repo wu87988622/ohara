@@ -34,11 +34,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * $ ./gradlew clean ohara-it:test --tests *TestDockerClient -PskipManager -Pohara.it.docker=$user:$password@$hostname:$port
   */
 class TestDockerClient extends IntegrationTest {
-  private[this] val platform    = ContainerPlatform.dockerMode
-  private[this] val resourceRef = platform.setup()
-  private[this] val webHost     = "www.google.com.tw"
+  private[this] val platform = ContainerPlatform.dockerMode
+  private[this] val webHost  = "www.google.com.tw"
 
-  private[this] val client: DockerClient = resourceRef.containerClient.asInstanceOf[DockerClient]
+  private[this] val client: DockerClient = platform.setupContainerClient().asInstanceOf[DockerClient]
 
   private[this] val remoteHostname: String = platform.nodeNames.head
 
@@ -214,6 +213,6 @@ class TestDockerClient extends IntegrationTest {
   @After
   def tearDown(): Unit = {
     Releasable.close(() => result(client.forceRemove(name)))
-    Releasable.close(resourceRef)
+    Releasable.close(client)
   }
 }

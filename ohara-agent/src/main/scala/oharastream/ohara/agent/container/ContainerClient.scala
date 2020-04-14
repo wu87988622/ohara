@@ -18,7 +18,7 @@ package oharastream.ohara.agent.container
 
 import java.util.Objects
 
-import oharastream.ohara.agent.container.ContainerClient.ContainerCreator
+import oharastream.ohara.agent.container.ContainerClient.{ContainerCreator, ContainerVolume, VolumeCreator}
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Resource
 import oharastream.ohara.common.annotations.Optional
@@ -35,7 +35,22 @@ import scala.concurrent.{ExecutionContext, Future}
   * functions supported by all implementations, and your services SHOULD NOT assume the container implementations.
   */
 trait ContainerClient extends Releasable {
+  /**
+    * @param executionContext thread pool
+    * @return list all ohara containers
+    */
   def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]]
+
+  /**
+    * get the container for specify name. Noted: the name should be unique in container env. However, the implementation
+    * has no such limit possibly. However, you should NOT assume the implementation and then use the specification based
+    * on specify implementation. If there are two containers have same name, only one container is returned (the order
+    * is random!!!)
+    *
+    * @param name container name
+    * @param executionContext thread pool
+    * @return container
+    */
   def container(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
     containers()
       .map(
@@ -43,6 +58,10 @@ trait ContainerClient extends Releasable {
           .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
       )
 
+  /**
+    * @param executionContext thread pool
+    * @return list all container names
+    */
   def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
     containers().map(_.map { container =>
       new ContainerName(
@@ -53,6 +72,16 @@ trait ContainerClient extends Releasable {
       )
     })
 
+  /**
+    * get the container for specify name. Noted: the name should be unique in container env. However, the implementation
+    * has no such limit possibly. However, you should NOT assume the implementation and then use the specification based
+    * on specify implementation. If there are two containers have same name, only one container is returned (the order
+    * is random!!!)
+    *
+    * @param name container name
+    * @param executionContext thread pool
+    * @return container name
+    */
   def containerName(name: String)(implicit executionContext: ExecutionContext): Future[ContainerName] =
     containerNames()
       .map(
@@ -60,22 +89,149 @@ trait ContainerClient extends Releasable {
           .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
       )
 
+  /**
+    * remove specify container. The container is removed by graceful shutdown.
+    * @param name container name
+    * @param executionContext thread pool
+    * @return empty future if the container is removed successfully.
+    */
   def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+
+  /**
+    * force remove specify container.
+    * @param name container name
+    * @param executionContext thread pool
+    * @return empty future if the container is removed successfully.
+    */
   def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+
+  /**
+    * get container log
+    * @param name container name
+    * @param executionContext thread pool
+    * @return container log
+    */
   def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] = log(name, None)
+
+  /**
+    * get container log
+    * @param name container name
+    * @param sinceSeconds time windows
+    * @param executionContext thread pool
+    * @return container log
+    */
   def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[(ContainerName, String)]
+
+  /**
+    * start a progress to setup a container
+    * @return container creator
+    */
   def containerCreator: ContainerCreator
+
+  /**
+    * @param executionContext thread pool
+    * @return all container images on all hosted nodes.
+    */
   def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]]
+
+  /**
+    * @param executionContext thread pool
+    * @return all container images on specify node.
+    */
   def imageNames(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
     imageNames()
       .map(_.getOrElse(nodeName, throw new NoSuchElementException(s"$nodeName does not exists!!!")))
 
+  /**
+    * @param executionContext thread pool
+    * @return all resources on all hosted nodes
+    */
   def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]]
+
+  /**
+    * start a progress to create a named volume on specify node.
+    * @return volume creator
+    */
+  def volumeCreator: VolumeCreator
+
+  /**
+    * @param executionContext thread pool
+    * @return all ohara volumes across all hosted nodes
+    */
+  def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]]
+
+  /**
+    * @param executionContext thread pool
+    * @return all ohara volumes across all hosted nodes
+    */
+  def volume(name: String)(implicit executionContext: ExecutionContext): Future[ContainerVolume] =
+    volumes()
+      .map(
+        _.find(_.name == name)
+          .getOrElse(throw new NoSuchElementException(s"volume:$name does not exists!!!"))
+      )
+
+  /**
+    * @param name volumne name
+    * @return true if there is a deleted volume. Otherwise, false
+    */
+  def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 }
 
 object ContainerClient {
+  /**
+    * @param name volume name
+    * @param driver volume driver. For example, local, nfs or tmpFs.
+    * @param path the path on the driver.
+    * @param nodeName the node hosting this volume
+    */
+  case class ContainerVolume(name: String, driver: String, path: String, nodeName: String)
+
+  trait VolumeCreator extends oharastream.ohara.common.pattern.Creator[Future[Unit]] {
+    private[this] var name: String                                = CommonUtils.randomString()
+    private[this] var path: String                                = _
+    private[this] var nodeName: String                            = _
+    private[this] implicit var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+    @Optional("default is random string")
+    def name(name: String): VolumeCreator.this.type = {
+      this.name = CommonUtils.requireNonEmpty(name)
+      this
+    }
+
+    def path(path: String): VolumeCreator.this.type = {
+      this.path = CommonUtils.requireNonEmpty(path)
+      this
+    }
+
+    def nodeName(nodeName: String): VolumeCreator.this.type = {
+      this.nodeName = CommonUtils.requireNonEmpty(nodeName)
+      this
+    }
+
+    @Optional("default pool is scala.concurrent.ExecutionContext.Implicits.global")
+    def threadPool(executionContext: ExecutionContext): VolumeCreator.this.type = {
+      this.executionContext = Objects.requireNonNull(executionContext)
+      this
+    }
+
+    final override def create(): Future[Unit] = doCreate(
+      nodeName = CommonUtils.requireNonEmpty(nodeName),
+      name = CommonUtils.requireNonEmpty(name),
+      path = CommonUtils.requireNonEmpty(path),
+      executionContext = Objects.requireNonNull(executionContext)
+    )
+
+    protected def doCreate(
+      nodeName: String,
+      name: String,
+      path: String,
+      executionContext: ExecutionContext
+    ): Future[Unit]
+  }
+
   trait ContainerCreator extends oharastream.ohara.common.pattern.Creator[Future[Unit]] {
     private[this] var nodeName: String                            = _
     private[this] var hostname: String                            = CommonUtils.randomString()
