@@ -23,13 +23,26 @@ const getGroupFromProps = (_, props) => props?.group;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const makeGetAllTopics = () =>
-  createSelector([getEntities], entities => _.values(entities));
+export const getTopicById = createSelector(
+  [getEntities, getIdFromProps],
+  (entities, id) => entities[id],
+);
 
-export const makeGetTopicsByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
-    _.filter(_.values(entities), topic => topic?.group === group),
-  );
+export const getAllTopics = createSelector([getEntities], entities =>
+  _.values(entities),
+);
 
-export const makeGetTopicById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+export const getTopicsByGroup = createSelector(
+  [getAllTopics, getGroupFromProps],
+  (allTopics, group) => _.filter(allTopics, topic => topic?.group === group),
+);
+
+export const getSharedTopicsByGroup = createSelector(
+  [getTopicsByGroup],
+  topics => _.filter(topics, topic => topic?.tags?.isShared === true),
+);
+
+export const getPipelineOnlyTopicsByGroup = createSelector(
+  [getTopicsByGroup],
+  topics => _.filter(topics, topic => topic?.tags?.isShared === false),
+);

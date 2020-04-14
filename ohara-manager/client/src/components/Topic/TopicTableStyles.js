@@ -18,12 +18,16 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
-    .filters {
-      margin-bottom: ${theme.spacing(3)}px;
+    .pipeline-only-topics {
+      margin-top: ${theme.spacing(4)}px;
+    }
 
-      .checkboxes {
-        margin-left: ${theme.spacing(3)}px;
-      }
+    .MuiPaper-root {
+      box-shadow: none;
+    }
+
+    .pipeline-link {
+      cursor: pointer;
     }
   `,
 );

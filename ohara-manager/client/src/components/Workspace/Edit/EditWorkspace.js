@@ -23,7 +23,6 @@ import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 
 import { FullScreenDialog } from 'components/common/Dialog';
-import { AddTopicDialog } from 'components/Topic';
 import Badge from 'components/common/Badge';
 import {
   useEditWorkspaceDialog,
@@ -177,7 +176,6 @@ const EditWorkspace = () => {
           )}
         </Wrapper>
       </FullScreenDialog>
-      <AddTopicDialog uniqueId="edit-worker" />
     </>
   );
 };

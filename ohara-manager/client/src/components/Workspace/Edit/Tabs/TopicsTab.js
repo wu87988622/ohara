@@ -16,12 +16,12 @@
 
 import React from 'react';
 
-import { TopicList } from 'components/Topic';
+import { TopicTable } from 'components/Topic';
 
 function TopicsTab() {
   return (
     <>
-      <TopicList />
+      <TopicTable />
     </>
   );
 }

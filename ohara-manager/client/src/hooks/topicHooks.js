@@ -130,7 +130,6 @@ export const useStopAndDeleteTopicAction = () => {
 };
 
 export const useAllTopics = () => {
-  const getAllTopics = useMemo(selectors.makeGetAllTopics, []);
   const isTopicLoaded = hooks.useIsTopicLoaded();
   const fetchAllTopics = hooks.useFetchAllTopicsAction();
 
@@ -138,12 +137,20 @@ export const useAllTopics = () => {
     if (!isTopicLoaded) fetchAllTopics();
   }, [fetchAllTopics, isTopicLoaded]);
 
-  return useSelector(useCallback(state => getAllTopics(state), [getAllTopics]));
+  return useSelector(state => selectors.getAllTopics(state));
 };
 
-export const useTopicsInWorkspace = () => {
+export const useTopicsInWorkspace = isShared => {
+  const getTopicsByGroup = useMemo(() => {
+    if (isShared === true) {
+      return selectors.getSharedTopicsByGroup;
+    } else if (isShared === false) {
+      return selectors.getPipelineOnlyTopicsByGroup;
+    } else {
+      return selectors.getTopicsByGroup;
+    }
+  }, [isShared]);
   const group = useTopicGroup();
-  const getTopicsByGroup = useMemo(selectors.makeGetTopicsByGroup, []);
   return useSelector(
     useCallback(state => getTopicsByGroup(state, { group }), [
       getTopicsByGroup,
@@ -161,15 +168,14 @@ export const useTopicsInWorkspace = () => {
  */
 export const useTopicsInToolbox = () => {
   const group = useTopicGroup();
-  const getTopicsByGroup = useMemo(selectors.makeGetTopicsByGroup, []);
   return useSelector(
     useCallback(
       state =>
         reject(
-          getTopicsByGroup(state, { group }),
+          selectors.getTopicsByGroup(state, { group }),
           topic => !topic.tags.isShared || topic.state !== 'RUNNING',
         ),
-      [getTopicsByGroup, group],
+      [group],
     ),
   );
 };
@@ -182,7 +188,6 @@ export const useTopicsInToolbox = () => {
 export const useTopicsInPipeline = () => {
   const currentPipeline = hooks.usePipeline();
   const group = useTopicGroup();
-  const getTopicsByGroup = useMemo(selectors.makeGetTopicsByGroup, []);
   return useSelector(
     useCallback(
       state => {
@@ -190,7 +195,7 @@ export const useTopicsInPipeline = () => {
           get(currentPipeline, 'endpoints', []),
           endpoint => endpoint.kind === KIND.topic,
         ).map(endpoint => ({ name: endpoint.name, group: endpoint.group }));
-        return filter(getTopicsByGroup(state, { group }), topic => {
+        return filter(selectors.getTopicsByGroup(state, { group }), topic => {
           return topicKeys.some(
             ({ name, group }) => name === topic.name && group === topic.group,
           );
@@ -204,13 +209,12 @@ export const useTopicsInPipeline = () => {
           return currentName.localeCompare(nextName);
         });
       },
-      [currentPipeline, getTopicsByGroup, group],
+      [currentPipeline, group],
     ),
   );
 };
 
 export const useTopic = name => {
-  const getTopicById = useMemo(selectors.makeGetTopicById, []);
   const brokerData = hooks.useBroker();
   // broker only have "one" classInfo (i.e., topic definition)
   const info = get(brokerData, 'classInfos[0]', {});
@@ -219,10 +223,10 @@ export const useTopic = name => {
   return useSelector(
     useCallback(
       state => {
-        const topic = getTopicById(state, { id });
+        const topic = selectors.getTopicById(state, { id });
         return merge(topic, info);
       },
-      [getTopicById, id, info],
+      [id, info],
     ),
   );
 };

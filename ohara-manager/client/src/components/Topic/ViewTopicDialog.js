@@ -55,8 +55,9 @@ const ViewTopicDialog = () => {
     closeDialog();
   };
 
-  const displayName = get(topic, 'displayName');
-  const isShared = get(topic, 'isShared');
+  const isShared = topic?.tags?.isShared;
+  const displayName = isShared ? topic?.name : topic?.tags?.displayName;
+
   const usedByPipelines = pipelines.filter(pipeline =>
     pipeline.objects.find(object => object.name === topic.name),
   );
@@ -78,24 +79,26 @@ const ViewTopicDialog = () => {
               {displayName}
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              variant="outlined"
-              color="secondary"
-              disabled={!isEmpty(usedByPipelines)}
-              onClick={() => setIsConfirmOpen(true)}
-            >
-              Delete
-            </Button>
-            <DeleteDialog
-              title="Delete topic?"
-              content={`Are you sure you want to delete the topic: ${displayName} ? This action cannot be undone!`}
-              open={isConfirmOpen}
-              handleClose={() => setIsConfirmOpen(false)}
-              handleConfirm={handleDelete}
-              testId="view-topic-detail-delete-dialog"
-            />
-          </Grid>
+          {isShared && (
+            <Grid item>
+              <Button
+                variant="outlined"
+                color="secondary"
+                disabled={!isEmpty(usedByPipelines)}
+                onClick={() => setIsConfirmOpen(true)}
+              >
+                Delete
+              </Button>
+              <DeleteDialog
+                title="Delete topic?"
+                content={`Are you sure you want to delete the topic: ${displayName} ? This action cannot be undone!`}
+                open={isConfirmOpen}
+                handleClose={() => setIsConfirmOpen(false)}
+                handleConfirm={handleDelete}
+                testId="view-topic-detail-delete-dialog"
+              />
+            </Grid>
+          )}
         </Grid>
         <Grid container spacing={3} className="details">
           <Grid item xs={4}>
