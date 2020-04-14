@@ -20,6 +20,7 @@ import java.time.{Duration => JDuration}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 
 import akka.http.scaladsl.testkit.RouteTestTimeout
+import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Test}
@@ -42,10 +43,11 @@ final class TestSinkDataGroups extends BasicShabondiTest {
   def testDefaultGroup(): Unit = {
     val threadPool: ExecutorService = newThreadPool()
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                   = ObjectKey.of("g", "n")
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
     val dataGroups =
-      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
@@ -67,10 +69,11 @@ final class TestSinkDataGroups extends BasicShabondiTest {
   def testMultipleGroup(): Unit = {
     val threadPool: ExecutorService = newThreadPool()
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                   = ObjectKey.of("g", "n")
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
     val dataGroups =
-      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
@@ -111,10 +114,11 @@ final class TestSinkDataGroups extends BasicShabondiTest {
   def testFreeIdleGroup(): Unit = {
     val threadPool: ExecutorService = newThreadPool()
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                   = ObjectKey.of("g", "n")
     val topicKey1                   = createTopicKey
     val idleTime                    = JDuration.ofSeconds(3)
     val dataGroups =
-      new SinkDataGroups(brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       val group1Name   = "group1"
       val defaultGroup = dataGroups.defaultGroup

@@ -20,6 +20,7 @@ apply plugin: 'java-library-distribution'
 dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
+  implementation project(':ohara-metrics')
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging

@@ -78,6 +78,8 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
   ): SourceConfig = {
     import ShabondiDefinitions._
     val args = mutable.ArrayBuffer(
+      GROUP_DEFINITION.key + "=" + CommonUtils.randomString(5),
+      NAME_DEFINITION.key + "=" + CommonUtils.randomString(3),
       SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Source.className,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
@@ -94,6 +96,8 @@ abstract class BasicShabondiTest extends WithBroker with Matchers {
   ): SinkConfig = {
     import ShabondiDefinitions._
     val args = mutable.ArrayBuffer(
+      GROUP_DEFINITION.key + "=" + CommonUtils.randomString(5),
+      NAME_DEFINITION.key + "=" + CommonUtils.randomString(3),
       SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Sink.className,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps

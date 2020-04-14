@@ -18,13 +18,18 @@ package oharastream.ohara.shabondi.sink
 
 import java.time.{Duration => JDuration}
 
-import oharastream.ohara.common.setting.{SettingDef, TopicKey}
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.shabondi.ShabondiDefinitions._
 
 import scala.collection.JavaConverters._
 
 private[shabondi] class SinkConfig(raw: Map[String, String]) {
-  import oharastream.ohara.shabondi.ShabondiDefinitions._
+  def group: String = raw(GROUP_DEFINITION.key)
+
+  def name: String = raw(NAME_DEFINITION.key)
+
+  def objectKey: ObjectKey = ObjectKey.of(group, name)
 
   def port: Int = raw(CLIENT_PORT_DEFINITION.key).toInt
 

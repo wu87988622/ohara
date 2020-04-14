@@ -20,11 +20,14 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.kafka.Consumer
+import oharastream.ohara.metrics.BeanChannel
+import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 import spray.json._
 
 import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 
 final class TestSourceRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -61,9 +64,16 @@ final class TestSourceRoute extends BasicShabondiTest {
         KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 10, 9)
       rowsTopic1.size should ===(requestSize)
       rowsTopic1(0).key.get.cells.size should ===(6)
+
+      // assert metrics
+      val beans = counterMBeans()
+      beans.size should ===(1)
+      beans(0).getValue should ===(requestSize)
     } finally {
       webServer.close()
       topicAdmin.deleteTopic(topicKey1)
     }
   }
+
+  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala
 }

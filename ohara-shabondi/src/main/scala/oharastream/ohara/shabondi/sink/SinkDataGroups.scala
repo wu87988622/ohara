@@ -22,20 +22,26 @@ import java.util.concurrent._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import oharastream.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.common.setting.ObjectKey
 
 import scala.collection.JavaConverters._
 
 private[sink] object SinkDataGroups {
   def apply(config: SinkConfig) =
-    new SinkDataGroups(config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka), config.sinkPollTimeout)
+    new SinkDataGroups(config)
 }
 
-private class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration) extends Releasable {
+private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration)
+    extends Releasable {
+  def this(config: SinkConfig) = {
+    this(config.objectKey, config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka), config.sinkPollTimeout)
+  }
+
   private val threadPool: ExecutorService =
     Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("SinkDataGroups-%d").build())
 
   private val log                    = Logger(classOf[SinkDataGroups])
-  private[sink] val defaultGroupName = "__dafault__"
+  private[sink] val defaultGroupName = "default"
   private val dataGroups             = new ConcurrentHashMap[String, DataGroup]()
 
   def defaultGroup: DataGroup = createIfAbsent(defaultGroupName)
@@ -56,7 +62,7 @@ private class SinkDataGroups(brokerProps: String, topicNames: Seq[String], pollT
     dataGroups.computeIfAbsent(
       name, { n =>
         log.info("create data group: {}", n)
-        val dataGroup = new DataGroup(n, brokerProps, topicNames, pollTimeout)
+        val dataGroup = new DataGroup(n, objectKey, brokerProps, topicNames, pollTimeout)
         threadPool.submit(dataGroup.producer)
         dataGroup
       }

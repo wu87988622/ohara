@@ -17,6 +17,7 @@
 package oharastream.ohara.shabondi.source
 
 import java.util.concurrent.{ExecutorService, Executors}
+import java.util.function.Consumer
 
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
@@ -25,6 +26,7 @@ import akka.stream.ActorMaterializer
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
+import oharastream.ohara.metrics.basic.Counter
 import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
 
 import scala.concurrent.ExecutionContext
@@ -33,7 +35,10 @@ private[shabondi] object SourceRouteHandler {
   def apply(config: SourceConfig, materializer: ActorMaterializer) =
     new SourceRouteHandler(config, materializer)
 }
-private[shabondi] class SourceRouteHandler(config: SourceConfig, materializer: ActorMaterializer) extends RouteHandler {
+private[shabondi] class SourceRouteHandler(
+  config: SourceConfig,
+  materializer: ActorMaterializer
+) extends RouteHandler {
   import oharastream.ohara.shabondi.common.JsonSupport._
 
   private val actorSystem = materializer.system
@@ -41,6 +46,15 @@ private[shabondi] class SourceRouteHandler(config: SourceConfig, materializer: A
 
   private val threadPool: ExecutorService = Executors.newFixedThreadPool(4)
   implicit private val ec                 = ExecutionContext.fromExecutorService(threadPool)
+
+  private val totalRowsCounter =
+    Counter.builder
+      .key(config.objectKey)
+      .item("total-rows")
+      .unit("row")
+      .document("The number of received rows")
+      .value(0)
+      .register()
 
   private val exceptionHandler = ExceptionHandler {
     case ex: Throwable =>
@@ -62,7 +76,8 @@ private[shabondi] class SourceRouteHandler(config: SourceConfig, materializer: A
     (post & path("v0")) {
       handleExceptions(exceptionHandler) {
         entity(as[RowData]) { rowData =>
-          val row   = JsonSupport.toRow(rowData)
+          val row = JsonSupport.toRow(rowData)
+          totalRowsCounter.incrementAndGet()
           val graph = StreamGraph.fromSendRow(producer, topicKeys, row)
           complete((StatusCodes.OK, graph.run()))
         }
@@ -71,7 +86,13 @@ private[shabondi] class SourceRouteHandler(config: SourceConfig, materializer: A
   }
 
   override def close(): Unit = {
-    Releasable.close(producer)
+    var exception: Throwable = null
+    val addSuppressedException: Consumer[Throwable] = (ex: Throwable) => {
+      if (exception == null) exception = ex else exception.addSuppressed(ex)
+    }
+    Releasable.close(producer, addSuppressedException)
+    Releasable.close(totalRowsCounter, addSuppressedException)
+    if (exception != null) throw exception
     threadPool.shutdown()
   }
 }

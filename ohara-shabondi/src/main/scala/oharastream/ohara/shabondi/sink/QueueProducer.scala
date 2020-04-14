@@ -25,6 +25,7 @@ import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Consumer
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.metrics.basic.Counter
 
 import scala.collection.JavaConverters._
 
@@ -33,7 +34,8 @@ private[sink] class QueueProducer(
   val queue: JQueue[Row],
   val brokerProps: String,
   val topicNames: Seq[String],
-  val pollTimeout: JDuration
+  val pollTimeout: JDuration,
+  val rowCounter: Counter
 ) extends Runnable
     with Releasable {
   private[this] val log                    = Logger(classOf[QueueProducer])
@@ -61,7 +63,10 @@ private[sink] class QueueProducer(
       while (!stopped.get) {
         if (!paused.get && queue.isEmpty) {
           val rows: Seq[Row] = consumer.poll(pollTimeout).asScala.map(_.key.get)
-          rows.foreach(r => queue.add(r))
+          rows.foreach { r =>
+            queue.add(r)
+            rowCounter.incrementAndGet()
+          }
           log.trace("    group[{}], queue: {}, rows: {}", groupName, queue.size, rows.size)
         } else {
           TimeUnit.MILLISECONDS.sleep(10)

@@ -16,13 +16,19 @@
 
 package oharastream.ohara.shabondi.source
 
-import oharastream.ohara.common.setting.TopicKey
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.shabondi.ShabondiDefinitions._
 
 import scala.collection.JavaConverters._
 
 private[shabondi] class SourceConfig(raw: Map[String, String]) {
-  def shabondiClass: String = raw(SHABONDI_CLASS_DEFINITION.key).toString
+  def group: String = raw(GROUP_DEFINITION.key)
+
+  def name: String = raw(NAME_DEFINITION.key)
+
+  def objectKey: ObjectKey = ObjectKey.of(group, name)
+
+  def shabondiClass: String = raw(SHABONDI_CLASS_DEFINITION.key)
 
   def port: Int = raw(CLIENT_PORT_DEFINITION.key).toInt
 

@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.metrics.BeanChannel
+import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi._
 import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
@@ -29,6 +31,7 @@ import org.junit.Test
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.collection.JavaConverters._
 
 final class TestSinkRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -92,9 +95,17 @@ final class TestSinkRoute extends BasicShabondiTest {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount3, FiniteDuration(10, SECONDS))
       log.info("produce {} rows", rowCount3); Thread.sleep(1000)
 
-      val rows  = Await.result(clientFetch, Duration.Inf)
-      val rows1 = Await.result(clientFetch1, Duration.Inf)
-      (rows.size + rows1.size) should ===(rowCount1 + rowCount2 + rowCount3)
+      val totalCount = rowCount1 + rowCount2 + rowCount3
+      val rows       = Await.result(clientFetch, Duration.Inf)
+      val rows1      = Await.result(clientFetch1, Duration.Inf)
+      (rows.size + rows1.size) should ===(totalCount)
+
+      // assert metrics
+      val beans = counterMBeans()
+      beans.size should ===(1)
+      beans(0).key should ===(config.objectKey)
+      beans(0).item should ===("rows-default")
+      beans(0).getValue should ===(totalCount)
     } finally {
       Releasable.close(webServer)
       ec.shutdown()
@@ -138,6 +149,19 @@ final class TestSinkRoute extends BasicShabondiTest {
 
       (rows.size + rows2.size) should ===(totalCount)
       (rows1.size + rows3.size) should ===(totalCount)
+
+      // assert metrics
+      val beans = counterMBeans()
+      beans.size should ===(2)
+      beans.foreach { bean =>
+        bean.item match {
+          case "rows-default" | "rows-group1" =>
+            bean.key should ===(config.objectKey)
+            bean.getValue should ===(totalCount)
+          case n =>
+            fail(s"Unknown counter: $n")
+        }
+      }
     } finally {
       Releasable.close(webServer)
       ec.shutdown()
@@ -177,4 +201,6 @@ final class TestSinkRoute extends BasicShabondiTest {
       ec.shutdown()
     }
   }
+
+  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala
 }

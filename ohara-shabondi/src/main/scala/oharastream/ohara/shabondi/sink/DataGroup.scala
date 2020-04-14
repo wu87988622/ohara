@@ -18,15 +18,33 @@ package oharastream.ohara.shabondi.sink
 
 import java.time.{Duration => JDuration}
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
 
 import oharastream.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.metrics.basic.Counter
 
-private[sink] class DataGroup(val name: String, brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration)
-    extends Releasable {
-  private val log          = Logger(classOf[RowQueue])
+private[sink] class DataGroup(
+  val name: String,
+  objectKey: ObjectKey,
+  brokerProps: String,
+  topicNames: Seq[String],
+  pollTimeout: JDuration
+) extends Releasable {
+  private val log = Logger(classOf[RowQueue])
+
+  private val rowCounter: Counter =
+    Counter.builder
+      .key(objectKey)
+      .item(s"rows-$name")
+      .unit("row")
+      .document(s"The number of received rows of group $name")
+      .value(0)
+      .register()
+
   val queue                = new RowQueue(name)
-  val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout)
+  val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout, rowCounter)
   private[this] val closed = new AtomicBoolean(false)
 
   def resume(): Unit =
@@ -41,9 +59,16 @@ private[sink] class DataGroup(val name: String, brokerProps: String, topicNames:
 
   def isIdle(idleTime: JDuration): Boolean = queue.isIdle(idleTime)
 
-  override def close(): Unit =
+  override def close(): Unit = {
     if (closed.compareAndSet(false, true)) {
-      producer.close()
+      var exception: Throwable = null
+      val addSuppressedException: Consumer[Throwable] = (ex: Throwable) => {
+        if (exception == null) exception = ex else exception.addSuppressed(ex)
+      }
+      Releasable.close(producer, addSuppressedException)
+      Releasable.close(rowCounter, addSuppressedException)
+      if (exception != null) throw exception
       log.info("Group {} closed.", name)
     }
+  }
 }
