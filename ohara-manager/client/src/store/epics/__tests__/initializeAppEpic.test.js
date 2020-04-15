@@ -26,19 +26,18 @@ import { entities as pipelineEntities } from 'api/__mocks__/pipelineApi';
 jest.mock('api/workspaceApi');
 jest.mock('api/pipelineApi');
 
-const testScheduler = () =>
+const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
 it('initial app correctly', () => {
-  testScheduler().run(helpers => {
+  makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-|';
-    // 6 frames shift after the latest action
+    const input = '   ^-a-|        ';
     const expected = '--------(ab|)';
-    const subs = '    ^---!';
+    const subs = '    ^---!--------';
 
     const action$ = hot(input, {
       a: {
@@ -78,16 +77,15 @@ it('initial app correctly', () => {
 });
 
 it('switch to existed workspace correctly', () => {
-  testScheduler().run(helpers => {
+  makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
       workspaceName: 'workspace1',
     };
-    const input = '   ^-a-|';
-    // 6 frames shift after the latest action
+    const input = '   ^-a-|        ';
     const expected = '--------(ab|)';
-    const subs = '    ^---!';
+    const subs = '    ^---!--------';
 
     const action$ = hot(input, {
       a: {
@@ -129,17 +127,16 @@ it('switch to existed workspace correctly', () => {
 });
 
 it('switch to existed workspace and pipeline correctly', () => {
-  testScheduler().run(helpers => {
+  makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a-|';
-    // 6 frames shift after the latest action
+    const input = '   ^-a-|        ';
     const expected = '--------(ab|)';
-    const subs = '    ^---!';
+    const subs = '    ^---!--------';
 
     const action$ = hot(input, {
       a: {
@@ -182,17 +179,16 @@ it('switch to existed workspace and pipeline correctly', () => {
 });
 
 it('multiple actions will only used the latest action', () => {
-  testScheduler().run(helpers => {
+  makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a--b-|';
-    // 6 frames shift after the latest action
+    const input = '   ^-a--b-|        ';
     const expected = '-----------(ab|)';
-    const subs = '    ^------!';
+    const subs = '    ^------!--------';
 
     const action$ = hot(input, {
       a: {

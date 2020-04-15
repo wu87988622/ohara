@@ -17,21 +17,15 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
-import {
-  catchError,
-  debounce,
-  map,
-  switchMap,
-  startWith,
-} from 'rxjs/operators';
+import { defer, of } from 'rxjs';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateBroker$ = values => {
+const updateBroker$ = values => {
   const brokerId = getId(values);
   return defer(() => brokerApi.update(values)).pipe(
     map(res => res.data),
@@ -49,6 +43,5 @@ export default action$ =>
   action$.pipe(
     ofType(actions.updateBroker.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    switchMap(values => updateBroker$(values)),
+    mergeMap(values => updateBroker$(values)),
   );

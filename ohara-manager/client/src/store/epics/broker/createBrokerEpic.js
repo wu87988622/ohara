@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
 import { merge } from 'lodash';
+import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
+import { defer, of } from 'rxjs';
 import {
   catchError,
-  debounce,
-  exhaustMap,
+  distinctUntilChanged,
   map,
   startWith,
+  mergeMap,
 } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const createBroker$ = values => {
+const createBroker$ = values => {
   const brokerId = getId(values);
   return defer(() => brokerApi.create(values)).pipe(
     map(res => res.data),
@@ -49,6 +49,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.createBroker.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    exhaustMap(values => createBroker$(values)),
+    distinctUntilChanged(),
+    mergeMap(values => createBroker$(values)),
   );

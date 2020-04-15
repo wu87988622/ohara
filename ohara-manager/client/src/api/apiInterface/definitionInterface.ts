@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-enum Necessary {
+export enum Necessary {
   REQUIRED = 'REQUIRED',
   OPTIONAL = 'OPTIONAL',
   RANDOM_DEFAULT = 'RANDOM_DEFAULT',
@@ -29,7 +29,7 @@ export enum Reference {
   FILE = 'FILE',
 }
 
-enum Permission {
+export enum Permission {
   READ_ONLY = 'READ_ONLY',
   CREATE_ONLY = 'CREATE_ONLY',
   EDITABLE = 'EDITABLE',

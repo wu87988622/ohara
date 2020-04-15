@@ -31,7 +31,7 @@ export interface ServiceBody extends ObjectKey {
   [k: string]: any;
 }
 
-interface ClusterData {
+export interface ClusterData {
   aliveNodes: string[];
   deadNodes?: string[];
   lastModified: number;

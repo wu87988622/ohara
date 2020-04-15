@@ -17,17 +17,17 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
+import { defer, of, iif, throwError } from 'rxjs';
 import {
   catchError,
   concatAll,
-  debounce,
   delay,
   map,
   retryWhen,
   startWith,
-  switchMap,
-  take,
+  distinctUntilChanged,
+  mergeMap,
+  concatMap,
 } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
@@ -35,19 +35,29 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const stopBroker$ = params => {
+const stopBroker$ = params => {
   const brokerId = getId(params);
   return of(
     defer(() => brokerApi.stop(params)),
     defer(() => brokerApi.get(params)).pipe(
       map(res => {
         if (res.data?.state) throw res;
-        return res.data;
+        else return res.data;
       }),
       map(data => normalize(data, schema.broker)),
       map(normalizedData => merge(normalizedData, { brokerId })),
       map(normalizedData => actions.stopBroker.success(normalizedData)),
-      retryWhen(error => error.pipe(delay(2000), take(10))),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 10,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
+      ),
     ),
   ).pipe(
     concatAll(),
@@ -62,6 +72,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.stopBroker.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    switchMap(params => stopBroker$(params)),
+    distinctUntilChanged(),
+    mergeMap(params => stopBroker$(params)),
   );
