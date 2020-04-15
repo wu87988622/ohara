@@ -41,13 +41,8 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
   ): Future[Map[ContainerName, String]] =
     cluster(key)
       .map(_.containers)
-      .flatMap(
-        cs =>
-          Future.sequence(
-            cs.map(container => k8sClient.log(container.name, sinceSeconds))
-          )
-      )
-      .map(_.toMap)
+      .flatMap(Future.traverse(_)(container => k8sClient.logs(container.name, sinceSeconds)))
+      .map(_.flatten.toMap)
 
   override def clusters()(
     implicit executionContext: ExecutionContext

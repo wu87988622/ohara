@@ -45,7 +45,7 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
     )
 
   private[this] def log(name: String, sinceSeconds: Option[Long]): String =
-    result(containerClient.log(name, sinceSeconds))._2
+    result(containerClient.logs(name, sinceSeconds)).head._2
 
   @Test
   def testLog(): Unit = {
@@ -80,12 +80,12 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
       )
       names.foreach { name =>
         result(containerClient.volumes()).size shouldBe names.size
-        result(containerClient.volume(name)).path shouldBe "/tmp"
-        result(containerClient.volume(name)).name shouldBe name
-        result(containerClient.volume(name)).nodeName shouldBe platform.nodeNames.head
+        result(containerClient.volumes(name)).head.path shouldBe "/tmp"
+        result(containerClient.volumes(name)).head.name shouldBe name
+        result(containerClient.volumes(name)).head.nodeName shouldBe platform.nodeNames.head
       }
     } finally {
-      names.foreach(name => Releasable.close(() => result(containerClient.removeVolume(name))))
+      names.foreach(name => Releasable.close(() => result(containerClient.removeVolumes(name))))
       result(containerClient.volumes()) shouldBe Seq.empty
     }
   }

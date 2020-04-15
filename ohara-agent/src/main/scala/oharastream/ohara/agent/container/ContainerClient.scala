@@ -44,19 +44,14 @@ trait ContainerClient extends Releasable {
   /**
     * get the container for specify name. Noted: the name should be unique in container env. However, the implementation
     * has no such limit possibly. However, you should NOT assume the implementation and then use the specification based
-    * on specify implementation. If there are two containers have same name, only one container is returned (the order
-    * is random!!!)
+    * on specify implementation.
     *
     * @param name container name
     * @param executionContext thread pool
     * @return container
     */
-  def container(name: String)(implicit executionContext: ExecutionContext): Future[ContainerInfo] =
-    containers()
-      .map(
-        _.find(_.name == name)
-          .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
-      )
+  def containers(name: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
+    containers().map(_.filter(_.name == name))
 
   /**
     * @param executionContext thread pool
@@ -75,19 +70,14 @@ trait ContainerClient extends Releasable {
   /**
     * get the container for specify name. Noted: the name should be unique in container env. However, the implementation
     * has no such limit possibly. However, you should NOT assume the implementation and then use the specification based
-    * on specify implementation. If there are two containers have same name, only one container is returned (the order
-    * is random!!!)
+    * on specify implementation.
     *
     * @param name container name
     * @param executionContext thread pool
     * @return container name
     */
-  def containerName(name: String)(implicit executionContext: ExecutionContext): Future[ContainerName] =
-    containerNames()
-      .map(
-        _.find(_.name == name)
-          .getOrElse(throw new NoSuchElementException(s"$name does not exists!!!"))
-      )
+  def containerNames(name: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
+    containerNames().map(_.filter(_.name == name))
 
   /**
     * remove specify container. The container is removed by graceful shutdown.
@@ -111,7 +101,8 @@ trait ContainerClient extends Releasable {
     * @param executionContext thread pool
     * @return container log
     */
-  def log(name: String)(implicit executionContext: ExecutionContext): Future[(ContainerName, String)] = log(name, None)
+  def logs(name: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+    logs(name, None)
 
   /**
     * get container log
@@ -120,9 +111,9 @@ trait ContainerClient extends Releasable {
     * @param executionContext thread pool
     * @return container log
     */
-  def log(name: String, sinceSeconds: Option[Long])(
+  def logs(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)]
+  ): Future[Map[ContainerName, String]]
 
   /**
     * start a progress to setup a container
@@ -166,18 +157,15 @@ trait ContainerClient extends Releasable {
     * @param executionContext thread pool
     * @return all ohara volumes across all hosted nodes
     */
-  def volume(name: String)(implicit executionContext: ExecutionContext): Future[ContainerVolume] =
-    volumes()
-      .map(
-        _.find(_.name == name)
-          .getOrElse(throw new NoSuchElementException(s"volume:$name does not exists!!!"))
-      )
+  def volumes(name: String)(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] =
+    volumes().map(_.filter(_.name == name))
 
   /**
-    * @param name volumne name
+    * remove volumes having same name
+    * @param name volume name
     * @return true if there is a deleted volume. Otherwise, false
     */
-  def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit]
 }
 
 object ContainerClient {

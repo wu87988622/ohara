@@ -239,35 +239,44 @@ object DockerClient {
       )
 
     override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      containerName(name)
+      containerNames(name)
         .flatMap(
-          container =>
-            agent(container.nodeName)
-              .map { agent =>
-                agent.execute(s"docker stop ${container.id}")
-                agent.execute(s"docker rm ${container.id}")
-              }
+          Future.traverse(_)(
+            container =>
+              agent(container.nodeName)
+                .map { agent =>
+                  agent.execute(s"docker stop ${container.id}")
+                  agent.execute(s"docker rm ${container.id}")
+                }
+          )
         )
         .map(_ => Unit)
 
     override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      containerName(name)
-        .flatMap(container => agent(container.nodeName).map(_.execute(s"docker rm -f ${container.id}")))
+      containerNames(name)
+        .flatMap(
+          Future.traverse(_)(container => agent(container.nodeName).map(_.execute(s"docker rm -f ${container.id}")))
+        )
         .map(_ => Unit)
 
-    override def log(name: String, sinceSeconds: Option[Long])(
+    override def logs(name: String, sinceSeconds: Option[Long])(
       implicit executionContext: ExecutionContext
-    ): Future[(ContainerName, String)] =
-      containerName(name).flatMap { containerName =>
-        agent(containerName.nodeName)
-          .map(
-            _.execute(
-              s"docker container logs ${containerName.id} ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}"
-            )
+    ): Future[Map[ContainerName, String]] =
+      containerNames(name)
+        .flatMap(
+          Future.traverse(_)(
+            containerName =>
+              agent(containerName.nodeName)
+                .map(
+                  _.execute(
+                    s"docker container logs ${containerName.id} ${sinceSeconds.map(seconds => s"--since=${seconds}s").getOrElse("")}"
+                  )
+                )
+                .map(_.getOrElse(throw new IllegalArgumentException(s"no response from $name")))
+                .map(containerName -> _)
           )
-          .map(_.getOrElse(throw new IllegalArgumentException(s"no response from $name")))
-          .map(containerName -> _)
-      }
+        )
+        .map(_.toMap)
 
     override def containerInspector: Inspector =
       containerInspector(null, false)
@@ -283,33 +292,47 @@ object DockerClient {
           this
         }
 
-        override def cat(path: String)(implicit executionContext: ExecutionContext): Future[Option[String]] =
-          containerName(name).flatMap { containerName =>
-            agent(containerName.nodeName)
-              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"cat $path\""""))
-          }
+        override def cat(
+          path: String
+        )(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+          containerNames(name)
+            .flatMap(
+              Future.traverse(_)(
+                containerName =>
+                  agent(containerName.nodeName)
+                    .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"cat $path\""""))
+                    .map(_.map(containerName -> _))
+              )
+            )
+            .map(_.flatten.toMap)
 
         override def append(path: String, content: Seq[String])(
           implicit executionContext: ExecutionContext
-        ): Future[String] =
-          containerName(name).flatMap { containerName =>
-            agent(containerName.nodeName)
-              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
-                .mkString("\n")}\\" >> $path\""""))
-              .flatMap(_ => cat(path))
-              .map(_.get)
-          }
+        ): Future[Map[ContainerName, String]] =
+          containerNames(name)
+            .flatMap(
+              Future.traverse(_)(
+                containerName =>
+                  agent(containerName.nodeName)
+                    .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
+                      .mkString("\n")}\\" >> $path\""""))
+              )
+            )
+            .flatMap(_ => cat(path))
 
         override def write(path: String, content: Seq[String])(
           implicit executionContext: ExecutionContext
-        ): Future[String] =
-          containerName(name).flatMap { containerName =>
-            agent(containerName.nodeName)
-              .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
-                .mkString("\n")}\\" > $path\""""))
-              .flatMap(_ => cat(path))
-              .map(_.get)
-          }
+        ): Future[Map[ContainerName, String]] =
+          containerNames(name)
+            .flatMap(
+              Future.traverse(_)(
+                containerName =>
+                  agent(containerName.nodeName)
+                    .map(_.execute(s"""docker exec $rootConfig ${containerName.id} /bin/bash -c \"echo \\"${content
+                      .mkString("\n")}\\" > $path\""""))
+              )
+            )
+            .flatMap(_ => cat(path))
 
         override def asRoot(): Inspector = containerInspector(name, true)
       }
@@ -429,12 +452,14 @@ object DockerClient {
           }
         })
 
-    override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-      volume(name)
+    override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      volumes(name)
         .flatMap(
-          volume =>
-            agent(volume.nodeName)
-              .map(_.execute(s"docker volume rm ${volume.name}"))
+          Future.traverse(_)(
+            volume =>
+              agent(volume.nodeName)
+                .map(_.execute(s"docker volume rm ${volume.name}"))
+          )
         )
         .map(_ => Unit)
 
@@ -482,7 +507,7 @@ object DockerClient {
       * @param path file path
       * @return content of file
       */
-    def cat(path: String)(implicit executionContext: ExecutionContext): Future[Option[String]]
+    def cat(path: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]]
 
     /**
       * append something to the file of a running container
@@ -490,7 +515,9 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def append(path: String, content: String)(implicit executionContext: ExecutionContext): Future[String] =
+    def append(path: String, content: String)(
+      implicit executionContext: ExecutionContext
+    ): Future[Map[ContainerName, String]] =
       append(path, Seq(content))
 
     /**
@@ -499,7 +526,9 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def append(path: String, content: Seq[String])(implicit executionContext: ExecutionContext): Future[String]
+    def append(path: String, content: Seq[String])(
+      implicit executionContext: ExecutionContext
+    ): Future[Map[ContainerName, String]]
 
     /**
       * clear and write something to the file of a running container
@@ -507,7 +536,9 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def write(path: String, content: String)(implicit executionContext: ExecutionContext): Future[String] =
+    def write(path: String, content: String)(
+      implicit executionContext: ExecutionContext
+    ): Future[Map[ContainerName, String]] =
       write(path, Seq(content))
 
     /**
@@ -516,7 +547,9 @@ object DockerClient {
       * @param content content
       * @param path    file path
       */
-    def write(path: String, content: Seq[String])(implicit executionContext: ExecutionContext): Future[String]
+    def write(path: String, content: Seq[String])(
+      implicit executionContext: ExecutionContext
+    ): Future[Map[ContainerName, String]]
   }
 
   //-----------------------------[Creator]-----------------------------//

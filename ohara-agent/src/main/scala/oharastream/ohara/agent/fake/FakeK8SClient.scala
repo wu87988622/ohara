@@ -59,10 +59,10 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     Future.failed(new UnsupportedOperationException("FakeK8SClient does not support remove function"))
 
-  override def log(name: String, sinceSeconds: Option[Long])(
+  override def logs(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)] =
-    containerName(name).map(_ -> s"fake k8s log for $name")
+  ): Future[Map[ContainerName, String]] =
+    containerNames(name).map(_.map(n => n -> s"fake k8s log for $name").toMap)
 
   override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[K8SJson.HostAliases]] =
     Future.successful(Seq.empty)
@@ -87,7 +87,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   ): Future[Seq[ContainerClient.ContainerVolume]] =
     throw new UnsupportedOperationException("FakeK8SClient does not support volumes function")
 
-  override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+  override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     throw new UnsupportedOperationException("FakeK8SClient does not support removeVolume function")
 
   override def close(): Unit = {

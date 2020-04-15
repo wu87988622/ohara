@@ -58,8 +58,8 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
 
   override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)] =
-    k8sClient.log(containerName, sinceSeconds)
+  ): Future[Map[ContainerName, String]] =
+    k8sClient.logs(containerName, sinceSeconds)
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
     k8sClient.resources()

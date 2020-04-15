@@ -121,7 +121,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
 
   override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)] = dockerClient.log(containerName, sinceSeconds)
+  ): Future[Map[ContainerName, String]] = dockerClient.logs(containerName, sinceSeconds)
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
     dockerClient.resources()

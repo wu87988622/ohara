@@ -53,7 +53,7 @@ trait K8SClient extends ContainerClient {
     throw new UnsupportedOperationException("K8SClient does not support volumes function")
 
   // TODO: https://github.com/oharastream/ohara/issues/4460
-  override def removeVolume(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+  override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     throw new UnsupportedOperationException("K8SClient does not support volumes function")
 }
 
@@ -182,21 +182,28 @@ object K8SClient {
         override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
           removePod(name, false)
 
-        override def log(name: String, sinceSeconds: Option[Long])(
+        override def logs(name: String, sinceSeconds: Option[Long])(
           implicit executionContext: ExecutionContext
-        ): Future[(ContainerName, String)] =
-          containerName(name)
-            .flatMap { containerName =>
-              HttpExecutor.SINGLETON
-                .getOnlyMessage(
-                  sinceSeconds
-                    .map(seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds")
-                    .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
-                )
-                .map(
-                  msg => if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else containerName -> msg
-                )
-            }
+        ): Future[Map[ContainerName, String]] =
+          containerNames(name)
+            .flatMap(
+              Future.traverse(_)(
+                containerName =>
+                  HttpExecutor.SINGLETON
+                    .getOnlyMessage(
+                      sinceSeconds
+                        .map(
+                          seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds"
+                        )
+                        .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
+                    )
+                    .map(
+                      msg =>
+                        if (msg.contains("ERROR:")) throw new IllegalArgumentException(msg) else containerName -> msg
+                    )
+              )
+            )
+            .map(_.toMap)
 
         override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
           HttpExecutor.SINGLETON
@@ -350,14 +357,15 @@ object K8SClient {
           implicit executionContext: ExecutionContext
         ): Future[Unit] = {
           val isForceRemovePod: String = if (isForce) "?gracePeriodSeconds=0" else ""
-          container(name)
+          containers(name)
             .flatMap(
-              container => {
-                HttpExecutor.SINGLETON
-                  .delete[K8SErrorResponse](
-                    s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/${container.name}${isForceRemovePod}"
-                  )
-              }
+              Future.traverse(_)(
+                container =>
+                  HttpExecutor.SINGLETON
+                    .delete[K8SErrorResponse](
+                      s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/${container.name}${isForceRemovePod}"
+                    )
+              )
             )
             .map(_ => Unit)
         }

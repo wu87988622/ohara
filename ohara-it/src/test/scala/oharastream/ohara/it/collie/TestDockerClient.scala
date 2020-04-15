@@ -55,7 +55,7 @@ class TestDockerClient extends IntegrationTest {
         .command(s"""/bin/bash -c \"ping $webHost\"""")
         .create()
     )
-    result(client.log(name, None))._2 should include(webHost)
+    result(client.logs(name, None)).head._2 should include(webHost)
   }
 
   @Test
@@ -98,7 +98,7 @@ class TestDockerClient extends IntegrationTest {
         .command(s"""/bin/bash -c \"ping $webHost\"""")
         .create()
     )
-    val hostFile = result(client.containerInspector.name(name).cat("/etc/hosts")).get
+    val hostFile = result(client.containerInspector.name(name).cat("/etc/hosts")).head._2
     hostFile should include("192.168.123.123")
     hostFile should include("ABC")
   }
@@ -178,9 +178,9 @@ class TestDockerClient extends IntegrationTest {
         .create()
     )
     val container = result(client.containers()).find(_.name == name).get
-    result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")) shouldBe "abc\n"
-    result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")) shouldBe "abc\nabc\n"
-    result(client.containerInspector.name(container.name).append("/tmp/ttt", Seq("t", "z"))) shouldBe "abc\nabc\nt\nz\n"
+    result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")).head._2 shouldBe "abc\n"
+    result(client.containerInspector.name(container.name).append("/tmp/ttt", "abc")).head._2 shouldBe "abc\nabc\n"
+    result(client.containerInspector.name(container.name).append("/tmp/ttt", Seq("t", "z"))).head._2 shouldBe "abc\nabc\nt\nz\n"
   }
 
   @Test

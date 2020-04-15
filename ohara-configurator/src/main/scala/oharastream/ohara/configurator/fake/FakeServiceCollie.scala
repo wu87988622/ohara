@@ -91,6 +91,6 @@ private[configurator] class FakeServiceCollie(
 
   override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)] =
+  ): Future[Map[ContainerName, String]] =
     Future.failed(new NoSuchElementException)
 }

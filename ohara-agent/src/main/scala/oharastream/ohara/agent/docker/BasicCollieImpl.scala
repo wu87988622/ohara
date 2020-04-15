@@ -78,13 +78,8 @@ private abstract class BasicCollieImpl(
   ): Future[Map[ContainerName, String]] =
     cluster(key)
       .map(_.containers)
-      .flatMap { containers =>
-        Future
-          .sequence(containers.map { container =>
-            dockerClient.log(container.name, sinceSeconds)
-          })
-          .map(_.toMap)
-      }
+      .flatMap(Future.traverse(_)(container => dockerClient.logs(container.name, sinceSeconds)))
+      .map(_.flatten.toMap)
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
     if (containers.isEmpty) None

@@ -116,7 +116,7 @@ abstract class ServiceCollie extends Releasable {
     */
   def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[(ContainerName, String)]
+  ): Future[Map[ContainerName, String]]
 
   /**
     * Fetch the available hardware resources of hosted nodes.
