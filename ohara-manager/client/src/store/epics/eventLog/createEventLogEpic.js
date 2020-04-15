@@ -39,8 +39,6 @@ const setLogToLocalForge$ = values => {
   return from(localForage.setItem(key, value));
 };
 
-// we need to trigger snackBar also
-// TODO: https://github.com/oharastream/ohara/issues/4456
 export default action$ =>
   action$.pipe(
     ofType(actions.createEventLog.TRIGGER),

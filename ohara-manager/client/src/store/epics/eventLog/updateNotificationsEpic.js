@@ -17,7 +17,7 @@
 import { min } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of } from 'rxjs';
-import { switchMap, map, catchError } from 'rxjs/operators';
+import { map, catchError, concatMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
@@ -39,7 +39,7 @@ export default (action$, state$) =>
   action$.pipe(
     // we listen the create event epic
     ofType(actions.createEventLog.SUCCESS),
-    switchMap(entity =>
+    concatMap(entity =>
       increaseNotification$(entity.payload.type, state$).pipe(
         map(entity => actions.updateNotifications.success(entity)),
         catchError(res => of(actions.updateNotifications.failure(res))),

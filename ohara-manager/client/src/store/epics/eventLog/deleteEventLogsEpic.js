@@ -15,8 +15,8 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { switchMap, map, catchError } from 'rxjs/operators';
+import { defer, of, zip } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
@@ -27,7 +27,7 @@ localForage.config({
 });
 
 const deleteLogFromLocalForge$ = (keys = []) =>
-  from(Promise.all(keys.map(key => localForage.removeItem(key))));
+  zip(...keys.map(key => defer(() => localForage.removeItem(key))));
 
 export default action$ =>
   action$.pipe(

@@ -16,8 +16,8 @@
 
 import { get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { switchMap, map, catchError } from 'rxjs/operators';
+import { of, defer, zip } from 'rxjs';
+import { switchMap, map, catchError, mergeMap } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
@@ -28,22 +28,19 @@ localForage.config({
 });
 
 const getLogFromLocalForge$ = () =>
-  from(
-    localForage.keys().then(keys => {
-      const data = [];
-      for (let key of keys) {
-        data.push(
-          localForage.getItem(key).then(value => ({
-            key,
-            type: get(value, 'type'),
-            title: get(value, 'title'),
-            createAt: get(value, 'createAt'),
-            payload: get(value, 'payload'),
-          })),
-        );
-      }
-      return Promise.all(data);
-    }),
+  defer(() => localForage.keys()).pipe(
+    mergeMap(keys =>
+      zip(...keys.map(key => defer(() => localForage.getItem(key)))),
+    ),
+    map(values =>
+      values.map(value => ({
+        key: get(value, 'key'),
+        type: get(value, 'type'),
+        title: get(value, 'title'),
+        createAt: get(value, 'createAt'),
+        payload: get(value, 'payload'),
+      })),
+    ),
   );
 
 export default action$ =>
