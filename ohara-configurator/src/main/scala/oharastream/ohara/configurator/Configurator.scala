@@ -33,6 +33,7 @@ import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.InspectApi.K8sUrls
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -209,8 +210,13 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
               .flatMap(keys => Future.traverse(keys)(store.get[StreamClusterInfo]))
               .map(_.flatten)
               .flatMap(clusterInfos => metrics(serviceCollie.streamCollie, clusterInfos))
-            // TODO: Shabondi metrics
-          } yield zks ++ bks ++ wks ++ streams,
+            shabondis <- serviceCollie.shabondiCollie
+              .clusters()
+              .map(_.map(_.key))
+              .flatMap(keys => Future.traverse(keys)(store.get[ShabondiClusterInfo]))
+              .map(_.flatten)
+              .flatMap(clusterInfos => metrics(serviceCollie.shabondiCollie, clusterInfos))
+          } yield zks ++ bks ++ wks ++ streams ++ shabondis,
           cacheTimeout * 10
         )
       }

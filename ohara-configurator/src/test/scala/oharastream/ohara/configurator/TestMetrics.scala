@@ -16,20 +16,27 @@
 
 package oharastream.ohara.configurator
 
+import java.time.Duration
+
+import oharastream.ohara.agent.ServiceState
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.{
   BrokerApi,
   ConnectorApi,
   FileInfoApi,
   PipelineApi,
+  ShabondiApi,
   StreamApi,
   TopicApi,
   WorkerApi
 }
 import oharastream.ohara.common.data.Serializer
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.route.RouteUtils
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.BeanChannel
+import oharastream.ohara.shabondi.ShabondiType
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
@@ -47,6 +54,7 @@ class TestMetrics extends WithBrokerWorker {
   private[this] val topicApi     = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val streamApi    = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] val fileApi      = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
+  private[this] val shabondiApi  = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
@@ -56,15 +64,25 @@ class TestMetrics extends WithBrokerWorker {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 15 seconds)
 
+  private[this] def awaitTrue(f: () => Boolean, swallowException: Boolean = false): Unit =
+    CommonUtils.await(
+      () =>
+        try f()
+        catch {
+          case _: Throwable if swallowException =>
+            false
+        },
+      Duration.ofSeconds(20)
+    )
+
   private[this] def assertNoMetricsForTopic(topicId: String): Unit =
     CommonUtils.await(
       () => BeanChannel.local().topicMeters().asScala.count(_.topicName() == topicId) == 0,
       java.time.Duration.ofSeconds(20)
     )
 
-  @Test
-  def testTopic(): Unit = {
-    val topic = result(
+  private def createTopic(): TopicApi.TopicInfo = {
+    result(
       topicApi.request
         .name(CommonUtils.randomString(10))
         .brokerClusterKey(
@@ -72,6 +90,11 @@ class TestMetrics extends WithBrokerWorker {
         )
         .create()
     )
+  }
+
+  @Test
+  def testTopic(): Unit = {
+    val topic = createTopic()
     result(topicApi.start(topic.key))
     val producer = Producer
       .builder()
@@ -106,14 +129,7 @@ class TestMetrics extends WithBrokerWorker {
 
   @Test
   def testConnector(): Unit = {
-    val topic = result(
-      topicApi.request
-        .name(CommonUtils.randomString(10))
-        .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
-        )
-        .create()
-    )
+    val topic = createTopic()
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -152,15 +168,7 @@ class TestMetrics extends WithBrokerWorker {
 
   @Test
   def testPipeline(): Unit = {
-    val topicName = CommonUtils.randomString(10)
-    val topic = result(
-      topicApi.request
-        .name(topicName)
-        .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
-        )
-        .create()
-    )
+    val topic = createTopic()
     result(topicApi.start(topic.key))
 
     val sink = result(
@@ -199,15 +207,7 @@ class TestMetrics extends WithBrokerWorker {
 
   @Test
   def testTopicMeterInPerfSource(): Unit = {
-    val topicName = CommonUtils.randomString(10)
-    val topic = result(
-      topicApi.request
-        .name(topicName)
-        .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
-        )
-        .create()
-    )
+    val topic = createTopic()
     result(topicApi.start(topic.key))
 
     val source = result(
@@ -266,22 +266,8 @@ class TestMetrics extends WithBrokerWorker {
     val jarInfo = result(fileApi.request.file(jar).group(wkInfo.name).upload())
     jarInfo.name shouldBe jar.getName
 
-    val t1 = result(
-      topicApi.request
-        .name(CommonUtils.randomString(10))
-        .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
-        )
-        .create()
-    )
-    val t2 = result(
-      topicApi.request
-        .name(CommonUtils.randomString(10))
-        .brokerClusterKey(
-          result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
-        )
-        .create()
-    )
+    val t1 = createTopic()
+    val t2 = createTopic()
     result(topicApi.start(t1.key))
     result(topicApi.start(t2.key))
 
@@ -323,6 +309,79 @@ class TestMetrics extends WithBrokerWorker {
       () => result(pipelineApi.get(pipeline.key)).objects.filter(_.key == stream.key).head.meters.isEmpty,
       java.time.Duration.ofSeconds(20)
     )
+  }
+
+  @Test
+  def testShabondiMeterInPipeline(): Unit = {
+    val bkKey
+      : ObjectKey = result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head.key
+    val topic1    = createTopic()
+    result(topicApi.start(topic1.key))
+
+    // ----- create Shabondi Source & Sink & Pipeline
+    val shabondiSource = createShabondiService(ShabondiType.Source, bkKey, topic1.key)
+    val shabondiSink   = createShabondiService(ShabondiType.Sink, bkKey, topic1.key)
+    // ----- create Pipeline: Shabondi Source --> Topic --> Shabondi Sink
+    val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
+    val pipeline = result(
+      pipelineApi.request
+        .name(CommonUtils.randomString(10))
+        .endpoint(topic1)
+        .endpoint(shabondiSource)
+        .endpoint(shabondiSink)
+        .create()
+    )
+    val sourceObject = pipeline.objects.filter(_.key == shabondiSource.key).head
+    val sinkObject   = pipeline.objects.filter(_.key == shabondiSink.key).head
+    sourceObject.meters.size shouldBe 0
+    sinkObject.meters.size shouldBe 0
+
+    // ---- Start Shabondi Source & Sink
+    result(shabondiApi.start(shabondiSource.key))
+    result(shabondiApi.start(shabondiSink.key))
+
+    awaitTrue(() => {
+      val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
+      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
+
+      val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
+      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
+    })
+
+    awaitTrue(() => { // should have meter(fake)
+      val objects: Set[PipelineApi.ObjectAbstract] = result(pipelineApi.get(pipeline.key)).objects
+      val meters1                                  = objects.filter(_.key == shabondiSource.key).head.meters
+      val meters2                                  = objects.filter(_.key == shabondiSink.key).head.meters
+      meters1.nonEmpty && meters2.nonEmpty
+    })
+
+    // ---- Stop Shabondi Source & Sink
+    result(shabondiApi.stop(shabondiSource.key))
+    result(shabondiApi.stop(shabondiSink.key))
+    awaitTrue(() => { // should not have any meter(fake)
+      val objects: Set[PipelineApi.ObjectAbstract] = result(pipelineApi.get(pipeline.key)).objects
+      val meters1                                  = objects.filter(_.key == shabondiSource.key).head.meters
+      val meters2                                  = objects.filter(_.key == shabondiSink.key).head.meters
+      meters1.isEmpty && meters2.isEmpty
+    })
+  }
+
+  private def createShabondiService(
+    shabondiType: ShabondiType,
+    bkKey: ObjectKey,
+    topicKey: TopicKey
+  ): ShabondiClusterInfo = {
+    val request = shabondiApi.request
+      .name(CommonUtils.randomString(10))
+      .brokerClusterKey(bkKey)
+      .nodeName(nodeNames.head)
+      .shabondiClass(shabondiType.className)
+      .clientPort(CommonUtils.availablePort())
+    shabondiType match {
+      case ShabondiType.Source => request.sourceToTopics(Set(topicKey))
+      case ShabondiType.Sink   => request.sinkFromTopics(Set(topicKey))
+    }
+    result(request.create())
   }
 
   @After

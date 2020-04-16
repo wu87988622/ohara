@@ -25,6 +25,7 @@ import oharastream.ohara.agent.{Collie, DataCollie, NoSuchClusterException, Serv
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
@@ -144,25 +145,24 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     case _ => Map.empty
   }
 
+  private def fakeCounter(key: ObjectKey) =
+    Counter
+      .builder()
+      .key(key)
+      .item("fake counter")
+      .value(CommonUtils.randomInteger().toLong)
+      .build()
+
   override protected def counterMBeans(cluster: ClusterInfo): Map[String, Seq[CounterMBean]] = cluster match {
     case _: BrokerClusterInfo =>
       /**
         * the metrics we fetch from kafka are only topic metrics so we skip the other beans
         */
       Map.empty
-    case _: StreamClusterInfo =>
+    case _ @(_: StreamClusterInfo | _: ShabondiClusterInfo) =>
       // we fake counters since stream is not really running in fake collie mode
       if (clusterCache.containsKey(cluster.key)) {
-        Map(
-          CommonUtils.hostname() -> Seq(
-            Counter
-              .builder()
-              .key(cluster.key)
-              .item("fake counter")
-              .value(CommonUtils.randomInteger().toLong)
-              .build()
-          )
-        )
+        Map(CommonUtils.hostname() -> Seq(fakeCounter(cluster.key)))
       } else Map.empty
     case _ =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm

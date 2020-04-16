@@ -128,7 +128,8 @@ private[configurator] object PipelineRoute {
                 )
             )
       }
-    case data @ (_: ZookeeperClusterInfo | _: BrokerClusterInfo | _: WorkerClusterInfo | _: StreamClusterInfo) =>
+    case data @ (_: ZookeeperClusterInfo | _: BrokerClusterInfo | _: WorkerClusterInfo | _: StreamClusterInfo |
+        _: ShabondiClusterInfo) =>
       serviceCollie
         .clusters()
         .map { clusters =>
@@ -138,14 +139,16 @@ private[configurator] object PipelineRoute {
             name = data.name,
             kind = data.kind,
             className = data match {
-              case clusterInfo: StreamClusterInfo => Some(clusterInfo.className)
-              case _                              => None
+              case clusterInfo: StreamClusterInfo   => Some(clusterInfo.className)
+              case clusterInfo: ShabondiClusterInfo => Some(clusterInfo.shabondiClass)
+              case _                                => None
             },
             state = status.flatMap(_.state),
             error = status.flatMap(_.error),
             nodeMetrics = data match {
-              case clusterInfo: StreamClusterInfo => meterCache.meters(clusterInfo, clusterInfo.key)
-              case _                              => Map.empty
+              case clusterInfo: StreamClusterInfo   => meterCache.meters(clusterInfo, clusterInfo.key)
+              case clusterInfo: ShabondiClusterInfo => meterCache.meters(clusterInfo, clusterInfo.key)
+              case _                                => Map.empty
             },
             lastModified = data.lastModified,
             tags = data.tags
@@ -224,9 +227,10 @@ private[configurator] object PipelineRoute {
               name = obj.name,
               kind = obj.kind,
               className = obj match {
-                case d: ConnectorInfo     => Some(d.className)
-                case d: StreamClusterInfo => Some(d.className)
-                case _                    => None
+                case d: ConnectorInfo       => Some(d.className)
+                case d: StreamClusterInfo   => Some(d.className)
+                case d: ShabondiClusterInfo => Some(d.shabondiClass)
+                case _                      => None
               },
               state = None,
               error = Some(e.getMessage),

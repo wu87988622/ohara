@@ -47,6 +47,17 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
   private[this] def await[T](f: Future[T]): T = Await.result(f, 20 seconds)
 
+  private[this] def awaitTrue(f: () => Boolean, swallowException: Boolean = false): Unit =
+    CommonUtils.await(
+      () =>
+        try f()
+        catch {
+          case _: Throwable if swallowException =>
+            false
+        },
+      JDuration.ofSeconds(20)
+    )
+
   @Before
   def setup(): Unit = {
     configurator = Configurator.builder.fake().build()
@@ -150,29 +161,39 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
     await(shabondiApi.start(objectKey))
 
-    val shabondiList = await(shabondiApi.list())
-    shabondiList.size should ===(1)
-    //shabondiList(0).sourceToTopics should ===(Set(topicKey))
-    shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
-    shabondiList(0).aliveNodes.head should ===(nodeName)
+    awaitTrue(() => {
+      val shabondiList = await(shabondiApi.list())
+      shabondiList.size should ===(1)
+      shabondiList(0).sourceToTopics should ===(Set(topicKey))
+      shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
+      shabondiList(0).aliveNodes.head should ===(nodeName)
+      shabondiList(0).meters.nonEmpty
+    })
   }
 
   @Test
-  def testSourceStop(): Unit = {
+  def testSourceStartAndStop(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
     createShabondiSource(objectKey, clientPort, nodeName, Set(topicKey))
 
     await(shabondiApi.start(objectKey))
-    val shabondiList = await(shabondiApi.list())
-    shabondiList.size should ===(1)
-    shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
+    awaitTrue(() => {
+      val shabondiList = await(shabondiApi.list())
+      shabondiList.size should ===(1)
+      shabondiList(0).sourceToTopics should ===(Set(topicKey))
+      shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
+      shabondiList(0).aliveNodes.head should ===(nodeName)
+      shabondiList(0).meters.nonEmpty
+    })
 
     await(shabondiApi.stop(objectKey))
-    val shabondiList1 = await(shabondiApi.list())
 
-    shabondiList1.size should ===(1)
-    println(shabondiList1)
-    shabondiList1(0).state should ===(None)
+    awaitTrue(() => {
+      val shabondiList1 = await(shabondiApi.list())
+      shabondiList1.size should ===(1)
+      shabondiList1(0).state should ===(None)
+      shabondiList1(0).meters.isEmpty
+    })
   }
 
   @Test

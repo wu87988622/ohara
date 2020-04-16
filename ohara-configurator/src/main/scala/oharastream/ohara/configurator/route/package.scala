@@ -301,8 +301,8 @@ package object route {
     collie
       .clusters()
       .map(
-        clusters =>
-          clusters.find(_.key == cluster.key) match {
+        statuses =>
+          statuses.find(_.key == cluster.key) match {
             case None =>
               // no running cluster. It means no state and no dead nodes.
               // noted that the failed containers should still exist and we can "get" the cluster from collie.
@@ -384,7 +384,8 @@ package object route {
                     aliveNodes = status.aliveNodes,
                     state = status.state,
                     error = status.error,
-                    lastModified = CommonUtils.current()
+                    lastModified = CommonUtils.current(),
+                    nodeMetrics = meterCache.meters(c, c.key)
                   )
               }
           }

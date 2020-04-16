@@ -25,6 +25,7 @@ import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -283,6 +284,7 @@ trait Collie {
           case Kind.BROKER    => dataCollie.value[BrokerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
           case Kind.WORKER    => dataCollie.value[WorkerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
           case Kind.STREAM    => dataCollie.value[StreamClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case Kind.SHABONDI  => dataCollie.value[ShabondiClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
         }).map { clusterInfo =>
           counterMBeans(clusterInfo)
             .map {

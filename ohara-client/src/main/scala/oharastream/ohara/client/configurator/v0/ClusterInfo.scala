@@ -18,6 +18,7 @@ package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -106,6 +107,8 @@ trait ClusterInfo extends Data {
       c.copy(settings = WorkerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
     case c: StreamClusterInfo =>
       c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+    case c: ShabondiClusterInfo =>
+      c.copy(settings = ShabondiApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
   }
 
   /**

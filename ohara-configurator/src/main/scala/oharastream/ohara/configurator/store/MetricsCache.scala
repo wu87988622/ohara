@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ClusterInfo
 import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
@@ -105,6 +106,7 @@ object MetricsCache {
           case _: BrokerClusterInfo    => "bk"
           case _: WorkerClusterInfo    => "wk"
           case _: StreamClusterInfo    => "stream"
+          case _: ShabondiClusterInfo  => "shabondi"
           case c: ClusterInfo          => c.getClass.getSimpleName // used by testing
         }
       )
