@@ -20,6 +20,7 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.ContainerPlatform
 import org.junit.experimental.categories.Category
 import oharastream.ohara.it.category.ConnectorGroup
+import org.junit.AssumptionViolatedException
 
 @Category(Array(classOf[ConnectorGroup]))
 class TestPostgresqlJDBCSourceConnector(platform: ContainerPlatform)
@@ -28,21 +29,22 @@ class TestPostgresqlJDBCSourceConnector(platform: ContainerPlatform)
   private[this] val DB_USER_NAME_KEY: String = "ohara.it.postgresql.db.username"
   private[this] val DB_PASSWORD_KEY: String  = "ohara.it.postgresql.db.password"
 
-  override protected def dbUrl(): Option[String] = sys.env.get(DB_URL_KEY)
+  override protected def dbUrl(): String =
+    sys.env.getOrElse(DB_URL_KEY, throw new AssumptionViolatedException(s"$DB_URL_KEY does not exists!!!"))
 
-  override protected def dbUserName(): Option[String] = sys.env.get(DB_USER_NAME_KEY)
+  override protected def dbUserName(): String =
+    sys.env.getOrElse(DB_USER_NAME_KEY, throw new AssumptionViolatedException(s"$DB_USER_NAME_KEY does not exists!!!"))
 
-  override protected def dbPassword(): Option[String] = sys.env.get(DB_PASSWORD_KEY)
+  override protected def dbPassword(): String =
+    sys.env.getOrElse(DB_PASSWORD_KEY, throw new AssumptionViolatedException(s"$DB_PASSWORD_KEY does not exists!!!"))
 
   override protected def dbName(): String = "postgresql"
 
-  override protected def jdbcDriverJarFileName(): String = "postgresql-42.2.6.jar"
-
   override protected val tableName: String = s"table${CommonUtils.randomString(5)}"
 
-  override protected val columnPrefixName: String = "column"
+  override protected def jdbcDriverJarFileName(): String = "postgresql-42.2.6.jar"
 
-  override protected val insertDataSQL: String = s"INSERT INTO $tableName VALUES('2018-09-01 00:00:00',?,?,?)"
+  override protected val columnPrefixName: String = "column"
 
   override protected val BINARY_TYPE_NAME: String = "BYTEA"
 }
