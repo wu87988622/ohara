@@ -16,13 +16,13 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import fetchBrokerEpic from '../broker/fetchBrokerEpic';
+import fetchZookeeperEpic from '../zookeeper/fetchZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
-import { brokerInfoEntity } from 'api/__mocks__/inspectApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
+import { zookeeperInfoEntity } from 'api/__mocks__/inspectApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 jest.mock('api/inspectApi');
 
 const makeTestScheduler = () =>
@@ -30,40 +30,40 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('fetch broker should be worked correctly', () => {
+it('fetch zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const key = { name: 'newbk', group: 'newworkspace' };
+    const key = { name: 'newzk', group: 'newworkspace' };
     const input = '   ^-a 10s     ';
     const expected = '--a 2999ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchZookeeper.TRIGGER,
         payload: key,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
-          brokerId: getId(key),
+          zookeeperId: getId(key),
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(key),
+          zookeeperId: getId(key),
           entities: {
-            brokers: {
-              [getId(key)]: { ...brokerEntity, ...key },
+            zookeepers: {
+              [getId(key)]: { ...zookeeperEntity, ...key },
             },
             infos: {
-              [getId(key)]: { ...brokerInfoEntity, ...key },
+              [getId(key)]: { ...zookeeperInfoEntity, ...key },
             },
           },
           result: getId(key),
@@ -77,45 +77,45 @@ it('fetch broker should be worked correctly', () => {
   });
 });
 
-it('fetch broker multiple times within period should get first result', () => {
+it('fetch zookeeper multiple times within period should get first result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const key = { name: 'newbk', group: 'newworkspace' };
-    const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
+    const key = { name: 'newzk', group: 'newworkspace' };
+    const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
     const expected = '--a 2999ms u-';
     const subs = '    ^------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchZookeeper.TRIGGER,
         payload: key,
       },
       b: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchZookeeper.TRIGGER,
         payload: anotherKey,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
-          brokerId: getId(key),
+          zookeeperId: getId(key),
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(key),
+          zookeeperId: getId(key),
           entities: {
-            brokers: {
-              [getId(key)]: { ...brokerEntity, ...key },
+            zookeepers: {
+              [getId(key)]: { ...zookeeperEntity, ...key },
             },
             infos: {
-              [getId(key)]: { ...brokerInfoEntity, ...key },
+              [getId(key)]: { ...zookeeperInfoEntity, ...key },
             },
           },
           result: getId(key),
@@ -129,51 +129,51 @@ it('fetch broker multiple times within period should get first result', () => {
   });
 });
 
-it('fetch broker multiple times without period should get latest result', () => {
+it('fetch zookeeper multiple times without period should get latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const key = { name: 'newbk', group: 'newworkspace' };
-    const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
+    const key = { name: 'newzk', group: 'newworkspace' };
+    const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
     const input = '   ^-a 2s b         ';
     const expected = '--a 2s b 2999ms u';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchZookeeper.TRIGGER,
         payload: key,
       },
       b: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchZookeeper.TRIGGER,
         payload: anotherKey,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
-          brokerId: getId(key),
+          zookeeperId: getId(key),
         },
       },
       b: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
-          brokerId: getId(anotherKey),
+          zookeeperId: getId(anotherKey),
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(anotherKey),
+          zookeeperId: getId(anotherKey),
           entities: {
-            brokers: {
-              [getId(anotherKey)]: { ...brokerEntity, ...anotherKey },
+            zookeepers: {
+              [getId(anotherKey)]: { ...zookeeperEntity, ...anotherKey },
             },
             infos: {
-              [getId(anotherKey)]: { ...brokerInfoEntity, ...anotherKey },
+              [getId(anotherKey)]: { ...zookeeperInfoEntity, ...anotherKey },
             },
           },
           result: getId(anotherKey),

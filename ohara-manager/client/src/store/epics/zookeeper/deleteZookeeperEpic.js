@@ -16,12 +16,12 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
+import { defer, of } from 'rxjs';
 import {
   catchError,
-  debounce,
+  distinctUntilChanged,
   map,
-  switchMap,
+  mergeMap,
   startWith,
 } from 'rxjs/operators';
 
@@ -29,7 +29,7 @@ import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-export const deleteZookeeper$ = params => {
+const deleteZookeeper$ = params => {
   const zookeeperId = getId(params);
   return defer(() => zookeeperApi.remove(params)).pipe(
     map(() => actions.deleteZookeeper.success({ zookeeperId })),
@@ -44,6 +44,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.deleteZookeeper.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    switchMap(params => deleteZookeeper$(params)),
+    distinctUntilChanged(),
+    mergeMap(params => deleteZookeeper$(params)),
   );

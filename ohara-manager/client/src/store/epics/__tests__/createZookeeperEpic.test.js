@@ -16,19 +16,19 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import createBrokerEpic from '../broker/createBrokerEpic';
+import createZookeeperEpic from '../zookeeper/createZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('create broker should be worked correctly', () => {
+it('create zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -38,29 +38,29 @@ it('create broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.createBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.createZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = createBrokerEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createBroker.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: zookeeperEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
     });
@@ -71,62 +71,62 @@ it('create broker should be worked correctly', () => {
   });
 });
 
-it('create multiple brokers should be worked correctly', () => {
+it('create multiple zookeepers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
     const expected = '--ab 1998ms uv';
     const subs = '    ^-------------';
-    const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
+    const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.createBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.createZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
       b: {
-        type: actions.createBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        type: actions.createZookeeper.TRIGGER,
+        payload: anotherZookeeperEntity,
       },
     });
-    const output$ = createBrokerEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createBroker.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: zookeeperEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
       b: {
-        type: actions.createBroker.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
         },
       },
       v: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
           entities: {
-            brokers: {
-              [getId(anotherBrokerEntity)]: anotherBrokerEntity,
+            zookeepers: {
+              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
             },
           },
-          result: getId(anotherBrokerEntity),
+          result: getId(anotherZookeeperEntity),
         },
       },
     });
@@ -137,7 +137,7 @@ it('create multiple brokers should be worked correctly', () => {
   });
 });
 
-it('create same broker within period should be created once only', () => {
+it('create same zookeeper within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -147,29 +147,29 @@ it('create same broker within period should be created once only', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.createBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.createZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = createBrokerEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createBroker.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: zookeeperEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
     });

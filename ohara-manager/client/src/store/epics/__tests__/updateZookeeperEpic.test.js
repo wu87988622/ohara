@@ -16,19 +16,19 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateBrokerEpic from '../broker/updateBrokerEpic';
+import updateZookeeperEpic from '../zookeeper/updateZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('update broker should be worked correctly', () => {
+it('update zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -38,29 +38,29 @@ it('update broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, jmxPort: 999 },
+        type: actions.updateZookeeper.TRIGGER,
+        payload: { ...zookeeperEntity, jmxPort: 999 },
       },
     });
-    const output$ = updateBrokerEpic(action$);
+    const output$ = updateZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.updateZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.updateZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: { ...brokerEntity, jmxPort: 999 },
+            zookeepers: {
+              [getId(zookeeperEntity)]: { ...zookeeperEntity, jmxPort: 999 },
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
     });
@@ -71,7 +71,7 @@ it('update broker should be worked correctly', () => {
   });
 });
 
-it('update broker multiple times should got latest result', () => {
+it('update zookeeper multiple times should got latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -81,79 +81,79 @@ it('update broker multiple times should got latest result', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.updateZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
       b: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, nodeNames: ['n1', 'n2'] },
+        type: actions.updateZookeeper.TRIGGER,
+        payload: { ...zookeeperEntity, nodeNames: ['n1', 'n2'] },
       },
       c: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, clientPort: 1234 },
+        type: actions.updateZookeeper.TRIGGER,
+        payload: { ...zookeeperEntity, clientPort: 1234 },
       },
     });
-    const output$ = updateBrokerEpic(action$);
+    const output$ = updateZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.updateZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       b: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.updateZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       d: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.updateZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.updateZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: zookeeperEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
       v: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.updateZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: {
-                ...brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: {
+                ...zookeeperEntity,
                 nodeNames: ['n1', 'n2'],
               },
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
       w: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.updateZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
           entities: {
-            brokers: {
-              [getId(brokerEntity)]: {
-                ...brokerEntity,
+            zookeepers: {
+              [getId(zookeeperEntity)]: {
+                ...zookeeperEntity,
                 clientPort: 1234,
               },
             },
           },
-          result: getId(brokerEntity),
+          result: getId(zookeeperEntity),
         },
       },
     });

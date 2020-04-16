@@ -30,7 +30,7 @@ export const entities = [
     nodeNames: ['n1', 'n2'],
   },
 ];
-// simulate a promise request with delay 5 ms
+// simulate a promise request with a delay of 5 ms
 export const getAll = (): Observable<ObjectResponseList> =>
   of({
     status: 200,

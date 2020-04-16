@@ -17,13 +17,13 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, interval, of } from 'rxjs';
+import { defer, forkJoin, of } from 'rxjs';
 import {
   catchError,
-  debounce,
   map,
   switchMap,
   startWith,
+  throttleTime,
 } from 'rxjs/operators';
 
 import * as zookeeperApi from 'api/zookeeperApi';
@@ -32,7 +32,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const fetchZookeeper$ = params => {
+const fetchZookeeper$ = params => {
   const zookeeperId = getId(params);
   return forkJoin(
     defer(() => zookeeperApi.get(params)).pipe(
@@ -57,6 +57,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.fetchZookeeper.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
+    throttleTime(1000),
     switchMap(params => fetchZookeeper$(params)),
   );

@@ -16,19 +16,19 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import deleteBrokerEpic from '../broker/deleteBrokerEpic';
+import deleteZookeeperEpic from '../zookeeper/deleteZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('delete broker should be worked correctly', () => {
+it('delete zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -38,23 +38,23 @@ it('delete broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.deleteZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = deleteZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.deleteZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.deleteZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
     });
@@ -65,50 +65,50 @@ it('delete broker should be worked correctly', () => {
   });
 });
 
-it('delete multiple brokers should be worked correctly', () => {
+it('delete multiple zookeepers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
     const expected = '--ab 998ms uv';
     const subs = '    ^------------';
-    const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
+    const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.deleteZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
       b: {
-        type: actions.deleteBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        type: actions.deleteZookeeper.TRIGGER,
+        payload: anotherZookeeperEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = deleteZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.deleteZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.deleteZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       b: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.deleteZookeeper.REQUEST,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
         },
       },
       v: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.deleteZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
         },
       },
     });
@@ -119,7 +119,7 @@ it('delete multiple brokers should be worked correctly', () => {
   });
 });
 
-it('delete same broker within period should be created once only', () => {
+it('delete same zookeeper within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -129,23 +129,23 @@ it('delete same broker within period should be created once only', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.deleteZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = deleteZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.deleteZookeeper.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.deleteZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          zookeeperId: getId(zookeeperEntity),
         },
       },
     });

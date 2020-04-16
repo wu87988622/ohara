@@ -15,16 +15,18 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
+import { of } from 'rxjs';
 
 import startBrokerEpic from '../broker/startBrokerEpic';
 import * as brokerApi from 'api/brokerApi';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { of } from 'rxjs';
+import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
 jest.mock('api/brokerApi');
+
+const bkKey = getId(brokerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -56,7 +58,7 @@ it('start broker should be worked correctly', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
         },
       },
       u: {
@@ -71,13 +73,16 @@ it('start broker should be worked correctly', () => {
       v: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: { ...brokerEntity, state: 'RUNNING' },
+              [bkKey]: {
+                ...brokerEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
-          result: getId(brokerEntity),
+          result: bkKey,
         },
       },
     });
@@ -89,7 +94,7 @@ it('start broker should be worked correctly', () => {
 });
 
 it('start broker failed after reach retry limit', () => {
-  // mock a 20 times "failed started" results
+  // mock a 20 times "failed started" result
   const spyGet = jest.spyOn(brokerApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
@@ -129,7 +134,7 @@ it('start broker failed after reach retry limit', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
         },
       },
       u: {
@@ -173,7 +178,7 @@ it('start broker multiple times should be worked once', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
         },
       },
       u: {
@@ -188,13 +193,16 @@ it('start broker multiple times should be worked once', () => {
       v: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: { ...brokerEntity, state: 'RUNNING' },
+              [bkKey]: {
+                ...brokerEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
-          result: getId(brokerEntity),
+          result: bkKey,
         },
       },
     });
@@ -237,7 +245,7 @@ it('start different broker should be worked correctly', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
         },
       },
       b: {
@@ -267,13 +275,16 @@ it('start different broker should be worked correctly', () => {
       y: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkKey,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: { ...brokerEntity, state: 'RUNNING' },
+              [bkKey]: {
+                ...brokerEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
-          result: getId(brokerEntity),
+          result: bkKey,
         },
       },
       z: {
@@ -284,7 +295,7 @@ it('start different broker should be worked correctly', () => {
             brokers: {
               [getId(anotherBrokerEntity)]: {
                 ...anotherBrokerEntity,
-                state: 'RUNNING',
+                state: SERVICE_STATE.RUNNING,
               },
             },
           },

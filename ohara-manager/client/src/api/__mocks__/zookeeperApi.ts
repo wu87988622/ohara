@@ -26,24 +26,21 @@ import {
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
 
 export const entity = {
-  name: 'bk00',
-  group: 'default',
-  'offsets.topic.replication.factor': 1,
+  syncLimit: 5,
+  name: 'zk00',
   xms: 1024,
   routes: {},
-  'num.partitions': 1,
-  'num.network.threads': 1,
+  dataDir: '/home/ohara/default/data',
   tags: {},
+  electionPort: 44371,
   xmx: 1024,
-  imageName: 'oharastream/broker:0.10.0-SNAPSHOT',
-  'log.dirs': '/home/ohara/default/data',
-  jmxPort: 42020,
-  'num.io.threads': 1,
-  clientPort: 39614,
-  zookeeperClusterKey: {
-    group: 'default',
-    name: 'zk00',
-  },
+  imageName: 'oharastream/zookeeper:0.9.0',
+  initLimit: 10,
+  jmxPort: 33915,
+  clientPort: 42006,
+  peerPort: 46559,
+  tickTime: 2000,
+  group: 'default',
   nodeNames: ['node00'],
   aliveNodes: [],
   lastModified: 0,
@@ -60,7 +57,7 @@ let runtimeData: ClusterData = {
 export const create = (params: ServiceBody): Observable<ClusterResponse> =>
   of({
     status: 200,
-    title: 'mock create broker data',
+    title: 'mock create zookeeper data',
     data: { ...runtimeData, ...params },
   }).pipe(delay(2000));
 
@@ -68,7 +65,7 @@ export const create = (params: ServiceBody): Observable<ClusterResponse> =>
 export const remove = (): Observable<BasicResponse> =>
   of({
     status: 200,
-    title: 'mock delete broker data',
+    title: 'mock delete zookeeper data',
     data: {},
   }).pipe(delay(1000));
 
@@ -76,7 +73,7 @@ export const remove = (): Observable<BasicResponse> =>
 export const get = (params: ObjectKey): Observable<ClusterResponse> =>
   of({
     status: 200,
-    title: 'mock get broker data',
+    title: 'mock get zookeeper data',
     data: { ...entity, ...runtimeData, ...params },
   }).pipe(delay(500));
 
@@ -84,7 +81,7 @@ export const get = (params: ObjectKey): Observable<ClusterResponse> =>
 export const update = (params: ServiceBody): Observable<ClusterResponse> =>
   of({
     status: 200,
-    title: 'mock update broker data',
+    title: 'mock update zookeeper data',
     data: { ...runtimeData, ...params },
   }).pipe(delay(100));
 
@@ -92,7 +89,7 @@ export const update = (params: ServiceBody): Observable<ClusterResponse> =>
 export const start = (): Observable<BasicResponse> =>
   of({
     status: 200,
-    title: 'mock start broker data',
+    title: 'mock start zookeeper data',
     data: { ...omit(runtimeData, 'state') },
   }).pipe(
     // to simulate broker is "started" in fetch request
@@ -104,7 +101,7 @@ export const start = (): Observable<BasicResponse> =>
 export const stop = (): Observable<BasicResponse> =>
   of({
     status: 200,
-    title: 'mock stop broker data',
+    title: 'mock stop zookeeper data',
     data: { ...omit(runtimeData, 'state') },
   }).pipe(
     // to simulate broker is "stopped" in fetch request

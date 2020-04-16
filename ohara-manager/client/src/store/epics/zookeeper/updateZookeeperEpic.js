@@ -17,21 +17,15 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
-import {
-  catchError,
-  debounce,
-  map,
-  switchMap,
-  startWith,
-} from 'rxjs/operators';
+import { defer, of } from 'rxjs';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateZookeeper$ = values => {
+const updateZookeeper$ = values => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.update(values)).pipe(
     map(res => res.data),
@@ -49,6 +43,5 @@ export default action$ =>
   action$.pipe(
     ofType(actions.updateZookeeper.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    switchMap(values => updateZookeeper$(values)),
+    mergeMap(values => updateZookeeper$(values)),
   );

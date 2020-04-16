@@ -17,16 +17,16 @@
 import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
 
-import stopBrokerEpic from '../broker/stopBrokerEpic';
-import * as brokerApi from 'api/brokerApi';
+import stopZookeeperEpic from '../zookeeper/stopZookeeperEpic';
+import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/zookeeperApi');
 
-const bkKey = getId(brokerEntity);
+const zkKey = getId(zookeeperEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -38,7 +38,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('stop broker should be worked correctly', () => {
+it('stop zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -48,17 +48,17 @@ it('stop broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.stopZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = stopBrokerEpic(action$);
+    const output$ = stopZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopBroker.REQUEST,
+        type: actions.stopZookeeper.REQUEST,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
         },
       },
       u: {
@@ -68,18 +68,18 @@ it('stop broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop broker data',
+        title: 'mock stop zookeeper data',
       },
       v: {
-        type: actions.stopBroker.SUCCESS,
+        type: actions.stopZookeeper.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
           entities: {
-            brokers: {
-              [bkKey]: brokerEntity,
+            zookeepers: {
+              [zkKey]: zookeeperEntity,
             },
           },
-          result: bkKey,
+          result: zkKey,
         },
       },
     });
@@ -90,9 +90,9 @@ it('stop broker should be worked correctly', () => {
   });
 });
 
-it('stop broker failed after reach retry limit', () => {
+it('stop zookeeper failed after reach retry limit', () => {
   // mock a 20 times "failed stopped" result
-  const spyGet = jest.spyOn(brokerApi, 'get');
+  const spyGet = jest.spyOn(zookeeperApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
@@ -107,7 +107,7 @@ it('stop broker failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...brokerEntity },
+      data: { ...zookeeperEntity },
     }),
   );
 
@@ -121,17 +121,17 @@ it('stop broker failed after reach retry limit', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.stopZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = stopBrokerEpic(action$);
+    const output$ = stopZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopBroker.REQUEST,
+        type: actions.stopZookeeper.REQUEST,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
         },
       },
       u: {
@@ -141,10 +141,10 @@ it('stop broker failed after reach retry limit', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop broker data',
+        title: 'mock stop zookeeper data',
       },
       v: {
-        type: actions.stopBroker.FAILURE,
+        type: actions.stopZookeeper.FAILURE,
         payload: 'exceed max retry times',
       },
     });
@@ -155,7 +155,7 @@ it('stop broker failed after reach retry limit', () => {
   });
 });
 
-it('stop broker multiple times should be worked once', () => {
+it('stop zookeeper multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -165,17 +165,17 @@ it('stop broker multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.stopZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
     });
-    const output$ = stopBrokerEpic(action$);
+    const output$ = stopZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopBroker.REQUEST,
+        type: actions.stopZookeeper.REQUEST,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
         },
       },
       u: {
@@ -185,18 +185,18 @@ it('stop broker multiple times should be worked once', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop broker data',
+        title: 'mock stop zookeeper data',
       },
       v: {
-        type: actions.stopBroker.SUCCESS,
+        type: actions.stopZookeeper.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
           entities: {
-            brokers: {
-              [bkKey]: brokerEntity,
+            zookeepers: {
+              [zkKey]: zookeeperEntity,
             },
           },
-          result: bkKey,
+          result: zkKey,
         },
       },
     });
@@ -207,13 +207,13 @@ it('stop broker multiple times should be worked once', () => {
   });
 });
 
-it('stop different broker should be worked correctly', () => {
+it('stop different zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherBrokerEntity = {
-      ...brokerEntity,
-      name: 'anotherbk',
+    const anotherZookeeperEntity = {
+      ...zookeeperEntity,
+      name: 'anotherzk',
       group: 'default',
       xms: 1111,
       xmx: 2222,
@@ -225,27 +225,27 @@ it('stop different broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.stopZookeeper.TRIGGER,
+        payload: zookeeperEntity,
       },
       b: {
-        type: actions.stopBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        type: actions.stopZookeeper.TRIGGER,
+        payload: anotherZookeeperEntity,
       },
     });
-    const output$ = stopBrokerEpic(action$);
+    const output$ = stopZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopBroker.REQUEST,
+        type: actions.stopZookeeper.REQUEST,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
         },
       },
       b: {
-        type: actions.stopBroker.REQUEST,
+        type: actions.stopZookeeper.REQUEST,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
         },
       },
       u: {
@@ -255,7 +255,7 @@ it('stop different broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop broker data',
+        title: 'mock stop zookeeper data',
       },
       v: {
         data: {
@@ -264,30 +264,30 @@ it('stop different broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop broker data',
+        title: 'mock stop zookeeper data',
       },
       y: {
-        type: actions.stopBroker.SUCCESS,
+        type: actions.stopZookeeper.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          zookeeperId: zkKey,
           entities: {
-            brokers: {
-              [bkKey]: brokerEntity,
+            zookeepers: {
+              [zkKey]: zookeeperEntity,
             },
           },
-          result: bkKey,
+          result: zkKey,
         },
       },
       z: {
-        type: actions.stopBroker.SUCCESS,
+        type: actions.stopZookeeper.SUCCESS,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          zookeeperId: getId(anotherZookeeperEntity),
           entities: {
-            brokers: {
-              [getId(anotherBrokerEntity)]: anotherBrokerEntity,
+            zookeepers: {
+              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
             },
           },
-          result: getId(anotherBrokerEntity),
+          result: getId(anotherZookeeperEntity),
         },
       },
     });

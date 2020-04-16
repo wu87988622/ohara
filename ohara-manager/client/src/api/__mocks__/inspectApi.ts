@@ -24,7 +24,7 @@ import {
   Permission,
 } from 'api/apiInterface/definitionInterface';
 
-export const entity = {
+export const brokerInfoEntity = {
   imageName: 'oharastream/broker:0.10.0-SNAPSHOT',
   settingDefinitions: [
     {
@@ -49,10 +49,43 @@ export const entity = {
   classInfos: [],
 };
 
-// simulate a promise request with delay 3s
+export const zookeeperInfoEntity = {
+  imageName: 'oharastream/zookeeper:0.10.0-SNAPSHOT',
+  settingDefinitions: [
+    {
+      blacklist: [],
+      reference: Reference.NONE,
+      displayName: 'peerPort',
+      regex: null,
+      internal: false,
+      permission: Permission.EDITABLE,
+      documentation: 'the port exposed to each quorum',
+      necessary: Necessary.RANDOM_DEFAULT,
+      valueType: Type.BINDING_PORT,
+      tableKeys: [],
+      orderInGroup: 10,
+      key: 'peerPort',
+      defaultValue: null,
+      recommendedValues: [],
+      group: 'core',
+      prefix: '',
+    },
+  ],
+  classInfos: [],
+};
+
+// simulate a promise request with a delay of 3s
 export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
   of({
     status: 200,
     title: 'mock inspect broker data',
-    data: entity,
+    data: brokerInfoEntity,
+  }).pipe(delay(3000));
+
+// simulate a promise request with a delay of 3s
+export const getZookeeperInfo = (): Observable<InspectServiceResponse> =>
+  of({
+    status: 200,
+    title: 'mock inspect zookeeper data',
+    data: zookeeperInfoEntity,
   }).pipe(delay(3000));

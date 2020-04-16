@@ -48,7 +48,7 @@ export const entities = [
     tags: {},
   },
 ];
-// simulate a promise request with delay 6 ms
+// simulate a promise request with a delay of 6 ms
 export const getAll = (): Observable<PipelineResponseList> =>
   of({
     status: 200,
