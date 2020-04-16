@@ -35,28 +35,10 @@ private[configurator] object ShabondiRoute {
     implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
-    import ShabondiDefinitions._
     val shabondiType = ShabondiType(creation.shabondiClass)
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
-      .topics {
-        // Check required topic settings
-        shabondiType match {
-          case ShabondiType.Source =>
-            val sourceToTopics = creation.sourceToTopics
-            if (sourceToTopics != null) {
-              sourceToTopics
-            } else
-              throw new IllegalArgumentException(s"${SOURCE_TO_TOPICS_DEFINITION.key} is required.")
-          case ShabondiType.Sink =>
-            val sinkFromTopics = creation.sinkFromTopics
-            if (sinkFromTopics != null) {
-              sinkFromTopics
-            } else
-              throw new IllegalArgumentException(s"${SINK_FROM_TOPICS_DEFINITION.key} is required.")
-        }
-      }
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
         ShabondiClusterInfo(
