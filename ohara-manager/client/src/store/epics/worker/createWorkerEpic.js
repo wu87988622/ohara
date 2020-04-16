@@ -17,13 +17,13 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
+import { defer, of } from 'rxjs';
 import {
   catchError,
-  debounce,
-  exhaustMap,
   map,
   startWith,
+  distinctUntilChanged,
+  mergeMap,
 } from 'rxjs/operators';
 
 import * as workerApi from 'api/workerApi';
@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const createWorker$ = values => {
+const createWorker$ = values => {
   const workerId = getId(values);
   return defer(() => workerApi.create(values)).pipe(
     map(res => res.data),
@@ -49,6 +49,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.createWorker.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    exhaustMap(values => createWorker$(values)),
+    distinctUntilChanged(),
+    mergeMap(values => createWorker$(values)),
   );

@@ -16,24 +16,24 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import fetchBrokerEpic from '../broker/fetchBrokerEpic';
+import fetchWorkerEpic from '../worker/fetchWorkerEpic';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
+import { workerInfoEntity } from 'api/__mocks__/inspectApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
-import { brokerInfoEntity } from 'api/__mocks__/inspectApi';
 
-jest.mock('api/brokerApi');
+jest.mock('api/workerApi');
 jest.mock('api/inspectApi');
 
-const key = { name: 'newbk', group: 'newworkspace' };
-const bkId = getId(key);
+const key = { name: 'newwk', group: 'newworkspace' };
+const wkId = getId(key);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('fetch broker should be worked correctly', () => {
+it('fetch worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -43,32 +43,32 @@ it('fetch broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchWorker.TRIGGER,
         payload: key,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchWorker.SUCCESS,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
           entities: {
-            brokers: {
-              [bkId]: { ...brokerEntity, ...key },
+            workers: {
+              [wkId]: { ...workerEntity, ...key },
             },
             infos: {
-              [bkId]: { ...brokerInfoEntity, ...key },
+              [wkId]: { ...workerInfoEntity, ...key },
             },
           },
-          result: bkId,
+          result: wkId,
         },
       },
     });
@@ -79,47 +79,47 @@ it('fetch broker should be worked correctly', () => {
   });
 });
 
-it('fetch broker multiple times within period should get first result', () => {
+it('fetch worker multiple times within period should get first result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
+    const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
     const expected = '--a 2999ms u-';
     const subs = '    ^------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchWorker.TRIGGER,
         payload: key,
       },
       b: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchWorker.TRIGGER,
         payload: anotherKey,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchWorker.SUCCESS,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
           entities: {
-            brokers: {
-              [bkId]: { ...brokerEntity, ...key },
+            workers: {
+              [wkId]: { ...workerEntity, ...key },
             },
             infos: {
-              [bkId]: { ...brokerInfoEntity, ...key },
+              [wkId]: { ...workerInfoEntity, ...key },
             },
           },
-          result: bkId,
+          result: wkId,
         },
       },
     });
@@ -130,50 +130,50 @@ it('fetch broker multiple times within period should get first result', () => {
   });
 });
 
-it('fetch broker multiple times without period should get latest result', () => {
+it('fetch worker multiple times without period should get latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
+    const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
     const input = '   ^-a 2s b         ';
     const expected = '--a 2s b 2999ms u';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchWorker.TRIGGER,
         payload: key,
       },
       b: {
-        type: actions.fetchBroker.TRIGGER,
+        type: actions.fetchWorker.TRIGGER,
         payload: anotherKey,
       },
     });
-    const output$ = fetchBrokerEpic(action$);
+    const output$ = fetchWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       b: {
-        type: actions.fetchBroker.REQUEST,
+        type: actions.fetchWorker.REQUEST,
         payload: {
-          brokerId: getId(anotherKey),
+          workerId: getId(anotherKey),
         },
       },
       u: {
-        type: actions.fetchBroker.SUCCESS,
+        type: actions.fetchWorker.SUCCESS,
         payload: {
-          brokerId: getId(anotherKey),
+          workerId: getId(anotherKey),
           entities: {
-            brokers: {
-              [getId(anotherKey)]: { ...brokerEntity, ...anotherKey },
+            workers: {
+              [getId(anotherKey)]: { ...workerEntity, ...anotherKey },
             },
             infos: {
-              [getId(anotherKey)]: { ...brokerInfoEntity, ...anotherKey },
+              [getId(anotherKey)]: { ...workerInfoEntity, ...anotherKey },
             },
           },
           result: getId(anotherKey),

@@ -16,21 +16,21 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateZookeeperEpic from '../zookeeper/updateZookeeperEpic';
+import updateWorkerEpic from '../worker/updateWorkerEpic';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/zookeeperApi');
+jest.mock('api/workerApi');
 
-const zkId = getId(zookeeperEntity);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('update zookeeper should be worked correctly', () => {
+it('update worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -40,29 +40,29 @@ it('update zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, jmxPort: 999 },
+        type: actions.updateWorker.TRIGGER,
+        payload: { ...workerEntity, jmxPort: 999 },
       },
     });
-    const output$ = updateZookeeperEpic(action$);
+    const output$ = updateWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateZookeeper.REQUEST,
+        type: actions.updateWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.updateZookeeper.SUCCESS,
+        type: actions.updateWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: { ...zookeeperEntity, jmxPort: 999 },
+            workers: {
+              [wkId]: { ...workerEntity, jmxPort: 999 },
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
     });
@@ -73,7 +73,7 @@ it('update zookeeper should be worked correctly', () => {
   });
 });
 
-it('update zookeeper multiple times should got latest result', () => {
+it('update worker multiple times should got latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -83,79 +83,79 @@ it('update zookeeper multiple times should got latest result', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.updateWorker.TRIGGER,
+        payload: workerEntity,
       },
       b: {
-        type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, nodeNames: ['n1', 'n2'] },
+        type: actions.updateWorker.TRIGGER,
+        payload: { ...workerEntity, nodeNames: ['n1', 'n2'] },
       },
       c: {
-        type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, clientPort: 1234 },
+        type: actions.updateWorker.TRIGGER,
+        payload: { ...workerEntity, clientPort: 1234 },
       },
     });
-    const output$ = updateZookeeperEpic(action$);
+    const output$ = updateWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateZookeeper.REQUEST,
+        type: actions.updateWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       b: {
-        type: actions.updateZookeeper.REQUEST,
+        type: actions.updateWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       d: {
-        type: actions.updateZookeeper.REQUEST,
+        type: actions.updateWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.updateZookeeper.SUCCESS,
+        type: actions.updateWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: zookeeperEntity,
+            workers: {
+              [wkId]: workerEntity,
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
       v: {
-        type: actions.updateZookeeper.SUCCESS,
+        type: actions.updateWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: {
-                ...zookeeperEntity,
+            workers: {
+              [wkId]: {
+                ...workerEntity,
                 nodeNames: ['n1', 'n2'],
               },
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
       w: {
-        type: actions.updateZookeeper.SUCCESS,
+        type: actions.updateWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: {
-                ...zookeeperEntity,
+            workers: {
+              [wkId]: {
+                ...workerEntity,
                 clientPort: 1234,
               },
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
     });

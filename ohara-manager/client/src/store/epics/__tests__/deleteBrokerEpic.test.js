@@ -23,6 +23,8 @@ import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
 jest.mock('api/brokerApi');
 
+const bkId = getId(brokerEntity);
+
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
@@ -48,13 +50,13 @@ it('delete broker should be worked correctly', () => {
       a: {
         type: actions.deleteBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.deleteBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
     });
@@ -90,13 +92,13 @@ it('delete multiple brokers should be worked correctly', () => {
       a: {
         type: actions.deleteBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.deleteBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       b: {
@@ -139,13 +141,13 @@ it('delete same broker within period should be created once only', () => {
       a: {
         type: actions.deleteBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.deleteBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
     });

@@ -26,7 +26,7 @@ import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
 jest.mock('api/brokerApi');
 
-const bkKey = getId(brokerEntity);
+const bkId = getId(brokerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -58,7 +58,7 @@ it('start broker should be worked correctly', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
         },
       },
       u: {
@@ -73,16 +73,16 @@ it('start broker should be worked correctly', () => {
       v: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
           entities: {
             brokers: {
-              [bkKey]: {
+              [bkId]: {
                 ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: bkKey,
+          result: bkId,
         },
       },
     });
@@ -134,7 +134,7 @@ it('start broker failed after reach retry limit', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
         },
       },
       u: {
@@ -178,7 +178,7 @@ it('start broker multiple times should be worked once', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
         },
       },
       u: {
@@ -193,16 +193,16 @@ it('start broker multiple times should be worked once', () => {
       v: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
           entities: {
             brokers: {
-              [bkKey]: {
+              [bkId]: {
                 ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: bkKey,
+          result: bkId,
         },
       },
     });
@@ -245,7 +245,7 @@ it('start different broker should be worked correctly', () => {
       a: {
         type: actions.startBroker.REQUEST,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
         },
       },
       b: {
@@ -275,16 +275,16 @@ it('start different broker should be worked correctly', () => {
       y: {
         type: actions.startBroker.SUCCESS,
         payload: {
-          brokerId: bkKey,
+          brokerId: bkId,
           entities: {
             brokers: {
-              [bkKey]: {
+              [bkId]: {
                 ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: bkKey,
+          result: bkId,
         },
       },
       z: {

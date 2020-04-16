@@ -32,15 +32,15 @@ export default (action$, state$) =>
       defer(() => {
         const getDevToolLog = selectors.makeGetDevToolLog();
         const workspaceName = selectors.getWorkspaceName(state$.value);
-        const zkKey = () => ({
+        const zkId = () => ({
           name: workspaceName,
           group: GROUP.ZOOKEEPER,
         });
-        const bkKey = () => ({
+        const bkId = () => ({
           name: workspaceName,
           group: GROUP.BROKER,
         });
-        const wkKey = () => ({
+        const wkId = () => ({
           name: workspaceName,
           group: GROUP.WORKER,
         });
@@ -72,15 +72,15 @@ export default (action$, state$) =>
               sinceSeconds: getTimeSeconds(),
             });
           case KIND.zookeeper:
-            return logApi.getZookeeperLog(zkKey(), {
+            return logApi.getZookeeperLog(zkId(), {
               sinceSeconds: getTimeSeconds(),
             });
           case KIND.broker:
-            return logApi.getBrokerLog(bkKey(), {
+            return logApi.getBrokerLog(bkId(), {
               sinceSeconds: getTimeSeconds(),
             });
           case KIND.worker:
-            return logApi.getWorkerLog(wkKey(), {
+            return logApi.getWorkerLog(wkId(), {
               sinceSeconds: getTimeSeconds(),
             });
           case KIND.stream:

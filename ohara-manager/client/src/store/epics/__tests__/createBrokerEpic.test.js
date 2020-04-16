@@ -23,6 +23,8 @@ import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
 jest.mock('api/brokerApi');
 
+const bkId = getId(brokerEntity);
+
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
@@ -48,19 +50,19 @@ it('create broker should be worked correctly', () => {
       a: {
         type: actions.createBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.createBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+              [bkId]: brokerEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
     });
@@ -96,19 +98,19 @@ it('create multiple brokers should be worked correctly', () => {
       a: {
         type: actions.createBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.createBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+              [bkId]: brokerEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
       b: {
@@ -157,19 +159,19 @@ it('create same broker within period should be created once only', () => {
       a: {
         type: actions.createBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.createBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+              [bkId]: brokerEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
     });

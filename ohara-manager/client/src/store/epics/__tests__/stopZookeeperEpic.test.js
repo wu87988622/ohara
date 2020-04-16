@@ -26,7 +26,7 @@ import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
 jest.mock('api/zookeeperApi');
 
-const zkKey = getId(zookeeperEntity);
+const zkId = getId(zookeeperEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -58,7 +58,7 @@ it('stop zookeeper should be worked correctly', () => {
       a: {
         type: actions.stopZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -73,13 +73,13 @@ it('stop zookeeper should be worked correctly', () => {
       v: {
         type: actions.stopZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: zookeeperEntity,
+              [zkId]: zookeeperEntity,
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
     });
@@ -131,7 +131,7 @@ it('stop zookeeper failed after reach retry limit', () => {
       a: {
         type: actions.stopZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -175,7 +175,7 @@ it('stop zookeeper multiple times should be worked once', () => {
       a: {
         type: actions.stopZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -190,13 +190,13 @@ it('stop zookeeper multiple times should be worked once', () => {
       v: {
         type: actions.stopZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: zookeeperEntity,
+              [zkId]: zookeeperEntity,
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
     });
@@ -239,7 +239,7 @@ it('stop different zookeeper should be worked correctly', () => {
       a: {
         type: actions.stopZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       b: {
@@ -269,13 +269,13 @@ it('stop different zookeeper should be worked correctly', () => {
       y: {
         type: actions.stopZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: zookeeperEntity,
+              [zkId]: zookeeperEntity,
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
       z: {

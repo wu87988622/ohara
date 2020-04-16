@@ -31,7 +31,6 @@ export const brokerInfoEntity = {
       blacklist: [],
       reference: Reference.NONE,
       displayName: 'xmx',
-      regex: null,
       internal: false,
       permission: Permission.EDITABLE,
       documentation: 'maximum memory allocation (in MB)',
@@ -43,7 +42,6 @@ export const brokerInfoEntity = {
       defaultValue: 1024,
       recommendedValues: [],
       group: 'core',
-      prefix: '',
     },
   ],
   classInfos: [],
@@ -56,7 +54,6 @@ export const zookeeperInfoEntity = {
       blacklist: [],
       reference: Reference.NONE,
       displayName: 'peerPort',
-      regex: null,
       internal: false,
       permission: Permission.EDITABLE,
       documentation: 'the port exposed to each quorum',
@@ -68,11 +65,40 @@ export const zookeeperInfoEntity = {
       defaultValue: null,
       recommendedValues: [],
       group: 'core',
-      prefix: '',
     },
   ],
   classInfos: [],
 };
+
+export const workerInfoEntity = {
+  classInfos: [],
+  imageName: 'oharastream/connect-worker:0.10.0-SNAPSHOT',
+  settingDefinitions: [
+    {
+      blacklist: [],
+      displayName: 'sharedJarKeys',
+      documentation: 'the shared jars',
+      group: 'core',
+      internal: false,
+      key: 'sharedJarKeys',
+      necessary: Necessary.OPTIONAL,
+      orderInGroup: 12,
+      permission: Permission.EDITABLE,
+      recommendedValues: [],
+      reference: Reference.FILE,
+      tableKeys: [],
+      valueType: Type.OBJECT_KEYS,
+    },
+  ],
+};
+
+// simulate a promise request with a delay of 3s
+export const getZookeeperInfo = (): Observable<InspectServiceResponse> =>
+  of({
+    status: 200,
+    title: 'mock inspect zookeeper data',
+    data: zookeeperInfoEntity,
+  }).pipe(delay(3000));
 
 // simulate a promise request with a delay of 3s
 export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
@@ -83,9 +109,9 @@ export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
   }).pipe(delay(3000));
 
 // simulate a promise request with a delay of 3s
-export const getZookeeperInfo = (): Observable<InspectServiceResponse> =>
+export const getWorkerInfo = (): Observable<InspectServiceResponse> =>
   of({
     status: 200,
-    title: 'mock inspect zookeeper data',
-    data: zookeeperInfoEntity,
+    title: 'mock inspect broker data',
+    data: workerInfoEntity,
   }).pipe(delay(3000));

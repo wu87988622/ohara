@@ -26,7 +26,7 @@ import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
 jest.mock('api/zookeeperApi');
 
-const zkKey = getId(zookeeperEntity);
+const zkId = getId(zookeeperEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -58,7 +58,7 @@ it('start zookeeper should be worked correctly', () => {
       a: {
         type: actions.startZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -73,16 +73,16 @@ it('start zookeeper should be worked correctly', () => {
       v: {
         type: actions.startZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: {
+              [zkId]: {
                 ...zookeeperEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
     });
@@ -134,7 +134,7 @@ it('start zookeeper failed after reach retry limit', () => {
       a: {
         type: actions.startZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -178,7 +178,7 @@ it('start zookeeper multiple times should be worked once', () => {
       a: {
         type: actions.startZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       u: {
@@ -193,16 +193,16 @@ it('start zookeeper multiple times should be worked once', () => {
       v: {
         type: actions.startZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: {
+              [zkId]: {
                 ...zookeeperEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
     });
@@ -245,7 +245,7 @@ it('start different zookeeper should be worked correctly', () => {
       a: {
         type: actions.startZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
         },
       },
       b: {
@@ -275,16 +275,16 @@ it('start different zookeeper should be worked correctly', () => {
       y: {
         type: actions.startZookeeper.SUCCESS,
         payload: {
-          zookeeperId: zkKey,
+          zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkKey]: {
+              [zkId]: {
                 ...zookeeperEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkKey,
+          result: zkId,
         },
       },
       z: {

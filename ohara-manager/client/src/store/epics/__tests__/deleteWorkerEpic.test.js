@@ -16,21 +16,21 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import deleteZookeeperEpic from '../zookeeper/deleteZookeeperEpic';
+import deleteWorkerEpic from '../worker/deleteWorkerEpic';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 
-jest.mock('api/zookeeperApi');
+jest.mock('api/workerApi');
 
-const zkId = getId(zookeeperEntity);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('delete zookeeper should be worked correctly', () => {
+it('delete worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -40,23 +40,23 @@ it('delete zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.deleteWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = deleteWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
     });
@@ -67,50 +67,50 @@ it('delete zookeeper should be worked correctly', () => {
   });
 });
 
-it('delete multiple zookeepers should be worked correctly', () => {
+it('delete multiple workers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
     const expected = '--ab 998ms uv';
     const subs = '    ^------------';
-    const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
+    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.deleteWorker.TRIGGER,
+        payload: workerEntity,
       },
       b: {
-        type: actions.deleteZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        type: actions.deleteWorker.TRIGGER,
+        payload: anotherWorkerEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = deleteWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       b: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          workerId: getId(anotherWorkerEntity),
         },
       },
       v: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          workerId: getId(anotherWorkerEntity),
         },
       },
     });
@@ -121,7 +121,7 @@ it('delete multiple zookeepers should be worked correctly', () => {
   });
 });
 
-it('delete same zookeeper within period should be created once only', () => {
+it('delete same worker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -131,23 +131,23 @@ it('delete same zookeeper within period should be created once only', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.deleteWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = deleteWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
     });

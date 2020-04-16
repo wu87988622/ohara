@@ -23,6 +23,8 @@ import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
 jest.mock('api/brokerApi');
 
+const bkId = getId(brokerEntity);
+
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
@@ -48,19 +50,19 @@ it('update broker should be worked correctly', () => {
       a: {
         type: actions.updateBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.updateBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: { ...brokerEntity, jmxPort: 999 },
+              [bkId]: { ...brokerEntity, jmxPort: 999 },
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
     });
@@ -99,61 +101,61 @@ it('update broker multiple times should got latest result', () => {
       a: {
         type: actions.updateBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       b: {
         type: actions.updateBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       d: {
         type: actions.updateBroker.REQUEST,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
         },
       },
       u: {
         type: actions.updateBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: brokerEntity,
+              [bkId]: brokerEntity,
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
       v: {
         type: actions.updateBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: {
+              [bkId]: {
                 ...brokerEntity,
                 nodeNames: ['n1', 'n2'],
               },
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
       w: {
         type: actions.updateBroker.SUCCESS,
         payload: {
-          brokerId: getId(brokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(brokerEntity)]: {
+              [bkId]: {
                 ...brokerEntity,
                 clientPort: 1234,
               },
             },
           },
-          result: getId(brokerEntity),
+          result: bkId,
         },
       },
     });

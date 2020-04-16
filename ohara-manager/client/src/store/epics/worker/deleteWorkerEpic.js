@@ -16,20 +16,20 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, interval, of } from 'rxjs';
+import { defer, of } from 'rxjs';
 import {
   catchError,
-  debounce,
   map,
-  switchMap,
   startWith,
+  mergeMap,
+  distinctUntilChanged,
 } from 'rxjs/operators';
 
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-export const deleteWorker$ = params => {
+const deleteWorker$ = params => {
   const workerId = getId(params);
   return defer(() => workerApi.remove(params)).pipe(
     map(() => actions.deleteWorker.success({ workerId })),
@@ -44,6 +44,6 @@ export default action$ =>
   action$.pipe(
     ofType(actions.deleteWorker.TRIGGER),
     map(action => action.payload),
-    debounce(() => interval(1000)),
-    switchMap(params => deleteWorker$(params)),
+    distinctUntilChanged(),
+    mergeMap(params => deleteWorker$(params)),
   );

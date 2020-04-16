@@ -16,21 +16,21 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import createZookeeperEpic from '../zookeeper/createZookeeperEpic';
+import createWorkerEpic from '../worker/createWorkerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
 
-jest.mock('api/zookeeperApi');
+jest.mock('api/workerApi');
 
-const zkId = getId(zookeeperEntity);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('create zookeeper should be worked correctly', () => {
+it('create worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -40,29 +40,29 @@ it('create zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: zookeeperEntity,
+            workers: {
+              [wkId]: workerEntity,
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
     });
@@ -73,62 +73,62 @@ it('create zookeeper should be worked correctly', () => {
   });
 });
 
-it('create multiple zookeepers should be worked correctly', () => {
+it('create multiple workers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
     const expected = '--ab 1998ms uv';
     const subs = '    ^-------------';
-    const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
+    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
       b: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        type: actions.createWorker.TRIGGER,
+        payload: anotherWorkerEntity,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: zookeeperEntity,
+            workers: {
+              [wkId]: workerEntity,
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
       b: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          workerId: getId(anotherWorkerEntity),
         },
       },
       v: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          workerId: getId(anotherWorkerEntity),
           entities: {
-            zookeepers: {
-              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
+            workers: {
+              [getId(anotherWorkerEntity)]: anotherWorkerEntity,
             },
           },
-          result: getId(anotherZookeeperEntity),
+          result: getId(anotherWorkerEntity),
         },
       },
     });
@@ -139,7 +139,7 @@ it('create multiple zookeepers should be worked correctly', () => {
   });
 });
 
-it('create same zookeeper within period should be created once only', () => {
+it('create same worker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -149,29 +149,29 @@ it('create same zookeeper within period should be created once only', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
         },
       },
       u: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          workerId: wkId,
           entities: {
-            zookeepers: {
-              [zkId]: zookeeperEntity,
+            workers: {
+              [wkId]: workerEntity,
             },
           },
-          result: zkId,
+          result: wkId,
         },
       },
     });

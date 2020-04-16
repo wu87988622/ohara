@@ -90,16 +90,16 @@ export interface SettingDef {
   orderInGroup: number;
   valueType: Type;
   necessary: Necessary;
-  defaultValue: any;
+  defaultValue?: any;
   documentation: string;
-  reference: Reference | null;
-  regex: string | null;
+  reference?: Reference;
+  regex?: string;
   internal: boolean;
   permission: Permission;
   tableKeys: TableColumn[];
   recommendedValues: string[];
   blacklist: string[];
-  prefix: string | null;
+  prefix?: string;
 }
 
 export interface ClassInfo {
