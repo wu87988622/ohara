@@ -14,18 +14,4 @@
  * limitations under the License.
  */
 
-import { sortBy, values } from 'lodash';
-import { createSelector } from 'reselect';
-import * as transforms from 'store/transforms';
-
-const getAllEntities = state => state?.entities;
-
-const getNodeEntities = state => state?.entities?.nodes;
-
-export const getAllNodes = createSelector(
-  [getNodeEntities, getAllEntities],
-  (nodeEntities, allEntities) => {
-    const nodes = sortBy(values(nodeEntities), ['hostname']);
-    return transforms.transformNodes(nodes, allEntities);
-  },
-);
+export * from './nodeTransform';

@@ -52,6 +52,7 @@ const FileActionsMenu = ({ file, deleteDisabled }) => {
   const handleDelete = async () => {
     if (name) {
       deleteFile(name);
+      setAnchorEl(null);
       setIsDeleteDialogOpen(false);
     }
   };

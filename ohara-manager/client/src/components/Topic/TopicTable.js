@@ -44,7 +44,7 @@ function TopicList() {
 
   return (
     <Wrapper>
-      <div className="shared-topics">
+      <div className="shared-topics" data-testid="shared-topics">
         <Table
           title="Shared topics"
           actions={[
@@ -79,7 +79,10 @@ function TopicList() {
               sorting: false,
               render: topic => (
                 <Tooltip title="View Topic">
-                  <IconButton onClick={() => openViewTopicDialog(topic)}>
+                  <IconButton
+                    data-testid={`view-topic-${topic.name}`}
+                    onClick={() => openViewTopicDialog(topic)}
+                  >
                     <VisibilityIcon />
                   </IconButton>
                 </Tooltip>
@@ -136,7 +139,10 @@ function TopicList() {
               sorting: false,
               render: topic => (
                 <Tooltip title="View Topic">
-                  <IconButton onClick={() => openViewTopicDialog(topic)}>
+                  <IconButton
+                    data-testid={`view-topic-${topic.name}`}
+                    onClick={() => openViewTopicDialog(topic)}
+                  >
                     <VisibilityIcon />
                   </IconButton>
                 </Tooltip>

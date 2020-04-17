@@ -31,12 +31,10 @@ import {
 } from 'utils/validate';
 import * as hooks from 'hooks';
 
-const AddNodeDialog = props => {
-  const { isOpen, handleClose, mode } = props;
-
+const NodeCreateDialog = ({ isOpen, onClose, mode }) => {
   const createNode = hooks.useCreateNodeAction();
 
-  const onSubmit = async (values, form) => {
+  const handleSubmit = values => {
     const { hostname, port, ...rest } = values;
 
     const params = {
@@ -46,20 +44,19 @@ const AddNodeDialog = props => {
     };
 
     createNode(params);
-    setTimeout(form.reset);
-    handleClose();
+    onClose();
   };
 
   return (
     <Form
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
             open={isOpen}
             handleClose={() => {
-              handleClose();
+              onClose();
               form.reset();
             }}
             handleConfirm={handleSubmit}
@@ -134,16 +131,16 @@ const AddNodeDialog = props => {
   );
 };
 
-AddNodeDialog.propTypes = {
+NodeCreateDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
   mode: PropTypes.string.isRequired,
 };
 
-AddNodeDialog.defaultProps = {
+NodeCreateDialog.defaultProps = {
   isOpen: false,
-  handleClose: noop,
+  onClose: noop,
   mode: MODE.K8S,
 };
 
-export default AddNodeDialog;
+export default NodeCreateDialog;

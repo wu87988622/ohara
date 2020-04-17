@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { get, isEmpty } from 'lodash';
 import clx from 'classnames';
 import AppsIcon from '@material-ui/icons/Apps';
@@ -31,14 +31,15 @@ import * as hooks from 'hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
+import NodeListDialog from 'components/Node/NodeListDialog';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
 const AppBar = () => {
+  const allNodes = hooks.useAllNodes();
   const workspaces = hooks.useAllWorkspaces();
   const workspace = hooks.useWorkspace();
   const openIntro = hooks.useOpenIntroAction();
-  const { toggle: toggleNodeList } = context.useListNodeDialog();
   const {
     toggle: toggleDevTool,
     close: closeDevTool,
@@ -47,10 +48,12 @@ const AppBar = () => {
     toggle: toggleEventLog,
     close: closeEventLog,
   } = context.useEventLogDialog();
+  const { data: configuratorInfo } = context.useConfiguratorState();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const { data: notifications } = hooks.useEventNotifications();
   const createWorkspaceState = hooks.useCreateWorkspaceState();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const [isNodeListDialogOpen, setIsNodeListDialogOpen] = useState(false);
 
   return (
     <StyledAppBar>
@@ -128,12 +131,23 @@ const AppBar = () => {
           </Tooltip>
 
           <Tooltip title="Node list" placement="right">
-            <IconButton className="node-list item" onClick={toggleNodeList}>
+            <IconButton
+              className="node-list item"
+              onClick={() => setIsNodeListDialogOpen(true)}
+            >
               <StorageIcon />
             </IconButton>
           </Tooltip>
         </div>
       </header>
+      <NodeListDialog
+        dialogTitle="All nodes"
+        isOpen={isNodeListDialogOpen}
+        mode={configuratorInfo?.mode}
+        nodes={allNodes}
+        onClose={() => setIsNodeListDialogOpen(false)}
+        tableTitle="All nodes"
+      />
     </StyledAppBar>
   );
 };

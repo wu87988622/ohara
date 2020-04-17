@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 
@@ -31,11 +32,13 @@ export const useIsNodeLoading = () => {
 };
 
 export const useAllNodes = () => {
-  const getAllNodes = useMemo(selectors.makeGetAllNodes, []);
-  const nodes = useSelector(
-    useCallback(state => getAllNodes(state), [getAllNodes]),
-  );
-  return nodes;
+  const fetchNodes = useCallback(hooks.useFetchNodesAction(), []);
+  const isLoaded = hooks.useIsNodeLoaded();
+  useEffect(() => {
+    if (!isLoaded) fetchNodes();
+  }, [fetchNodes, isLoaded]);
+
+  return useSelector(state => selectors.getAllNodes(state));
 };
 
 export const useCreateNodeAction = () => {

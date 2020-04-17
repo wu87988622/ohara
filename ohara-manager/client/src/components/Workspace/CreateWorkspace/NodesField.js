@@ -16,14 +16,15 @@
 
 import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { find, map, pull } from 'lodash';
+import { filter, includes, map, reject } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import FormHelperText from '@material-ui/core/FormHelperText';
 
+import * as context from 'context';
 import * as hooks from 'hooks';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
-import SelectNodeDialog from 'components/Node/SelectNodeDialog';
+import NodeSelectorDialog from 'components/Node/NodeSelectorDialog';
 
 const renderFromHelper = ({ touched, error }) => {
   if (!(touched && error)) {
@@ -39,28 +40,34 @@ const NodesField = props => {
     meta: { touched, error },
   } = props;
 
+  const { data: configuratorInfo } = context.useConfiguratorState();
   const allNodes = hooks.useAllNodes();
+  const [selectedNodes, setSelectedNodes] = useState(() => {
+    // value is an array of hostname, like ['dev01', 'dev02'].
+    return filter(allNodes, node => includes(value, node.hostname));
+  });
+  const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
+  const selectorDialogRef = useRef(null);
 
-  // nodeNames is an array of hostname, like ['dev01', 'dev02'].
-  const [nodeNames, setNodeNames] = useState(value);
-  const [isSelectNodeDialogOpen, setIsSelectNodeDialogOpen] = useState(false);
-  const openSelectNodeDialog = () => setIsSelectNodeDialogOpen(true);
-  const closeSelectNodeDialog = () => setIsSelectNodeDialogOpen(false);
+  const openSelectorDialog = () => setIsSelectorDialogOpen(true);
+  const closeSelectorDialog = () => setIsSelectorDialogOpen(false);
 
-  const selectNodeDialogRef = useRef(null);
-
-  const handleDelete = nodeName => () => {
-    const remaining = pull(nodeNames, nodeName);
-    const newNodeNames = [...remaining];
-    setNodeNames(newNodeNames);
-    onChange(newNodeNames);
+  const deleteNode = nodeToDelete => () => {
+    const remaining = reject(
+      selectedNodes,
+      selectedNode => selectedNode.hostname === nodeToDelete?.hostname,
+    );
+    const newSelectedNodes = [...remaining];
+    setSelectedNodes(newSelectedNodes);
+    selectorDialogRef.current.setSelectedNodes(newSelectedNodes);
+    onChange(newSelectedNodes.map(node => node.hostname));
   };
 
-  const handleSelect = (selected = []) => {
+  const handleSelectorConfirm = (selectedNodes = []) => {
     onBlur();
-    setNodeNames(selected);
-    onChange(selected);
-    closeSelectNodeDialog();
+    setSelectedNodes(selectedNodes);
+    onChange(selectedNodes.map(node => node.hostname));
+    closeSelectorDialog();
   };
 
   return (
@@ -71,38 +78,40 @@ const NodesField = props => {
         justify="flex-start"
         alignItems="flex-start"
       >
-        {map(nodeNames, nodeName => {
-          const node = find(allNodes, n => n.hostname === nodeName);
-          if (node) {
-            return (
-              <Grid item xs={4} key={nodeName}>
-                <SelectCard rows={node} handleClose={handleDelete(nodeName)} />
-              </Grid>
-            );
-          }
+        {map(selectedNodes, node => {
+          return (
+            <Grid item xs={4} key={node?.hostname}>
+              <SelectCard rows={node} handleClose={deleteNode(node)} />
+            </Grid>
+          );
         })}
-        <Grid item xs={nodeNames.length > 0 ? 4 : 12} key="select_nodes">
+        <Grid item xs={selectedNodes?.length > 0 ? 4 : 12} key="select_nodes">
           <Card
             onClick={() => {
               onFocus();
-              openSelectNodeDialog();
+              openSelectorDialog();
             }}
             title="Select nodes"
             content="Click here to select nodes"
-            sm={nodeNames.length > 0}
+            sm={selectedNodes?.length > 0}
           />
         </Grid>
       </Grid>
       {renderFromHelper({ touched, error })}
-      <SelectNodeDialog
-        initialValues={nodeNames}
-        isOpen={isSelectNodeDialogOpen}
+
+      <NodeSelectorDialog
+        dialogTitle="Select nodes in the workspace"
+        isOpen={isSelectorDialogOpen}
+        mode={configuratorInfo?.mode}
+        nodes={allNodes}
         onClose={() => {
           onBlur();
-          closeSelectNodeDialog();
+          closeSelectorDialog();
         }}
-        onSubmit={handleSelect}
-        ref={selectNodeDialogRef}
+        onConfirm={handleSelectorConfirm}
+        ref={selectorDialogRef}
+        selectedNodes={selectedNodes}
+        tableTitle="All nodes"
       />
     </>
   );

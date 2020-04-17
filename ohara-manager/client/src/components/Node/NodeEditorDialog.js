@@ -15,27 +15,21 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
+import * as hooks from 'hooks';
 import {
   required,
   minNumber,
   maxNumber,
   composeValidators,
 } from 'utils/validate';
-import { useEditNodeDialog } from 'context';
-import * as hooks from 'hooks';
 
-const EditNodeDialog = () => {
-  const {
-    isOpen,
-    close: closeEditNodeDialog,
-    data: node,
-  } = useEditNodeDialog();
-
+const NodeEditorDialog = ({ node, isOpen, onClose }) => {
   const updateNode = hooks.useUpdateNodeAction();
 
   const hostname = get(node, 'hostname', '');
@@ -45,22 +39,21 @@ const EditNodeDialog = () => {
 
   const parse = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
 
-  const onSubmit = async (values, form) => {
+  const handleSubmit = values => {
     updateNode(values);
-    setTimeout(form.reset);
-    closeEditNodeDialog();
+    onClose();
   };
 
   return (
     <Form
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
             open={isOpen}
             handleClose={() => {
-              closeEditNodeDialog();
+              onClose();
               form.reset();
             }}
             handleConfirm={handleSubmit}
@@ -132,4 +125,19 @@ const EditNodeDialog = () => {
   );
 };
 
-export default EditNodeDialog;
+NodeEditorDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  node: PropTypes.shape({
+    hostname: PropTypes.string,
+    port: PropTypes.number,
+    username: PropTypes.string,
+    password: PropTypes.string,
+  }),
+  onClose: PropTypes.func,
+};
+
+NodeEditorDialog.defaultProps = {
+  onClose: () => {},
+};
+
+export default NodeEditorDialog;

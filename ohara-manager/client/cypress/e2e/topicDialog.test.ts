@@ -58,10 +58,7 @@ describe('TopicDialog of Workspace Settings', () => {
     cy.findByText(topic3).should('exist');
 
     // check the topic view
-    cy.findByText(topic3)
-      .siblings('td')
-      .last()
-      .click();
+    cy.findByTestId(`view-topic-${topic3}`).click();
 
     // check the detail of topic
     cy.contains('td', /^type$/i)
@@ -79,21 +76,22 @@ describe('TopicDialog of Workspace Settings', () => {
       .click();
     cy.contains('span', 'DELETE').click();
 
-    cy.findByText(/^all topics$/i).should('be.visible');
+    cy.findByText(/^shared topics$/i).should('be.visible');
     cy.findByText(topic3).should('not.exist');
 
     //filter
-    cy.findAllByPlaceholderText('Search')
-      .filter(':visible')
-      .type(topic1);
-    cy.findByText(topic1).should('exist');
-    cy.findByText(topic2).should('not.exist');
+    cy.findByTestId('shared-topics').within(() => {
+      cy.get('input[placeholder="Search"]')
+        .clear()
+        .type(topic1);
+      cy.contains(topic1).should('exist');
+      cy.contains(topic2).should('not.exist');
 
-    cy.findAllByPlaceholderText('Search')
-      .filter(':visible')
-      .clear()
-      .type('fake');
-    cy.findByText(topic1).should('not.exist');
-    cy.findByText(topic2).should('not.exist');
+      cy.get('input[placeholder="Search"]')
+        .clear()
+        .type('fake');
+      cy.contains(topic1).should('not.exist');
+      cy.contains(topic2).should('not.exist');
+    });
   });
 });

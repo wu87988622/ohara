@@ -41,7 +41,7 @@ describe('NodeDialog of AppBar', () => {
 
     if (mode === MODE.DOCKER) {
       // empty node list in DOCKER mode
-      cy.findByText(/^view$/i).should('not.exist');
+      cy.findByText(nodeHost).should('not.exist');
     } else if (mode === MODE.K8S) {
       // K8S will show the available node for us
       cy.findByText(nodeHost).should('exist');
@@ -68,10 +68,7 @@ describe('NodeDialog of AppBar', () => {
     cy.get('input[name=password]').type(generate.password());
     cy.findByText(/^add$/i).click();
 
-    cy.findByText(hostname)
-      .should('exist')
-      .findByText(/^view$/i)
-      .click();
+    cy.findByTestId(`view-node-${nodeHost}`).click();
 
     // random added host should be dead
     cy.findAllByText(/^state$/i)
@@ -94,7 +91,6 @@ describe('NodeDialog of AppBar', () => {
 
     // will auto back to node list, and the node list should be empty
     cy.findByText(hostname).should('not.exist');
-    cy.findByText(/^view$/i).should('not.exist');
   });
 
   it('filter nodes should be work', () => {
@@ -105,12 +101,12 @@ describe('NodeDialog of AppBar', () => {
       .click();
 
     if (mode === MODE.K8S) {
-      cy.findAllByPlaceholderText('Quick Filter')
+      cy.findAllByPlaceholderText('Search')
         .filter(':visible')
         .type(nodeHost);
       cy.findByText(nodeHost).should('exist');
 
-      cy.findAllByPlaceholderText('Quick Filter')
+      cy.findAllByPlaceholderText('Search')
         .filter(':visible')
         .clear()
         .type('fake');
@@ -141,14 +137,14 @@ describe('NodeDialog of AppBar', () => {
     cy.findByText(hostname1).should('exist');
     cy.findByText(hostname2).should('exist');
 
-    cy.findAllByPlaceholderText('Quick Filter')
+    cy.findAllByPlaceholderText('Search')
       .filter(':visible')
       .type(hostname2);
 
     cy.findByText(hostname1).should('not.exist');
     cy.findByText(hostname2).should('exist');
 
-    cy.findAllByPlaceholderText('Quick Filter')
+    cy.findAllByPlaceholderText('Search')
       .filter(':visible')
       .clear()
       .type('fake');
@@ -174,11 +170,7 @@ describe('NodeDialog of AppBar', () => {
       cy.findByText(/^add$/i).click();
     }
 
-    cy.findByText(nodeHost)
-      .should('exist')
-      .parent('tr')
-      .contains(/^view$/i)
-      .click();
+    cy.findByTestId(`view-node-${nodeHost}`).click();
 
     // actual host should be alive
     cy.findAllByText(/^state$/i)
@@ -189,7 +181,7 @@ describe('NodeDialog of AppBar', () => {
     // press "ESC" back to node list
     cy.get('body:visible').trigger('keydown', { keyCode: 27, which: 27 });
     // press "ESC" again back to home page
-    cy.findAllByText(/^nodes$/i)
+    cy.findAllByText(/^all nodes$/i)
       .first()
       .trigger('keydown', { keyCode: 27, which: 27 });
 
@@ -205,11 +197,7 @@ describe('NodeDialog of AppBar', () => {
       .should('exist')
       .click();
 
-    cy.findByText(nodeHost)
-      .should('exist')
-      .parent('tr')
-      .contains(/^view$/i)
-      .click();
+    cy.findByTestId(`view-node-${nodeHost}`).click();
 
     cy.findByText(/^zookeeper$/i)
       .should('exist')
@@ -298,7 +286,7 @@ describe('NodeDialog of workspaceQuick', () => {
       .click();
 
     // filter by non-selected hostname
-    cy.findAllByPlaceholderText('Quick Filter')
+    cy.findAllByPlaceholderText('Search')
       .filter(':visible')
       .type(hostname2);
     cy.findByText(hostname1).should('not.exist');
@@ -306,7 +294,7 @@ describe('NodeDialog of workspaceQuick', () => {
     cy.get('input[type=checkbox]:visible').should('not.be.checked');
 
     // filter by selected hostname
-    cy.findAllByPlaceholderText('Quick Filter')
+    cy.findAllByPlaceholderText('Search')
       .filter(':visible')
       .clear()
       .type(hostname1);

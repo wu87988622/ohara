@@ -29,7 +29,7 @@ import {
   CreateWorkspace as CreateWorkspaceDialog,
 } from 'components/Workspace';
 import IntroDialog from 'components/Intro';
-import NodeDialog from 'components/Node/NodeDialog';
+
 import StyledSnackbar from 'components/common/Snackbar';
 import { Wrapper } from './AppLayoutStyles';
 import * as hooks from 'hooks';
@@ -73,7 +73,6 @@ const AppLayout = () => {
       <IntroDialog quickModeText={'QUICK CREATE'} />
       <CreateWorkspaceDialog />
       <ListWorkspacesDialog />
-      <NodeDialog />
       <StyledSnackbar />
     </Wrapper>
   );

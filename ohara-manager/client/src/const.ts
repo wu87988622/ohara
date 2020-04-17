@@ -63,6 +63,7 @@ export enum CREATE_WORKSPACE_MODE {
 }
 
 export enum GROUP {
+  DEFAULT = 'default',
   WORKSPACE = 'workspace',
   ZOOKEEPER = 'zookeeper',
   BROKER = 'broker',
@@ -81,4 +82,16 @@ export enum LOG_LEVEL {
 export enum LOG_TIME_GROUP {
   latest = 'latest',
   customize = 'customize',
+}
+
+export enum SERVICE_NAME {
+  BROKER = 'broker',
+  WORKER = 'connect-worker',
+  STREAM = 'stream',
+  ZOOKEEPER = 'zookeeper',
+  CONFIGURATOR = 'configurator',
+}
+
+export enum CLUSTER_STATE {
+  RUNNING = 'RUNNING',
 }
