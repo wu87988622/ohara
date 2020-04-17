@@ -16,13 +16,24 @@
 
 package oharastream.ohara.configurator.fake
 
-import oharastream.ohara.agent.container.ContainerName
+import java.util.concurrent.ConcurrentHashMap
+
+import oharastream.ohara.agent.container.ContainerClient.ContainerVolume
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ShabondiApi, StreamApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{
+  BrokerApi,
+  ContainerApi,
+  ShabondiApi,
+  StreamApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.store.DataStore
 
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -34,6 +45,8 @@ private[configurator] class FakeServiceCollie(
   bkConnectionProps: String,
   wkConnectionProps: String
 ) extends ServiceCollie {
+  private[this] val existentVolumes = new ConcurrentHashMap[String, ContainerVolume]()
+
   def this(dataCollie: DataCollie, store: DataStore) {
     this(dataCollie, store, null, null)
   }
@@ -93,4 +106,51 @@ private[configurator] class FakeServiceCollie(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerName, String]] =
     Future.failed(new NoSuchElementException)
+
+  val containerClient: ContainerClient = new ContainerClient {
+    override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def logs(name: String, sinceSeconds: Option[Long])(
+      implicit executionContext: ExecutionContext
+    ): Future[Map[ContainerName, String]] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def containerCreator: ContainerClient.ContainerCreator =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
+      throw new UnsupportedOperationException("this is fake container client")
+
+    override def volumeCreator: ContainerClient.VolumeCreator =
+      (nodeName: String, name: String, path: String, _: ExecutionContext) => {
+        val v = ContainerVolume(
+          name = name,
+          driver = "fake",
+          path = path,
+          nodeName = nodeName
+        )
+        val previous = existentVolumes.putIfAbsent(name, v)
+        if (previous != null) Future.failed(new IllegalArgumentException(s"$name exists!!!"))
+        else Future.unit
+      }
+
+    override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerClient.ContainerVolume]] =
+      Future.successful(existentVolumes.values().asScala.toSeq)
+
+    override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = {
+      existentVolumes.remove(name)
+      Future.unit
+    }
+    override def close(): Unit = existentVolumes.clear()
+  }
 }

@@ -23,28 +23,30 @@ import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import scala.concurrent.{ExecutionContext, Future}
 
 // accessible to configurator
-private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8SClient) extends ServiceCollie {
-  override val zookeeperCollie: ZookeeperCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with ZookeeperCollie
+private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, val containerClient: K8SClient)
+    extends ServiceCollie {
+  override val zookeeperCollie: ZookeeperCollie = new K8SBasicCollieImpl(dataCollie, containerClient)
+    with ZookeeperCollie
 
-  override val brokerCollie: BrokerCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with BrokerCollie
+  override val brokerCollie: BrokerCollie = new K8SBasicCollieImpl(dataCollie, containerClient) with BrokerCollie
 
-  override val workerCollie: WorkerCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with WorkerCollie
+  override val workerCollie: WorkerCollie = new K8SBasicCollieImpl(dataCollie, containerClient) with WorkerCollie
 
-  override val streamCollie: StreamCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with StreamCollie
+  override val streamCollie: StreamCollie = new K8SBasicCollieImpl(dataCollie, containerClient) with StreamCollie
 
-  override val shabondiCollie: ShabondiCollie = new K8SBasicCollieImpl(dataCollie, k8sClient) with ShabondiCollie
+  override val shabondiCollie: ShabondiCollie = new K8SBasicCollieImpl(dataCollie, containerClient) with ShabondiCollie
 
   override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
     dataCollie.values[Node]().flatMap { nodes =>
       Future
         .traverse(nodes) { node =>
-          k8sClient.imageNames(node.name).map(images => node -> images)
+          containerClient.imageNames(node.name).map(images => node -> images)
         }
         .map(_.toMap)
     }
 
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String] =
-    k8sClient
+    containerClient
       .checkNode(node.name)
       .map(report => {
         val statusInfo = report.statusInfo.getOrElse(K8SStatusInfo(false, s"${node.name} node doesn't exists."))
@@ -54,15 +56,15 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, k8sClient: K8S
       })
 
   override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    k8sClient.containerNames()
+    containerClient.containerNames()
 
   override def log(containerName: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerName, String]] =
-    k8sClient.logs(containerName, sinceSeconds)
+    containerClient.logs(containerName, sinceSeconds)
 
   override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
-    k8sClient.resources()
+    containerClient.resources()
 
   override def close(): Unit = {
     // do nothing

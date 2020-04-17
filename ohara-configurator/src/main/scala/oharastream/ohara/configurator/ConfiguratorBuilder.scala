@@ -20,7 +20,8 @@ import java.io.File
 import java.util.Objects
 
 import oharastream.ohara.agent._
-import oharastream.ohara.agent.k8s.K8SClient
+import oharastream.ohara.agent.docker.ServiceCollieImpl
+import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, NodeService, State}
@@ -387,7 +388,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   override def build(): Configurator = {
     import scala.concurrent.ExecutionContext.Implicits.global
     if (this.k8sApiServer != null) {
-      val client: K8SClient = K8SClient.builder
+      val client = K8SClient.builder
         .apiServerURL(this.k8sApiServer)
         .namespace(k8sNamespace)
         .metricsApiServerURL(metricsServiceURL)
@@ -407,7 +408,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         store = getOrCreateStore(),
         dataCollie = createCollie(),
         serviceCollie = getOrCreateCollie(),
-        k8sClient = Option(k8sClient)
+        containerClient = serviceCollie match {
+          case s: K8SServiceCollieImpl => s.containerClient
+          case s: ServiceCollieImpl    => s.containerClient
+          case s: FakeServiceCollie    => s.containerClient
+        }
       )
     )
   }

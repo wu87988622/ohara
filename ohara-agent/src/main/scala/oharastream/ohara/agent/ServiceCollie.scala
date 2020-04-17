@@ -269,7 +269,7 @@ object ServiceCollie {
       */
     override def build: ServiceCollie = new K8SServiceCollieImpl(
       dataCollie = Objects.requireNonNull(dataCollie),
-      k8sClient = Objects.requireNonNull(k8sClient)
+      containerClient = Objects.requireNonNull(k8sClient)
     )
   }
 }

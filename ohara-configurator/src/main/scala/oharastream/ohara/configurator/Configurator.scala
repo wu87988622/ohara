@@ -27,6 +27,7 @@ import akka.http.scaladsl.{Http, server}
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent._
+import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.HttpExecutor
@@ -58,7 +59,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   implicit val store: DataStore,
   val dataCollie: DataCollie,
   val serviceCollie: ServiceCollie,
-  val k8sClient: Option[K8SClient]
+  val containerClient: ContainerClient
 ) extends ReleaseOnce {
   private[this] val log = Logger(classOf[Configurator])
 
@@ -76,26 +77,27 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
 
   private[this] val threadPool = Executors.newFixedThreadPool(threadMax)
 
-  private[this] val loopOfUpdatingNode: Releasable = {
-    val pool = if (k8sClient.nonEmpty) Executors.newSingleThreadExecutor() else null
-    if (pool != null) pool.execute(() => {
-      while (!Thread.currentThread().isInterrupted()) {
-        try {
-          TimeUnit.SECONDS.sleep(5)
-          Await.result(addK8SNodes(), 5 seconds)
-        } catch {
-          case timeoutException: TimeoutException => log.error("timeout exception", timeoutException)
-          case interrupException: InterruptedException => {
-            log.error("interrup exception", interrupException)
-            break
+  private[this] val loopOfUpdatingNode: Releasable =
+    containerClient match {
+      case _: K8SClient =>
+        val pool = Executors.newSingleThreadExecutor()
+        pool.execute { () =>
+          while (!Thread.currentThread().isInterrupted) {
+            try {
+              TimeUnit.SECONDS.sleep(5)
+              Await.result(addK8SNodes(), 5 seconds)
+            } catch {
+              case timeoutException: TimeoutException => log.error("timeout exception", timeoutException)
+              case interruptedException: InterruptedException =>
+                log.error("interrupted exception", interruptedException)
+                break
+              case e: Throwable => throw e
+            }
           }
-          case e: Throwable => throw e
         }
-      }
-    })
-
-    () => if (pool != null) pool.shutdownNow()
-  }
+        () => pool.shutdownNow()
+      case _ => () => {}
+    }
 
   private[this] implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(threadPool)
 
@@ -224,34 +226,37 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
       .build
   }
 
-  private[configurator] def addK8SNodes(): Future[Seq[NodeApi.Node]] =
-    this.k8sClient
-      .map {
-        val nodeApi = NodeApi.access.hostname(hostname).port(port)
-        _.nodes()
-          .flatMap { kns =>
-            nodeApi.list().flatMap { nodes =>
-              Future.sequence(
-                kns
-                  .filterNot(kn => nodes.map(_.hostname).contains(kn.nodeName))
-                  .map(
-                    newK8sNode =>
-                      nodeApi.request
-                        .hostname(newK8sNode.nodeName)
-                        .create()
-                        .map(Some(_))
-                        .recover {
-                          case _: Throwable =>
-                            // this loop may encounter the data conflict so we swallow the exception
-                            None
-                        }
-                  )
-              )
-            }
+  /**
+    * In k8s mode, we fetch the nodes from k8s master and then add them to store automatically.
+    * @return k8s nodes
+    */
+  private[configurator] def addK8SNodes(): Future[Seq[NodeApi.Node]] = containerClient match {
+    case c: K8SClient =>
+      val nodeApi = NodeApi.access.hostname(hostname).port(port)
+      c.nodes()
+        .flatMap { kns =>
+          nodeApi.list().flatMap { nodes =>
+            Future.sequence(
+              kns
+                .filterNot(kn => nodes.map(_.hostname).contains(kn.nodeName))
+                .map(
+                  newK8sNode =>
+                    nodeApi.request
+                      .hostname(newK8sNode.nodeName)
+                      .create()
+                      .map(Some(_))
+                      .recover {
+                        case _: Throwable =>
+                          // this loop may encounter the data conflict so we swallow the exception
+                          None
+                      }
+                )
+            )
           }
-          .map(_.flatten)
-      }
-      .getOrElse(Future.successful(Seq.empty))
+        }
+        .map(_.flatten)
+    case _ => Future.successful(Seq.empty)
+  }
 
   /**
     * the version of APIs supported by Configurator.
@@ -275,7 +280,10 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         PipelineRoute.apply,
         ValidationRoute.apply,
         ConnectorRoute.apply,
-        InspectRoute.apply(mode, k8sClient.map(c => K8sUrls(c.masterUrl, c.metricsUrl))),
+        InspectRoute.apply(mode, containerClient match {
+          case c: K8SClient => Some(K8sUrls(c.masterUrl, c.metricsUrl))
+          case _            => None
+        }),
         StreamRoute.apply,
         ShabondiRoute.apply,
         NodeRoute.apply,
