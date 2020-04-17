@@ -16,13 +16,13 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import startWorkerEpic from '../worker/startWorkerEpic';
+import stopWorkerEpic from '../../worker/stopWorkerEpic';
 import * as workerApi from 'api/workerApi';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import { of } from 'rxjs';
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 jest.mock('api/workerApi');
 
@@ -38,7 +38,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('start worker should be worked correctly', () => {
+it('stop worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -48,15 +48,15 @@ it('start worker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startWorker.TRIGGER,
+        type: actions.stopWorker.TRIGGER,
         payload: workerEntity,
       },
     });
-    const output$ = startWorkerEpic(action$);
+    const output$ = stopWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startWorker.REQUEST,
+        type: actions.stopWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
@@ -68,15 +68,15 @@ it('start worker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start worker data',
+        title: 'mock stop worker data',
       },
       v: {
-        type: actions.startWorker.SUCCESS,
+        type: actions.stopWorker.SUCCESS,
         payload: {
           workerId: wkId,
           entities: {
             workers: {
-              [wkId]: { ...workerEntity, state: 'RUNNING' },
+              [wkId]: workerEntity,
             },
           },
           result: wkId,
@@ -90,15 +90,15 @@ it('start worker should be worked correctly', () => {
   });
 });
 
-it('start worker failed after reach retry limit', () => {
-  // mock a 20 times "failed started" results
+it('stop worker failed after reach retry limit', () => {
+  // mock a 20 times "failed stopped" results
   const spyGet = jest.spyOn(workerApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -107,7 +107,7 @@ it('start worker failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
+      data: { ...workerEntity },
     }),
   );
 
@@ -121,15 +121,15 @@ it('start worker failed after reach retry limit', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startWorker.TRIGGER,
+        type: actions.stopWorker.TRIGGER,
         payload: workerEntity,
       },
     });
-    const output$ = startWorkerEpic(action$);
+    const output$ = stopWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startWorker.REQUEST,
+        type: actions.stopWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
@@ -141,10 +141,10 @@ it('start worker failed after reach retry limit', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start worker data',
+        title: 'mock stop worker data',
       },
       v: {
-        type: actions.startWorker.FAILURE,
+        type: actions.stopWorker.FAILURE,
         payload: 'exceed max retry times',
       },
     });
@@ -155,7 +155,7 @@ it('start worker failed after reach retry limit', () => {
   });
 });
 
-it('start worker multiple times should be worked once', () => {
+it('stop worker multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -165,15 +165,15 @@ it('start worker multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startWorker.TRIGGER,
+        type: actions.stopWorker.TRIGGER,
         payload: workerEntity,
       },
     });
-    const output$ = startWorkerEpic(action$);
+    const output$ = stopWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startWorker.REQUEST,
+        type: actions.stopWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
@@ -185,15 +185,15 @@ it('start worker multiple times should be worked once', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start worker data',
+        title: 'mock stop worker data',
       },
       v: {
-        type: actions.startWorker.SUCCESS,
+        type: actions.stopWorker.SUCCESS,
         payload: {
           workerId: wkId,
           entities: {
             workers: {
-              [wkId]: { ...workerEntity, state: 'RUNNING' },
+              [wkId]: workerEntity,
             },
           },
           result: wkId,
@@ -207,7 +207,7 @@ it('start worker multiple times should be worked once', () => {
   });
 });
 
-it('start different worker should be worked correctly', () => {
+it('stop different worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -225,25 +225,25 @@ it('start different worker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startWorker.TRIGGER,
+        type: actions.stopWorker.TRIGGER,
         payload: workerEntity,
       },
       b: {
-        type: actions.startWorker.TRIGGER,
+        type: actions.stopWorker.TRIGGER,
         payload: anotherWorkerEntity,
       },
     });
-    const output$ = startWorkerEpic(action$);
+    const output$ = stopWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startWorker.REQUEST,
+        type: actions.stopWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
       b: {
-        type: actions.startWorker.REQUEST,
+        type: actions.stopWorker.REQUEST,
         payload: {
           workerId: getId(anotherWorkerEntity),
         },
@@ -255,7 +255,7 @@ it('start different worker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start worker data',
+        title: 'mock stop worker data',
       },
       v: {
         data: {
@@ -264,30 +264,27 @@ it('start different worker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start worker data',
+        title: 'mock stop worker data',
       },
       y: {
-        type: actions.startWorker.SUCCESS,
+        type: actions.stopWorker.SUCCESS,
         payload: {
           workerId: wkId,
           entities: {
             workers: {
-              [wkId]: { ...workerEntity, state: 'RUNNING' },
+              [wkId]: workerEntity,
             },
           },
           result: wkId,
         },
       },
       z: {
-        type: actions.startWorker.SUCCESS,
+        type: actions.stopWorker.SUCCESS,
         payload: {
           workerId: getId(anotherWorkerEntity),
           entities: {
             workers: {
-              [getId(anotherWorkerEntity)]: {
-                ...anotherWorkerEntity,
-                state: 'RUNNING',
-              },
+              [getId(anotherWorkerEntity)]: anotherWorkerEntity,
             },
           },
           result: getId(anotherWorkerEntity),

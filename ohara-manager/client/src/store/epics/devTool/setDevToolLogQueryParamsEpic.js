@@ -23,6 +23,7 @@ import {
   mergeAll,
   filter,
   mapTo,
+  concatMap,
 } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
@@ -32,7 +33,7 @@ export default action$ =>
   action$.pipe(
     ofType(actions.setDevToolLogQueryParams.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
+    concatMap(values =>
       scheduled(
         [
           of(values).pipe(
@@ -80,7 +81,7 @@ export default action$ =>
             switchMap(() =>
               scheduled(
                 [
-                  // initial the hostName value
+                  // provide an initial value when switching to stream
                   actions.setDevToolLogQueryParams.success({ hostName: '' }),
                   actions.setDevToolLogQueryParams.success({
                     streamKey: {
@@ -96,31 +97,20 @@ export default action$ =>
           ),
           of(values).pipe(
             filter(() => !!values.params.logType),
-            switchMap(() =>
-              scheduled(
-                values.params.logType !== KIND.stream
-                  ? [
-                      actions.setDevToolLogQueryParams.success({
-                        logType: values.params.logType,
-                      }),
-                      // initial the hostName value
-                      actions.setDevToolLogQueryParams.success({
-                        hostName: '',
-                      }),
-                      actions.fetchDevToolLog.trigger(),
-                    ]
-                  : [
-                      actions.setDevToolLogQueryParams.success({
-                        logType: values.params.logType,
-                      }),
-                      // initial the hostName value
-                      actions.setDevToolLogQueryParams.success({
-                        hostName: '',
-                      }),
-                    ],
-                asapScheduler,
-              ),
-            ),
+            switchMap(() => {
+              const outActions = [
+                actions.setDevToolLogQueryParams.success({
+                  logType: values.params.logType,
+                }),
+                // initial the hostName value
+                actions.setDevToolLogQueryParams.success({
+                  hostName: '',
+                }),
+              ];
+              if (values.params.logType !== KIND.stream)
+                outActions.push(actions.fetchDevToolLog.trigger());
+              return scheduled(outActions, asapScheduler);
+            }),
           ),
         ],
         queueScheduler,

@@ -19,6 +19,7 @@ import { of, asapScheduler, scheduled, queueScheduler } from 'rxjs';
 import {
   map,
   catchError,
+  concatMap,
   switchMap,
   mergeAll,
   filter,
@@ -31,7 +32,7 @@ export default action$ =>
   action$.pipe(
     ofType(actions.setDevToolTopicQueryParams.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
+    concatMap(values =>
       scheduled(
         [
           of(values).pipe(
@@ -51,7 +52,7 @@ export default action$ =>
                     name: values.params.name,
                   }),
                   actions.fetchDevToolTopicData.trigger({
-                    group: values.group,
+                    group: values.topicGroup,
                   }),
                 ],
                 asapScheduler,

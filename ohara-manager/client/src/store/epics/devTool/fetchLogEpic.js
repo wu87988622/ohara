@@ -18,7 +18,7 @@ import moment from 'moment';
 import * as _ from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, defer, from, queueScheduler } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, exhaustMap } from 'rxjs/operators';
 
 import { KIND, LOG_TIME_GROUP, GROUP } from 'const';
 import * as logApi from 'api/logApi';
@@ -28,7 +28,7 @@ import * as selectors from 'store/selectors';
 export default (action$, state$) =>
   action$.pipe(
     ofType(actions.fetchDevToolLog.TRIGGER),
-    switchMap(() =>
+    exhaustMap(() =>
       defer(() => {
         const getDevToolLog = selectors.makeGetDevToolLog();
         const workspaceName = selectors.getWorkspaceName(state$.value);
@@ -91,7 +91,7 @@ export default (action$, state$) =>
             throw new Error('Unsupported logType');
         }
       }).pipe(
-        switchMap(res =>
+        concatMap(res =>
           from(
             [
               actions.fetchDevToolLog.success(
@@ -100,6 +100,7 @@ export default (action$, state$) =>
                   logs: _.split(log.value, '\n'),
                 })),
               ),
+              // we set the hostname of dropdown list to first host of log data response
               actions.setDevToolLogQueryParams.success({
                 hostName: _.get(res.data, 'logs[0].hostname', ''),
               }),

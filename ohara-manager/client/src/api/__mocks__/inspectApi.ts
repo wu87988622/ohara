@@ -16,7 +16,10 @@
 
 import { of, Observable } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { InspectServiceResponse } from 'api/apiInterface/inspectInterface';
+import {
+  InspectServiceResponse,
+  InspectTopicResponse,
+} from 'api/apiInterface/inspectInterface';
 import {
   Type,
   Necessary,
@@ -92,6 +95,13 @@ export const workerInfoEntity = {
   ],
 };
 
+export const topicEntity = {
+  messages: [
+    { partition: 1, offset: 0, value: { r1: 'fake topic data' } },
+    { partition: 2, offset: 1, value: { col: 10 } },
+  ],
+};
+
 // simulate a promise request with a delay of 3s
 export const getZookeeperInfo = (): Observable<InspectServiceResponse> =>
   of({
@@ -115,3 +125,11 @@ export const getWorkerInfo = (): Observable<InspectServiceResponse> =>
     title: 'mock inspect broker data',
     data: workerInfoEntity,
   }).pipe(delay(3000));
+
+// simulate a promise request with a delay of 5s
+export const getTopicData = (): Observable<InspectTopicResponse> =>
+  of({
+    status: 200,
+    title: 'mock inspect topic data',
+    data: topicEntity,
+  }).pipe(delay(5000));

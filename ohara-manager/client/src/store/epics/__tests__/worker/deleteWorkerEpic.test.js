@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateWorkerEpic from '../worker/updateWorkerEpic';
+import deleteWorkerEpic from '../../worker/deleteWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -30,39 +30,33 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('update worker should be worked correctly', () => {
+it('delete worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a       ';
-    const expected = '--a 99ms u';
-    const subs = '    ^---------';
+    const input = '   ^-a        ';
+    const expected = '--a 999ms u';
+    const subs = '    ^----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, jmxPort: 999 },
+        type: actions.deleteWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = updateWorkerEpic(action$);
+    const output$ = deleteWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateWorker.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
       u: {
-        type: actions.updateWorker.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
           workerId: wkId,
-          entities: {
-            workers: {
-              [wkId]: { ...workerEntity, jmxPort: 999 },
-            },
-          },
-          result: wkId,
         },
       },
     });
@@ -73,89 +67,87 @@ it('update worker should be worked correctly', () => {
   });
 });
 
-it('update worker multiple times should got latest result', () => {
+it('delete multiple workers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-b 60ms c 10s            ';
-    const expected = '--a-b 60ms d 36ms u-v 60ms w';
-    const subs = '    ^---------------------------';
+    const input = '   ^-ab         ';
+    const expected = '--ab 998ms uv';
+    const subs = '    ^------------';
+    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateWorker.TRIGGER,
+        type: actions.deleteWorker.TRIGGER,
         payload: workerEntity,
       },
       b: {
-        type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, nodeNames: ['n1', 'n2'] },
-      },
-      c: {
-        type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, clientPort: 1234 },
+        type: actions.deleteWorker.TRIGGER,
+        payload: anotherWorkerEntity,
       },
     });
-    const output$ = updateWorkerEpic(action$);
+    const output$ = deleteWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateWorker.REQUEST,
-        payload: {
-          workerId: wkId,
-        },
-      },
-      b: {
-        type: actions.updateWorker.REQUEST,
-        payload: {
-          workerId: wkId,
-        },
-      },
-      d: {
-        type: actions.updateWorker.REQUEST,
+        type: actions.deleteWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
       u: {
-        type: actions.updateWorker.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
           workerId: wkId,
-          entities: {
-            workers: {
-              [wkId]: workerEntity,
-            },
-          },
-          result: wkId,
+        },
+      },
+      b: {
+        type: actions.deleteWorker.REQUEST,
+        payload: {
+          workerId: getId(anotherWorkerEntity),
         },
       },
       v: {
-        type: actions.updateWorker.SUCCESS,
+        type: actions.deleteWorker.SUCCESS,
         payload: {
-          workerId: wkId,
-          entities: {
-            workers: {
-              [wkId]: {
-                ...workerEntity,
-                nodeNames: ['n1', 'n2'],
-              },
-            },
-          },
-          result: wkId,
+          workerId: getId(anotherWorkerEntity),
         },
       },
-      w: {
-        type: actions.updateWorker.SUCCESS,
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+  });
+});
+
+it('delete same worker within period should be created once only', () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-aa 10s a---';
+    const expected = '--a 999ms u--';
+    const subs = '    ^------------';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteWorker.TRIGGER,
+        payload: workerEntity,
+      },
+    });
+    const output$ = deleteWorkerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteWorker.REQUEST,
         payload: {
           workerId: wkId,
-          entities: {
-            workers: {
-              [wkId]: {
-                ...workerEntity,
-                clientPort: 1234,
-              },
-            },
-          },
-          result: wkId,
+        },
+      },
+      u: {
+        type: actions.deleteWorker.SUCCESS,
+        payload: {
+          workerId: wkId,
         },
       },
     });

@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import fetchBrokerEpic from '../broker/fetchBrokerEpic';
+import fetchBrokerEpic from '../../broker/fetchBrokerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';

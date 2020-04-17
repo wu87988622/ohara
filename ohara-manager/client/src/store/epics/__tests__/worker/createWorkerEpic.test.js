@@ -16,56 +16,50 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import fetchWorkerEpic from '../worker/fetchWorkerEpic';
-import { entity as workerEntity } from 'api/__mocks__/workerApi';
-import { workerInfoEntity } from 'api/__mocks__/inspectApi';
+import createWorkerEpic from '../../worker/createWorkerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
 
 jest.mock('api/workerApi');
-jest.mock('api/inspectApi');
 
-const key = { name: 'newwk', group: 'newworkspace' };
-const wkId = getId(key);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('fetch worker should be worked correctly', () => {
+it('create worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a 10s     ';
-    const expected = '--a 2999ms u';
+    const input = '   ^-a         ';
+    const expected = '--a 1999ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: key,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = fetchWorkerEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchWorker.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
       u: {
-        type: actions.fetchWorker.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
           workerId: wkId,
           entities: {
             workers: {
-              [wkId]: { ...workerEntity, ...key },
-            },
-            infos: {
-              [wkId]: { ...workerInfoEntity, ...key },
+              [wkId]: workerEntity,
             },
           },
           result: wkId,
@@ -79,47 +73,62 @@ it('fetch worker should be worked correctly', () => {
   });
 });
 
-it('fetch worker multiple times within period should get first result', () => {
+it('create multiple workers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
-    const input = '   ^-a 50ms b   ';
-    const expected = '--a 2999ms u-';
-    const subs = '    ^------------';
+    const input = '   ^-ab          ';
+    const expected = '--ab 1998ms uv';
+    const subs = '    ^-------------';
+    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: key,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
       b: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: anotherKey,
+        type: actions.createWorker.TRIGGER,
+        payload: anotherWorkerEntity,
       },
     });
-    const output$ = fetchWorkerEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchWorker.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
       u: {
-        type: actions.fetchWorker.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
           workerId: wkId,
           entities: {
             workers: {
-              [wkId]: { ...workerEntity, ...key },
-            },
-            infos: {
-              [wkId]: { ...workerInfoEntity, ...key },
+              [wkId]: workerEntity,
             },
           },
           result: wkId,
+        },
+      },
+      b: {
+        type: actions.createWorker.REQUEST,
+        payload: {
+          workerId: getId(anotherWorkerEntity),
+        },
+      },
+      v: {
+        type: actions.createWorker.SUCCESS,
+        payload: {
+          workerId: getId(anotherWorkerEntity),
+          entities: {
+            workers: {
+              [getId(anotherWorkerEntity)]: anotherWorkerEntity,
+            },
+          },
+          result: getId(anotherWorkerEntity),
         },
       },
     });
@@ -130,53 +139,39 @@ it('fetch worker multiple times within period should get first result', () => {
   });
 });
 
-it('fetch worker multiple times without period should get latest result', () => {
+it('create same worker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
-    const input = '   ^-a 2s b         ';
-    const expected = '--a 2s b 2999ms u';
-    const subs = '    ^----------------';
+    const input = '   ^-aa 10s a    ';
+    const expected = '--a 1999ms u--';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: key,
-      },
-      b: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: anotherKey,
+        type: actions.createWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = fetchWorkerEpic(action$);
+    const output$ = createWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.fetchWorker.REQUEST,
+        type: actions.createWorker.REQUEST,
         payload: {
           workerId: wkId,
         },
       },
-      b: {
-        type: actions.fetchWorker.REQUEST,
-        payload: {
-          workerId: getId(anotherKey),
-        },
-      },
       u: {
-        type: actions.fetchWorker.SUCCESS,
+        type: actions.createWorker.SUCCESS,
         payload: {
-          workerId: getId(anotherKey),
+          workerId: wkId,
           entities: {
             workers: {
-              [getId(anotherKey)]: { ...workerEntity, ...anotherKey },
-            },
-            infos: {
-              [getId(anotherKey)]: { ...workerInfoEntity, ...anotherKey },
+              [wkId]: workerEntity,
             },
           },
-          result: getId(anotherKey),
+          result: wkId,
         },
       },
     });

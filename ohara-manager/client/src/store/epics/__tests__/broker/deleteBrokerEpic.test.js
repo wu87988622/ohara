@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateBrokerEpic from '../broker/updateBrokerEpic';
+import deleteBrokerEpic from '../../broker/deleteBrokerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
@@ -30,39 +30,33 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('update broker should be worked correctly', () => {
+it('delete broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a       ';
-    const expected = '--a 99ms u';
-    const subs = '    ^---------';
+    const input = '   ^-a        ';
+    const expected = '--a 999ms u';
+    const subs = '    ^----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, jmxPort: 999 },
+        type: actions.deleteBroker.TRIGGER,
+        payload: brokerEntity,
       },
     });
-    const output$ = updateBrokerEpic(action$);
+    const output$ = deleteBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.deleteBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.deleteBroker.SUCCESS,
         payload: {
           brokerId: bkId,
-          entities: {
-            brokers: {
-              [bkId]: { ...brokerEntity, jmxPort: 999 },
-            },
-          },
-          result: bkId,
         },
       },
     });
@@ -73,89 +67,87 @@ it('update broker should be worked correctly', () => {
   });
 });
 
-it('update broker multiple times should got latest result', () => {
+it('delete multiple brokers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-b 60ms c 10s            ';
-    const expected = '--a-b 60ms d 36ms u-v 60ms w';
-    const subs = '    ^---------------------------';
+    const input = '   ^-ab         ';
+    const expected = '--ab 998ms uv';
+    const subs = '    ^------------';
+    const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateBroker.TRIGGER,
+        type: actions.deleteBroker.TRIGGER,
         payload: brokerEntity,
       },
       b: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, nodeNames: ['n1', 'n2'] },
-      },
-      c: {
-        type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, clientPort: 1234 },
+        type: actions.deleteBroker.TRIGGER,
+        payload: anotherBrokerEntity,
       },
     });
-    const output$ = updateBrokerEpic(action$);
+    const output$ = deleteBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateBroker.REQUEST,
-        payload: {
-          brokerId: bkId,
-        },
-      },
-      b: {
-        type: actions.updateBroker.REQUEST,
-        payload: {
-          brokerId: bkId,
-        },
-      },
-      d: {
-        type: actions.updateBroker.REQUEST,
+        type: actions.deleteBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.deleteBroker.SUCCESS,
         payload: {
           brokerId: bkId,
-          entities: {
-            brokers: {
-              [bkId]: brokerEntity,
-            },
-          },
-          result: bkId,
+        },
+      },
+      b: {
+        type: actions.deleteBroker.REQUEST,
+        payload: {
+          brokerId: getId(anotherBrokerEntity),
         },
       },
       v: {
-        type: actions.updateBroker.SUCCESS,
+        type: actions.deleteBroker.SUCCESS,
         payload: {
-          brokerId: bkId,
-          entities: {
-            brokers: {
-              [bkId]: {
-                ...brokerEntity,
-                nodeNames: ['n1', 'n2'],
-              },
-            },
-          },
-          result: bkId,
+          brokerId: getId(anotherBrokerEntity),
         },
       },
-      w: {
-        type: actions.updateBroker.SUCCESS,
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+  });
+});
+
+it('delete same broker within period should be created once only', () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-aa 10s a---';
+    const expected = '--a 999ms u--';
+    const subs = '    ^------------';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteBroker.TRIGGER,
+        payload: brokerEntity,
+      },
+    });
+    const output$ = deleteBrokerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteBroker.REQUEST,
         payload: {
           brokerId: bkId,
-          entities: {
-            brokers: {
-              [bkId]: {
-                ...brokerEntity,
-                clientPort: 1234,
-              },
-            },
-          },
-          result: bkId,
+        },
+      },
+      u: {
+        type: actions.deleteBroker.SUCCESS,
+        payload: {
+          brokerId: bkId,
         },
       },
     });

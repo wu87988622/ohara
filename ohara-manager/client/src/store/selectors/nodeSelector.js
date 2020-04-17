@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-export const getEntities = state => state?.entities?.nodes;
+const getEntities = state => state?.entities?.nodes;
 
 export const makeGetAllNodes = () =>
   createSelector([getEntities], entities => _.values(entities));

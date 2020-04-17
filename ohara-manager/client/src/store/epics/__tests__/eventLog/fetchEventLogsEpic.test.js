@@ -15,12 +15,12 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
-
-import fetchEventLogsEpic from '../eventLog/fetchEventLogsEpic';
-import * as actions from 'store/actions';
-import localForage from 'localforage';
 import { of } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import localForage from 'localforage';
+
+import fetchEventLogsEpic from '../../eventLog/fetchEventLogsEpic';
+import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
 
 const makeTestScheduler = () =>

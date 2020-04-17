@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import createBrokerEpic from '../broker/createBrokerEpic';
+import updateBrokerEpic from '../../broker/updateBrokerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
@@ -30,36 +30,36 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('create broker should be worked correctly', () => {
+it('update broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
-    const subs = '    ^-----------';
+    const input = '   ^-a       ';
+    const expected = '--a 99ms u';
+    const subs = '    ^---------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.createBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.updateBroker.TRIGGER,
+        payload: { ...brokerEntity, jmxPort: 999 },
       },
     });
-    const output$ = createBrokerEpic(action$);
+    const output$ = updateBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createBroker.REQUEST,
+        type: actions.updateBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.updateBroker.SUCCESS,
         payload: {
           brokerId: bkId,
           entities: {
             brokers: {
-              [bkId]: brokerEntity,
+              [bkId]: { ...brokerEntity, jmxPort: 999 },
             },
           },
           result: bkId,
@@ -73,36 +73,51 @@ it('create broker should be worked correctly', () => {
   });
 });
 
-it('create multiple brokers should be worked correctly', () => {
+it('update broker multiple times should got latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
-    const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
+    const input = '   ^-a-b 60ms c 10s            ';
+    const expected = '--a-b 60ms d 36ms u-v 60ms w';
+    const subs = '    ^---------------------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.createBroker.TRIGGER,
+        type: actions.updateBroker.TRIGGER,
         payload: brokerEntity,
       },
       b: {
-        type: actions.createBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        type: actions.updateBroker.TRIGGER,
+        payload: { ...brokerEntity, nodeNames: ['n1', 'n2'] },
+      },
+      c: {
+        type: actions.updateBroker.TRIGGER,
+        payload: { ...brokerEntity, clientPort: 1234 },
       },
     });
-    const output$ = createBrokerEpic(action$);
+    const output$ = updateBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createBroker.REQUEST,
+        type: actions.updateBroker.REQUEST,
+        payload: {
+          brokerId: bkId,
+        },
+      },
+      b: {
+        type: actions.updateBroker.REQUEST,
+        payload: {
+          brokerId: bkId,
+        },
+      },
+      d: {
+        type: actions.updateBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.updateBroker.SUCCESS,
         payload: {
           brokerId: bkId,
           entities: {
@@ -111,64 +126,33 @@ it('create multiple brokers should be worked correctly', () => {
             },
           },
           result: bkId,
-        },
-      },
-      b: {
-        type: actions.createBroker.REQUEST,
-        payload: {
-          brokerId: getId(anotherBrokerEntity),
         },
       },
       v: {
-        type: actions.createBroker.SUCCESS,
+        type: actions.updateBroker.SUCCESS,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          brokerId: bkId,
           entities: {
             brokers: {
-              [getId(anotherBrokerEntity)]: anotherBrokerEntity,
+              [bkId]: {
+                ...brokerEntity,
+                nodeNames: ['n1', 'n2'],
+              },
             },
           },
-          result: getId(anotherBrokerEntity),
+          result: bkId,
         },
       },
-    });
-
-    expectSubscriptions(action$.subscriptions).toBe(subs);
-
-    flush();
-  });
-});
-
-it('create same broker within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
-    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
-
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
-
-    const action$ = hot(input, {
-      a: {
-        type: actions.createBroker.TRIGGER,
-        payload: brokerEntity,
-      },
-    });
-    const output$ = createBrokerEpic(action$);
-
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.createBroker.REQUEST,
-        payload: {
-          brokerId: bkId,
-        },
-      },
-      u: {
-        type: actions.createBroker.SUCCESS,
+      w: {
+        type: actions.updateBroker.SUCCESS,
         payload: {
           brokerId: bkId,
           entities: {
             brokers: {
-              [bkId]: brokerEntity,
+              [bkId]: {
+                ...brokerEntity,
+                clientPort: 1234,
+              },
             },
           },
           result: bkId,

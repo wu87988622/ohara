@@ -43,11 +43,16 @@ export const useRefetchDevToolTopicDataAction = () => {
 };
 export const useSetDevToolTopicQueryParams = () => {
   const dispatch = useDispatch();
-  const group = hooks.useTopicGroup();
+  const topicGroup = hooks.useTopicGroup();
   return useCallback(
     params =>
-      dispatch(actions.setDevToolTopicQueryParams.trigger({ params, group })),
-    [dispatch, group],
+      dispatch(
+        actions.setDevToolTopicQueryParams.trigger({
+          params,
+          topicGroup,
+        }),
+      ),
+    [dispatch, topicGroup],
   );
 };
 

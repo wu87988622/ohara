@@ -17,7 +17,7 @@
 import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
 
-import stopZookeeperEpic from '../zookeeper/stopZookeeperEpic';
+import startZookeeperEpic from '../../zookeeper/startZookeeperEpic';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -38,7 +38,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('stop zookeeper should be worked correctly', () => {
+it('start zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -48,15 +48,15 @@ it('stop zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopZookeeper.TRIGGER,
+        type: actions.startZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
     });
-    const output$ = stopZookeeperEpic(action$);
+    const output$ = startZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopZookeeper.REQUEST,
+        type: actions.startZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
@@ -68,15 +68,18 @@ it('stop zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop zookeeper data',
+        title: 'mock start zookeeper data',
       },
       v: {
-        type: actions.stopZookeeper.SUCCESS,
+        type: actions.startZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [zkId]: {
+                ...zookeeperEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
           result: zkId,
@@ -90,15 +93,15 @@ it('stop zookeeper should be worked correctly', () => {
   });
 });
 
-it('stop zookeeper failed after reach retry limit', () => {
-  // mock a 20 times "failed stopped" result
+it('start zookeeper failed after reach retry limit', () => {
+  // mock a 20 times "failed started" result
   const spyGet = jest.spyOn(zookeeperApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: {},
       }),
     );
   }
@@ -107,7 +110,7 @@ it('stop zookeeper failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...zookeeperEntity },
+      data: { ...zookeeperEntity, state: SERVICE_STATE.RUNNING },
     }),
   );
 
@@ -121,15 +124,15 @@ it('stop zookeeper failed after reach retry limit', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopZookeeper.TRIGGER,
+        type: actions.startZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
     });
-    const output$ = stopZookeeperEpic(action$);
+    const output$ = startZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopZookeeper.REQUEST,
+        type: actions.startZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
@@ -141,10 +144,10 @@ it('stop zookeeper failed after reach retry limit', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop zookeeper data',
+        title: 'mock start zookeeper data',
       },
       v: {
-        type: actions.stopZookeeper.FAILURE,
+        type: actions.startZookeeper.FAILURE,
         payload: 'exceed max retry times',
       },
     });
@@ -155,7 +158,7 @@ it('stop zookeeper failed after reach retry limit', () => {
   });
 });
 
-it('stop zookeeper multiple times should be worked once', () => {
+it('start zookeeper multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -165,15 +168,15 @@ it('stop zookeeper multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopZookeeper.TRIGGER,
+        type: actions.startZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
     });
-    const output$ = stopZookeeperEpic(action$);
+    const output$ = startZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopZookeeper.REQUEST,
+        type: actions.startZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
@@ -185,15 +188,18 @@ it('stop zookeeper multiple times should be worked once', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop zookeeper data',
+        title: 'mock start zookeeper data',
       },
       v: {
-        type: actions.stopZookeeper.SUCCESS,
+        type: actions.startZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [zkId]: {
+                ...zookeeperEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
           result: zkId,
@@ -207,7 +213,7 @@ it('stop zookeeper multiple times should be worked once', () => {
   });
 });
 
-it('stop different zookeeper should be worked correctly', () => {
+it('start different zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -225,25 +231,25 @@ it('stop different zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.stopZookeeper.TRIGGER,
+        type: actions.startZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
       b: {
-        type: actions.stopZookeeper.TRIGGER,
+        type: actions.startZookeeper.TRIGGER,
         payload: anotherZookeeperEntity,
       },
     });
-    const output$ = stopZookeeperEpic(action$);
+    const output$ = startZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.stopZookeeper.REQUEST,
+        type: actions.startZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       b: {
-        type: actions.stopZookeeper.REQUEST,
+        type: actions.startZookeeper.REQUEST,
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
         },
@@ -255,7 +261,7 @@ it('stop different zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop zookeeper data',
+        title: 'mock start zookeeper data',
       },
       v: {
         data: {
@@ -264,27 +270,33 @@ it('stop different zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock stop zookeeper data',
+        title: 'mock start zookeeper data',
       },
       y: {
-        type: actions.stopZookeeper.SUCCESS,
+        type: actions.startZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [zkId]: {
+                ...zookeeperEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
           result: zkId,
         },
       },
       z: {
-        type: actions.stopZookeeper.SUCCESS,
+        type: actions.startZookeeper.SUCCESS,
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
           entities: {
             zookeepers: {
-              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
+              [getId(anotherZookeeperEntity)]: {
+                ...anotherZookeeperEntity,
+                state: SERVICE_STATE.RUNNING,
+              },
             },
           },
           result: getId(anotherZookeeperEntity),

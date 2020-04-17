@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import createEventLogEpic from '../eventLog/createEventLogEpic';
+import createEventLogEpic from '../../eventLog/createEventLogEpic';
 import * as actions from 'store/actions';
 import localForage from 'localforage';
 import { of } from 'rxjs';

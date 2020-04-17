@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateSettingsEpic from '../eventLog/updateSettingsEpic';
+import setDevToolLogQueryParamsEpic from '../../devTool/setDevToolTopicQueryParamsEpic';
 import * as actions from 'store/actions';
 
 const makeTestScheduler = () =>
@@ -24,46 +24,48 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-beforeEach(() => {
-  jest.restoreAllMocks();
-});
+const values = {
+  params: {
+    name: 't1',
+    limit: 10,
+  },
+  topicGroup: 'fakegroup',
+};
 
-it('update settings should be executed correctly', () => {
+it('set devTool log query params should be executed correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a--b--|';
-    const expected = '--a--b--|';
+    const input = '   ^-a-----|';
+    const expected = '--(abc)-|';
     const subs = '    ^-------!';
 
     const action$ = hot(input, {
       a: {
-        type: actions.updateSettings.TRIGGER,
-        payload: {
-          limit: 99,
-          unlimited: false,
-        },
-      },
-      b: {
-        type: actions.updateSettings.TRIGGER,
-        payload: {
-          unlimited: true,
-        },
+        type: actions.setDevToolTopicQueryParams.TRIGGER,
+        payload: values,
       },
     });
-    const output$ = updateSettingsEpic(action$);
+    const output$ = setDevToolLogQueryParamsEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.updateSettings.SUCCESS,
+        type: actions.setDevToolTopicQueryParams.SUCCESS,
         payload: {
-          limit: 99,
-          unlimited: false,
+          limit: 10,
         },
       },
       b: {
-        type: actions.updateSettings.SUCCESS,
-        payload: { unlimited: true },
+        type: actions.setDevToolTopicQueryParams.SUCCESS,
+        payload: {
+          name: 't1',
+        },
+      },
+      c: {
+        type: actions.fetchDevToolTopicData.TRIGGER,
+        payload: {
+          group: 'fakegroup',
+        },
       },
     });
 

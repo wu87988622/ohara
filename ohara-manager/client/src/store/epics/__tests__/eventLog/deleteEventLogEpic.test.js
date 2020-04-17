@@ -15,12 +15,12 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
-
-import clearEventLogsEpic from '../eventLog/clearEventLogsEpic';
-import * as actions from 'store/actions';
-import localForage from 'localforage';
 import { of, noop } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import localForage from 'localforage';
+
+import deleteEventLogsEpic from '../../eventLog/deleteEventLogsEpic';
+import * as actions from 'store/actions';
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -31,30 +31,29 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('clear event log should be executed correctly', () => {
-  const spyClear = jest.spyOn(localForage, 'clear');
-  spyClear.mockImplementation(() => of(noop()));
+it('remove event logs should be executed correctly', () => {
+  const spyRemoveItem = jest.spyOn(localForage, 'removeItem');
+  spyRemoveItem.mockImplementation(() => of(noop()));
 
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
-    const expected = '--(ab)|';
+    const expected = '--a---|';
     const subs = '    ^-----!';
 
     const action$ = hot(input, {
       a: {
-        type: actions.clearEventLogs.TRIGGER,
+        type: actions.deleteEventLogs.TRIGGER,
+        payload: ['k1', 'k2', 'k3'],
       },
     });
-    const output$ = clearEventLogsEpic(action$);
+    const output$ = deleteEventLogsEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.clearEventLogs.SUCCESS,
-      },
-      b: {
-        type: actions.fetchEventLogs.TRIGGER,
+        type: actions.deleteEventLogs.SUCCESS,
+        payload: ['k1', 'k2', 'k3'],
       },
     });
 
@@ -62,35 +61,37 @@ it('clear event log should be executed correctly', () => {
 
     flush();
 
-    expect(spyClear).toHaveBeenCalledTimes(1);
+    expect(spyRemoveItem).toHaveBeenCalledTimes(3);
   });
 });
 
-it('clear event log multiple times should be executed once only', () => {
-  const spyClear = jest.spyOn(localForage, 'clear');
-  // simulate a 10ms delay "promise-like" function
-  spyClear.mockImplementation(() => of(noop()).pipe(delay(10)));
+it('multiple remove actions within period should be executed the latest one', () => {
+  const spyRemoveItem = jest.spyOn(localForage, 'removeItem');
+  spyRemoveItem.mockImplementation(() => of(noop()).pipe(delay(5)));
 
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a--a---------|';
-    const expected = '------ 9ms (ab|)';
-    const subs = '    ^--------------!';
+    const input = '   ^-a--b------|';
+    const expected = '----------u-|';
+    const subs = '    ^-----------!';
 
     const action$ = hot(input, {
       a: {
-        type: actions.clearEventLogs.TRIGGER,
-      },
-    });
-    const output$ = clearEventLogsEpic(action$);
-
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.clearEventLogs.SUCCESS,
+        type: actions.deleteEventLogs.TRIGGER,
+        payload: ['k1', 'k2', 'k3'],
       },
       b: {
-        type: actions.fetchEventLogs.TRIGGER,
+        type: actions.deleteEventLogs.TRIGGER,
+        payload: ['v1', 'v2'],
+      },
+    });
+    const output$ = deleteEventLogsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      u: {
+        type: actions.deleteEventLogs.SUCCESS,
+        payload: ['v1', 'v2'],
       },
     });
 
@@ -98,6 +99,8 @@ it('clear event log multiple times should be executed once only', () => {
 
     flush();
 
-    expect(spyClear).toHaveBeenCalledTimes(2);
+    // although the previous observable had been cancelled
+    // the removeItem requests still in fly
+    expect(spyRemoveItem).toHaveBeenCalledTimes(5);
   });
 });

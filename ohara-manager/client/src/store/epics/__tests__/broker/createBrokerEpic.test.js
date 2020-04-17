@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import deleteBrokerEpic from '../broker/deleteBrokerEpic';
+import createBrokerEpic from '../../broker/createBrokerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
@@ -30,33 +30,39 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete broker should be worked correctly', () => {
+it('create broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const input = '   ^-a         ';
+    const expected = '--a 1999ms u';
+    const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
+        type: actions.createBroker.TRIGGER,
         payload: brokerEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = createBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.createBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.createBroker.SUCCESS,
         payload: {
           brokerId: bkId,
+          entities: {
+            brokers: {
+              [bkId]: brokerEntity,
+            },
+          },
+          result: bkId,
         },
       },
     });
@@ -67,50 +73,62 @@ it('delete broker should be worked correctly', () => {
   });
 });
 
-it('delete multiple brokers should be worked correctly', () => {
+it('create multiple brokers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const input = '   ^-ab          ';
+    const expected = '--ab 1998ms uv';
+    const subs = '    ^-------------';
     const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
+        type: actions.createBroker.TRIGGER,
         payload: brokerEntity,
       },
       b: {
-        type: actions.deleteBroker.TRIGGER,
+        type: actions.createBroker.TRIGGER,
         payload: anotherBrokerEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = createBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.createBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.createBroker.SUCCESS,
         payload: {
           brokerId: bkId,
+          entities: {
+            brokers: {
+              [bkId]: brokerEntity,
+            },
+          },
+          result: bkId,
         },
       },
       b: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.createBroker.REQUEST,
         payload: {
           brokerId: getId(anotherBrokerEntity),
         },
       },
       v: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.createBroker.SUCCESS,
         payload: {
           brokerId: getId(anotherBrokerEntity),
+          entities: {
+            brokers: {
+              [getId(anotherBrokerEntity)]: anotherBrokerEntity,
+            },
+          },
+          result: getId(anotherBrokerEntity),
         },
       },
     });
@@ -121,33 +139,39 @@ it('delete multiple brokers should be worked correctly', () => {
   });
 });
 
-it('delete same broker within period should be created once only', () => {
+it('create same broker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const input = '   ^-aa 10s a    ';
+    const expected = '--a 1999ms u--';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteBroker.TRIGGER,
+        type: actions.createBroker.TRIGGER,
         payload: brokerEntity,
       },
     });
-    const output$ = deleteBrokerEpic(action$);
+    const output$ = createBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteBroker.REQUEST,
+        type: actions.createBroker.REQUEST,
         payload: {
           brokerId: bkId,
         },
       },
       u: {
-        type: actions.deleteBroker.SUCCESS,
+        type: actions.createBroker.SUCCESS,
         payload: {
           brokerId: bkId,
+          entities: {
+            brokers: {
+              [bkId]: brokerEntity,
+            },
+          },
+          result: bkId,
         },
       },
     });

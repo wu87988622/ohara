@@ -17,16 +17,16 @@
 import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
 
-import startZookeeperEpic from '../zookeeper/startZookeeperEpic';
-import * as zookeeperApi from 'api/zookeeperApi';
+import startBrokerEpic from '../../broker/startBrokerEpic';
+import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
+import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 
-jest.mock('api/zookeeperApi');
+jest.mock('api/brokerApi');
 
-const zkId = getId(zookeeperEntity);
+const bkId = getId(brokerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -38,7 +38,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('start zookeeper should be worked correctly', () => {
+it('start broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -48,17 +48,17 @@ it('start zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.startBroker.TRIGGER,
+        payload: brokerEntity,
       },
     });
-    const output$ = startZookeeperEpic(action$);
+    const output$ = startBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startZookeeper.REQUEST,
+        type: actions.startBroker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
         },
       },
       u: {
@@ -68,21 +68,21 @@ it('start zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start zookeeper data',
+        title: 'mock start broker data',
       },
       v: {
-        type: actions.startZookeeper.SUCCESS,
+        type: actions.startBroker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
           entities: {
-            zookeepers: {
-              [zkId]: {
-                ...zookeeperEntity,
+            brokers: {
+              [bkId]: {
+                ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkId,
+          result: bkId,
         },
       },
     });
@@ -93,9 +93,9 @@ it('start zookeeper should be worked correctly', () => {
   });
 });
 
-it('start zookeeper failed after reach retry limit', () => {
+it('start broker failed after reach retry limit', () => {
   // mock a 20 times "failed started" result
-  const spyGet = jest.spyOn(zookeeperApi, 'get');
+  const spyGet = jest.spyOn(brokerApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
@@ -110,7 +110,7 @@ it('start zookeeper failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...zookeeperEntity, state: SERVICE_STATE.RUNNING },
+      data: { ...brokerEntity, state: SERVICE_STATE.RUNNING },
     }),
   );
 
@@ -124,17 +124,17 @@ it('start zookeeper failed after reach retry limit', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.startBroker.TRIGGER,
+        payload: brokerEntity,
       },
     });
-    const output$ = startZookeeperEpic(action$);
+    const output$ = startBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startZookeeper.REQUEST,
+        type: actions.startBroker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
         },
       },
       u: {
@@ -144,10 +144,10 @@ it('start zookeeper failed after reach retry limit', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start zookeeper data',
+        title: 'mock start broker data',
       },
       v: {
-        type: actions.startZookeeper.FAILURE,
+        type: actions.startBroker.FAILURE,
         payload: 'exceed max retry times',
       },
     });
@@ -158,7 +158,7 @@ it('start zookeeper failed after reach retry limit', () => {
   });
 });
 
-it('start zookeeper multiple times should be worked once', () => {
+it('start broker multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -168,17 +168,17 @@ it('start zookeeper multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.startBroker.TRIGGER,
+        payload: brokerEntity,
       },
     });
-    const output$ = startZookeeperEpic(action$);
+    const output$ = startBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startZookeeper.REQUEST,
+        type: actions.startBroker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
         },
       },
       u: {
@@ -188,21 +188,21 @@ it('start zookeeper multiple times should be worked once', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start zookeeper data',
+        title: 'mock start broker data',
       },
       v: {
-        type: actions.startZookeeper.SUCCESS,
+        type: actions.startBroker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
           entities: {
-            zookeepers: {
-              [zkId]: {
-                ...zookeeperEntity,
+            brokers: {
+              [bkId]: {
+                ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkId,
+          result: bkId,
         },
       },
     });
@@ -213,13 +213,13 @@ it('start zookeeper multiple times should be worked once', () => {
   });
 });
 
-it('start different zookeeper should be worked correctly', () => {
+it('start different broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherZookeeperEntity = {
-      ...zookeeperEntity,
-      name: 'anotherzk',
+    const anotherBrokerEntity = {
+      ...brokerEntity,
+      name: 'anotherbk',
       group: 'default',
       xms: 1111,
       xmx: 2222,
@@ -231,27 +231,27 @@ it('start different zookeeper should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.startBroker.TRIGGER,
+        payload: brokerEntity,
       },
       b: {
-        type: actions.startZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        type: actions.startBroker.TRIGGER,
+        payload: anotherBrokerEntity,
       },
     });
-    const output$ = startZookeeperEpic(action$);
+    const output$ = startBrokerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startZookeeper.REQUEST,
+        type: actions.startBroker.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
         },
       },
       b: {
-        type: actions.startZookeeper.REQUEST,
+        type: actions.startBroker.REQUEST,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          brokerId: getId(anotherBrokerEntity),
         },
       },
       u: {
@@ -261,7 +261,7 @@ it('start different zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start zookeeper data',
+        title: 'mock start broker data',
       },
       v: {
         data: {
@@ -270,36 +270,36 @@ it('start different zookeeper should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start zookeeper data',
+        title: 'mock start broker data',
       },
       y: {
-        type: actions.startZookeeper.SUCCESS,
+        type: actions.startBroker.SUCCESS,
         payload: {
-          zookeeperId: zkId,
+          brokerId: bkId,
           entities: {
-            zookeepers: {
-              [zkId]: {
-                ...zookeeperEntity,
+            brokers: {
+              [bkId]: {
+                ...brokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: zkId,
+          result: bkId,
         },
       },
       z: {
-        type: actions.startZookeeper.SUCCESS,
+        type: actions.startBroker.SUCCESS,
         payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
+          brokerId: getId(anotherBrokerEntity),
           entities: {
-            zookeepers: {
-              [getId(anotherZookeeperEntity)]: {
-                ...anotherZookeeperEntity,
+            brokers: {
+              [getId(anotherBrokerEntity)]: {
+                ...anotherBrokerEntity,
                 state: SERVICE_STATE.RUNNING,
               },
             },
           },
-          result: getId(anotherZookeeperEntity),
+          result: getId(anotherBrokerEntity),
         },
       },
     });

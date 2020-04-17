@@ -17,7 +17,7 @@
 import { createSelector } from 'reselect';
 import { getDefinition } from '../../api/utils/definitionsUtils';
 
-export const getEntities = state => state?.entities?.infos;
+const getEntities = state => state?.entities?.infos;
 
 const getIdFromProps = (_, props) => props?.id;
 

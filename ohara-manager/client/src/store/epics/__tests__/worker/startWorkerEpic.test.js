@@ -15,18 +15,18 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
-import { of } from 'rxjs';
 
-import startBrokerEpic from '../broker/startBrokerEpic';
-import * as brokerApi from 'api/brokerApi';
+import startWorkerEpic from '../../worker/startWorkerEpic';
+import * as workerApi from 'api/workerApi';
+import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { of } from 'rxjs';
 
-jest.mock('api/brokerApi');
+jest.mock('api/workerApi');
 
-const bkId = getId(brokerEntity);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -38,7 +38,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('start broker should be worked correctly', () => {
+it('start worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -48,17 +48,17 @@ it('start broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.startWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = startBrokerEpic(action$);
+    const output$ = startWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startBroker.REQUEST,
+        type: actions.startWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       u: {
@@ -68,21 +68,18 @@ it('start broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start broker data',
+        title: 'mock start worker data',
       },
       v: {
-        type: actions.startBroker.SUCCESS,
+        type: actions.startWorker.SUCCESS,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
           entities: {
-            brokers: {
-              [bkId]: {
-                ...brokerEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
+            workers: {
+              [wkId]: { ...workerEntity, state: 'RUNNING' },
             },
           },
-          result: bkId,
+          result: wkId,
         },
       },
     });
@@ -93,9 +90,9 @@ it('start broker should be worked correctly', () => {
   });
 });
 
-it('start broker failed after reach retry limit', () => {
-  // mock a 20 times "failed started" result
-  const spyGet = jest.spyOn(brokerApi, 'get');
+it('start worker failed after reach retry limit', () => {
+  // mock a 20 times "failed started" results
+  const spyGet = jest.spyOn(workerApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
@@ -110,7 +107,7 @@ it('start broker failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...brokerEntity, state: SERVICE_STATE.RUNNING },
+      data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
     }),
   );
 
@@ -124,17 +121,17 @@ it('start broker failed after reach retry limit', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.startWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = startBrokerEpic(action$);
+    const output$ = startWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startBroker.REQUEST,
+        type: actions.startWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       u: {
@@ -144,10 +141,10 @@ it('start broker failed after reach retry limit', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start broker data',
+        title: 'mock start worker data',
       },
       v: {
-        type: actions.startBroker.FAILURE,
+        type: actions.startWorker.FAILURE,
         payload: 'exceed max retry times',
       },
     });
@@ -158,7 +155,7 @@ it('start broker failed after reach retry limit', () => {
   });
 });
 
-it('start broker multiple times should be worked once', () => {
+it('start worker multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -168,17 +165,17 @@ it('start broker multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.startWorker.TRIGGER,
+        payload: workerEntity,
       },
     });
-    const output$ = startBrokerEpic(action$);
+    const output$ = startWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startBroker.REQUEST,
+        type: actions.startWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       u: {
@@ -188,21 +185,18 @@ it('start broker multiple times should be worked once', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start broker data',
+        title: 'mock start worker data',
       },
       v: {
-        type: actions.startBroker.SUCCESS,
+        type: actions.startWorker.SUCCESS,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
           entities: {
-            brokers: {
-              [bkId]: {
-                ...brokerEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
+            workers: {
+              [wkId]: { ...workerEntity, state: 'RUNNING' },
             },
           },
-          result: bkId,
+          result: wkId,
         },
       },
     });
@@ -213,13 +207,13 @@ it('start broker multiple times should be worked once', () => {
   });
 });
 
-it('start different broker should be worked correctly', () => {
+it('start different worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherBrokerEntity = {
-      ...brokerEntity,
-      name: 'anotherbk',
+    const anotherWorkerEntity = {
+      ...workerEntity,
+      name: 'anotherwk',
       group: 'default',
       xms: 1111,
       xmx: 2222,
@@ -231,27 +225,27 @@ it('start different broker should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startBroker.TRIGGER,
-        payload: brokerEntity,
+        type: actions.startWorker.TRIGGER,
+        payload: workerEntity,
       },
       b: {
-        type: actions.startBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        type: actions.startWorker.TRIGGER,
+        payload: anotherWorkerEntity,
       },
     });
-    const output$ = startBrokerEpic(action$);
+    const output$ = startWorkerEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startBroker.REQUEST,
+        type: actions.startWorker.REQUEST,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
         },
       },
       b: {
-        type: actions.startBroker.REQUEST,
+        type: actions.startWorker.REQUEST,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          workerId: getId(anotherWorkerEntity),
         },
       },
       u: {
@@ -261,7 +255,7 @@ it('start different broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start broker data',
+        title: 'mock start worker data',
       },
       v: {
         data: {
@@ -270,36 +264,33 @@ it('start different broker should be worked correctly', () => {
           nodeMetrics: {},
         },
         status: 200,
-        title: 'mock start broker data',
+        title: 'mock start worker data',
       },
       y: {
-        type: actions.startBroker.SUCCESS,
+        type: actions.startWorker.SUCCESS,
         payload: {
-          brokerId: bkId,
+          workerId: wkId,
           entities: {
-            brokers: {
-              [bkId]: {
-                ...brokerEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
+            workers: {
+              [wkId]: { ...workerEntity, state: 'RUNNING' },
             },
           },
-          result: bkId,
+          result: wkId,
         },
       },
       z: {
-        type: actions.startBroker.SUCCESS,
+        type: actions.startWorker.SUCCESS,
         payload: {
-          brokerId: getId(anotherBrokerEntity),
+          workerId: getId(anotherWorkerEntity),
           entities: {
-            brokers: {
-              [getId(anotherBrokerEntity)]: {
-                ...anotherBrokerEntity,
-                state: SERVICE_STATE.RUNNING,
+            workers: {
+              [getId(anotherWorkerEntity)]: {
+                ...anotherWorkerEntity,
+                state: 'RUNNING',
               },
             },
           },
-          result: getId(anotherBrokerEntity),
+          result: getId(anotherWorkerEntity),
         },
       },
     });

@@ -17,7 +17,7 @@
 import { keyBy } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
 
-import initializeAppEpic from '../app/initializeAppEpic';
+import initializeAppEpic from '../../app/initializeAppEpic';
 import * as actions from 'store/actions';
 
 import { entities as workspaceEntities } from 'api/__mocks__/workspaceApi';

@@ -16,7 +16,7 @@
 
 import { ofType } from 'redux-observable';
 import { of, defer } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, exhaustMap } from 'rxjs/operators';
 
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
@@ -26,7 +26,7 @@ export default (action$, state$) =>
   action$.pipe(
     ofType(actions.fetchDevToolTopicData.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
+    exhaustMap(values =>
       defer(() => {
         const getDevToolTopicData = selectors.makeGetDevToolTopicData();
         const topicData = getDevToolTopicData(state$.value);

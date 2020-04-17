@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import clearNotificationsEpic from '../eventLog/clearNotificationsEpic';
+import clearNotificationsEpic from '../../eventLog/clearNotificationsEpic';
 import * as actions from 'store/actions';
 
 const makeTestScheduler = () =>

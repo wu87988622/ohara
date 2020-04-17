@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import deleteZookeeperEpic from '../zookeeper/deleteZookeeperEpic';
+import createZookeeperEpic from '../../zookeeper/createZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
@@ -30,33 +30,39 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete zookeeper should be worked correctly', () => {
+it('create zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const input = '   ^-a         ';
+    const expected = '--a 1999ms u';
+    const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
+        type: actions.createZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
+          entities: {
+            zookeepers: {
+              [zkId]: zookeeperEntity,
+            },
+          },
+          result: zkId,
         },
       },
     });
@@ -67,50 +73,62 @@ it('delete zookeeper should be worked correctly', () => {
   });
 });
 
-it('delete multiple zookeepers should be worked correctly', () => {
+it('create multiple zookeepers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const input = '   ^-ab          ';
+    const expected = '--ab 1998ms uv';
+    const subs = '    ^-------------';
     const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
+        type: actions.createZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
       b: {
-        type: actions.deleteZookeeper.TRIGGER,
+        type: actions.createZookeeper.TRIGGER,
         payload: anotherZookeeperEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
+          entities: {
+            zookeepers: {
+              [zkId]: zookeeperEntity,
+            },
+          },
+          result: zkId,
         },
       },
       b: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
         },
       },
       v: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
+          entities: {
+            zookeepers: {
+              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
+            },
+          },
+          result: getId(anotherZookeeperEntity),
         },
       },
     });
@@ -121,33 +139,39 @@ it('delete multiple zookeepers should be worked correctly', () => {
   });
 });
 
-it('delete same zookeeper within period should be created once only', () => {
+it('create same zookeeper within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const input = '   ^-aa 10s a    ';
+    const expected = '--a 1999ms u--';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteZookeeper.TRIGGER,
+        type: actions.createZookeeper.TRIGGER,
         payload: zookeeperEntity,
       },
     });
-    const output$ = deleteZookeeperEpic(action$);
+    const output$ = createZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteZookeeper.REQUEST,
+        type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       u: {
-        type: actions.deleteZookeeper.SUCCESS,
+        type: actions.createZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
+          entities: {
+            zookeepers: {
+              [zkId]: zookeeperEntity,
+            },
+          },
+          result: zkId,
         },
       },
     });

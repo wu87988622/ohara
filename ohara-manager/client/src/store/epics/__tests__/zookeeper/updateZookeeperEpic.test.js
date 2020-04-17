@@ -16,7 +16,7 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import updateZookeeperEpic from '../zookeeper/updateZookeeperEpic';
+import updateZookeeperEpic from '../../zookeeper/updateZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';

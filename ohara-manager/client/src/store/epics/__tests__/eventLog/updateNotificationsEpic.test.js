@@ -15,11 +15,11 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
+import { StateObservable } from 'redux-observable';
 
-import updateNotificationsEpic from '../eventLog/updateNotificationsEpic';
+import updateNotificationsEpic from '../../eventLog/updateNotificationsEpic';
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
-import { StateObservable } from 'redux-observable';
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {

@@ -16,50 +16,56 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import createZookeeperEpic from '../zookeeper/createZookeeperEpic';
+import fetchZookeeperEpic from '../../zookeeper/fetchZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
+import { zookeeperInfoEntity } from 'api/__mocks__/inspectApi';
 
 jest.mock('api/zookeeperApi');
+jest.mock('api/inspectApi');
 
-const zkId = getId(zookeeperEntity);
+const key = { name: 'newzk', group: 'newworkspace' };
+const zkId = getId(key);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('create zookeeper should be worked correctly', () => {
+it('fetch zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
+    const input = '   ^-a 10s     ';
+    const expected = '--a 2999ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: key,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       u: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.fetchZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [zkId]: { ...zookeeperEntity, ...key },
+            },
+            infos: {
+              [zkId]: { ...zookeeperInfoEntity, ...key },
             },
           },
           result: zkId,
@@ -73,62 +79,47 @@ it('create zookeeper should be worked correctly', () => {
   });
 });
 
-it('create multiple zookeepers should be worked correctly', () => {
+it('fetch zookeeper multiple times within period should get first result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
-    const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
+    const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
+    const input = '   ^-a 50ms b   ';
+    const expected = '--a 2999ms u-';
+    const subs = '    ^------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: key,
       },
       b: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: anotherKey,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
       u: {
-        type: actions.createZookeeper.SUCCESS,
+        type: actions.fetchZookeeper.SUCCESS,
         payload: {
           zookeeperId: zkId,
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [zkId]: { ...zookeeperEntity, ...key },
+            },
+            infos: {
+              [zkId]: { ...zookeeperInfoEntity, ...key },
             },
           },
           result: zkId,
-        },
-      },
-      b: {
-        type: actions.createZookeeper.REQUEST,
-        payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
-        },
-      },
-      v: {
-        type: actions.createZookeeper.SUCCESS,
-        payload: {
-          zookeeperId: getId(anotherZookeeperEntity),
-          entities: {
-            zookeepers: {
-              [getId(anotherZookeeperEntity)]: anotherZookeeperEntity,
-            },
-          },
-          result: getId(anotherZookeeperEntity),
         },
       },
     });
@@ -139,39 +130,53 @@ it('create multiple zookeepers should be worked correctly', () => {
   });
 });
 
-it('create same zookeeper within period should be created once only', () => {
+it('fetch zookeeper multiple times without period should get latest result', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
+    const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
+    const input = '   ^-a 2s b         ';
+    const expected = '--a 2s b 2999ms u';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: key,
+      },
+      b: {
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: anotherKey,
       },
     });
-    const output$ = createZookeeperEpic(action$);
+    const output$ = fetchZookeeperEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.createZookeeper.REQUEST,
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
         },
       },
-      u: {
-        type: actions.createZookeeper.SUCCESS,
+      b: {
+        type: actions.fetchZookeeper.REQUEST,
         payload: {
-          zookeeperId: zkId,
+          zookeeperId: getId(anotherKey),
+        },
+      },
+      u: {
+        type: actions.fetchZookeeper.SUCCESS,
+        payload: {
+          zookeeperId: getId(anotherKey),
           entities: {
             zookeepers: {
-              [zkId]: zookeeperEntity,
+              [getId(anotherKey)]: { ...zookeeperEntity, ...anotherKey },
+            },
+            infos: {
+              [getId(anotherKey)]: { ...zookeeperInfoEntity, ...anotherKey },
             },
           },
-          result: zkId,
+          result: getId(anotherKey),
         },
       },
     });
