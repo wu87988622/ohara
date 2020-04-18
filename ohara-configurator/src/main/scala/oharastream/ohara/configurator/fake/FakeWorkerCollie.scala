@@ -18,8 +18,7 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import oharastream.ohara.agent.{DataCollie, NoSuchClusterException, WorkerCollie}
-import oharastream.ohara.client.configurator.v0.ClusterStatus
+import oharastream.ohara.agent.{ClusterKind, DataCollie, NoSuchClusterException, WorkerCollie}
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
@@ -41,7 +40,7 @@ private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectio
       Future.successful(
         addCluster(
           key = creation.key,
-          kind = ClusterStatus.Kind.WORKER,
+          kind = ClusterKind.WORKER,
           nodeNames = creation.nodeNames ++ clusterCache.asScala
             .find(_._1 == creation.key)
             .map(_._2.nodeNames)

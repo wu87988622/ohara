@@ -27,7 +27,7 @@ import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, NodeService, State}
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterStatus, NodeApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.setting.ObjectKey
@@ -181,14 +181,14 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
       collie.brokerCollie.addCluster(
         bkCluster.key,
-        ClusterStatus.Kind.BROKER,
+        ClusterKind.BROKER,
         bkCluster.nodeNames,
         bkCluster.imageName,
         bkCluster.ports
       )
       collie.workerCollie.addCluster(
         wkCluster.key,
-        ClusterStatus.Kind.WORKER,
+        ClusterKind.WORKER,
         wkCluster.nodeNames,
         wkCluster.imageName,
         wkCluster.ports
@@ -228,7 +228,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val creation  = ZookeeperApi.access.request.name(s"$zkClusterNamePrefix$index").nodeNames(nodeNames).creation
         collie.zookeeperCollie.addCluster(
           creation.key,
-          ClusterStatus.Kind.ZOOKEEPER,
+          ClusterKind.ZOOKEEPER,
           nodeNames,
           creation.imageName,
           creation.ports
@@ -246,7 +246,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .creation
           collie.brokerCollie.addCluster(
             creation.key,
-            ClusterStatus.Kind.BROKER,
+            ClusterKind.BROKER,
             zkCreation.nodeNames,
             creation.imageName,
             creation.ports
@@ -260,7 +260,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           WorkerApi.access.request.brokerClusterKey(bkCreation.key).nodeNames(bkCreation.nodeNames).creation
         collie.workerCollie.addCluster(
           creation.key,
-          ClusterStatus.Kind.WORKER,
+          ClusterKind.WORKER,
           bkCreation.nodeNames,
           creation.imageName,
           creation.ports

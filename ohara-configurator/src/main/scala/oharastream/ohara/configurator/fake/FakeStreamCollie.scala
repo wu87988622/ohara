@@ -16,8 +16,7 @@
 
 package oharastream.ohara.configurator.fake
 
-import oharastream.ohara.agent.{DataCollie, StreamCollie}
-import oharastream.ohara.client.configurator.v0.ClusterStatus
+import oharastream.ohara.agent.{ClusterKind, DataCollie, StreamCollie}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -31,7 +30,7 @@ private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends Fak
         Future.successful(
           addCluster(
             key = creation.key,
-            kind = ClusterStatus.Kind.STREAM,
+            kind = ClusterKind.STREAM,
             nodeNames = creation.nodeNames ++ clusterCache.asScala
               .find(_._1 == creation.key)
               .map(_._2.nodeNames)

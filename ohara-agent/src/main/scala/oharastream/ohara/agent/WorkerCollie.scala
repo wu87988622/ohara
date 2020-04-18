@@ -18,22 +18,22 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
-import oharastream.ohara.client.configurator.v0.{ClusterStatus, WorkerApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WorkerCollie extends Collie {
-  protected val log       = Logger(classOf[WorkerCollie])
-  override val kind: Kind = Kind.WORKER
+  protected val log              = Logger(classOf[WorkerCollie])
+  override val kind: ClusterKind = ClusterKind.WORKER
 
   // TODO: remove this hard code (see #2957)
   private[this] val homeFolder: String = WorkerApi.WORKER_HOME_FOLDER
@@ -173,11 +173,11 @@ trait WorkerCollie extends Collie {
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            clusterStatus = ClusterStatus(
+            clusterStatus = agent.ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
-              kind = ClusterStatus.Kind.WORKER,
+              kind = ClusterKind.WORKER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
             ),
@@ -207,7 +207,7 @@ trait WorkerCollie extends Collie {
         group = key.group(),
         name = key.name(),
         containers = containers,
-        kind = ClusterStatus.Kind.WORKER,
+        kind = ClusterKind.WORKER,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None

@@ -18,16 +18,16 @@ package oharastream.ohara.agent
 
 import java.util.Objects
 
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.ShabondiApi
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterCreation
-import oharastream.ohara.client.configurator.v0.{ClusterStatus, ShabondiApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.shabondi.common.ShabondiUtils
-import com.typesafe.scalalogging.Logger
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,17 +35,17 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ShabondiCollie extends Collie {
   protected val log = Logger(classOf[ShabondiCollie])
 
-  override val kind: Kind = Kind.SHABONDI
+  override val kind: ClusterKind = ClusterKind.SHABONDI
 
   override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[ClusterStatus] =
     Future.successful(
-      ClusterStatus(
+      agent.ClusterStatus(
         group = key.group(),
         name = key.name(),
         containers = containers,
-        kind = ClusterStatus.Kind.SHABONDI,
+        kind = ClusterKind.SHABONDI,
         state = toClusterState(containers).map(_.name),
         error = None
       )
@@ -122,7 +122,14 @@ trait ShabondiCollie extends Collie {
             .flatMap { aliveContainers =>
               val state = toClusterState(aliveContainers).map(_.name)
               val clusterStatus =
-                ClusterStatus(creation.group, creation.name, ClusterStatus.Kind.SHABONDI, state, None, aliveContainers)
+                agent.ClusterStatus(
+                  creation.group,
+                  creation.name,
+                  ClusterKind.SHABONDI,
+                  state,
+                  None,
+                  aliveContainers
+                )
               postCreate(clusterStatus, existentNodes, routes)
             }
       }

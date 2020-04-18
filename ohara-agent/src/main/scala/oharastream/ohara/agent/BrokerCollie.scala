@@ -17,23 +17,23 @@
 package oharastream.ohara.agent
 import java.util.Objects
 
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
+import oharastream.ohara.client.configurator.v0.BrokerApi
 import oharastream.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterStatus}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.kafka.TopicAdmin
-import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie {
   protected val log = Logger(classOf[BrokerCollie])
 
-  override val kind: Kind = Kind.BROKER
+  override val kind: ClusterKind = ClusterKind.BROKER
 
   // TODO: remove this hard code (see #2957)
   private[this] val homeFolder: String = BrokerApi.BROKER_HOME_FOLDER
@@ -147,11 +147,11 @@ trait BrokerCollie extends Collie {
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            clusterStatus = ClusterStatus(
+            clusterStatus = agent.ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
-              kind = ClusterStatus.Kind.BROKER,
+              kind = ClusterKind.BROKER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
             ),
@@ -177,11 +177,11 @@ trait BrokerCollie extends Collie {
     implicit executionContext: ExecutionContext
   ): Future[ClusterStatus] =
     Future.successful(
-      ClusterStatus(
+      agent.ClusterStatus(
         group = key.group(),
         name = key.name(),
         containers = containers,
-        kind = ClusterStatus.Kind.BROKER,
+        kind = ClusterKind.BROKER,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None

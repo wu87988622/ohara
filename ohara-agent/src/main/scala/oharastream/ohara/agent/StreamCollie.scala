@@ -18,18 +18,18 @@ package oharastream.ohara.agent
 
 import java.util.Objects
 
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi.Creation
-import oharastream.ohara.client.configurator.v0.{ClusterStatus, StreamApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.stream.Stream
 import oharastream.ohara.stream.config.StreamSetting
-import com.typesafe.scalalogging.Logger
 import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -142,11 +142,11 @@ trait StreamCollie extends Collie {
 
             successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
               postCreate(
-                clusterStatus = ClusterStatus(
+                clusterStatus = agent.ClusterStatus(
                   group = creation.group,
                   name = creation.name,
                   containers = aliveContainers,
-                  kind = ClusterStatus.Kind.STREAM,
+                  kind = ClusterKind.STREAM,
                   state = toClusterState(aliveContainers).map(_.name),
                   error = None
                 ),
@@ -161,17 +161,17 @@ trait StreamCollie extends Collie {
     implicit executionContext: ExecutionContext
   ): Future[ClusterStatus] =
     Future.successful(
-      ClusterStatus(
+      agent.ClusterStatus(
         group = key.group(),
         name = key.name(),
         containers = containers,
-        kind = ClusterStatus.Kind.STREAM,
+        kind = ClusterKind.STREAM,
         state = toClusterState(containers).map(_.name),
         error = None
       )
     )
 
-  override val kind: Kind = Kind.STREAM
+  override val kind: ClusterKind = ClusterKind.STREAM
 }
 
 object StreamCollie {

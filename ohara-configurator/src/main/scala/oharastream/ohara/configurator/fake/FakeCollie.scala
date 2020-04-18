@@ -19,15 +19,16 @@ package oharastream.ohara.configurator.fake
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
+import oharastream.ohara.agent
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.agent.{Collie, DataCollie, NoSuchClusterException, ServiceState}
+import oharastream.ohara.agent.{ClusterKind, ClusterStatus, Collie, DataCollie, NoSuchClusterException, ServiceState}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
@@ -47,14 +48,14 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     */
   private[configurator] def addCluster(
     key: ObjectKey,
-    kind: ClusterStatus.Kind,
+    kind: ClusterKind,
     nodeNames: Set[String],
     imageName: String,
     ports: Set[Int]
   ): ClusterStatus =
     clusterCache.put(
       key,
-      ClusterStatus(
+      agent.ClusterStatus(
         group = key.group(),
         name = key.name(),
         state = Some("RUNNING"),

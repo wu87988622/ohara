@@ -19,8 +19,9 @@ package oharastream.ohara.agent.docker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+import oharastream.ohara.agent
+import oharastream.ohara.agent.{ClusterKind, ClusterStatus}
 import oharastream.ohara.agent.docker.ServiceCache.RequestKey
-import oharastream.ohara.client.configurator.v0.ClusterStatus
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
@@ -30,10 +31,10 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 class TestServiceCache extends OharaTest {
-  private[this] def status(name: String): ClusterStatus = ClusterStatus(
+  private[this] def status(name: String): ClusterStatus = agent.ClusterStatus(
     group = "default",
     name = name,
-    kind = ClusterStatus.Kind.ZOOKEEPER,
+    kind = ClusterKind.ZOOKEEPER,
     containers = Seq(fakeContainerInfo),
     state = Some("RUNNING"),
     error = None
@@ -56,13 +57,13 @@ class TestServiceCache extends OharaTest {
   def testRequestKey(): Unit = {
     val key = RequestKey(
       key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()),
-      kind = ClusterStatus.Kind.ZOOKEEPER,
+      kind = ClusterKind.ZOOKEEPER,
       createdTime = CommonUtils.current()
     )
 
     key shouldBe key
     key should not be key.copy(key = ObjectKey.of(CommonUtils.randomString(), CommonUtils.randomString()))
-    key should not be key.copy(kind = ClusterStatus.Kind.WORKER)
+    key should not be key.copy(kind = ClusterKind.WORKER)
   }
 
   @Test

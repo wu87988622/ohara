@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.agent.{Collie, ServiceCollie}
+import oharastream.ohara.agent.{ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
@@ -27,7 +27,7 @@ import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus}
+import oharastream.ohara.client.configurator.v0.ClusterInfo
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}

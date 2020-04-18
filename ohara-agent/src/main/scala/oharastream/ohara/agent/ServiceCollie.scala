@@ -23,7 +23,6 @@ import java.util.concurrent.{ExecutorService, Executors}
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
-import oharastream.ohara.client.configurator.v0.ClusterStatus
 import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import oharastream.ohara.client.configurator.v0.InspectApi.FileContent
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}

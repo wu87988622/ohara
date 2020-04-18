@@ -21,7 +21,6 @@ import java.util.Objects
 import oharastream.ohara.agent.Collie.ClusterCreator
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -29,7 +28,7 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest, ClusterStatus}
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
@@ -235,7 +234,7 @@ trait Collie {
     * services. Hence, this implicit field is added to cache to find out the cached data belonging to this collie.
     * @return service name
     */
-  def kind: Kind
+  def kind: ClusterKind
 
   /**
     * the store used by this colle.
@@ -280,11 +279,16 @@ trait Collie {
     cluster(key)
       .flatMap { status =>
         (status.kind match {
-          case Kind.ZOOKEEPER => dataCollie.value[ZookeeperClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
-          case Kind.BROKER    => dataCollie.value[BrokerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
-          case Kind.WORKER    => dataCollie.value[WorkerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
-          case Kind.STREAM    => dataCollie.value[StreamClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
-          case Kind.SHABONDI  => dataCollie.value[ShabondiClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case ClusterKind.ZOOKEEPER =>
+            dataCollie.value[ZookeeperClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case ClusterKind.BROKER =>
+            dataCollie.value[BrokerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case ClusterKind.WORKER =>
+            dataCollie.value[WorkerClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case ClusterKind.STREAM =>
+            dataCollie.value[StreamClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
+          case ClusterKind.SHABONDI =>
+            dataCollie.value[ShabondiClusterInfo](key).map(_.copy(aliveNodes = status.aliveNodes))
         }).map { clusterInfo =>
           counterMBeans(clusterInfo)
             .map {
@@ -378,7 +382,7 @@ object Collie {
     * @param kind the service type name for current cluster
     * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def containerName(group: String, clusterName: String, kind: Kind): String = {
+  def containerName(group: String, clusterName: String, kind: ClusterKind): String = {
     def rejectDivider(s: String): String =
       if (s.contains(DIVIDER))
         throw new IllegalArgumentException(s"$DIVIDER is protected word!!! input:$s")
@@ -401,7 +405,7 @@ object Collie {
     * @param kind the service type name for current cluster
     * @return a formatted string. form: {prefixKey}-{group}-{clusterName}-{service}-{index}
     */
-  def containerHostName(group: String, clusterName: String, kind: Kind): String = {
+  def containerHostName(group: String, clusterName: String, kind: ClusterKind): String = {
     val name = containerName(group, clusterName, kind)
     if (name.length > LENGTH_OF_CONTAINER_HOSTNAME) {
       val rval = name.substring(name.length - LENGTH_OF_CONTAINER_HOSTNAME)
@@ -417,7 +421,7 @@ object Collie {
     * @param kind service name
     * @return true if it is legal. otherwise, false
     */
-  private[agent] def matched(containerName: String, kind: Kind): Boolean =
+  private[agent] def matched(containerName: String, kind: ClusterKind): Boolean =
     // form: GROUP-NAME-KIND-HASH
     containerName.split(DIVIDER).length == 4 &&
       containerName.split(DIVIDER)(2).toLowerCase == kind.toString.toLowerCase()

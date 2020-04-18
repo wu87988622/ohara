@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.client.configurator.v0
+package oharastream.ohara.agent
 
-import oharastream.ohara.client.Enum
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.common.setting.ObjectKey
 
@@ -29,7 +27,7 @@ import oharastream.ohara.common.setting.ObjectKey
 case class ClusterStatus(
   group: String,
   name: String,
-  kind: Kind,
+  kind: ClusterKind,
   state: Option[String],
   error: Option[String],
   containers: Seq[ContainerInfo]
@@ -53,15 +51,4 @@ case class ClusterStatus(
     * @return a collection of node names
     */
   final def aliveNodes: Set[String] = aliveContainers.map(_.nodeName).toSet
-}
-
-object ClusterStatus {
-  abstract class Kind
-  object Kind extends Enum[Kind] {
-    case object ZOOKEEPER extends Kind
-    case object BROKER    extends Kind
-    case object WORKER    extends Kind
-    case object STREAM    extends Kind
-    case object SHABONDI  extends Kind
-  }
 }

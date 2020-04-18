@@ -17,10 +17,12 @@
 package oharastream.ohara.agent
 import java.util.Objects
 
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.ZookeeperApi
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.{
   CLIENT_PORT_DEFINITION,
   Creation,
@@ -29,10 +31,8 @@ import oharastream.ohara.client.configurator.v0.ZookeeperApi.{
   SYNC_LIMIT_DEFINITION,
   TICK_TIME_DEFINITION
 }
-import oharastream.ohara.client.configurator.v0.{ClusterStatus, ZookeeperApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
-import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +49,7 @@ trait ZookeeperCollie extends Collie {
   private[this] val dataFolder: String = s"$homeFolder/data"
   private[this] val myIdPath: String   = s"$dataFolder/myid"
 
-  override val kind: Kind = ClusterStatus.Kind.ZOOKEEPER
+  override val kind: ClusterKind = ClusterKind.ZOOKEEPER
 
   /**
     * This is a complicated process. We must address following issues.
@@ -185,11 +185,11 @@ trait ZookeeperCollie extends Collie {
 
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
           postCreate(
-            clusterStatus = ClusterStatus(
+            clusterStatus = agent.ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
-              kind = ClusterStatus.Kind.ZOOKEEPER,
+              kind = ClusterKind.ZOOKEEPER,
               state = toClusterState(aliveContainers).map(_.name),
               error = None
             ),
@@ -204,11 +204,11 @@ trait ZookeeperCollie extends Collie {
     implicit executionContext: ExecutionContext
   ): Future[ClusterStatus] =
     Future.successful(
-      ClusterStatus(
+      agent.ClusterStatus(
         group = key.group(),
         name = key.name(),
         containers = containers,
-        kind = ClusterStatus.Kind.ZOOKEEPER,
+        kind = ClusterKind.ZOOKEEPER,
         state = toClusterState(containers).map(_.name),
         // TODO how could we fetch the error?...by Sam
         error = None

@@ -18,9 +18,9 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent.ServiceCollie
+import oharastream.ohara.agent.{ClusterKind, ServiceCollie}
 import oharastream.ohara.client.configurator.v0.NodeApi._
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterStatus, NodeApi}
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
@@ -47,28 +47,28 @@ object NodeRoute {
               NodeService(
                 name = NodeApi.ZOOKEEPER_SERVICE_NAME,
                 clusterKeys = clusters
-                  .filter(_.kind == ClusterStatus.Kind.ZOOKEEPER)
+                  .filter(_.kind == ClusterKind.ZOOKEEPER)
                   .filter(_.aliveNodes.contains(node.name))
                   .map(_.key)
               ),
               NodeService(
                 name = NodeApi.BROKER_SERVICE_NAME,
                 clusterKeys = clusters
-                  .filter(_.kind == ClusterStatus.Kind.BROKER)
+                  .filter(_.kind == ClusterKind.BROKER)
                   .filter(_.aliveNodes.contains(node.name))
                   .map(_.key)
               ),
               NodeService(
                 name = NodeApi.WORKER_SERVICE_NAME,
                 clusterKeys = clusters
-                  .filter(_.kind == ClusterStatus.Kind.WORKER)
+                  .filter(_.kind == ClusterKind.WORKER)
                   .filter(_.aliveNodes.contains(node.name))
                   .map(_.key)
               ),
               NodeService(
                 name = NodeApi.STREAM_SERVICE_NAME,
                 clusterKeys = clusters
-                  .filter(_.kind == ClusterStatus.Kind.STREAM)
+                  .filter(_.kind == ClusterKind.STREAM)
                   .filter(_.aliveNodes.contains(node.name))
                   .map(_.key)
               )

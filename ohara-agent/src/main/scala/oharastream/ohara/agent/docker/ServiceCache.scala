@@ -18,8 +18,8 @@ package oharastream.ohara.agent.docker
 
 import java.util.Objects
 
-import oharastream.ohara.client.configurator.v0.ClusterStatus
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
+import oharastream.ohara.agent.ClusterStatus
+import oharastream.ohara.agent.ClusterKind
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.cache.RefreshableCache
 import oharastream.ohara.common.setting.ObjectKey
@@ -70,7 +70,7 @@ object ServiceCache {
 
   // TODO: remove this workaround if google guava support the custom comparison ... by chia
   @VisibleForTesting
-  private[agent] case class RequestKey(key: ObjectKey, kind: Kind, createdTime: Long) {
+  private[agent] case class RequestKey(key: ObjectKey, kind: ClusterKind, createdTime: Long) {
     override def equals(obj: Any): Boolean = obj match {
       case another: RequestKey => another.key == key && another.kind == kind
       case _                   => false

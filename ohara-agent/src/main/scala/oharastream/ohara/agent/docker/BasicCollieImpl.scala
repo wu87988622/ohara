@@ -17,8 +17,7 @@
 package oharastream.ohara.agent.docker
 
 import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.agent.{Collie, DataCollie, ServiceState}
-import oharastream.ohara.client.configurator.v0.ClusterStatus
+import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie, ServiceState}
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.setting.ObjectKey

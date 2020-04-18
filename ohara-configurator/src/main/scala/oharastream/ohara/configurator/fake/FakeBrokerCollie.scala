@@ -18,9 +18,8 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
-import oharastream.ohara.agent.{BrokerCollie, DataCollie, NoSuchClusterException}
+import oharastream.ohara.agent.{BrokerCollie, ClusterKind, DataCollie, NoSuchClusterException}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterStatus
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.kafka.TopicAdmin
 
@@ -43,7 +42,7 @@ private[configurator] class FakeBrokerCollie(dataCollie: DataCollie, bkConnectio
       Future.successful(
         addCluster(
           key = creation.key,
-          kind = ClusterStatus.Kind.BROKER,
+          kind = ClusterKind.BROKER,
           nodeNames = creation.nodeNames ++ clusterCache.asScala
             .find(_._1 == creation.key)
             .map(_._2.nodeNames)

@@ -18,10 +18,9 @@ package oharastream.ohara.agent.docker
 
 import java.util.concurrent.ExecutorService
 
-import oharastream.ohara.agent._
+import oharastream.ohara.agent.ClusterKind
 import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.client.configurator.v0.ClusterStatus
-import oharastream.ohara.client.configurator.v0.ClusterStatus.Kind
+import oharastream.ohara.agent.{ClusterStatus, _}
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import oharastream.ohara.common.setting.ObjectKey
@@ -61,7 +60,7 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
       .containers()
       .flatMap { allContainers =>
         def parse(
-          kind: Kind,
+          kind: ClusterKind,
           f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]
         ): Future[Seq[ClusterStatus]] =
           Future
@@ -80,10 +79,10 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
             .map(_.toSeq)
 
         for {
-          zkMap     <- parse(ClusterStatus.Kind.ZOOKEEPER, zookeeperCollie.toStatus)
-          bkMap     <- parse(ClusterStatus.Kind.BROKER, brokerCollie.toStatus)
-          wkMap     <- parse(ClusterStatus.Kind.WORKER, workerCollie.toStatus)
-          streamMap <- parse(ClusterStatus.Kind.STREAM, streamCollie.toStatus)
+          zkMap     <- parse(ClusterKind.ZOOKEEPER, zookeeperCollie.toStatus)
+          bkMap     <- parse(ClusterKind.BROKER, brokerCollie.toStatus)
+          wkMap     <- parse(ClusterKind.WORKER, workerCollie.toStatus)
+          streamMap <- parse(ClusterKind.STREAM, streamCollie.toStatus)
         } yield zkMap ++ bkMap ++ wkMap ++ streamMap
       }
 
