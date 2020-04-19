@@ -58,32 +58,27 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
   ): Future[Seq[ClusterStatus]] =
     containerClient
       .containers()
-      .flatMap { allContainers =>
+      .map { allContainers =>
         def parse(
           kind: ClusterKind,
-          f: (ObjectKey, Seq[ContainerInfo]) => Future[ClusterStatus]
-        ): Future[Seq[ClusterStatus]] =
-          Future
-            .sequence(
-              allContainers
-                .filter(container => Collie.matched(container.name, kind))
-                .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
-                .groupBy(_._1)
-                .map {
-                  case (clusterKey, value) => clusterKey -> value.map(_._2)
-                }
-                .map {
-                  case (clusterKey, containers) => f(clusterKey, containers)
-                }
-            )
-            .map(_.toSeq)
+          toClusterStatus: (ObjectKey, Seq[ContainerInfo]) => ClusterStatus
+        ): Seq[ClusterStatus] =
+          allContainers
+            .filter(container => Collie.matched(container.name, kind))
+            .map(container => Collie.objectKeyOfContainerName(container.name) -> container)
+            .groupBy(_._1)
+            .map {
+              case (clusterKey, value) => clusterKey -> value.map(_._2)
+            }
+            .map {
+              case (clusterKey, containers) => toClusterStatus(clusterKey, containers)
+            }
+            .toSeq
 
-        for {
-          zkMap     <- parse(ClusterKind.ZOOKEEPER, zookeeperCollie.toStatus)
-          bkMap     <- parse(ClusterKind.BROKER, brokerCollie.toStatus)
-          wkMap     <- parse(ClusterKind.WORKER, workerCollie.toStatus)
-          streamMap <- parse(ClusterKind.STREAM, streamCollie.toStatus)
-        } yield zkMap ++ bkMap ++ wkMap ++ streamMap
+        parse(ClusterKind.ZOOKEEPER, zookeeperCollie.toStatus) ++
+          parse(ClusterKind.BROKER, brokerCollie.toStatus) ++
+          parse(ClusterKind.WORKER, workerCollie.toStatus) ++
+          parse(ClusterKind.STREAM, streamCollie.toStatus)
       }
 
   override def close(): Unit = {

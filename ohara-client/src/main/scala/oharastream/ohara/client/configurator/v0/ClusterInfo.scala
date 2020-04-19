@@ -71,7 +71,7 @@ trait ClusterInfo extends Data {
   /**
     * @return the state of this cluster. None means the cluster is not running
     */
-  def state: Option[String]
+  def state: Option[ClusterState]
 
   /**
     * @return the error message of the dead cluster

@@ -18,14 +18,12 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi
 import oharastream.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.kafka.TopicAdmin
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -147,12 +145,12 @@ trait BrokerCollie extends Collie {
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            clusterStatus = agent.ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterKind.BROKER,
-              state = toClusterState(aliveContainers).map(_.name),
+              state = toClusterState(aliveContainers),
               error = None
             ),
             existentNodes = existentNodes,
@@ -172,21 +170,6 @@ trait BrokerCollie extends Collie {
     brokerClusterInfo: BrokerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[TopicAdmin] =
     cluster(brokerClusterInfo.key).map(_ => TopicAdmin.of(brokerClusterInfo.connectionProps))
-
-  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus] =
-    Future.successful(
-      agent.ClusterStatus(
-        group = key.group(),
-        name = key.name(),
-        containers = containers,
-        kind = ClusterKind.BROKER,
-        state = toClusterState(containers).map(_.name),
-        // TODO how could we fetch the error?...by Sam
-        error = None
-      )
-    )
 }
 
 object BrokerCollie {

@@ -19,16 +19,15 @@ package oharastream.ohara.configurator.fake
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
 
-import oharastream.ohara.agent
+import oharastream.ohara.agent._
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.agent.{ClusterKind, ClusterStatus, Collie, DataCollie, NoSuchClusterException, ServiceState}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterState, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
@@ -55,10 +54,10 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
   ): ClusterStatus =
     clusterCache.put(
       key,
-      agent.ClusterStatus(
+      ClusterStatus(
         group = key.group(),
         name = key.name(),
-        state = Some("RUNNING"),
+        state = Some(ClusterState.RUNNING),
         error = None,
         kind = kind,
         containers = nodeNames
@@ -134,8 +133,8 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     finally _forceRemoveCount.incrementAndGet()
 
   // In fake mode, the cluster state should be running since we add "running containers" always
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
-    Some(ServiceState.RUNNING)
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
+    Some(ClusterState.RUNNING)
 
   def forceRemoveCount: Int = _forceRemoveCount.get()
 

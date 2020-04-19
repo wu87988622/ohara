@@ -45,7 +45,7 @@ final object ShabondiApi {
   final case class ShabondiClusterInfo(
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
-    state: Option[String],
+    state: Option[ClusterState],
     error: Option[String],
     nodeMetrics: Map[String, Metrics],
     lastModified: Long

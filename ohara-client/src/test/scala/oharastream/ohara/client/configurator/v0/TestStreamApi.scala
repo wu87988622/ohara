@@ -877,7 +877,7 @@ class TestStreamApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
@@ -942,12 +942,12 @@ class TestStreamApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()
     )
-    StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+    StreamApi.STREAM_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain "settings"
   }
 
   @Test
@@ -960,7 +960,7 @@ class TestStreamApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       nodeMetrics = Map.empty,
       lastModified = CommonUtils.current()

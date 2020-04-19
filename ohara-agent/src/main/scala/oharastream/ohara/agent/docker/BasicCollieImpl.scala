@@ -17,7 +17,8 @@
 package oharastream.ohara.agent.docker
 
 import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie, ServiceState}
+import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.setting.ObjectKey
@@ -80,21 +81,21 @@ private abstract class BasicCollieImpl(
       .flatMap(Future.traverse(_)(container => dockerClient.logs(container.name, sinceSeconds)))
       .map(_.flatten.toMap)
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
     else {
       // one of the containers in pending state means cluster pending
-      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ServiceState.PENDING)
+      if (containers.exists(_.state == ContainerState.CREATED.name)) Some(ClusterState.PENDING)
       // not pending, if one of the containers in running state means cluster running (even other containers are in
       // restarting, paused, exited or dead state
-      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ServiceState.RUNNING)
+      else if (containers.exists(_.state == ContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
       // since cluster(collie) is a collection of long running containers,
       // we could assume cluster failed if containers are run into "exited" or "dead" state
       else if (containers.forall(c => c.state == ContainerState.EXITED.name || c.state == ContainerState.DEAD.name))
-        Some(ServiceState.FAILED)
+        Some(ClusterState.FAILED)
       // we set failed state is ok here
       // since there are too many cases that we could not handle for now, we should open the door for whitelist only
-      else Some(ServiceState.FAILED)
+      else Some(ClusterState.FAILED)
     }
 
   //----------------------------[override helper methods]----------------------------//

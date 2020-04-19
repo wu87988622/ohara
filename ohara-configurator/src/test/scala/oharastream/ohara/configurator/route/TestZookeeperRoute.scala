@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -147,7 +147,7 @@ class TestZookeeperRoute extends OharaTest {
     )
     result(zookeeperApi.start(cluster.key))
     result(zookeeperApi.removeNode(cluster.key, nodeNames.head))
-    result(zookeeperApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(zookeeperApi.get(cluster.key)).state shouldBe Some(ClusterState.RUNNING)
     result(zookeeperApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
     nodeNames should contain(result(zookeeperApi.get(cluster.key)).nodeNames.head)
     intercept[IllegalArgumentException] {

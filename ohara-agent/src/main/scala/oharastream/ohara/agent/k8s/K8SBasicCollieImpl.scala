@@ -17,7 +17,8 @@
 package oharastream.ohara.agent.k8s
 
 import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie, ServiceState}
+import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.setting.ObjectKey
@@ -60,19 +61,18 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
           }
           .toSeq
       )
-      .flatMap(Future.sequence(_))
 
-  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState] =
+  override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
     else {
       // we use a "pod" as a container of ohara cluster, so it is more easy to define a cluster state than docker
       // since a "pod" in k8s is actually an application with multiple containers...
-      if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ServiceState.RUNNING)
-      else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ServiceState.FAILED)
-      else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ServiceState.PENDING)
+      if (containers.exists(_.state == K8sContainerState.RUNNING.name)) Some(ClusterState.RUNNING)
+      else if (containers.exists(_.state == K8sContainerState.FAILED.name)) Some(ClusterState.FAILED)
+      else if (containers.exists(_.state == K8sContainerState.PENDING.name)) Some(ClusterState.PENDING)
       // All Containers in the Pod have terminated in success, BUT it is still failed :(
-      else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ServiceState.FAILED)
-      else Some(ServiceState.UNKNOWN)
+      else if (containers.exists(_.state == K8sContainerState.SUCCEEDED.name)) Some(ClusterState.FAILED)
+      else Some(ClusterState.UNKNOWN)
     }
 
   //----------------------------[override helper methods]----------------------------//

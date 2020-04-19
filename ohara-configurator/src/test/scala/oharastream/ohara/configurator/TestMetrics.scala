@@ -18,7 +18,7 @@ package oharastream.ohara.configurator
 
 import java.time.Duration
 
-import oharastream.ohara.agent.ServiceState
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.{
   BrokerApi,
@@ -342,10 +342,9 @@ class TestMetrics extends WithBrokerWorker {
 
     awaitTrue(() => {
       val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
-      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
-
       val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
-      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
+      clusterInfo1.state.contains(ClusterState.RUNNING) &&
+      clusterInfo2.state.contains(ClusterState.RUNNING)
     })
 
     awaitTrue(() => { // should have meter(fake)

@@ -19,7 +19,6 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
@@ -27,7 +26,6 @@ import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi.Creation
-import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.stream.Stream
 import oharastream.ohara.stream.config.StreamSetting
 import spray.json.JsString
@@ -142,12 +140,12 @@ trait StreamCollie extends Collie {
 
             successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
               postCreate(
-                clusterStatus = agent.ClusterStatus(
+                clusterStatus = ClusterStatus(
                   group = creation.group,
                   name = creation.name,
                   containers = aliveContainers,
                   kind = ClusterKind.STREAM,
-                  state = toClusterState(aliveContainers).map(_.name),
+                  state = toClusterState(aliveContainers),
                   error = None
                 ),
                 existentNodes = Map.empty,
@@ -156,20 +154,6 @@ trait StreamCollie extends Collie {
             }
         }
     }
-
-  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus] =
-    Future.successful(
-      agent.ClusterStatus(
-        group = key.group(),
-        name = key.name(),
-        containers = containers,
-        kind = ClusterKind.STREAM,
-        state = toClusterState(containers).map(_.name),
-        error = None
-      )
-    )
 
   override val kind: ClusterKind = ClusterKind.STREAM
 }

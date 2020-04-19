@@ -697,7 +697,7 @@ class TestWorkerApi extends OharaTest {
       settings =
         WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -798,7 +798,7 @@ class TestWorkerApi extends OharaTest {
       settings =
         WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -883,7 +883,7 @@ class TestWorkerApi extends OharaTest {
       settings =
         WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -896,7 +896,7 @@ class TestWorkerApi extends OharaTest {
       settings =
         WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )

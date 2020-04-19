@@ -18,7 +18,6 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
@@ -27,7 +26,6 @@ import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
 import oharastream.ohara.client.kafka.ConnectorAdmin
-import oharastream.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -173,12 +171,12 @@ trait WorkerCollie extends Collie {
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { successfulContainers =>
           val aliveContainers = existentNodes.values.toSeq ++ successfulContainers
           postCreate(
-            clusterStatus = agent.ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterKind.WORKER,
-              state = toClusterState(aliveContainers).map(_.name),
+              state = toClusterState(aliveContainers),
               error = None
             ),
             existentNodes = existentNodes,
@@ -198,21 +196,6 @@ trait WorkerCollie extends Collie {
     workerClusterInfo: WorkerClusterInfo
   )(implicit executionContext: ExecutionContext): Future[ConnectorAdmin] =
     cluster(workerClusterInfo.key).map(_ => ConnectorAdmin(workerClusterInfo))
-
-  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus] =
-    Future.successful(
-      new ClusterStatus(
-        group = key.group(),
-        name = key.name(),
-        containers = containers,
-        kind = ClusterKind.WORKER,
-        state = toClusterState(containers).map(_.name),
-        // TODO how could we fetch the error?...by Sam
-        error = None
-      )
-    )
 }
 
 object WorkerCollie {

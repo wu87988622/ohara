@@ -19,9 +19,9 @@ package oharastream.ohara.agent.docker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import oharastream.ohara.agent
-import oharastream.ohara.agent.{ClusterKind, ClusterStatus}
 import oharastream.ohara.agent.docker.ServiceCache.RequestKey
+import oharastream.ohara.agent.{ClusterKind, ClusterStatus}
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
@@ -31,12 +31,12 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 class TestServiceCache extends OharaTest {
-  private[this] def status(name: String): ClusterStatus = agent.ClusterStatus(
+  private[this] def status(name: String): ClusterStatus = ClusterStatus(
     group = "default",
     name = name,
     kind = ClusterKind.ZOOKEEPER,
     containers = Seq(fakeContainerInfo),
-    state = Some("RUNNING"),
+    state = Some(ClusterState.RUNNING),
     error = None
   )
 

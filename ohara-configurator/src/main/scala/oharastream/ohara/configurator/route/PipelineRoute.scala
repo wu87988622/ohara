@@ -143,7 +143,7 @@ private[configurator] object PipelineRoute {
               case clusterInfo: ShabondiClusterInfo => Some(clusterInfo.shabondiClass)
               case _                                => None
             },
-            state = status.flatMap(_.state),
+            state = status.flatMap(_.state).map(_.name),
             error = status.flatMap(_.error),
             nodeMetrics = data match {
               case clusterInfo: StreamClusterInfo   => meterCache.meters(clusterInfo, clusterInfo.key)

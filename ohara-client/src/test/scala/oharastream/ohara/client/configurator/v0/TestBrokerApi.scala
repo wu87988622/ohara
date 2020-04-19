@@ -616,7 +616,7 @@ class TestBrokerApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -633,7 +633,7 @@ class TestBrokerApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("nn"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -655,7 +655,7 @@ class TestBrokerApi extends OharaTest {
         .creation
         .settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )

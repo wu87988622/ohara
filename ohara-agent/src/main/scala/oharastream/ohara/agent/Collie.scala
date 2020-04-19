@@ -28,7 +28,7 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest}
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest, ClusterState}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
@@ -227,7 +227,7 @@ trait Collie {
     * @param containers container list
     * @return the cluster state
     */
-  protected def toClusterState(containers: Seq[ContainerInfo]): Option[ServiceState]
+  protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState]
 
   /**
     * all ssh collies share the single cache, and we need a way to distinguish the difference status from different
@@ -354,9 +354,15 @@ trait Collie {
     * @param containers cluster's containers
     * @return cluster status
     */
-  protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus]
+  private[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo]): ClusterStatus = ClusterStatus(
+    group = key.group(),
+    name = key.name(),
+    containers = containers,
+    kind = kind,
+    state = toClusterState(containers),
+    // TODO how could we fetch the error?...by Sam
+    error = None
+  )
 }
 
 object Collie {

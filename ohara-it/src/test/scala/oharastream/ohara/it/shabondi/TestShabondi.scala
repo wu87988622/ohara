@@ -17,7 +17,7 @@
 package oharastream.ohara.it.shabondi
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent.ServiceState
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.{
@@ -158,10 +158,9 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     // wait for source and sink ready
     await(() => {
       val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
-      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
-
+      clusterInfo1.state.contains(ClusterState.RUNNING)
       val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
-      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
+      clusterInfo1.state.contains(ClusterState.RUNNING) && clusterInfo2.state.contains(ClusterState.RUNNING)
     })
 
     val thrown = the[IllegalArgumentException] thrownBy result(bkApi.stop(bkKey))
@@ -193,10 +192,8 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
 
     await(() => {
       val clusterInfo1 = result(shabondiApi.get(shabondiSource.key))
-      clusterInfo1.state.isDefined && clusterInfo1.state.get == ServiceState.RUNNING.name
-
       val clusterInfo2 = result(shabondiApi.get(shabondiSink.key))
-      clusterInfo2.state.isDefined && clusterInfo2.state.get == ServiceState.RUNNING.name
+      clusterInfo1.state.contains(ClusterState.RUNNING) && clusterInfo2.state.contains(ClusterState.RUNNING)
     })
 
     val thrown = the[IllegalArgumentException] thrownBy result(topicApi.stop(topic1.key))
@@ -235,7 +232,7 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     result(shabondiApi.start(clusterInfo.key))
     await(() => {
       val resultInfo = result(shabondiApi.get(clusterInfo.key))
-      resultInfo.state.isDefined && resultInfo.state.get == ServiceState.RUNNING.name
+      resultInfo.state.contains(ClusterState.RUNNING)
     })
 
     { // assert Shabondi Source cluster info

@@ -20,7 +20,7 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent.ServiceState
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.{ZookeeperApi, _}
 import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
@@ -142,10 +142,7 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     // start stream
     log.info(s"[testRunSimpleStream] stream start [${stream.key}]")
     result(access.start(stream.key))
-    await(() => {
-      val res = result(access.get(stream.key))
-      res.state.isDefined && res.state.get == ServiceState.RUNNING.name
-    })
+    await(() => result(access.get(stream.key)).state.contains(ClusterState.RUNNING))
     log.info(s"[testRunSimpleStream] stream start [${stream.key}]...done")
 
     val res1 = result(access.get(stream.key))
@@ -238,10 +235,7 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
       // start stream
       result(access.start(stream.key))
-      await(() => {
-        val res = result(access.get(stream.key))
-        res.state.isDefined && res.state.get == ServiceState.RUNNING.name
-      })
+      await(() => result(access.get(stream.key)).state.contains(ClusterState.RUNNING))
 
       result(access.get(stream.key)).nodeNames shouldBe platform.nodeNames
       result(access.get(stream.key)).deadNodes shouldBe Set.empty

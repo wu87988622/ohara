@@ -16,6 +16,7 @@
 
 package oharastream.ohara.agent
 
+import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.common.setting.ObjectKey
 
@@ -28,7 +29,7 @@ case class ClusterStatus(
   group: String,
   name: String,
   kind: ClusterKind,
-  state: Option[String],
+  state: Option[ClusterState],
   error: Option[String],
   containers: Seq[ContainerInfo]
 ) {

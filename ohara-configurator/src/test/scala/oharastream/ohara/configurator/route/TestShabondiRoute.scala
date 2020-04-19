@@ -18,8 +18,7 @@ package oharastream.ohara.configurator.route
 
 import java.time.{Duration => JDuration}
 
-import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, ShabondiApi, TopicApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, ShabondiApi, TopicApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -31,8 +30,8 @@ import org.scalatest.Matchers
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class TestShabondiRoute extends OharaTest with Matchers {
   private[this] var configurator: Configurator                     = _
@@ -163,11 +162,11 @@ class TestShabondiRoute extends OharaTest with Matchers {
 
     awaitTrue(() => {
       val shabondiList = await(shabondiApi.list())
-      shabondiList.size should ===(1)
-      shabondiList(0).sourceToTopics should ===(Set(topicKey))
-      shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
-      shabondiList(0).aliveNodes.head should ===(nodeName)
-      shabondiList(0).meters.nonEmpty
+      shabondiList.size shouldBe 1
+      shabondiList.head.sourceToTopics shouldBe Set(topicKey)
+      shabondiList.head.state.get shouldBe ClusterState.RUNNING
+      shabondiList.head.aliveNodes.head shouldBe nodeName
+      shabondiList.head.meters.nonEmpty
     })
   }
 
@@ -179,11 +178,11 @@ class TestShabondiRoute extends OharaTest with Matchers {
     await(shabondiApi.start(objectKey))
     awaitTrue(() => {
       val shabondiList = await(shabondiApi.list())
-      shabondiList.size should ===(1)
-      shabondiList(0).sourceToTopics should ===(Set(topicKey))
-      shabondiList(0).state.get should ===(ContainerState.RUNNING.name)
-      shabondiList(0).aliveNodes.head should ===(nodeName)
-      shabondiList(0).meters.nonEmpty
+      shabondiList.size shouldBe 1
+      shabondiList.head.sourceToTopics shouldBe Set(topicKey)
+      shabondiList.head.state.get shouldBe ClusterState.RUNNING
+      shabondiList.head.aliveNodes.head shouldBe nodeName
+      shabondiList.head.meters.nonEmpty
     })
 
     await(shabondiApi.stop(objectKey))
@@ -191,8 +190,8 @@ class TestShabondiRoute extends OharaTest with Matchers {
     awaitTrue(() => {
       val shabondiList1 = await(shabondiApi.list())
       shabondiList1.size should ===(1)
-      shabondiList1(0).state should ===(None)
-      shabondiList1(0).meters.isEmpty
+      shabondiList1.head.state should ===(None)
+      shabondiList1.head.meters.isEmpty
     })
   }
 

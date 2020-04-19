@@ -414,7 +414,7 @@ class TestZookeeperApi extends OharaTest {
     val cluster = ZookeeperClusterInfo(
       settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -428,7 +428,7 @@ class TestZookeeperApi extends OharaTest {
     val cluster = ZookeeperClusterInfo(
       settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -506,7 +506,7 @@ class TestZookeeperApi extends OharaTest {
     val cluster = ZookeeperClusterInfo(
       settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )
@@ -518,7 +518,7 @@ class TestZookeeperApi extends OharaTest {
     val cluster = ZookeeperClusterInfo(
       settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
       aliveNodes = Set("n0"),
-      state = Some("running"),
+      state = Some(ClusterState.RUNNING),
       error = None,
       lastModified = CommonUtils.current()
     )

@@ -18,7 +18,6 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -31,7 +30,6 @@ import oharastream.ohara.client.configurator.v0.ZookeeperApi.{
   SYNC_LIMIT_DEFINITION,
   TICK_TIME_DEFINITION
 }
-import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -185,12 +183,12 @@ trait ZookeeperCollie extends Collie {
 
         successfulContainersFuture.map(_.flatten.toSeq).flatMap { aliveContainers =>
           postCreate(
-            clusterStatus = agent.ClusterStatus(
+            clusterStatus = ClusterStatus(
               group = creation.group,
               name = creation.name,
               containers = aliveContainers,
               kind = ClusterKind.ZOOKEEPER,
-              state = toClusterState(aliveContainers).map(_.name),
+              state = toClusterState(aliveContainers),
               error = None
             ),
             existentNodes = Map.empty,
@@ -199,21 +197,6 @@ trait ZookeeperCollie extends Collie {
         }
       }
   }
-
-  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus] =
-    Future.successful(
-      agent.ClusterStatus(
-        group = key.group(),
-        name = key.name(),
-        containers = containers,
-        kind = ClusterKind.ZOOKEEPER,
-        state = toClusterState(containers).map(_.name),
-        // TODO how could we fetch the error?...by Sam
-        error = None
-      )
-    )
 }
 
 object ZookeeperCollie {

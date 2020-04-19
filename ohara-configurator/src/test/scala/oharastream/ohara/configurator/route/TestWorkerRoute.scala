@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, NodeApi, TopicApi, WorkerApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, ConnectorApi, NodeApi, TopicApi, WorkerApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -199,7 +199,7 @@ class TestWorkerRoute extends OharaTest {
     )
     result(workerApi.start(cluster.key))
     result(workerApi.removeNode(cluster.key, nodeNames.head))
-    result(workerApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(workerApi.get(cluster.key)).state shouldBe Some(ClusterState.RUNNING)
     result(workerApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
     nodeNames should contain(result(workerApi.get(cluster.key)).nodeNames.head)
     intercept[IllegalArgumentException] {

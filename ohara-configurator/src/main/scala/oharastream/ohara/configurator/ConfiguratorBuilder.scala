@@ -27,7 +27,7 @@ import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, NodeService, State}
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.setting.ObjectKey
@@ -150,7 +150,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .settings,
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ServiceState.RUNNING.name),
+          state = Some(ClusterState.RUNNING),
           error = None,
           lastModified = CommonUtils.current()
         )
@@ -169,7 +169,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .settings,
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-          state = Some(ServiceState.RUNNING.name),
+          state = Some(ClusterState.RUNNING),
           error = None,
           lastModified = CommonUtils.current()
         )
@@ -277,7 +277,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               settings = creation.settings,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ServiceState.RUNNING.name),
+              state = Some(ClusterState.RUNNING),
               error = None,
               lastModified = CommonUtils.current()
             )
@@ -291,7 +291,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               // TODO: we should check the supported arguments by the running broker images
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ServiceState.RUNNING.name),
+              state = Some(ClusterState.RUNNING),
               error = None,
               lastModified = CommonUtils.current()
             )
@@ -304,7 +304,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               settings = creation.settings,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
-              state = Some(ServiceState.RUNNING.name),
+              state = Some(ClusterState.RUNNING),
               error = None,
               lastModified = CommonUtils.current()
             )

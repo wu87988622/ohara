@@ -18,7 +18,6 @@ package oharastream.ohara.configurator.route
 
 import java.nio.file.Files
 
-import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.common.rule.OharaTest
@@ -229,11 +228,11 @@ class TestStreamRoute extends OharaTest {
     res1.toTopicKeys shouldBe Set(to)
     res1.jarKey.name shouldBe fileInfo.name
     res1.nodeNames.forall(nodeNames.contains) shouldBe true
-    res1.state.get shouldBe ContainerState.RUNNING.name
+    res1.state.get shouldBe ClusterState.RUNNING
 
     // get again
     val running = result(streamApi.get(props.key))
-    running.state.get shouldBe ContainerState.RUNNING.name
+    running.state.get shouldBe ClusterState.RUNNING
     running.error.isEmpty shouldBe true
 
     // get the stream clusters information by clusterCache
@@ -245,7 +244,7 @@ class TestStreamRoute extends OharaTest {
     val prevRes = result(streamApi.get(props.key))
     prevRes.name shouldBe props.name
     prevRes.name shouldBe streamName
-    prevRes.state.get shouldBe ContainerState.RUNNING.name
+    prevRes.state.get shouldBe ClusterState.RUNNING
     prevRes.error.isDefined shouldBe false
 
     // running stream cannot update state
@@ -892,7 +891,7 @@ class TestStreamRoute extends OharaTest {
 
     result(streamApi.start(cluster.key))
     result(streamApi.removeNode(cluster.key, nodeNames.head))
-    result(streamApi.get(cluster.key)).state shouldBe Some("RUNNING")
+    result(streamApi.get(cluster.key)).state shouldBe Some(ClusterState.RUNNING)
     result(streamApi.get(cluster.key)).nodeNames.size shouldBe nodeNames.size - 1
     nodeNames should contain(result(streamApi.get(cluster.key)).nodeNames.head)
     intercept[IllegalArgumentException] {

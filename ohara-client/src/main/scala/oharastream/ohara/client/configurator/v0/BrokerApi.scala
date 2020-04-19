@@ -180,7 +180,7 @@ object BrokerApi {
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
     lastModified: Long,
-    state: Option[String],
+    state: Option[ClusterState],
     error: Option[String]
   ) extends ClusterInfo {
     /**

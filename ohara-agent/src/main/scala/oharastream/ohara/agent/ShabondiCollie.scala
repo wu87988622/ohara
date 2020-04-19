@@ -19,14 +19,12 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterCreation
-import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.shabondi.common.ShabondiUtils
 import spray.json._
 
@@ -36,20 +34,6 @@ trait ShabondiCollie extends Collie {
   protected val log = Logger(classOf[ShabondiCollie])
 
   override val kind: ClusterKind = ClusterKind.SHABONDI
-
-  override protected[agent] def toStatus(key: ObjectKey, containers: Seq[ContainerInfo])(
-    implicit executionContext: ExecutionContext
-  ): Future[ClusterStatus] =
-    Future.successful(
-      agent.ClusterStatus(
-        group = key.group(),
-        name = key.name(),
-        containers = containers,
-        kind = ClusterKind.SHABONDI,
-        state = toClusterState(containers).map(_.name),
-        error = None
-      )
-    )
 
   override def creator: ShabondiCollie.ClusterCreator =
     (executionContext, creation) => {
@@ -120,15 +104,14 @@ trait ShabondiCollie extends Collie {
           successfulContainersFuture
             .map(_.flatten.toSeq)
             .flatMap { aliveContainers =>
-              val state = toClusterState(aliveContainers).map(_.name)
               val clusterStatus =
-                agent.ClusterStatus(
-                  creation.group,
-                  creation.name,
-                  ClusterKind.SHABONDI,
-                  state,
-                  None,
-                  aliveContainers
+                ClusterStatus(
+                  group = creation.group,
+                  name = creation.name,
+                  kind = ClusterKind.SHABONDI,
+                  state = toClusterState(aliveContainers),
+                  error = None,
+                  containers = aliveContainers
                 )
               postCreate(clusterStatus, existentNodes, routes)
             }

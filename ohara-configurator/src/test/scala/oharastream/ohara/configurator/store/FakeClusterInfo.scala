@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.store
 
-import oharastream.ohara.client.configurator.v0.ClusterInfo
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterState}
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.JsValue
 
@@ -35,7 +35,7 @@ case class FakeClusterInfo(override val name: String) extends ClusterInfo {
 
   override def tags: Map[String, JsValue] = Map.empty
 
-  override def state: Option[String] = None
+  override def state: Option[ClusterState] = None
 
   override def error: Option[String] = None
 
