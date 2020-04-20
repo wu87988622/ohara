@@ -57,3 +57,12 @@ export const useWorkspace = () => {
     useCallback(state => selectors.getWorkspaceById(state, { id }), [id]),
   );
 };
+
+export const useUpdateWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.useWorkspaceGroup();
+  return useCallback(
+    values => dispatch(actions.updateWorkspace.trigger({ ...values, group })),
+    [dispatch, group],
+  );
+};

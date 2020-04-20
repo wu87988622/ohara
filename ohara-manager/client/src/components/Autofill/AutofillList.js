@@ -15,8 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { get, reject } from 'lodash';
-import { useDispatch } from 'react-redux';
+import { get, map, reject } from 'lodash';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -32,17 +31,15 @@ import { DeleteDialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import AutofillEditor, { MODE } from './AutofillEditor';
 import * as hooks from 'hooks';
-import * as actions from 'store/actions';
 
 const AutofillList = () => {
-  const dispatch = useDispatch();
   const [editorMode, setEditorMode] = useState(MODE.ADD);
   const [selectedData, setSelectedData] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const currentWorkspace = hooks.useWorkspace();
-  const settingFillings = get(currentWorkspace, 'settingFillings', []);
+  const workspace = hooks.useWorkspace();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
 
   const handleAddButtonClick = () => {
     setEditorMode(MODE.ADD);
@@ -69,16 +66,13 @@ const AutofillList = () => {
 
   const handleDelete = () => {
     const name = get(selectedData, 'name');
-    const workspaceName = get(currentWorkspace, 'name');
-    dispatch(
-      actions.updateWorkspace.trigger({
-        name: workspaceName,
-        settingFillings: reject(
-          settingFillings,
-          settingFilling => settingFilling.name === name,
-        ),
-      }),
-    );
+    updateWorkspace({
+      name: workspace.name,
+      settingFillings: reject(
+        workspace?.settingFillings,
+        settingFilling => settingFilling.name === name,
+      ),
+    });
     setIsDeleteConfirmOpen(false);
   };
 
@@ -91,7 +85,7 @@ const AutofillList = () => {
   return (
     <>
       <List>
-        {settingFillings.map(settingFilling => {
+        {map(workspace?.settingFillings, settingFilling => {
           return (
             <ListItem key={settingFilling.name} divider alignItems="flex-start">
               <ListItemText primary={settingFilling.displayName} />

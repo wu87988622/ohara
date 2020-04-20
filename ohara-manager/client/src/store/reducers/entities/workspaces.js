@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-import { omit } from 'lodash';
+import { omit, assign } from 'lodash';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
 import { entity } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
+    case actions.updateWorkspace.SUCCESS:
+      return assign(
+        {},
+        state,
+        action.payload.entities?.[ENTITY_TYPE.workspaces],
+      );
     case actions.deleteWorkspace.SUCCESS:
       return omit(state, action.payload);
     default:

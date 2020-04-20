@@ -16,8 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, filter, map, noop, some, values } from 'lodash';
-import { useDispatch } from 'react-redux';
+import { filter, map, noop, some, values } from 'lodash';
 import uuid from 'uuid';
 import { Form, Field } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
@@ -28,7 +27,6 @@ import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
 
 import * as hooks from 'hooks';
-import * as actions from 'store/actions';
 import { InputField, AutoComplete } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
@@ -44,15 +42,15 @@ export const MODE = {
 
 const AutofillEditor = props => {
   const { isOpen, mode, onClose, data } = props;
-  const dispatch = useDispatch();
-  const currentWorkspace = hooks.useWorkspace();
-  const workspaceName = get(currentWorkspace, 'name');
-  const settingFillings = get(currentWorkspace, 'settingFillings', []);
+
+  const workspace = hooks.useWorkspace();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
+
   const suggestiveKeys = useSuggestiveKeys();
 
   const duplicateDisplayName = value => {
     if (mode === MODE.EDIT && value === data.displayName) return;
-    if (some(settingFillings, { displayName: value })) {
+    if (some(workspace?.settingFillings, { displayName: value })) {
       return `Name '${value}' already existed. Please use a different name`;
     }
   };
@@ -69,26 +67,22 @@ const AutofillEditor = props => {
       name: uuid.v4(),
       lastModified: new Date(),
     };
-    dispatch(
-      actions.updateWorkspace.trigger({
-        name: workspaceName,
-        settingFillings: [...settingFillings, newSettingFilling],
-      }),
-    );
+    updateWorkspace({
+      name: workspace.name,
+      settingFillings: [...workspace?.settingFillings, newSettingFilling],
+    });
   };
 
   const save = values => {
     const newSettingFilling = { ...values, lastModified: new Date() };
-    dispatch(
-      actions.updateWorkspace.trigger({
-        name: workspaceName,
-        settingFillings: map(settingFillings, settingFilling =>
-          settingFilling.name === newSettingFilling.name
-            ? newSettingFilling
-            : settingFilling,
-        ),
-      }),
-    );
+    updateWorkspace({
+      name: workspace.name,
+      settingFillings: map(workspace?.settingFillings, settingFilling =>
+        settingFilling.name === newSettingFilling.name
+          ? newSettingFilling
+          : settingFilling,
+      ),
+    });
   };
 
   const handleSubmit = (values, form) => {
