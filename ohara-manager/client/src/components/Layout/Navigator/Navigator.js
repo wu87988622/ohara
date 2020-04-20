@@ -40,10 +40,8 @@ import * as hooks from 'hooks';
 import * as validate from 'utils/validate';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import {
-  EditWorkspace,
-  Tabs as EditWorkspaceTabs,
-} from 'components/Workspace/Edit';
+import { Tabs as EditWorkspaceTabs } from 'components/Workspace/Edit';
+import WorkspaceSettings from 'components/Workspace/Settings';
 import {
   StyledNavigator,
   StyledButton,
@@ -120,51 +118,13 @@ const Navigator = ({ pipelineApi }) => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        {/* Feature is disabled because it's not implemented in 0.9 */
-        false && (
-          <MenuItem
-            className="overview"
-            key={EditWorkspaceTabs.OVERVIEW}
-            onClick={handleMenuItemClick(EditWorkspaceTabs.OVERVIEW)}
-          >
-            Overview
-          </MenuItem>
-        )}
-
         <MenuItem
-          className="topics"
-          key={EditWorkspaceTabs.TOPICS}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.TOPICS)}
+          className="settings"
+          key={EditWorkspaceTabs.SETTINGS}
+          onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
         >
-          Topics
+          Settings
         </MenuItem>
-        <MenuItem
-          className="files"
-          key={EditWorkspaceTabs.FILES}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.FILES)}
-        >
-          Files
-        </MenuItem>
-
-        <MenuItem
-          className="autofill"
-          key={EditWorkspaceTabs.AUTOFILL}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.AUTOFILL)}
-        >
-          Autofill
-        </MenuItem>
-
-        {/* Feature is disabled because it's not implemented in 0.9 */
-
-        false && (
-          <MenuItem
-            className="settings"
-            key={EditWorkspaceTabs.SETTINGS}
-            onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
-          >
-            Settings
-          </MenuItem>
-        )}
       </Menu>
 
       <Form
@@ -304,8 +264,7 @@ const Navigator = ({ pipelineApi }) => {
           </div>
         )}
       </StyledOutlineList>
-
-      <EditWorkspace />
+      <WorkspaceSettings />
     </StyledNavigator>
   );
 };
