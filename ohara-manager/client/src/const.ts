@@ -95,8 +95,3 @@ export enum SERVICE_NAME {
 export enum CLUSTER_STATE {
   RUNNING = 'RUNNING',
 }
-export enum SETTINGS_COMPONENT_TYPES {
-  DIALOG = 'DIALOG',
-  PAGE = 'PAGE',
-  CUSTOMIZED = 'CUSTOMIZED',
-}

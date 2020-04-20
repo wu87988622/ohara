@@ -17,6 +17,7 @@
 import EditWorkspace from './EditWorkspace';
 
 const Tabs = {
+  OVERVIEW: 'overview',
   TOPICS: 'topics',
   FILES: 'files',
   AUTOFILL: 'autofill',
