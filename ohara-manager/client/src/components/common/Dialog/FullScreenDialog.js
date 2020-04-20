@@ -53,41 +53,43 @@ const FullScreenDialog = props => {
     handleSave,
     hasSave = false,
     testId = 'fullscreen-dialog',
+    ...other
   } = props;
   return (
-    <>
-      <Dialog
-        fullScreen
-        open={open}
-        onClose={handleClose}
-        PaperProps={{
-          style: {
-            backgroundColor: '#f5f6fa',
-          },
-        }}
-        data-testid={testId}
-      >
-        <AppBar>
-          <Toolbar>
-            <StyledIconButton
-              edge="start"
-              color="inherit"
-              data-testid={`${testId}-close-button`}
-              onClick={handleClose}
-            >
-              <KeyboardBackspaceIcon />
-            </StyledIconButton>
-            <StyledTypography variant="h4">{title}</StyledTypography>
-            {hasSave && (
-              <Button autoFocus color="inherit" onClick={handleSave}>
-                save
-              </Button>
-            )}
-          </Toolbar>
-        </AppBar>
-        <StyledDialogContent>{children}</StyledDialogContent>
-      </Dialog>
-    </>
+    <Dialog
+      fullScreen
+      open={open}
+      onClose={handleClose}
+      PaperProps={{
+        style: {
+          backgroundColor: '#f5f6fa',
+        },
+      }}
+      data-testid={testId}
+      {...other}
+    >
+      <AppBar>
+        <Toolbar>
+          <StyledIconButton
+            edge="start"
+            color="inherit"
+            data-testid={`${testId}-close-button`}
+            onClick={handleClose}
+          >
+            <KeyboardBackspaceIcon />
+          </StyledIconButton>
+          <StyledTypography variant="h4">{title}</StyledTypography>
+          {hasSave && (
+            <Button autoFocus color="inherit" onClick={handleSave}>
+              save
+            </Button>
+          )}
+        </Toolbar>
+      </AppBar>
+      <StyledDialogContent>
+        <div className="dialog-inner">{children}</div>
+      </StyledDialogContent>
+    </Dialog>
   );
 };
 
