@@ -20,7 +20,12 @@
 
 import * as generate from '../../src/utils/generate';
 import * as bkApi from '../../src/api/brokerApi';
-import { createServices, deleteAllServices } from '../utils';
+import * as inspectApi from '../../src/api/inspectApi';
+import {
+  createServices,
+  deleteAllServices,
+  assertSettingsByDefinitions,
+} from '../utils';
 import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 
 const generateBroker = async () => {
@@ -58,47 +63,14 @@ describe('Broker API', () => {
   it('createBroker', async () => {
     const bkCluster = await generateBroker();
     const result = await bkApi.create(bkCluster);
+    const info = await inspectApi.getBrokerInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      jmxPort,
-      imageName,
-      zookeeperClusterKey,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(bkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(bkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(jmxPort).to.be.a('number');
-
-    expect(imageName).to.be.a('string');
-
-    expect(zookeeperClusterKey).to.be.an('object');
-    expect(zookeeperClusterKey).to.be.deep.eq(bkCluster.zookeeperClusterKey);
-
-    expect(tags).to.be.an('object');
-    expect(tags.name).to.eq(bkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, bkCluster);
+    } else {
+      assert.fail('inspect broker should have result');
+    }
   });
 
   it('fetchBroker', async () => {
@@ -106,47 +78,14 @@ describe('Broker API', () => {
     await bkApi.create(bkCluster);
 
     const result = await bkApi.get(bkCluster);
+    const info = await inspectApi.getBrokerInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      jmxPort,
-      imageName,
-      zookeeperClusterKey,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(bkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(bkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(jmxPort).to.be.a('number');
-
-    expect(imageName).to.be.a('string');
-
-    expect(zookeeperClusterKey).to.be.an('object');
-    expect(zookeeperClusterKey).to.be.deep.eq(bkCluster.zookeeperClusterKey);
-
-    expect(tags).to.be.an('object');
-    expect(tags.name).to.eq(bkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, bkCluster);
+    } else {
+      assert.fail('inspect broker should have result');
+    }
   });
 
   it('fetchBrokers', async () => {
@@ -197,46 +136,14 @@ describe('Broker API', () => {
     await bkApi.create(bkCluster);
 
     const result = await bkApi.update(newBk);
+    const info = await inspectApi.getBrokerInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      jmxPort,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(bkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(bkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(clientPort).to.eq(2222);
-
-    expect(jmxPort).to.be.a('number');
-    expect(jmxPort).to.eq(3333);
-
-    expect(imageName).to.be.a('string');
-
-    expect(tags).to.be.an('object');
-    expect(tags.name).to.eq(bkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, newBk);
+    } else {
+      assert.fail('inspect broker should have result');
+    }
   });
 
   it('startBroker', async () => {

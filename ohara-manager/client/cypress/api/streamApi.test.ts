@@ -21,8 +21,13 @@
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as streamApi from '../../src/api/streamApi';
+import * as inspectApi from '../../src/api/inspectApi';
 import * as fileApi from '../../src/api/fileApi';
-import { createServices, deleteAllServices } from '../utils';
+import {
+  createServices,
+  deleteAllServices,
+  assertSettingsByDefinitions,
+} from '../utils';
 import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 
 const file = {
@@ -83,61 +88,14 @@ describe('Stream API', () => {
   it('createStream', async () => {
     const stream = await generateStream();
     const result = await streamApi.create(stream);
+    const info = await inspectApi.getStreamsInfo(stream);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      brokerClusterKey,
-      jmxPort,
-      from,
-      to,
-      jarKey,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(stream.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(stream.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(jmxPort).to.be.a('number');
-
-    expect(from).to.be.an('array');
-    expect(from).to.be.lengthOf(1);
-    expect(from).to.be.deep.eq(stream.from);
-
-    expect(to).to.be.an('array');
-    expect(to).to.be.lengthOf(1);
-    expect(to).to.be.deep.eq(stream.to);
-
-    expect(jarKey).to.be.an('object');
-    expect(jarKey.name).to.be.eq(file.name);
-    expect(jarKey.group).to.be.eq(file.group);
-
-    expect(imageName).to.be.a('string');
-
-    expect(brokerClusterKey).to.be.a('object');
-    expect(brokerClusterKey).to.be.deep.eq(stream.brokerClusterKey);
-
-    expect(tags.name).to.eq(stream.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, stream);
+    } else {
+      assert.fail('inspect stream should have result');
+    }
   });
 
   it('fetchStream', async () => {
@@ -145,61 +103,14 @@ describe('Stream API', () => {
     await streamApi.create(stream);
 
     const result = await streamApi.get(stream);
+    const info = await inspectApi.getStreamsInfo(stream);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      brokerClusterKey,
-      jmxPort,
-      from,
-      to,
-      jarKey,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(stream.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(stream.group);
-    stream;
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(jmxPort).to.be.a('number');
-
-    expect(from).to.be.an('array');
-    expect(from).to.be.lengthOf(1);
-    expect(from).to.be.deep.eq(stream.from);
-
-    expect(to).to.be.an('array');
-    expect(to).to.be.lengthOf(1);
-    expect(to).to.be.deep.eq(stream.to);
-
-    expect(jarKey).to.be.an('object');
-    expect(jarKey.name).to.be.eq(file.name);
-    expect(jarKey.group).to.be.eq(file.group);
-
-    expect(imageName).to.be.a('string');
-
-    expect(brokerClusterKey).to.be.a('object');
-    expect(brokerClusterKey).to.be.deep.eq(stream.brokerClusterKey);
-
-    expect(tags.name).to.eq(stream.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, stream);
+    } else {
+      assert.fail('inspect stream should have result');
+    }
   });
 
   it('fetchStreams', async () => {
@@ -247,62 +158,14 @@ describe('Stream API', () => {
     await streamApi.create(stream);
 
     const result = await streamApi.update(newStream);
+    const info = await inspectApi.getStreamsInfo(stream);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { aliveNodes, lastModified, nodeMetrics, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      brokerClusterKey,
-      jmxPort,
-      from,
-      to,
-      jarKey,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(stream.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(stream.group);
-    stream;
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(jmxPort).to.be.a('number');
-    expect(jmxPort).to.eq(2222);
-
-    expect(from).to.be.an('array');
-    expect(from).to.be.lengthOf(1);
-    expect(from).to.be.deep.eq(stream.from);
-
-    expect(to).to.be.an('array');
-    expect(to).to.be.lengthOf(1);
-    expect(to).to.be.deep.eq(stream.to);
-
-    expect(jarKey).to.be.an('object');
-    expect(jarKey.name).to.be.eq(file.name);
-    expect(jarKey.group).to.be.eq(file.group);
-
-    expect(imageName).to.be.a('string');
-
-    expect(brokerClusterKey).to.be.a('object');
-    expect(brokerClusterKey).to.be.deep.eq(stream.brokerClusterKey);
-
-    expect(tags.name).to.eq(stream.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, newStream);
+    } else {
+      assert.fail('inspect stream should have result');
+    }
   });
 
   it('startStream', async () => {

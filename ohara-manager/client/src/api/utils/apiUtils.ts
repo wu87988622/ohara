@@ -17,7 +17,7 @@
 /* eslint-disable no-dupe-class-members */
 
 import axios, { AxiosResponse, AxiosInstance, AxiosTransformer } from 'axios';
-import { isArray, isObject, has, cloneDeep, capitalize } from 'lodash';
+import { isArray, isPlainObject, has, cloneDeep, capitalize } from 'lodash';
 
 import {
   ObjectKey,
@@ -34,6 +34,7 @@ export enum RESOURCE {
   BROKER = 'brokers',
   WORKER = 'workers',
   STREAM = 'streams',
+  SHABONDI = 'shabondis',
   CONNECTOR = 'connectors',
   NODE = 'nodes',
   PIPELINE = 'pipelines',
@@ -74,8 +75,9 @@ const replaceKeyInObject = (
     ? cloneDeep(obj)
     : cloneDeep([obj]);
   newObjs.forEach((newObj, i) => {
+    if (!isPlainObject(newObj)) return;
     Object.keys(newObj).forEach(key => {
-      if (isObject(newObjs[i][key])) {
+      if (isPlainObject(newObjs[i][key])) {
         const obj = replaceKeyInObject(newObjs[i][key], originStr, changeStr);
         newObjs[i][key] = obj;
       } else if (key.indexOf(originStr) !== -1) {

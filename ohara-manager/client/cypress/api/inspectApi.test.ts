@@ -87,6 +87,9 @@ describe('Inspect API', () => {
 
     const infoStream = await inspect.getStreamsInfo();
     expectResult(inspect.INSPECT_KIND.stream, infoStream);
+
+    const infoShabondi = await inspect.getShabondiInfo();
+    expectResult(inspect.INSPECT_KIND.shabondi, infoShabondi);
   });
 
   it('fetchServiceDefinitionByName', async () => {

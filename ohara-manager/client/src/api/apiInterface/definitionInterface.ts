@@ -77,6 +77,40 @@ export function isNumberType(type: Type) {
   }
 }
 
+export function isStringType(type: Type) {
+  switch (type) {
+    case Type.STRING:
+    case Type.CLASS:
+    case Type.PASSWORD:
+    case Type.JDBC_TABLE:
+    case Type.DURATION:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isArrayType(type: Type) {
+  switch (type) {
+    case Type.ARRAY:
+    case Type.OBJECT_KEYS:
+    case Type.TABLE:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function isObjectType(type: Type) {
+  switch (type) {
+    case Type.OBJECT_KEY:
+    case Type.TAGS:
+      return true;
+    default:
+      return false;
+  }
+}
+
 interface TableColumn {
   name: string;
   type: string;

@@ -20,7 +20,12 @@
 
 import * as generate from '../../src/utils/generate';
 import * as zkApi from '../../src/api/zookeeperApi';
-import { createServices, deleteAllServices } from '../utils';
+import * as inspectApi from '../../src/api/inspectApi';
+import {
+  createServices,
+  deleteAllServices,
+  assertSettingsByDefinitions,
+} from '../utils';
 import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 
 const generateZookeeper = async () => {
@@ -44,44 +49,14 @@ describe('Zookeeper API', () => {
   it('createZookeeper', async () => {
     const zkCluster = await generateZookeeper();
     const result = await zkApi.create(zkCluster);
+    const info = await inspectApi.getZookeeperInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      electionPort,
-      peerPort,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(zkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(zkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(electionPort).to.be.a('number');
-    expect(peerPort).to.be.a('number');
-
-    expect(imageName).to.be.a('string');
-
-    expect(tags.name).to.eq(zkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, zkCluster);
+    } else {
+      assert.fail('inspect zookeeper should have result');
+    }
   });
 
   it('fetchZookeeper', async () => {
@@ -89,44 +64,14 @@ describe('Zookeeper API', () => {
     await zkApi.create(zkCluster);
 
     const result = await zkApi.get(zkCluster);
+    const info = await inspectApi.getZookeeperInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      electionPort,
-      peerPort,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(zkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(zkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(electionPort).to.be.a('number');
-    expect(peerPort).to.be.a('number');
-
-    expect(imageName).to.be.a('string');
-
-    expect(tags.name).to.eq(zkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, zkCluster);
+    } else {
+      assert.fail('inspect zookeeper should have result');
+    }
   });
 
   it('fetchZookeepers', async () => {
@@ -177,49 +122,14 @@ describe('Zookeeper API', () => {
     await zkApi.create(zkCluster);
 
     const result = await zkApi.update(newZk);
+    const info = await inspectApi.getZookeeperInfo();
+    const defs = info.data.settingDefinitions;
 
-    const { aliveNodes, lastModified, state, error } = result.data;
-    const {
-      name,
-      group,
-      nodeNames,
-      clientPort,
-      electionPort,
-      peerPort,
-      imageName,
-      tags,
-    } = result.data;
-
-    expect(aliveNodes).to.be.an('array');
-    expect(aliveNodes).to.be.empty;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(state).to.be.undefined;
-
-    expect(error).to.be.undefined;
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(zkCluster.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(zkCluster.group);
-
-    expect(nodeNames).to.be.an('array');
-    expect(nodeNames).have.lengthOf(1);
-
-    expect(clientPort).to.be.a('number');
-    expect(clientPort).to.eq(2222);
-
-    expect(electionPort).to.be.a('number');
-    expect(electionPort).to.eq(3333);
-
-    expect(peerPort).to.be.a('number');
-    expect(peerPort).to.eq(4444);
-
-    expect(imageName).to.be.a('string');
-
-    expect(tags.name).to.eq(zkCluster.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, newZk);
+    } else {
+      assert.fail('inspect zookeeper should have result');
+    }
   });
 
   it('startZookeeper', async () => {

@@ -20,9 +20,14 @@
 
 import * as generate from '../../src/utils/generate';
 import * as connectorApi from '../../src/api/connectorApi';
+import * as inspectApi from '../../src/api/inspectApi';
 import { SOURCES, State } from '../../src/api/apiInterface/connectorInterface';
 import * as topicApi from '../../src/api/topicApi';
-import { createServices, deleteAllServices } from '../utils';
+import {
+  createServices,
+  deleteAllServices,
+  assertSettingsByDefinitions,
+} from '../utils';
 
 const generateConnector = async () => {
   const { node, broker, worker } = await createServices({
@@ -48,6 +53,7 @@ const generateConnector = async () => {
     name: connectorName,
     group: generate.serviceName({ prefix: 'group' }),
     connector__class: SOURCES.perf,
+    perf__frequency: 'PT2S',
     topicKeys: [{ name: topic.name, group: topic.group }],
     workerClusterKey: {
       name: worker.name,
@@ -66,58 +72,20 @@ describe('Connector API', () => {
   it('createConnector', async () => {
     const connector = await generateConnector();
     const result = await connectorApi.create(connector);
+    const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
+    const defs = info.data.classInfos.find(
+      classInfo => classInfo.className === connector.connector__class,
+    );
 
-    const {
-      state,
-      aliveNodes,
-      error,
-      tasksStatus,
-      nodeMetrics,
-      lastModified,
-    } = result.data;
-    const {
-      columns,
-      connector__class,
-      name,
-      group,
-      key__converter,
-      value__converter,
-      topicKeys,
-      workerClusterKey,
-      tags,
-    } = result.data;
-
-    // runtime information should be empty before starting
-    expect(state).to.be.undefined;
-    expect(aliveNodes).to.be.empty;
-    expect(error).to.be.undefined;
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(lastModified).to.be.a('number');
-
-    expect(tasksStatus).to.be.an('array');
-
-    expect(columns).to.be.an('array');
-
-    expect(connector__class).to.be.an('string');
-    expect(connector__class).to.eq(connector.connector__class);
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(connector.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(connector.group);
-
-    expect(key__converter).to.be.a('string');
-
-    expect(value__converter).to.be.a('string');
-
-    expect(topicKeys).to.be.an('array');
-
-    expect(workerClusterKey).to.be.an('object');
-    expect(workerClusterKey).to.be.deep.eq(connector.workerClusterKey);
-
-    expect(tags.name).to.eq(connector.name);
+    if (defs) {
+      assertSettingsByDefinitions(
+        result.data,
+        defs.settingDefinitions,
+        connector,
+      );
+    } else {
+      assert.fail('inspect connector should have result');
+    }
   });
 
   it('fetchConnector', async () => {
@@ -125,58 +93,20 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
 
     const result = await connectorApi.get(connector);
+    const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
+    const defs = info.data.classInfos.find(
+      classInfo => classInfo.className === connector.connector__class,
+    );
 
-    const {
-      state,
-      aliveNodes,
-      error,
-      tasksStatus,
-      nodeMetrics,
-      lastModified,
-    } = result.data;
-    const {
-      columns,
-      connector__class,
-      name,
-      group,
-      key__converter,
-      value__converter,
-      topicKeys,
-      workerClusterKey,
-      tags,
-    } = result.data;
-
-    // runtime information should be empty before starting
-    expect(state).to.be.undefined;
-    expect(aliveNodes).to.be.empty;
-    expect(error).to.be.undefined;
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(lastModified).to.be.a('number');
-
-    expect(tasksStatus).to.be.an('array');
-
-    expect(columns).to.be.an('array');
-
-    expect(connector__class).to.be.an('string');
-    expect(connector__class).to.eq(connector.connector__class);
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(connector.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(connector.group);
-
-    expect(key__converter).to.be.a('string');
-
-    expect(value__converter).to.be.a('string');
-
-    expect(topicKeys).to.be.an('array');
-
-    expect(workerClusterKey).to.be.an('object');
-    expect(workerClusterKey).to.be.deep.eq(connector.workerClusterKey);
-
-    expect(tags.name).to.eq(connector.name);
+    if (defs) {
+      assertSettingsByDefinitions(
+        result.data,
+        defs.settingDefinitions,
+        connector,
+      );
+    } else {
+      assert.fail('inspect connector should have result');
+    }
   });
 
   it('fetchConnectors', async () => {
@@ -225,66 +155,20 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
 
     const result = await connectorApi.update(newConnector);
+    const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
+    const defs = info.data.classInfos.find(
+      classInfo => classInfo.className === connector.connector__class,
+    );
 
-    const {
-      state,
-      aliveNodes,
-      error,
-      tasksStatus,
-      nodeMetrics,
-      lastModified,
-    } = result.data;
-    const {
-      columns,
-      connector__class,
-      name,
-      group,
-      key__converter,
-      value__converter,
-      topicKeys,
-      workerClusterKey,
-      perf__batch,
-      tasks__max,
-      tags,
-    } = result.data;
-
-    // runtime information should be empty before starting
-    expect(state).to.be.undefined;
-    expect(aliveNodes).to.be.empty;
-    expect(error).to.be.undefined;
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(lastModified).to.be.a('number');
-
-    expect(tasksStatus).to.be.an('array');
-
-    expect(columns).to.be.an('array');
-
-    expect(connector__class).to.be.an('string');
-    expect(connector__class).to.eq(connector.connector__class);
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(connector.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(connector.group);
-
-    expect(key__converter).to.be.a('string');
-
-    expect(value__converter).to.be.a('string');
-
-    expect(topicKeys).to.be.an('array');
-
-    expect(perf__batch).to.be.a('number');
-    expect(perf__batch).to.eq(newParams.perf__batch);
-
-    expect(tasks__max).to.be.a('number');
-    expect(tasks__max).to.eq(newParams.tasks__max);
-
-    expect(workerClusterKey).to.be.an('object');
-    expect(workerClusterKey).to.be.deep.eq(connector.workerClusterKey);
-
-    expect(tags.name).to.eq(connector.name);
+    if (defs) {
+      assertSettingsByDefinitions(
+        result.data,
+        defs.settingDefinitions,
+        newConnector,
+      );
+    } else {
+      assert.fail('inspect connector should have result');
+    }
   });
 
   it('startConnector', async () => {

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { MODE } from '../src/const';
 import * as generate from '../src/utils/generate';
@@ -24,6 +25,7 @@ import * as wkApi from '../src/api/workerApi';
 import * as connectorApi from '../src/api/connectorApi';
 import * as topicApi from '../src/api/topicApi';
 import * as streamApi from '../src/api/streamApi';
+import * as shabondiApi from '../src/api/shabondiApi';
 import * as pipelineApi from '../src/api/pipelineApi';
 import * as objectApi from '../src/api/objectApi';
 import * as inspectApi from '../src/api/inspectApi';
@@ -34,6 +36,15 @@ import {
   BasicResponse,
 } from '../src/api/apiInterface/basicInterface';
 import { waitForRunning, waitForStopped } from '../src/api/utils/waitUtils';
+import {
+  SettingDef,
+  Type,
+  isNumberType,
+  isStringType,
+  isArrayType,
+  isObjectType,
+  Necessary,
+} from '../src/api/apiInterface/definitionInterface';
 
 export const waitFor = async <T extends BasicResponse>(
   resource: string,
@@ -189,6 +200,28 @@ export const deleteAllServices = async () => {
     ),
   );
 
+  // delete all shabondis
+  const shabondiRes = await shabondiApi.getAll();
+  const shabondis = shabondiRes.data;
+  // we don't care the execute order of each individual shabondi was done or not.
+  // Using Promise.all() to make sure all shabondis were stopped & deleted.
+  await Promise.all(
+    shabondis.map(shabondi =>
+      shabondiApi
+        .forceStop({ name: shabondi.name, group: shabondi.group })
+        .then(() =>
+          waitFor(
+            RESOURCE.SHABONDI,
+            { name: shabondi.name, group: shabondi.group },
+            waitForStopped,
+          ),
+        )
+        .then(() => {
+          shabondiApi.remove({ name: shabondi.name, group: shabondi.group });
+        }),
+    ),
+  );
+
   // delete all topics
   const topicRes = await topicApi.getAll();
   const topics = topicRes.data;
@@ -278,4 +311,59 @@ export const deleteAllServices = async () => {
   await Promise.all(
     objects.map(object => objectApi.remove(object as ObjectKey)),
   );
+};
+
+export const assertSettingsByDefinitions = (
+  data: { [k: string]: any },
+  definitions: SettingDef[] = [],
+  expectedResult: { [k: string]: any } = {},
+) => {
+  // check type
+  definitions.forEach(definition => {
+    const value = data[definition.key];
+    // don't assert the value if:
+    // - it's internal
+    // - it's optional and no data
+    if (
+      definition.internal ||
+      (definition.necessary === Necessary.OPTIONAL && !value)
+    )
+      return;
+
+    // 1. value should not be undefined
+    expect(value, `${definition.key} should have value`).to.be.not.undefined;
+
+    // 2. check type by valueType
+    if (isNumberType(definition.valueType)) {
+      expect(value, `${value} should be a number`).to.be.a('number');
+    } else if (isStringType(definition.valueType)) {
+      expect(value, `${value} should be a string`).to.be.a('string');
+    } else if (isArrayType(definition.valueType)) {
+      expect(value, `${value} should be an array`).to.be.an('array');
+    } else if (isObjectType(definition.valueType)) {
+      expect(value, `${value} should be an object`).to.be.an('object');
+    } else if (definition.valueType === Type.BOOLEAN) {
+      expect(value, `${value} should be a boolean`).to.be.a('boolean');
+    }
+
+    // 3. check value
+    const expectedValue =
+      definition.key in expectedResult
+        ? expectedResult[definition.key]
+        : definition.defaultValue
+        ? definition.defaultValue
+        : undefined;
+
+    // don't assert the value which be randomized by configurator
+    if (!expectedValue) return;
+
+    expect(value, `[${definition.key}] value assert`).to.be.deep.eq(
+      expectedValue,
+    );
+    if (isArrayType(definition.valueType)) {
+      expect(value, `[${definition.key}] length assert`).to.have.lengthOf(
+        expectedValue.length,
+      );
+    }
+  });
 };

@@ -33,6 +33,7 @@ export enum INSPECT_KIND {
   broker = 'broker',
   worker = 'worker',
   stream = 'stream',
+  shabondi = 'shabondi',
   manager = 'manager',
   rdb = 'rdb',
   topic = 'topic',
@@ -128,6 +129,10 @@ export const getWorkerInfo = (objectKey?: ObjectKey) => {
 
 export const getStreamsInfo = (objectKey?: ObjectKey) => {
   return fetchServiceInfo(INSPECT_KIND.stream, objectKey);
+};
+
+export const getShabondiInfo = (objectKey?: ObjectKey) => {
+  return fetchServiceInfo(INSPECT_KIND.shabondi, objectKey);
 };
 
 export const getFileInfoWithoutUpload = (params: FileRequest) => {

@@ -20,7 +20,12 @@
 
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
-import { createServices, deleteAllServices } from '../utils';
+import * as inspectApi from '../../src/api/inspectApi';
+import {
+  createServices,
+  deleteAllServices,
+  assertSettingsByDefinitions,
+} from '../utils';
 
 const generateTopic = async () => {
   const { node, broker } = await createServices({
@@ -50,39 +55,14 @@ describe('Topic API', () => {
   it('createTopic', async () => {
     const topic = await generateTopic();
     const result = await topicApi.create(topic);
+    const info = await inspectApi.getBrokerInfo(topic.brokerClusterKey);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
-    const {
-      brokerClusterKey,
-      numberOfPartitions,
-      numberOfReplications,
-      group,
-      name,
-      tags,
-    } = result.data;
-
-    expect(partitionInfos).to.be.an('array');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(brokerClusterKey).to.be.an('object');
-    expect(brokerClusterKey).to.be.deep.eq(topic.brokerClusterKey);
-
-    expect(numberOfPartitions).to.be.a('number');
-
-    expect(numberOfReplications).to.be.a('number');
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(topic.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(topic.group);
-
-    expect(tags.name).to.eq(topic.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, topic);
+    } else {
+      assert.fail('inspect topic should have result');
+    }
   });
 
   it('fetchTopic', async () => {
@@ -90,39 +70,14 @@ describe('Topic API', () => {
     await topicApi.create(topic);
 
     const result = await topicApi.get(topic);
+    const info = await inspectApi.getBrokerInfo(topic.brokerClusterKey);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
-    const {
-      brokerClusterKey,
-      numberOfPartitions,
-      numberOfReplications,
-      group,
-      name,
-      tags,
-    } = result.data;
-
-    expect(partitionInfos).to.be.an('array');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(brokerClusterKey).to.be.an('object');
-    expect(brokerClusterKey).to.be.deep.eq(topic.brokerClusterKey);
-
-    expect(numberOfPartitions).to.be.a('number');
-
-    expect(numberOfReplications).to.be.a('number');
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(topic.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(topic.group);
-
-    expect(tags.name).to.eq(topic.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, topic);
+    } else {
+      assert.fail('inspect topic should have result');
+    }
   });
 
   it('fetchTopics', async () => {
@@ -169,41 +124,14 @@ describe('Topic API', () => {
 
     await topicApi.create(topic);
     const result = await topicApi.update(newTopic);
+    const info = await inspectApi.getBrokerInfo(topic.brokerClusterKey);
+    const defs = info.data.classInfos[0].settingDefinitions;
 
-    const { partitionInfos, nodeMetrics, state, lastModified } = result.data;
-    const {
-      brokerClusterKey,
-      numberOfPartitions,
-      numberOfReplications,
-      group,
-      name,
-      tags,
-    } = result.data;
-
-    expect(partitionInfos).to.be.an('array');
-
-    expect(nodeMetrics).to.be.an('object');
-
-    expect(state).to.be.undefined;
-
-    expect(lastModified).to.be.a('number');
-
-    expect(brokerClusterKey).to.be.an('object');
-    expect(brokerClusterKey).to.be.deep.eq(topic.brokerClusterKey);
-
-    expect(numberOfPartitions).to.be.a('number');
-    expect(numberOfPartitions).to.eq(newTopic.numberOfPartitions);
-
-    expect(numberOfReplications).to.be.a('number');
-    expect(numberOfReplications).to.eq(newTopic.numberOfReplications);
-
-    expect(name).to.be.a('string');
-    expect(name).to.eq(topic.name);
-
-    expect(group).to.be.a('string');
-    expect(group).to.eq(topic.group);
-
-    expect(tags.name).to.eq(topic.name);
+    if (defs) {
+      assertSettingsByDefinitions(result.data, defs, newTopic);
+    } else {
+      assert.fail('inspect topic should have result');
+    }
   });
 
   it('startTopic', async () => {
