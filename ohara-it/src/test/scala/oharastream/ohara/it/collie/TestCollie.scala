@@ -27,7 +27,6 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Contain
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.exception.{ExecutionException, TimeoutException}
-import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
@@ -39,7 +38,6 @@ import org.junit.experimental.categories.Category
 import org.scalatest.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 /**
   * This abstract class extracts the "required" information of running tests on true env.
@@ -66,158 +64,15 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   private[this] def containerApi = ContainerApi.access.hostname(configuratorHostname).port(configuratorPort)
 
-  //--------------------------------------------------[zk operations]--------------------------------------------------//
-  private[this] def zk_exist(clusterKey: ObjectKey): Future[Boolean] =
-    zkApi.list().map(_.exists(_.key == clusterKey))
-  private[this] def zk_create(
-    clusterKey: ObjectKey,
-    jmxPort: Int,
-    clientPort: Int,
-    electionPort: Int,
-    peerPort: Int,
-    nodeNames: Set[String]
-  ): Future[ZookeeperClusterInfo] =
-    zkApi.request
-      .key(clusterKey)
-      .jmxPort(jmxPort)
-      .clientPort(clientPort)
-      .electionPort(electionPort)
-      .peerPort(peerPort)
-      .nodeNames(nodeNames)
-      .create()
-  private[this] def zk_start(clusterKey: ObjectKey): Future[Unit] = zkApi.start(clusterKey)
-  private[this] def zk_stop(clusterKey: ObjectKey): Future[Unit] =
-    zkApi.forceStop(clusterKey).map(_ => Unit)
-  private[this] def zk_cluster(clusterKey: ObjectKey): Future[ZookeeperClusterInfo] =
-    zk_clusters().map(_.find(_.key == clusterKey).get)
-  private[this] def zk_clusters(): Future[Seq[ZookeeperApi.ZookeeperClusterInfo]] = zkApi.list()
-
-  private[this] def zk_logs(clusterKey: ObjectKey): Future[Seq[String]] =
-    logApi.log4ZookeeperCluster(clusterKey).map(_.logs.map(_.value))
-
-  private[this] def zk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterKey).map(_.flatMap(_.containers))
-
-  private[this] def zk_delete(clusterKey: ObjectKey): Future[Unit] = zkApi.delete(clusterKey)
-
-  //--------------------------------------------------[bk operations]--------------------------------------------------//
-  private[this] def bk_exist(clusterKey: ObjectKey): Future[Boolean] =
-    bkApi.list().map(_.exists(_.key == clusterKey))
-
-  private[this] def bk_create(
-    clusterKey: ObjectKey,
-    clientPort: Int,
-    jmxPort: Int,
-    zookeeperClusterKey: ObjectKey,
-    nodeNames: Set[String]
-  ): Future[BrokerApi.BrokerClusterInfo] =
-    bkApi.request
-      .key(clusterKey)
-      .clientPort(clientPort)
-      .jmxPort(jmxPort)
-      .zookeeperClusterKey(zookeeperClusterKey)
-      .nodeNames(nodeNames)
-      .create()
-
-  def bk_cluster(clusterKey: ObjectKey): Future[BrokerClusterInfo] =
-    bk_clusters().map(_.find(_.key == clusterKey).get)
-
-  private[this] def bk_start(clusterKey: ObjectKey): Future[Unit] = bkApi.start(clusterKey)
-
-  private[this] def bk_stop(clusterKey: ObjectKey): Future[Unit] =
-    bkApi.forceStop(clusterKey).map(_ => Unit)
-
-  private[this] def bk_clusters(): Future[Seq[BrokerApi.BrokerClusterInfo]] = bkApi.list()
-
-  private[this] def bk_logs(clusterKey: ObjectKey): Future[Seq[String]] =
-    logApi.log4BrokerCluster(clusterKey).map(_.logs.map(_.value))
-
-  private[this] def bk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterKey).map(_.flatMap(_.containers))
-
-  private[this] def bk_delete(clusterKey: ObjectKey): Future[Unit] = bkApi.delete(clusterKey)
-
-  private[this] def bk_addNode(clusterKey: ObjectKey, nodeName: String): Future[BrokerApi.BrokerClusterInfo] =
-    bkApi.addNode(clusterKey, nodeName).flatMap(_ => bkApi.get(clusterKey))
-
-  private[this] def bk_removeNode(clusterKey: ObjectKey, nodeName: String): Future[Unit] =
-    bkApi.removeNode(clusterKey, nodeName)
-
-  //--------------------------------------------------[wk operations]--------------------------------------------------//
-  private[this] def wk_exist(clusterKey: ObjectKey): Future[Boolean] =
-    wkApi.list().map(_.exists(_.key == clusterKey))
-
-  private[this] def wk_create(
-    clusterKey: ObjectKey,
-    clientPort: Int,
-    jmxPort: Int,
-    brokerClusterKey: ObjectKey,
-    nodeNames: Set[String]
-  ): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi.request
-      .key(clusterKey)
-      .clientPort(clientPort)
-      .jmxPort(jmxPort)
-      .brokerClusterKey(brokerClusterKey)
-      .nodeNames(nodeNames)
-      .create()
-
-  private[this] def wk_create(
-    clusterKey: ObjectKey,
-    clientPort: Int,
-    jmxPort: Int,
-    groupId: String,
-    configTopicName: String,
-    statusTopicName: String,
-    offsetTopicName: String,
-    brokerClusterKey: ObjectKey,
-    nodeNames: Set[String]
-  ): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi.request
-      .key(clusterKey)
-      .clientPort(clientPort)
-      .jmxPort(jmxPort)
-      .brokerClusterKey(brokerClusterKey)
-      .nodeNames(nodeNames)
-      .groupId(groupId)
-      .configTopicName(configTopicName)
-      .statusTopicName(statusTopicName)
-      .offsetTopicName(offsetTopicName)
-      .create()
-
-  private[this] def wk_start(clusterKey: ObjectKey): Future[Unit] = wkApi.start(clusterKey)
-
-  private[this] def wk_stop(clusterKey: ObjectKey): Future[Unit] =
-    wkApi.forceStop(clusterKey).map(_ => Unit)
-
-  private[this] def wk_clusters(): Future[Seq[WorkerApi.WorkerClusterInfo]] = wkApi.list()
-
-  private[this] def wk_logs(clusterKey: ObjectKey): Future[Seq[String]] =
-    logApi.log4WorkerCluster(clusterKey).map(_.logs.map(_.value))
-
-  private[this] def wk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
-    containerApi.get(clusterKey).map(_.flatMap(_.containers))
-
-  private[this] def wk_delete(clusterKey: ObjectKey): Future[Unit] = wkApi.delete(clusterKey)
-
-  private[this] def wk_addNode(clusterKey: ObjectKey, nodeName: String): Future[WorkerApi.WorkerClusterInfo] =
-    wkApi.addNode(clusterKey, nodeName).flatMap(_ => wkApi.get(clusterKey))
-
-  private[this] def wk_removeNode(clusterKey: ObjectKey, nodeName: String): Future[Unit] =
-    wkApi.removeNode(clusterKey, nodeName)
-  private[this] def wk_cluster(clusterKey: ObjectKey): Future[WorkerClusterInfo] =
-    wk_clusters().map(_.find(_.key == clusterKey).get)
-
   @Test
   def testZk(): Unit = {
     log.info("start to run zookeeper cluster")
     val nodeName: String = platform.nodeNames.head
     val clusterKey       = serviceKeyHolder.generateClusterKey()
-    result(zk_exist(clusterKey)) shouldBe false
-    val jmxPort      = CommonUtils.availablePort()
-    val clientPort   = CommonUtils.availablePort()
-    val electionPort = CommonUtils.availablePort()
-    val peerPort     = CommonUtils.availablePort()
+    val jmxPort          = CommonUtils.availablePort()
+    val clientPort       = CommonUtils.availablePort()
+    val electionPort     = CommonUtils.availablePort()
+    val peerPort         = CommonUtils.availablePort()
     def assert(zkCluster: ZookeeperClusterInfo): ZookeeperClusterInfo = {
       zkCluster.key shouldBe clusterKey
       zkCluster.nodeNames.head shouldBe nodeName
@@ -230,35 +85,39 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
     val zkCluster = assert(
       result(
-        zk_create(
-          clusterKey = clusterKey,
-          jmxPort = jmxPort,
-          clientPort = clientPort,
-          electionPort = electionPort,
-          peerPort = peerPort,
-          nodeNames = Set(nodeName)
-        )
+        zkApi.request
+          .key(clusterKey)
+          .jmxPort(jmxPort)
+          .clientPort(clientPort)
+          .electionPort(electionPort)
+          .peerPort(peerPort)
+          .nodeName(nodeName)
+          .create()
       )
     )
-    result(zk_start(zkCluster.key))
-    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
-    assert(result(zk_cluster(zkCluster.key)))
-    log.info("start to run zookeeper cluster ... done")
-    result(zk_exist(zkCluster.key)) shouldBe true
-    // we can't assume the size since other tests may create zk cluster at the same time
-    result(zk_clusters()).isEmpty shouldBe false
-    log.info(s"verify number of zk clusters... done")
-    result(zk_logs(clusterKey)).size shouldBe 1
-    log.info(s"verify number of log... done")
-    result(zk_logs(clusterKey)).foreach(
-      log =>
-        withClue(log) {
-          log.toLowerCase().contains("exception") shouldBe false
-          log.isEmpty shouldBe false
-        }
+    result(zkApi.start(zkCluster.key))
+    assertCluster(
+      () => result(zkApi.list()),
+      () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+      zkCluster.key
     )
+    assert(result(zkApi.get(zkCluster.key)))
+    log.info("start to run zookeeper cluster ... done")
+    result(zkApi.get(clusterKey)).key shouldBe clusterKey
+    log.info(s"verify number of zk clusters... done")
+    result(logApi.log4ZookeeperCluster(clusterKey)).logs.size shouldBe 1
+    log.info(s"verify number of log... done")
+    result(logApi.log4ZookeeperCluster(clusterKey)).logs
+      .map(_.value)
+      .foreach(
+        log =>
+          withClue(log) {
+            log.toLowerCase().contains("exception") shouldBe false
+            log.isEmpty shouldBe false
+          }
+      )
     log.info(s"verify log of zk clusters... done")
-    result(zk_containers(clusterKey)).foreach { container =>
+    result(containerApi.get(clusterKey)).flatMap(_.containers).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name()) shouldBe true
       container.name should not be container.hostname
@@ -271,35 +130,38 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     log.info(s"get containers from zk:$clusterKey... done")
     testJmx(zkCluster)
     log.info(s"test jmx from zk:$clusterKey... done")
-    result(zk_stop(clusterKey))
+    result(zkApi.stop(clusterKey))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
       // In collie mode: clusters() will return the "cluster list except stop one" in normal case
       // we should consider these two cases by case...
-      val clusters = result(zk_clusters())
+      val clusters = result(zkApi.list())
       !clusters.map(_.key).contains(clusterKey) || clusters.find(_.key == clusterKey).get.state.isEmpty
     })
     // the cluster is stopped actually, delete the data
-    zk_delete(clusterKey)
+    result(zkApi.delete(clusterKey))
   }
 
   @Test
   def testBroker(): Unit = {
     val zkCluster = result(
-      zk_create(
-        clusterKey = serviceKeyHolder.generateClusterKey(),
-        jmxPort = CommonUtils.availablePort(),
-        clientPort = CommonUtils.availablePort(),
-        electionPort = CommonUtils.availablePort(),
-        peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(platform.nodeNames.head)
-      )
+      zkApi.request
+        .key(serviceKeyHolder.generateClusterKey())
+        .jmxPort(CommonUtils.availablePort())
+        .clientPort(CommonUtils.availablePort())
+        .electionPort(CommonUtils.availablePort())
+        .peerPort(CommonUtils.availablePort())
+        .nodeName(platform.nodeNames.head)
+        .create()
     )
-    result(zk_start(zkCluster.key))
-    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
+    result(zkApi.start(zkCluster.key))
+    assertCluster(
+      () => result(zkApi.list()),
+      () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+      zkCluster.key
+    )
     log.info("[BROKER] start to run broker cluster")
     val clusterKey = serviceKeyHolder.generateClusterKey()
-    result(bk_exist(clusterKey)) shouldBe false
     log.info(s"[BROKER] verify existence of broker cluster:$clusterKey...done")
     val nodeName: String = platform.nodeNames.head
     val clientPort       = CommonUtils.availablePort()
@@ -315,24 +177,26 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
     val bkCluster = assert(
       result(
-        bk_create(
-          clusterKey = clusterKey,
-          clientPort = clientPort,
-          jmxPort = jmxPort,
-          zookeeperClusterKey = zkCluster.key,
-          nodeNames = Set(nodeName)
-        )
+        bkApi.request
+          .key(clusterKey)
+          .clientPort(clientPort)
+          .jmxPort(jmxPort)
+          .zookeeperClusterKey(zkCluster.key)
+          .nodeName(nodeName)
+          .create()
       )
     )
-    result(bk_start(bkCluster.key))
+    result(bkApi.start(bkCluster.key))
     log.info("[BROKER] start to run broker cluster...done")
-    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
-    assert(result(bk_cluster(bkCluster.key)))
+    assertCluster(
+      () => result(bkApi.list()),
+      () => result(containerApi.get(bkCluster.key)).flatMap(_.containers),
+      bkCluster.key
+    )
+    assert(result(bkApi.get(bkCluster.key)))
     log.info("[BROKER] verify cluster api...done")
-    result(bk_exist(bkCluster.key)) shouldBe true
-    // we can't assume the size since other tests may create zk cluster at the same time
-    result(bk_clusters()).isEmpty shouldBe false
-    result(bk_containers(clusterKey)).foreach { container =>
+    result(bkApi.get(bkCluster.key)).key shouldBe bkCluster.key
+    result(containerApi.get(clusterKey)).flatMap(_.containers).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
       container.name should not be container.hostname
@@ -340,14 +204,16 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       container.portMappings.size shouldBe 2
       container.portMappings.exists(_.containerPort == clientPort) shouldBe true
     }
-    result(bk_logs(clusterKey)).size shouldBe 1
-    result(bk_logs(clusterKey)).foreach(
-      log =>
-        withClue(log) {
-          log.toLowerCase().contains("exception") shouldBe false
-          log.isEmpty shouldBe false
-        }
-    )
+    result(logApi.log4BrokerCluster(clusterKey)).logs.size shouldBe 1
+    result(logApi.log4BrokerCluster(clusterKey)).logs
+      .map(_.value)
+      .foreach(
+        log =>
+          withClue(log) {
+            log.toLowerCase().contains("exception") shouldBe false
+            log.isEmpty shouldBe false
+          }
+      )
     log.info("[BROKER] verify:log done")
     var curCluster = bkCluster
     testTopic(curCluster)
@@ -361,45 +227,49 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     curCluster = testRemoveNodeToRunningBrokerCluster(curCluster, nodeName)
     testTopic(curCluster)
     testJmx(curCluster)
-    result(bk_stop(clusterKey))
+    result(bkApi.stop(clusterKey))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
       // In collie mode: clusters() will return the "cluster list except stop one" in normal case
       // we should consider these two cases by case...
-      val clusters = result(bk_clusters())
+      val clusters = result(bkApi.list())
       !clusters.map(_.key).contains(clusterKey) || clusters.find(_.key == clusterKey).get.state.isEmpty
     })
     // the cluster is stopped actually, delete the data
-    bk_delete(clusterKey)
+    result(bkApi.delete(clusterKey))
   }
 
   private[this] def testAddNodeToRunningBrokerCluster(previousCluster: BrokerClusterInfo): BrokerClusterInfo = {
-    await(() => result(bk_exist(previousCluster.key)))
+    await(() => result(bkApi.list()).exists(_.key == previousCluster.key))
     log.info(s"[BROKER] nodes:${platform.nodeNames} previous:${previousCluster.nodeNames}")
     an[IllegalArgumentException] should be thrownBy result(
-      bk_removeNode(previousCluster.key, previousCluster.nodeNames.head)
+      bkApi.removeNode(previousCluster.key, previousCluster.nodeNames.head)
     )
     val freeNodes = platform.nodeNames.diff(previousCluster.nodeNames)
     if (freeNodes.nonEmpty) {
       await { () =>
         // nothing happens if we add duplicate nodes
-        result(bk_addNode(previousCluster.key, previousCluster.nodeNames.head))
+        result(bkApi.addNode(previousCluster.key, previousCluster.nodeNames.head))
         // we can't add a nonexistent node
         // we always get IllegalArgumentException if we sent request by restful api
         // However, if we use collie impl, an NoSuchElementException will be thrown...
-        an[Throwable] should be thrownBy result(bk_addNode(previousCluster.key, CommonUtils.randomString()))
+        an[Throwable] should be thrownBy result(bkApi.addNode(previousCluster.key, CommonUtils.randomString()))
         val newNode = freeNodes.head
         log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.key}")
-        val newCluster = result(bk_addNode(previousCluster.key, newNode))
+        val newCluster = result(
+          bkApi
+            .addNode(previousCluster.key, newNode)
+            .flatMap(_ => bkApi.get(previousCluster.key))
+        )
         log.info(s"[BROKER] add new node:$newNode to cluster:${previousCluster.key}...done")
         newCluster.key shouldBe previousCluster.key
         newCluster.imageName shouldBe previousCluster.imageName
         newCluster.zookeeperClusterKey shouldBe previousCluster.zookeeperClusterKey
         newCluster.clientPort shouldBe previousCluster.clientPort
         newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
-        result(bk_cluster(newCluster.key)).aliveNodes.contains(newNode)
+        result(bkApi.get(newCluster.key)).aliveNodes.contains(newNode)
       }
-      result(bk_cluster(previousCluster.key))
+      result(bkApi.get(previousCluster.key))
     } else previousCluster
   }
 
@@ -470,7 +340,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     previousCluster: BrokerClusterInfo,
     excludedNode: String
   ): BrokerClusterInfo = {
-    await(() => result(bk_exist(previousCluster.key)))
+    await(() => result(bkApi.list()).exists(_.key == previousCluster.key))
     if (previousCluster.nodeNames.size > 1) {
       val beRemovedNode: String = previousCluster.nodeNames.filter(_ != excludedNode).head
       await { () =>
@@ -478,49 +348,56 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
           s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.key} nodes:${previousCluster.nodeNames
             .mkString(",")}"
         )
-        result(bk_removeNode(previousCluster.key, beRemovedNode))
+        result(bkApi.removeNode(previousCluster.key, beRemovedNode))
         log.info(s"[BROKER] start to remove node:$beRemovedNode from bk cluster:${previousCluster.key} ... done")
-        val newCluster = result(bk_cluster(previousCluster.key))
+        val newCluster = result(bkApi.get(previousCluster.key))
         newCluster.key == previousCluster.key &&
         newCluster.imageName == previousCluster.imageName &&
         newCluster.zookeeperClusterKey == previousCluster.zookeeperClusterKey &&
         newCluster.clientPort == previousCluster.clientPort &&
         previousCluster.nodeNames.size - newCluster.nodeNames.size == 1 &&
-        !result(bk_cluster(newCluster.key)).aliveNodes.contains(beRemovedNode)
+        !result(bkApi.get(newCluster.key)).aliveNodes.contains(beRemovedNode)
       }
-      result(bk_cluster(previousCluster.key))
+      result(bkApi.get(previousCluster.key))
     } else previousCluster
   }
 
   @Test
   def testWorker(): Unit = {
     val zkCluster = result(
-      zk_create(
-        clusterKey = serviceKeyHolder.generateClusterKey(),
-        jmxPort = CommonUtils.availablePort(),
-        clientPort = CommonUtils.availablePort(),
-        electionPort = CommonUtils.availablePort(),
-        peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(platform.nodeNames.head)
-      )
+      zkApi.request
+        .key(serviceKeyHolder.generateClusterKey())
+        .jmxPort(CommonUtils.availablePort())
+        .clientPort(CommonUtils.availablePort())
+        .electionPort(CommonUtils.availablePort())
+        .peerPort(CommonUtils.availablePort())
+        .nodeName(platform.nodeNames.head)
+        .create()
     )
-    result(zk_start(zkCluster.key))
-    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
+    result(zkApi.start(zkCluster.key))
+    assertCluster(
+      () => result(zkApi.list()),
+      () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+      zkCluster.key
+    )
     val bkCluster = result(
-      bk_create(
-        clusterKey = serviceKeyHolder.generateClusterKey(),
-        clientPort = CommonUtils.availablePort(),
-        jmxPort = CommonUtils.availablePort(),
-        zookeeperClusterKey = zkCluster.key,
-        nodeNames = Set(platform.nodeNames.head)
-      )
+      bkApi.request
+        .key(serviceKeyHolder.generateClusterKey())
+        .clientPort(CommonUtils.availablePort())
+        .jmxPort(CommonUtils.availablePort())
+        .zookeeperClusterKey(zkCluster.key)
+        .nodeName(platform.nodeNames.head)
+        .create()
     )
-    result(bk_start(bkCluster.key))
-    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
+    result(bkApi.start(bkCluster.key))
+    assertCluster(
+      () => result(bkApi.list()),
+      () => result(containerApi.get(bkCluster.key)).flatMap(_.containers),
+      bkCluster.key
+    )
     log.info("[WORKER] start to test worker")
     val nodeName   = platform.nodeNames.head
     val clusterKey = serviceKeyHolder.generateClusterKey()
-    result(wk_exist(clusterKey)) shouldBe false
     log.info("[WORKER] verify:nonExists done")
     val clientPort = CommonUtils.availablePort()
     val jmxPort    = CommonUtils.availablePort()
@@ -539,30 +416,35 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       workerCluster
     }
     log.info("[WORKER] create ...")
+
     val wkCluster = assert(
       result(
-        wk_create(
-          clusterKey = clusterKey,
-          clientPort = clientPort,
-          jmxPort = jmxPort,
-          brokerClusterKey = bkCluster.key,
-          nodeNames = Set(nodeName)
-        )
+        wkApi.request
+          .key(clusterKey)
+          .clientPort(clientPort)
+          .jmxPort(jmxPort)
+          .brokerClusterKey(bkCluster.key)
+          .nodeName(nodeName)
+          .create()
       )
     )
     log.info("[WORKER] create done")
-    result(wk_start(wkCluster.key))
+    result(wkApi.start(wkCluster.key))
     log.info("[WORKER] start done")
-    assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.key)), wkCluster.key)
+    assertCluster(
+      () => result(wkApi.list()),
+      () => result(containerApi.get(wkCluster.key)).flatMap(_.containers),
+      wkCluster.key
+    )
     log.info("[WORKER] check existence")
-    assert(result(wk_cluster(wkCluster.key)))
+    assert(result(wkApi.get(wkCluster.key)))
     log.info("[WORKER] verify:create done")
-    result(wk_exist(wkCluster.key)) shouldBe true
+    result(wkApi.get(wkCluster.key)).key shouldBe wkCluster.key
     log.info("[WORKER] verify:exist done")
     // we can't assume the size since other tests may create zk cluster at the same time
-    result(wk_clusters()).isEmpty shouldBe false
+    result(wkApi.list()).isEmpty shouldBe false
     log.info("[WORKER] verify:list done")
-    result(wk_containers(clusterKey)).foreach { container =>
+    result(containerApi.get(clusterKey)).flatMap(_.containers).foreach { container =>
       container.nodeName shouldBe nodeName
       container.name.contains(clusterKey.name) shouldBe true
       container.name should not be container.hostname
@@ -573,7 +455,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       container.portMappings.size shouldBe 2
       container.portMappings.exists(_.containerPort == clientPort) shouldBe true
     }
-    val logs = result(wk_logs(clusterKey))
+    val logs = result(logApi.log4WorkerCluster(clusterKey)).logs.map(_.value)
     logs.size shouldBe 1
     logs.foreach(
       log =>
@@ -596,16 +478,16 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     curCluster = testRemoveNodeToRunningWorkerCluster(curCluster, nodeName)
     testConnectors(curCluster)
     testJmx(curCluster)
-    result(wk_stop(clusterKey))
+    result(wkApi.stop(clusterKey))
     await(() => {
       // In configurator mode: clusters() will return the "stopped list" in normal case
       // In collie mode: clusters() will return the "cluster list except stop one" in normal case
       // we should consider these two cases by case...
-      val clusters = result(wk_clusters())
+      val clusters = result(wkApi.list())
       !clusters.map(_.key).contains(clusterKey) || clusters.find(_.key == clusterKey).get.state.isEmpty
     })
     // the cluster is stopped actually, delete the data
-    wk_delete(clusterKey)
+    result(wkApi.delete(clusterKey))
   }
 
   private[this] def testConnectors(cluster: WorkerClusterInfo): Unit =
@@ -636,21 +518,25 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     )
 
   private[this] def testAddNodeToRunningWorkerCluster(previousCluster: WorkerClusterInfo): WorkerClusterInfo = {
-    await(() => result(wk_exist(previousCluster.key)))
+    await(() => result(wkApi.list()).exists(_.key == previousCluster.key))
     an[IllegalArgumentException] should be thrownBy result(
-      wk_removeNode(previousCluster.key, previousCluster.nodeNames.head)
+      wkApi.removeNode(previousCluster.key, previousCluster.nodeNames.head)
     )
     val freeNodes = platform.nodeNames.diff(previousCluster.nodeNames)
     if (freeNodes.nonEmpty) {
       val newNode = freeNodes.head
       // it is ok to add duplicate nodes
-      result(wk_addNode(previousCluster.key, previousCluster.nodeNames.head))
+      result(wkApi.addNode(previousCluster.key, previousCluster.nodeNames.head))
       // we can't add a nonexistent node
       // we always get IllegalArgumentException if we sent request by restful api
       // However, if we use collie impl, an NoSuchElementException will be thrown...
-      an[Throwable] should be thrownBy result(wk_addNode(previousCluster.key, CommonUtils.randomString()))
+      an[Throwable] should be thrownBy result(wkApi.addNode(previousCluster.key, CommonUtils.randomString()))
       log.info(s"[WORKER] start to add node:$newNode to a running worker cluster")
-      val newCluster = result(wk_addNode(previousCluster.key, newNode))
+      val newCluster = result(
+        wkApi
+          .addNode(previousCluster.key, newNode)
+          .flatMap(_ => wkApi.get(previousCluster.key))
+      )
       newCluster.key shouldBe previousCluster.key
       newCluster.imageName shouldBe previousCluster.imageName
       newCluster.configTopicName shouldBe previousCluster.configTopicName
@@ -660,7 +546,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       newCluster.brokerClusterKey shouldBe previousCluster.brokerClusterKey
       newCluster.clientPort shouldBe previousCluster.clientPort
       newCluster.nodeNames.size - previousCluster.nodeNames.size shouldBe 1
-      await(() => result(wk_cluster(newCluster.key)).nodeNames.contains(newNode))
+      await(() => result(wkApi.get(newCluster.key)).nodeNames.contains(newNode))
       newCluster
     } else previousCluster
   }
@@ -669,14 +555,14 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     previousCluster: WorkerClusterInfo,
     excludedNode: String
   ): WorkerClusterInfo = {
-    await(() => result(wk_exist(previousCluster.key)))
+    await(() => result(wkApi.list()).exists(_.key == previousCluster.key))
     if (previousCluster.nodeNames.size > 1) {
       val beRemovedNode = previousCluster.nodeNames.filter(_ != excludedNode).head
       await(() => {
         log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.key}")
-        result(wk_removeNode(previousCluster.key, beRemovedNode))
+        result(wkApi.removeNode(previousCluster.key, beRemovedNode))
         log.info(s"[WORKER] start to remove node:$beRemovedNode from ${previousCluster.key} ... done")
-        val newCluster = result(wk_cluster(previousCluster.key))
+        val newCluster = result(wkApi.get(previousCluster.key))
         newCluster.key == previousCluster.key &&
         newCluster.imageName == previousCluster.imageName &&
         newCluster.configTopicName == previousCluster.configTopicName &&
@@ -686,9 +572,9 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         newCluster.brokerClusterKey == previousCluster.brokerClusterKey &&
         newCluster.clientPort == previousCluster.clientPort &&
         previousCluster.nodeNames.size - newCluster.nodeNames.size == 1 &&
-        !result(wk_cluster(newCluster.key)).nodeNames.contains(beRemovedNode)
+        !result(wkApi.get(newCluster.key)).nodeNames.contains(beRemovedNode)
       })
-      result(wk_cluster(previousCluster.key))
+      result(wkApi.get(previousCluster.key))
     } else previousCluster
   }
 
@@ -696,24 +582,36 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
   def testMultiZkClustersOnSameNodes(): Unit = {
     if (platform.nodeNames.size < 2) skipTest("the size of nodes must be bigger than 1")
     val keys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
-    val zkClusters = keys.map { key =>
-      result(
-        zk_create(
-          clusterKey = key,
-          jmxPort = CommonUtils.availablePort(),
-          clientPort = CommonUtils.availablePort(),
-          electionPort = CommonUtils.availablePort(),
-          peerPort = CommonUtils.availablePort(),
-          nodeNames = platform.nodeNames
-        ).flatMap(info => zk_start(info.key).flatMap(_ => zk_cluster(info.key)))
-      )
-    }
+    val zkClusters = keys.map(
+      key =>
+        result(
+          zkApi.request
+            .key(key)
+            .jmxPort(CommonUtils.availablePort())
+            .clientPort(CommonUtils.availablePort())
+            .electionPort(CommonUtils.availablePort())
+            .peerPort(CommonUtils.availablePort())
+            .nodeName(platform.nodeNames.head)
+            .create()
+            .flatMap(
+              _ =>
+                zkApi
+                  .start(key)
+                  .flatMap(_ => zkApi.get(key))
+            )
+        )
+    )
     // add a bit wait to make sure the cluster is up
     TimeUnit.SECONDS.sleep(5)
     zkClusters.foreach(
-      zkCluster => assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
+      zkCluster =>
+        assertCluster(
+          () => result(zkApi.list()),
+          () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+          zkCluster.key
+        )
     )
-    val clusters2 = result(zk_clusters())
+    val clusters2 = result(zkApi.list())
     zkClusters.foreach { c =>
       val another = clusters2.find(_.key == c.key).get
       another.key shouldBe c.key
@@ -722,7 +620,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       another.imageName shouldBe c.imageName
       another.electionPort shouldBe c.electionPort
       another.nodeNames shouldBe c.nodeNames
-      result(zk_logs(c.key)).foreach { log =>
+      result(logApi.log4ZookeeperCluster(c.key)).logs.map(_.value).foreach { log =>
         // If we start a single-node zk cluster, zk print a "error" warning to us to say that you are using a single-node,
         // and we won't see the connection exception since there is only a node.
         if (platform.nodeNames.size == 1) withClue(log)(log.toLowerCase.contains("exception") shouldBe false)
@@ -739,33 +637,45 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     val zkKeys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
     val bkKeys = (0 until numberOfClusters).map(_ => serviceKeyHolder.generateClusterKey())
     // NOTED: It is illegal to run multi bk clusters on same zk cluster so we have got to instantiate multi zk clusters first.
-    val zkClusters = zkKeys.map { key =>
-      result(
-        zk_create(
-          clusterKey = key,
-          jmxPort = CommonUtils.availablePort(),
-          clientPort = CommonUtils.availablePort(),
-          electionPort = CommonUtils.availablePort(),
-          peerPort = CommonUtils.availablePort(),
-          nodeNames = Set(platform.nodeNames.head)
-        ).flatMap(info => zk_start(info.key).flatMap(_ => zk_cluster(info.key)))
-      )
-    }
+    val zkClusters = zkKeys.map(
+      key =>
+        result(
+          zkApi.request
+            .key(key)
+            .jmxPort(CommonUtils.availablePort())
+            .clientPort(CommonUtils.availablePort())
+            .electionPort(CommonUtils.availablePort())
+            .peerPort(CommonUtils.availablePort())
+            .nodeName(platform.nodeNames.head)
+            .create()
+            .flatMap(
+              _ =>
+                zkApi
+                  .start(key)
+                  .flatMap(_ => zkApi.get(key))
+            )
+        )
+    )
     zkClusters.foreach(
-      zkCluster => assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
+      zkCluster =>
+        assertCluster(
+          () => result(zkApi.list()),
+          () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+          zkCluster.key
+        )
     )
     zkClusters.zipWithIndex.foreach {
       case (zk, index) =>
         val bkCluster = result(
-          bk_create(
-            clusterKey = bkKeys(index),
-            clientPort = CommonUtils.availablePort(),
-            jmxPort = CommonUtils.availablePort(),
-            zookeeperClusterKey = zk.key,
-            nodeNames = Set(platform.nodeNames.head)
-          )
+          bkApi.request
+            .key(bkKeys(index))
+            .clientPort(CommonUtils.availablePort())
+            .jmxPort(CommonUtils.availablePort())
+            .zookeeperClusterKey(zk.key)
+            .nodeName(platform.nodeNames.head)
+            .create()
         )
-        result(bk_start(bkCluster.key))
+        result(bkApi.start(bkCluster.key))
         testTopic(bkCluster)
     }
   }
@@ -782,52 +692,65 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     val statusTopicNames = (0 until numberOfClusters).map(_ => CommonUtils.randomString(10))
     log.info(s"start to run zk cluster:$zkKey")
     val zkCluster = result(
-      zk_create(
-        clusterKey = zkKey,
-        jmxPort = CommonUtils.availablePort(),
-        clientPort = CommonUtils.availablePort(),
-        electionPort = CommonUtils.availablePort(),
-        peerPort = CommonUtils.availablePort(),
-        nodeNames = Set(platform.nodeNames.head)
-      )
+      zkApi.request
+        .key(serviceKeyHolder.generateClusterKey())
+        .jmxPort(CommonUtils.availablePort())
+        .clientPort(CommonUtils.availablePort())
+        .electionPort(CommonUtils.availablePort())
+        .peerPort(CommonUtils.availablePort())
+        .nodeName(platform.nodeNames.head)
+        .create()
     )
-    result(zk_start(zkCluster.key))
-    assertCluster(() => result(zk_clusters()), () => result(zk_containers(zkCluster.key)), zkCluster.key)
+    result(zkApi.start(zkCluster.key))
+    assertCluster(
+      () => result(zkApi.list()),
+      () => result(containerApi.get(zkCluster.key)).flatMap(_.containers),
+      zkCluster.key
+    )
     log.info(s"start to run bk cluster:$bkKey")
     val bkCluster = result(
-      bk_create(
-        clusterKey = bkKey,
-        clientPort = CommonUtils.availablePort(),
-        jmxPort = CommonUtils.availablePort(),
-        zookeeperClusterKey = zkCluster.key,
-        nodeNames = Set(platform.nodeNames.head)
-      )
+      bkApi.request
+        .key(bkKey)
+        .clientPort(CommonUtils.availablePort())
+        .jmxPort(CommonUtils.availablePort())
+        .zookeeperClusterKey(zkCluster.key)
+        .nodeName(platform.nodeNames.head)
+        .create()
     )
-    result(bk_start(bkCluster.key))
-    assertCluster(() => result(bk_clusters()), () => result(bk_containers(bkCluster.key)), bkCluster.key)
+    result(bkApi.start(bkCluster.key))
+    assertCluster(
+      () => result(bkApi.list()),
+      () => result(containerApi.get(bkCluster.key)).flatMap(_.containers),
+      bkCluster.key
+    )
     log.info(s"start to run multi wk clusters:$wkKeys")
     val wkClusters = wkKeys.zipWithIndex.map {
       case (wkKey, index) =>
         result(
-          wk_create(
-            clusterKey = wkKey,
-            clientPort = CommonUtils.availablePort(),
-            jmxPort = CommonUtils.availablePort(),
-            brokerClusterKey = bkCluster.key,
-            groupId = groupIds(index),
-            configTopicName = configTopicNames(index),
-            offsetTopicName = offsetTopicNames(index),
-            statusTopicName = statusTopicNames(index),
-            nodeNames = platform.nodeNames
-          )
+          wkApi.request
+            .key(wkKey)
+            .clientPort(CommonUtils.availablePort())
+            .jmxPort(CommonUtils.availablePort())
+            .brokerClusterKey(bkCluster.key)
+            .nodeNames(platform.nodeNames)
+            .groupId(groupIds(index))
+            .configTopicName(configTopicNames(index))
+            .statusTopicName(statusTopicNames(index))
+            .offsetTopicName(offsetTopicNames(index))
+            .create()
         )
     }
-    wkClusters.foreach(wk => result(wk_start(wk.key)))
+    wkClusters.foreach(wk => result(wkApi.start(wk.key)))
     log.info(s"check multi wk clusters:$wkKeys")
     // add a bit wait to make sure the cluster is up
     TimeUnit.SECONDS.sleep(10)
     wkClusters.foreach(
-      wkCluster => assertCluster(() => result(wk_clusters()), () => result(wk_containers(wkCluster.key)), wkCluster.key)
+      wkCluster =>
+        assertCluster(
+          () => result(wkApi.list()),
+          () => result(containerApi.get(wkCluster.key)).flatMap(_.containers),
+          wkCluster.key
+        )
     )
     wkKeys.zipWithIndex.map {
       case (wkKey, index) =>
@@ -839,7 +762,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     }
 
     log.info(s"check multi wk clusters:$wkKeys by list")
-    result(wk_clusters()).foreach { cluster =>
+    result(wkApi.list()).foreach { cluster =>
       testConnectors(cluster)
       testJmx(cluster)
     }
