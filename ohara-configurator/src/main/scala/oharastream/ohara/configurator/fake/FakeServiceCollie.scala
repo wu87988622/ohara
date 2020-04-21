@@ -18,8 +18,7 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
 
-import oharastream.ohara.agent.container.ContainerClient.ContainerVolume
-import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import oharastream.ohara.client.configurator.v0.{
@@ -107,7 +106,7 @@ private[configurator] class FakeServiceCollie(
   ): Future[Map[ContainerName, String]] =
     Future.failed(new NoSuchElementException)
 
-  val containerClient: ContainerClient = new ContainerClient {
+  override val containerClient: ContainerClient = new ContainerClient {
     override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerApi.ContainerInfo]] =
       throw new UnsupportedOperationException("this is fake container client")
 
@@ -144,7 +143,7 @@ private[configurator] class FakeServiceCollie(
         else Future.unit
       }
 
-    override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerClient.ContainerVolume]] =
+    override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] =
       Future.successful(existentVolumes.values().asScala.toSeq)
 
     override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = {

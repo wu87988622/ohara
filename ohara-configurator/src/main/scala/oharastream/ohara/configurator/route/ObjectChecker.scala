@@ -19,15 +19,16 @@ package oharastream.ohara.configurator.route
 import oharastream.ohara.agent.{ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.v0.ClusterInfo
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterInfo
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
@@ -51,6 +52,7 @@ trait ObjectChecker {
 object ObjectChecker {
   case class ObjectInfos(
     topicInfos: Map[TopicInfo, Condition],
+    volumes: Map[Volume, Condition],
     connectorInfos: Map[ConnectorInfo, Condition],
     fileInfos: Seq[FileInfo],
     nodes: Seq[Node],
@@ -70,6 +72,49 @@ object ObjectChecker {
   }
 
   trait CheckList {
+    //---------------[volume]---------------//
+
+    /**
+      * check all volumes. It invokes a loop to all volumes and then fetch their state - a expensive operation!!!
+      * @return check list
+      */
+    def allVolumes(): CheckList
+
+    /**
+      * check the properties of volume.
+      * @param key volume key
+      * @return this check list
+      */
+    def volume(key: ObjectKey): CheckList = volumes(Set(key), None)
+
+    /**
+      * check both properties and status of volume.
+      * @param key volume key
+      * @return this check list
+      */
+    def volume(key: ObjectKey, condition: Condition): CheckList = volumes(Set(key), Some(condition))
+
+    /**
+      * check whether input volumes have been stored in Configurator
+      * @param keys volume keys
+      * @return this check list
+      */
+    def volumes(keys: Set[ObjectKey]): CheckList = volumes(keys, None)
+
+    /**
+      * check whether input volumes condition.
+      * @param keys volume keys
+      * @return this check list
+      */
+    def volumes(keys: Set[ObjectKey], condition: Condition): CheckList = volumes(keys, Some(condition))
+
+    /**
+      * set the volumes and condition to check.
+      * @param keys volume keys
+      * @param condition condition
+      * @return check list
+      */
+    protected def volumes(keys: Set[ObjectKey], condition: Option[Condition]): CheckList
     //---------------[topic]---------------//
 
     /**
@@ -105,6 +150,13 @@ object ObjectChecker {
       * @return this check list
       */
     def topics(keys: Set[TopicKey], condition: Condition): CheckList = topics(keys, Some(condition))
+
+    /**
+      * set the topics and condition to check.
+      * @param keys topic keys
+      * @param condition condition
+      * @return check list
+      */
     protected def topics(keys: Set[TopicKey], condition: Option[Condition]): CheckList
 
     //---------------[connector]---------------//
@@ -319,6 +371,8 @@ object ObjectChecker {
         private[this] val requiredFiles        = mutable.Set[ObjectKey]()
         private[this] var requireAllTopics     = false
         private[this] val requiredTopics       = mutable.Map[TopicKey, Option[Condition]]()
+        private[this] var requireAllVolumes    = false
+        private[this] val requiredVolumes      = mutable.Map[ObjectKey, Option[Condition]]()
         private[this] var requireAllConnectors = false
         private[this] val requiredConnectors   = mutable.Map[ConnectorKey, Option[Condition]]()
         private[this] var requireAllZookeepers = false
@@ -337,8 +391,10 @@ object ObjectChecker {
           key: ObjectKey
         )(implicit executionContext: ExecutionContext): Future[Option[(C, Condition)]] =
           store.get[C](key).flatMap {
-            case None => Future.successful(None)
+            case None          => Future.successful(None)
             case Some(cluster) =>
+              // TODO: currently the existence of cluster implies the cluster is running. However, it would be better
+              // to check the state of cluster as well.
               collie.exist(key).map(if (_) RUNNING else STOPPED).map(condition => Some(cluster -> condition))
           }
 
@@ -470,6 +526,25 @@ object ObjectChecker {
             Future.traverse(keys)(checkTopic).map(_.flatten.toMap)
           } else Future.traverse(requiredTopics.keySet)(checkTopic).map(_.flatten.toMap)
 
+        private[this] def checkVolumes()(
+          implicit executionContext: ExecutionContext
+        ): Future[Map[Volume, Condition]] =
+          if (requireAllVolumes) store.values[Volume]().map(_.map(_.key)).flatMap { keys =>
+            Future.traverse(keys)(checkVolume).map(_.flatten.toMap)
+          } else Future.traverse(requiredVolumes.keySet)(checkVolume).map(_.flatten.toMap)
+
+        private[this] def checkVolume(
+          key: ObjectKey
+        )(implicit executionContext: ExecutionContext): Future[Option[(Volume, Condition)]] =
+          store.get[Volume](key).flatMap {
+            case None => Future.successful(None)
+            case Some(volume) =>
+              serviceCollie
+                .volumes()
+                .map(_.filter(_.key == volume.key))
+                .map(existentVolumes => Some(volume -> (if (existentVolumes.isEmpty) STOPPED else RUNNING)))
+          }
+
         private[this] def checkConnector(
           key: ConnectorKey
         )(implicit executionContext: ExecutionContext): Future[Option[(ConnectorInfo, Condition)]] =
@@ -536,6 +611,7 @@ object ObjectChecker {
               compare("file", passed.map(_.key -> RUNNING).toMap, requiredFiles.map(_ -> Some(RUNNING)).toMap)
               ObjectInfos(
                 topicInfos = Map.empty,
+                volumes = Map.empty,
                 connectorInfos = Map.empty,
                 fileInfos = passed,
                 nodes = Seq.empty,
@@ -594,6 +670,13 @@ object ObjectChecker {
                 report.copy(topicInfos = passed)
               }
             }
+            // check volumes
+            .flatMap { report =>
+              checkVolumes().map { passed =>
+                compare("volume", passed.map(e => e._1.key -> e._2), requiredVolumes.toMap)
+                report.copy(volumes = passed)
+              }
+            }
             // check connectors
             .flatMap { report =>
               checkConnectors().map { passed =>
@@ -604,6 +687,11 @@ object ObjectChecker {
 
         override protected def topics(keys: Set[TopicKey], condition: Option[Condition]): CheckList = {
           keys.foreach(key => requiredTopics += (key -> condition))
+          this
+        }
+
+        override protected def volumes(keys: Set[ObjectKey], condition: Option[Condition]): CheckList = {
+          keys.foreach(key => requiredVolumes += (key -> condition))
           this
         }
 
@@ -689,6 +777,11 @@ object ObjectChecker {
 
         override def allShabondis(): CheckList = {
           this.requireAllShabondis = true
+          this
+        }
+
+        override def allVolumes(): CheckList = {
+          this.requireAllVolumes = true
           this
         }
       }

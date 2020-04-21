@@ -16,7 +16,7 @@
 
 package oharastream.ohara.agent.fake
 
-import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.k8s._
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
@@ -84,7 +84,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
 
   override def volumes()(
     implicit executionContext: ExecutionContext
-  ): Future[Seq[ContainerClient.ContainerVolume]] =
+  ): Future[Seq[ContainerVolume]] =
     throw new UnsupportedOperationException("FakeK8SClient does not support volumes function")
 
   override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =

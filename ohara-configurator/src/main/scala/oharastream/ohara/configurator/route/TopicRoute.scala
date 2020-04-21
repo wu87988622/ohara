@@ -81,7 +81,7 @@ private[configurator] object TopicRoute {
                         .toScala
                         .map(_.asScala)
                         .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
-                        .map(_.partitionInfos.asScala -> Some(State.RUNNING))
+                        .map(_.partitionInfos.asScala -> Some(TopicState.RUNNING))
                     else Future.successful(Seq.empty  -> None)
                   )
                   .map {

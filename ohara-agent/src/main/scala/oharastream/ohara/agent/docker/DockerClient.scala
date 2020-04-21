@@ -19,14 +19,14 @@ package oharastream.ohara.agent.docker
 import java.util.Objects
 import java.util.concurrent.ConcurrentHashMap
 
-import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent.container.ContainerClient.VolumeCreator
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.docker.DockerClient.{ContainerCreator, Inspector}
 import oharastream.ohara.agent.{Agent, DataCollie}
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent.container.ContainerClient.{ContainerVolume, VolumeCreator}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

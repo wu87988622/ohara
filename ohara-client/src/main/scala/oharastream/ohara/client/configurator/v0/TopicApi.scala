@@ -173,14 +173,14 @@ object TopicApi {
 
   import MetricsApi._
 
-  abstract sealed class State(val name: String) extends Serializable
-  object State extends Enum[State] {
-    case object RUNNING extends State("RUNNING")
+  abstract sealed class TopicState(val name: String) extends Serializable
+  object TopicState extends Enum[TopicState] {
+    case object RUNNING extends TopicState("RUNNING")
   }
 
-  implicit val STATE_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
-    override def read(json: JsValue): State = State.forName(json.convertTo[String].toUpperCase)
-    override def write(obj: State): JsValue = JsString(obj.name)
+  implicit val TOPIC_STATE_FORMAT: RootJsonFormat[TopicState] = new RootJsonFormat[TopicState] {
+    override def read(json: JsValue): TopicState = TopicState.forName(json.convertTo[String].toUpperCase)
+    override def write(obj: TopicState): JsValue = JsString(obj.name)
   }
 
   implicit val PARTITION_NODE_FORMAT: RootJsonFormat[PartitionNode] = new RootJsonFormat[PartitionNode] {
@@ -238,7 +238,7 @@ object TopicApi {
     settings: Map[String, JsValue],
     partitionInfos: Seq[PartitionInfo],
     nodeMetrics: Map[String, Metrics],
-    state: Option[State],
+    state: Option[TopicState],
     lastModified: Long
   ) extends Data
       with Metricsable {
@@ -359,7 +359,7 @@ object TopicApi {
 
   sealed trait Query extends BasicQuery[TopicInfo] {
     import spray.json._
-    def state(value: State): Query = setting("state", value.name)
+    def state(value: TopicState): Query = setting("state", value.name)
 
     def brokerClusterKey(key: ObjectKey): Query = setting(BROKER_CLUSTER_KEY_KEY, ObjectKey.toJsonString(key).parseJson)
 

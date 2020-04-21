@@ -27,7 +27,7 @@ import oharastream.ohara.client.configurator.v0.ObjectApi.ObjectInfo
 import oharastream.ohara.client.configurator.v0.PipelineApi._
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.v0.TopicApi.{TopicInfo, TopicState}
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.client.configurator.v0.{
@@ -108,7 +108,7 @@ private[configurator] object PipelineRoute {
             .exist(data.key)
             .toScala
             .map(
-              try if (_) Some(TopicApi.State.RUNNING) else None
+              try if (_) Some(TopicState.RUNNING) else None
               finally topicAdmin.close()
             )
             .map(_.map(_.name))

@@ -18,7 +18,7 @@ package oharastream.ohara.agent.container
 
 import java.util.Objects
 
-import oharastream.ohara.agent.container.ContainerClient.{ContainerCreator, ContainerVolume, VolumeCreator}
+import oharastream.ohara.agent.container.ContainerClient.{ContainerCreator, VolumeCreator}
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Resource
 import oharastream.ohara.common.annotations.Optional
@@ -169,14 +169,6 @@ trait ContainerClient extends Releasable {
 }
 
 object ContainerClient {
-  /**
-    * @param name volume name
-    * @param driver volume driver. For example, local, nfs or tmpFs.
-    * @param path the path on the driver.
-    * @param nodeName the node hosting this volume
-    */
-  case class ContainerVolume(name: String, driver: String, path: String, nodeName: String)
-
   trait VolumeCreator extends oharastream.ohara.common.pattern.Creator[Future[Unit]] {
     private[this] var name: String                                = CommonUtils.randomString()
     private[this] var path: String                                = _

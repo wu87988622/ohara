@@ -17,8 +17,9 @@
 package oharastream.ohara.agent.k8s
 
 import java.util.Objects
-import oharastream.ohara.agent.container.ContainerClient.{ContainerVolume, VolumeCreator}
-import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
+
+import oharastream.ohara.agent.container.ContainerClient.VolumeCreator
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.k8s.K8SClient.ContainerCreator
 import oharastream.ohara.agent.k8s.K8SJson._
 import oharastream.ohara.client.HttpExecutor

@@ -17,7 +17,7 @@
 package oharastream.ohara.configurator.route
 
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, State}
+import oharastream.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
 import oharastream.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
@@ -385,7 +385,7 @@ class TestTopicRoute extends OharaTest {
     result(topicApi.start(topic.key))
     val res = result(topicApi.get(topic.key))
     res.name shouldBe name
-    res.state.get shouldBe State.RUNNING
+    res.state.get shouldBe TopicState.RUNNING
 
     // stop and delete action sequentially should remove the topic totally
     result(topicApi.stop(topic.key))
@@ -396,7 +396,7 @@ class TestTopicRoute extends OharaTest {
     // pass
     result(topicApi.request.name(name).brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(topic.key))
-    result(topicApi.get(topic.key)).state.get shouldBe State.RUNNING
+    result(topicApi.get(topic.key)).state.get shouldBe TopicState.RUNNING
 
     result(topicApi.stop(topic.key))
     result(topicApi.get(topic.key)).state shouldBe None
@@ -497,7 +497,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.name(name).state(State.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.name(name).state(TopicState.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -510,7 +510,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.group(group).state(State.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.group(group).state(TopicState.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -529,7 +529,7 @@ class TestTopicRoute extends OharaTest {
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.tags(tags).state(State.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.tags(tags).state(TopicState.RUNNING).execute()).size shouldBe 0
   }
 
   @Test
@@ -538,12 +538,12 @@ class TestTopicRoute extends OharaTest {
     (0 until 3).foreach(_ => result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create()))
     result(topicApi.list()).size shouldBe 4
     result(topicApi.start(topic.key))
-    val topics = result(topicApi.query.state(State.RUNNING).execute())
+    val topics = result(topicApi.query.state(TopicState.RUNNING).execute())
     topics.size shouldBe 1
     topics.head.key shouldBe topic.key
 
-    result(topicApi.query.group(CommonUtils.randomString()).state(State.RUNNING).execute()).size shouldBe 0
-    result(topicApi.query.group(topic.group).state(State.RUNNING).execute()).size shouldBe 1
+    result(topicApi.query.group(CommonUtils.randomString()).state(TopicState.RUNNING).execute()).size shouldBe 0
+    result(topicApi.query.group(topic.group).state(TopicState.RUNNING).execute()).size shouldBe 1
     result(topicApi.query.noState.execute()).size shouldBe 3
   }
 
@@ -587,7 +587,7 @@ class TestTopicRoute extends OharaTest {
     result(topicApi.start(topic.key))
     (0 until 3).foreach(_ => result(topicApi.request.tags(tags2).brokerClusterKey(brokerClusterInfo.key).create()))
     result(topicApi.list()).size shouldBe 4
-    result(topicApi.query.state(State.RUNNING).execute()).size shouldBe 1
+    result(topicApi.query.state(TopicState.RUNNING).execute()).size shouldBe 1
     result(topicApi.query.tags(tags1).execute()).size shouldBe 1
     result(topicApi.query.tags(tags2).execute()).size shouldBe 4
     result(topicApi.query.tags(tags2).name(topic.name).execute()).size shouldBe 1

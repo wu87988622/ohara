@@ -20,25 +20,27 @@ import java.net.{URL, URLClassLoader}
 import java.util.Objects
 import java.util.concurrent.{ExecutorService, Executors}
 
-import oharastream.ohara.agent.container.ContainerName
+import com.typesafe.scalalogging.Logger
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import oharastream.ohara.client.configurator.v0.InspectApi.FileContent
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
+import oharastream.ohara.client.configurator.v0.VolumeApi.VolumeState
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.pattern.Builder
-import oharastream.ohara.common.setting.WithDefinitions
-import oharastream.ohara.common.util.Releasable
+import oharastream.ohara.common.setting.{ObjectKey, WithDefinitions}
+import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.RowPartitioner
 import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import oharastream.ohara.stream.Stream
-import com.typesafe.scalalogging.Logger
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.ConfigurationBuilder
 
 import scala.collection.JavaConverters._
+import scala.compat.java8.OptionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -48,6 +50,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Currently, default implementation is based on ssh and docker command. It is simple but slow.
   */
 abstract class ServiceCollie extends Releasable {
+  /**
+    * @return the internal container client
+    */
+  protected def containerClient: ContainerClient
+
   /**
     * create a collie for zookeeper cluster
     * @return zookeeper collie
@@ -189,6 +196,112 @@ abstract class ServiceCollie extends Releasable {
       )
     }
   }
+
+  /**
+    * generate the plain name for ohara volume
+    * @param key volume key
+    * @return plain volume name
+    */
+  private[this] def volumeName(key: ObjectKey): String = s"${key.toPlain}-${CommonUtils.randomString(5)}"
+
+  /**
+    * parse the plain string to ohara key. If the volume is not controlled by ohara, the key is EMPTY.
+    * @param plain plain volume name
+    * @return ohara key or nothing
+    */
+  private[this] def volumeKey(plain: String): Option[ObjectKey] = {
+    val last = plain.lastIndexOf("-")
+    if (last < 0 || last >= plain.length) None
+    else ObjectKey.ofPlain(plain.substring(0, last)).asScala
+  }
+
+  /**
+    * create volumes on specify nodes. If the node has volume already, it is no-op.
+    * @param key volume key
+    * @param nodeNames node names
+    * @param executionContext thread pool
+    * @return async call with unit. Otherwise, a exception is in the call
+    */
+  final def createLocalVolumes(key: ObjectKey, path: String, nodeNames: Set[String])(
+    implicit executionContext: ExecutionContext
+  ): Future[Unit] =
+    Future
+      .traverse(nodeNames)(
+        nodeName =>
+          containerClient.volumeCreator
+            .nodeName(nodeName)
+            .path(path)
+            .name(volumeName(key))
+            .create()
+      )
+      .map(_ => Unit)
+
+  /**
+    * list all volumes
+    * @param executionContext thread pool
+    * @return volumes
+    */
+  final def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ClusterVolume]] =
+    containerClient
+      .volumes()
+      .map(_.flatMap { volume =>
+        volumeKey(volume.name) match {
+          case None => None
+          case Some(key) =>
+            Some(
+              ClusterVolume(
+                group = key.group(),
+                name = key.name(),
+                path = volume.path,
+                driver = volume.driver,
+                state = None,
+                error = None,
+                nodeNames = Set(volume.nodeName)
+              )
+            )
+        }
+      })
+      .map(_.groupBy(_.key).map {
+        case (key, volumes) =>
+          val drivers = volumes.map(_.driver).toSet
+          val paths   = volumes.map(_.driver).toSet
+          val error =
+            if (drivers.size != 1)
+              Some(s"the driver is not consistent. ${volumes.map(v => s"${v.key} has driver:${v.driver}")}")
+            else if (paths.size != 1)
+              Some(s"the path is not consistent. ${volumes.map(v => s"${v.key} has path:${v.path}")}")
+            else None
+          ClusterVolume(
+            group = key.group(),
+            name = key.name(),
+            path = paths.head,
+            driver = drivers.head,
+            state = if (error.isEmpty) Some(VolumeState.RUNNING) else None,
+            error = error,
+            nodeNames = volumes.flatMap(_.nodeNames).toSet
+          )
+      }.toSeq)
+
+  /**
+    * remove volumes from nodes. If the node does not have volume, it is no-op.
+    * @param key volume key
+    * @param executionContext thread pool
+    * @return async call with unit. Otherwise, a exception is in the call
+    */
+  final def removeVolumes(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+    containerClient
+      .volumes()
+      .map(
+        _.filter(
+          v =>
+            volumeKey(v.name) match {
+              case None            => false
+              case Some(volumeKey) => volumeKey == key
+            }
+        )
+      )
+      .flatMap(Future.traverse(_)(v => containerClient.removeVolumes(v.name)))
+      .map(_ => Unit)
 }
 
 object ServiceCollie {
