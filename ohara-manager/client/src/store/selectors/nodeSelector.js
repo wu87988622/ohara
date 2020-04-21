@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import { sortBy, values } from 'lodash';
+import { filter, includes, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 import * as transforms from 'store/transforms';
 
 const getAllEntities = state => state?.entities;
 
 const getNodeEntities = state => state?.entities?.nodes;
+
+const getNamesFormProps = (_, props) => props?.names;
 
 export const getAllNodes = createSelector(
   [getNodeEntities, getAllEntities],
@@ -29,3 +31,11 @@ export const getAllNodes = createSelector(
     return transforms.transformNodes(nodes, allEntities);
   },
 );
+
+export const getNodesByNames = createSelector(
+  [getAllNodes, getNamesFormProps],
+  (allNodes, names) =>
+    filter(allNodes, node => includes(names, node?.hostname)),
+);
+
+export const makeGetNodesByNames = () => getNodesByNames;

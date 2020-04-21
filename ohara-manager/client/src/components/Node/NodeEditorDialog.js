@@ -16,12 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get } from 'lodash';
 import { Form, Field } from 'react-final-form';
 
+import { MODE } from 'const';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import * as hooks from 'hooks';
 import {
   required,
   minNumber,
@@ -29,24 +28,12 @@ import {
   composeValidators,
 } from 'utils/validate';
 
-const NodeEditorDialog = ({ node, isOpen, onClose }) => {
-  const updateNode = hooks.useUpdateNodeAction();
+const parsePort = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
 
-  const hostname = get(node, 'hostname', '');
-  const port = get(node, 'port', '');
-  const user = get(node, 'user', '');
-  const password = get(node, 'password', '');
-
-  const parse = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
-
-  const handleSubmit = values => {
-    updateNode(values);
-    onClose();
-  };
-
+const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
   return (
     <Form
-      onSubmit={handleSubmit}
+      onSubmit={onConfirm}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
@@ -71,52 +58,55 @@ const NodeEditorDialog = ({ node, isOpen, onClose }) => {
                 helperText="hostname of the node"
                 component={InputField}
                 disabled
-                defaultValue={hostname}
+                defaultValue={node?.hostname}
               />
-              <Field
-                name="port"
-                label="Port"
-                placeholder="22"
-                type="number"
-                margin="normal"
-                helperText="SSH port of the node"
-                component={InputField}
-                parse={parse}
-                defaultValue={port}
-                validate={composeValidators(
-                  required,
-                  minNumber(1),
-                  maxNumber(65535),
-                )}
-                inputProps={{
-                  min: 1,
-                  max: 65535,
-                }}
-              />
-              <Field
-                name="user"
-                label="User"
-                placeholder="admin"
-                margin="normal"
-                helperText="SSH username"
-                validate={required}
-                component={InputField}
-                defaultValue={user}
-                fullWidth
-              />
-
-              <Field
-                name="password"
-                label="Password"
-                type="password"
-                margin="normal"
-                placeholder="password"
-                helperText="SSH password"
-                validate={required}
-                component={InputField}
-                defaultValue={password}
-                fullWidth
-              />
+              {mode === MODE.DOCKER && (
+                <>
+                  <Field
+                    name="port"
+                    label="Port"
+                    placeholder="22"
+                    type="number"
+                    margin="normal"
+                    helperText="SSH port of the node"
+                    component={InputField}
+                    parse={parsePort}
+                    defaultValue={node?.port}
+                    validate={composeValidators(
+                      required,
+                      minNumber(1),
+                      maxNumber(65535),
+                    )}
+                    inputProps={{
+                      min: 1,
+                      max: 65535,
+                    }}
+                  />
+                  <Field
+                    name="user"
+                    label="User"
+                    placeholder="admin"
+                    margin="normal"
+                    helperText="SSH username"
+                    validate={required}
+                    component={InputField}
+                    defaultValue={node?.user}
+                    fullWidth
+                  />
+                  <Field
+                    name="password"
+                    label="Password"
+                    type="password"
+                    margin="normal"
+                    placeholder="password"
+                    helperText="SSH password"
+                    validate={required}
+                    component={InputField}
+                    defaultValue={node?.password}
+                    fullWidth
+                  />
+                </>
+              )}
             </form>
           </Dialog>
         );
@@ -127,6 +117,7 @@ const NodeEditorDialog = ({ node, isOpen, onClose }) => {
 
 NodeEditorDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
+  mode: PropTypes.string,
   node: PropTypes.shape({
     hostname: PropTypes.string,
     port: PropTypes.number,
@@ -134,9 +125,12 @@ NodeEditorDialog.propTypes = {
     password: PropTypes.string,
   }),
   onClose: PropTypes.func,
+  onConfirm: PropTypes.func.isRequired,
 };
 
 NodeEditorDialog.defaultProps = {
+  mode: MODE.K8S,
+  node: null,
   onClose: () => {},
 };
 

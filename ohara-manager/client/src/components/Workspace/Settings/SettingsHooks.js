@@ -34,6 +34,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
+import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 
 /*
     Available props for component
@@ -249,6 +250,9 @@ export const useConfig = () => {
           icon: <StorageIcon />,
           title: 'Nodes in this workspace',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <WorkspaceNodesPage />,
+          },
         },
       ],
     },

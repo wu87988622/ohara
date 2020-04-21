@@ -21,15 +21,16 @@ import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
   content: node =>
-    `Are you sure you want to delete the node ${node?.hostname} ? This action cannot be undone!`,
-  title: 'Delete node?',
+    `Are you sure you want to remove the node ${node?.hostname}?`,
+  title: 'Remove node?',
 };
 
-function NodeDeleteDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
+function NodeRemoveDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
   const options = { ...defaultOptions, ...restProps.options };
 
   return (
     <DeleteDialog
+      confirmText="REMOVE"
       content={
         isFunction(options?.content) ? options.content(node) : options?.content
       }
@@ -41,7 +42,7 @@ function NodeDeleteDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
   );
 }
 
-NodeDeleteDialog.propTypes = {
+NodeRemoveDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   node: PropTypes.shape({
     hostname: PropTypes.string,
@@ -54,10 +55,10 @@ NodeDeleteDialog.propTypes = {
   }),
 };
 
-NodeDeleteDialog.defaultProps = {
+NodeRemoveDialog.defaultProps = {
   node: null,
   onClose: () => {},
   options: defaultOptions,
 };
 
-export default NodeDeleteDialog;
+export default NodeRemoveDialog;

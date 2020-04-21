@@ -24,7 +24,7 @@ import * as context from 'context';
 import * as hooks from 'hooks';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
-import NodeSelectorDialog from 'components/Node/NodeSelectorDialog';
+import { NodeSelectorDialog } from 'components/Node';
 
 const renderFromHelper = ({ touched, error }) => {
   if (!(touched && error)) {
@@ -100,7 +100,7 @@ const NodesField = props => {
       {renderFromHelper({ touched, error })}
 
       <NodeSelectorDialog
-        dialogTitle="Select nodes in the workspace"
+        dialogTitle="Select nodes"
         isOpen={isSelectorDialogOpen}
         mode={configuratorInfo?.mode}
         nodes={allNodes}

@@ -21,6 +21,7 @@ import {
   flatMap,
   filter,
   find,
+  isFunction,
   map,
   round,
   some,
@@ -33,14 +34,39 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-import AddBox from '@material-ui/icons/AddBox';
 import Typography from '@material-ui/core/Typography';
+
+import AddIcon from '@material-ui/icons/Add';
+import AddBoxIcon from '@material-ui/icons/AddBox';
+import ClearIcon from '@material-ui/icons/Clear';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 
 import Table from 'components/common/Table/MuiTable';
-import { KIND } from 'const';
+import { KIND, MODE } from 'const';
+import NodeCreateDialog from './NodeCreateDialog';
+import NodeDeleteDialog from './NodeDeleteDialog';
+import NodeDetailDialog from './NodeDetailDialog';
+import NodeEditorDialog from './NodeEditorDialog';
+import NodeRemoveDialog from './NodeRemoveDialog';
+
+const defaultOptions = {
+  mode: MODE.K8S,
+  onCreateIconClick: null,
+  onDeleteIconClick: null,
+  onDetailIconClick: null,
+  onEditorIconClick: null,
+  selection: false,
+  selectedNodes: [],
+  showAddIcon: false,
+  showCreateIcon: true,
+  showDeleteIcon: true,
+  showDetailIcon: true,
+  showEditorIcon: true,
+  showRemoveIcon: false,
+  showTitle: true,
+};
 
 const getUnionResourceNames = nodes =>
   uniq(flatMap(nodes, node => map(node.resources, resource => resource.name)));
@@ -48,21 +74,93 @@ const getUnionResourceNames = nodes =>
 function NodeTable(props) {
   const {
     nodes,
-    onCreateClick,
-    onDeleteClick,
-    onDetailClick,
-    onEditorClick,
+    onCreate,
+    onDelete,
+    onUpdate,
+    onRemove,
     onSelectionChange,
     title,
-    selection,
-    selectedNodes,
-    showCreateIcon,
-    showDeleteIcon,
-    showDetailIcon,
-    showEditorIcon,
   } = props;
 
-  const [selected, setSelected] = useState(selectedNodes);
+  const options = { ...defaultOptions, ...props?.options };
+
+  const [activeNode, setActiveNode] = useState();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditorDialogOpen, setIsEditorDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [selected, setSelected] = useState(options?.selectedNodes || []);
+
+  const handleAddIconClick = () => {
+    if (isFunction(options?.onAddIconClick)) {
+      options.onAddIconClick();
+    }
+  };
+
+  const handleCreateIconClick = () => {
+    if (isFunction(options?.onCreateIconClick)) {
+      options.onCreateIconClick();
+    } else {
+      setIsCreateDialogOpen(true);
+    }
+  };
+
+  const handleDeleteIconClick = node => {
+    if (isFunction(options?.onDeleteIconClick)) {
+      options.onDeleteIconClick(node);
+    } else {
+      setIsDeleteDialogOpen(true);
+      setActiveNode(node);
+    }
+  };
+
+  const handleDetailIconClick = node => {
+    if (isFunction(options?.onDetailIconClick)) {
+      options.onDetailIconClick(node);
+    } else {
+      setIsDetailDialogOpen(true);
+      setActiveNode(node);
+    }
+  };
+
+  const handleEditorIconClick = node => {
+    if (isFunction(options?.onEditorIconClick)) {
+      options.onEditorIconClick(node);
+    } else {
+      setIsEditorDialogOpen(true);
+      setActiveNode(node);
+    }
+  };
+
+  const handleRemoveIconClick = node => {
+    if (isFunction(options?.onRemoveIconClick)) {
+      options.onRemoveIconClick(node);
+    } else {
+      setIsRemoveDialogOpen(true);
+      setActiveNode(node);
+    }
+  };
+
+  const handleCreateDialogConfirm = nodeToCreate => {
+    onCreate(nodeToCreate);
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleDeleteDialogConfirm = nodeToDelete => {
+    onDelete(nodeToDelete);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleEditorDialogConfirm = nodeToUpdate => {
+    onUpdate(nodeToUpdate);
+    setIsEditorDialogOpen(false);
+  };
+
+  const handleRemoveDialogConfirm = nodeToRemove => {
+    onRemove(nodeToRemove);
+    setIsRemoveDialogOpen(false);
+  };
 
   const handleRowSelected = (event, dataClicked) => {
     if (dataClicked) {
@@ -79,7 +177,7 @@ function NodeTable(props) {
     event.stopPropagation();
   };
 
-  const renderActions = () => {
+  const renderRowActions = () => {
     return {
       title: 'Actions',
       cellStyle: { textAlign: 'right' },
@@ -87,37 +185,48 @@ function NodeTable(props) {
       sorting: false,
       render: node => (
         <>
-          {showDetailIcon && (
+          {options?.showDetailIcon && (
             <Tooltip title="View node">
               <IconButton
                 data-testid={`view-node-${node.hostname}`}
                 onClick={() => {
-                  onDetailClick(node);
+                  handleDetailIconClick(node);
                 }}
               >
                 <VisibilityIcon />
               </IconButton>
             </Tooltip>
           )}
-          {showEditorIcon && (
+          {options?.showEditorIcon && (
             <Tooltip title="Edit node">
               <IconButton
                 onClick={() => {
-                  onEditorClick(node);
+                  handleEditorIconClick(node);
                 }}
               >
                 <EditIcon />
               </IconButton>
             </Tooltip>
           )}
-          {showDeleteIcon && (
+          {options?.showDeleteIcon && (
             <Tooltip title="Delete node">
               <IconButton
                 onClick={() => {
-                  onDeleteClick(node);
+                  handleDeleteIconClick(node);
                 }}
               >
                 <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {options?.showRemoveIcon && (
+            <Tooltip title="Remove node">
+              <IconButton
+                onClick={() => {
+                  handleRemoveIconClick(node);
+                }}
+              >
+                <ClearIcon />
               </IconButton>
             </Tooltip>
           )}
@@ -137,7 +246,7 @@ function NodeTable(props) {
         return (
           <>
             <Typography variant="subtitle2">
-              {value} {unit}
+              {round(value, 1)} {unit}
             </Typography>
             <Tooltip title={`${round(used * 100, 1)} %`}>
               <LinearProgress
@@ -182,7 +291,7 @@ function NodeTable(props) {
               component="button"
               variant="h6"
               onClick={event => {
-                onDetailClick(node);
+                handleDetailIconClick(node);
                 event.stopPropagation();
               }}
             >
@@ -194,44 +303,98 @@ function NodeTable(props) {
     };
   };
 
-  const renderColumns = [
-    { title: 'Name', field: 'hostname' },
-    ...renderResourceColumns(nodes),
-    renderServiceColumn(),
-    {
-      title: 'State',
-      field: 'state',
-      render: node => capitalize(node.state),
-    },
-  ];
+  const renderActions = () => {
+    return [
+      {
+        icon: () => <AddIcon />,
+        tooltip: 'Add Node',
+        hidden: !options?.showAddIcon,
+        isFreeAction: true,
+        onClick: handleAddIconClick,
+      },
+      {
+        icon: () => <AddBoxIcon />,
+        tooltip: 'Create Node',
+        hidden: !options?.showCreateIcon,
+        isFreeAction: true,
+        onClick: handleCreateIconClick,
+      },
+    ];
+  };
 
-  if (selection) {
-    renderColumns.unshift(renderSelectionColumn());
-  }
+  const renderColumns = () => {
+    const columns = [
+      { title: 'Name', field: 'hostname' },
+      ...renderResourceColumns(nodes),
+      renderServiceColumn(),
+      {
+        title: 'State',
+        field: 'state',
+        render: node => capitalize(node.state),
+      },
+    ];
 
-  if (showDeleteIcon || showDetailIcon || showEditorIcon) {
-    renderColumns.push(renderActions());
-  }
+    if (options?.selection) {
+      columns.unshift(renderSelectionColumn());
+    }
+
+    if (
+      options?.showDeleteIcon ||
+      options?.showDetailIcon ||
+      options?.showEditorIcon ||
+      options?.showRemoveIcon
+    ) {
+      columns.push(renderRowActions());
+    }
+
+    return columns;
+  };
 
   return (
-    <Table
-      title={title}
-      actions={[
-        {
-          icon: () => <AddBox />,
-          tooltip: 'Add Node',
-          hidden: !showCreateIcon,
-          isFreeAction: true,
-          onClick: onCreateClick,
-        },
-      ]}
-      columns={renderColumns}
-      data={nodes}
-      options={{
-        paging: false,
-        search: true,
-      }}
-    />
+    <>
+      <Table
+        title={title}
+        actions={renderActions()}
+        columns={renderColumns()}
+        data={nodes}
+        options={{
+          paging: false,
+          search: true,
+          showTitle: options?.showTitle,
+        }}
+      />
+      <NodeCreateDialog
+        isOpen={isCreateDialogOpen}
+        mode={options?.mode}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onConfirm={handleCreateDialogConfirm}
+      />
+      <NodeDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        node={activeNode}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteDialogConfirm}
+      />
+      <NodeDetailDialog
+        isOpen={isDetailDialogOpen}
+        mode={options?.mode}
+        node={activeNode}
+        onClose={() => setIsDetailDialogOpen(false)}
+      />
+      <NodeEditorDialog
+        isOpen={isEditorDialogOpen}
+        mode={options?.mode}
+        node={activeNode}
+        onClose={() => setIsEditorDialogOpen(false)}
+        onConfirm={handleEditorDialogConfirm}
+      />
+      <NodeRemoveDialog
+        isOpen={isRemoveDialogOpen}
+        node={activeNode}
+        onClose={() => setIsRemoveDialogOpen(false)}
+        onConfirm={handleRemoveDialogConfirm}
+      />
+    </>
   );
 }
 
@@ -256,34 +419,41 @@ NodeTable.propTypes = {
       ),
     }),
   ),
-  onCreateClick: PropTypes.func,
-  onDeleteClick: PropTypes.func,
-  onDetailClick: PropTypes.func,
-  onEditorClick: PropTypes.func,
+  onCreate: PropTypes.func,
+  onDelete: PropTypes.func,
+  onUpdate: PropTypes.func,
+  onRemove: PropTypes.func,
   onSelectionChange: PropTypes.func,
+  options: PropTypes.shape({
+    mode: PropTypes.string,
+    onAddIconClick: PropTypes.func,
+    onCreateIconClick: PropTypes.func,
+    onDeleteIconClick: PropTypes.func,
+    onDetailIconClick: PropTypes.func,
+    onEditorIconClick: PropTypes.func,
+    onRemoveIconClick: PropTypes.func,
+    selection: PropTypes.bool,
+    selectedNodes: PropTypes.array,
+    showAddIcon: PropTypes.bool,
+    showCreateIcon: PropTypes.bool,
+    showDeleteIcon: PropTypes.bool,
+    showDetailIcon: PropTypes.bool,
+    showEditorIcon: PropTypes.bool,
+    showRemoveIcon: PropTypes.bool,
+    showTitle: PropTypes.bool,
+  }),
   title: PropTypes.string,
-  selection: PropTypes.bool,
-  selectedNodes: PropTypes.array,
-  showCreateIcon: PropTypes.bool,
-  showDeleteIcon: PropTypes.bool,
-  showDetailIcon: PropTypes.bool,
-  showEditorIcon: PropTypes.bool,
 };
 
 NodeTable.defaultProps = {
   nodes: [],
-  onCreateClick: () => {},
-  onDeleteClick: () => {},
-  onDetailClick: () => {},
-  onEditorClick: () => {},
+  onCreate: () => {},
+  onDelete: () => {},
+  onUpdate: () => {},
+  onRemove: () => {},
   onSelectionChange: () => {},
+  options: defaultOptions,
   title: 'Nodes',
-  selection: false,
-  selectedNodes: [],
-  showCreateIcon: true,
-  showDeleteIcon: true,
-  showDetailIcon: true,
-  showEditorIcon: true,
 };
 
 export default NodeTable;

@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import { noop } from 'lodash';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
@@ -29,21 +28,16 @@ import {
   maxNumber,
   composeValidators,
 } from 'utils/validate';
-import * as hooks from 'hooks';
 
-const NodeCreateDialog = ({ isOpen, onClose, mode }) => {
-  const createNode = hooks.useCreateNodeAction();
-
+const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
   const handleSubmit = values => {
     const { hostname, port, ...rest } = values;
-
-    const params = {
+    const finalValues = {
       port: Number(port),
       hostname,
       ...rest,
     };
-
-    createNode(params);
+    onConfirm(finalValues);
     onClose();
   };
 
@@ -133,14 +127,14 @@ const NodeCreateDialog = ({ isOpen, onClose, mode }) => {
 
 NodeCreateDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  mode: PropTypes.string.isRequired,
+  mode: PropTypes.string,
+  onClose: PropTypes.func,
+  onConfirm: PropTypes.func.isRequired,
 };
 
 NodeCreateDialog.defaultProps = {
-  isOpen: false,
-  onClose: noop,
   mode: MODE.K8S,
+  onClose: () => {},
 };
 
 export default NodeCreateDialog;

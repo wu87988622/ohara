@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
@@ -39,6 +39,18 @@ export const useAllNodes = () => {
   }, [fetchNodes, isLoaded]);
 
   return useSelector(state => selectors.getAllNodes(state));
+};
+
+export const useNodesInWorkspace = () => {
+  const getNodesByNames = useMemo(selectors.makeGetNodesByNames, []);
+  const workspace = hooks.useWorkspace();
+  const { nodeNames } = workspace;
+  return useSelector(
+    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+      getNodesByNames,
+      nodeNames,
+    ]),
+  );
 };
 
 export const useCreateNodeAction = () => {

@@ -31,7 +31,7 @@ import * as hooks from 'hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
-import NodeListDialog from 'components/Node/NodeListDialog';
+import NodeListDialog from './NodeListDialog';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
@@ -141,12 +141,10 @@ const AppBar = () => {
         </div>
       </header>
       <NodeListDialog
-        dialogTitle="All nodes"
         isOpen={isNodeListDialogOpen}
         mode={configuratorInfo?.mode}
         nodes={allNodes}
         onClose={() => setIsNodeListDialogOpen(false)}
-        tableTitle="All nodes"
       />
     </StyledAppBar>
   );

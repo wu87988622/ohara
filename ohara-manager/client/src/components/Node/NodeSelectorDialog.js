@@ -20,9 +20,8 @@ import { isEqual, sortedUniq } from 'lodash';
 
 import { Dialog } from 'components/common/Dialog';
 import { MODE } from 'const';
+import * as hooks from 'hooks';
 import NodeTable from './NodeTable';
-import NodeCreateDialog from './NodeCreateDialog';
-import NodeDetailDialog from './NodeDetailDialog';
 
 const NodeSelectorDialog = React.forwardRef((props, ref) => {
   const {
@@ -34,23 +33,16 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
     onConfirm,
     tableTitle,
   } = props;
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const createNode = hooks.useCreateNodeAction();
   const [selectedNodes, setSelectedNodes] = useState(props.selectedNodes);
-  const [activeNode, setActiveNode] = useState();
 
   const saveable = isEqual(
     sortedUniq(props.selectedNodes),
     sortedUniq(selectedNodes),
   );
 
-  const handleCreateClick = () => {
-    setIsCreateDialogOpen(true);
-  };
-
-  const handleDetailClick = node => {
-    setIsDetailDialogOpen(true);
-    setActiveNode(node);
+  const handleCreate = nodeToCreate => {
+    createNode(nodeToCreate);
   };
 
   const handleSelectionChange = selectNodes => {
@@ -82,28 +74,16 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
     >
       <NodeTable
         nodes={nodes}
-        onCreateClick={handleCreateClick}
-        onDetailClick={handleDetailClick}
+        onCreate={handleCreate}
         onSelectionChange={handleSelectionChange}
+        options={{
+          selectedNodes,
+          selection: true,
+          showCreateIcon: mode !== MODE.K8S,
+          showDeleteIcon: false,
+          showEditorIcon: false,
+        }}
         title={tableTitle}
-        selectedNodes={selectedNodes}
-        selection={true}
-        showCreateIcon={mode !== MODE.K8S}
-        showDeleteIcon={false}
-        showEditorIcon={false}
-      />
-
-      <NodeCreateDialog
-        isOpen={isCreateDialogOpen}
-        mode={mode}
-        onClose={() => setIsCreateDialogOpen(false)}
-      />
-
-      <NodeDetailDialog
-        isOpen={isDetailDialogOpen}
-        mode={mode}
-        node={activeNode}
-        onClose={() => setIsDetailDialogOpen(false)}
       />
     </Dialog>
   );
