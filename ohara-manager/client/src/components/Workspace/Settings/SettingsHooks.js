@@ -37,6 +37,7 @@ import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import BrokerNodesPage from './pages/BrokerNodesPage';
 import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
+import WorkspaceFilesPage from './pages/WorkspaceFilesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 
 /*
@@ -268,6 +269,9 @@ export const useConfig = () => {
           icon: <FolderOpenIcon />,
           title: 'Files in this workspace',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <WorkspaceFilesPage />,
+          },
         },
       ],
     },
