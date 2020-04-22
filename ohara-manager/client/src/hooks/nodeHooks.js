@@ -65,6 +65,18 @@ export const useNodesInWorker = () => {
   );
 };
 
+export const useNodesInBroker = () => {
+  const getNodesByNames = useMemo(selectors.makeGetNodesByNames, []);
+  const broker = hooks.useBroker();
+  const { nodeNames } = broker;
+  return useSelector(
+    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+      getNodesByNames,
+      nodeNames,
+    ]),
+  );
+};
+
 export const useCreateNodeAction = () => {
   const dispatch = useDispatch();
   return function(values) {

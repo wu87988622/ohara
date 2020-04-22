@@ -34,6 +34,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
+import BrokerNodesPage from './pages/BrokerNodesPage';
 import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
@@ -181,11 +182,12 @@ export const useConfig = () => {
     {
       heading: 'Zookeeper',
       components: [
-        {
-          icon: <TuneIcon />,
-          title: 'Zookeeper settings',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
-        },
+        // Feature is disabled because it's not implemented in 0.10
+        // {
+        //   icon: <TuneIcon />,
+        //   title: 'Zookeeper settings',
+        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        // },
         {
           icon: <StorageIcon />,
           title: 'Nodes running the zookeeper',
@@ -196,26 +198,31 @@ export const useConfig = () => {
     {
       heading: 'Broker',
       components: [
-        {
-          icon: <TuneIcon />,
-          title: 'Broker settings',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
-        },
+        // Feature is disabled because it's not implemented in 0.10
+        // {
+        //   icon: <TuneIcon />,
+        //   title: 'Broker settings',
+        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        // },
         {
           icon: <StorageIcon />,
           title: 'Nodes running the broker',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <BrokerNodesPage />,
+          },
         },
       ],
     },
     {
       heading: 'Worker',
       components: [
-        {
-          icon: <TuneIcon />,
-          title: 'Worker settings',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
-        },
+        // Feature is disabled because it's not implemented in 0.10
+        // {
+        //   icon: <TuneIcon />,
+        //   title: 'Worker settings',
+        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        // },
         {
           icon: <StorageIcon />,
           title: 'Nodes running the worker',
@@ -267,28 +274,29 @@ export const useConfig = () => {
     {
       heading: 'Danger Zone',
       components: [
-        {
-          icon: <PowerSettingsNewIcon />,
-          title: 'Restart this worker',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
-          componentProps: {
-            children: 'This will restart the worker.',
-            title: 'Are you absolutely sure?',
-            confirmText: 'Restart',
-            handleConfirm: () => {},
-          },
-        },
-        {
-          icon: <PowerSettingsNewIcon />,
-          title: 'Restart this broker',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
-          componentProps: {
-            children: 'This will restart the broker and worker.',
-            title: 'Are you absolutely sure?',
-            confirmText: 'Restart',
-            handleConfirm: () => {},
-          },
-        },
+        // Feature is disabled because it's not implemented in 0.10
+        // {
+        //   icon: <PowerSettingsNewIcon />,
+        //   title: 'Restart this worker',
+        //   type: SETTINGS_COMPONENT_TYPES.DIALOG,
+        //   componentProps: {
+        //     children: 'This will restart the worker.',
+        //     title: 'Are you absolutely sure?',
+        //     confirmText: 'Restart',
+        //     handleConfirm: () => {},
+        //   },
+        // },
+        // {
+        //   icon: <PowerSettingsNewIcon />,
+        //   title: 'Restart this broker',
+        //   type: SETTINGS_COMPONENT_TYPES.DIALOG,
+        //   componentProps: {
+        //     children: 'This will restart the broker and worker.',
+        //     title: 'Are you absolutely sure?',
+        //     confirmText: 'Restart',
+        //     handleConfirm: () => {},
+        //   },
+        // },
         {
           icon: <PowerSettingsNewIcon />,
           title: 'Restart this workspace',
