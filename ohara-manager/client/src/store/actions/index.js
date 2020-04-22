@@ -24,6 +24,7 @@ export * from './fileActions';
 export * from './introActions';
 export * from './nodeActions';
 export * from './pipelineActions';
+export * from './shabondiActions';
 export * from './streamActions';
 export * from './snackbarActions';
 export * from './topicActions';

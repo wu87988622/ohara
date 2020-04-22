@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './connectorHooks';
-export * from './createWorkspaceHooks';
-export * from './devToolHooks';
-export * from './eventLogHooks';
-export * from './fileHooks';
-export * from './introHooks';
-export * from './nodeHooks';
-export * from './pipelineHooks';
-export * from './shabondiHooks';
-export * from './streamHooks';
-export * from './reduxFormHooks';
-export * from './snackbarHooks';
-export * from './topicHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+const getEntities = state => state?.entities?.shabondies;
+const getIdFromProps = (_, props) => props?.id;
+const getGroupFromProps = (_, props) => props?.group;
+
+export const makeGetShabondiById = () =>
+  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
+
+export const makeGetAllShabondisByGroup = () =>
+  createSelector([getEntities, getGroupFromProps], (entities, group) =>
+    _.values(entities).filter(shabondi => shabondi.group === group),
+  );

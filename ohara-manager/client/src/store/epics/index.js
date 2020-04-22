@@ -24,6 +24,7 @@ import eventLogEpics from './eventLog';
 import fileEpics from './file';
 import nodeEpics from './nodeEpics';
 import pipelineEpics from './pipeline';
+import shabondiEpics from './shabondi';
 import streamEpics from './stream';
 import snackbarEpics from './snackbarEpics';
 import topicEpics from './topic';
@@ -39,6 +40,7 @@ export default combineEpics(
   eventLogEpics,
   fileEpics,
   nodeEpics,
+  shabondiEpics,
   streamEpics,
   pipelineEpics,
   snackbarEpics,

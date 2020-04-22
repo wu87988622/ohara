@@ -24,6 +24,7 @@ import files from './files';
 import infos from './infos';
 import nodes from './nodes';
 import pipelines from './pipelines';
+import shabondis from './shabondis';
 import streams from './streams';
 import topics from './topics';
 import workers from './workers';
@@ -56,6 +57,7 @@ export default combineReducers({
   infos,
   nodes,
   pipelines,
+  shabondis,
   streams,
   topics,
   workers,

@@ -22,6 +22,7 @@ export * from './fileSelector';
 export * from './infoSelector';
 export * from './nodeSelector';
 export * from './pipelineSelector';
+export * from './shabondiSelector';
 export * from './streamSelector';
 export * from './topicSelector';
 export * from './workerSelector';

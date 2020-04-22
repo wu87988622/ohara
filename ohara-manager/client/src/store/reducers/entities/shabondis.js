@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-export * from './appHooks';
-export * from './brokerHooks';
-export * from './connectorHooks';
-export * from './createWorkspaceHooks';
-export * from './devToolHooks';
-export * from './eventLogHooks';
-export * from './fileHooks';
-export * from './introHooks';
-export * from './nodeHooks';
-export * from './pipelineHooks';
-export * from './shabondiHooks';
-export * from './streamHooks';
-export * from './reduxFormHooks';
-export * from './snackbarHooks';
-export * from './topicHooks';
-export * from './workerHooks';
-export * from './workspaceHooks';
-export * from './zookeeperHooks';
+import { omit } from 'lodash';
+import * as actions from 'store/actions';
+import { ENTITY_TYPE } from 'store/schema';
+import { entity } from './index';
+
+export default function reducer(state = {}, action) {
+  switch (action.type) {
+    case actions.deleteShabondi.SUCCESS:
+      return omit(state, action.payload);
+    default:
+      return entity(ENTITY_TYPE.shabondis)(state, action);
+  }
+}
