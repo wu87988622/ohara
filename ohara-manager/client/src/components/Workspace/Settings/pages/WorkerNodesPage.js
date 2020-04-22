@@ -118,8 +118,8 @@ function WorkerNodesPage() {
           showDeleteIcon: false,
           showEditorIcon: false,
           showRemoveIcon: true,
-          showTitle: false,
         }}
+        title="Worker nodes"
       />
 
       <NodeSelectorDialog

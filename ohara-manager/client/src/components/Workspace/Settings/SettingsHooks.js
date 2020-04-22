@@ -36,6 +36,7 @@ import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
 import WorkspaceFilesPage from './pages/WorkspaceFilesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
+import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
 
 /*
     Available props for component
@@ -157,6 +158,9 @@ export const useConfig = ({ openDeleteProgressDialog }) => {
           icon: <StorageIcon />,
           title: 'Nodes running the zookeeper',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <ZookeeperNodesPage />,
+          },
         },
       ],
     },

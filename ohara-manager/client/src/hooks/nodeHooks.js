@@ -77,6 +77,18 @@ export const useNodesInBroker = () => {
   );
 };
 
+export const useNodesInZookeeper = () => {
+  const getNodesByNames = useMemo(selectors.makeGetNodesByNames, []);
+  const zookeeper = hooks.useZookeeper();
+  const { nodeNames } = zookeeper;
+  return useSelector(
+    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+      getNodesByNames,
+      nodeNames,
+    ]),
+  );
+};
+
 export const useCreateNodeAction = () => {
   const dispatch = useDispatch();
   return function(values) {

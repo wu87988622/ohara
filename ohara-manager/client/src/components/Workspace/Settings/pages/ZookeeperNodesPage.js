@@ -21,32 +21,32 @@ import { NodeSelectorDialog, NodeTable } from 'components/Node';
 import * as context from 'context';
 import * as hooks from 'hooks';
 
-function BrokerNodesPage() {
+function ZookeeperNodesPage() {
   const { data: configuratorInfo } = context.useConfiguratorState();
   const workspace = hooks.useWorkspace();
-  const nodesInBroker = hooks.useNodesInBroker();
+  const nodesInZookeeper = hooks.useNodesInZookeeper();
   const nodesInWorkspace = hooks.useNodesInWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
 
-  const brokerNodesInWorkspace = workspace?.broker?.nodeNames
+  const zookeeperNodesInWorkspace = workspace?.zookeeper?.nodeNames
     ? filter(
-        map(workspace.broker.nodeNames, nodeName =>
+        map(workspace.zookeeper.nodeNames, nodeName =>
           find(nodesInWorkspace, node => node.hostname === nodeName),
         ),
       )
-    : nodesInBroker;
+    : nodesInZookeeper;
 
   const handleAddIconClick = () => {
     setIsSelectorDialogOpen(true);
   };
 
   const handleUndoIconClick = nodeClicked => {
-    const currentIndex = workspace?.broker?.nodeNames?.indexOf(
+    const currentIndex = workspace?.zookeeper?.nodeNames?.indexOf(
       nodeClicked?.hostname,
     );
-    const newNodeNames = [...workspace?.broker?.nodeNames];
+    const newNodeNames = [...workspace?.zookeeper?.nodeNames];
 
     if (currentIndex === -1) {
       newNodeNames.push(nodeClicked?.hostname);
@@ -55,8 +55,8 @@ function BrokerNodesPage() {
     }
     updateWorkspace({
       ...workspace,
-      broker: {
-        ...workspace?.broker,
+      zookeeper: {
+        ...workspace?.zookeeper,
         nodeNames: newNodeNames,
       },
     });
@@ -69,19 +69,19 @@ function BrokerNodesPage() {
 
   const handleRemove = nodeToRemove => {
     const shouldBeRemoved = some(
-      brokerNodesInWorkspace,
+      zookeeperNodesInWorkspace,
       n => n.hostname === nodeToRemove?.hostname,
     );
 
     if (shouldBeRemoved) {
       const newNodes = reject(
-        brokerNodesInWorkspace,
+        zookeeperNodesInWorkspace,
         n => n.hostname === nodeToRemove.hostname,
       );
       updateWorkspace({
         ...workspace,
-        broker: {
-          ...workspace?.broker,
+        zookeeper: {
+          ...workspace?.zookeeper,
           nodeNames: map(newNodes, n => n.hostname),
         },
       });
@@ -92,8 +92,8 @@ function BrokerNodesPage() {
   const handleSelectorDialogConfirm = selectedNodes => {
     updateWorkspace({
       ...workspace,
-      broker: {
-        ...workspace?.broker,
+      zookeeper: {
+        ...workspace?.zookeeper,
         nodeNames: map(selectedNodes, n => n.hostname),
       },
     });
@@ -103,11 +103,11 @@ function BrokerNodesPage() {
   return (
     <>
       <NodeTable
-        nodes={brokerNodesInWorkspace}
+        nodes={zookeeperNodesInWorkspace}
         onRemove={handleRemove}
         options={{
           comparison: true,
-          comparedNodes: nodesInBroker,
+          comparedNodes: nodesInZookeeper,
           mode: configuratorInfo?.mode,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
@@ -117,7 +117,7 @@ function BrokerNodesPage() {
           showEditorIcon: false,
           showRemoveIcon: true,
         }}
-        title="Broker nodes"
+        title="Zookeeper nodes"
       />
 
       <NodeSelectorDialog
@@ -126,11 +126,11 @@ function BrokerNodesPage() {
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
         ref={selectorDialogRef}
-        selectedNodes={brokerNodesInWorkspace}
+        selectedNodes={zookeeperNodesInWorkspace}
         tableTitle="Workspace nodes"
       />
     </>
   );
 }
 
-export default BrokerNodesPage;
+export default ZookeeperNodesPage;

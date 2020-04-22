@@ -74,8 +74,8 @@ function WorkspaceNodesPage() {
           showDeleteIcon: false,
           showEditorIcon: false,
           showRemoveIcon: true,
-          showTitle: false,
         }}
+        title="Workspace nodes"
       />
 
       <NodeSelectorDialog
