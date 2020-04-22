@@ -34,6 +34,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
+import WorkerNodesPage from './pages/WorkerNodesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 
 /*
@@ -225,6 +226,9 @@ export const useConfig = () => {
           icon: <StorageIcon />,
           title: 'Nodes running the worker',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <WorkerNodesPage />,
+          },
         },
         {
           icon: <UnarchiveIcon />,

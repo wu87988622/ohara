@@ -53,6 +53,18 @@ export const useNodesInWorkspace = () => {
   );
 };
 
+export const useNodesInWorker = () => {
+  const getNodesByNames = useMemo(selectors.makeGetNodesByNames, []);
+  const worker = hooks.useWorker();
+  const { nodeNames } = worker;
+  return useSelector(
+    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+      getNodesByNames,
+      nodeNames,
+    ]),
+  );
+};
+
 export const useCreateNodeAction = () => {
   const dispatch = useDispatch();
   return function(values) {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { values } from 'lodash';
 import { GROUP, SERVICE_NAME } from 'const';
 import { generateState } from 'utils/test';
 import { transformNode, transformNodes } from '../nodeTransform';
@@ -51,8 +52,13 @@ test('transform node', () => {
     ],
   };
   const node = testData.entities.nodes.node1;
-  const allEntities = testData.entities;
-  const received = transformNode(node, allEntities);
+  const clusters = {
+    brokers: values(testData.entities.brokers),
+    workers: values(testData.entities.workers),
+    streams: values(testData.entities.streams),
+    zookeepers: values(testData.entities.zookeepers),
+  };
+  const received = transformNode(node, clusters);
   expect(received).toMatchObject(expected);
 });
 
@@ -63,7 +69,12 @@ test('nodeTransform.transformNodes', () => {
   });
 
   const nodes = [testData.entities.nodes.node1, testData.entities.nodes.node2];
-  const allEntities = testData.entities;
-  const received = transformNodes(nodes, allEntities);
+  const clusters = {
+    brokers: values(testData.entities.brokers),
+    workers: values(testData.entities.workers),
+    streams: values(testData.entities.streams),
+    zookeepers: values(testData.entities.zookeepers),
+  };
+  const received = transformNodes(nodes, clusters);
   expect(received?.length).toBe(2);
 });

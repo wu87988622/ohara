@@ -21,12 +21,15 @@ import {
   flatMap,
   filter,
   find,
+  isEmpty,
   isFunction,
   map,
+  reject,
   round,
   some,
-  reject,
+  sortBy,
   size,
+  unionBy,
   uniq,
 } from 'lodash';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -36,11 +39,12 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import AddIcon from '@material-ui/icons/Add';
 import AddBoxIcon from '@material-ui/icons/AddBox';
+import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
-import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 
 import Table from 'components/common/Table/MuiTable';
@@ -52,11 +56,15 @@ import NodeEditorDialog from './NodeEditorDialog';
 import NodeRemoveDialog from './NodeRemoveDialog';
 
 const defaultOptions = {
+  comparison: false,
+  comparedNodes: [],
   mode: MODE.K8S,
   onCreateIconClick: null,
   onDeleteIconClick: null,
   onDetailIconClick: null,
   onEditorIconClick: null,
+  onUndoIconClick: null,
+  onRemoveIconClick: null,
   selection: false,
   selectedNodes: [],
   showAddIcon: false,
@@ -64,6 +72,7 @@ const defaultOptions = {
   showDeleteIcon: true,
   showDetailIcon: true,
   showEditorIcon: true,
+  showUndoIcon: false,
   showRemoveIcon: false,
   showTitle: true,
 };
@@ -91,6 +100,12 @@ function NodeTable(props) {
   const [isEditorDialogOpen, setIsEditorDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [selected, setSelected] = useState(options?.selectedNodes || []);
+
+  const willBeRemoved = node => !find(nodes, n => n.hostname === node.hostname);
+
+  const willBeAdded = node =>
+    !isEmpty(options?.comparedNodes) &&
+    !find(options?.comparedNodes, n => n.hostname === node.hostname);
 
   const handleAddIconClick = () => {
     if (isFunction(options?.onAddIconClick)) {
@@ -130,6 +145,12 @@ function NodeTable(props) {
     } else {
       setIsEditorDialogOpen(true);
       setActiveNode(node);
+    }
+  };
+
+  const handleUndoIconClick = node => {
+    if (isFunction(options?.onUndoIconClick)) {
+      options.onUndoIconClick(node);
     }
   };
 
@@ -183,60 +204,88 @@ function NodeTable(props) {
       cellStyle: { textAlign: 'right' },
       headerStyle: { textAlign: 'right' },
       sorting: false,
-      render: node => (
-        <>
-          {options?.showDetailIcon && (
-            <Tooltip title="View node">
-              <IconButton
-                data-testid={`view-node-${node.hostname}`}
-                onClick={() => {
-                  handleDetailIconClick(node);
-                }}
-              >
-                <VisibilityIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showEditorIcon && (
-            <Tooltip title="Edit node">
-              <IconButton
-                onClick={() => {
-                  handleEditorIconClick(node);
-                }}
-              >
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showDeleteIcon && (
-            <Tooltip title="Delete node">
-              <IconButton
-                onClick={() => {
-                  handleDeleteIconClick(node);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showRemoveIcon && (
-            <Tooltip title="Remove node">
-              <IconButton
-                onClick={() => {
-                  handleRemoveIconClick(node);
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </>
-      ),
+      render: node => {
+        const getUndoTooltipTitle = node => {
+          if (willBeAdded(node)) {
+            return 'Undo add node';
+          } else if (willBeRemoved(node)) {
+            return 'Undo remove node';
+          }
+          return 'Undo';
+        };
+
+        const showUndoIcon = node =>
+          (options?.comparison && willBeAdded(node)) || willBeRemoved(node);
+
+        const showRemoveIcon = node =>
+          options?.showRemoveIcon && !showUndoIcon(node);
+
+        return (
+          <>
+            {options?.showDetailIcon && (
+              <Tooltip title="View node">
+                <IconButton
+                  data-testid={`view-node-${node.hostname}`}
+                  onClick={() => {
+                    handleDetailIconClick(node);
+                  }}
+                >
+                  <VisibilityIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            {options?.showEditorIcon && (
+              <Tooltip title="Edit node">
+                <IconButton
+                  onClick={() => {
+                    handleEditorIconClick(node);
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            {options?.showDeleteIcon && (
+              <Tooltip title="Delete node">
+                <IconButton
+                  onClick={() => {
+                    handleDeleteIconClick(node);
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            {showRemoveIcon(node) && (
+              <Tooltip title="Remove node">
+                <IconButton
+                  onClick={() => {
+                    handleRemoveIconClick(node);
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            {showUndoIcon(node) && (
+              <Tooltip title={getUndoTooltipTitle(node)}>
+                <IconButton
+                  onClick={() => {
+                    handleUndoIconClick(node);
+                  }}
+                >
+                  <SettingsBackupRestoreIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </>
+        );
+      },
     };
   };
 
-  const renderResourceColumns = nodes => {
-    const unionResourceNames = getUnionResourceNames(nodes);
+  const renderResourceColumns = () => {
+    const unionResourceNames = getUnionResourceNames(getData());
     return map(unionResourceNames, resourceName => ({
       title: resourceName,
       render: node => {
@@ -325,7 +374,7 @@ function NodeTable(props) {
   const renderColumns = () => {
     const columns = [
       { title: 'Name', field: 'hostname' },
-      ...renderResourceColumns(nodes),
+      ...renderResourceColumns(),
       renderServiceColumn(),
       {
         title: 'State',
@@ -350,17 +399,40 @@ function NodeTable(props) {
     return columns;
   };
 
+  const getData = () => {
+    if (options?.comparison) {
+      return sortBy(unionBy(options?.comparedNodes, nodes, 'hostname'), [
+        'hostname',
+      ]);
+    }
+    return nodes;
+  };
+
+  const getRowStyle = node => {
+    if (options?.comparison && willBeRemoved(node)) {
+      return {
+        backgroundColor: 'rgba(255, 117, 159, 0.1)',
+      };
+    } else if (options?.comparison && willBeAdded(node)) {
+      return {
+        backgroundColor: 'rgba(114, 204, 255, 0.1)',
+      };
+    }
+    return null;
+  };
+
   return (
     <>
       <Table
         title={title}
         actions={renderActions()}
         columns={renderColumns()}
-        data={nodes}
+        data={getData()}
         options={{
           paging: false,
           search: true,
           showTitle: options?.showTitle,
+          rowStyle: node => getRowStyle(node),
         }}
       />
       <NodeCreateDialog
@@ -425,12 +497,15 @@ NodeTable.propTypes = {
   onRemove: PropTypes.func,
   onSelectionChange: PropTypes.func,
   options: PropTypes.shape({
+    comparison: PropTypes.bool,
+    comparedNodes: PropTypes.array,
     mode: PropTypes.string,
     onAddIconClick: PropTypes.func,
     onCreateIconClick: PropTypes.func,
     onDeleteIconClick: PropTypes.func,
     onDetailIconClick: PropTypes.func,
     onEditorIconClick: PropTypes.func,
+    onUndoIconClick: PropTypes.func,
     onRemoveIconClick: PropTypes.func,
     selection: PropTypes.bool,
     selectedNodes: PropTypes.array,
@@ -439,6 +514,7 @@ NodeTable.propTypes = {
     showDeleteIcon: PropTypes.bool,
     showDetailIcon: PropTypes.bool,
     showEditorIcon: PropTypes.bool,
+    showUndoIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
   }),

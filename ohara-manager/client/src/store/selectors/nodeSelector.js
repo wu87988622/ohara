@@ -14,28 +14,52 @@
  * limitations under the License.
  */
 
-import { filter, includes, sortBy, values } from 'lodash';
+import { filter, map, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 import * as transforms from 'store/transforms';
 
-const getAllEntities = state => state?.entities;
+const sort = nodes => sortBy(nodes, ['hostname']);
+
+const getBrokerEntities = state => state?.entities?.brokers;
 
 const getNodeEntities = state => state?.entities?.nodes;
 
+const getStreamEntities = state => state?.entities?.streams;
+
+const getWorkerEntities = state => state?.entities?.workers;
+
+const getZookeeperEntities = state => state?.entities?.zookeepers;
+
 const getNamesFormProps = (_, props) => props?.names;
 
+const getClusters = createSelector(
+  [
+    getBrokerEntities,
+    getStreamEntities,
+    getWorkerEntities,
+    getZookeeperEntities,
+  ],
+  (brokerEntities, streamEntities, workerEntities, zookeeperEntities) => ({
+    brokers: values(brokerEntities),
+    streams: values(streamEntities),
+    workers: values(workerEntities),
+    zookeepers: values(zookeeperEntities),
+  }),
+);
+
 export const getAllNodes = createSelector(
-  [getNodeEntities, getAllEntities],
-  (nodeEntities, allEntities) => {
-    const nodes = sortBy(values(nodeEntities), ['hostname']);
-    return transforms.transformNodes(nodes, allEntities);
+  [getNodeEntities, getClusters],
+  (nodeEntities, clusters) => {
+    const sortedNodes = sort(values(nodeEntities));
+    return transforms.transformNodes(sortedNodes, clusters);
   },
 );
 
-export const getNodesByNames = createSelector(
-  [getAllNodes, getNamesFormProps],
-  (allNodes, names) =>
-    filter(allNodes, node => includes(names, node?.hostname)),
-);
-
-export const makeGetNodesByNames = () => getNodesByNames;
+export const makeGetNodesByNames = () =>
+  createSelector(
+    [getNodeEntities, getClusters, getNamesFormProps],
+    (nodeEntities, clusters, names) => {
+      const sortedNodes = sort(filter(map(names, name => nodeEntities[name])));
+      return transforms.transformNodes(sortedNodes, clusters);
+    },
+  );

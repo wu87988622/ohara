@@ -14,29 +14,11 @@
  * limitations under the License.
  */
 
-import { filter, get, map } from 'lodash';
-import { getId } from 'utils/object';
+import { filter, find, map } from 'lodash';
 import { SERVICE_NAME } from 'const';
-import { ENTITY_TYPE } from 'store/schema';
 
-const convertToEntityType = serviceName => {
-  switch (serviceName) {
-    case SERVICE_NAME.BROKER:
-      return ENTITY_TYPE.brokers;
-    case SERVICE_NAME.CONFIGURATOR:
-      return null;
-    case SERVICE_NAME.WORKER:
-      return ENTITY_TYPE.workers;
-    case SERVICE_NAME.STREAM:
-      return ENTITY_TYPE.streams;
-    case SERVICE_NAME.ZOOKEEPER:
-      return ENTITY_TYPE.zookeepers;
-    default:
-      throw Error('Unknown service name: ', serviceName);
-  }
-};
-
-export const transformNode = (node, allEntities) => {
+export const transformNode = (node, clusters) => {
+  const { brokers, workers, streams, zookeepers } = clusters;
   return {
     ...node,
     services: map(node?.services, service => {
@@ -44,9 +26,19 @@ export const transformNode = (node, allEntities) => {
         ...service,
         clusters: filter(
           map(service.clusterKeys, clusterKey => {
-            const entityType = convertToEntityType(service.name);
-            if (entityType) {
-              return get(allEntities, [entityType, getId(clusterKey)]);
+            switch (service.name) {
+              case SERVICE_NAME.BROKER:
+                return find(brokers, b => b.name === clusterKey.name);
+              case SERVICE_NAME.CONFIGURATOR:
+                return null;
+              case SERVICE_NAME.WORKER:
+                return find(workers, w => w.name === clusterKey.name);
+              case SERVICE_NAME.STREAM:
+                return find(streams, s => s.name === clusterKey.name);
+              case SERVICE_NAME.ZOOKEEPER:
+                return find(zookeepers, z => z.name === clusterKey.name);
+              default:
+                throw Error('Unknown service name: ', service.name);
             }
           }),
         ),
@@ -55,6 +47,6 @@ export const transformNode = (node, allEntities) => {
   };
 };
 
-export const transformNodes = (nodes, allEntities) => {
-  return map(nodes, node => transformNode(node, allEntities));
+export const transformNodes = (nodes, clusters) => {
+  return map(nodes, node => transformNode(node, clusters));
 };
