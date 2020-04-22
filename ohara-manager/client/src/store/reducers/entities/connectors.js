@@ -24,6 +24,6 @@ export default function reducer(state = {}, action) {
     case actions.deleteConnector.SUCCESS:
       return omit(state, action.payload);
     default:
-      return entity(ENTITY_TYPE.connector)(state, action);
+      return entity(ENTITY_TYPE.connectors)(state, action);
   }
 }

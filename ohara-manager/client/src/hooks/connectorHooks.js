@@ -17,6 +17,7 @@
 import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import * as _ from 'lodash';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import * as hooks from 'hooks';
@@ -153,17 +154,28 @@ export const useConnectors = () => {
   );
   const group = useConnectorGroup();
   const fetchConnectors = useFetchConnectorsAction();
+  const isConnectorLoaded = useIsConnectorLoaded();
+  const isConnectorLoading = useIsConnectorLoading();
+  const getInfoById = selectors.makeGetInfoById();
+  const workerId = hooks.useWorkerId();
 
   useEffect(() => {
-    if (useIsConnectorLoaded || useIsConnectorLoading) return;
+    if (isConnectorLoaded || isConnectorLoading) return;
+    if (!group) return;
 
     fetchConnectors();
-  }, [fetchConnectors]);
+  }, [fetchConnectors, group, isConnectorLoaded, isConnectorLoading]);
 
-  return useSelector(
-    useCallback(state => getConnectorByGroup(state, { group }), [
-      getConnectorByGroup,
-      group,
-    ]),
-  );
+  return useSelector(state => {
+    const connectors = getConnectorByGroup(state, { group });
+    const results = connectors.map(connector => {
+      const info = getInfoById(state, { id: workerId });
+      const settingDefinitions =
+        info?.classInfos.find(
+          def => def.className === connector.connector__class,
+        ).settingDefinitions || [];
+      return _.merge(connector, { settingDefinitions });
+    });
+    return results;
+  });
 };

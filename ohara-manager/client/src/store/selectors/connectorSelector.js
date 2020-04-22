@@ -18,13 +18,9 @@ import _ from 'lodash';
 import { createSelector } from 'reselect';
 
 const getEntities = state => state?.entities?.connectors;
-const getIdFromProps = (_, props) => props?.id;
 const getGroupFromProps = (_, props) => props?.group;
-
-export const makeGetConnectorById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
 
 export const makeGetAllConnectorsByGroup = () =>
   createSelector([getEntities, getGroupFromProps], (entities, group) =>
-    _.values(entities).filter(connector => connector.group === group),
+    _.values(entities).filter(connector => connector?.group === group),
   );
