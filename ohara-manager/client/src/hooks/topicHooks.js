@@ -18,6 +18,7 @@ import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { get, merge, reject, filter } from 'lodash';
 
+import * as _ from 'lodash';
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
@@ -132,12 +133,24 @@ export const useStopAndDeleteTopicAction = () => {
 export const useAllTopics = () => {
   const isTopicLoaded = hooks.useIsTopicLoaded();
   const fetchAllTopics = hooks.useFetchAllTopicsAction();
+  const getInfoById = selectors.makeGetInfoById();
+  const brokerId = hooks.useBrokerId();
 
   useEffect(() => {
     if (!isTopicLoaded) fetchAllTopics();
   }, [fetchAllTopics, isTopicLoaded]);
 
-  return useSelector(state => selectors.getAllTopics(state));
+  return useSelector(state => {
+    const topics = selectors.getAllTopics(state);
+    const results = topics.map(topic => {
+      const info = getInfoById(state, { id: brokerId });
+      const settingDefinitions =
+        info?.classInfos.find(def => def.classType === KIND.topic)
+          .settingDefinitions || [];
+      return _.merge(topic, { settingDefinitions });
+    });
+    return results;
+  });
 };
 
 export const useTopicsInWorkspace = isShared => {

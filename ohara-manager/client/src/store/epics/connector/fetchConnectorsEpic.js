@@ -29,7 +29,7 @@ export default action$ => {
     map(action => action.payload),
     switchMap(values =>
       from(connectorApi.getAll(values)).pipe(
-        map(res => normalize(res.data, schema.connector)),
+        map(res => normalize(res.data, [schema.connector])),
         map(entities => actions.fetchConnectors.success(entities)),
         startWith(actions.fetchConnectors.request()),
         catchError(err => of(actions.fetchConnectors.failure(err))),

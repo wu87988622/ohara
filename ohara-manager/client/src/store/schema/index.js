@@ -19,6 +19,7 @@ import { getId } from 'utils/object';
 
 export const ENTITY_TYPE = {
   brokers: 'brokers',
+  connectors: 'connectors',
   eventLogs: 'eventLogs',
   files: 'files',
   infos: 'infos',
@@ -29,14 +30,13 @@ export const ENTITY_TYPE = {
   workers: 'workers',
   workspaces: 'workspaces',
   zookeepers: 'zookeepers',
-  connector: 'connector',
 };
 
 export const broker = new schema.Entity(ENTITY_TYPE.brokers, undefined, {
   idAttribute: getId,
 });
 
-export const connector = new schema.Entity(ENTITY_TYPE.connector, undefined, {
+export const connector = new schema.Entity(ENTITY_TYPE.connectors, undefined, {
   idAttribute: getId,
 });
 

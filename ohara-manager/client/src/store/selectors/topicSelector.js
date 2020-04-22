@@ -29,7 +29,7 @@ export const getTopicById = createSelector(
 );
 
 export const getAllTopics = createSelector([getEntities], entities =>
-  _.values(entities),
+  _.sortBy(_.values(entities), 'name'),
 );
 
 export const getTopicsByGroup = createSelector(
