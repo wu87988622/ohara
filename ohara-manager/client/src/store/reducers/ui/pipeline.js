@@ -22,6 +22,7 @@ const initialState = {
   lastUpdated: null,
   error: null,
   selectedCell: null,
+  deleting: false,
 };
 
 export default function reducer(state = initialState, action) {
@@ -42,6 +43,23 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         loading: false,
+        error: action.payload,
+      };
+    case actions.deletePipeline.TRIGGER:
+      return {
+        ...state,
+        deleting: true,
+        error: null,
+      };
+    case actions.deletePipeline.SUCCESS:
+      return {
+        ...state,
+        deleting: false,
+      };
+    case actions.deletePipeline.FAILURE:
+      return {
+        ...state,
+        deleting: false,
         error: action.payload,
       };
     case actions.setSelectedCell.TRIGGER:

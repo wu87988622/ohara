@@ -225,7 +225,7 @@ const Navigator = ({ pipelineApi }) => {
           <ExtensionIcon />
           Outline
         </Typography>
-        {pipelineApi && (
+        {pipelineApi && currentPipeline && (
           <div className="scrollbar-wrapper">
             <Scrollbar>
               <ul className="list">

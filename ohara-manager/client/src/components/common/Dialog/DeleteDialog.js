@@ -62,10 +62,6 @@ const Progress = styled(CircularProgress)`
   margin-left: -8px;
 `;
 
-const StyledContentText = styled(DialogContentText)`
-  word-break: break-all;
-`;
-
 const AlertDialog = props => {
   const {
     title,
@@ -75,6 +71,7 @@ const AlertDialog = props => {
     handleClose,
     cancelText = 'CANCEL',
     confirmText = 'DELETE',
+    confirmDisabled = false,
     isWorking = false,
     testId = 'delete-dialog',
   } = props;
@@ -94,7 +91,7 @@ const AlertDialog = props => {
           </IconButton>
         </StyledDialogTitle>
         <DialogContent>
-          <StyledContentText>{content}</StyledContentText>
+          <DialogContentText>{content}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button disabled={isWorking} onClick={handleClose}>
@@ -102,7 +99,7 @@ const AlertDialog = props => {
           </Button>
           <ConfirmButtonWrapper>
             <ConfirmButton
-              disabled={isWorking}
+              disabled={isWorking || confirmDisabled}
               onClick={handleConfirm}
               color="primary"
               autoFocus
@@ -124,6 +121,7 @@ AlertDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   handleConfirm: PropTypes.func.isRequired,
+  confirmDisabled: PropTypes.bool,
   cancelText: PropTypes.string,
   confirmText: PropTypes.string,
   isWorking: PropTypes.bool,

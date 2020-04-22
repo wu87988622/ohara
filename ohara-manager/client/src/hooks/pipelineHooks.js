@@ -36,6 +36,16 @@ export const usePipelineName = () => {
   return useSelector(selector);
 };
 
+export const useIsPipelineDeleting = () => {
+  const selector = useCallback(state => state.ui.pipeline.deleting, []);
+  return useSelector(selector);
+};
+
+export const usePipelineError = () => {
+  const selector = useCallback(state => state.ui.pipeline.error, []);
+  return useSelector(selector);
+};
+
 export const useSwitchPipelineAction = () => {
   const dispatch = useDispatch();
   const group = hooks.usePipelineGroup();
@@ -112,7 +122,10 @@ export const useDeletePipelineAction = () => {
   const dispatch = useDispatch();
   const group = hooks.usePipelineGroup();
   return useCallback(
-    name => dispatch(actions.deletePipeline.trigger({ group, name })),
+    (params, options) => {
+      const newParams = { ...params, group };
+      dispatch(actions.deletePipeline.trigger({ params: newParams, options }));
+    },
     [dispatch, group],
   );
 };

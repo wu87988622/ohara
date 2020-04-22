@@ -32,7 +32,7 @@ export default action$ =>
           return actions.deleteStream.success(params);
         }),
         startWith(actions.deleteStream.request()),
-        catchError(res => of(actions.deleteStream.failure(res))),
+        catchError(error => of(actions.deleteStream.failure(error))),
       ),
     ),
   );

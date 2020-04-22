@@ -31,24 +31,27 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import _ from 'lodash';
 
-import { KIND } from 'const';
-import { Progress } from 'components/common/Progress';
-import { StyledToolbar } from './ToolbarStyles';
-import { Button } from 'components/common/Form';
-import { useDeleteCells, useZoom } from './ToolbarHooks';
-import { Tooltip } from 'components/common/Tooltip';
 import * as pipelineContext from '../Pipeline';
 import * as hooks from 'hooks';
-import * as pipelineUtils from '../PipelineApiHelper';
+import { KIND } from 'const';
+import { StyledToolbar } from './ToolbarStyles';
+import { Button } from 'components/common/Form';
+import { Tooltip } from 'components/common/Tooltip';
+import { DeleteDialog } from 'components/common/Dialog';
+import {
+  useZoom,
+  useRunningServices,
+  useRenderDeleteContent,
+  useMakeRequest,
+} from './ToolbarHooks';
 
 const Toolbar = props => {
   const { handleToolboxOpen, handleToolbarClick, isToolboxOpen } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
-  const [isDeletingPipeline, setIsDeletingPipeline] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const pipelineDispatch = React.useContext(
     pipelineContext.PipelineDispatchContext,
   );
@@ -56,22 +59,21 @@ const Toolbar = props => {
     pipelineContext.PipelineStateContext,
   );
 
-  const deletePipeline = hooks.useDeletePipelineAction();
   const currentPipeline = hooks.usePipeline();
+  const isDeleting = hooks.useIsPipelineDeleting();
+  const pipelineError = hooks.usePipelineError();
   const selectedCell = hooks.useCurrentPipelineCell();
   const currentWorkspace = hooks.useWorkspace();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const deletePipeline = hooks.useDeletePipelineAction();
+  const streamAndConnectorGroup = hooks.useStreamGroup();
+  const topicGroup = hooks.useTopicGroup();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
-  const { steps, activeStep, deleteCells } = useDeleteCells();
+  const runningServices = useRunningServices();
+  const deleteDialogContent = useRenderDeleteContent();
+  const makeRequest = useMakeRequest();
   const { setZoom, scale, setScale } = useZoom();
-
-  const {
-    start: startConnector,
-    stop: stopConnector,
-  } = pipelineUtils.connector();
-
-  const { start: startStream, stop: stopStream } = pipelineUtils.stream();
 
   const handleZoomClick = event => {
     setZoomAnchorEl(event.currentTarget);
@@ -90,61 +92,43 @@ const Toolbar = props => {
     setPipelineAnchorEl(event.currentTarget);
   };
 
-  const makeRequest = (pipeline, action) => {
-    const cells = paperApi.getCells();
-    const connectors = cells.filter(
-      cell => cell.kind === KIND.source || cell.kind === KIND.sink,
-    );
-    const streams = cells.filter(cell => cell.kind === KIND.stream);
-
-    let connectorPromises = [];
-    let streamsPromises = [];
-
-    if (action === 'start') {
-      connectorPromises = connectors.map(cellData =>
-        startConnector(cellData, paperApi),
-      );
-      streamsPromises = streams.map(cellData =>
-        startStream(cellData, paperApi),
-      );
-    } else {
-      connectorPromises = connectors.map(cellData =>
-        stopConnector(cellData, paperApi),
-      );
-      streamsPromises = streams.map(cellData => stopStream(cellData, paperApi));
-    }
-    return Promise.all([...connectorPromises, ...streamsPromises]).then(
-      result => result,
-    );
+  const handlePipelineStart = () => {
+    handlePipelineControlsClose();
+    makeRequest(currentPipeline, 'start');
   };
 
-  const handlePipelineStart = async () => {
+  const handlePipelineStop = () => {
     handlePipelineControlsClose();
-    await makeRequest(currentPipeline, 'start');
+    makeRequest(currentPipeline, 'stop');
   };
 
-  const handlePipelineStop = async () => {
+  const handlePipelineDelete = () => {
     handlePipelineControlsClose();
-    await makeRequest(currentPipeline, 'stop');
+    setIsDeleteDialogOpen(true);
   };
 
-  const handlePipelineDelete = async () => {
-    handlePipelineControlsClose();
-    setIsDeletingPipeline(true);
+  const handleDeleteConfirm = () => {
     const { name } = currentPipeline;
+
     const cells = paperApi
       .getCells()
       .filter(cell => cell.cellType === 'html.Element')
-      .sort((a, b) => a.kind.localeCompare(b.kind));
+      .filter(
+        cell =>
+          (cell.kind === KIND.topic && !cell.isShared) ||
+          cell.kind !== KIND.topic,
+      )
+      .sort((a, b) => a.kind.localeCompare(b.kind))
+      .map(cell => ({
+        id: cell.id,
+        name: cell.name,
+        kind: cell.kind,
+        status: cell.status,
+        isShared: cell.isShared,
+        group: cell.kind === KIND.topic ? topicGroup : streamAndConnectorGroup,
+      }));
 
-    await deleteCells(cells);
-    deletePipeline(name);
-    //const res = await deletePipeline(name);
-    // if (!res.error) {
-    //   eventLog.info(`Successfully deleted pipeline ${name}.`);
-    // }
-    setIsDeletingPipeline(false);
-
+    deletePipeline({ name, cells }, { paperApi });
     switchWorkspace(currentWorkspace?.name);
   };
 
@@ -321,15 +305,16 @@ const Toolbar = props => {
         </div>
       )}
 
-      {// Display the progress when deleting if there are running objects
-      !_.isEmpty(steps) && (
-        <Progress
-          open={isDeletingPipeline}
-          createTitle={`Deleting pipeline ${currentPipeline.name}`}
-          steps={steps}
-          activeStep={activeStep}
-        />
-      )}
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        title="Delete pipeline"
+        isWorking={isDeleting}
+        confirmDisabled={runningServices.length > 0}
+        confirmText={pipelineError ? 'Retry' : 'Delete'}
+        content={deleteDialogContent}
+        handleClose={() => setIsDeleteDialogOpen(false)}
+        handleConfirm={handleDeleteConfirm}
+      />
     </StyledToolbar>
   );
 };

@@ -58,12 +58,12 @@ export default action$ =>
     map(action => action.payload),
     switchMap(values =>
       stopTopic$(values).pipe(
-        catchError(res =>
+        catchError(error => {
           from([
-            actions.stopTopic.failure(res),
-            actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-          ]),
-        ),
+            actions.stopTopic.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]);
+        }),
       ),
     ),
   );

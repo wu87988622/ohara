@@ -16,69 +16,34 @@
 
 import React from 'react';
 
-import { KIND, CELL_STATUS } from 'const';
 import * as hooks from 'hooks';
+import * as pipelineUtils from '../PipelineApiHelper';
 import { PaperContext } from '../Pipeline';
-import { sleep } from 'utils/common';
+import { KIND, CELL_STATUS } from 'const';
 
-export const useDeleteCells = () => {
-  const [steps, setSteps] = React.useState([]);
-  const [activeStep, setActiveStep] = React.useState(0);
+export const useRunningServices = () => {
+  const paperApi = React.useContext(PaperContext);
+  return paperApi
+    .getCells()
+    .filter(cell => cell.kind !== KIND.topic)
+    .filter(cell => cell.cellType === 'html.Element')
+    .filter(cell => cell.status?.toLowerCase() !== CELL_STATUS.stopped);
+};
 
-  const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
-  const stopAndDeleteStream = hooks.useStopAndDeleteStreamAction();
-  const deleteConnector = hooks.useDeleteConnectorAction();
-  const stopConnector = hooks.useStopConnectorAction();
+export const useRenderDeleteContent = () => {
+  const pipelineError = hooks.usePipelineError();
+  const currentPipelineName = hooks.usePipelineName();
+  const hasRunningServices = useRunningServices().length > 0;
 
-  const deleteCells = async cells => {
-    const cellNames = cells.map(cell => {
-      if (cell.kind !== KIND.topic) return cell.name;
-      return cell.isShared ? cell.name : cell.displayName;
-    });
+  if (pipelineError) {
+    return `Failed to delete services! You can try to delete again by hitting on the RETRY button`;
+  }
 
-    setSteps(cellNames);
+  if (hasRunningServices) {
+    return `Oops, there are still some running services in ${currentPipelineName}. You should stop them first and then you will be able to delete this pipeline.`;
+  }
 
-    // Need to use a while loop so we can update
-    // react state: `activeStep` in the loop
-    let index = 0;
-    while (index < cells.length) {
-      const currentCell = cells[index];
-      const { kind, isShared, name, status } = currentCell;
-
-      if (kind === KIND.source || kind === KIND.sink) {
-        // To ensure services can be properly removed, we're stopping the services
-        // here no matter if it's running or not
-        await stopConnector(name);
-        await deleteConnector(name);
-      }
-
-      if (kind === KIND.stream) {
-        stopAndDeleteStream({ name });
-      }
-
-      // Only pipeline-only topics are belong to this Pipeline and so need to
-      // be deleted along with this pipeline
-      if (kind === KIND.topic && !isShared) {
-        stopAndDeleteTopic({ name });
-      }
-
-      index++;
-      setActiveStep(index);
-
-      // TODO: A temp fix as for deleting a bunch components from the Paper altogether
-      // often would cause trouble for backend, so we're making the request in a less
-      // frequent manner
-      if (status.toLowerCase() === CELL_STATUS.running) {
-        await sleep(1500);
-      }
-    }
-  };
-
-  return {
-    deleteCells,
-    steps,
-    activeStep,
-  };
+  return `Are you sure you want to delete ${currentPipelineName} ? This action cannot be undone!`;
 };
 
 export const useZoom = () => {
@@ -162,4 +127,42 @@ export const useZoom = () => {
     scale: paperScale,
     setScale: setPaperScale,
   };
+};
+
+export const useMakeRequest = () => {
+  const paperApi = React.useContext(PaperContext);
+  const streamUtils = pipelineUtils.stream();
+  const connectorUtils = pipelineUtils.connector();
+
+  const makeRequest = (pipeline, action) => {
+    const cells = paperApi.getCells();
+    const connectors = cells.filter(
+      cell => cell.kind === KIND.source || cell.kind === KIND.sink,
+    );
+    const streams = cells.filter(cell => cell.kind === KIND.stream);
+
+    let connectorPromises = [];
+    let streamsPromises = [];
+
+    if (action === 'start') {
+      connectorPromises = connectors.map(cellData =>
+        connectorUtils.startConnector(cellData, paperApi),
+      );
+      streamsPromises = streams.map(cellData =>
+        streamUtils.startStream(cellData, paperApi),
+      );
+    } else {
+      connectorPromises = connectors.map(cellData =>
+        connectorUtils.stopConnector(cellData, paperApi),
+      );
+      streamsPromises = streams.map(cellData =>
+        streamUtils.stopStream(cellData, paperApi),
+      );
+    }
+    return Promise.all([...connectorPromises, ...streamsPromises]).then(
+      result => result,
+    );
+  };
+
+  return makeRequest;
 };

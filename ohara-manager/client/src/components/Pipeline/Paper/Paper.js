@@ -274,7 +274,7 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Create a link that moves along with mouse cursor
     $(document).on('mousemove.createlink', event => {
-      if (_.has(paperApi, 'state.isReady')) {
+      if (paperApi) {
         const link = graph.getLinks().find(link => !link.get('target').id);
 
         if (link) {
@@ -299,41 +299,60 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Binding custom event handlers
     // Graph Events
-    graph.on('add', cell => {
-      if (!_.has(paperApi, 'state.isReady')) return;
+    graph.on('add', (cell, child, options = {}) => {
+      if (!paperApi) return;
       if (_.isEqual(cellAddRef.current, cell)) return;
       // half-way link is not counted in the `add` event
       if (cell.isLink() && !cell.target().id) return;
 
+      const {
+        shouldSkipOnElementAdd = false,
+        shouldUpdatePipeline = true,
+      } = options;
+
       const data = paperUtils.getCellData(cell);
 
-      if (!cell.get('shouldSkipOnElementAdd')) {
+      if (!shouldSkipOnElementAdd) {
         onCellEventRef.current.onElementAdd(data, paperApi);
+      }
+
+      if (shouldUpdatePipeline) {
+        onChange(paperApi);
       }
 
       updateStatus(cell);
       // OnChange event handler is called on graph's `add`, `change` and `remove` events
-      onChange(paperApi);
       cellAddRef.current = cell;
     });
 
-    graph.on('change', (cell, updates) => {
-      if (!_.has(paperApi, 'state.isReady')) return;
+    graph.on('change', (cell, updates, options = {}) => {
+      if (!paperApi) return;
       if (_.isEqual(cellChangeRef.current, updates)) return;
       if (cell.isLink() && !cell.target().id) return;
+      const { shouldUpdatePipeline = true } = options;
 
       updateStatus(cell);
-      onChange(paperApi);
+
+      if (shouldUpdatePipeline) {
+        onChange(paperApi);
+      }
+
       cellChangeRef.current = updates;
     });
 
-    graph.on('remove', cell => {
-      if (!_.has(paperApi, 'state.isReady')) return;
+    graph.on('remove', (cell, child, options = {}) => {
+      if (!paperApi) return;
       if (_.isEqual(cellRemoveRef.current, cell)) return;
       if (cell.isLink() && !cell.target().id) return;
 
+      const { shouldUpdatePipeline = true } = options;
+
       updateStatus(cell);
-      onChange(paperApi);
+
+      if (shouldUpdatePipeline) {
+        onChange(paperApi);
+      }
+
       cellRemoveRef.current = cell;
     });
 
@@ -468,14 +487,6 @@ const Paper = React.forwardRef((props, ref) => {
 
       $(document).off('mousemove.createlink');
 
-      // TODO: the event should be unsubscribed here, but doing so will cause
-      // paper losing all elements from the screen
-
-      // Graph events
-      // graph.off('add');
-      // graph.off('change');
-      // graph.off('remove');
-
       // Cell events
       paper.off('cell:pointermove');
 
@@ -526,21 +537,24 @@ const Paper = React.forwardRef((props, ref) => {
 
     return {
       // Public APIs
-      addElement(data) {
+      addElement(data, options) {
         const { source, sink, stream, topic } = KIND;
         const { kind } = data;
+
         const statusColors = {
           stopped: palette.text.secondary,
           pending: palette.warning.main,
           running: palette.success.main,
           failed: palette.error.main,
         };
+
         const newData = {
           ...data,
           statusColors,
           isMetricsOn,
           paperApi: ref.current,
         };
+
         let cell;
         if (kind === source || kind === sink || kind === stream) {
           cell = createConnectorCell(newData);
@@ -553,11 +567,11 @@ const Paper = React.forwardRef((props, ref) => {
           );
         }
 
-        graph.addCell(cell);
+        graph.addCell(cell, options);
         const currentCell = graph.getLastCell();
         return paperUtils.getCellData(currentCell);
       },
-      removeElement(id) {
+      removeElement(id, options) {
         if (typeof id !== 'string') {
           throw new Error(
             `paperApi: removeElement(id: string) invalid argument id!`,
@@ -571,18 +585,21 @@ const Paper = React.forwardRef((props, ref) => {
             `paperApi: removeElement(id: string) can only remove an element with this method`,
           );
 
-        graph.removeCells(cell);
+        graph.removeCells(cell, options);
       },
-      updateElement(id, data) {
+      updateElement(id, data, options) {
         const elementView = findElementViews().find(
           elementView => elementView.model.id === id,
         );
 
         if (elementView) {
-          elementView.updateElement({
-            ...elementView.model.attributes,
-            ...data,
-          });
+          elementView.updateElement(
+            {
+              ...elementView.model.attributes,
+              ...data,
+            },
+            options,
+          );
 
           // Topic shouldn't be updated
           if (elementView.model.get('kind') === KIND.topic) {
@@ -707,11 +724,15 @@ const Paper = React.forwardRef((props, ref) => {
           .forEach(cell => {
             const { type, source, target } = cell;
             if (type === 'html.Element') {
-              return this.addElement({
-                ...cell,
-                shouldSkipOnElementAdd: true,
-                isSelected: false, // we don't want to recovery this state for now
-              });
+              return this.addElement(
+                {
+                  ...cell,
+                  isSelected: false, // we don't want to recovery this state for now
+                },
+                {
+                  shouldSkipOnElementAdd: true,
+                },
+              );
             }
 
             if (type === 'standard.Link') {

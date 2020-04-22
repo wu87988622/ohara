@@ -36,7 +36,6 @@ const createTopicCell = options => {
     status = CELL_STATUS.stopped,
     isShared,
     statusColors,
-    shouldSkipOnElementAdd = false,
     isSelected = false,
   } = options;
 
@@ -208,7 +207,6 @@ const createTopicCell = options => {
     status,
     isShared,
     size: { width: 70, height: 96 },
-    shouldSkipOnElementAdd,
     isSelected,
   });
 };

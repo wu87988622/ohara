@@ -15,23 +15,156 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { of, defer, from, throwError, iif } from 'rxjs';
+import {
+  catchError,
+  map,
+  switchMap,
+  startWith,
+  delay,
+  concatAll,
+  retryWhen,
+  concatMap,
+  mergeMap,
+} from 'rxjs/operators';
 
 import * as pipelineApi from 'api/pipelineApi';
+import * as streamApi from 'api/streamApi';
+import * as connectorApi from 'api/connectorApi';
+import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { KIND, CELL_STATUS, LOG_LEVEL } from 'const';
+
+const deleteStream$ = (params, paperApi) => {
+  const { id, name, group } = params;
+  return defer(() => streamApi.remove({ name, group })).pipe(
+    map(() => {
+      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      return actions.deleteStream.success(params);
+    }),
+  );
+};
+
+const deleteAllStreams$ = (streams, paperApi) => {
+  return of(...streams).pipe(
+    mergeMap(stream => deleteStream$(stream, paperApi)),
+  );
+};
+
+const deleteConnector$ = (params, paperApi) => {
+  const { id, name, group } = params;
+  return defer(() => connectorApi.remove({ name, group })).pipe(
+    map(() => {
+      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      return actions.deleteConnector.success(params);
+    }),
+  );
+};
+
+const deleteAllConnectors$ = (connectors, paperApi) => {
+  return of(...connectors).pipe(
+    mergeMap(connector => deleteConnector$(connector, paperApi)),
+  );
+};
+
+const stopTopic$ = params => {
+  return defer(() => topicApi.stop(params)).pipe(
+    map(() => actions.stopTopic.request()),
+  );
+};
+
+const waitUntilTopicStopped$ = (params, paperApi) => {
+  const { id, name, group } = params;
+  return defer(() => topicApi.get({ name, group })).pipe(
+    map(res => {
+      if (res.data.state) throw res;
+
+      paperApi.updateElement(
+        id,
+        { status: CELL_STATUS.stopped },
+        { shouldUpdatePipeline: false },
+      );
+      return actions.stopTopic.success(res);
+    }),
+    retryWhen(errors =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 2,
+            throwError('exceed max retry times'),
+            of(value).pipe(delay(2000)),
+          ),
+        ),
+      ),
+    ),
+  );
+};
+
+const deleteTopic$ = (params, paperApi) => {
+  const { id, name, group } = params;
+  return defer(() => topicApi.remove({ name, group })).pipe(
+    map(() => {
+      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      return actions.deleteTopic.success(params);
+    }),
+  );
+};
+
+const stopAndDeleteAllTopics$ = (topics, paperApi) => {
+  return of(...topics).pipe(
+    mergeMap(topic => {
+      // Allow users to delete topics that don't have the "correct status" like pending or stopped since normally, topic status should always be running in our UI
+      if (
+        topic.status.toLowerCase() === CELL_STATUS.stopped ||
+        topic.status.toLowerCase() === CELL_STATUS.pending
+      ) {
+        return deleteTopic$(topic, paperApi);
+      }
+
+      return of(
+        stopTopic$(topic),
+        waitUntilTopicStopped$(topic, paperApi),
+        deleteTopic$(topic, paperApi),
+      ).pipe(concatAll());
+    }),
+  );
+};
+
+const deletePipeline$ = params =>
+  defer(() => pipelineApi.remove(params)).pipe(
+    map(() => actions.deletePipeline.success(getId(params))),
+    startWith(actions.deletePipeline.request()),
+  );
 
 export default action$ =>
   action$.pipe(
     ofType(actions.deletePipeline.TRIGGER),
     map(action => action.payload),
-    switchMap(params =>
-      from(pipelineApi.remove(params)).pipe(
-        map(() => getId(params)),
-        map(id => actions.deletePipeline.success(id)),
-        startWith(actions.deletePipeline.request()),
-        catchError(res => of(actions.deletePipeline.failure(res))),
-      ),
-    ),
+    switchMap(({ params, options }) => {
+      const { name, group, cells } = params;
+      const { paperApi } = options;
+      const streams = cells.filter(cell => cell.kind === KIND.stream);
+      const connectors = cells.filter(
+        cell => cell.kind === KIND.source || cell.kind === KIND.sink,
+      );
+      const topics = cells.filter(
+        cell => cell.kind === KIND.topic && !cell.isShared,
+      );
+
+      return of(
+        deleteAllConnectors$(connectors, paperApi),
+        deleteAllStreams$(streams, paperApi),
+        stopAndDeleteAllTopics$(topics, paperApi),
+        deletePipeline$({ group, name }),
+      ).pipe(
+        concatAll(),
+        catchError(error => {
+          return from([
+            actions.deletePipeline.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]);
+        }),
+      );
+    }),
   );

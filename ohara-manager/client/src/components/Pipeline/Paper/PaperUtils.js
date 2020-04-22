@@ -175,17 +175,21 @@ export const createConnection = params => {
         paperApi.getCells('topic'),
       );
 
-      const topic = paperApi.addElement({
-        name: PipelineOnlyTopicName,
-        displayName,
-        kind: KIND.topic,
-        className: KIND.topic,
-        position: {
-          x: topicX,
-          y: topicY,
+      const topic = paperApi.addElement(
+        {
+          name: PipelineOnlyTopicName,
+          displayName,
+          kind: KIND.topic,
+          className: KIND.topic,
+          position: {
+            x: topicX,
+            y: topicY,
+          },
         },
-        shouldSkipOnElementAdd: true,
-      });
+        {
+          shouldSkipOnElementAdd: true,
+        },
+      );
 
       const { id: topicId } = topic;
 

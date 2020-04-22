@@ -40,10 +40,10 @@ export const deleteTopic$ = values =>
         actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
       ]);
     }),
-    catchError(res =>
+    catchError(error =>
       from([
-        actions.deleteTopic.failure(res),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
+        actions.deleteTopic.failure(error),
+        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
       ]),
     ),
   );
@@ -54,10 +54,10 @@ export default action$ =>
     map(action => action.payload),
     switchMap(values =>
       deleteTopic$(values).pipe(
-        catchError(res =>
+        catchError(error =>
           from([
-            actions.deleteTopic.failure(res),
-            actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
+            actions.deleteTopic.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
           ]),
         ),
       ),

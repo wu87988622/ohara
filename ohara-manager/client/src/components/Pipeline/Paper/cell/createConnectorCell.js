@@ -45,7 +45,6 @@ const createConnectorCell = options => {
     paperApi,
     jarKey,
     isMetricsOn,
-    shouldSkipOnElementAdd = false,
     isTemporary = false,
     isSelected = false,
   } = options;
@@ -296,7 +295,6 @@ const createConnectorCell = options => {
     status,
     isTemporary,
     isMetricsOn,
-    shouldSkipOnElementAdd,
     jarKey,
     isSelected,
     size: {
