@@ -61,7 +61,7 @@ The following are common settings to a stream app.
                             the input jar. However, it throw exception if there are many available classes in the jar file.
 #. from (**array(TopicKey)**) — source topic
 #. to (**array(TopicKey)**) — target topic
-#. nodeNames (**array(string)**) — the nodes running the zookeeper process
+#. nodeNames (**array(string)**) — the nodes running the stream process
 #. brokerClusterKey (**object**) — the broker cluster key used for stream running
 
    - brokerClusterKey.group (**option(string)**) — the group of broker cluster
@@ -254,7 +254,8 @@ list information of stream cluster
 
 *GET /v0/streams*
 
-the accepted query keys are listed below.
+the accepted query keys are listed below
+
 #. author
 #. group
 #. name
@@ -422,8 +423,7 @@ the stream component which is stored in pipeline.
 .. note::
    We will use the default value as the query parameter "?group=" if you don't specify it.
 
-**Example Response**
-
+Example Response
   ::
 
      204 NoContent

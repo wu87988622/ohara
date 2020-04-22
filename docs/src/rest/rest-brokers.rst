@@ -206,6 +206,7 @@ get a broker cluster
 --------------------
 
 *GET /v0/brokers/$name?group=$group*
+
 We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
@@ -242,6 +243,7 @@ start a broker cluster
 ----------------------
 
 *PUT /v0/brokers/$name/start?group=$group*
+
 We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Example Response
@@ -260,6 +262,7 @@ Gracefully stopping a running broker cluster. It is disallowed to
 stop a broker cluster used by a running :ref:`worker cluster <rest-workers>`.
 
 *PUT /v0/brokers/$name/stop?group=$group[&force=true]*
+
 We will use the default value as the query parameter "?group=" if you don't specify it.
 
 Query Parameters

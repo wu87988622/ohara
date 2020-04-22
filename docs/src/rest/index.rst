@@ -96,6 +96,7 @@ Manage clusters
    rest-validation
    rest-containers
    rest-stream
+   rest-shabondi
    rest-files
    rest-logs
    rest-inspect
