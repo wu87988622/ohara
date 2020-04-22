@@ -43,7 +43,6 @@ const stopBroker$ = params => {
         if (res.data?.state) throw res;
         else return res.data;
       }),
-
       retryWhen(errors =>
         errors.pipe(
           concatMap((value, index) =>

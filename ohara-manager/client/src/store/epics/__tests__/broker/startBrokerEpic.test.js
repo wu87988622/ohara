@@ -140,7 +140,7 @@ it('start broker failed after reach retry limit', () => {
   });
 });
 
-it('start broker multiple times should be worked once', () => {
+it('start broker multiple times should be executed once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

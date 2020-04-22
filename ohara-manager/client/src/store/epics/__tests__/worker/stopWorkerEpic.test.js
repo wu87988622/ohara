@@ -137,7 +137,7 @@ it('stop worker failed after reach retry limit', () => {
   });
 });
 
-it('stop worker multiple times should be worked once', () => {
+it('stop worker multiple times should be executed once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

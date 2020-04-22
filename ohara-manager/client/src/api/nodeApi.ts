@@ -21,6 +21,7 @@ import {
   NodeResponse,
   NodeResponseList,
 } from './apiInterface/nodeInterface';
+import { BasicResponse } from './apiInterface/basicInterface';
 
 const nodeApi = new API(RESOURCE.NODE);
 
@@ -36,7 +37,7 @@ export const update = (params: NodeRequest) => {
 };
 
 export const remove = (hostname: string) => {
-  return nodeApi.delete<NodeResponse>({ name: hostname });
+  return nodeApi.delete<BasicResponse>({ name: hostname });
 };
 
 export const get = (hostname: string) => {

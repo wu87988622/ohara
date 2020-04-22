@@ -137,7 +137,7 @@ it('stop broker failed after reach retry limit', () => {
   });
 });
 
-it('stop broker multiple times should be worked once', () => {
+it('stop broker multiple times should be executed once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

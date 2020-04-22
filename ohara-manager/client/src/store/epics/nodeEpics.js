@@ -16,28 +16,31 @@
 
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
-import { from, of, defer, iif, throwError } from 'rxjs';
+import { of, defer, iif, throwError, zip } from 'rxjs';
 import {
   switchMap,
   map,
   startWith,
   catchError,
-  concatAll,
   retryWhen,
   delay,
   concatMap,
+  distinctUntilChanged,
+  mergeMap,
+  throttleTime,
 } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import * as nodeApi from 'api/nodeApi';
 
-const createNodeEpic = action$ =>
+export const createNodeEpic = action$ =>
   action$.pipe(
     ofType(actions.createNode.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(nodeApi.create(values)).pipe(
+    distinctUntilChanged(),
+    mergeMap(values =>
+      defer(() => nodeApi.create(values)).pipe(
         map(res => normalize(res.data, schema.node)),
         map(entities => actions.createNode.success(entities)),
         startWith(actions.createNode.request()),
@@ -46,12 +49,12 @@ const createNodeEpic = action$ =>
     ),
   );
 
-const updateNodeEpic = action$ =>
+export const updateNodeEpic = action$ =>
   action$.pipe(
     ofType(actions.updateNode.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(nodeApi.update(values)).pipe(
+    mergeMap(values =>
+      defer(() => nodeApi.update(values)).pipe(
         map(res => normalize(res.data, schema.node)),
         map(entities => actions.updateNode.success(entities)),
         startWith(actions.updateNode.request()),
@@ -60,12 +63,12 @@ const updateNodeEpic = action$ =>
     ),
   );
 
-const fetchNodesEpic = action$ =>
+export const fetchNodesEpic = action$ =>
   action$.pipe(
     ofType(actions.fetchNodes.TRIGGER),
-    map(action => action.payload),
+    throttleTime(1000),
     switchMap(() =>
-      from(nodeApi.getAll()).pipe(
+      defer(() => nodeApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.node])),
         map(entities => actions.fetchNodes.success(entities)),
         startWith(actions.fetchNodes.request()),
@@ -74,45 +77,43 @@ const fetchNodesEpic = action$ =>
     ),
   );
 
-const checkNodes$ = values =>
-  // If the API needs retry, it must use the defer wrapper
-  defer(() => nodeApi.getAll()).pipe(
-    map(res =>
-      iif(
-        () => res.data.find(node => node.hostname === values),
-        throwError,
-        res,
-      ),
-    ),
-    retryWhen(error =>
-      error.pipe(
-        concatMap((e, i) =>
-          iif(() => i > 4, throwError(e), of(e).pipe(delay(2000))),
+const deleteNode$ = hostname =>
+  zip(
+    defer(() => nodeApi.remove(hostname)),
+    defer(() => nodeApi.getAll()).pipe(
+      map(res => {
+        if (res.data.find(node => node.hostname === hostname)) throw res;
+        else return res.data;
+      }),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 4,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
         ),
       ),
     ),
-    map(() => actions.deleteNode.success(values)),
-    startWith(actions.fetchNodes.request()),
-    catchError(res => of(actions.fetchNodes.failure(res))),
+  ).pipe(
+    map(() => actions.deleteNode.success(hostname)),
+    startWith(actions.deleteNode.request()),
+    catchError(error => of(actions.deleteNode.failure(error))),
   );
 
-const deleteNodesEpic = action$ =>
+export const deleteNodeEpic = action$ =>
   action$.pipe(
     ofType(actions.deleteNode.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      of(
-        from(nodeApi.remove(values)).pipe(
-          map(() => actions.deleteNode.request()),
-          catchError(res => of(actions.deleteNode.failure(res))),
-        ),
-        checkNodes$(values),
-      ).pipe(concatAll()),
-    ),
+    distinctUntilChanged(),
+    mergeMap(hostname => deleteNode$(hostname)),
   );
+
 export default combineEpics(
   createNodeEpic,
   updateNodeEpic,
   fetchNodesEpic,
-  deleteNodesEpic,
+  deleteNodeEpic,
 );
