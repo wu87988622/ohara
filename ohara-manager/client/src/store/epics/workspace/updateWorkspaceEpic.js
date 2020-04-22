@@ -14,25 +14,34 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { of, defer } from 'rxjs';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+
+const updateWorkspace$ = values => {
+  const workspaceId = getId(values);
+  return defer(() => workspaceApi.update(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.workspace)),
+    map(normalizedData => merge(normalizedData, { workspaceId })),
+    map(normalizedData => actions.updateWorkspace.success(normalizedData)),
+    startWith(actions.updateWorkspace.request({ workspaceId })),
+    catchError(error =>
+      of(actions.updateWorkspace.failure(merge(error, { workspaceId }))),
+    ),
+  );
+};
 
 export default action$ =>
   action$.pipe(
     ofType(actions.updateWorkspace.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(workspaceApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.workspace)),
-        map(entities => actions.updateWorkspace.success(entities)),
-        startWith(actions.updateWorkspace.request()),
-        catchError(res => of(actions.updateWorkspace.failure(res))),
-      ),
-    ),
+    mergeMap(values => updateWorkspace$(values)),
   );

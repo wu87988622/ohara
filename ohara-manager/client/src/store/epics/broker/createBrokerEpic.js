@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createBroker$ = values => {
+export const createBroker$ = values => {
   const brokerId = getId(values);
   return defer(() => brokerApi.create(values)).pipe(
     map(res => res.data),

@@ -17,10 +17,9 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, throwError, iif } from 'rxjs';
+import { defer, of, throwError, iif, zip } from 'rxjs';
 import {
   catchError,
-  concatAll,
   delay,
   map,
   retryWhen,
@@ -36,9 +35,9 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const startBroker$ = params => {
+export const startBroker$ = params => {
   const brokerId = getId(params);
-  return of(
+  return zip(
     defer(() => brokerApi.start(params)),
     defer(() => brokerApi.get(params)).pipe(
       map(res => {
@@ -46,9 +45,6 @@ const startBroker$ = params => {
           throw res;
         else return res.data;
       }),
-      map(data => normalize(data, schema.broker)),
-      map(normalizedData => merge(normalizedData, { brokerId })),
-      map(normalizedData => actions.startBroker.success(normalizedData)),
       retryWhen(errors =>
         errors.pipe(
           concatMap((value, index) =>
@@ -62,7 +58,9 @@ const startBroker$ = params => {
       ),
     ),
   ).pipe(
-    concatAll(),
+    map(([, data]) => normalize(data, schema.broker)),
+    map(normalizedData => merge(normalizedData, { brokerId })),
+    map(normalizedData => actions.startBroker.success(normalizedData)),
     startWith(actions.startBroker.request({ brokerId })),
     catchError(error =>
       of(actions.startBroker.failure(merge(error, { brokerId }))),

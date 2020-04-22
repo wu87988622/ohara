@@ -42,9 +42,9 @@ it('stop zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a              ';
-    const expected = '--a 9ms u 499ms v';
-    const subs = '    ^----------------';
+    const input = '   ^-a        ';
+    const expected = '--a 499ms v';
+    const subs = '    ^----------';
 
     const action$ = hot(input, {
       a: {
@@ -60,15 +60,6 @@ it('stop zookeeper should be worked correctly', () => {
         payload: {
           zookeeperId: zkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock stop zookeeper data',
       },
       v: {
         type: actions.stopZookeeper.SUCCESS,
@@ -114,10 +105,10 @@ it('stop zookeeper failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                ';
+    const input = '   ^-a          ';
     // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 9ms u 21999ms v';
-    const subs = '    ^------------------';
+    const expected = '--a 21999ms v';
+    const subs = '    ^------------';
 
     const action$ = hot(input, {
       a: {
@@ -133,15 +124,6 @@ it('stop zookeeper failed after reach retry limit', () => {
         payload: {
           zookeeperId: zkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock stop zookeeper data',
       },
       v: {
         type: actions.stopZookeeper.FAILURE,
@@ -160,7 +142,7 @@ it('stop zookeeper multiple times should be worked once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a 9ms u 499ms v';
+    const expected = '--a       499ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -177,15 +159,6 @@ it('stop zookeeper multiple times should be worked once', () => {
         payload: {
           zookeeperId: zkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock stop zookeeper data',
       },
       v: {
         type: actions.stopZookeeper.SUCCESS,
@@ -219,9 +192,9 @@ it('stop different zookeeper should be worked correctly', () => {
       xmx: 2222,
       clientPort: 3333,
     };
-    const input = '   ^-a--b                       ';
-    const expected = '--a--b 6ms u 2ms v 496ms y--z';
-    const subs = '    ^----------------------------';
+    const input = '   ^-a--b           ';
+    const expected = '--a--b 496ms y--z';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
@@ -247,24 +220,6 @@ it('stop different zookeeper should be worked correctly', () => {
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock stop zookeeper data',
-      },
-      v: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock stop zookeeper data',
       },
       y: {
         type: actions.stopZookeeper.SUCCESS,

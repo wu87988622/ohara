@@ -17,10 +17,9 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError } from 'rxjs';
+import { defer, of, iif, throwError, zip } from 'rxjs';
 import {
   catchError,
-  concatAll,
   delay,
   map,
   retryWhen,
@@ -37,16 +36,14 @@ import { getId } from 'utils/object';
 
 const stopWorker$ = params => {
   const workerId = getId(params);
-  return of(
+  return zip(
     defer(() => workerApi.stop(params)),
     defer(() => workerApi.get(params)).pipe(
       map(res => {
         if (res.data?.state) throw res;
         else return res.data;
       }),
-      map(data => normalize(data, schema.worker)),
-      map(normalizedData => merge(normalizedData, { workerId })),
-      map(normalizedData => actions.stopWorker.success(normalizedData)),
+
       retryWhen(errors =>
         errors.pipe(
           concatMap((value, index) =>
@@ -60,7 +57,9 @@ const stopWorker$ = params => {
       ),
     ),
   ).pipe(
-    concatAll(),
+    map(([, data]) => normalize(data, schema.worker)),
+    map(normalizedData => merge(normalizedData, { workerId })),
+    map(normalizedData => actions.stopWorker.success(normalizedData)),
     startWith(actions.stopWorker.request({ workerId })),
     catchError(error =>
       of(actions.stopWorker.failure(merge(error, { workerId }))),

@@ -15,23 +15,34 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { of, merge, defer } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+} from 'rxjs/operators';
 
 import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
+const deleteWorkspace$ = params => {
+  const workspaceId = getId(params);
+  return defer(() => workspaceApi.remove(params)).pipe(
+    map(() => actions.deleteWorkspace.success({ workspaceId })),
+    startWith(actions.deleteWorkspace.request({ workspaceId })),
+    catchError(error =>
+      of(actions.deleteWorkspace.failure(merge(error, { workspaceId }))),
+    ),
+  );
+};
+
 export default action$ =>
   action$.pipe(
     ofType(actions.deleteWorkspace.TRIGGER),
     map(action => action.payload),
-    switchMap(params =>
-      from(workspaceApi.remove(params)).pipe(
-        map(params => getId(params)),
-        map(id => actions.deleteWorkspace.success(id)),
-        startWith(actions.deleteWorkspace.request()),
-        catchError(res => of(actions.deleteWorkspace.failure(res))),
-      ),
-    ),
+    distinctUntilChanged(),
+    mergeMap(params => deleteWorkspace$(params)),
   );

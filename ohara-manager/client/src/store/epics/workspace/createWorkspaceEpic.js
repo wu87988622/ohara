@@ -16,25 +16,25 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, of, scheduled, asapScheduler } from 'rxjs';
 import {
   catchError,
   concatAll,
   delay,
   exhaustMap,
   map,
-  retryWhen,
   startWith,
-  take,
   withLatestFrom,
 } from 'rxjs/operators';
 import { reset } from 'redux-form';
 
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import * as brokerApi from 'api/brokerApi';
-import * as workerApi from 'api/workerApi';
+import { createZookeeper$ } from 'store/epics/zookeeper/createZookeeperEpic';
+import { startZookeeper$ } from 'store/epics/zookeeper/startZookeeperEpic';
+import { createBroker$ } from 'store/epics/broker/createBrokerEpic';
+import { startBroker$ } from 'store/epics/broker/startBrokerEpic';
+import { createWorker$ } from 'store/epics/worker/createWorkerEpic';
+import { startWorker$ } from 'store/epics/worker/startWorkerEpic';
 import * as workspaceApi from 'api/workspaceApi';
-import * as zookeeperApi from 'api/zookeeperApi';
 import { FORM } from 'const';
 import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
@@ -42,7 +42,6 @@ import * as schema from 'store/schema';
 import { getKey } from 'utils/object';
 
 const duration = 1000;
-const retry = 10;
 
 const createWorkspace$ = values =>
   defer(() => workspaceApi.create(values)).pipe(
@@ -52,90 +51,6 @@ const createWorkspace$ = values =>
       actions.createWorkspace.success(normalize(data, schema.workspace)),
     ),
     startWith(actions.createWorkspace.request()),
-  );
-
-const createZookeeper$ = values =>
-  defer(() => zookeeperApi.create(values)).pipe(
-    delay(duration),
-    map(res => res.data),
-    map(data => actions.createZookeeper.success(data)),
-    startWith(actions.createZookeeper.request()),
-  );
-
-const createBroker$ = values =>
-  defer(() => brokerApi.create(values)).pipe(
-    delay(duration),
-    map(res => res.data),
-    map(data => actions.createBroker.success(data)),
-    startWith(actions.createBroker.request()),
-  );
-
-const createWorker$ = values =>
-  defer(() => workerApi.create(values)).pipe(
-    delay(duration),
-    map(res => res.data),
-    map(data => actions.createWorker.success(data)),
-    startWith(actions.createWorker.request()),
-  );
-
-const startZookeeper$ = params =>
-  defer(() => zookeeperApi.start(params)).pipe(
-    delay(duration),
-    map(() => actions.startZookeeper.request()),
-    catchError(error => of(actions.startZookeeper.failure(error))),
-  );
-
-const startBroker$ = params =>
-  defer(() => brokerApi.start(params)).pipe(
-    delay(duration),
-    map(() => actions.startBroker.request()),
-    catchError(error => of(actions.startBroker.failure(error))),
-  );
-
-const startWorker$ = params =>
-  defer(() => workerApi.start(params)).pipe(
-    delay(duration),
-    map(() => actions.startWorker.request()),
-    catchError(error => of(actions.startWorker.failure(error))),
-  );
-
-const waitZookeeper$ = params =>
-  defer(() => zookeeperApi.get(params)).pipe(
-    map(res => res.data),
-    map(data => {
-      if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
-        throw data;
-      }
-      return actions.startZookeeper.success(data);
-    }),
-    retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
-    catchError(error => of(actions.startZookeeper.failure(error))),
-  );
-
-const waitBroker$ = params =>
-  defer(() => brokerApi.get(params)).pipe(
-    map(res => res.data),
-    map(data => {
-      if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
-        throw data;
-      }
-      return actions.startBroker.success(data);
-    }),
-    retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
-    catchError(error => of(actions.startBroker.failure(error))),
-  );
-
-const waitWorker$ = params =>
-  defer(() => workerApi.get(params)).pipe(
-    map(res => res.data),
-    map(data => {
-      if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
-        throw data;
-      }
-      return actions.startWorker.success(data);
-    }),
-    retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
-    catchError(error => of(actions.startWorker.failure(error))),
   );
 
 const finalize$ = params =>
@@ -166,21 +81,19 @@ export default (action$, state$) =>
     exhaustMap(([action]) => {
       const { workspace, zookeeper, broker, worker } = action.payload;
       const workspaceKey = getKey(workspace);
-      const zookeeperKey = getKey(zookeeper);
-      const brokerKey = getKey(broker);
-      const workerKey = getKey(worker);
-      return of(
-        createWorkspace$(workspace),
-        createZookeeper$(zookeeper),
-        createBroker$(broker),
-        createWorker$(worker),
-        startZookeeper$(zookeeperKey),
-        waitZookeeper$(zookeeperKey),
-        startBroker$(brokerKey),
-        waitBroker$(brokerKey),
-        startWorker$(workerKey),
-        waitWorker$(workerKey),
-        finalize$(workspaceKey),
+
+      return scheduled(
+        [
+          createWorkspace$(workspace),
+          createZookeeper$(zookeeper).pipe(delay(duration)),
+          createBroker$(broker).pipe(delay(duration)),
+          createWorker$(worker).pipe(delay(duration)),
+          startZookeeper$(zookeeper).pipe(delay(duration)),
+          startBroker$(broker).pipe(delay(duration)),
+          startWorker$(worker).pipe(delay(duration)),
+          finalize$(workspaceKey).pipe(delay(duration)),
+        ],
+        asapScheduler,
       ).pipe(
         concatAll(),
         catchError(error => of(actions.createWorkspace.failure(error))),

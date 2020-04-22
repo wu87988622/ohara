@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createZookeeper$ = values => {
+export const createZookeeper$ = values => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.create(values)).pipe(
     map(res => res.data),

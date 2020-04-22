@@ -42,9 +42,9 @@ it('start broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a              ';
-    const expected = '--a 9ms u 499ms v';
-    const subs = '    ^----------------';
+    const input = '   ^-a        ';
+    const expected = '--a 499ms v';
+    const subs = '    ^----------';
 
     const action$ = hot(input, {
       a: {
@@ -60,15 +60,6 @@ it('start broker should be worked correctly', () => {
         payload: {
           brokerId: bkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock start broker data',
       },
       v: {
         type: actions.startBroker.SUCCESS,
@@ -117,10 +108,10 @@ it('start broker failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                ';
+    const input = '   ^-a           ';
     // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 9ms u 21999ms v';
-    const subs = '    ^------------------';
+    const expected = '--a  21999ms v';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -136,15 +127,6 @@ it('start broker failed after reach retry limit', () => {
         payload: {
           brokerId: bkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock start broker data',
       },
       v: {
         type: actions.startBroker.FAILURE,
@@ -163,7 +145,7 @@ it('start broker multiple times should be worked once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a 9ms u 499ms v';
+    const expected = '--a       499ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -180,15 +162,6 @@ it('start broker multiple times should be worked once', () => {
         payload: {
           brokerId: bkId,
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock start broker data',
       },
       v: {
         type: actions.startBroker.SUCCESS,
@@ -225,9 +198,9 @@ it('start different broker should be worked correctly', () => {
       xmx: 2222,
       clientPort: 3333,
     };
-    const input = '   ^-a--b                       ';
-    const expected = '--a--b 6ms u 2ms v 496ms y--z';
-    const subs = '    ^----------------------------';
+    const input = '   ^-a--b           ';
+    const expected = '--a--b 496ms y--z';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
@@ -253,24 +226,6 @@ it('start different broker should be worked correctly', () => {
         payload: {
           brokerId: getId(anotherBrokerEntity),
         },
-      },
-      u: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock start broker data',
-      },
-      v: {
-        data: {
-          aliveNodes: [],
-          lastModified: 0,
-          nodeMetrics: {},
-        },
-        status: 200,
-        title: 'mock start broker data',
       },
       y: {
         type: actions.startBroker.SUCCESS,

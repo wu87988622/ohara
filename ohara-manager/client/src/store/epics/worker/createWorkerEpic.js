@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createWorker$ = values => {
+export const createWorker$ = values => {
   const workerId = getId(values);
   return defer(() => workerApi.create(values)).pipe(
     map(res => res.data),

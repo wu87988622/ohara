@@ -14,9 +14,20 @@
  * limitations under the License.
  */
 
-import { ObjectResponseList } from 'api/apiInterface/objectInterface';
+import {
+  ObjectResponseList,
+  ObjectResponse,
+} from 'api/apiInterface/objectInterface';
 import { of, Observable } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import { ServiceBody } from 'api/apiInterface/clusterInterface';
+import { BasicResponse } from 'api/apiInterface/basicInterface';
+
+export const entity = {
+  name: 'workspace1',
+  group: 'workspace',
+  nodeNames: ['node00'],
+};
 
 export const entities = [
   {
@@ -30,6 +41,15 @@ export const entities = [
     nodeNames: ['n1', 'n2'],
   },
 ];
+
+// simulate a promise request with a delay of 2s
+export const create = (params: ServiceBody): Observable<ObjectResponse> =>
+  of({
+    status: 200,
+    title: 'mock create workspace data',
+    data: params,
+  }).pipe(delay(2000));
+
 // simulate a promise request with a delay of 5 ms
 export const getAll = (): Observable<ObjectResponseList> =>
   of({
@@ -37,3 +57,19 @@ export const getAll = (): Observable<ObjectResponseList> =>
     title: 'mock workspace data',
     data: entities,
   }).pipe(delay(5));
+
+// simulate a promise request with a delay of 1s
+export const remove = (): Observable<BasicResponse> =>
+  of({
+    status: 200,
+    title: 'mock delete workspace data',
+    data: {},
+  }).pipe(delay(1000));
+
+// simulate a promise request with a delay of 100ms
+export const update = (params: ServiceBody): Observable<BasicResponse> =>
+  of({
+    status: 200,
+    title: 'mock update workspace data',
+    data: { ...entity, ...params },
+  }).pipe(delay(100));

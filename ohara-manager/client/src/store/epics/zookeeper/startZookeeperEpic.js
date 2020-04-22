@@ -17,10 +17,9 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError } from 'rxjs';
+import { defer, of, iif, throwError, zip } from 'rxjs';
 import {
   catchError,
-  concatAll,
   delay,
   map,
   retryWhen,
@@ -36,9 +35,9 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const startZookeeper$ = params => {
+export const startZookeeper$ = params => {
   const zookeeperId = getId(params);
-  return of(
+  return zip(
     defer(() => zookeeperApi.start(params)),
     defer(() => zookeeperApi.get(params)).pipe(
       map(res => {
@@ -46,9 +45,6 @@ const startZookeeper$ = params => {
           throw res;
         else return res.data;
       }),
-      map(data => normalize(data, schema.zookeeper)),
-      map(normalizedData => merge(normalizedData, { zookeeperId })),
-      map(normalizedData => actions.startZookeeper.success(normalizedData)),
       retryWhen(errors =>
         errors.pipe(
           concatMap((value, index) =>
@@ -62,7 +58,9 @@ const startZookeeper$ = params => {
       ),
     ),
   ).pipe(
-    concatAll(),
+    map(([, data]) => normalize(data, schema.zookeeper)),
+    map(normalizedData => merge(normalizedData, { zookeeperId })),
+    map(normalizedData => actions.startZookeeper.success(normalizedData)),
     startWith(actions.startZookeeper.request({ zookeeperId })),
     catchError(error =>
       of(actions.startZookeeper.failure(merge(error, { zookeeperId }))),
