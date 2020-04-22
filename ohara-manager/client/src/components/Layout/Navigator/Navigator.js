@@ -78,9 +78,6 @@ const Navigator = ({ pipelineApi }) => {
 
   const onSubmit = ({ pipelineName: name }, form) => {
     createPipeline({ name });
-    // if (!res.error) {
-    //   eventLog.info(`Successfully created pipeline ${name}.`);
-    // }
     setTimeout(form.reset);
     setIsOpen(false);
   };

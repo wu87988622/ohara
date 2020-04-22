@@ -28,7 +28,6 @@ const SettingsMenu = ({
   selected,
   isPageComponent,
   closePageComponent,
-  setScrollRef,
 }) => {
   return (
     <div className="settings-menu">
@@ -47,17 +46,14 @@ const SettingsMenu = ({
           >
             {items.map(({ icon, text, ref }) => {
               const onClick = (event, text) => {
-                handleClick(text);
+                handleClick({ text, ref });
 
                 if (isPageComponent) {
                   closePageComponent();
-                  return setScrollRef(ref);
+                  return;
                 }
 
-                ref.current.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'start',
-                });
+                ref.current.scrollIntoView();
               };
 
               return (
@@ -96,7 +92,6 @@ SettingsMenu.propTypes = {
   selected: PropTypes.string.isRequired,
   isPageComponent: PropTypes.bool.isRequired,
   closePageComponent: PropTypes.func.isRequired,
-  setScrollRef: PropTypes.func.isRequired,
 };
 
-export default SettingsMenu;
+export default React.memo(SettingsMenu);

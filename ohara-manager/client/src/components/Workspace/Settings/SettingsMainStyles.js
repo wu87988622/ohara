@@ -76,7 +76,7 @@ export const Wrapper = styled.div(
     .section-page-header {
       display: flex;
       align-items: center;
-      padding: ${theme.spacing(1, 0, 3)};
+      margin: ${theme.spacing(2, 0)};
 
       .section-page-content {
         padding: ${theme.spacing(0, 2)};

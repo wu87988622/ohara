@@ -17,7 +17,7 @@
 import React from 'react';
 
 import * as hooks from 'hooks';
-import * as pipelineUtils from '../PipelineApiHelper';
+import * as pipelineApiHelper from '../PipelineApiHelper';
 import { PaperContext } from '../Pipeline';
 import { KIND, CELL_STATUS } from 'const';
 
@@ -131,8 +131,8 @@ export const useZoom = () => {
 
 export const useMakeRequest = () => {
   const paperApi = React.useContext(PaperContext);
-  const streamUtils = pipelineUtils.stream();
-  const connectorUtils = pipelineUtils.connector();
+  const streamApiHelper = pipelineApiHelper.stream();
+  const connectorApiHelper = pipelineApiHelper.connector();
 
   const makeRequest = (pipeline, action) => {
     const cells = paperApi.getCells();
@@ -146,17 +146,17 @@ export const useMakeRequest = () => {
 
     if (action === 'start') {
       connectorPromises = connectors.map(cellData =>
-        connectorUtils.startConnector(cellData, paperApi),
+        connectorApiHelper.start(cellData, paperApi),
       );
       streamsPromises = streams.map(cellData =>
-        streamUtils.startStream(cellData, paperApi),
+        streamApiHelper.start(cellData, paperApi),
       );
     } else {
       connectorPromises = connectors.map(cellData =>
-        connectorUtils.stopConnector(cellData, paperApi),
+        connectorApiHelper.stop(cellData, paperApi),
       );
       streamsPromises = streams.map(cellData =>
-        streamUtils.stopStream(cellData, paperApi),
+        streamApiHelper.stop(cellData, paperApi),
       );
     }
     return Promise.all([...connectorPromises, ...streamsPromises]).then(

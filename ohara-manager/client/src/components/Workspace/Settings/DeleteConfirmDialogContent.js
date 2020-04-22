@@ -19,24 +19,32 @@ import PropTypes from 'prop-types';
 
 import { Input } from '@material-ui/core';
 
-const DeleteConfirmDialogContent = ({ workspaceName, setWorkspaceName }) => {
+const DeleteConfirmDialogContent = ({ setIsValidate }) => {
+  const [workspaceName, setWorkspaceName] = React.useState('');
+
+  const handleChange = event => {
+    setWorkspaceName(event.target.value);
+
+    if (event.target.value === 'workspaceName1') {
+      return setIsValidate(true);
+    }
+
+    setIsValidate(false);
+  };
+
   return (
     <>
       <div>
         'This action cannot be undone. This will permanently delete the
         workspace1 zookeeper, broker, worker, and pipelines.'
       </div>
-      <Input
-        value={workspaceName}
-        onChange={event => setWorkspaceName(event.target.value)}
-      />
+      <Input value={workspaceName} onChange={handleChange} />
     </>
   );
 };
 
 DeleteConfirmDialogContent.propTypes = {
-  workspaceName: PropTypes.string.isRequired,
-  setWorkspaceName: PropTypes.func.isRequired,
+  setIsValidate: PropTypes.func.isRequired,
 };
 
 export default DeleteConfirmDialogContent;

@@ -28,9 +28,6 @@ import TuneIcon from '@material-ui/icons/Tune';
 import UnarchiveIcon from '@material-ui/icons/Unarchive';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
-import Switch from '@material-ui/core/Switch';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
@@ -67,8 +64,8 @@ import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
             - children: a valid react children
 */
 
-export const useConfig = () => {
-  const [workspaceName, setWorkspaceName] = React.useState('');
+export const useConfig = ({ openDeleteProgressDialog }) => {
+  const [isValidate, setIsValidate] = React.useState(false);
 
   const menu = [
     {
@@ -133,39 +130,6 @@ export const useConfig = () => {
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
             children: <TopicPage />,
-          },
-        },
-        {
-          subTitle: 'Try toggling me',
-          title: 'A switch component...',
-          type: SETTINGS_COMPONENT_TYPES.CUSTOMIZED,
-          componentProps: {
-            children: (
-              <Switch
-                defaultChecked
-                color="primary"
-                size="small"
-                inputProps={{ 'aria-label': 'checkbox with default color' }}
-              />
-            ),
-          },
-        },
-        {
-          icon: <SubjectIcon />,
-          title: 'Open a new link',
-          type: SETTINGS_COMPONENT_TYPES.CUSTOMIZED,
-          componentProps: {
-            children: (
-              <IconButton
-                size="small"
-                onClick={() => {
-                  window.open('https://www.google.com', '_blank');
-                  window.focus();
-                }}
-              >
-                <OpenInNewIcon fontSize="small" />
-              </IconButton>
-            ),
           },
         },
       ],
@@ -318,15 +282,12 @@ export const useConfig = () => {
           type: SETTINGS_COMPONENT_TYPES.DIALOG,
           componentProps: {
             children: (
-              <DeleteConfirmDialogContent
-                workspaceName={workspaceName}
-                setWorkspaceName={setWorkspaceName}
-              />
+              <DeleteConfirmDialogContent setIsValidate={setIsValidate} />
             ),
             title: 'Are you absolutely sure?',
-            confirmDisabled: !workspaceName,
+            confirmDisabled: !isValidate,
             confirmText: 'Delete',
-            handleConfirm: () => {},
+            handleConfirm: openDeleteProgressDialog,
           },
         },
       ],

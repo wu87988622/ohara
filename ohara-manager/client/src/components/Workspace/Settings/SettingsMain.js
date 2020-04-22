@@ -33,10 +33,15 @@ import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { Wrapper } from './SettingsMainStyles';
 import { Dialog } from 'components/common/Dialog';
 
-const SettingsMain = ({ sections, handleChange, selected, handleClose }) => {
-  const isDialog = selected?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
+const SettingsMain = ({
+  sections,
+  handleChange,
+  selectedComponent,
+  handleClose,
+}) => {
+  const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
-    'should-display': isEmpty(selected) || isDialog,
+    'should-display': isEmpty(selectedComponent) || isDialog,
   });
 
   return (
@@ -70,7 +75,12 @@ const SettingsMain = ({ sections, handleChange, selected, handleClose }) => {
                       switch (type) {
                         case SETTINGS_COMPONENT_TYPES.PAGE:
                         case SETTINGS_COMPONENT_TYPES.DIALOG:
-                          return handleChange({ name: title, type, ref });
+                          return handleChange({
+                            name: title,
+                            type,
+                            heading,
+                            ref,
+                          });
 
                         case SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
                           return (
@@ -116,15 +126,15 @@ const SettingsMain = ({ sections, handleChange, selected, handleClose }) => {
         })}
       </div>
 
-      {selected &&
+      {selectedComponent &&
         sections.map(section =>
           section.components.map(component => {
             const { title } = component;
             return (
-              <Box hidden={title !== selected.name} key={title}>
+              <Box hidden={title !== selectedComponent.name} key={title}>
                 {componentRenderer({
                   component,
-                  selected,
+                  selectedComponent,
                   handleClose,
                 })}
               </Box>
@@ -135,7 +145,7 @@ const SettingsMain = ({ sections, handleChange, selected, handleClose }) => {
   );
 };
 
-function componentRenderer({ component, selected, handleClose }) {
+function componentRenderer({ component, selectedComponent, handleClose }) {
   const { title, type, componentProps } = component;
 
   switch (type) {
@@ -158,7 +168,7 @@ function componentRenderer({ component, selected, handleClose }) {
     case SETTINGS_COMPONENT_TYPES.DIALOG:
       return (
         <Dialog
-          open={title === selected.name}
+          open={title === selectedComponent.name}
           handleClose={handleClose}
           {...componentProps}
         />
@@ -189,10 +199,10 @@ SettingsMain.propTypes = {
   ).isRequired,
   handleChange: PropTypes.func.isRequired,
   handleClose: PropTypes.func.isRequired,
-  selected: PropTypes.shape({
+  selectedComponent: PropTypes.shape({
     name: PropTypes.string,
     type: PropTypes.string,
   }),
 };
 
-export default SettingsMain;
+export default React.memo(SettingsMain);

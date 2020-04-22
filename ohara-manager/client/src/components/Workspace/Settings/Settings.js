@@ -22,25 +22,37 @@ import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
+import { Dialog } from 'components/common/Dialog';
 
 const Settings = () => {
   const { isOpen, close } = useEditWorkspaceDialog();
-  const { menu, sections } = useConfig();
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState('');
   const [selectedComponent, setSelectedComponent] = React.useState(null);
-  const [scrollRef, setScrollRef] = React.useState(null);
+  const scrollRef = React.useRef(null);
 
-  const handleMenuClick = newMenuItem => {
-    setSelectedMenu(newMenuItem);
+  const resetSelectedItem = () => {
+    setSelectedComponent(null);
+  };
+
+  const { menu, sections } = useConfig({
+    openDeleteProgressDialog: () => {
+      setIsDeleteOpen(true);
+      resetSelectedItem(null);
+    },
+  });
+
+  const handleMenuClick = ({ text: selectedItem, ref }) => {
+    scrollRef.current = ref.current;
+    setSelectedMenu(selectedItem);
   };
 
   const handleComponentChange = newPage => {
-    setSelectedComponent(newPage);
-  };
+    const { ref, heading: currentSection, type, name } = newPage;
 
-  const resetSelectedItem = () => {
-    setScrollRef(selectedComponent.ref);
-    setSelectedComponent(null);
+    scrollRef.current = ref.current;
+    setSelectedMenu(currentSection); // sync the menu selected state
+    setSelectedComponent({ name, type });
   };
 
   // Use a different layout for rendering page component
@@ -52,7 +64,7 @@ const Settings = () => {
     if (!isPageComponent && scrollRef?.current) {
       scrollRef.current.scrollIntoView();
     }
-  }, [isPageComponent, scrollRef, selectedComponent]);
+  }, [isPageComponent, menu, scrollRef, sections, selectedComponent]);
 
   return (
     <StyledFullScreenDialog
@@ -69,13 +81,21 @@ const Settings = () => {
           handleClick={handleMenuClick}
           closePageComponent={resetSelectedItem}
           isPageComponent={isPageComponent}
-          setScrollRef={setScrollRef}
+          scrollRef={scrollRef}
         />
         <SettingsMain
           sections={sections}
           handleChange={handleComponentChange}
           handleClose={resetSelectedItem}
-          selected={selectedComponent}
+          selectedComponent={selectedComponent}
+        />
+
+        <Dialog
+          open={isDeleteOpen}
+          title="abc"
+          handleClose={() => setIsDeleteOpen(false)}
+          handleConfirm={() => {}}
+          children="Dumb dialog"
         />
       </Wrapper>
     </StyledFullScreenDialog>
