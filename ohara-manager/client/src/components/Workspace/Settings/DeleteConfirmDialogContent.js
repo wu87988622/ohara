@@ -17,34 +17,42 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Input } from '@material-ui/core';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
 
-const DeleteConfirmDialogContent = ({ setIsValidate }) => {
-  const [workspaceName, setWorkspaceName] = React.useState('');
-
+const DeleteConfirmDialogContent = ({ workspace, onValidate }) => {
   const handleChange = event => {
-    setWorkspaceName(event.target.value);
-
-    if (event.target.value === 'workspaceName1') {
-      return setIsValidate(true);
+    if (event?.target?.value) {
+      onValidate(event.target.value === workspace.name);
     }
-
-    setIsValidate(false);
   };
 
   return (
     <>
-      <div>
-        'This action cannot be undone. This will permanently delete the
-        workspace1 zookeeper, broker, worker, and pipelines.'
-      </div>
-      <Input value={workspaceName} onChange={handleChange} />
+      <Typography paragraph>
+        This action cannot be undone. This will permanently delete the{' '}
+        {workspace.name} zookeeper, broker, worker, and pipelines.
+      </Typography>
+      <Typography paragraph>
+        Please type <b>{workspace.name}</b> to confirm.
+      </Typography>
+      <TextField
+        autoFocus
+        fullWidth
+        onChange={handleChange}
+        placeholder={workspace.name}
+        type="input"
+        variant="outlined"
+      />
     </>
   );
 };
 
 DeleteConfirmDialogContent.propTypes = {
-  setIsValidate: PropTypes.func.isRequired,
+  workspace: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+  }).isRequired,
+  onValidate: PropTypes.func.isRequired,
 };
 
 export default DeleteConfirmDialogContent;

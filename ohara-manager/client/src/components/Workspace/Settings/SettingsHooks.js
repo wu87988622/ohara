@@ -65,8 +65,8 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
             - children: a valid react children
 */
 
-export const useConfig = ({ openDeleteProgressDialog }) => {
-  const [isValidate, setIsValidate] = React.useState(false);
+export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
+  const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
 
   const menu = [
     {
@@ -278,6 +278,7 @@ export const useConfig = ({ openDeleteProgressDialog }) => {
             title: 'Are you absolutely sure?',
             confirmText: 'Restart',
             handleConfirm: () => {},
+            maxWidth: 'sm',
           },
         },
         {
@@ -286,12 +287,16 @@ export const useConfig = ({ openDeleteProgressDialog }) => {
           type: SETTINGS_COMPONENT_TYPES.DIALOG,
           componentProps: {
             children: (
-              <DeleteConfirmDialogContent setIsValidate={setIsValidate} />
+              <DeleteConfirmDialogContent
+                workspace={workspace}
+                onValidate={setIsDeleteEnabled}
+              />
             ),
             title: 'Are you absolutely sure?',
-            confirmDisabled: !isValidate,
+            confirmDisabled: !isDeleteEnabled,
             confirmText: 'Delete',
             handleConfirm: openDeleteProgressDialog,
+            maxWidth: 'sm',
           },
         },
       ],

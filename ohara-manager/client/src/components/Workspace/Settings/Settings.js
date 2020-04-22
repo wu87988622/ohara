@@ -16,6 +16,7 @@
 
 import React from 'react';
 
+import * as hooks from 'hooks';
 import SettingsMain from './SettingsMain';
 import SettingsMenu from './SettingsMenu';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
@@ -31,6 +32,8 @@ const Settings = () => {
   const [selectedComponent, setSelectedComponent] = React.useState(null);
   const scrollRef = React.useRef(null);
 
+  const workspace = hooks.useWorkspace();
+
   const resetSelectedItem = () => {
     setSelectedComponent(null);
   };
@@ -40,6 +43,7 @@ const Settings = () => {
       setIsDeleteOpen(true);
       resetSelectedItem(null);
     },
+    workspace,
   });
 
   const handleMenuClick = ({ text: selectedItem, ref }) => {
