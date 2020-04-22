@@ -34,6 +34,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
+import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 
@@ -129,14 +130,7 @@ export const useConfig = () => {
           title: 'Topics in this workspace',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
-            children: (
-              <p>
-                Lorem, ipsum dolor sit amet consectetur adipisicing elit.
-                Inventore quae corrupti ipsum quo est veniam tempora porro
-                necessitatibus mollitia. Molestias nobis minima asperiores quis
-                error! Corrupti nobis inventore est assumenda!
-              </p>
-            ),
+            children: <TopicPage />,
           },
         },
         {

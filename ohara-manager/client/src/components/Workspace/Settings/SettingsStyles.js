@@ -36,7 +36,7 @@ export const StyledFullScreenDialog = styled(props => (
           : 'none'};
         width: 680px;
         margin: auto;
-        padding: ${theme.spacing(12, 3)};
+        padding: ${theme.spacing(9, 3)};
         height: 100%;
       }
 
@@ -48,15 +48,15 @@ export const StyledFullScreenDialog = styled(props => (
 );
 
 export const Wrapper = styled.div(
-  () => css`
+  ({ theme }) => css`
     display: flex;
 
     .settings-menu {
       position: fixed;
-      top: 100px;
-      left: 40px;
+      top: ${theme.spacing(11)}px;
+      left: ${theme.spacing(1)}px;
       height: 100%;
-      width: 180px;
+      width: ${theme.spacing(24)}px;
     }
 
     section {
