@@ -19,7 +19,7 @@ import { map, throttleTime } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 
-const showMessageEpic = action$ =>
+export const showMessageEpic = action$ =>
   action$.pipe(
     ofType(actions.showMessage.TRIGGER),
     // avoid message display too frequently
@@ -29,7 +29,7 @@ const showMessageEpic = action$ =>
     map(values => actions.showMessage.success(values)),
   );
 
-const hideMessageEpic = action$ =>
+export const hideMessageEpic = action$ =>
   action$.pipe(
     ofType(actions.hideMessage.TRIGGER),
     map(() => ({ message: '', isOpen: false })),
