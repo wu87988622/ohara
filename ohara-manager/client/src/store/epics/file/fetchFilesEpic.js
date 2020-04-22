@@ -16,8 +16,14 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
-import { switchMap, map, startWith, catchError } from 'rxjs/operators';
+import { from, defer } from 'rxjs';
+import {
+  switchMap,
+  map,
+  startWith,
+  catchError,
+  throttleTime,
+} from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
@@ -28,8 +34,9 @@ export default action$ =>
   action$.pipe(
     ofType(actions.fetchFiles.TRIGGER),
     map(action => action.payload),
+    throttleTime(1000),
     switchMap(() =>
-      from(fileApi.getAll()).pipe(
+      defer(() => fileApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.file])),
         map(normalizedData => actions.fetchFiles.success(normalizedData)),
         startWith(actions.fetchFiles.request()),

@@ -16,8 +16,14 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { from, defer } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+} from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
@@ -28,8 +34,9 @@ export default action$ => {
   return action$.pipe(
     ofType(actions.createFile.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(fileApi.create(values)).pipe(
+    distinctUntilChanged(),
+    mergeMap(values =>
+      defer(() => fileApi.create(values)).pipe(
         map(res => normalize(res.data, schema.file)),
         map(normalizedData => actions.createFile.success(normalizedData)),
         startWith(actions.createFile.request()),

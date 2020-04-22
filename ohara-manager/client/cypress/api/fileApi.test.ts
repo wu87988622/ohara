@@ -87,7 +87,7 @@ describe('File API', () => {
     cy.createJar(file)
       .then(params => fileApi.create(params))
       .then(() => {
-        fileApi.getAll(file.group).then(result => {
+        fileApi.getAll({ group: file.group }).then(result => {
           expect(result.data).to.be.an('array');
           expect(result.data.length).to.eq(1);
 

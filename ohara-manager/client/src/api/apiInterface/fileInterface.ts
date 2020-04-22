@@ -28,7 +28,6 @@ interface Data {
   name: string;
   group: string;
   url?: string;
-  bytes: number[];
   size: number;
   classInfos: ClassInfo[];
   lastModified: number;

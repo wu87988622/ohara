@@ -15,8 +15,14 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { from, defer } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+} from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
@@ -27,8 +33,9 @@ export default action$ =>
   action$.pipe(
     ofType(actions.deleteFile.TRIGGER),
     map(action => action.payload),
-    switchMap(params =>
-      from(fileApi.remove(params)).pipe(
+    distinctUntilChanged(),
+    mergeMap(params =>
+      defer(() => fileApi.remove(params)).pipe(
         map(() => getId(params)),
         map(id => actions.deleteFile.success(id)),
         startWith(actions.deleteFile.request()),
