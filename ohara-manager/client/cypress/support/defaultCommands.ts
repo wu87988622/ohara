@@ -41,10 +41,8 @@ declare global {
       ) => Chainable<JQuery<HTMLElement>>;
       createWorkspace: ({
         workspaceName,
-        withPlugin,
       }: {
         workspaceName?: string;
-        withPlugin?: boolean;
       }) => Chainable<null>;
       addNode: () => Chainable<null>;
       addElement: (
@@ -113,10 +111,8 @@ Cypress.Commands.add(
   'createWorkspace',
   ({
     workspaceName,
-    withPlugin = true,
   }: {
     workspaceName?: string;
-    withPlugin?: boolean;
   } = {}) => {
     Cypress.Commands.add('addNode', () => {
       cy.get('body').then($body => {
@@ -194,43 +190,13 @@ Cypress.Commands.add(
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode();
 
-    // Step3: add worker plugins
-    // we add a stream.jar for testing purpose
-
-    if (withPlugin) {
-      const workspaceKey = {
-        name: 'workspace1',
-        group: 'workspace',
-      };
-      const fileGroup = hashByGroupAndName(
-        workspaceKey.group,
-        workspaceKey.name,
-      );
-      const stream = {
-        fixturePath: 'stream',
-        name: 'ohara-it-stream.jar',
-        group: fileGroup,
-        tags: { parentKey: workspaceKey },
-      };
-      cy.contains('button:visible', 'Add worker plugins')
-        .find('input')
-        .then(element => {
-          cy.createJar(stream).then(params => {
-            element[0].files = params.fileList;
-            cy.wrap(element).trigger('change', { force: true });
-          });
-        });
-      cy.wait(1000);
-      cy.contains('button', 'Add worker plugins').click();
-    }
-
     cy.findAllByText(/^next$/i)
       .filter(':visible')
       .click();
 
-    // Step4: create workspace
+    // Step3: create workspace
     cy.wait(1000);
-    cy.findAllByText(/^next$/i)
+    cy.findAllByText(/^submit$/i)
       .filter(':visible')
       .click();
 

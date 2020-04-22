@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, replace } from 'lodash';
+import { replace } from 'lodash';
 import { reduxForm } from 'redux-form';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
@@ -47,19 +47,13 @@ const ReviewForm = props => {
                 {replace(values?.workspace?.nodeNames, /,/g, ', ')}
               </TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell>Plugins</TableCell>
-              <TableCell>
-                {map(values?.files, file => file.name).join(', ')}
-              </TableCell>
-            </TableRow>
           </TableBody>
         </Table>
       </Paper>
       <div className="buttons">
         <Button onClick={previousStep}>Back</Button>
         <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Next
+          Submit
         </Button>
       </div>
     </form>

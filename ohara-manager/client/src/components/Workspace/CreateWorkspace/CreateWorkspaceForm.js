@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, merge, shuffle, take, times } from 'lodash';
+import { merge, shuffle, take, times } from 'lodash';
 import { reduxForm } from 'redux-form';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
@@ -27,12 +27,10 @@ import * as hooks from 'hooks';
 import { CREATE_WORKSPACE_MODE, FORM, GROUP } from 'const';
 import * as generate from 'utils/generate';
 import { getKey } from 'utils/object';
-import { hashByGroupAndName } from 'utils/sha';
 import { Wrapper } from './CreateWorkspaceFormStyles';
 import ReviewForm from './ReviewForm';
 import SetupBrokerForm from './SetupBrokerForm';
 import SetupNodesForm from './SetupNodesForm';
-import SetupPluginsForm from './SetupPluginsForm';
 import SetupWorkerForm from './SetupWorkerForm';
 import SetupWorkspaceForm from './SetupWorkspaceForm';
 import SetupZookeeperForm from './SetupZookeeperForm';
@@ -67,10 +65,6 @@ const CreateWorkspaceForm = props => {
       zookeeper: { group: GROUP.ZOOKEEPER },
       broker: { group: GROUP.BROKER },
       worker: { group: GROUP.WORKER },
-      files: map(values.files, file => ({
-        ...file,
-        group: hashByGroupAndName(GROUP.WORKSPACE, values.workspace.name),
-      })),
     });
 
   const handleSubmit = values => {
@@ -85,7 +79,6 @@ const CreateWorkspaceForm = props => {
       worker: {
         brokerClusterKey: getKey(values.broker),
         freePorts: times(5, generate.port),
-        plugins: map(values.files, file => getKey(file)),
       },
     });
 
@@ -141,12 +134,6 @@ const CreateWorkspaceForm = props => {
           </Step>
         )}
         <Step>
-          <StepLabel>Upload or select worker plugins(Optional)</StepLabel>
-          <StepContent>
-            <SetupPluginsForm previousStep={previousStep} onSubmit={nextStep} />
-          </StepContent>
-        </Step>
-        <Step>
           <StepLabel>Create this workspace</StepLabel>
           <StepContent>
             <ReviewForm previousStep={previousStep} onSubmit={handleSubmit} />
@@ -175,6 +162,5 @@ export default reduxForm({
     workspace: {
       nodeNames: [],
     },
-    files: [],
   },
 })(CreateWorkspaceForm);

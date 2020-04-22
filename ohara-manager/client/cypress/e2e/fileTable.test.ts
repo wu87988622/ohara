@@ -24,7 +24,7 @@ describe.skip('FileTable of Workspace Settings', () => {
 
   it('file operations in workspace should be worked normally', () => {
     // create workspace
-    cy.createWorkspace({ withPlugin: false });
+    cy.createWorkspace({});
 
     // we use the default workspace name and group for file tags
     const workspaceKey = {

@@ -170,7 +170,6 @@ export default (action$, state$) =>
       const brokerKey = getKey(broker);
       const workerKey = getKey(worker);
       return of(
-        // TODO: upload files
         createWorkspace$(workspace),
         createZookeeper$(zookeeper),
         createBroker$(broker),
