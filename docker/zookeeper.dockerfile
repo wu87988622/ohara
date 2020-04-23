@@ -28,13 +28,13 @@ RUN yum install -y \
 # download zookeeper
 # WARN: Please don't change the value of ZOOKEEPER_DIR
 ARG ZOOKEEPER_DIR=/opt/zookeeper
-ARG ZOOKEEPER_VERSION=3.4.13
+ARG ZOOKEEPER_VERSION=3.5.7
 ARG MIRROR_SITE=https://archive.apache.org/dist
-RUN wget $MIRROR_SITE/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz
+RUN wget $MIRROR_SITE/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/apache-zookeeper-${ZOOKEEPER_VERSION}-bin.tar.gz
 RUN mkdir ${ZOOKEEPER_DIR}
-RUN tar -zxvf zookeeper-${ZOOKEEPER_VERSION}.tar.gz -C ${ZOOKEEPER_DIR}
-RUN rm -f zookeeper-${ZOOKEEPER_VERSION}.tar.gz
-RUN echo "$ZOOKEEPER_VERSION" > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/zookeeper_version
+RUN tar -zxvf apache-zookeeper-${ZOOKEEPER_VERSION}-bin.tar.gz -C ${ZOOKEEPER_DIR}
+RUN rm -f apache-zookeeper-${ZOOKEEPER_VERSION}-bin.tar.gz
+RUN echo "$ZOOKEEPER_VERSION" > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "apache-zookeeper-*")/bin/zookeeper_version
 
 # clone ohara
 ARG BRANCH="master"
@@ -45,7 +45,7 @@ WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
-RUN git rev-parse HEAD > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "zookeeper-*")/bin/ohara_version
+RUN git rev-parse HEAD > $(find "${ZOOKEEPER_DIR}" -maxdepth 1 -type d -name "apache-zookeeper-*")/bin/ohara_version
 
 FROM centos:7.7.1908
 
@@ -62,7 +62,7 @@ RUN useradd -ms /bin/bash -g $USER $USER
 
 # copy zookeeper binary
 COPY --from=deps /opt/zookeeper /home/$USER
-RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "zookeeper-*") /home/$USER/default
+RUN ln -s $(find "/home/$USER" -maxdepth 1 -type d -name "apache-zookeeper-*") /home/$USER/default
 COPY --from=deps /testpatch/ohara/docker/zk.sh /home/$USER/default/bin/
 RUN chown -R $USER:$USER /home/$USER
 RUN chmod +x /home/$USER/default/bin/zk.sh

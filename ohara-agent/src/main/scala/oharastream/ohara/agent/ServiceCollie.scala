@@ -146,7 +146,7 @@ abstract class ServiceCollie extends Releasable {
     def fetch(clz: Class[_]): Set[String] =
       try
       // classOf[SubTypesScanner].getSimpleName is hard-code since Reflections does not expose it ...
-      reflections.getStore.getAll(classOf[SubTypesScanner].getSimpleName, clz.getName).asScala.toSet
+      reflections.getStore.getAll(classOf[SubTypesScanner], clz.getName).asScala.toSet
       catch {
         case _: Throwable => Set.empty
       }

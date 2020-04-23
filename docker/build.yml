@@ -46,7 +46,7 @@ services:
       context: .
       dockerfile: stream.dockerfile
       args:
-        KAFKA_VERSION: 2.4.1
+        KAFKA_VERSION: 2.5.0
         LOG_VERSION: 1.7.25
         GRADLE_VERSION: 6.3
         COMMON_LANG_VERSION: 3.7
@@ -78,7 +78,7 @@ services:
       context: .
       dockerfile: zookeeper.dockerfile
       args:
-        ZOOKEEPER_VERSION: 3.4.13
+        ZOOKEEPER_VERSION: 3.5.7
 
   broker:
     image: oharastream/broker:${TAG:-0.10.0-SNAPSHOT}
@@ -86,7 +86,7 @@ services:
       context: .
       dockerfile: broker.dockerfile
       args:
-        KAFKA_VERSION: 2.4.1
+        KAFKA_VERSION: 2.5.0
 
   worker:
     image: oharastream/connect-worker:${TAG:-0.10.0-SNAPSHOT}
@@ -94,6 +94,6 @@ services:
       context: .
       dockerfile: worker.dockerfile
       args:
-        KAFKA_VERSION: 2.4.1
+        KAFKA_VERSION: 2.5.0
         BRANCH: master
         REPO: https://github.com/oharastream/ohara.git
