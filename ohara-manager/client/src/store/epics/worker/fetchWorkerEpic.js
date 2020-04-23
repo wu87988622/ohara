@@ -15,9 +15,9 @@
  */
 
 import { normalize } from 'normalizr';
-import { merge } from 'lodash';
+import { sortBy, merge, mergeWith, omit, isArray } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, of } from 'rxjs';
+import { defer, forkJoin, of, zip } from 'rxjs';
 import {
   catchError,
   map,
@@ -32,6 +32,13 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
+const customizer = (objValue, srcValue) => {
+  if (isArray(objValue)) {
+    // combine the classInfos array and sort it by "displayed" className
+    return sortBy(objValue.concat(srcValue), v => v.className.split('.').pop());
+  }
+};
+
 const fetchWorker$ = params => {
   const workerId = getId(params);
   return forkJoin(
@@ -39,8 +46,20 @@ const fetchWorker$ = params => {
       map(res => res.data),
       map(data => normalize(data, schema.worker)),
     ),
-    defer(() => inspectApi.getWorkerInfo(params)).pipe(
-      map(res => merge(res.data, params)),
+    zip(
+      defer(() => inspectApi.getWorkerInfo(params)),
+      defer(() => inspectApi.getShabondiInfo()),
+    ).pipe(
+      map(([wkInfo, shabondiInfo]) =>
+        mergeWith(
+          wkInfo.data,
+          // we only need to inject the shabondi classes into worker.classInfos
+          // the other fields of inspect/shabondi should be omitted
+          omit(shabondiInfo.data, ['settingDefinitions', 'imageName']),
+          params,
+          customizer,
+        ),
+      ),
       map(data => normalize(data, schema.info)),
     ),
   ).pipe(

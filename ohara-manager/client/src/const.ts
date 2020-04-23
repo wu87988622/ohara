@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+export const PACKAGE_ROOT = 'oharastream.ohara';
+
 // kind of all objects
 export enum KIND {
   configurator = 'configurator',

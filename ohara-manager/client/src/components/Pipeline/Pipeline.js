@@ -29,7 +29,7 @@ import { PaperWrapper, StyledSplitPane } from './PipelineStyles';
 import { usePipelineState as usePipelineReducerState } from './PipelineHooks';
 import * as pipelineUtils from './PipelineApiHelper';
 import { CONNECTION_TYPE } from './PipelineApiHelper';
-import { KIND } from 'const';
+import { KIND, PACKAGE_ROOT } from 'const';
 import { DeleteDialog } from 'components/common/Dialog';
 
 export const PaperContext = createContext(null);
@@ -391,7 +391,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                       }
                     }}
                     onCellConfig={(cellData, paperApi) => {
-                      const { displayName, kind, name } = cellData;
+                      const { className, displayName, kind, name } = cellData;
                       let targetCell;
                       switch (kind) {
                         case KIND.source:
@@ -408,8 +408,13 @@ const Pipeline = React.forwardRef((props, ref) => {
                         default:
                           break;
                       }
+                      const type = className
+                        .replace(PACKAGE_ROOT, '')
+                        .split('.')
+                        .slice(1)
+                        .shift();
                       openPropertyDialog({
-                        title: `Edit the property of ${displayName} ${kind} connector`,
+                        title: `Edit the property of ${displayName} ${kind} ${type}`,
                         classInfo: targetCell,
                         cellData,
                         paperApi,

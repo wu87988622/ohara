@@ -95,6 +95,29 @@ export const workerInfoEntity = {
   ],
 };
 
+export const shabondiInfoEntity = {
+  classInfos: [],
+  imageName: 'oharastream/shabondi:0.10.0-SNAPSHOT',
+  settingDefinitions: [
+    {
+      blacklist: [],
+      displayName: 'Broker cluster key',
+      documentation:
+        'the key of broker cluster used to transfer data for this Shabondi',
+      group: 'core',
+      internal: false,
+      key: 'brokerClusterKey',
+      necessary: Necessary.REQUIRED,
+      orderInGroup: 6,
+      permission: Permission.EDITABLE,
+      recommendedValues: [],
+      reference: Reference.BROKER_CLUSTER,
+      tableKeys: [],
+      valueType: Type.OBJECT_KEY,
+    },
+  ],
+};
+
 export const topicEntity = {
   messages: [
     { partition: 1, offset: 0, value: { r1: 'fake topic data' } },
@@ -122,9 +145,16 @@ export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
 export const getWorkerInfo = (): Observable<InspectServiceResponse> =>
   of({
     status: 200,
-    title: 'mock inspect broker data',
+    title: 'mock inspect worker data',
     data: workerInfoEntity,
   }).pipe(delay(3000));
+
+export const getShabondiInfo = (): Observable<InspectServiceResponse> =>
+  of({
+    status: 200,
+    title: 'mock inspect shabondi data',
+    data: shabondiInfoEntity,
+  });
 
 // simulate a promise request with a delay of 5s
 export const getTopicData = (): Observable<InspectTopicResponse> =>
