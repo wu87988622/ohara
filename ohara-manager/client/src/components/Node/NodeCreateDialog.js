@@ -54,8 +54,8 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
               form.reset();
             }}
             handleConfirm={handleSubmit}
-            title="Add node"
-            confirmText="ADD"
+            title="Create node"
+            confirmText="CREATE"
             confirmDisabled={submitting || pristine || invalid}
           >
             <form onSubmit={handleSubmit}>

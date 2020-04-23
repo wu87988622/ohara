@@ -39,9 +39,9 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import AddBoxIcon from '@material-ui/icons/AddBox';
 import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
+import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
@@ -100,6 +100,12 @@ function NodeTable(props) {
   const [isEditorDialogOpen, setIsEditorDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [selected, setSelected] = useState(options?.selectedNodes || []);
+
+  const data = options?.comparison
+    ? sortBy(unionBy(options?.comparedNodes, nodes, 'hostname'), ['hostname'])
+    : nodes;
+
+  const resourceNames = getUnionResourceNames(data);
 
   const willBeRemoved = node => !find(nodes, n => n.hostname === node.hostname);
 
@@ -198,95 +204,24 @@ function NodeTable(props) {
     event.stopPropagation();
   };
 
-  const renderRowActions = () => {
+  const renderSelectionColumn = () => {
+    const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
     return {
-      title: 'Actions',
-      cellStyle: { textAlign: 'right' },
-      headerStyle: { textAlign: 'right' },
-      sorting: false,
-      render: node => {
-        const getUndoTooltipTitle = node => {
-          if (willBeAdded(node)) {
-            return 'Undo add node';
-          } else if (willBeRemoved(node)) {
-            return 'Undo remove node';
-          }
-          return 'Undo';
-        };
-
-        const showUndoIcon = node =>
-          (options?.comparison && willBeAdded(node)) || willBeRemoved(node);
-
-        const showRemoveIcon = node =>
-          options?.showRemoveIcon && !showUndoIcon(node);
-
-        return (
-          <>
-            {options?.showDetailIcon && (
-              <Tooltip title="View node">
-                <IconButton
-                  data-testid={`view-node-${node.hostname}`}
-                  onClick={() => {
-                    handleDetailIconClick(node);
-                  }}
-                >
-                  <VisibilityIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {options?.showEditorIcon && (
-              <Tooltip title="Edit node">
-                <IconButton
-                  onClick={() => {
-                    handleEditorIconClick(node);
-                  }}
-                >
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {options?.showDeleteIcon && (
-              <Tooltip title="Delete node">
-                <IconButton
-                  onClick={() => {
-                    handleDeleteIconClick(node);
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {showRemoveIcon(node) && (
-              <Tooltip title="Remove node">
-                <IconButton
-                  onClick={() => {
-                    handleRemoveIconClick(node);
-                  }}
-                >
-                  <ClearIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {showUndoIcon(node) && (
-              <Tooltip title={getUndoTooltipTitle(node)}>
-                <IconButton
-                  onClick={() => {
-                    handleUndoIconClick(node);
-                  }}
-                >
-                  <SettingsBackupRestoreIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-          </>
-        );
-      },
+      cellStyle: style,
+      headerStyle: style,
+      hidden: !options?.selection,
+      render: node => (
+        <Checkbox
+          checked={some(selected, n => n.hostname === node.hostname)}
+          color="primary"
+          onChange={event => handleRowSelected(event, node)}
+        />
+      ),
     };
   };
 
   const renderResourceColumns = () => {
-    const unionResourceNames = getUnionResourceNames(getData());
-    return map(unionResourceNames, resourceName => ({
+    return map(resourceNames, resourceName => ({
       title: resourceName,
       render: node => {
         const resource = find(node.resources, r => r.name === resourceName);
@@ -308,21 +243,6 @@ function NodeTable(props) {
         );
       },
     }));
-  };
-
-  const renderSelectionColumn = () => {
-    const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
-    return {
-      cellStyle: style,
-      headerStyle: style,
-      render: node => (
-        <Checkbox
-          checked={some(selected, n => n.hostname === node.hostname)}
-          color="primary"
-          onChange={event => handleRowSelected(event, node)}
-        />
-      ),
-    };
   };
 
   const renderServiceColumn = () => {
@@ -352,60 +272,99 @@ function NodeTable(props) {
     };
   };
 
-  const renderActions = () => {
-    return [
-      {
-        icon: () => <AddIcon />,
-        tooltip: 'Add Node',
-        hidden: !options?.showAddIcon,
-        isFreeAction: true,
-        onClick: handleAddIconClick,
-      },
-      {
-        icon: () => <AddBoxIcon />,
-        tooltip: 'Create Node',
-        hidden: !options?.showCreateIcon,
-        isFreeAction: true,
-        onClick: handleCreateIconClick,
-      },
-    ];
-  };
-
-  const renderColumns = () => {
-    const columns = [
-      { title: 'Name', field: 'hostname' },
-      ...renderResourceColumns(),
-      renderServiceColumn(),
-      {
-        title: 'State',
-        field: 'state',
-        render: node => capitalize(node.state),
-      },
-    ];
-
-    if (options?.selection) {
-      columns.unshift(renderSelectionColumn());
-    }
-
-    if (
+  const renderRowActions = () => {
+    const isShow =
       options?.showDeleteIcon ||
       options?.showDetailIcon ||
       options?.showEditorIcon ||
-      options?.showRemoveIcon
-    ) {
-      columns.push(renderRowActions());
-    }
+      options?.showRemoveIcon;
 
-    return columns;
-  };
+    const render = node => {
+      const getUndoTooltipTitle = node => {
+        if (willBeAdded(node)) {
+          return 'Undo add node';
+        } else if (willBeRemoved(node)) {
+          return 'Undo remove node';
+        }
+        return 'Undo';
+      };
 
-  const getData = () => {
-    if (options?.comparison) {
-      return sortBy(unionBy(options?.comparedNodes, nodes, 'hostname'), [
-        'hostname',
-      ]);
-    }
-    return nodes;
+      const showUndoIcon = node =>
+        (options?.comparison && willBeAdded(node)) || willBeRemoved(node);
+
+      const showRemoveIcon = node =>
+        options?.showRemoveIcon && !showUndoIcon(node);
+
+      return (
+        <>
+          {options?.showDetailIcon && (
+            <Tooltip title="View node">
+              <IconButton
+                data-testid={`view-node-${node.hostname}`}
+                onClick={() => {
+                  handleDetailIconClick(node);
+                }}
+              >
+                <VisibilityIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {options?.showEditorIcon && (
+            <Tooltip title="Edit node">
+              <IconButton
+                onClick={() => {
+                  handleEditorIconClick(node);
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {options?.showDeleteIcon && (
+            <Tooltip title="Delete node">
+              <IconButton
+                onClick={() => {
+                  handleDeleteIconClick(node);
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {showRemoveIcon(node) && (
+            <Tooltip title="Remove node">
+              <IconButton
+                onClick={() => {
+                  handleRemoveIconClick(node);
+                }}
+              >
+                <ClearIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {showUndoIcon(node) && (
+            <Tooltip title={getUndoTooltipTitle(node)}>
+              <IconButton
+                onClick={() => {
+                  handleUndoIconClick(node);
+                }}
+              >
+                <SettingsBackupRestoreIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </>
+      );
+    };
+
+    return {
+      cellStyle: { textAlign: 'right' },
+      headerStyle: { textAlign: 'right' },
+      hidden: !isShow,
+      render,
+      sorting: false,
+      title: 'Actions',
+    };
   };
 
   const getRowStyle = node => {
@@ -424,16 +383,42 @@ function NodeTable(props) {
   return (
     <>
       <Table
-        title={title}
-        actions={renderActions()}
-        columns={renderColumns()}
-        data={getData()}
+        actions={[
+          {
+            hidden: !options?.showAddIcon,
+            icon: () => <AddIcon />,
+            isFreeAction: true,
+            onClick: handleAddIconClick,
+            tooltip: 'Add Node',
+          },
+          {
+            hidden: !options?.showCreateIcon,
+            icon: () => <CreateIcon />,
+            isFreeAction: true,
+            onClick: handleCreateIconClick,
+            tooltip: 'Create Node',
+          },
+        ]}
+        columns={[
+          renderSelectionColumn(),
+          { title: 'Name', field: 'hostname' },
+          ...renderResourceColumns(),
+          renderServiceColumn(),
+          {
+            title: 'State',
+            field: 'state',
+            render: node => capitalize(node.state),
+          },
+          renderRowActions(),
+        ]}
+        data={data}
         options={{
           paging: false,
           search: true,
           showTitle: options?.showTitle,
           rowStyle: node => getRowStyle(node),
         }}
+        title={title}
       />
       <NodeCreateDialog
         isOpen={isCreateDialogOpen}
