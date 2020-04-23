@@ -16,15 +16,7 @@
 
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  find,
-  isEmpty,
-  isFunction,
-  reject,
-  some,
-  sortBy,
-  unionBy,
-} from 'lodash';
+import { find, isFunction, reject, some, sortBy, unionBy } from 'lodash';
 import moment from 'moment';
 import NumberFormat from 'react-number-format';
 
@@ -33,10 +25,10 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import AddBoxIcon from '@material-ui/icons/AddBox';
 import AddIcon from '@material-ui/icons/Add';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
+import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
@@ -65,6 +57,7 @@ const defaultOptions = {
   showUploadIcon: true,
   showRemoveIcon: false,
   showTitle: true,
+  showUsedColumn: false,
 };
 
 function FileTable(props) {
@@ -86,10 +79,13 @@ function FileTable(props) {
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [selected, setSelected] = useState(options?.selectedFiles || []);
 
+  const data = options?.comparison
+    ? sortBy(unionBy(options?.comparedFiles, files, 'name'), ['name'])
+    : files;
+
   const willBeRemoved = file => !find(files, f => f.name === file.name);
 
   const willBeAdded = file =>
-    !isEmpty(options?.comparedFiles) &&
     !find(options?.comparedFiles, f => f.name === file.name);
 
   const handleAddIconClick = () => {
@@ -161,30 +157,12 @@ function FileTable(props) {
     event.stopPropagation();
   };
 
-  const renderActions = () => {
-    return [
-      {
-        icon: () => <AddIcon />,
-        tooltip: 'Add File',
-        hidden: !options?.showAddIcon,
-        isFreeAction: true,
-        onClick: handleAddIconClick,
-      },
-      {
-        icon: () => <AddBoxIcon />,
-        tooltip: 'Upload File',
-        hidden: !options?.showUploadIcon,
-        isFreeAction: true,
-        onClick: handleUploadIconClick,
-      },
-    ];
-  };
-
   const renderSelectionColumn = () => {
     const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
     return {
       cellStyle: style,
       headerStyle: style,
+      hidden: !options?.selection,
       render: file => (
         <Checkbox
           checked={some(selected, f => f.name === file.name)}
@@ -196,136 +174,85 @@ function FileTable(props) {
   };
 
   const renderRowActions = () => {
+    const isShow =
+      options?.showDeleteIcon ||
+      options?.showDownloadIcon ||
+      options?.showRemoveIcon;
+
+    const render = file => {
+      const getUndoTooltipTitle = file => {
+        if (willBeAdded(file)) {
+          return 'Undo add file';
+        } else if (willBeRemoved(file)) {
+          return 'Undo remove file';
+        }
+        return 'Undo';
+      };
+
+      const showUndoIcon = file =>
+        (options?.comparison && willBeAdded(file)) || willBeRemoved(file);
+
+      const showRemoveIcon = file =>
+        options?.showRemoveIcon && !showUndoIcon(file);
+
+      return (
+        <>
+          {options?.showDownloadIcon && (
+            <Tooltip title="Download file">
+              <IconButton
+                onClick={() => {
+                  handleDownloadIconClick(file);
+                }}
+              >
+                <CloudDownloadIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {options?.showDeleteIcon && (
+            <Tooltip title="Delete file">
+              <IconButton
+                onClick={() => {
+                  handleDeleteIconClick(file);
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {showRemoveIcon(file) && (
+            <Tooltip title="Remove file">
+              <IconButton
+                onClick={() => {
+                  handleRemoveIconClick(file);
+                }}
+              >
+                <ClearIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {showUndoIcon(file) && (
+            <Tooltip title={getUndoTooltipTitle(file)}>
+              <IconButton
+                onClick={() => {
+                  handleUndoIconClick(file);
+                }}
+              >
+                <SettingsBackupRestoreIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </>
+      );
+    };
+
     return {
       title: 'Actions',
       cellStyle: { textAlign: 'right' },
       headerStyle: { textAlign: 'right' },
+      hidden: !isShow,
+      render,
       sorting: false,
-      render: file => {
-        const getUndoTooltipTitle = file => {
-          if (willBeAdded(file)) {
-            return 'Undo add file';
-          } else if (willBeRemoved(file)) {
-            return 'Undo remove file';
-          }
-          return 'Undo';
-        };
-
-        const showUndoIcon = file =>
-          (options?.comparison && willBeAdded(file)) || willBeRemoved(file);
-
-        const showRemoveIcon = file =>
-          options?.showRemoveIcon && !showUndoIcon(file);
-
-        return (
-          <>
-            {options?.showDownloadIcon && (
-              <Tooltip title="Download file">
-                <IconButton
-                  onClick={() => {
-                    handleDownloadIconClick(file);
-                  }}
-                >
-                  <CloudDownloadIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {options?.showDeleteIcon && (
-              <Tooltip title="Delete file">
-                <IconButton
-                  onClick={() => {
-                    handleDeleteIconClick(file);
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {showRemoveIcon(file) && (
-              <Tooltip title="Remove file">
-                <IconButton
-                  onClick={() => {
-                    handleRemoveIconClick(file);
-                  }}
-                >
-                  <ClearIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            {showUndoIcon(file) && (
-              <Tooltip title={getUndoTooltipTitle(file)}>
-                <IconButton
-                  onClick={() => {
-                    handleUndoIconClick(file);
-                  }}
-                >
-                  <SettingsBackupRestoreIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-          </>
-        );
-      },
     };
-  };
-
-  const renderColumns = () => {
-    const columns = [
-      { title: 'Name', field: 'name' },
-      {
-        title: 'Used',
-        render: file => {
-          if (file.isUsed) return <CheckIcon className="checkIcon" />;
-        },
-      },
-      {
-        title: 'File size(KB)',
-        type: 'numeric',
-        field: 'size',
-        render: file => (
-          <NumberFormat
-            value={file.size}
-            displayType="text"
-            thousandSeparator
-          />
-        ),
-      },
-      {
-        title: 'Last modified',
-        type: 'date',
-        field: 'lastModified',
-        render: file => {
-          return (
-            <Tooltip
-              title={moment(file?.lastModified).format('YYYY/MM/DD HH:mm:ss')}
-            >
-              <Typography>{moment(file?.lastModified).fromNow()}</Typography>
-            </Tooltip>
-          );
-        },
-      },
-    ];
-
-    if (options?.selection) {
-      columns.unshift(renderSelectionColumn());
-    }
-
-    if (
-      options?.showDeleteIcon ||
-      options?.showDownloadIcon ||
-      options?.showRemoveIcon
-    ) {
-      columns.push(renderRowActions());
-    }
-
-    return columns;
-  };
-
-  const getData = () => {
-    if (options?.comparison) {
-      return sortBy(unionBy(options?.comparedFiles, files, 'name'), ['name']);
-    }
-    return files;
   };
 
   const getRowStyle = file => {
@@ -344,16 +271,72 @@ function FileTable(props) {
   return (
     <>
       <Table
-        title={title}
-        actions={renderActions()}
-        columns={renderColumns()}
-        data={getData()}
+        actions={[
+          {
+            icon: () => <AddIcon />,
+            tooltip: 'Add File',
+            hidden: !options?.showAddIcon,
+            isFreeAction: true,
+            onClick: handleAddIconClick,
+          },
+          {
+            icon: () => <CloudUploadIcon />,
+            tooltip: 'Upload File',
+            hidden: !options?.showUploadIcon,
+            isFreeAction: true,
+            onClick: handleUploadIconClick,
+          },
+        ]}
+        columns={[
+          renderSelectionColumn(),
+          { title: 'Name', field: 'name' },
+          {
+            title: 'Used',
+            render: file => {
+              if (file.isUsed) return <CheckIcon className="checkIcon" />;
+            },
+            hidden: !options?.showUsedColumn,
+          },
+          {
+            title: 'File size(KB)',
+            type: 'numeric',
+            field: 'size',
+            render: file => (
+              <NumberFormat
+                value={file.size}
+                displayType="text"
+                thousandSeparator
+              />
+            ),
+          },
+          {
+            title: 'Last modified',
+            type: 'date',
+            field: 'lastModified',
+            render: file => {
+              return (
+                <Tooltip
+                  title={moment(file?.lastModified).format(
+                    'YYYY/MM/DD HH:mm:ss',
+                  )}
+                >
+                  <Typography>
+                    {moment(file?.lastModified).fromNow()}
+                  </Typography>
+                </Tooltip>
+              );
+            },
+          },
+          renderRowActions(),
+        ]}
+        data={data}
         options={{
           paging: false,
           search: true,
           showTitle: options?.showTitle,
           rowStyle: file => getRowStyle(file),
         }}
+        title={title}
       />
       <FileDeleteDialog
         isOpen={isDeleteDialogOpen}
@@ -405,6 +388,7 @@ FileTable.propTypes = {
     showUploadIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
+    showUsedColumn: PropTypes.bool,
   }),
   title: PropTypes.string,
 };

@@ -34,6 +34,7 @@ import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import BrokerNodesPage from './pages/BrokerNodesPage';
 import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
+import WorkerPluginsPage from './pages/WorkerPluginsPage';
 import WorkspaceFilesPage from './pages/WorkspaceFilesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
@@ -156,7 +157,8 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         // },
         {
           icon: <StorageIcon />,
-          title: 'Nodes running the zookeeper',
+          title: 'Zookeeper nodes',
+          subTitle: 'Nodes running the zookeeper',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
             children: <ZookeeperNodesPage />,
@@ -175,7 +177,8 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         // },
         {
           icon: <StorageIcon />,
-          title: 'Nodes running the broker',
+          title: 'Broker nodes',
+          subTitle: 'Nodes running the broker',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
             children: <BrokerNodesPage />,
@@ -194,7 +197,8 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         // },
         {
           icon: <StorageIcon />,
-          title: 'Nodes running the worker',
+          title: 'Worker nodes',
+          subTitle: 'Nodes running the worker',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
             children: <WorkerNodesPage />,
@@ -202,8 +206,11 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         },
         {
           icon: <UnarchiveIcon />,
-          title: 'Plugin jars and Shared jars',
+          title: 'Worker plugins and shared jars',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <WorkerPluginsPage />,
+          },
         },
       ],
     },
@@ -222,7 +229,8 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
       components: [
         {
           icon: <StorageIcon />,
-          title: 'Nodes in this workspace',
+          title: 'Workspace nodes',
+          subTitle: 'Nodes in this workspace',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
           componentProps: {
             children: <WorkspaceNodesPage />,

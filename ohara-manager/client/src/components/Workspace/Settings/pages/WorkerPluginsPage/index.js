@@ -14,18 +14,30 @@
  * limitations under the License.
  */
 
-import FileDeleteDialog from './FileDeleteDialog';
-import FileDownload from './FileDownload';
-import FileRemoveDialog from './FileRemoveDialog';
-import FileSelectorDialog from './FileSelectorDialog';
-import FileTable from './FileTable';
-import FileUpload from './FileUpload';
+import React from 'react';
+import styled, { css } from 'styled-components';
+import Box from '@material-ui/core/Box';
 
-export {
-  FileDeleteDialog,
-  FileDownload,
-  FileRemoveDialog,
-  FileSelectorDialog,
-  FileTable,
-  FileUpload,
-};
+import PluginTable from './PluginTable';
+import SharedJarTable from './SharedJarTable';
+
+const Wrapper = styled.div(
+  ({ theme }) => css`
+    .shared-jars {
+      margin-top: ${theme.spacing(6)}px;
+    }
+  `,
+);
+
+export default function() {
+  return (
+    <Wrapper>
+      <Box className="plugins">
+        <PluginTable />
+      </Box>
+      <Box className="shared-jars">
+        <SharedJarTable />
+      </Box>
+    </Wrapper>
+  );
+}
