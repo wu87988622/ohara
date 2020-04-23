@@ -120,7 +120,8 @@ class TestShabondiRoute extends OharaTest with Matchers {
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
-    //clusterInfo.sourceToTopics should be(empty)
+    clusterInfo.sourceToTopics should be(empty)
+    clusterInfo.imageName should ===(IMAGE_NAME_DEFAULT)
 
     val newClientPort = CommonUtils.availablePort()
     val updatedClusterInfo = await(
@@ -129,6 +130,7 @@ class TestShabondiRoute extends OharaTest with Matchers {
         .name(objectKey.name)
         .clientPort(newClientPort)
         .sourceToTopics(Set(topicKey))
+        .imageName("ohara/shabondi")
         .settings(
           Map(
             SINK_POLL_TIMEOUT_DEFINITION.key -> JsString(JDuration.ofSeconds(10).toString),
@@ -137,9 +139,9 @@ class TestShabondiRoute extends OharaTest with Matchers {
         )
         .update()
     )
-    updatedClusterInfo.clientPort should be(newClientPort)
-    //updatedClusterInfo.sourceToTopics should be(Some(Set(topicKey)))
-    //updatedClusterInfo.sinkFromTopics should be(None)
+    updatedClusterInfo.clientPort should ===(newClientPort)
+    updatedClusterInfo.sourceToTopics should ===(Set(topicKey))
+    updatedClusterInfo.imageName should ===("ohara/shabondi")
     updatedClusterInfo.settings should contain(SINK_POLL_TIMEOUT_DEFINITION.key -> JsString("PT10S"))
     updatedClusterInfo.settings should contain(SINK_GROUP_IDLETIME.key          -> JsString("PT30M"))
   }

@@ -72,7 +72,6 @@ object ShabondiDefinitions {
     .displayName("Image name")
     .documentation("The image name of this Shabondi running with")
     .optional(IMAGE_NAME_DEFAULT)
-    .permission(SettingDef.Permission.READ_ONLY) // TODO: #4061
     .build
     .registerTo(basicDefinitionMap)
 

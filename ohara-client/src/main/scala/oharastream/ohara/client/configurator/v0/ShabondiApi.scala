@@ -126,6 +126,9 @@ final object ShabondiApi {
     def clientPort(port: Int): Request.this.type =
       setting(CLIENT_PORT_DEFINITION.key, JsNumber(CommonUtils.requireBindPort(port)))
 
+    def imageName(imageName: String): Request.this.type =
+      setting(IMAGE_NAME_DEFINITION.key, JsString(imageName))
+
     @Optional("the default port is random")
     def jmxPort(jmxPort: Int): Request.this.type =
       setting(JMX_PORT_DEFINITION.key(), JsNumber(CommonUtils.requireBindPort(jmxPort)))
