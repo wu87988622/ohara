@@ -32,6 +32,7 @@ import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import BrokerNodesPage from './pages/BrokerNodesPage';
+import StreamJarsPage from './pages/StreamJarsPage';
 import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
 import WorkerPluginsPage from './pages/WorkerPluginsPage';
@@ -221,6 +222,9 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
           icon: <UnarchiveIcon />,
           title: 'Stream jars',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <StreamJarsPage />,
+          },
         },
       ],
     },
