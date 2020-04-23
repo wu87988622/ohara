@@ -14,152 +14,216 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { isFunction } from 'lodash';
 
-import Link from '@material-ui/core/Link';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-import AddBox from '@material-ui/icons/AddBox';
+
+import CreateIcon from '@material-ui/icons/Create';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 import VisibilityIcon from '@material-ui/icons/Visibility';
 
-import * as hooks from 'hooks';
-import {
-  useViewTopicDialog,
-  useAddTopicDialog,
-  useEditWorkspaceDialog,
-} from 'context';
 import Table from 'components/common/Table/MuiTable';
-import ViewTopicDialog from './ViewTopicDialog';
-import AddTopicDialog from './AddTopicDialog';
-import { Wrapper } from './TopicTableStyles';
+import TopicCreateDialog from './TopicCreateDialog';
+import TopicDeleteDialog from './TopicDeleteDialog';
+import TopicDetailDialog from './TopicDetailDialog';
 
-function TopicList() {
-  const broker = hooks.useBroker();
-  const sharedTopics = hooks.useTopicsInWorkspace(true);
-  const pipelineOnlyTopics = hooks.useTopicsInWorkspace(false);
-  const switchPipeline = hooks.useSwitchPipelineAction();
-  const { open: openAddTopicDialog } = useAddTopicDialog();
-  const { open: openViewTopicDialog } = useViewTopicDialog();
-  const { close: closeEditWorkspaceDialog } = useEditWorkspaceDialog();
+const defaultOptions = {
+  onCreateIconClick: null,
+  onDeleteIconClick: null,
+  onDetailIconClick: null,
+  showCreateIcon: true,
+  showDeleteIcon: true,
+  showDetailIcon: true,
+  showTitle: true,
+};
+
+function TopicTable(props) {
+  const { broker, topics: data, onCreate, onDelete, title } = props;
+
+  const options = { ...defaultOptions, ...props?.options };
+
+  const [activeTopic, setActiveTopic] = useState();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleCreateIconClick = () => {
+    if (isFunction(options?.onCreateIconClick)) {
+      options.onCreateIconClick();
+    } else {
+      setIsCreateDialogOpen(true);
+    }
+  };
+
+  const handleDeleteIconClick = topic => {
+    if (isFunction(options?.onDeleteIconClick)) {
+      options.onDeleteIconClick(topic);
+    } else {
+      setIsDeleteDialogOpen(true);
+      setActiveTopic(topic);
+    }
+  };
+
+  const handleDetailIconClick = topic => {
+    if (isFunction(options?.onDetailIconClick)) {
+      options.onDetailIconClick(topic);
+    } else {
+      setIsDetailDialogOpen(true);
+      setActiveTopic(topic);
+    }
+  };
+
+  const handleCreateDialogConfirm = topicToCreate => {
+    onCreate(topicToCreate);
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleDeleteDialogConfirm = topicToDelete => {
+    onDelete(topicToDelete);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const renderActionColumn = () => {
+    const isShow = options?.showDeleteIcon || options?.showDetailIcon;
+
+    const render = topic => {
+      return (
+        <>
+          {options?.showDetailIcon && (
+            <Tooltip title="View topic">
+              <IconButton
+                onClick={() => {
+                  handleDetailIconClick(topic);
+                }}
+              >
+                <VisibilityIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          {options?.showDeleteIcon && (
+            <Tooltip title="Delete topic">
+              <IconButton
+                onClick={() => {
+                  handleDeleteIconClick(topic);
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </>
+      );
+    };
+
+    return {
+      cellStyle: { textAlign: 'right' },
+      headerStyle: { textAlign: 'right' },
+      hidden: !isShow,
+      render,
+      sorting: false,
+      title: 'Actions',
+    };
+  };
 
   return (
-    <Wrapper>
-      <div className="shared-topics" data-testid="shared-topics">
-        <Table
-          title="Shared topics"
-          actions={[
-            {
-              icon: () => <AddBox />,
-              tooltip: 'Add Topic',
-              isFreeAction: true,
-              onClick: openAddTopicDialog,
-              disabled: broker?.state !== 'RUNNING',
-            },
-          ]}
-          columns={[
-            { title: 'Name', field: 'name' },
-            {
-              title: 'Partitions',
-              field: 'numberOfPartitions',
-            },
-            {
-              title: 'Replications',
-              field: 'numberOfReplications',
-            },
-            // Completed in the next version, so hide it first
-            // 'Used by pipelines',
-            {
-              title: 'State',
-              field: 'state',
-            },
-            {
-              title: 'Actions',
-              cellStyle: { textAlign: 'right' },
-              headerStyle: { textAlign: 'right' },
-              sorting: false,
-              render: topic => (
-                <Tooltip title="View Topic">
-                  <IconButton
-                    data-testid={`view-topic-${topic.name}`}
-                    onClick={() => openViewTopicDialog(topic)}
-                  >
-                    <VisibilityIcon />
-                  </IconButton>
-                </Tooltip>
-              ),
-            },
-          ]}
-          data={sharedTopics}
-          options={{
-            paging: false,
-            search: true,
-          }}
-        />
-      </div>
-      <div className="pipeline-only-topics">
-        <Table
-          title="Pipeline only topics"
-          columns={[
-            { title: 'Name', field: 'tags.displayName' },
-            {
-              title: 'Partitions',
-              field: 'numberOfPartitions',
-            },
-            {
-              title: 'Replications',
-              field: 'numberOfReplications',
-            },
-            {
-              title: 'State',
-              field: 'state',
-            },
-            {
-              title: 'Used',
-              field: 'tags.pipelineName',
-              render: topic => {
-                return (
-                  <Link
-                    className="pipeline-link"
-                    onClick={() => {
-                      if (topic?.tags?.pipelineName) {
-                        closeEditWorkspaceDialog();
-                        switchPipeline(topic?.tags?.pipelineName);
-                      }
-                    }}
-                  >
-                    {topic?.tags?.pipelineName}
-                  </Link>
-                );
-              },
-            },
-            {
-              title: 'Actions',
-              cellStyle: { textAlign: 'right' },
-              headerStyle: { textAlign: 'right' },
-              sorting: false,
-              render: topic => (
-                <Tooltip title="View Topic">
-                  <IconButton
-                    data-testid={`view-topic-${topic.name}`}
-                    onClick={() => openViewTopicDialog(topic)}
-                  >
-                    <VisibilityIcon />
-                  </IconButton>
-                </Tooltip>
-              ),
-            },
-          ]}
-          data={pipelineOnlyTopics}
-          options={{
-            paging: false,
-            search: true,
-          }}
-        />
-      </div>
-      <AddTopicDialog uniqueId="edit-worker" />
-      <ViewTopicDialog />
-    </Wrapper>
+    <>
+      <Table
+        title={title}
+        actions={[
+          {
+            disabled: broker?.state !== 'RUNNING',
+            hidden: !options?.showCreateIcon,
+            icon: () => <CreateIcon />,
+            isFreeAction: true,
+            onClick: handleCreateIconClick,
+            tooltip: 'Create Topic',
+          },
+        ]}
+        columns={[
+          { field: 'name', title: 'Name' },
+          {
+            field: 'numberOfPartitions',
+            title: 'Partitions',
+            type: 'numeric',
+          },
+          {
+            field: 'numberOfReplications',
+            title: 'Replications',
+            type: 'numeric',
+          },
+          // Completed in the next version, so hide it first
+          // 'Used by pipelines',
+          {
+            field: 'state',
+            title: 'State',
+          },
+          renderActionColumn(),
+        ]}
+        data={data}
+        options={{
+          paging: false,
+          search: true,
+          showTitle: options?.showTitle,
+        }}
+      />
+      <TopicCreateDialog
+        broker={broker}
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onConfirm={handleCreateDialogConfirm}
+      />
+      <TopicDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        topic={activeTopic}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteDialogConfirm}
+      />
+      <TopicDetailDialog
+        isOpen={isDetailDialogOpen}
+        topic={activeTopic}
+        onClose={() => setIsDetailDialogOpen(false)}
+      />
+    </>
   );
 }
 
-export default TopicList;
+TopicTable.propTypes = {
+  broker: PropTypes.shape({
+    state: PropTypes.string,
+  }),
+  topics: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      numberOfPartitions: PropTypes.number,
+      numberOfReplications: PropTypes.number,
+      state: PropTypes.string,
+    }),
+  ),
+  onCreate: PropTypes.func,
+  onDelete: PropTypes.func,
+  options: PropTypes.shape({
+    onCreateIconClick: PropTypes.func,
+    onDeleteIconClick: PropTypes.func,
+    onDetailIconClick: PropTypes.func,
+    showCreateIcon: PropTypes.bool,
+    showDeleteIcon: PropTypes.bool,
+    showDetailIcon: PropTypes.bool,
+    showTitle: PropTypes.bool,
+  }),
+  title: PropTypes.string,
+};
+
+TopicTable.defaultProps = {
+  broker: null,
+  topics: [],
+  onCreate: () => {},
+  onDelete: () => {},
+  options: defaultOptions,
+  title: 'Topics',
+};
+
+export default TopicTable;

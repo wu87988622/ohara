@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { get, isEmpty, flatten, map } from 'lodash';
+import React from 'react';
+import PropTypes from 'prop-types';
+import styled, { css } from 'styled-components';
+import { get, flatten, map } from 'lodash';
+
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
@@ -27,80 +28,40 @@ import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Divider from '@material-ui/core/Divider';
-import Link from '@material-ui/core/Link';
 import NumberFormat from 'react-number-format';
 
+import { Dialog } from 'components/common/Dialog';
 import TopicChip from './TopicChip';
-import { FullScreenDialog, DeleteDialog } from 'components/common/Dialog';
-import { Wrapper } from './ViewTopicDialogStyles';
-import * as context from 'context';
-import * as hooks from 'hooks';
 
-const ViewTopicDialog = () => {
-  const {
-    isOpen: isDialogOpen,
-    close: closeDialog,
-    data: topic,
-  } = context.useViewTopicDialog();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
-  const pipelines = hooks.usePipelines();
+const Wrapper = styled.div(
+  ({ theme }) => css`
+    .MuiCardContent-root {
+      padding: 0;
+    }
 
+    .MuiTableRow-root:nth-child(2n) {
+      background-color: ${theme.palette.grey[100]};
+    }
+  `,
+);
+
+const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
   if (!topic) return null;
-
-  const handleDelete = async () => {
-    const name = get(topic, 'name');
-    stopAndDeleteTopic({ name });
-    setIsConfirmOpen(false);
-    closeDialog();
-  };
 
   const isShared = topic?.tags?.isShared;
   const displayName = isShared ? topic?.name : topic?.tags?.displayName;
 
-  const usedByPipelines = pipelines.filter(pipeline =>
-    pipeline.objects.find(object => object.name === topic.name),
-  );
-
   return (
-    <FullScreenDialog
-      title="View topic detail"
-      open={isDialogOpen}
-      handleClose={closeDialog}
+    <Dialog
+      open={isOpen}
+      handleClose={onClose}
+      maxWidth="md"
+      showActions={false}
       testId="view-topic-detail-dialog"
+      title="View topic"
     >
       <Wrapper>
-        <Grid container justify="space-between" alignItems="flex-end">
-          <Grid item>
-            <Typography component="h2" variant="overline" gutterBottom>
-              Topics
-            </Typography>
-            <Typography component="div" variant="h3">
-              {displayName}
-            </Typography>
-          </Grid>
-          {isShared && (
-            <Grid item>
-              <Button
-                variant="outlined"
-                color="secondary"
-                disabled={!isEmpty(usedByPipelines)}
-                onClick={() => setIsConfirmOpen(true)}
-              >
-                Delete
-              </Button>
-              <DeleteDialog
-                title="Delete topic?"
-                content={`Are you sure you want to delete the topic: ${displayName} ? This action cannot be undone!`}
-                open={isConfirmOpen}
-                handleClose={() => setIsConfirmOpen(false)}
-                handleConfirm={handleDelete}
-                testId="view-topic-detail-delete-dialog"
-              />
-            </Grid>
-          )}
-        </Grid>
-        <Grid container spacing={3} className="details">
+        <Grid container spacing={3}>
           <Grid item xs={4}>
             <Card>
               <CardHeader title="Information" />
@@ -139,7 +100,7 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={8}>
             <Card>
               <CardHeader title="Metrics" />
               <Divider />
@@ -181,36 +142,20 @@ const ViewTopicDialog = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={4}>
-            <Card>
-              <CardHeader title="Used by pipelines" />
-              <Divider />
-              <CardContent>
-                <Table>
-                  <TableBody>
-                    {usedByPipelines.map(pipeline => {
-                      const pipelineName = get(pipeline, 'name');
-                      return (
-                        <TableRow key={pipelineName}>
-                          <TableCell>{pipelineName}</TableCell>
-                          {/* Disabled in 0.9 as the feature is not yet done */}
-                          {false && (
-                            <TableCell align="right">
-                              <Link>Open</Link>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </Grid>
         </Grid>
       </Wrapper>
-    </FullScreenDialog>
+    </Dialog>
   );
 };
 
-export default ViewTopicDialog;
+TopicDetailDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  topic: PropTypes.object,
+};
+
+TopicDetailDialog.defaultProps = {
+  onClose: () => {},
+};
+
+export default TopicDetailDialog;

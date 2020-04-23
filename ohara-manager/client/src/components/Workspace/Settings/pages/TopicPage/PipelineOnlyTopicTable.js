@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-import styled, { css } from 'styled-components';
+import React from 'react';
 
-export const Wrapper = styled.div(
-  ({ theme }) => css`
-    .pipeline-only-topics {
-      margin-top: ${theme.spacing(4)}px;
-    }
+import { TopicTable } from 'components/Topic';
+import * as hooks from 'hooks';
 
-    .MuiPaper-root {
-      box-shadow: none;
-    }
+function PipelineOnlyTopicTable() {
+  const broker = hooks.useBroker();
+  const topics = hooks.useTopicsInWorkspace(false);
 
-    .pipeline-link {
-      cursor: pointer;
-    }
-  `,
-);
+  return (
+    <>
+      <TopicTable
+        broker={broker}
+        topics={topics}
+        options={{
+          showCreateIcon: false,
+          showDeleteIcon: false,
+        }}
+        title="Pipeline only topics"
+      />
+    </>
+  );
+}
+
+export default PipelineOnlyTopicTable;
