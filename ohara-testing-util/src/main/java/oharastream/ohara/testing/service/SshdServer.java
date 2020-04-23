@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.util.CommonUtils;
@@ -28,6 +27,7 @@ import oharastream.ohara.common.util.Releasable;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
@@ -78,9 +78,9 @@ public interface SshdServer extends Releasable {
     sshd.setPasswordAuthenticator(
         (String username, String password, ServerSession session) ->
             username.equals(_user) && password.equals(_password));
-    sshd.setShellFactory(new ProcessShellFactory(Arrays.asList("/bin/sh", "-i", "-l")));
+    sshd.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
     sshd.setCommandFactory(
-        (String command) ->
+        (ChannelSession channel, String command) ->
             handlers.stream()
                 .filter(h -> h.belong(command))
                 .findFirst()
@@ -93,7 +93,7 @@ public interface SshdServer extends Releasable {
                               private ExitCallback callback = null;
 
                               @Override
-                              public void start(Environment env) {
+                              public void start(ChannelSession channel, Environment env) {
                                 try {
                                   h.execute(command)
                                       .forEach(
@@ -124,7 +124,7 @@ public interface SshdServer extends Releasable {
                               }
 
                               @Override
-                              public void destroy() {
+                              public void destroy(ChannelSession channel) {
                                 Releasable.close(out);
                                 Releasable.close(err);
                               }
@@ -149,7 +149,14 @@ public interface SshdServer extends Releasable {
                                 this.callback = callback;
                               }
                             })
-                .orElseGet(() -> ProcessShellCommandFactory.INSTANCE.createCommand(command)));
+                .orElseGet(
+                    () -> {
+                      try {
+                        return ProcessShellCommandFactory.INSTANCE.createCommand(channel, command);
+                      } catch (IOException e) {
+                        throw new RuntimeException(e);
+                      }
+                    }));
     sshd.setHost(CommonUtils.hostname());
     sshd.setPort(Math.max(port, 0));
     try {

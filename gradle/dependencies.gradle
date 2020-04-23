@@ -39,7 +39,7 @@ versions["embeddedsql"] = project.hasProperty('embeddedsql.version') ? project.p
 versions["mysql"] = project.hasProperty('mysql.version') ? project.properties['mysql.version'] : "8.0.12"
 versions["ftpServer"] = project.hasProperty('ftpServer.version') ? project.properties['ftpServer.version'] : "1.1.1"
 versions["commonNet"] = project.hasProperty('commonNet.version') ? project.properties['commonNet.version'] : "3.6"
-versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['sshd.version'] : "2.2.0"
+versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['sshd.version'] : "2.4.0"
 // commonIo has been included by apache hadoop so we use the identical version
 versions["commonsIo"] = project.hasProperty('commonsIo.version') ? project.properties['commonsIo.version'] : "2.4"
 // Guava has been included by apache kafka so we use the identical version

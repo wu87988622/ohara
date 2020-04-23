@@ -275,7 +275,7 @@ class TestK8SClient extends OharaTest {
     val s       = log(podName)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      Await.result(client.logs(podName, None), 5 seconds)
+      Await.result(client.logs(podName, None), 10 seconds)
     } finally s.close()
   }
 
