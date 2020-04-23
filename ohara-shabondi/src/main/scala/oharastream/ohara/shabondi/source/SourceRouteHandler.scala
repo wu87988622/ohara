@@ -22,14 +22,15 @@ import java.util.function.Consumer
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.basic.Counter
-import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
+import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHandler}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 private[shabondi] object SourceRouteHandler {
   def apply(config: SourceConfig, materializer: ActorMaterializer) =
@@ -71,15 +72,29 @@ private[shabondi] class SourceRouteHandler(
 
   private val topicKeys = config.sourceToTopics
 
+  // TODO: The error handling for the Kafka Producer exception
+  private val sendRowFlow = Flow[RowData].mapAsync(4) { rowData =>
+    import ConvertSupport._
+    val row = JsonSupport.toRow(rowData)
+    Future.sequence(topicKeys.map { topicKey =>
+      val sender = producer.sender().key(row).topicName(topicKey.topicNameOnKafka)
+      sender.send.toScala
+    })
+  }
+
+  private val rowQueue = Source
+    .queue[RowData](1024, OverflowStrategy.backpressure)
+    .via(sendRowFlow)
+    .toMat(Sink.ignore)(Keep.left)
+    .run()(materializer)
+
   override def route(): Route = {
-    implicit val _materializer = materializer
     (post & path("v0")) {
       handleExceptions(exceptionHandler) {
         entity(as[RowData]) { rowData =>
-          val row = JsonSupport.toRow(rowData)
           totalRowsCounter.incrementAndGet()
-          val graph = StreamGraph.fromSendRow(producer, topicKeys, row)
-          complete((StatusCodes.OK, graph.run()))
+          rowQueue.offer(rowData)
+          complete(StatusCodes.OK)
         }
       } // handleExceptions
     }

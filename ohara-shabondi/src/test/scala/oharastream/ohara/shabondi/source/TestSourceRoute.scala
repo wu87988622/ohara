@@ -37,8 +37,11 @@ final class TestSourceRoute extends BasicShabondiTest {
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
   implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
 
+  private val columnCount  = 6
+  private val requestCount = 200
+
   private def sourceData: Map[String, Int] =
-    (1 to 6).foldLeft(Map.empty[String, Int]) { (m, v) =>
+    (1 to columnCount).foldLeft(Map.empty[String, Int]) { (m, v) =>
       m + ("col-" + v -> v)
     }
 
@@ -48,27 +51,26 @@ final class TestSourceRoute extends BasicShabondiTest {
     val config    = defaultSourceConfig(Seq(topicKey1))
     val webServer = new WebServer(config)
     try {
-      val requestSize = 9
-      (1 to requestSize).foreach { i =>
+      (1 to requestCount).foreach { i =>
         val jsonRow = sourceData.toJson.compactPrint
         val entity  = HttpEntity(ContentTypes.`application/json`, jsonRow)
         val request = Post(uri = "/v0", entity)
 
         request ~> webServer.routes ~> check {
-          entityAs[String] should ===("")
+          entityAs[String] should ===("OK")
         }
       }
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 10, 9)
-      rowsTopic1.size should ===(requestSize)
-      rowsTopic1(0).key.get.cells.size should ===(6)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 60, requestCount)
+      rowsTopic1.size should ===(requestCount)
+      rowsTopic1(0).key.get.cells.size should ===(columnCount)
 
       // assert metrics
       val beans = counterMBeans()
       beans.size should ===(1)
-      beans(0).getValue should ===(requestSize)
+      beans(0).getValue should ===(requestCount)
     } finally {
       webServer.close()
       topicAdmin.deleteTopic(topicKey1)
