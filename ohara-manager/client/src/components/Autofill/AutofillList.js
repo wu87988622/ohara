@@ -31,6 +31,7 @@ import { DeleteDialog } from 'components/common/Dialog';
 import { Tooltip } from 'components/common/Tooltip';
 import AutofillEditor, { MODE } from './AutofillEditor';
 import * as hooks from 'hooks';
+import Wrapper from './AutofillListStyles';
 
 const AutofillList = () => {
   const [editorMode, setEditorMode] = useState(MODE.ADD);
@@ -83,7 +84,7 @@ const AutofillList = () => {
   };
 
   return (
-    <>
+    <Wrapper>
       <List>
         {map(workspace?.settingFillings, settingFilling => {
           return (
@@ -118,10 +119,11 @@ const AutofillList = () => {
       </List>
       <Tooltip title="Add an autofill" placement="right">
         <Button
-          variant="outlined"
+          className="add-button"
           color="primary"
-          startIcon={<AddIcon />}
           onClick={handleAddButtonClick}
+          startIcon={<AddIcon />}
+          variant="outlined"
         >
           Add Autofill
         </Button>
@@ -142,7 +144,7 @@ const AutofillList = () => {
         handleClose={() => setIsDeleteConfirmOpen(false)}
         handleConfirm={handleDelete}
       />
-    </>
+    </Wrapper>
   );
 };
 

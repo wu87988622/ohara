@@ -24,13 +24,13 @@ import WarningIcon from '@material-ui/icons/Warning';
 import StorageIcon from '@material-ui/icons/Storage';
 import SubjectIcon from '@material-ui/icons/Subject';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
-import TuneIcon from '@material-ui/icons/Tune';
 import UnarchiveIcon from '@material-ui/icons/Unarchive';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
+import AutofillPage from './pages/AutofillPage';
 import BrokerNodesPage from './pages/BrokerNodesPage';
 import StreamJarsPage from './pages/StreamJarsPage';
 import TopicPage from './pages/TopicPage';
@@ -141,9 +141,13 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
       heading: 'Autofill',
       components: [
         {
-          icon: <TuneIcon />,
-          title: 'Component settings',
+          icon: <AssignmentIcon />,
+          title: 'Autofill',
+          subTitle: 'For component settings',
           type: SETTINGS_COMPONENT_TYPES.PAGE,
+          componentProps: {
+            children: <AutofillPage />,
+          },
         },
       ],
     },

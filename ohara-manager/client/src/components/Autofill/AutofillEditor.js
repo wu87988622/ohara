@@ -69,7 +69,9 @@ const AutofillEditor = props => {
     };
     updateWorkspace({
       name: workspace.name,
-      settingFillings: [...workspace?.settingFillings, newSettingFilling],
+      settingFillings: workspace?.settingFillings
+        ? [...workspace.settingFillings, newSettingFilling]
+        : [newSettingFilling],
     });
   };
 
