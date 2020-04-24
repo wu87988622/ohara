@@ -91,9 +91,7 @@ private[code] object ClassUtils {
     val path        = "oharastream/ohara"
     val pattern     = Pattern.compile("^file:(.+\\.jar)!/" + path + "$")
     val urls        = classLoader.getResources(path)
-    Iterator
-      .continually(urls.nextElement())
-      .takeWhile(_ => urls.hasMoreElements)
+    urls.asScala
       .map(url => pattern.matcher(url.getFile))
       .filter(_.find())
       .map(_.group(1))

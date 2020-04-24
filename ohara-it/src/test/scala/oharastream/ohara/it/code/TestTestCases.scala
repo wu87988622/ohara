@@ -36,19 +36,23 @@ class TestTestCases extends OharaTest {
 
   @Test
   def testListTestClasses(): Unit = {
+    val packages = Set(
+      "oharastream.ohara.agent",
+      "oharastream.ohara.client",
+      "oharastream.ohara.common",
+      "oharastream.ohara.connector",
+      "oharastream.ohara.configurator",
+      "oharastream.ohara.kafka",
+      "oharastream.ohara.metrics",
+      "oharastream.ohara.shabondi",
+      "oharastream.ohara.stream",
+      "oharastream.ohara.testing"
+    )
     val classes = testClasses()
     classes.size should not be 0
-    classes.exists(_.getName.startsWith("oharastream.ohara.agent"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.client"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.common"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.connector"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.configurator"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.it"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.kafka"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.metrics"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.shabondi"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.stream"))
-    classes.exists(_.getName.startsWith("oharastream.ohara.testing"))
+    packages.foreach(
+      p => withClue(s"$p is NOT included by ohara-it module")(classes.exists(_.getName.startsWith(p)) shouldBe true)
+    )
   }
 
   @Test
