@@ -61,14 +61,14 @@ describe('NodeDialog of AppBar', () => {
       .click();
 
     const hostname = generate.serviceName();
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
     cy.get('input[name=password]').type(generate.password());
     cy.findByText(/^add$/i).click();
 
-    cy.findByTestId(`view-node-${nodeHost}`).click();
+    cy.findByTestId(`view-node-${hostname}`).click();
 
     // random added host should be dead
     cy.findAllByText(/^state$/i)
@@ -77,15 +77,11 @@ describe('NodeDialog of AppBar', () => {
       .contains('Dead')
       .should('exist');
 
-    // Edit the user name
-    cy.findByText(/^edit$/i).click();
-    cy.get('input[name=user]')
-      .clear()
-      .type('fake_user');
-    cy.findByText(/^save$/i).click();
-    cy.findByText(/^fake_user$/i).should('exist');
+    // press "ESC" back to node list
+    cy.get('body:visible').trigger('keydown', { keyCode: 27, which: 27 });
 
-    cy.findByText(/^delete$/i).click();
+    // delete the fake node we just added
+    cy.findByTestId(`delete-node-${hostname}`).click();
     // confirm dialog
     cy.findByTestId('confirm-button-DELETE').click();
 
@@ -115,7 +111,7 @@ describe('NodeDialog of AppBar', () => {
     }
 
     const hostname1 = generate.serviceName();
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname1);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
@@ -125,7 +121,7 @@ describe('NodeDialog of AppBar', () => {
     cy.findByText(hostname1).should('exist');
 
     const hostname2 = generate.serviceName();
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname2);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
@@ -162,7 +158,7 @@ describe('NodeDialog of AppBar', () => {
 
     if (mode === MODE.DOCKER) {
       // We only need to add node if was DOCKER mode
-      cy.contains('button', /^add node$/i).click();
+      cy.findByTitle('Create Node').click();
       cy.get('input[name=hostname]').type(nodeHost);
       cy.get('input[name=port]').type(nodePort);
       cy.get('input[name=user]').type(nodeUser);
@@ -236,7 +232,7 @@ describe('NodeDialog of workspaceQuick', () => {
       .click();
 
     const hostname1 = generate.serviceName();
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname1);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
@@ -246,7 +242,7 @@ describe('NodeDialog of workspaceQuick', () => {
     cy.findByText(hostname1).should('exist');
 
     const hostname2 = generate.serviceName();
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname2);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
@@ -256,7 +252,7 @@ describe('NodeDialog of workspaceQuick', () => {
     cy.findByText(hostname2).should('exist');
 
     const hostname3 = `${hostname1}${generate.serviceName()}`;
-    cy.contains('button', /^add node$/i).click();
+    cy.findByTitle('Create Node').click();
     cy.get('input[name=hostname]').type(hostname3);
     cy.get('input[name=port]').type(generate.port().toString());
     cy.get('input[name=user]').type(generate.userName());
@@ -279,10 +275,14 @@ describe('NodeDialog of workspaceQuick', () => {
     cy.findByText('Click here to select nodes').click();
     cy.findByText(hostname1)
       .should('exist')
+      .siblings('td')
+      .find('input[type="checkbox"]')
       .click();
     cy.findByText(hostname2).should('exist');
     cy.findByText(hostname3)
       .should('exist')
+      .siblings('td')
+      .find('input[type="checkbox"]')
       .click();
 
     // filter by non-selected hostname

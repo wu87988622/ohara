@@ -41,7 +41,7 @@ export const stopTopic$ = params =>
         }
         return res;
       }),
-      retryWhen(error => error.pipe(delay(1000 * 2), take(5))),
+      retryWhen(error => error.pipe(delay(1000 * 2), take(10))),
     ),
   ).pipe(
     map(([, res]) => normalize(res.data, schema.topic)),

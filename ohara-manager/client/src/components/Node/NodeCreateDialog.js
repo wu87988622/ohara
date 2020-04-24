@@ -53,7 +53,11 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
               onClose();
               form.reset();
             }}
-            handleConfirm={handleSubmit}
+            handleConfirm={() => {
+              handleSubmit();
+              // after creation, we should clear the input fields also
+              form.reset();
+            }}
             title="Create node"
             confirmText="CREATE"
             confirmDisabled={submitting || pristine || invalid}

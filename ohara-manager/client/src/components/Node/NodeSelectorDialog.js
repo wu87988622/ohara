@@ -77,6 +77,7 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
         onCreate={handleCreate}
         onSelectionChange={handleSelectionChange}
         options={{
+          mode,
           selectedNodes,
           selection: true,
           showCreateIcon: mode !== MODE.K8S,

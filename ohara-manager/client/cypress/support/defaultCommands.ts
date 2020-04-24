@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { hashByGroupAndName } from '../../src/utils/sha';
+// indicate this file is a module
+export {};
 
 interface FixtureResponse {
   name: string;
@@ -117,13 +118,13 @@ Cypress.Commands.add(
     Cypress.Commands.add('addNode', () => {
       cy.get('body').then($body => {
         const isDockerMode =
-          $body.find('button > span:contains("ADD NODE")').length > 0;
+          $body.find('span > button[title="Create Node"]').length > 0;
 
         if (isDockerMode) {
           cy.get('body').then($body => {
             // the node has not been added yet, added directly
             if ($body.find(`td:contains(${nodeHost})`).length === 0) {
-              cy.contains('button', /^add node$/i).click();
+              cy.findByTitle('Create Node').click();
               cy.get('input[name=hostname]').type(nodeHost);
               cy.get('input[name=port]').type(nodePort);
               cy.get('input[name=user]').type(nodeUser);
@@ -189,10 +190,6 @@ Cypress.Commands.add(
     cy.wait(1000);
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode();
-
-    cy.findAllByText(/^next$/i)
-      .filter(':visible')
-      .click();
 
     // Step3: create workspace
     cy.wait(1000);

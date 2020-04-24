@@ -323,6 +323,7 @@ function NodeTable(props) {
           {options?.showDeleteIcon && (
             <Tooltip title="Delete node">
               <IconButton
+                data-testid={`delete-node-${node.hostname}`}
                 onClick={() => {
                   handleDeleteIconClick(node);
                 }}

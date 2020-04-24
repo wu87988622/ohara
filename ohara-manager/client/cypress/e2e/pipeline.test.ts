@@ -201,21 +201,12 @@ describe('ToolBox of Pipeline', () => {
   });
 
   it('check the toolbox works normally', () => {
+    // wait 20s for the connectors loaded into toolbox
+    cy.wait(20000);
+
+    cy.visit('/');
+
     cy.findAllByText(/^wo$/i).should('exist');
-
-    // Add new pipeline
-    cy.findByText(/^pipelines$/i)
-      .siblings('svg')
-      .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
-
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
-
-    cy.findByText(/^add$/i).click();
 
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
@@ -279,10 +270,10 @@ describe('ToolBox of Pipeline', () => {
   });
 });
 
-describe('Element Links of Pipeline', () => {
+// TODO in https://github.com/oharastream/ohara/issues/4049
+describe.skip('Element Links of Pipeline', () => {
   before(async () => await deleteAllServices());
-  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
-  it.skip('tests of connector and topic links in pipeline', () => {
+  it('tests of connector and topic links in pipeline', () => {
     cy.createWorkspace({});
 
     // Add new pipeline
@@ -298,6 +289,9 @@ describe('Element Links of Pipeline', () => {
       .type('pipeline1');
 
     cy.findByText(/^add$/i).click();
+
+    // wait 20s for the connectors loaded into toolbox
+    cy.wait(20000);
 
     // force to reload the page in order to get the correct data in toolbox
     cy.reload();
@@ -422,8 +416,7 @@ describe('Element Links of Pipeline', () => {
     topics = [];
   });
 
-  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
-  it.skip('tests of stream, connector and topic links in pipeline', () => {
+  it('tests of stream, connector and topic links in pipeline', () => {
     cy.visit('/');
 
     // check the toolbox
@@ -503,10 +496,10 @@ describe('Element Links of Pipeline', () => {
   });
 });
 
-describe('Topic Operations of Pipeline', () => {
+// TODO in https://github.com/oharastream/ohara/issues/4049
+describe.skip('Topic Operations of Pipeline', () => {
   before(async () => await deleteAllServices());
-  // TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
-  it.skip('connect two elements of pipeline should auto generate pipeline-only topic', () => {
+  it('connect two elements of pipeline should auto generate pipeline-only topic', () => {
     cy.createWorkspace({});
 
     // Add new pipeline

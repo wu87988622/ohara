@@ -21,13 +21,13 @@ const topic = () => {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const currentPipeline = hooks.usePipeline();
-  const topics = hooks.useTopicsInPipeline();
+  const toolBoxTopics = hooks.useTopicsInToolbox();
 
   const createAndStart = (params, paperApi) => {
     const { id, name, displayName, isShared } = params;
 
     if (isShared) {
-      const target = topics.find(topic => topic.name === name);
+      const target = toolBoxTopics.find(topic => topic.name === name);
       return paperApi.updateElement(id, {
         status: target.state.toLowerCase(),
       });
