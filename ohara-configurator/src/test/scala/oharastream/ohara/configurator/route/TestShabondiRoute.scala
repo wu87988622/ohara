@@ -95,6 +95,22 @@ class TestShabondiRoute extends OharaTest with Matchers {
   }
 
   @Test
+  def testShouldThrowExceptionWithInvalidClassName(): Unit = {
+    val objectKey              = ObjectKey.of("group", "name")
+    val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
+    val clusterInfo: Future[ShabondiApi.ShabondiClusterInfo] =
+      shabondiApi.request
+        .group(objectKey.group)
+        .name(objectKey.name)
+        .shabondiClass("oharastream.ohara.shabondi.Source")
+        .clientPort(clientPort)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .nodeName(nodeName)
+        .create()
+
+    an[IllegalArgumentException] should be thrownBy await(clusterInfo)
+  }
+  @Test
   def testSourceCreate(): Unit = {
     val objectKey                                    = ObjectKey.of("group", "name")
     val (clientPort, nodeName)                       = (CommonUtils.availablePort(), availableNodeNames(0))

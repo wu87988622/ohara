@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi.sink
+package oharastream.ohara.shabondi
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.shabondi.common.ShabondiUtils
 
-object Boot {
-  private val log = Logger(Boot.getClass)
+object ShabondiSource {
+  private val log = Logger(ShabondiSource.getClass)
 
   def main(args: Array[String]): Unit = {
     val newArgs = ShabondiUtils.parseArgs(args)
-    log.info("Arguments:")
-    newArgs.foreach { case (k, v) => log.info(s"    $k=$v") }
+    log.info("Shabondi arguments({}):", newArgs.size)
+    newArgs.foreach { case (k, v) => log.info(s"  $k=$v") }
 
-    val config    = new SinkConfig(newArgs)
-    val webServer = new WebServer(config)
+    val config    = new source.SourceConfig(newArgs)
+    val webServer = new source.WebServer(config)
     try {
       webServer.start(CommonUtils.anyLocalAddress(), config.port)
     } finally {

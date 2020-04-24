@@ -24,8 +24,8 @@ import {
 } from './apiInterface/clusterInterface';
 
 export const SHABONDI_CLASS = {
-  source: 'oharastream.ohara.shabondi.source.Boot',
-  sink: 'oharastream.ohara.shabondi.sink.Boot',
+  source: 'oharastream.ohara.shabondi.ShabondiSource',
+  sink: 'oharastream.ohara.shabondi.ShabondiSink',
 };
 
 const shabondiApi = new API(RESOURCE.SHABONDI);

@@ -19,6 +19,6 @@ package oharastream.ohara.shabondi.common
 import akka.http.scaladsl.server.{Directives, Route}
 import oharastream.ohara.common.util.Releasable
 
-trait RouteHandler extends Directives with Releasable {
+private[shabondi] trait RouteHandler extends Directives with Releasable {
   def route(): Route
 }

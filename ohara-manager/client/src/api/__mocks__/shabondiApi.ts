@@ -40,7 +40,7 @@ export const entity = {
   shabondi__source__toTopics: [],
   tags: {},
   xmx: 1024,
-  shabondi__class: 'oharastream.ohara.shabondi.source.Boot',
+  shabondi__class: 'oharastream.ohara.shabondi.ShabondiSource',
   nodeMetrics: {},
   imageName: 'oharastream/shabondi:0.10.0-SNAPSHOT',
   revision: '5d8618bd3f0994131a6374119b57c19778d4b331',

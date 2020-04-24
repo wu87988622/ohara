@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
 import oharastream.ohara.common.data.Cell
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
 import org.scalatest.Matchers
 import spray.json._

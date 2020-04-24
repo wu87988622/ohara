@@ -20,7 +20,7 @@ import akka.http.scaladsl.server.Route
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.shabondi.common.AbstractWebServer
 
-private class WebServer(val config: SinkConfig) extends AbstractWebServer {
+private[shabondi] class WebServer(val config: SinkConfig) extends AbstractWebServer {
   val routeHandler: SinkRouteHandler = SinkRouteHandler(config, materializer)
 
   override def routes: Route = routeHandler.route()

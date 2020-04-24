@@ -39,8 +39,8 @@ The following are common setting both Shabondi source and sink:
      the following forms are legal as well. 1) ``{"name": "n"}`` and 2) ``"n"``. Both forms are converted to ``{"group": "default", "name": "n"}``
 #. shabondi.class (**string**) — class name of Shabondi service, only the following two class names are legal:
 
-   - Shabondi source: ``oharastream.ohara.shabondi.source.Boot``
-   - Shabondi sink: ``oharastream.ohara.shabondi.sink.Boot``
+   - Shabondi source: ``oharastream.ohara.shabondi.ShabondiSource``
+   - Shabondi sink: ``oharastream.ohara.shabondi.ShabondiSink``
 
 #. shabondi.client.port (**int**) - The Shabondi service client port
 #. imageName (**string**) — docker image
@@ -111,7 +111,7 @@ Example Response
         ],
         "tags": {},
         "xmx": 1024,
-        "shabondi.class": "oharastream.ohara.shabondi.source.Boot",
+        "shabondi.class": "oharastream.ohara.shabondi.ShabondiSource",
         "nodeMetrics": {
           "node00": {
             "meters": [
@@ -157,7 +157,7 @@ Example Request
     {
       "name": "shabondi0",
       "group": "group0",
-      "shabondi.class": "oharastream.ohara.shabondi.source.Boot",
+      "shabondi.class": "oharastream.ohara.shabondi.ShabondiSource",
       "shabondi.client.port": 58456,
       "shabondi.source.toTopics": [
         {"name": "topic0","group": "group0"}
@@ -194,7 +194,7 @@ Example Response
       ],
       "tags": {},
       "xmx": 1024,
-      "shabondi.class": "oharastream.ohara.shabondi.source.Boot",
+      "shabondi.class": "oharastream.ohara.shabondi.ShabondiSource",
       "nodeMetrics": {},
       "imageName": "oharastream/shabondi:$|version|",
       "revision": "7cb25202c5308095546e5a6a2b96480d9d3104e1",
@@ -239,7 +239,7 @@ Example Response
       ],
       "tags": {},
       "xmx": 1024,
-      "shabondi.class": "oharastream.ohara.shabondi.source.Boot",
+      "shabondi.class": "oharastream.ohara.shabondi.ShabondiSource",
       "nodeMetrics": {},
       "imageName": "oharastream/shabondi:$|version|",
       "revision": "7cb25202c5308095546e5a6a2b96480d9d3104e1",
@@ -291,7 +291,7 @@ Example Response
       ],
       "tags": {},
       "xmx": 1024,
-      "shabondi.class": "oharastream.ohara.shabondi.source.Boot",
+      "shabondi.class": "oharastream.ohara.shabondi.ShabondiSource",
       "nodeMetrics": {},
       "imageName": "oharastream/shabondi:$|version|",
       "revision": "7cb25202c5308095546e5a6a2b96480d9d3104e1",

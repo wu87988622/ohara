@@ -36,7 +36,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * reference: akka.http.scaladsl.server.HttpApp
   */
-abstract class AbstractWebServer extends Directives with Releasable {
+private[shabondi] abstract class AbstractWebServer extends Directives with Releasable {
   protected val actorSystemRef = new AtomicReference[ActorSystem]()
 
   implicit private val actorSystem = ActorSystem(Logging.simpleName(this).replaceAll("\\$", ""))

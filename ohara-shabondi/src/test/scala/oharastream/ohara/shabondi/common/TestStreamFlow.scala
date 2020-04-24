@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -23,6 +23,7 @@ import akka.{Done, NotUsed}
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.{Consumer, RecordMetadata}
+import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 
 import scala.collection.immutable

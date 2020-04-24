@@ -18,9 +18,6 @@ package oharastream.ohara.shabondi
 
 import scala.reflect.ClassTag
 
-import oharastream.ohara.shabondi.sink.{Boot => SinkBoot}
-import oharastream.ohara.shabondi.source.{Boot => SourceBoot}
-
 /**
   * A helper class to reflect all "object" values in the subclass.
   * To get more information visit the following link :
@@ -58,8 +55,8 @@ abstract private[shabondi] class Enum[Enu: ClassTag] { self =>
 sealed abstract class ShabondiType(val name: String, val className: String)
 
 object ShabondiType extends Enum[ShabondiType] {
-  case object Source extends ShabondiType("source", SourceBoot.getClass.getName.replaceAll("\\$", ""))
-  case object Sink   extends ShabondiType("sink", SinkBoot.getClass.getName.replaceAll("\\$", ""))
+  case object Source extends ShabondiType("source", ShabondiSource.getClass.getName.replaceAll("\\$", ""))
+  case object Sink   extends ShabondiType("sink", ShabondiSink.getClass.getName.replaceAll("\\$", ""))
 
   def apply(className: String): ShabondiType = {
     className match {

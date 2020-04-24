@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.shabondi
+package oharastream.ohara.shabondi.common
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Before, Test}
 
 import scala.concurrent.ExecutionContext.Implicits._
