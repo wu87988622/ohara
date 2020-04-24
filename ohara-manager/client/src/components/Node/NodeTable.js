@@ -58,6 +58,9 @@ import NodeRemoveDialog from './NodeRemoveDialog';
 const defaultOptions = {
   comparison: false,
   comparedNodes: [],
+  customColumns: [],
+  disabledDeleteIcon: false,
+  disabledRemoveIcon: false,
   mode: MODE.K8S,
   onCreateIconClick: null,
   onDeleteIconClick: null,
@@ -75,6 +78,7 @@ const defaultOptions = {
   showUndoIcon: false,
   showRemoveIcon: false,
   showTitle: true,
+  showServicesColumn: true,
 };
 
 const getUnionResourceNames = nodes =>
@@ -248,6 +252,7 @@ function NodeTable(props) {
   const renderServiceColumn = () => {
     return {
       title: 'Services',
+      hidden: !options?.showServicesColumn,
       render: node => {
         const services = filter(
           node.services,
@@ -295,6 +300,14 @@ function NodeTable(props) {
       const showRemoveIcon = node =>
         options?.showRemoveIcon && !showUndoIcon(node);
 
+      const disabledDeleteIcon = isFunction(options?.disabledDeleteIcon)
+        ? options?.disabledDeleteIcon(node)
+        : options?.disabledDeleteIcon;
+
+      const disabledRemoveIcon = isFunction(options?.disabledRemoveIcon)
+        ? options?.disabledRemoveIcon(node)
+        : options?.disabledRemoveIcon;
+
       return (
         <>
           {options?.showDetailIcon && (
@@ -323,7 +336,9 @@ function NodeTable(props) {
           {options?.showDeleteIcon && (
             <Tooltip title="Delete node">
               <IconButton
+                component="div"
                 data-testid={`delete-node-${node.hostname}`}
+                disabled={disabledDeleteIcon}
                 onClick={() => {
                   handleDeleteIconClick(node);
                 }}
@@ -335,6 +350,8 @@ function NodeTable(props) {
           {showRemoveIcon(node) && (
             <Tooltip title="Remove node">
               <IconButton
+                component="div"
+                disabled={disabledRemoveIcon}
                 onClick={() => {
                   handleRemoveIconClick(node);
                 }}
@@ -410,6 +427,7 @@ function NodeTable(props) {
             field: 'state',
             render: node => capitalize(node.state),
           },
+          ...options?.customColumns,
           renderRowActions(),
         ]}
         data={data}
@@ -485,6 +503,17 @@ NodeTable.propTypes = {
   options: PropTypes.shape({
     comparison: PropTypes.bool,
     comparedNodes: PropTypes.array,
+    customColumns: PropTypes.arrayOf(
+      PropTypes.shape({
+        customFilterAndSearch: PropTypes.func,
+        field: PropTypes.string,
+        render: PropTypes.func,
+        title: PropTypes.string,
+        type: PropTypes.string,
+      }),
+    ),
+    disabledDeleteIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
+    disabledRemoveIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
     mode: PropTypes.string,
     onAddIconClick: PropTypes.func,
     onCreateIconClick: PropTypes.func,
@@ -503,6 +532,7 @@ NodeTable.propTypes = {
     showUndoIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
+    showServicesColumn: PropTypes.bool,
   }),
   title: PropTypes.string,
 };

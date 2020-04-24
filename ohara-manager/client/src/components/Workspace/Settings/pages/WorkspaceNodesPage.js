@@ -15,11 +15,16 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { map, some, reject } from 'lodash';
+import { capitalize, includes, join, map, reject, some, toUpper } from 'lodash';
 
 import { NodeSelectorDialog, NodeTable } from 'components/Node';
 import * as context from 'context';
 import * as hooks from 'hooks';
+
+const BROKER = 'broker';
+const STREAM = 'stream';
+const WORKER = 'worker';
+const ZOOKEEPER = 'zookeeper';
 
 function WorkspaceNodesPage() {
   const { data: configuratorInfo } = context.useConfiguratorState();
@@ -29,6 +34,11 @@ function WorkspaceNodesPage() {
   const workspace = hooks.useWorkspace();
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
   const selectorDialogRef = useRef(null);
+
+  const broker = hooks.useBroker();
+  const streams = hooks.useStreams();
+  const worker = hooks.useWorker();
+  const zookeeper = hooks.useZookeeper();
 
   const handleAddIconClick = () => {
     setIsSelectorDialogOpen(true);
@@ -61,12 +71,70 @@ function WorkspaceNodesPage() {
     setIsSelectorDialogOpen(false);
   };
 
+  const isUsedByBroker = node => {
+    return (
+      includes(broker?.nodeNames, node?.hostname) ||
+      includes(workspace?.broker?.nodeNames, node?.hostname)
+    );
+  };
+
+  const isUsedByStream = node => {
+    return some(streams, stream => includes(stream?.nodeNames, node?.hostname));
+  };
+
+  const isUsedByWorker = node => {
+    return (
+      includes(worker?.nodeNames, node?.hostname) ||
+      includes(workspace?.worker?.nodeNames, node?.hostname)
+    );
+  };
+
+  const isUsedByZookeeper = node => {
+    return (
+      includes(zookeeper?.nodeNames, node?.hostname) ||
+      includes(workspace?.zookeeper?.nodeNames, node?.hostname)
+    );
+  };
+
   return (
     <>
       <NodeTable
         nodes={nodesInWorkspace}
         onRemove={handleRemove}
         options={{
+          customColumns: [
+            {
+              title: 'Used',
+              customFilterAndSearch: (filterValue, node) => {
+                const value = [];
+                if (isUsedByBroker(node)) value.push(BROKER);
+                if (isUsedByStream(node)) value.push(STREAM);
+                if (isUsedByWorker(node)) value.push(WORKER);
+                if (isUsedByZookeeper(node)) value.push(ZOOKEEPER);
+                return includes(toUpper(join(value)), toUpper(filterValue));
+              },
+              render: node => {
+                return (
+                  <>
+                    {isUsedByBroker(node) && <div>{capitalize(BROKER)}</div>}
+                    {isUsedByStream(node) && <div>{capitalize(STREAM)}</div>}
+                    {isUsedByWorker(node) && <div>{capitalize(WORKER)}</div>}
+                    {isUsedByZookeeper(node) && (
+                      <div>{capitalize(ZOOKEEPER)}</div>
+                    )}
+                  </>
+                );
+              },
+            },
+          ],
+          disabledRemoveIcon: node => {
+            return (
+              isUsedByBroker(node) ||
+              isUsedByStream(node) ||
+              isUsedByWorker(node) ||
+              isUsedByZookeeper(node)
+            );
+          },
           mode: configuratorInfo?.mode,
           onAddIconClick: handleAddIconClick,
           showAddIcon: true,
@@ -74,6 +142,7 @@ function WorkspaceNodesPage() {
           showDeleteIcon: false,
           showEditorIcon: false,
           showRemoveIcon: true,
+          showServicesColumn: false,
         }}
         title="Workspace nodes"
       />
