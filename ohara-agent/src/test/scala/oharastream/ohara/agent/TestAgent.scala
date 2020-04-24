@@ -29,7 +29,7 @@ class TestAgent extends OharaTest {
     "chia7712" -> Seq("jellynina")
   )
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
   private[this] val handlers = customCommands.map {
     case (k, response) =>
       new CommandHandler {

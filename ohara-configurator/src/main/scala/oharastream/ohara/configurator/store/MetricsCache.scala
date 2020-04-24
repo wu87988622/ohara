@@ -84,7 +84,7 @@ object MetricsCache {
     }
 
     override def build: MetricsCache = new MetricsCache {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       private[this] val refresher = Objects.requireNonNull(Builder.this.refresher)
       private[this] val closed    = new AtomicBoolean(false)
       private[this] val cache = RefreshableCache

@@ -23,7 +23,7 @@ import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector._
 import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * This class extends RowSinkConnector abstract.

@@ -37,7 +37,7 @@ import oharastream.ohara.common.exception.{NoSuchFileException, FileSystemExcept
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.connector.storage.FileType
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[filesystem] object SmbFileSystem {
   def builder: Builder = new Builder
@@ -153,7 +153,7 @@ private[filesystem] object SmbFileSystem {
         * @return the listing of the folder
         */
       override def listFileNames(dir: String): util.Iterator[String] =
-        listFileNames(dir, FileFilter.EMPTY).toIterator.asJava
+        listFileNames(dir, FileFilter.EMPTY).iterator.asJava
 
       /**
         * Filter files in the given path using the user-supplied path filter
@@ -170,7 +170,8 @@ private[filesystem] object SmbFileSystem {
           .map(f => f.getFileName)
           .filterNot(_ == ".")
           .filterNot(_ == "..")
-          .filter(filter.accept(_))
+          .filter(filter.accept)
+          .toSeq
       }
 
       /**
@@ -324,7 +325,7 @@ private[filesystem] object SmbFileSystem {
         * @param recursive if path is a folder and set to true, the folder is deleted else throws an
         *                  exception
         */
-      override def delete(path: String, recursive: Boolean): Unit = connectShare { shareRoot =>
+      override def delete(path: String, recursive: Boolean): Unit = connectShare { _ =>
         if (recursive) {
           if (fileType(path) == FileType.FOLDER)
             listFileNames(path, FileFilter.EMPTY).foreach(fileName => {

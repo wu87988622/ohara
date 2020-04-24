@@ -31,7 +31,7 @@ import oharastream.ohara.common.util.Releasable
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 /**
   * reference: akka.http.scaladsl.server.HttpApp
@@ -56,7 +56,7 @@ private[shabondi] abstract class AbstractWebServer extends Directives with Relea
     actorSystemRef.get().log.error(cause, s"Error starting the server ${cause.getMessage}")
   }
 
-  protected def waitForShutdownSignal(system: ActorSystem)(implicit ec: ExecutionContext): Future[Done] = {
+  protected def waitForShutdownSignal()(implicit ec: ExecutionContext): Future[Done] = {
     val promise = Promise[Done]()
     sys.addShutdownHook {
       promise.trySuccess(Done)
@@ -70,9 +70,7 @@ private[shabondi] abstract class AbstractWebServer extends Directives with Relea
     promise.future
   }
 
-  protected def postServerShutdown(attempt: Try[Done], system: ActorSystem): Unit = {
-    actorSystemRef.get().log.info("Shutting down the server")
-  }
+  protected def postServerShutdown(): Unit = actorSystemRef.get().log.info("Shutting down the server")
 
   def start(bindInterface: String, port: Int): Unit = {
     start(bindInterface, port, ServerSettings(actorSystem))
@@ -96,16 +94,16 @@ private[shabondi] abstract class AbstractWebServer extends Directives with Relea
     }
 
     Await.ready(
-      bindingFuture.flatMap(_ => waitForShutdownSignal(actorSystem)),
+      bindingFuture.flatMap(_ => waitForShutdownSignal()),
       Duration.Inf
     )
 
     bindingFuture
       .flatMap(_.unbind())
-      .onComplete(attempt => {
-        postServerShutdown(attempt, actorSystem)
+      .onComplete { _ =>
+        postServerShutdown()
         actorSystemRef.get().terminate()
-      })
+      }
   }
 
   override def close(): Unit = {

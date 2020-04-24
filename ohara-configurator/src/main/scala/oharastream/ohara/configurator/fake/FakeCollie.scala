@@ -35,7 +35,7 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.{Counter, CounterMBean}
 import oharastream.ohara.metrics.kafka.TopicMeter
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) extends Collie {
   @VisibleForTesting
@@ -141,7 +141,7 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
   override protected def topicMeters(cluster: ClusterInfo): Map[String, Seq[TopicMeter]] = cluster match {
     case _: BrokerClusterInfo =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-      Map(CommonUtils.hostname() -> BeanChannel.local().topicMeters().asScala)
+      Map(CommonUtils.hostname() -> BeanChannel.local().topicMeters().asScala.toSeq)
     case _ => Map.empty
   }
 
@@ -166,7 +166,7 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
       } else Map.empty
     case _ =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-      Map(CommonUtils.hostname() -> BeanChannel.local().counterMBeans().asScala)
+      Map(CommonUtils.hostname() -> BeanChannel.local().counterMBeans().asScala.toSeq)
   }
 
   override protected def doCreator(

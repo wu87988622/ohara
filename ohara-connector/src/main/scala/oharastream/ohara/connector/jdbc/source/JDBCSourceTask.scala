@@ -23,7 +23,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.jdbc.util.ColumnInfo
 import oharastream.ohara.kafka.connector._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
 
 class JDBCSourceTask extends RowSourceTask {
@@ -48,8 +48,8 @@ class JDBCSourceTask extends RowSourceTask {
 
     dbTableDataProvider = new DBTableDataProvider(jdbcSourceConnectorConfig)
 
-    schema = settings.columns.asScala
-    topics = settings.topicNames().asScala
+    schema = settings.columns.asScala.toSeq
+    topics = settings.topicNames().asScala.toSeq
     val tableName = jdbcSourceConnectorConfig.dbTableName
     inMemoryOffsets = new Offsets(rowContext, tableName)
     topicOffsets = new Offsets(rowContext, tableName)

@@ -30,7 +30,7 @@ import oharastream.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class TestFtpSourceTask extends OharaTest {
   private[this] val ftpServer = FtpServer.builder().controlPort(0).dataPorts(java.util.Arrays.asList(0, 0, 0)).build()

@@ -25,6 +25,7 @@ import scala.concurrent.Future
   *
   * @tparam Res data
   */
+@FunctionalInterface
 trait HookOfList[Res <: Data] {
   def apply(res: Seq[Res]): Future[Seq[Res]]
 }

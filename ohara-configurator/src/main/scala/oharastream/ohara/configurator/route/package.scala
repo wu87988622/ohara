@@ -26,7 +26,7 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterCreation, ClusterInfo, ClusterUpdating, ErrorApi, JsonFormat}
+import oharastream.ohara.client.configurator.v0.{ClusterCreation, ClusterInfo, ClusterUpdating, ErrorApi, JsonRefiner}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
@@ -97,7 +97,7 @@ package object route {
     meterCache: MetricsCache,
     collie: Collie,
     serviceCollie: ServiceCollie,
-    rm: JsonFormat[Creation],
+    rm: JsonRefiner[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Cluster],
     executionContext: ExecutionContext
@@ -116,7 +116,7 @@ package object route {
                 .flatMap(cluster => hookBeforeDelete(cluster.key).map(_ => cluster))
                 .map(_.state)
                 .map {
-                  case None => Unit
+                  case None => ()
                   case Some(_) =>
                     throw new IllegalArgumentException(
                       s"You cannot delete a non-stopped ${classTag[Cluster].runtimeClass.getSimpleName} :$key"
@@ -292,7 +292,7 @@ package object route {
             }
             .mkString(";")
         ).filter(_.nonEmpty).foreach(s => throw new IllegalArgumentException(s))
-        Unit
+        ()
       }
 
   private[this] def updateState[Cluster <: ClusterInfo: ClassTag](

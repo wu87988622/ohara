@@ -23,7 +23,7 @@ import org.junit.Test
 import org.scalatest.Matchers._
 import spray.json.{JsObject, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class TestPackage extends OharaTest {
   @Test

@@ -26,7 +26,7 @@ import org.junit.runners.Parameterized.Parameters
 import org.junit.{After, Test}
 import org.scalatest.Matchers.{include, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @RunWith(value = classOf[Parameterized])

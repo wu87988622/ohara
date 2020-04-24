@@ -23,7 +23,7 @@ import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SimpleRowSinkTask extends RowSinkTask {
   private[this] var outputTopic: String                  = _

@@ -28,7 +28,7 @@ import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.source.{SourceRecord, SourceTask}
 import spray.json.{JsObject, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 class ValidatorTask extends SourceTask {
   private[this] var done                       = false
   private[this] var props: Map[String, String] = _

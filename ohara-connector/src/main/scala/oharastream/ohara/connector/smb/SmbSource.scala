@@ -24,7 +24,7 @@ import oharastream.ohara.kafka.connector.csv.CsvSourceConnector
 import oharastream.ohara.kafka.connector.storage.FileSystem
 import oharastream.ohara.kafka.connector.{RowSourceTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SmbSource extends CsvSourceConnector {
   private[this] var settings: TaskSetting = _

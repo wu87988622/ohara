@@ -32,7 +32,7 @@ import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -65,7 +65,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
 
-  private[this] def pushData(data: Seq[Row], topicKey: TopicKey) {
+  private[this] def pushData(data: Seq[Row], topicKey: TopicKey): Unit = {
     val producer = Producer
       .builder()
       .connectionProps(testUtil.brokersConnProps)

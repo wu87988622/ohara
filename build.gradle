@@ -292,8 +292,14 @@ subprojects {
       // see https://github.com/scala/scala/blob/2.12.x/src/compiler/scala/tools/nsc/settings/Warnings.scala#L60
       "-Xlint",
       "-Ywarn-dead-code",
-      "-Ywarn-unused-import",
-      "-Xfatal-warnings"
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused:implicits",
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:params",
+      "-Ywarn-unused:patvars",
+      "-Ywarn-unused:privates",
+      "-Werror"
     ]
 
     // -------------------------------------------------[gradle configs]-------------------------------------------------//

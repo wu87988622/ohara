@@ -160,9 +160,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
   /**
     * Duration running function for after sleep
     */
-  protected def beforeEndSleepUntil(reports: Seq[PerformanceReport]): Unit = {
-    Releasable.close(inputDataThread)
-  }
+  protected def beforeEndSleepUntil(): Unit = Releasable.close(inputDataThread)
 
   /**
     * create and start the topic.
@@ -249,7 +247,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
     catch {
       case e: Throwable =>
         log.error("failed to log meters", e)
-    } finally afterRecodingReports(reports)
+    }
   }
 
   private[this] def fetchDataInfoMetrics(inputDataInfos: Seq[DataInfo]): Unit = {
@@ -258,15 +256,6 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
       case e: Throwable =>
         log.error("failed to log input data metrics", e)
     }
-  }
-
-  /**
-    * invoked after all metrics of connectors are recorded.
-    * Noted: it is always invoked even if we fail to record reports
-    * @param reports the stuff we record
-    */
-  protected def afterRecodingReports(reports: Seq[PerformanceReport]): Unit = {
-    // nothing by default
   }
 
   //------------------------------[core functions]------------------------------//
@@ -335,14 +324,14 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
       while (CommonUtils.current() <= end) {
         val reports = connectorReports()
         fetchConnectorMetrics(reports)
-        fetchDataInfoMetrics(inputDataInfos)
+        fetchDataInfoMetrics(inputDataInfos.toSeq)
         TimeUnit.MILLISECONDS.sleep(logMetersFrequency.toMillis)
       }
     } finally {
       val reports = connectorReports()
       fetchConnectorMetrics(reports)
-      fetchDataInfoMetrics(inputDataInfos)
-      beforeEndSleepUntil(reports)
+      fetchDataInfoMetrics(inputDataInfos.toSeq)
+      beforeEndSleepUntil()
     }
     durationOfPerformance.toMillis
   }
@@ -354,7 +343,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
     * This function is after get metrics data, you can run other operating.
     * example delete data.
     */
-  protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit = {}
+  protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit
 
   @After
   def record(): Unit = {

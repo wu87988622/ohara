@@ -21,7 +21,7 @@ import java.util
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * This is a stupid and do-nothing connector. It burns for testing deploy custom connector.

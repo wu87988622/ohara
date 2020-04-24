@@ -18,7 +18,7 @@ package oharastream.ohara.client.configurator.v0
 
 import java.util.Objects
 
-import oharastream.ohara.client.configurator.v0.JsonFormatBuilder.ArrayRestriction
+import oharastream.ohara.client.configurator.v0.JsonRefinerBuilder.ArrayRestriction
 import oharastream.ohara.common.setting.SettingDef.{Necessary, Permission, Type}
 import oharastream.ohara.common.setting.{ObjectKey, PropGroup, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
@@ -35,7 +35,7 @@ import spray.json.{
   RootJsonFormat
 }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
 import scala.reflect.{ClassTag, classTag}
 
@@ -50,25 +50,27 @@ import scala.reflect.{ClassTag, classTag}
   * Noted: the keys having checker MUST exist. otherwise, DeserializationException will be thrown to interrupt the serialization.
   * @tparam T scala object type
   */
-trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[JsonFormat[T]] {
-  def format(format: RootJsonFormat[T]): JsonFormatBuilder[T]
+trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[JsonRefiner[T]] {
+  def format(format: RootJsonFormat[T]): JsonRefinerBuilder[T]
 
   /**
     * config this refiner according to setting definitions
+    *
     * @param definitions setting definitions
     * @return this refiner
     */
-  def definitions(definitions: Seq[SettingDef]): JsonFormatBuilder[T] = {
+  def definitions(definitions: Seq[SettingDef]): JsonRefinerBuilder[T] = {
     definitions.foreach(definition)
     this
   }
 
   /**
     * config this refiner according to setting definition
+    *
     * @param definition setting definition
     * @return this refiner
     */
-  def definition(definition: SettingDef): JsonFormatBuilder[T] = {
+  def definition(definition: SettingDef): JsonRefinerBuilder[T] = {
     // the internal is not exposed to user so we skip it.
     // remove the value if the field is readonly
     if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
@@ -254,39 +256,40 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
     }
     this
   }
+
   //-------------------------[null to default]-------------------------//
 
-  def nullToBoolean(key: String, value: Boolean): JsonFormatBuilder[T] = nullToJsValue(key, () => JsBoolean(value))
+  def nullToBoolean(key: String, value: Boolean): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsBoolean(value))
 
-  def nullToString(key: String, defaultValue: String): JsonFormatBuilder[T] =
+  def nullToString(key: String, defaultValue: String): JsonRefinerBuilder[T] =
     nullToJsValue(key, () => JsString(defaultValue))
 
-  def nullToString(key: String, defaultValue: () => String): JsonFormatBuilder[T] =
+  def nullToString(key: String, defaultValue: () => String): JsonRefinerBuilder[T] =
     nullToJsValue(key, () => JsString(defaultValue()))
 
-  def nullToEmptyArray(key: String): JsonFormatBuilder[T] = nullToJsValue(key, () => JsArray.empty)
+  def nullToEmptyArray(key: String): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsArray.empty)
 
-  def nullToEmptyObject(key: String): JsonFormatBuilder[T] = nullToJsValue(key, () => JsObject.empty)
+  def nullToEmptyObject(key: String): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsObject.empty)
 
-  def nullToShort(key: String, value: Short): JsonFormatBuilder[T] = nullToJsValue(key, () => JsNumber(value))
+  def nullToShort(key: String, value: Short): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToInt(key: String, value: Int): JsonFormatBuilder[T] = nullToJsValue(key, () => JsNumber(value))
+  def nullToInt(key: String, value: Int): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToLong(key: String, value: Long): JsonFormatBuilder[T] = nullToJsValue(key, () => JsNumber(value))
+  def nullToLong(key: String, value: Long): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsNumber(value))
 
-  def nullToDouble(key: String, value: Double): JsonFormatBuilder[T] = nullToJsValue(key, () => JsNumber(value))
+  def nullToDouble(key: String, value: Double): JsonRefinerBuilder[T] = nullToJsValue(key, () => JsNumber(value))
 
   /**
     * auto-fill the value of key by another key's value. For example
     * defaultToAnother(Map("k0", "k1"))
     * input:
     * {
-    *   "k1": "abc"
+    * "k1": "abc"
     * }
     * output:
     * {
-    *   "k0": "abc",
-    *   "k1": "abc"
+    * "k0": "abc",
+    * "k1": "abc"
     * }
     *
     * This method is useful in working with deprecated key. For example, you plant to change the key from "k0" to "k1".
@@ -295,27 +298,29 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
     *
     * Noted: it does nothing if both key and another key are nonexistent
     *
-    * @param key the fist key mapped to input json that it can be ignored or null.
-    *  @param anotherKey the second key mapped to input json that it must exists!!!
+    * @param key        the fist key mapped to input json that it can be ignored or null.
+    * @param anotherKey the second key mapped to input json that it must exists!!!
     * @return this refiner
     */
-  def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonFormatBuilder[T]
+  def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefinerBuilder[T]
 
   //-------------------------[more checks]-------------------------//
 
   /**
     * require the key for input json. It produces exception if input json is lack of key.
+    *
     * @param key required key
     * @return this refiner
     */
-  def requireKey(key: String): JsonFormatBuilder[T] = requireKeys(Set(key))
+  def requireKey(key: String): JsonRefinerBuilder[T] = requireKeys(Set(key))
 
   /**
     * require the keys for input json. It produces exception if input json is lack of those keys.
+    *
     * @param keys required keys
     * @return this refiner
     */
-  def requireKeys(keys: Set[String]): JsonFormatBuilder[T] = keysChecker { inputKeys =>
+  def requireKeys(keys: Set[String]): JsonRefinerBuilder[T] = keysChecker { inputKeys =>
     val nonexistentKeys = keys.diff(inputKeys)
     if (nonexistentKeys.nonEmpty)
       throw DeserializationException(
@@ -329,11 +334,11 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
     * The required keys should exist in request data.
     * Note: We only accept string type.
     *
-    * @param keys to be checked keys
+    * @param keys           to be checked keys
     * @param sumLengthLimit sum length limit
     * @return this refiner
     */
-  def stringSumLengthLimit(keys: Set[String], sumLengthLimit: Int): JsonFormatBuilder[T] =
+  def stringSumLengthLimit(keys: Set[String], sumLengthLimit: Int): JsonRefinerBuilder[T] =
     // check the keys should exist in request
     requireKeys(keys).valuesChecker(
       keys,
@@ -349,19 +354,21 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
 
   /**
     * check whether target port is legal to connect. The legal range is (0, 65535].
+    *
     * @param key key
     * @return this refiner
     */
-  def requireConnectionPort(key: String): JsonFormatBuilder[T] = requireNumberType(key = key, min = 1, max = 65535)
+  def requireConnectionPort(key: String): JsonRefinerBuilder[T] = requireNumberType(key = key, min = 1, max = 65535)
 
   /**
     * require the number type and check the legal number.
+    *
     * @param key key
     * @param min the min value (included). if input value is bigger than min, DeserializationException is thrown
     * @param max the max value (included). if input value is smaller than max, DeserializationException is thrown
     * @return this refiner
     */
-  def requireNumberType(key: String, min: Long, max: Long): JsonFormatBuilder[T] = requireJsonType[JsNumber](
+  def requireNumberType(key: String, min: Long, max: Long): JsonRefinerBuilder[T] = requireJsonType[JsNumber](
     key,
     (jsNumber: JsNumber) => {
       val number = jsNumber.value.toLong
@@ -372,12 +379,13 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
 
   /**
     * require the number type and check the legal number.
+    *
     * @param key key
     * @param min the min value (included). if input value is bigger than min, DeserializationException is thrown
     * @param max the max value (included). if input value is smaller than max, DeserializationException is thrown
     * @return this refiner
     */
-  private[this] def requireNumberType(key: String, min: Double, max: Double): JsonFormatBuilder[T] =
+  private[this] def requireNumberType(key: String, min: Double, max: Double): JsonRefinerBuilder[T] =
     requireJsonType[JsNumber](
       key,
       (jsNumber: JsNumber) => {
@@ -389,16 +397,18 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
 
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    *
     * @param key key
     * @tparam Json expected value type
     * @return this refiner
     */
-  private[this] def requireJsonType[Json <: JsValue: ClassTag](key: String): JsonFormatBuilder[T] =
-    requireJsonType(key, (_: Json) => Unit)
+  private[this] def requireJsonType[Json <: JsValue: ClassTag](key: String): JsonRefinerBuilder[T] =
+    requireJsonType(key, (_: Json) => ())
 
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
-    * @param key key
+    *
+    * @param key     key
     * @param checker checker
     * @tparam Json expected value type
     * @return this refiner
@@ -406,7 +416,7 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
   private[this] def requireJsonType[Json <: JsValue: ClassTag](
     key: String,
     checker: Json => Unit
-  ): JsonFormatBuilder[T] =
+  ): JsonRefinerBuilder[T] =
     valueChecker(
       key,
       json => {
@@ -421,22 +431,24 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
 
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
+    *
     * @param key key
     * @tparam C expected value type
     * @return this refiner
     */
-  private[this] def requireType[C](key: String)(implicit format: RootJsonFormat[C]): JsonFormatBuilder[T] =
-    requireType(key, (_: C) => Unit)
+  private[this] def requireType[C](key: String)(implicit format: RootJsonFormat[C]): JsonRefinerBuilder[T] =
+    requireType(key, (_: C) => ())
 
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
-    * @param key key
+    *
+    * @param key     key
     * @param checker checker
     * @return this refiner
     */
   private[this] def requireType[C](key: String, checker: C => Unit)(
     implicit format: RootJsonFormat[C]
-  ): JsonFormatBuilder[T] =
+  ): JsonRefinerBuilder[T] =
     valueChecker(
       key,
       json => checker(format.read(json))
@@ -445,17 +457,19 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
   /**
     * reject the request having a key which is associated to empty string.
     * Noted: this rule is applied to all key-value even if the pair is in nested object.
+    *
     * @return this refiner
     */
-  def rejectEmptyString(): JsonFormatBuilder[T]
+  def rejectEmptyString(): JsonRefinerBuilder[T]
 
   /**
     * throw exception if the specific key of input json is associated to empty string.
     * This method check only the specific key. By contrast, rejectEmptyString() checks values for all keys.
+    *
     * @param key key
     * @return this refiner
     */
-  def rejectEmptyString(key: String): JsonFormatBuilder[T] = valueChecker(
+  def rejectEmptyString(key: String): JsonRefinerBuilder[T] = valueChecker(
     key, {
       case JsString(s) if s.isEmpty =>
         throw DeserializationException(s"""the value of \"$key\" can't be empty string!!!""", fieldNames = List(key))
@@ -466,21 +480,24 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
   /**
     * throw exception if the input json has empty array.
     * Noted: this rule is applied to all key-value even if the pair is in nested object.
+    *
     * @return this refiner
     */
-  def rejectEmptyArray(): JsonFormatBuilder[T]
+  def rejectEmptyArray(): JsonRefinerBuilder[T]
 
   /**
     * throw exception if the specific key of input json is associated to empty array.
+    *
     * @param key key
     * @return this refiner
     */
-  def rejectEmptyArray(key: String): JsonFormatBuilder[T] = arrayRestriction(key).rejectEmpty().toRefiner
+  def rejectEmptyArray(key: String): JsonRefinerBuilder[T] = arrayRestriction(key).rejectEmpty().toRefiner
 
   /**
     * add the array restriction to specific value.
     * It throws exception if the specific key of input json violates any restriction.
     * Noted: the empty restriction make the checker to reject all input values.
+    *
     * @param key key
     * @return this refiner
     */
@@ -488,7 +505,7 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
     (checkers: Seq[(String, JsArray) => Unit]) =>
       requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
 
-  def stringRestriction(key: String, regex: String): JsonFormatBuilder[T] = valueChecker(
+  def stringRestriction(key: String, regex: String): JsonRefinerBuilder[T] = valueChecker(
     key,
     (v: JsValue) => {
       val s = v match {
@@ -504,11 +521,12 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
     * add your custom check for specific (key, value). the checker is executed only if the key exists.
     *
     * Noted: we recommend you to throw DeserializationException when the input value is illegal.
-    * @param key key
+    *
+    * @param key     key
     * @param checker checker
     * @return this refiner
     */
-  def valueChecker(key: String, checker: JsValue => Unit): JsonFormatBuilder[T] =
+  def valueChecker(key: String, checker: JsValue => Unit): JsonRefinerBuilder[T] =
     valuesChecker(Set(CommonUtils.requireNonEmpty(key)), vs => checker(vs.head._2))
 
   //-------------------------[more conversion]-------------------------//
@@ -516,10 +534,11 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
   /**
     * Set the auto-conversion to key that the string value wiil be converted to number. Hence, the key is able to accept
     * both string type and number type. By contrast, akka json will produce DeserializationException in parsing string to number.
+    *
     * @param key key
     * @return this refiner
     */
-  def acceptStringToNumber(key: String): JsonFormatBuilder[T] = valueConverter(
+  def acceptStringToNumber(key: String): JsonRefinerBuilder[T] = valueConverter(
     key, {
       case s: JsString =>
         try JsNumber(s.value)
@@ -537,33 +556,32 @@ trait JsonFormatBuilder[T] extends oharastream.ohara.common.pattern.Builder[Json
 
   //-------------------------[protected methods]-------------------------//
 
-  protected def keysChecker(checker: Set[String] => Unit): JsonFormatBuilder[T]
+  protected def keysChecker(checker: Set[String] => Unit): JsonRefinerBuilder[T]
 
   /**
     * set the default number for input keys. The default value will be added into json request if the associated key is nonexistent.
-    * @param key key
+    *
+    * @param key          key
     * @param defaultValue default value
     * @return this refiner
     */
-  protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonFormatBuilder[T]
+  protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefinerBuilder[T]
 
   /**
     * add your custom check for a set of keys' values.
     * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
     * to do an "aggregation" check, like sum or length check.
     *
-    * @param keys keys
+    * @param keys    keys
     * @param checker checker
     * @return this refiner
     */
-  protected def valuesChecker(keys: Set[String], checker: Map[String, JsValue] => Unit): JsonFormatBuilder[T]
+  protected def valuesChecker(keys: Set[String], checker: Map[String, JsValue] => Unit): JsonRefinerBuilder[T]
 
-  protected def valueConverter(key: String, converter: JsValue => JsValue): JsonFormatBuilder[T]
-
-  override def build: JsonFormat[T]
+  protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefinerBuilder[T]
 }
 
-object JsonFormatBuilder {
+object JsonRefinerBuilder {
   trait ArrayRestriction[T] {
     private[this] var checkers: Seq[(String, JsArray) => Unit] = Seq.empty
 
@@ -593,7 +611,7 @@ object JsonFormatBuilder {
     /**
       * Complete this restriction and add it to refiner.
       */
-    def toRefiner: JsonFormatBuilder[T] =
+    def toRefiner: JsonRefinerBuilder[T] =
       if (checkers.isEmpty)
         throw new IllegalArgumentException("Don't use Array Restriction if you hate to add any restriction")
       else addToJsonRefiner(checkers)
@@ -603,10 +621,10 @@ object JsonFormatBuilder {
       this
     }
 
-    protected def addToJsonRefiner(checkers: Seq[(String, JsArray) => Unit]): JsonFormatBuilder[T]
+    protected def addToJsonRefiner(checkers: Seq[(String, JsArray) => Unit]): JsonRefinerBuilder[T]
   }
 
-  def apply[T]: JsonFormatBuilder[T] = new JsonFormatBuilder[T] {
+  def apply[T]: JsonRefinerBuilder[T] = new JsonRefinerBuilder[T] {
     private[this] var format: RootJsonFormat[T]                                      = _
     private[this] var valueConverters: Map[String, JsValue => JsValue]               = Map.empty
     private[this] var keyCheckers: Seq[Set[String] => Unit]                          = Seq.empty
@@ -616,11 +634,11 @@ object JsonFormatBuilder {
     private[this] var _rejectEmptyString: Boolean                                    = false
     private[this] var _rejectEmptyArray: Boolean                                     = false
 
-    override def format(format: RootJsonFormat[T]): JsonFormatBuilder[T] = {
+    override def format(format: RootJsonFormat[T]): JsonRefinerBuilder[T] = {
       this.format = Objects.requireNonNull(format)
       this
     }
-    override protected def keysChecker(checker: Set[String] => Unit): JsonFormatBuilder[T] = {
+    override protected def keysChecker(checker: Set[String] => Unit): JsonRefinerBuilder[T] = {
       this.keyCheckers = this.keyCheckers ++ Seq(checker)
       this
     }
@@ -628,7 +646,7 @@ object JsonFormatBuilder {
     override protected def valuesChecker(
       keys: Set[String],
       checkers: Map[String, JsValue] => Unit
-    ): JsonFormatBuilder[T] = {
+    ): JsonRefinerBuilder[T] = {
       /**
         * compose the new checker with older one.
         */
@@ -646,7 +664,7 @@ object JsonFormatBuilder {
       this
     }
 
-    override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonFormatBuilder[T] = {
+    override protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefinerBuilder[T] = {
       /**
         * compose the new checker with older one.
         */
@@ -663,24 +681,24 @@ object JsonFormatBuilder {
       this
     }
 
-    override def rejectEmptyString(): JsonFormatBuilder[T] = {
+    override def rejectEmptyString(): JsonRefinerBuilder[T] = {
       this._rejectEmptyString = true
       this
     }
 
-    override def rejectEmptyArray(): JsonFormatBuilder[T] = {
+    override def rejectEmptyArray(): JsonRefinerBuilder[T] = {
       this._rejectEmptyArray = true
       this
     }
 
-    override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonFormatBuilder[T] = {
+    override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefinerBuilder[T] = {
       if (nullToAnotherValueOfKey.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" has been associated to another key:\"$anotherKey\"""")
       this.nullToAnotherValueOfKey = this.nullToAnotherValueOfKey + (key -> CommonUtils.requireNonEmpty(anotherKey))
       this
     }
 
-    override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonFormatBuilder[T] = {
+    override protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefinerBuilder[T] = {
       if (nullToJsValue.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(
           s"""the \"$key\" have been associated to default value:${nullToJsValue(key)}"""
@@ -689,15 +707,15 @@ object JsonFormatBuilder {
       this
     }
 
-    override def build: JsonFormat[T] = {
+    override def build: JsonRefiner[T] = {
       Objects.requireNonNull(format)
       nullToJsValue.keys.foreach(CommonUtils.requireNonEmpty)
       valueConverters.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
-      new JsonFormat[T] {
-        override def more(definitions: Seq[SettingDef]): JsonFormat[T] =
-          JsonFormatBuilder[T]
+      new JsonRefiner[T] {
+        override def more(definitions: Seq[SettingDef]): JsonRefiner[T] =
+          JsonRefinerBuilder[T]
             .format(this)
             .definitions(definitions)
             .build

@@ -23,7 +23,7 @@ import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector.csv.CsvSourceConnector
 import oharastream.ohara.kafka.connector.{RowSourceTask, TaskSetting, storage}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class FtpSource extends CsvSourceConnector {
   override def fileSystem(config: TaskSetting): storage.FileSystem = {

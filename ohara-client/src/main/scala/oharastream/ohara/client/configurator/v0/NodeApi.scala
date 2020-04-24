@@ -54,7 +54,7 @@ object NodeApi {
     tags: Option[Map[String, JsValue]]
   )
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonFormatBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().build
+    JsonRefinerBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().build
 
   case class Creation(
     hostname: String,
@@ -66,8 +66,8 @@ object NodeApi {
     override def group: String = GROUP_DEFAULT
     override def name: String  = hostname
   }
-  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
-    JsonFormatBuilder[Creation]
+  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+    JsonRefinerBuilder[Creation]
       .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)
@@ -105,7 +105,7 @@ object NodeApi {
       if (bytes < 1024)
         Resource(
           name = "Memory",
-          value = bytes,
+          value = bytes.toDouble,
           unit = "bytes",
           used = used
         )

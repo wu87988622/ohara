@@ -22,7 +22,7 @@ import oharastream.ohara.common.data.{Cell, Column, DataType, Row}
 import oharastream.ohara.common.util.{ByteUtils, CommonUtils}
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
@@ -38,8 +38,8 @@ class PerfSourceTask extends RowSourceTask {
 
   override protected def run(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
-    this.topics = settings.topicNames().asScala
-    this.schema = settings.columns.asScala
+    this.topics = settings.topicNames().asScala.toSeq
+    this.schema = settings.columns.asScala.toSeq
     if (schema.isEmpty) schema = DEFAULT_SCHEMA
     val row = Row.of(
       schema.sortBy(_.order).map { c =>

@@ -37,7 +37,7 @@ object ObjectApi {
 
     override def tags: Map[String, JsValue] = settings.tags.get
   }
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(obj.settings)

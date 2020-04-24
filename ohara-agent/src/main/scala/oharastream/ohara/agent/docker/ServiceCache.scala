@@ -25,7 +25,7 @@ import oharastream.ohara.common.cache.RefreshableCache
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{Duration, _}
 
 /**
@@ -56,7 +56,7 @@ trait ServiceCache extends Releasable {
     *
     * @param clusterStatus cluster info
     */
-  def put(clusterStatus: ClusterStatus)
+  def put(clusterStatus: ClusterStatus): Unit
 
   /**
     * remove the cached cluster data

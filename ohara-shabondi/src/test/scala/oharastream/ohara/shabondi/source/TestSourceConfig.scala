@@ -21,7 +21,7 @@ import oharastream.ohara.common.setting.TopicKey
 import org.junit.Test
 import org.scalatest.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final class TestSourceConfig extends OharaTest with Matchers {
   private def topicKey1 = TopicKey.of("default", "topic1")

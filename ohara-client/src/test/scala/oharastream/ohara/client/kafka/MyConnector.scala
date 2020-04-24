@@ -23,7 +23,7 @@ import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.setting.SettingDef.Type
 import oharastream.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class MyConnector extends RowSourceConnector {
   private[this] var settings: TaskSetting = _

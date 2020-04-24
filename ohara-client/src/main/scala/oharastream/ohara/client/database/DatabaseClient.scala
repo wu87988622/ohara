@@ -85,11 +85,10 @@ object DatabaseClient {
       private[this] def toTableSchema(rs: ResultSet): String  = rs.getString("TABLE_SCHEM")
       private[this] def toTableName(rs: ResultSet): String    = rs.getString("TABLE_NAME")
       private[this] def toColumnName(rs: ResultSet): String   = rs.getString("COLUMN_NAME")
-      private[this] def toColumnType(rs: ResultSet): String   = rs.getString("TYPE_NAME")
       private[this] def toTableType(rs: ResultSet): Seq[String] = {
         val r = rs.getString("TABLE_TYPE")
         if (r == null) Seq.empty
-        else r.split(" ")
+        else r.split(" ").toSeq
       }
       private[this] def systemTable(types: Seq[String]): Boolean = types.contains("SYSTEM")
       private[this] val conn                                     = DriverManager.getConnection(CommonUtils.requireNonEmpty(url), user, password)
@@ -155,7 +154,7 @@ object DatabaseClient {
               val buf = new ArrayBuffer[(String, String, String)]()
               while (rs.next()) if (!systemTable(toTableType(rs)))
                 buf.append((toTableCatalog(rs), toTableSchema(rs), toTableName(rs)))
-              buf
+              buf.toSeq
             } finally rs.close()
           }
 
@@ -177,7 +176,8 @@ object DatabaseClient {
               case (c, s, t, pks) =>
                 implicit val rs: ResultSet = md.getColumns(c, null, t, null)
                 val columns = try {
-                  val buf = new ArrayBuffer[RdbColumn]()
+                  val buf                                 = new ArrayBuffer[RdbColumn]()
+                  def toColumnType(rs: ResultSet): String = rs.getString("TYPE_NAME")
                   while (rs.next()) buf += RdbColumn(
                     name = toColumnName(rs),
                     dataType = toColumnType(rs),
@@ -185,7 +185,7 @@ object DatabaseClient {
                   )
                   buf
                 } finally rs.close()
-                RdbTable(Option(c), Option(s), t, columns)
+                RdbTable(Option(c), Option(s), t, columns.toSeq)
             }
             .filterNot(_.columns.isEmpty)
         }

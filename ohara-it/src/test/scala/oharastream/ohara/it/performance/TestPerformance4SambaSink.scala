@@ -40,12 +40,14 @@ class TestPerformance4SambaSink extends BasicTestPerformance4Samba {
       loopInputDataThread(produce)
       setupConnector(
         connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
-        className = classOf[SmbSink].getName(),
+        className = classOf[SmbSink].getName,
         settings = sambaSettings
-          + (CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(
-            PerformanceTestingUtils.createFolder(samba, outputDir)
-          ),
-          CsvConnectorDefinitions.FLUSH_SIZE_KEY -> JsNumber(numberOfCsvFileToFlush))
+          ++ Map(
+            CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(
+              PerformanceTestingUtils.createFolder(samba, outputDir)
+            ),
+            CsvConnectorDefinitions.FLUSH_SIZE_KEY -> JsNumber(numberOfCsvFileToFlush)
+          )
       )
       sleepUntilEnd()
     } finally Releasable.close(samba)
@@ -54,7 +56,7 @@ class TestPerformance4SambaSink extends BasicTestPerformance4Samba {
   override protected def afterStoppingConnectors(connectorInfos: Seq[ConnectorInfo], topicInfos: Seq[TopicInfo]): Unit =
     if (needDeleteData)
       topicInfos.foreach { topicInfo =>
-        val path  = s"${outputDir}/${topicInfo.topicNameOnKafka}"
+        val path  = s"$outputDir/${topicInfo.topicNameOnKafka}"
         val samba = sambaClient()
         try {
           if (PerformanceTestingUtils.exists(samba, path)) PerformanceTestingUtils.deleteFolder(samba, path)

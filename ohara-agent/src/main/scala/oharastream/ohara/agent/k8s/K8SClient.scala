@@ -336,7 +336,7 @@ object K8SClient {
                         Pod(Metadata(None, name, Some(Map(LABEL_KEY -> LABEL_VALUE)), None), Some(podSpec), None)
                       )
                 )
-                .map(_ => Unit)
+                .map(_ => ())
             }
           }
 
@@ -354,7 +354,7 @@ object K8SClient {
                     )
               )
             )
-            .map(_ => Unit)
+            .map(_ => ())
         }
 
         override def close(): Unit = {
@@ -401,7 +401,7 @@ object K8SClient {
                     )
                   )
               }
-              .map(_ => Unit)
+              .map(_ => ())
           }
 
         override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = {
@@ -415,7 +415,7 @@ object K8SClient {
                   s"$k8sApiServerURL/persistentvolumes/${name}?gracePeriodSeconds=0"
                 )
             }
-            .map(_ => Unit)
+            .map(_ => ())
         }
 
         override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] = {

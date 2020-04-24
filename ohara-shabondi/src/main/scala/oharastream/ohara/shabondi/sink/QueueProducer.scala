@@ -27,7 +27,7 @@ import oharastream.ohara.kafka.Consumer
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.metrics.basic.Counter
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[sink] class QueueProducer(
   val groupName: String,
@@ -62,7 +62,7 @@ private[sink] class QueueProducer(
     try {
       while (!stopped.get) {
         if (!paused.get && queue.isEmpty) {
-          val rows: Seq[Row] = consumer.poll(pollTimeout).asScala.map(_.key.get)
+          val rows = consumer.poll(pollTimeout).asScala.map(_.key.get)
           rows.foreach { r =>
             queue.add(r)
             rowCounter.incrementAndGet()

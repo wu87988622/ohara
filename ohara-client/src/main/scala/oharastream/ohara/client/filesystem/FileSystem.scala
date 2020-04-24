@@ -16,7 +16,7 @@
 
 package oharastream.ohara.client.filesystem
 
-import java.io._
+import java.io.{BufferedReader, BufferedWriter, IOException, InputStreamReader, OutputStreamWriter}
 import java.nio.charset.{Charset, StandardCharsets}
 
 import oharastream.ohara.client.filesystem.ftp.FtpFileSystem

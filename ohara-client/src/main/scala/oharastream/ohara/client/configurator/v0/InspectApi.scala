@@ -119,8 +119,8 @@ object InspectApi {
     schemaPattern: Option[String],
     tableName: Option[String]
   )
-  implicit val RDB_QUERY_JSON_FORMAT: JsonFormat[RdbQuery] =
-    JsonFormatBuilder[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().build
+  implicit val RDB_QUERY_JSON_FORMAT: JsonRefiner[RdbQuery] =
+    JsonRefinerBuilder[RdbQuery].format(jsonFormat7(RdbQuery)).rejectEmptyString().build
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)

@@ -22,13 +22,15 @@ LABEL stage=$STAGE
 
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
+ARG SCALA_VERSION=2.13.2
 ARG REPO="https://github.com/oharastream/ohara.git"
 ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara
 RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
-RUN ./gradlew clean build -x test -PskipManager
+RUN ./gradlew clean build -x test -PskipManager  \
+  -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-shabondi/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 

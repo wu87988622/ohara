@@ -28,20 +28,20 @@ import spray.json.{JsValue, RootJsonFormat}
   * at both url and payload, and both of them must go through the same name string check.
   * @tparam T object
   */
-trait JsonFormat[T] extends RootJsonFormat[T] {
+trait JsonRefiner[T] extends RootJsonFormat[T] {
   /**
     * create another format based on this and more rules.
     * @param definition definition
     * @return new format
     */
-  def more(definition: SettingDef): JsonFormat[T] = more(Seq(definition))
+  def more(definition: SettingDef): JsonRefiner[T] = more(Seq(definition))
 
   /**
     * create another format based on this and more rules.
     * @param definitions definitions
     * @return new format
     */
-  def more(definitions: Seq[SettingDef]): JsonFormat[T]
+  def more(definitions: Seq[SettingDef]): JsonRefiner[T]
 
   /**
     * serialize and deseriailze the object. The input may be NOT same to output since the format rules may change something

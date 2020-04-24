@@ -28,7 +28,7 @@ import oharastream.ohara.testing.OharaTestUtils
 import org.apache.kafka.connect.connector.Connector
 import org.scalatest.Matchers.{include, intercept, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

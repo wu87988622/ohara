@@ -26,7 +26,6 @@ import oharastream.ohara.kafka.{Consumer, RecordMetadata}
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -81,7 +80,7 @@ final class TestStreamFlow extends BasicShabondiTest {
   def testMultipleTopics(): Unit = {
     val topicKey1  = createTopicKey
     val topicKey2  = createTopicKey
-    val topicKeys  = Seq(topicKey1, topicKey2).to[immutable.Iterable]
+    val topicKeys  = Seq(topicKey1, topicKey2)
     val producer   = KafkaSupport.newProducer(brokerProps)
     val maxRowSize = 1000
     val rows       = multipleRows(maxRowSize)

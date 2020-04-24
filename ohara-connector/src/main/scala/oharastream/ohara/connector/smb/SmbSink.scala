@@ -24,7 +24,7 @@ import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
 import oharastream.ohara.kafka.connector.storage.FileSystem
 import oharastream.ohara.kafka.connector.{RowSinkTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class SmbSink extends CsvSinkConnector {
   private[this] var settings: TaskSetting = _

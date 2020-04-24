@@ -26,9 +26,9 @@ import oharastream.ohara.common.exception.NoSuchFileException
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.connector.storage.FileType
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, RemoteIterator}
+import org.apache.hadoop.fs.{Path, PathFilter, RemoteIterator}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[filesystem] object HdfsFileSystem {
   def builder: Builder = new Builder
@@ -95,7 +95,8 @@ private[filesystem] object HdfsFileSystem {
         */
       override def listFileNames(dir: String, filter: FileFilter): Seq[String] = wrap { () =>
         if (nonExists(dir)) throw new NoSuchFileException(s"The path $dir doesn't exist")
-        hadoopFS.listStatus(new Path(dir), (path: Path) => filter.accept(path.getName)).map(_.getPath.getName)
+        val fileFilter: PathFilter = (path: Path) => filter.accept(path.getName)
+        hadoopFS.listStatus(new Path(dir), fileFilter).map(_.getPath.getName).toSeq
       }
 
       /**
@@ -172,10 +173,8 @@ private[filesystem] object HdfsFileSystem {
 
         if (sourcePath == targetPath) {
           LOG.error("The source path equals the target path")
-          return false
-        }
-
-        hadoopFS.rename(new Path(sourcePath), new Path(targetPath))
+          false
+        } else hadoopFS.rename(new Path(sourcePath), new Path(targetPath))
       }
 
       /**

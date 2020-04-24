@@ -29,7 +29,7 @@ import org.apache.kafka.common.config.TopicConfig
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -135,7 +135,7 @@ object TopicApi {
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonFormatBuilder[Updating]
+    JsonRefinerBuilder[Updating]
       .format(new RootJsonFormat[Updating] {
         override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
         override def write(obj: Updating): JsValue = JsObject(obj.settings)
@@ -160,7 +160,7 @@ object TopicApi {
     override def tags: Map[String, JsValue] = settings.tags.get
   }
 
-  implicit val CREATION_FORMAT: JsonFormat[Creation] =
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -226,8 +226,8 @@ object TopicApi {
         _PartitionInfo(
           id = obj.id,
           leader = obj.leader,
-          replicas = obj.replicas.asScala,
-          inSyncReplicas = obj.inSyncReplicas.asScala,
+          replicas = obj.replicas.asScala.toSeq,
+          inSyncReplicas = obj.inSyncReplicas.asScala.toSeq,
           beginningOffset = obj.beginningOffset,
           endOffset = obj.endOffset
         )
@@ -268,7 +268,7 @@ object TopicApi {
       * @return the custom configs. the core configs are not included
       */
     def configs: Map[String, JsValue] = noJsNull(settings).filter {
-      case (key, value) =>
+      case (key, _) =>
         DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key)
     }
 

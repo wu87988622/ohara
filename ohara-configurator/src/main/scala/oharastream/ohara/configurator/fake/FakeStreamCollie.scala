@@ -18,7 +18,7 @@ package oharastream.ohara.configurator.fake
 
 import oharastream.ohara.agent.{ClusterKind, DataCollie, StreamCollie}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
 private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends FakeCollie(dataCollie) with StreamCollie {

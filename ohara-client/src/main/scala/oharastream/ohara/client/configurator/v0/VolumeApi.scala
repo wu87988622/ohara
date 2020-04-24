@@ -32,7 +32,7 @@ object VolumeApi {
     path: String,
     tags: Map[String, JsValue]
   ) extends BasicCreation
-  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(jsonFormat5(Creation))
       .rejectEmptyString()
@@ -43,7 +43,7 @@ object VolumeApi {
   final case class Updating(tags: Option[Map[String, JsValue]])
 
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonFormatBuilder[Updating].format(jsonFormat1(Updating)).rejectEmptyString().build
+    JsonRefinerBuilder[Updating].format(jsonFormat1(Updating)).rejectEmptyString().build
 
   abstract sealed class VolumeState(val name: String) extends Serializable
   object VolumeState extends Enum[VolumeState] {

@@ -64,7 +64,7 @@ class TestDefaultValuesAutoComplete extends WithBrokerWorker {
     connector.settings.keySet should contain("console.sink.row.divider")
 
     val a = new ConcurrentHashMap[String, String]()
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     a.elements().asScala.toSeq
   }
 }

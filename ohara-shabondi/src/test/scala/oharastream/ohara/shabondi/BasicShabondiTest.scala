@@ -32,7 +32,7 @@ import com.typesafe.scalalogging.Logger
 import org.junit.After
 import org.scalatest.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.{immutable, mutable}
 import scala.concurrent.{ExecutionContext, Future}
 

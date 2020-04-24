@@ -25,6 +25,7 @@ import scala.concurrent.Future
   *
   * Noted: the returned (group, name) can differ from input. And the removed object is associated to the returned stuff.
   */
+@FunctionalInterface
 trait HookBeforeDelete {
   def apply(key: ObjectKey): Future[Unit]
 }

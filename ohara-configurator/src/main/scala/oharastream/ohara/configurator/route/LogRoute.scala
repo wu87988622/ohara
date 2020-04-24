@@ -111,7 +111,7 @@ object LogRoute {
               logs =
                 if (logFiles == null || logFiles.isEmpty) Seq.empty
                 else
-                  logFiles.filter(_.getName.endsWith(".log")).map { file =>
+                  logFiles.toSeq.filter(_.getName.endsWith(".log")).map { file =>
                     NodeLog(
                       CommonUtils.hostname(),
                       seekLogByTimestamp(file, sinceSeconds)

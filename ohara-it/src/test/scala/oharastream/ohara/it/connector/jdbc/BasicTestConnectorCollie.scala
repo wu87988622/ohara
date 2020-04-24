@@ -39,7 +39,7 @@ import oharastream.ohara.kafka.connector.TaskSetting
 import org.junit.{After, AssumptionViolatedException, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -161,6 +161,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
       val topicData: Seq[String] = result
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
 
       checkData(tableData, topicData)
     } finally {
@@ -220,6 +221,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
       val topicData: Seq[String] = result3
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
       checkData(tableData, topicData)
     } finally {
       Releasable.close(consumer)
@@ -277,6 +279,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
       val topicData: Seq[String] = result
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
       val tableResultSet = statement.executeQuery(s"select * from $tableName order by $queryColumn")
       val resultTableData: Seq[String] =
         Iterator.continually(tableResultSet).takeWhile(_.next()).map(_.getString(2)).toSeq
@@ -432,7 +435,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
   private[this] def wk_start(clusterKey: ObjectKey): Future[Unit] = wkApi.start(clusterKey)
 
   private[this] def wk_stop(clusterKey: ObjectKey): Future[Unit] =
-    wkApi.forceStop(clusterKey).map(_ => Unit)
+    wkApi.forceStop(clusterKey).map(_ => ())
 
   private[this] def wk_containers(clusterKey: ObjectKey): Future[Seq[ContainerApi.ContainerInfo]] =
     containerApi.get(clusterKey).map(_.flatMap(_.containers))

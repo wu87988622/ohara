@@ -31,7 +31,7 @@ import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{After, Before, Test}
 import org.mockito.Mockito._
 import org.scalatest.Matchers._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
 import org.scalatestplus.mockito.MockitoSugar
 
@@ -106,7 +106,7 @@ class TestJDBCSourceTask extends OharaTest {
     when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
     jdbcSourceTask.run(taskSetting)
 
-    val rows1: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows1: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows1.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
     rows1.head.row.cell(1).value shouldBe "a11"
     rows1.head.row.cell(2).value shouldBe 1
@@ -146,7 +146,7 @@ class TestJDBCSourceTask extends OharaTest {
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
 
     jdbcSourceTask.run(taskSetting)
-    val rows2: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows2: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows2.size shouldBe 1
   }
 
@@ -227,7 +227,7 @@ class TestJDBCSourceTask extends OharaTest {
       .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
     jdbcSourceTask.run(taskSetting)
 
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
     rows.head.row.cell(1).value shouldBe "a11"
     rows.head.row.cell(2).value shouldBe 1

@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 import org.junit.Test
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[code] object ClassUtils {
   /**
@@ -32,9 +32,10 @@ private[code] object ClassUtils {
     * @return super class and interfaces
     */
   def superClasses(rootClass: Class[_]): Seq[Class[_]] =
-    org.apache.commons.lang3.ClassUtils.getAllInterfaces(rootClass).asScala ++ org.apache.commons.lang3.ClassUtils
+    org.apache.commons.lang3.ClassUtils.getAllInterfaces(rootClass).asScala.toSeq ++ org.apache.commons.lang3.ClassUtils
       .getAllSuperclasses(rootClass)
       .asScala
+      .toSeq
 
   /**
     * seek the methods having annotation "Test" from a class

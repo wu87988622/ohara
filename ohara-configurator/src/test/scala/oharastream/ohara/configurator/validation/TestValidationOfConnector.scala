@@ -26,7 +26,7 @@ import org.junit.{After, Test}
 import org.scalatest.Matchers._
 import spray.json.{JsString, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -56,7 +56,7 @@ class TestValidationOfConnector extends With3Brokers3Workers {
     response.className.get() shouldBe classOf[FallibleSink].getName
     response.settings().size() should not be 0
     response.numberOfTasks().get() shouldBe 1
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     response.topicKeys().asScala.toSet shouldBe topicKeys
     response.author().isPresent shouldBe true
     response.version().isPresent shouldBe true

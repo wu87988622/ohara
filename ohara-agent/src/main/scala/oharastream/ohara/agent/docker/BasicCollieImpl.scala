@@ -45,7 +45,7 @@ private abstract class BasicCollieImpl(
               case (hostname, ip) => s"$ip $hostname"
             }.toSeq)
       )
-      .map(_ => Unit)
+      .map(_ => ())
 
   override protected def doForceRemove(clusterInfo: ClusterStatus, beRemovedContainers: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
@@ -128,6 +128,6 @@ private abstract class BasicCollieImpl(
     updateRoute(existentNodes, routes)
       .map { _ =>
         clusterCache.put(clusterStatus)
-        Unit
+        ()
       }
 }

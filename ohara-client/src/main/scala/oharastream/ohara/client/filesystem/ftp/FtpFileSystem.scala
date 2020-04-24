@@ -28,7 +28,7 @@ import oharastream.ohara.common.exception.NoSuchFileException
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.connector.storage.FileType
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 private[filesystem] object FtpFileSystem {
@@ -152,7 +152,7 @@ private[filesystem] object FtpFileSystem {
         * @return the listing of the folder
         */
       override def listFileNames(dir: String): util.Iterator[String] =
-        listFileNames(dir, FileFilter.EMPTY).toIterator.asJava
+        listFileNames(dir, FileFilter.EMPTY).iterator.asJava
 
       /**
         * Filter files in the given path using the user-supplied path filter
@@ -251,11 +251,11 @@ private[filesystem] object FtpFileSystem {
         }
         if (sourcePath == targetPath) {
           LOG.error("The source path equals the target path")
-          return false
+          false
+        } else {
+          client.moveFile(sourcePath, targetPath)
+          exists(targetPath)
         }
-
-        client.moveFile(sourcePath, targetPath)
-        exists(targetPath)
       }
 
       /**

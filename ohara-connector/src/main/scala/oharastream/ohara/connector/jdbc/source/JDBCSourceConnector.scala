@@ -22,7 +22,7 @@ import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector._
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * This class for JDBC Source connector plugin

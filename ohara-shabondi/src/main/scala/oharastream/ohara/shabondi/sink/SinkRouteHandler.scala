@@ -63,10 +63,10 @@ private[shabondi] class SinkRouteHandler(config: SinkConfig, materializer: Actor
       buffer += item
       item = queue.poll()
     }
-    buffer
+    buffer.toSeq
   }
 
-  def route: Route = handleExceptions(exceptionHandler) {
+  def route(): Route = handleExceptions(exceptionHandler) {
     (get & path("v0" / "poll")) {
       val group  = dataGroups.defaultGroup
       val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))

@@ -40,7 +40,7 @@ import org.apache.kafka.connect.source.SourceConnector
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
@@ -55,7 +55,7 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
       if (cachedConnectors.contains(creation.name()))
         Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
       else {
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
         cachedConnectorsState.put(creation.name(), State.RUNNING)
         Future.successful(ConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))

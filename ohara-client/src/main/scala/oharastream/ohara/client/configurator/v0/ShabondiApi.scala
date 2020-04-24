@@ -88,8 +88,8 @@ final object ShabondiApi {
       noJsNull(settings).get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
   }
 
-  implicit val SHABONDI_CLUSTER_INFO_JSON_FORMAT: JsonFormat[ShabondiClusterInfo] =
-    JsonFormatBuilder[ShabondiClusterInfo]
+  implicit val SHABONDI_CLUSTER_INFO_JSON_FORMAT: JsonRefiner[ShabondiClusterInfo] =
+    JsonRefinerBuilder[ShabondiClusterInfo]
       .format(new RootJsonFormat[ShabondiClusterInfo] {
         private[this] val format                              = jsonFormat6(ShabondiClusterInfo)
         override def write(obj: ShabondiClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
@@ -97,7 +97,7 @@ final object ShabondiApi {
       })
       .build
 
-  implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: JsonFormat[ShabondiClusterCreation] =
+  implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: JsonRefiner[ShabondiClusterCreation] =
     rulesOfCreation[ShabondiClusterCreation](
       new RootJsonFormat[ShabondiClusterCreation] {
         override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.settings))
@@ -106,7 +106,7 @@ final object ShabondiApi {
       ShabondiDefinitions.basicDefinitions
     )
 
-  implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: JsonFormat[ShabondiClusterUpdating] =
+  implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: JsonRefiner[ShabondiClusterUpdating] =
     rulesOfUpdating[ShabondiClusterUpdating](
       new RootJsonFormat[ShabondiClusterUpdating] {
         override def write(obj: ShabondiClusterUpdating): JsValue = JsObject(noJsNull(obj.settings))
@@ -143,7 +143,7 @@ final object ShabondiApi {
       setting(SINK_FROM_TOPICS_DEFINITION.key, JsArray(topicKeys.map(TOPIC_KEY_FORMAT.write).toVector))
 
     def sinkPollTimeout(duration: JDuration): Request.this.type = {
-      setting(SINK_POLL_TIMEOUT_DEFINITION.key, JsString(duration.toMillis + " milliseconds"))
+      setting(SINK_POLL_TIMEOUT_DEFINITION.key, JsString(duration.toMillis.toString + " milliseconds"))
     }
 
     def creation: ShabondiClusterCreation = {

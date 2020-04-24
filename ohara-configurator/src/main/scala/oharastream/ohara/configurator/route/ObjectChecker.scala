@@ -34,7 +34,7 @@ import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.store.DataStore
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}

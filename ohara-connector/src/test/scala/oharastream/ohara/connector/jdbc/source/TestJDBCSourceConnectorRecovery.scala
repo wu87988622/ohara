@@ -31,7 +31,7 @@ import oharastream.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -175,7 +175,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
     Releasable.close(db)
   }
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
   private[this] val props = JDBCSourceConnectorConfig(
     TaskSetting.of(
       Map(

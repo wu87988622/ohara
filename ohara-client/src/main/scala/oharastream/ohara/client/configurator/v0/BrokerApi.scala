@@ -134,7 +134,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
+  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -165,7 +165,7 @@ object BrokerApi {
       noJsNull(settings).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
   }
 
-  implicit val UPDATING_JSON_FORMAT: JsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
@@ -173,8 +173,8 @@ object BrokerApi {
 
   final case class TopicDefinition(settingDefinitions: Seq[SettingDef])
 
-  implicit val TOPIC_DEFINITION_JSON_FORMAT: JsonFormat[TopicDefinition] =
-    JsonFormatBuilder[TopicDefinition].format(jsonFormat1(TopicDefinition)).rejectEmptyString().build
+  implicit val TOPIC_DEFINITION_JSON_FORMAT: JsonRefiner[TopicDefinition] =
+    JsonRefinerBuilder[TopicDefinition].format(jsonFormat1(TopicDefinition)).rejectEmptyString().build
 
   final case class BrokerClusterInfo private[BrokerApi] (
     settings: Map[String, JsValue],
@@ -216,7 +216,7 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CLUSTER_INFO_FORMAT: RootJsonFormat[BrokerClusterInfo] =
-    JsonFormatBuilder[BrokerClusterInfo]
+    JsonRefinerBuilder[BrokerClusterInfo]
       .format(new RootJsonFormat[BrokerClusterInfo] {
         private[this] val format                            = jsonFormat5(BrokerClusterInfo)
         override def read(json: JsValue): BrokerClusterInfo = format.read(extractSetting(json.asJsObject))

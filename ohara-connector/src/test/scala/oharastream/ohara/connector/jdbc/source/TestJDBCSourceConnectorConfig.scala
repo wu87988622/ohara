@@ -20,7 +20,7 @@ import oharastream.ohara.kafka.connector.TaskSetting
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
 class TestJDBCSourceConnectorConfig extends OharaTest {
   private[this] def jdbcConfig(settings: Map[String, String]): JDBCSourceConnectorConfig =

@@ -24,7 +24,7 @@ import oharastream.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.setting.ObjectKey
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[sink] object SinkDataGroups {
   def apply(config: SinkConfig) =

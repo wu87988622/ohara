@@ -16,6 +16,7 @@
 
 package oharastream.ohara.it.performance
 
+import oharastream.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.connector.perf.PerfSource
@@ -35,4 +36,9 @@ class TestPerformance4PerfSource extends BasicTestPerformance {
     )
     sleepUntilEnd()
   }
+
+  override protected def afterStoppingConnectors(
+    connectorInfos: Seq[ConnectorApi.ConnectorInfo],
+    topicInfos: Seq[TopicApi.TopicInfo]
+  ): Unit = {}
 }

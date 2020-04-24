@@ -119,7 +119,7 @@ class TestTestCases extends OharaTest {
       classOf[After]
     )
 
-    def annotation(m: Method): Seq[Annotation] = if (m.getAnnotations == null) Seq.empty else m.getAnnotations
+    def annotation(m: Method): Seq[Annotation] = if (m.getAnnotations == null) Seq.empty else m.getAnnotations.toSeq
 
     val illegalCases: Map[Class[_], Set[Method]] = testClasses()
       .filter(clz => clz.getMethods != null)

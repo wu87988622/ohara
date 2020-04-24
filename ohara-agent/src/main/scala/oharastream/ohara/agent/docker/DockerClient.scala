@@ -30,7 +30,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -197,7 +197,7 @@ object DockerClient {
               command.getOrElse(""),
               arguments.map(arg => s"""\"$arg\"""").mkString(" ")
             ).filter(_.nonEmpty).mkString(" ")
-          ).map(_ => Unit)
+          ).map(_ => ())
         )
       }
 
@@ -250,14 +250,14 @@ object DockerClient {
                 }
           )
         )
-        .map(_ => Unit)
+        .map(_ => ())
 
     override def forceRemove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
       containerNames(name)
         .flatMap(
           Future.traverse(_)(container => agent(container.nodeName).map(_.execute(s"docker rm -f ${container.id}")))
         )
-        .map(_ => Unit)
+        .map(_ => ())
 
     override def logs(name: String, sinceSeconds: Option[Long])(
       implicit executionContext: ExecutionContext
@@ -422,7 +422,7 @@ object DockerClient {
                 s" --opt type=none --opt device=$path --opt o=bind"
             )
           )
-          .map(_ => Unit)
+          .map(_ => ())
       }
 
     override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] =
@@ -461,7 +461,7 @@ object DockerClient {
                 .map(_.execute(s"docker volume rm ${volume.name}"))
           )
         )
-        .map(_ => Unit)
+        .map(_ => ())
 
     override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
       agents()

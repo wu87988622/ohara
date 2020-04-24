@@ -107,7 +107,7 @@ private[configurator] object ShabondiRoute {
     shabondiCollie: ShabondiCollie,
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
-    (clusterInfo: ShabondiClusterInfo, subName: String, params: Map[String, String]) => {
+    (clusterInfo: ShabondiClusterInfo, _: String, _: Map[String, String]) => {
       val shabondiType = ShabondiType(clusterInfo.shabondiClass)
       val checkTopics = shabondiType match {
         case ShabondiType.Source => clusterInfo.sourceToTopics

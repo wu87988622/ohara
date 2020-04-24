@@ -32,7 +32,7 @@ import oharastream.ohara.client.configurator.v0.{
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.store.DataStore
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -46,7 +46,7 @@ private[configurator] class FakeServiceCollie(
 ) extends ServiceCollie {
   private[this] val existentVolumes = new ConcurrentHashMap[String, ContainerVolume]()
 
-  def this(dataCollie: DataCollie, store: DataStore) {
+  def this(dataCollie: DataCollie, store: DataStore) = {
     this(dataCollie, store, null, null)
   }
 

@@ -22,8 +22,8 @@ import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.AssumptionViolatedException
 import spray.json.{JsNumber, JsString, JsValue}
-import collection.JavaConverters._
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 import oharastream.ohara.client.filesystem.FileSystem
 
 abstract class BasicTestPerformance4Ftp extends BasicTestPerformance {

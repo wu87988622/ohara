@@ -29,7 +29,7 @@ import oharastream.ohara.kafka.connector.json.Creation
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

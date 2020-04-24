@@ -16,6 +16,7 @@
 
 package oharastream.ohara.it.performance
 
+import oharastream.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.connector.jdbc.source.JDBCSourceConnector
@@ -53,4 +54,9 @@ class TestPerformance4Oracle extends BasicTestPerformance4Jdbc {
       sleepUntilEnd()
     } finally if (needDeleteData) client.dropTable(tableName)
   }
+
+  override protected def afterStoppingConnectors(
+    connectorInfos: Seq[ConnectorApi.ConnectorInfo],
+    topicInfos: Seq[TopicApi.TopicInfo]
+  ): Unit = {}
 }

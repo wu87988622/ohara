@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import oharastream.ohara.common.util.VersionUtils
 import oharastream.ohara.common.setting.{SettingDef, WithDefinitions}
 import oharastream.ohara.common.setting.SettingDef.Type
-
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 
 object ShabondiDefinitions {

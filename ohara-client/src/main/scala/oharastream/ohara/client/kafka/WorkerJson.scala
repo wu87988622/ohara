@@ -108,16 +108,18 @@ object WorkerJson {
               tasksMax = tasksMax.toInt,
               topicNames = topicNames.split(",").toSet,
               connectorClass = connectorClass,
-              args = json.convertTo[Map[String, String]] - (taskMaxKey, topicNamesKey, connectClassKey)
+              args = json.convertTo[Map[String, String]] -- Set(taskMaxKey, topicNamesKey, connectClassKey)
             )
           case other: Any =>
             throw DeserializationException(s"${classOf[KafkaConnectorConfig].getSimpleName} expected but $other")
         }
       override def write(config: KafkaConnectorConfig): JsValue =
         JsObject(
-          config.args.map(f => f._1 -> JsString(f._2)) + (taskMaxKey -> JsString(config.tasksMax.toString),
-          topicNamesKey   -> JsString(config.topicNames.mkString(",")),
-          connectClassKey -> JsString(config.connectorClass))
+          config.args.map(f => f._1 -> JsString(f._2)) ++ Map(
+            taskMaxKey      -> JsString(config.tasksMax.toString),
+            topicNamesKey   -> JsString(config.topicNames.mkString(",")),
+            connectClassKey -> JsString(config.connectorClass)
+          )
         )
     }
 

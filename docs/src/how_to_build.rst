@@ -25,7 +25,7 @@ Prerequisites
 -------------
 
 -  OpenJDK 1.8
--  Scala 2.12.11
+-  Scala 2.13.2
 -  Gradle 6.3.0
 -  Node.js 8.12.0
 -  Yarn 1.13.0 or greater

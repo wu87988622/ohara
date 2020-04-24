@@ -36,7 +36,7 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.metrics.kafka.TopicMeter
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -248,7 +248,7 @@ trait Collie {
   protected def topicMeters(cluster: ClusterInfo): Map[String, Seq[TopicMeter]] = cluster match {
     case _: BrokerClusterInfo =>
       cluster.aliveNodes.map { hostname =>
-        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().topicMeters().asScala
+        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().topicMeters().asScala.toSeq
       }.toMap
     case _ => Map.empty
   }
@@ -264,7 +264,7 @@ trait Collie {
       Map.empty
     case _ =>
       cluster.aliveNodes.map { hostname =>
-        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().counterMBeans().asScala
+        hostname -> BeanChannel.builder().hostname(hostname).port(cluster.jmxPort).build().counterMBeans().asScala.toSeq
       }.toMap
   }
 
@@ -298,7 +298,7 @@ trait Collie {
                     key -> Metrics(counters.map { counter =>
                       Meter(
                         name = counter.item,
-                        value = counter.getValue,
+                        value = counter.getValue.toDouble,
                         unit = counter.getUnit,
                         document = counter.getDocument,
                         queryTime = counter.getQueryTime,
@@ -317,7 +317,7 @@ trait Collie {
                     if (key.isPresent) Some(key.get() -> Metrics(meters.map { meter =>
                       Meter(
                         name = meter.catalog().name(),
-                        value = meter.count(),
+                        value = meter.count().toDouble,
                         unit = s"${meter.eventType()} / ${meter.rateUnit().name()}",
                         document = meter.catalog.name(),
                         queryTime = meter.queryTime(),

@@ -41,7 +41,7 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 @RunWith(value = classOf[Parameterized])
 class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Brokers3Workers {
@@ -128,6 +128,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
       val topicData: Seq[String] = resultRecords
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
       checkData(tableData, topicData)
     } finally {
       result(connectorAdmin.delete(connectorKey)) // Avoid table not forund from the JDBC source connector
@@ -177,6 +178,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
       val topicData: Seq[String] = resultRecords
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
       checkData(tableData, topicData)
     } finally {
       result(connectorAdmin.delete(connectorKey)) // Avoid table not forund from the JDBC source connector
@@ -223,6 +225,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
       val topicData: Seq[String] = result
         .map(record => record.key.get.cell(queryColumn).value().toString)
         .sorted[String]
+        .toSeq
       val updateResultSet = statement.executeQuery(s"select * from $tableName order by $queryColumn")
       val resultTableData: Seq[String] =
         Iterator.continually(updateResultSet).takeWhile(_.next()).map(_.getString(2)).toSeq

@@ -35,7 +35,7 @@ import org.apache.kafka.connect.runtime.rest.entities.ConfigInfos
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
@@ -174,7 +174,7 @@ trait ConnectorAdmin {
       // kafka 2.x requires topic names for all sink connectors so we add a random topic for this request.
       .topicKey(TopicKey.of("fake_group", "fake_name"))
       .run()
-      .map(_.settings().asScala.map(_.definition()))
+      .map(_.settings().asScala.map(_.definition()).toSeq)
 }
 
 object ConnectorAdmin {

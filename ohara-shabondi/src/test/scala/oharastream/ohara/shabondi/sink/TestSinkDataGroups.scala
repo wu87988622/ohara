@@ -97,7 +97,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
   @Test
   def testRowQueueIsIdle(): Unit = {
     val idleTime = JDuration.ofSeconds(2)
-    val rowQueue = new RowQueue("group1")
+    val rowQueue = new RowQueue()
     multipleRows(100).foreach(rowQueue.add)
     rowQueue.poll() should !==(null)
     rowQueue.isIdle(idleTime) should ===(false)

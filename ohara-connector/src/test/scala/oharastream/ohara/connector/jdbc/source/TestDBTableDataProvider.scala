@@ -28,7 +28,7 @@ import oharastream.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends OharaTest {

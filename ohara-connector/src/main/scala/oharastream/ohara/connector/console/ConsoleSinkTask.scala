@@ -24,7 +24,7 @@ import oharastream.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSettin
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ConsoleSinkTask extends RowSinkTask {
   private[this] val LOG = Logger(classOf[ConsoleSinkTask])

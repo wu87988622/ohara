@@ -19,7 +19,7 @@ package oharastream.ohara.shabondi.source
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.shabondi.ShabondiDefinitions._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[shabondi] class SourceConfig(raw: Map[String, String]) {
   def group: String = raw(GROUP_DEFINITION.key)
@@ -34,5 +34,5 @@ private[shabondi] class SourceConfig(raw: Map[String, String]) {
 
   def brokers: String = raw(BROKERS_DEFINITION.key)
 
-  def sourceToTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SOURCE_TO_TOPICS_DEFINITION.key)).asScala
+  def sourceToTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SOURCE_TO_TOPICS_DEFINITION.key)).asScala.toSeq
 }

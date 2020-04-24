@@ -109,7 +109,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       val embeddedBrokerKey = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedbk")
       val embeddedWorkerKey = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedwk")
       // we fake nodes for embedded bk and wk
-      def nodes(s: String): Seq[String] = s.split(",").map(_.split(":").head)
+      def nodes(s: String): Seq[String] = s.split(",").toIndexedSeq.map(_.split(":").head)
       import scala.concurrent.ExecutionContext.Implicits.global
 
       (nodes(bkConnectionProps) ++ nodes(wkConnectionProps))
@@ -254,10 +254,14 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           creation
       }
 
-      val wkCreations = (0 until numberOfWorkerCluster).map { _ =>
+      val wkCreations = (0 until numberOfWorkerCluster).map { index =>
         val bkCreation = bkCreations((Math.random() % bkCreations.size).asInstanceOf[Int])
         val creation =
-          WorkerApi.access.request.brokerClusterKey(bkCreation.key).nodeNames(bkCreation.nodeNames).creation
+          WorkerApi.access.request
+            .name(s"$wkClusterNamePrefix$index")
+            .brokerClusterKey(bkCreation.key)
+            .nodeNames(bkCreation.nodeNames)
+            .creation
         collie.workerCollie.addCluster(
           creation.key,
           ClusterKind.WORKER,

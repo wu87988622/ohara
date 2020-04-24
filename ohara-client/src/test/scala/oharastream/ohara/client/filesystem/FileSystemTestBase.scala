@@ -22,7 +22,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 abstract class FileSystemTestBase extends OharaTest {
   protected val fileSystem: FileSystem

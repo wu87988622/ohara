@@ -37,7 +37,7 @@ class TestContainerCreator extends OharaTest {
       ports: Map[Int, Int],
       envs: Map[String, String],
       routes: Map[String, String],
-      executionContext: ExecutionContext
+      _: ExecutionContext
     ) =>
       Future.successful {
         // we check only the required arguments

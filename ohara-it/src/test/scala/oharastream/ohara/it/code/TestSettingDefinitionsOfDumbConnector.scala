@@ -22,7 +22,7 @@ import oharastream.ohara.it.connector.{IncludeAllTypesSinkConnector, IncludeAllT
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * our QA, by default, have specific plan for all IT so this test case is moved to ohara-assembly.

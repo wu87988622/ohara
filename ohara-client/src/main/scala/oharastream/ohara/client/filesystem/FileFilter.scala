@@ -16,6 +16,7 @@
 
 package oharastream.ohara.client.filesystem
 
+@FunctionalInterface
 trait FileFilter {
   def accept(fileName: String): Boolean
 }

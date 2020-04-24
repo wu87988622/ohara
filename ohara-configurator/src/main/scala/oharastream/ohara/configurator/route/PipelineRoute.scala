@@ -107,10 +107,10 @@ private[configurator] object PipelineRoute {
           topicAdmin
             .exist(data.key)
             .toScala
-            .map(
-              try if (_) Some(TopicState.RUNNING) else None
+            .map { existent =>
+              try if (existent) Some(TopicState.RUNNING) else None
               finally topicAdmin.close()
-            )
+            }
             .map(_.map(_.name))
             .map(
               state =>
@@ -374,7 +374,7 @@ private[configurator] object PipelineRoute {
     (pipeline: Pipeline, _, _) =>
       refreshEndpoints(pipeline)
         .flatMap(pipeline => store.add[Pipeline](pipeline))
-        .map(_ => Unit)
+        .map(_ => ())
 
   def apply(
     implicit brokerCollie: BrokerCollie,

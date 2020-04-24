@@ -130,10 +130,10 @@ object ZookeeperRoute {
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
           case e: Throwable                                           => throw e
         }
-        .map(_ => Unit)
+        .map(_ => ())
 
   def apply(
     implicit store: DataStore,

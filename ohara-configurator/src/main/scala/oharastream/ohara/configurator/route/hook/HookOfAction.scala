@@ -21,6 +21,7 @@ import scala.concurrent.Future
 /**
   * The basic interface of handling particular action
   */
+@FunctionalInterface
 trait HookOfAction[T] {
   def apply(key: T, subName: String, params: Map[String, String]): Future[Unit]
 }

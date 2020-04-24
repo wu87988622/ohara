@@ -23,14 +23,12 @@ import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class TestK8SClientVerify extends OharaTest {
-  private[this] val nodeCache              = new ArrayBuffer[Node]()
-  private[this] val dataCollie: DataCollie = DataCollie(nodeCache)
+  private[this] val dataCollie: DataCollie = DataCollie(Seq.empty)
 
   private[this] def node: Node = Node("ohara")
 

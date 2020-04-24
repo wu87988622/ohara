@@ -26,7 +26,7 @@ import oharastream.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 class TestPerfSourceProps extends OharaTest {

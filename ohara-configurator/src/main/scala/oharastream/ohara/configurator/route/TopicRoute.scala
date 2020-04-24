@@ -16,7 +16,6 @@
 
 package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
-import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.BrokerCollie
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
@@ -32,13 +31,11 @@ import oharastream.ohara.kafka.PartitionInfo
 import oharastream.ohara.shabondi.ShabondiType
 import spray.json.JsString
 
-import scala.collection.JavaConverters._
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 private[configurator] object TopicRoute {
-  private[this] val LOG = Logger(TopicRoute.getClass)
-
   /**
     * update the metrics for input topic
     * @param topicInfo topic info
@@ -74,8 +71,8 @@ private[configurator] object TopicRoute {
                 topicAdmin
                   .exist(topicInfo.key)
                   .toScala
-                  .flatMap(
-                    if (_)
+                  .flatMap { existent =>
+                    if (existent)
                       topicAdmin
                         .topicDescriptions()
                         .toScala
@@ -83,21 +80,23 @@ private[configurator] object TopicRoute {
                         .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
                         .map(_.partitionInfos.asScala -> Some(TopicState.RUNNING))
                     else Future.successful(Seq.empty  -> None)
-                  )
+                  }
                   .map {
                     case (partitions, state) =>
                       topicInfo.copy(
-                        partitionInfos = partitions.map(
-                          partition =>
-                            new PartitionInfo(
-                              partition.id,
-                              partition.leader,
-                              partition.replicas,
-                              partition.inSyncReplicas(),
-                              partition.beginningOffset,
-                              partition.endOffset
-                            )
-                        ),
+                        partitionInfos = partitions
+                          .map(
+                            partition =>
+                              new PartitionInfo(
+                                partition.id,
+                                partition.leader,
+                                partition.replicas,
+                                partition.inSyncReplicas(),
+                                partition.beginningOffset,
+                                partition.endOffset
+                              )
+                          )
+                          .toSeq,
                         state = state,
                         nodeMetrics = meterCache.meters(brokerClusterInfo, topicInfo.key)
                       )
@@ -106,8 +105,7 @@ private[configurator] object TopicRoute {
             }
       }
       .recover {
-        case e: Throwable =>
-          LOG.debug(s"failed to fetch stats for $topicInfo", e)
+        case _: Throwable =>
           topicInfo.copy(
             partitionInfos = Seq.empty,
             nodeMetrics = Map.empty,
@@ -236,14 +234,14 @@ private[configurator] object TopicRoute {
             report.streamClusterInfos.keys.toSeq,
             report.shabondiClusterInfos.keys.toSeq
           )
-          Unit
+          ()
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
           case e: Throwable                                           => throw e
         }
-        .map(_ => Unit)
+        .map(_ => ())
 
   private[this] def hookOfStart(
     implicit objectChecker: ObjectChecker,

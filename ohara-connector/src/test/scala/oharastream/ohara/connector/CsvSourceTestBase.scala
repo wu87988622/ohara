@@ -32,7 +32,7 @@ import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -143,7 +143,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
-    try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala
+    try consumer.poll(java.time.Duration.ofNanos(timeout.toNanos), size).asScala.toSeq
     finally consumer.close()
   }
 

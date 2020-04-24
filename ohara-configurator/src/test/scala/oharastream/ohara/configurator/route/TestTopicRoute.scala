@@ -423,7 +423,7 @@ class TestTopicRoute extends OharaTest {
     // we can't use APIs to remove broker since it is used by topic
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val cluster = cache.values().asScala.find(_.key == bk.key).get
     cache.remove(cluster.key)
     adminCache.remove(bk)
@@ -445,7 +445,7 @@ class TestTopicRoute extends OharaTest {
     // we can't use APIs to remove broker since it is used by topic
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val cluster = cache.values().asScala.find(_.key == bk.key).get
     cache.remove(cluster.key)
     adminCache.remove(bk)
@@ -466,7 +466,7 @@ class TestTopicRoute extends OharaTest {
     // we can't use APIs to remove broker since it is used by topic
     val cache      = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].clusterCache
     val adminCache = configurator.serviceCollie.brokerCollie.asInstanceOf[FakeBrokerCollie].fakeAdminCache
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val cluster = cache.values().asScala.find(_.key == bk.key).get
     cache.remove(cluster.key)
     adminCache.remove(bk)

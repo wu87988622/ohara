@@ -23,7 +23,7 @@ import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.kafka.TopicAdmin
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] class FakeBrokerCollie(dataCollie: DataCollie, bkConnectionProps: String)

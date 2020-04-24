@@ -16,6 +16,7 @@
 
 package oharastream.ohara.it.performance
 
+import oharastream.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.connector.smb.SmbSource
@@ -39,7 +40,7 @@ class TestPerformance4SambaSource extends BasicTestPerformance4Samba {
       loopInputDataThread(setupInputData)
       setupConnector(
         connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
-        className = classOf[SmbSource].getName(),
+        className = classOf[SmbSource].getName,
         settings = sambaSettings
           + (CsvConnectorDefinitions.INPUT_FOLDER_KEY -> JsString(path))
           + (CsvConnectorDefinitions.COMPLETED_FOLDER_KEY -> JsString(
@@ -57,4 +58,9 @@ class TestPerformance4SambaSource extends BasicTestPerformance4Samba {
       PerformanceTestingUtils.deleteFolder(samba, errorPath)
     }
   }
+
+  override protected def afterStoppingConnectors(
+    connectorInfos: Seq[ConnectorApi.ConnectorInfo],
+    topicInfos: Seq[TopicApi.TopicInfo]
+  ): Unit = {}
 }

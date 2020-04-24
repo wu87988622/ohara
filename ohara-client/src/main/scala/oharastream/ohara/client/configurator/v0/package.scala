@@ -21,9 +21,9 @@ import oharastream.ohara.common.setting.SettingDef.Type
 import oharastream.ohara.common.setting._
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsNull, JsValue, RootJsonFormat, _}
+import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 package object v0 {
   /**
@@ -111,7 +111,7 @@ package object v0 {
 
   private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 
-  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonFormatBuilder[ObjectKey]
+  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefinerBuilder[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
 
@@ -214,7 +214,7 @@ package object v0 {
     * @tparam T type of object
     * @return json refiner object
     */
-  private[v0] def rulesOfKey[T]: JsonFormatBuilder[T] =
+  private[v0] def rulesOfKey[T]: JsonRefinerBuilder[T] =
     limitsOfKey[T]
     // we random a default name for this object
       .nullToString(NAME_KEY, () => CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT))
@@ -225,8 +225,8 @@ package object v0 {
     * NOTED: this rules don't include the default value to group!!!
     * @return refiner
     */
-  private[v0] def limitsOfKey[T]: JsonFormatBuilder[T] =
-    JsonFormatBuilder[T]
+  private[v0] def limitsOfKey[T]: JsonRefinerBuilder[T] =
+    JsonRefinerBuilder[T]
       .stringRestriction(GROUP_KEY, SettingDef.GROUP_STRING_REGEX)
       .stringRestriction(NAME_KEY, SettingDef.NAME_STRING_REGEX)
 
@@ -243,7 +243,7 @@ package object v0 {
   private[v0] def rulesOfCreation[T <: ClusterCreation](
     format: RootJsonFormat[T],
     definitions: Seq[SettingDef]
-  ): JsonFormat[T] =
+  ): JsonRefiner[T] =
     limitsOfKey[T]
       .format(format)
       .definitions(definitions)
@@ -259,8 +259,8 @@ package object v0 {
     * @tparam T type of update
     * @return json refiner object
     */
-  private[v0] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): JsonFormat[T] =
-    JsonFormatBuilder[T]
+  private[v0] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): JsonRefiner[T] =
+    JsonRefinerBuilder[T]
       .format(format)
       // for each field, we should reject any empty string
       .rejectEmptyString()

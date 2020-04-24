@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import oharastream.ohara.common.data.Row
 
-private[sink] class RowQueue(name: String) extends ConcurrentLinkedQueue[Row] {
+private[sink] class RowQueue extends ConcurrentLinkedQueue[Row] {
   private[sink] val lastTime = new AtomicLong(System.currentTimeMillis())
 
   override def poll(): Row =

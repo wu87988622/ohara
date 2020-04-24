@@ -19,7 +19,7 @@ import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.kafka.connector.{RowSourceConnector, RowSourceTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class PerfSource extends RowSourceConnector {
   @VisibleForTesting

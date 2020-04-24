@@ -37,7 +37,7 @@ import akka.http.scaladsl.server.Directives.{
   _
 }
 import akka.http.scaladsl.server.Route
-import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonFormat}
+import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefiner}
 import oharastream.ohara.client.configurator.{Data, QueryRequest}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
@@ -69,7 +69,7 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   private[this] var hookOfUpdating: Option[HookOfUpdating[Updating, Res]]    = None
   private[this] var hookOfGet: HookOfGet[Res]                                = (res: Res) => Future.successful(res)
   private[this] var hookOfList: HookOfList[Res]                              = (res: Seq[Res]) => Future.successful(res)
-  private[this] var hookBeforeDelete: HookBeforeDelete                       = (_: ObjectKey) => Future.successful(Unit)
+  private[this] var hookBeforeDelete: HookBeforeDelete                       = (_: ObjectKey) => Future.unit
   private[this] val hookOfPutActions                                         = mutable.Map[String, HookOfAction[Res]]()
   private[this] var hookOfFinalPutAction: Option[HookOfAction[Res]]          = None
   private[this] val hookOfDeleteActions                                      = mutable.Map[String, HookOfAction[ObjectKey]]()
@@ -200,7 +200,7 @@ object RouteBuilder {
     // normally, update request does not carry the name field,
     // Hence, the check of name have to be executed by format of creation
     // since it must have name field.
-    rm: JsonFormat[Creation],
+    rm: JsonRefiner[Creation],
     rm1: RootJsonFormat[Updating],
     rm2: RootJsonFormat[Res],
     executionContext: ExecutionContext

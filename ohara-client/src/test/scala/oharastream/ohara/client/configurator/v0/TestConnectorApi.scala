@@ -29,7 +29,7 @@ import org.scalatest.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsString, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 class TestConnectorApi extends OharaTest {

@@ -42,8 +42,10 @@ class TestPerformance4FtpSink extends BasicTestPerformance4Ftp {
         connectorKey = ConnectorKey.of(groupName, CommonUtils.randomString(5)),
         className = classOf[FtpSink].getName(),
         settings = ftpSettings
-          + (CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(PerformanceTestingUtils.createFolder(ftp, dataDir)),
-          CsvConnectorDefinitions.FLUSH_SIZE_KEY       -> JsNumber(numberOfCsvFileToFlush))
+          ++ Map(
+            CsvConnectorDefinitions.OUTPUT_FOLDER_KEY -> JsString(PerformanceTestingUtils.createFolder(ftp, dataDir)),
+            CsvConnectorDefinitions.FLUSH_SIZE_KEY    -> JsNumber(numberOfCsvFileToFlush)
+          )
       )
       sleepUntilEnd()
     } finally Releasable.close(ftp)

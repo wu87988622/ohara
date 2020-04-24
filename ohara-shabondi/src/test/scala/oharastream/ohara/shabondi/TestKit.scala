@@ -34,7 +34,7 @@ private[shabondi] object ShabondiRouteTestSupport extends Suite with ScalaFuture
 private[shabondi] object KafkaSupport {
   import oharastream.ohara.shabondi.common.ConvertSupport._
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   def newProducer(brokers: String): Producer[Row, Array[Byte]] =
     Producer
@@ -96,7 +96,7 @@ private[shabondi] object KafkaSupport {
   ): Seq[Consumer.Record[Row, Array[Byte]]] = {
     val consumer = KafkaSupport.newConsumer(brokers, topicName)
     try {
-      consumer.poll(Duration.ofSeconds(timeoutSecond), expectedSize).asScala
+      consumer.poll(Duration.ofSeconds(timeoutSecond), expectedSize).asScala.toSeq
     } finally {
       Releasable.close(consumer)
     }

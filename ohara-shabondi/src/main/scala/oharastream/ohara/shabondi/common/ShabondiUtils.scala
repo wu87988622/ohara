@@ -19,7 +19,7 @@ package oharastream.ohara.shabondi.common
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.util.CommonUtils
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 object ShabondiUtils {
   private val log = Logger(ShabondiUtils.getClass)
 

@@ -27,7 +27,7 @@ import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 object StreamApi {
   val KIND: String               = "stream"
@@ -72,7 +72,7 @@ object StreamApi {
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
   }
-  implicit val CREATION_JSON_FORMAT: JsonFormat[Creation] =
+  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -100,7 +100,7 @@ object StreamApi {
     def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
-  implicit val UPDATING_JSON_FORMAT: JsonFormat[Updating] =
+  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -152,8 +152,8 @@ object StreamApi {
     override protected def raw: Map[String, JsValue] = STREAM_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
-  private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: JsonFormat[StreamClusterInfo] =
-    JsonFormatBuilder[StreamClusterInfo]
+  private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: JsonRefiner[StreamClusterInfo] =
+    JsonRefinerBuilder[StreamClusterInfo]
       .format(new RootJsonFormat[StreamClusterInfo] {
         private[this] val format                            = jsonFormat6(StreamClusterInfo)
         override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))

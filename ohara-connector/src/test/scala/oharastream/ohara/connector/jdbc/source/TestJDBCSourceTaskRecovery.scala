@@ -32,7 +32,7 @@ import org.mockito.Mockito.when
 import org.scalatest.Matchers._
 import org.scalatestplus.mockito.MockitoSugar
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class TestJDBCSourceTaskRecovery extends OharaTest {
   private[this] val db                                       = Database.local()
@@ -106,7 +106,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
   @Test
   def testNormal(): Unit = {
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
 
     rows.head.row.cell(0).value.toString shouldBe "2018-09-01 00:00:00.0"
     rows.head.row.cell(1).value shouldBe "a11"
@@ -157,7 +157,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> s"${new Timestamp(0).toString},1")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows.size shouldBe 6
   }
 
@@ -166,7 +166,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> s"${new Timestamp(0).toString},2")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows.size shouldBe 5
   }
 
@@ -175,7 +175,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> s"${new Timestamp(0).toString},4")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows.size shouldBe 3
   }
 
@@ -184,7 +184,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:02.0,1")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
     rows.size shouldBe 1
     rows.head.sourceOffset.asScala.foreach(x => {
       x._1 shouldBe JDBCSourceTask.DB_TABLE_OFFSET_KEY
@@ -202,7 +202,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     val maps: Map[String, Object] = Map("db.table.offset" -> "2018-09-01 00:00:02.0,1")
     when(offsetStorageReader.offset(Map("db.table.name" -> tableName).asJava)).thenReturn(maps.asJava)
     jdbcSourceTask.run(taskSetting)
-    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala
+    val rows: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
 
     rows.size shouldBe 2
     rows.head.sourceOffset.asScala.foreach(x => {

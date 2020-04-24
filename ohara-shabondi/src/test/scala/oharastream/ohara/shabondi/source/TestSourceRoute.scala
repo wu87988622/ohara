@@ -27,7 +27,7 @@ import org.junit.Test
 import spray.json._
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final class TestSourceRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -51,7 +51,7 @@ final class TestSourceRoute extends BasicShabondiTest {
     val config    = defaultSourceConfig(Seq(topicKey1))
     val webServer = new WebServer(config)
     try {
-      (1 to requestCount).foreach { i =>
+      (1 to requestCount).foreach { _ =>
         val jsonRow = sourceData.toJson.compactPrint
         val entity  = HttpEntity(ContentTypes.`application/json`, jsonRow)
         val request = Post(uri = "/v0", entity)
@@ -77,5 +77,5 @@ final class TestSourceRoute extends BasicShabondiTest {
     }
   }
 
-  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala
+  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala.toSeq
 }

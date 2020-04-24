@@ -97,7 +97,7 @@ object FileInfoApi {
       bytes: Array[Byte],
       classInfos: Seq[ClassInfo],
       tags: Map[String, JsValue]
-    ) {
+    ) = {
       this(
         group = group,
         name = name,
@@ -136,7 +136,7 @@ object FileInfoApi {
           throw DeserializationException(s"$key must be mapped to JsString but actual is ${j.getClass.getName}")
       }
       def number(key: String): Long = value(key) match {
-        case JsNumber(i) => i.longValue()
+        case JsNumber(i) => i.toLong
         case j: JsValue =>
           throw DeserializationException(s"$key must be mapped to JsNumber but actual is ${j.getClass.getName}")
       }

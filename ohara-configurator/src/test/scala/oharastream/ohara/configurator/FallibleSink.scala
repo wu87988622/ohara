@@ -18,7 +18,7 @@ package oharastream.ohara.configurator
 
 import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSinkTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 class FallibleSink extends RowSinkConnector {
   private[this] var settings: TaskSetting                                         = _
   override protected def taskClass(): Class[_ <: RowSinkTask]                     = classOf[FallibleSinkTask]

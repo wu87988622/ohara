@@ -27,7 +27,7 @@ import oharastream.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -100,7 +100,7 @@ object ConnectorApi {
 
   val DEFINITIONS: Map[String, SettingDef] = ConnectorDefUtils.DEFAULT.asScala.toMap
 
-  implicit val CREATION_FORMAT: JsonFormat[Creation] =
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
@@ -149,7 +149,7 @@ object ConnectorApi {
     def className: Option[String]                   = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
-      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala)
+      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
     def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
 
     def workerClusterKey: Option[ObjectKey] = noJsNull(settings).get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -162,7 +162,7 @@ object ConnectorApi {
     def partitionerClass: Option[String] = noJsNull(settings).get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonFormatBuilder[Updating]
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefinerBuilder[Updating]
     .format(new RootJsonFormat[Updating] {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)

@@ -25,7 +25,7 @@ import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestDataTransmissionOnCluster extends WithBrokerWorker {
   private[this] val topicAdmin     = TopicAdmin.of(testUtil().brokersConnProps)

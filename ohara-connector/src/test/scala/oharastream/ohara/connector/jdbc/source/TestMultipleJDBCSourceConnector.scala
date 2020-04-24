@@ -33,7 +33,7 @@ import org.scalatest.Matchers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
@@ -148,9 +148,10 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
         "2018-09-02 00:00:05.0,a81,a82,8",
         "2018-09-02 00:00:05.0,a81,a82,8"
       )
-      val resultData: Seq[String] = record3.map(x => x.key.get).map(x => x.cells().asScala.map(_.value).mkString(","))
+      val resultData: Seq[String] =
+        record3.map(x => x.key.get).map(x => x.cells().asScala.map(_.value).mkString(",")).toSeq
 
-      (0 to expectResult.size - 1).foreach(i => resultData(i) shouldBe expectResult(i))
+      expectResult.indices.foreach(i => resultData(i) shouldBe expectResult(i))
     } finally consumer.close()
   }
 

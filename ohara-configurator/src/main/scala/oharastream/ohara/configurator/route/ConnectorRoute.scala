@@ -225,9 +225,9 @@ private[configurator] object ConnectorRoute {
         .check()
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => Unit
+          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
         }
-        .map(_ => Unit)
+        .map(_ => ())
 
   private[this] def hookOfStart(
     implicit objectChecker: ObjectChecker,
@@ -269,7 +269,7 @@ private[configurator] object ConnectorRoute {
                     .threadPool(executionContext)
                     .topicKeys(connectorInfo.topicKeys)
                     .create()
-                    .map(_ => Unit)
+                    .map(_ => ())
                 }
             }
         }
@@ -306,7 +306,7 @@ private[configurator] object ConnectorRoute {
         .map { wkClient =>
           wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
             case State.PAUSED.name => Future.unit
-            case _                 => wkClient.pause(connectorInfo.key).map(_ => Unit)
+            case _                 => wkClient.pause(connectorInfo.key).map(_ => ())
           }
         }
 
@@ -325,7 +325,7 @@ private[configurator] object ConnectorRoute {
         .map { wkClient =>
           wkClient.status(connectorInfo.key).map(_.connector.state).flatMap {
             case State.RUNNING.name => Future.unit
-            case _                  => wkClient.resume(connectorInfo.key).map(_ => Unit)
+            case _                  => wkClient.resume(connectorInfo.key).map(_ => ())
           }
         }
 

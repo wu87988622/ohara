@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import kafka.metrics.KafkaMetricsReporter;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaConfig$;
 import kafka.server.KafkaServer;
@@ -63,13 +64,16 @@ public interface Brokers extends Releasable {
                   // increase the timeout in order to avoid ZkTimeoutException
                   config.setProperty(
                       KafkaConfig$.MODULE$.ZkSessionTimeoutMsProp(), String.valueOf(30 * 1000));
-
+                  scala.jdk.CollectionConverters.IterableHasAsScala(Collections.emptyList());
                   KafkaServer broker =
                       new KafkaServer(
                           new KafkaConfig(config),
                           SystemTime.SYSTEM,
                           scala.Option.empty(),
-                          scala.collection.JavaConverters.asScalaBuffer(Collections.emptyList()));
+                          scala.jdk.CollectionConverters.IterableHasAsScala(
+                                  Collections.<KafkaMetricsReporter>emptyList())
+                              .asScala()
+                              .toSeq());
 
                   broker.startup();
                   return broker;

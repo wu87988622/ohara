@@ -25,7 +25,7 @@ import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 class SimpleRowSourceTask extends RowSourceTask {

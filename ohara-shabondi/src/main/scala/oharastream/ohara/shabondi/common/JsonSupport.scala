@@ -20,7 +20,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import oharastream.ohara.common.data.{Cell, Row}
 import spray.json._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   type RowData = Map[String, JsValue] // column, value

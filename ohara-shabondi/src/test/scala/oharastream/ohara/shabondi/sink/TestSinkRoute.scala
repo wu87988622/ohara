@@ -31,7 +31,7 @@ import org.junit.Test
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 final class TestSinkRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -67,7 +67,7 @@ final class TestSinkRoute extends BasicShabondiTest {
         Thread.sleep(10)
       }
       log.debug("pollRowsRequest[{}] done.", dataGroup)
-      resultRows
+      resultRows.toSeq
     }(ec)
 
   @Test
@@ -202,5 +202,5 @@ final class TestSinkRoute extends BasicShabondiTest {
     }
   }
 
-  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala
+  private def counterMBeans(): Seq[CounterMBean] = BeanChannel.local().counterMBeans().asScala.toSeq
 }

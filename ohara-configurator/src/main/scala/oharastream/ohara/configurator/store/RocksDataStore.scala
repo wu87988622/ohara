@@ -28,7 +28,7 @@ import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.Releasable
 import org.rocksdb.{ColumnFamilyDescriptor, _}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 

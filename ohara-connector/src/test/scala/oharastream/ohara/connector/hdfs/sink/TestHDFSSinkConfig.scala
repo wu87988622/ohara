@@ -21,7 +21,7 @@ import oharastream.ohara.kafka.connector.TaskSetting
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class TestHDFSSinkConfig extends OharaTest {
   private[this] val HDFS_URL_VALUE = "hdfs://test:9000"

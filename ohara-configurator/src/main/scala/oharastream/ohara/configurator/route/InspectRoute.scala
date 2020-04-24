@@ -49,17 +49,14 @@ import oharastream.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
-import oharastream.ohara.stream.config.StreamDefUtils
-import com.typesafe.scalalogging.Logger
 import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
+import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.{DeserializationException, JsNull, JsObject}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 private[configurator] object InspectRoute {
-  private[this] lazy val LOG = Logger(InspectRoute.getClass)
-
   /**
     * we reuse the great conversion of JIO connectors
     * @param row row
@@ -215,6 +212,7 @@ private[configurator] object InspectRoute {
                       .poll(java.time.Duration.ofMillis(Math.max(1000L, endTime - CommonUtils.current())), limit)
                       .asScala
                       .slice(0, limit)
+                      .toSeq
                   )
                 } finally Releasable.close(consumer)
               }
@@ -301,9 +299,7 @@ private[configurator] object InspectRoute {
               .map(file => Seq(file.url.get))
               .flatMap(serviceCollie.fileContent)
               .recover {
-                case e: Throwable =>
-                  LOG.warn(s"failed to find definitions for stream:${ObjectKey.of(group, name)}", e)
-                  FileContent.empty
+                case _: Throwable => FileContent.empty
               }
               .map(
                 fileContent =>

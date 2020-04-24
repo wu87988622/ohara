@@ -23,7 +23,7 @@ import oharastream.ohara.common.setting.WithDefinitions
 import com.typesafe.scalalogging.Logger
 import org.reflections.Reflections
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 object ReflectionUtils {
   private[this] val LOG = Logger(ReflectionUtils.getClass)
 

@@ -43,7 +43,7 @@ private[sink] class DataGroup(
       .value(0)
       .register()
 
-  val queue                = new RowQueue(name)
+  val queue                = new RowQueue
   val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout, rowCounter)
   private[this] val closed = new AtomicBoolean(false)
 

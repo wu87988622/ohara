@@ -23,7 +23,7 @@ import java.{lang, util}
 import oharastream.ohara.kafka.{TopicAdmin, TopicCreator, TopicDescription, TopicOption}
 
 private[configurator] class FakeTopicAdmin extends TopicAdmin {
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   override val connectionProps: String = "Unknown"
 
@@ -55,7 +55,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     CompletableFuture.completedFuture(new util.ArrayList[TopicDescription](cachedTopics.values()))
 
   override def topicCreator(): TopicCreator =
-    (numberOfPartitions: Int, numberOfReplications: Short, options: util.Map[String, String], name: String) => {
+    (_: Int, _: Short, options: util.Map[String, String], name: String) => {
       val f = new CompletableFuture[Void]()
       if (cachedTopics.contains(name))
         f.completeExceptionally(new IllegalArgumentException(s"$name already exists!"))

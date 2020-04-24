@@ -24,13 +24,12 @@ LABEL stage=$STAGE
 # WARN: Please don't change the value of KAFKA_DIR
 ARG KAFKA_DIR=/opt/kafka
 ARG KAFKA_VERSION=2.5.0
-ARG SCALA_VERSION=2.12
+ARG SCALA_VERSION=2.13.2
 ARG MIRROR_SITE=https://archive.apache.org/dist
-RUN wget $MIRROR_SITE/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+RUN wget $MIRROR_SITE/kafka/${KAFKA_VERSION}/kafka_$(echo $SCALA_VERSION | cut -d. -f1-2)-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
-RUN tar -zxvf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C ${KAFKA_DIR}
-RUN rm -f kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
-RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/worker_version
+RUN tar -zxvf $(find ./ -maxdepth 1 -type f -name "kafka_*") -C ${KAFKA_DIR}
+RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
 
 # build ohara
 ARG BRANCH="master"
@@ -42,7 +41,9 @@ RUN git clone $REPO /testpatch/ohara
 RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 # we build ohara with specified version of kafka in order to keep the compatibility
-RUN ./gradlew clean ohara-connector:build -x test -PskipManager -Pkafka.version=$KAFKA_VERSION -Pscala.version=$SCALA_VERSION
+RUN ./gradlew clean ohara-connector:build -x test -PskipManager \
+  -Pkafka.version=$KAFKA_VERSION \
+  -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-connector/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/
 # copy version file

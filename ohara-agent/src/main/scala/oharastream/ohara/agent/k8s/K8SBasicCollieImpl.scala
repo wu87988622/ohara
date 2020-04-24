@@ -29,12 +29,12 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
   override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Unit] =
-    Future.sequence(beRemovedContainer.map(c => k8sClient.remove(c.name))).map(_ => Unit)
+    Future.sequence(beRemovedContainer.map(c => k8sClient.remove(c.name))).map(_ => ())
 
   override protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Unit] =
-    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_ => Unit)
+    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_ => ())
 
   override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
