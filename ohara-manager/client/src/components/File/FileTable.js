@@ -26,7 +26,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import AddIcon from '@material-ui/icons/Add';
-import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
@@ -42,6 +41,9 @@ import FileUpload from './FileUpload';
 const defaultOptions = {
   comparison: false,
   comparedFiles: [],
+  customColumns: [],
+  disabledDeleteIcon: false,
+  disabledRemoveIcon: false,
   onAddIconClick: null,
   onDeleteIconClick: null,
   onDownloadIconClick: null,
@@ -195,6 +197,14 @@ function FileTable(props) {
       const showRemoveIcon = file =>
         options?.showRemoveIcon && !showUndoIcon(file);
 
+      const disabledDeleteIcon = isFunction(options?.disabledDeleteIcon)
+        ? options?.disabledDeleteIcon(file)
+        : options?.disabledDeleteIcon;
+
+      const disabledRemoveIcon = isFunction(options?.disabledRemoveIcon)
+        ? options?.disabledRemoveIcon(file)
+        : options?.disabledRemoveIcon;
+
       return (
         <>
           {options?.showDownloadIcon && (
@@ -211,6 +221,8 @@ function FileTable(props) {
           {options?.showDeleteIcon && (
             <Tooltip title="Delete file">
               <IconButton
+                component="div"
+                disabled={disabledDeleteIcon}
                 onClick={() => {
                   handleDeleteIconClick(file);
                 }}
@@ -222,6 +234,8 @@ function FileTable(props) {
           {showRemoveIcon(file) && (
             <Tooltip title="Remove file">
               <IconButton
+                component="div"
+                disabled={disabledRemoveIcon}
                 onClick={() => {
                   handleRemoveIconClick(file);
                 }}
@@ -291,13 +305,6 @@ function FileTable(props) {
           renderSelectionColumn(),
           { title: 'Name', field: 'name' },
           {
-            title: 'Used',
-            render: file => {
-              if (file.isUsed) return <CheckIcon className="checkIcon" />;
-            },
-            hidden: !options?.showUsedColumn,
-          },
-          {
             title: 'File size(KB)',
             type: 'numeric',
             field: 'size',
@@ -327,6 +334,7 @@ function FileTable(props) {
               );
             },
           },
+          ...options?.customColumns,
           renderRowActions(),
         ]}
         data={data}
@@ -359,7 +367,6 @@ function FileTable(props) {
 FileTable.propTypes = {
   files: PropTypes.arrayOf(
     PropTypes.shape({
-      isUsed: PropTypes.bool,
       lastModified: PropTypes.number,
       name: PropTypes.string,
       size: PropTypes.number,
@@ -372,6 +379,17 @@ FileTable.propTypes = {
   options: PropTypes.shape({
     comparison: PropTypes.bool,
     comparedFiles: PropTypes.array,
+    customColumns: PropTypes.arrayOf(
+      PropTypes.shape({
+        customFilterAndSearch: PropTypes.func,
+        field: PropTypes.string,
+        render: PropTypes.func,
+        title: PropTypes.string,
+        type: PropTypes.string,
+      }),
+    ),
+    disabledDeleteIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
+    disabledRemoveIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
     mode: PropTypes.string,
     onAddIconClick: PropTypes.func,
     onDeleteIconClick: PropTypes.func,
@@ -388,7 +406,6 @@ FileTable.propTypes = {
     showUploadIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
-    showUsedColumn: PropTypes.bool,
   }),
   title: PropTypes.string,
 };
