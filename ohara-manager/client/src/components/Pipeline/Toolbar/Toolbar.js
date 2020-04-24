@@ -312,8 +312,8 @@ const Toolbar = props => {
         confirmDisabled={runningServices.length > 0}
         confirmText={pipelineError ? 'Retry' : 'Delete'}
         content={deleteDialogContent}
-        handleClose={() => setIsDeleteDialogOpen(false)}
-        handleConfirm={handleDeleteConfirm}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
       />
     </StyledToolbar>
   );

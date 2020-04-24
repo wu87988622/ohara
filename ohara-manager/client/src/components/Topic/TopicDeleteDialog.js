@@ -39,8 +39,8 @@ function TopicDeleteDialog({
       content={
         isFunction(options?.content) ? options.content(topic) : options?.content
       }
-      handleClose={onClose}
-      handleConfirm={() => onConfirm(topic)}
+      onClose={onClose}
+      onConfirm={() => onConfirm(topic)}
       open={isOpen}
       title={isFunction(options?.title) ? options.title(topic) : options?.title}
     />

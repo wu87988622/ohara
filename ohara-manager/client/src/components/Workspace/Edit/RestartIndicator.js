@@ -102,8 +102,8 @@ function RestartIndicator({ invisible }) {
           title="Discard Workspace?"
           content={`Are you sure you want to discard the workspace, This action cannot be undone!`}
           open={isDiscardConfirmOpen}
-          handleClose={() => setIsDiscardConfirmOpen(false)}
-          handleConfirm={handleDiscard}
+          onClose={() => setIsDiscardConfirmOpen(false)}
+          onConfirm={handleDiscard}
           confirmText="DISCARD"
           isWorking={isWkFetching || isBkFetching || isZkFetching}
         />

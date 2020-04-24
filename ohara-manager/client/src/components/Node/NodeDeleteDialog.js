@@ -21,7 +21,7 @@ import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
   content: node =>
-    `Are you sure you want to delete the node ${node?.hostname} ? This action cannot be undone!`,
+    `Are you sure you want to delete the node ${node?.hostname}? This action cannot be undone!`,
   title: 'Delete node?',
 };
 
@@ -33,8 +33,8 @@ function NodeDeleteDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
       content={
         isFunction(options?.content) ? options.content(node) : options?.content
       }
-      handleClose={onClose}
-      handleConfirm={() => onConfirm(node)}
+      onClose={onClose}
+      onConfirm={() => onConfirm(node)}
       open={isOpen}
       title={isFunction(options?.title) ? options.title(node) : options?.title}
     />

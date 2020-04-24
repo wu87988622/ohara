@@ -94,8 +94,8 @@ const FileActionsMenu = ({ file, deleteDisabled }) => {
         title="Delete file?"
         content={`Are you sure you want to delete the file: ${name} ? This action cannot be undone!`}
         open={isDeleteDialogOpen}
-        handleClose={handleClose}
-        handleConfirm={handleDelete}
+        onClose={handleClose}
+        onConfirm={handleDelete}
         working={isWorking}
       />
     </>

@@ -136,8 +136,8 @@ const NodeCard = ({ node }) => {
           title="Delete node?"
           content={`Are you sure you want to delete the node: ${node.hostname} ? This action cannot be undone!`}
           open={isConfirmOpen}
-          handleClose={handleNodeClose}
-          handleConfirm={handleNodeDelete}
+          onClose={handleNodeClose}
+          onConfirm={handleNodeDelete}
         />
         <CardContent>
           {map(node.resources, resource => (

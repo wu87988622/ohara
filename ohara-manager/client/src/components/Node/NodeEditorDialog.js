@@ -39,11 +39,11 @@ const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
         return (
           <Dialog
             open={isOpen}
-            handleClose={() => {
+            onClose={() => {
               onClose();
               form.reset();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             title="Edit node"
             confirmText="SAVE"
             confirmDisabled={submitting || pristine || invalid}

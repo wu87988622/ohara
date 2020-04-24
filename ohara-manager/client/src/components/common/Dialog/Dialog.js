@@ -17,22 +17,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
-import Dialog from '@material-ui/core/Dialog';
+
+import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
+import MuiDialog from '@material-ui/core/Dialog';
 import Typography from '@material-ui/core/Typography';
+
+import CloseIcon from '@material-ui/icons/Close';
 
 import DrabblePaper from './DrabblePaper';
 
 const StyledDialogTitle = styled(DialogTitle)(
   props => css`
     cursor: move;
-
     .close-button {
       position: absolute;
       right: ${props.theme.spacing(1)}px;
@@ -59,73 +60,81 @@ const Progress = styled(CircularProgress)`
   margin-left: -8px;
 `;
 
-const MuiDialog = props => {
-  const {
-    open,
-    handleConfirm,
-    handleClose,
-    title,
-    confirmText = 'ADD',
-    cancelText = 'CANCEL',
-    children,
-    confirmDisabled = false,
-    maxWidth = 'xs',
-    loading,
-    showActions = true,
-    testId,
-  } = props;
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth={maxWidth}
-      PaperComponent={DrabblePaper}
-      fullWidth
-      data-testid="dialog-container"
-    >
-      <div data-testid={testId}>
-        <StyledDialogTitle disableTypography>
-          <Typography variant="h3">{title}</Typography>
-          <IconButton className="close-button" onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </StyledDialogTitle>
-        <DialogContent>{children}</DialogContent>
+const Dialog = ({
+  children,
+  confirmDisabled,
+  confirmText,
+  cancelText,
+  loading,
+  maxWidth,
+  open,
+  onClose,
+  onConfirm,
+  showActions,
+  testId,
+  title,
+}) => (
+  <MuiDialog
+    data-testid="dialog-container"
+    fullWidth
+    maxWidth={maxWidth}
+    onClose={onClose}
+    open={open}
+    PaperComponent={DrabblePaper}
+  >
+    <div data-testid={testId}>
+      <StyledDialogTitle disableTypography>
+        <Typography variant="h3">{title}</Typography>
+        <IconButton className="close-button" onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </StyledDialogTitle>
+      <DialogContent>{children}</DialogContent>
+      {showActions && (
+        <StyledDialogActions>
+          <Button onClick={onClose}>{cancelText}</Button>
+          <ConfirmButtonWrapper>
+            <Button
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+              color="primary"
+              variant="contained"
+            >
+              {confirmText}
+            </Button>
+            {loading && <Progress size={14} />}
+          </ConfirmButtonWrapper>
+        </StyledDialogActions>
+      )}
+    </div>
+  </MuiDialog>
+);
 
-        {showActions && (
-          <StyledDialogActions>
-            <Button onClick={handleClose}>{cancelText}</Button>
-            <ConfirmButtonWrapper>
-              <Button
-                onClick={handleConfirm}
-                disabled={confirmDisabled}
-                color="primary"
-                variant="contained"
-              >
-                {confirmText}
-              </Button>
-              {loading && <Progress size={14} />}
-            </ConfirmButtonWrapper>
-          </StyledDialogActions>
-        )}
-      </div>
-    </Dialog>
-  );
-};
-
-MuiDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
+Dialog.propTypes = {
   children: PropTypes.node.isRequired,
-  handleClose: PropTypes.func.isRequired,
-  confirmText: PropTypes.string,
   confirmDisabled: PropTypes.bool,
+  confirmText: PropTypes.string,
   cancelText: PropTypes.string,
-  maxWidth: PropTypes.string,
-  handleConfirm: PropTypes.func,
   loading: PropTypes.bool,
-  testId: PropTypes.string,
+  maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  onConfirm: PropTypes.func,
   showActions: PropTypes.bool,
+  testId: PropTypes.string,
+  title: PropTypes.string.isRequired,
 };
 
-export default MuiDialog;
+Dialog.defaultProps = {
+  confirmDisabled: false,
+  confirmText: 'ADD',
+  cancelText: 'CANCEL',
+  loading: false,
+  maxWidth: 'sm',
+  onClose: () => {},
+  onConfirm: () => {},
+  showActions: true,
+  testId: null,
+};
+
+export default Dialog;

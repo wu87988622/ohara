@@ -64,11 +64,11 @@ const AddTopicDialog = props => {
           <Dialog
             open={isDialogOpen}
             title="Add a new topic"
-            handleClose={() => {
+            onClose={() => {
               form.reset();
               closeDialog();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             confirmBText="ADD"
             confirmDisabled={submitting || pristine || invalid}
           >

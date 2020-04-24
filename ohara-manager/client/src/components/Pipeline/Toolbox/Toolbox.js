@@ -366,8 +366,8 @@ const Toolbox = props => {
         <ToolboxAddGraphDialog
           isOpen={isOpen}
           kind={cellInfo.kind}
-          handleConfirm={handleAddGraph}
-          handleClose={() => {
+          onConfirm={handleAddGraph}
+          onClose={() => {
             setIsOpen(false);
             utils.removeTemporaryCell(paperApi);
           }}

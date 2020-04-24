@@ -118,11 +118,11 @@ const AutofillEditor = props => {
           <Dialog
             confirmDisabled={submitting || pristine || invalid}
             confirmText="Save"
-            handleClose={() => {
+            onClose={() => {
               onClose();
               form.reset();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             maxWidth="sm"
             open={isOpen}
             title={`${mode} Autofill`}

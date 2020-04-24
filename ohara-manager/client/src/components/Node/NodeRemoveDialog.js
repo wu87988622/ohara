@@ -34,8 +34,8 @@ function NodeRemoveDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
       content={
         isFunction(options?.content) ? options.content(node) : options?.content
       }
-      handleClose={onClose}
-      handleConfirm={() => onConfirm(node)}
+      onClose={onClose}
+      onConfirm={() => onConfirm(node)}
       open={isOpen}
       title={isFunction(options?.title) ? options.title(node) : options?.title}
     />

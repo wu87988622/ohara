@@ -34,8 +34,8 @@ function FileDeleteDialog(props) {
       content={
         isFunction(options?.content) ? options.content(file) : options?.content
       }
-      handleClose={onClose}
-      handleConfirm={() => onConfirm(file)}
+      onClose={onClose}
+      onConfirm={() => onConfirm(file)}
       open={isOpen}
       title={isFunction(options?.title) ? options.title(file) : options?.title}
     />

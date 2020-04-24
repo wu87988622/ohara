@@ -62,31 +62,30 @@ const Progress = styled(CircularProgress)`
   margin-left: -8px;
 `;
 
-const AlertDialog = props => {
-  const {
-    title,
-    content,
-    open,
-    handleConfirm,
-    handleClose,
-    cancelText = 'CANCEL',
-    confirmText = 'DELETE',
-    confirmDisabled = false,
-    isWorking = false,
-    testId = 'delete-dialog',
-  } = props;
-
+const DeleteDialog = ({
+  cancelText,
+  confirmDisabled,
+  confirmText,
+  content,
+  maxWidth,
+  open,
+  onClose,
+  onConfirm,
+  isWorking,
+  testId,
+  title,
+}) => {
   return (
     <Dialog
-      maxWidth="xs"
+      maxWidth={maxWidth}
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       PaperComponent={DrabblePaper}
     >
       <div data-testid={testId}>
         <StyledDialogTitle disableTypography>
           <Typography variant="h3">{title}</Typography>
-          <IconButton className="close-button" onClick={handleClose}>
+          <IconButton className="close-button" onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </StyledDialogTitle>
@@ -94,13 +93,13 @@ const AlertDialog = props => {
           <DialogContentText>{content}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button disabled={isWorking} onClick={handleClose}>
+          <Button disabled={isWorking} onClick={onClose}>
             {cancelText}
           </Button>
           <ConfirmButtonWrapper>
             <ConfirmButton
               disabled={isWorking || confirmDisabled}
-              onClick={handleConfirm}
+              onClick={onConfirm}
               color="primary"
               autoFocus
               data-testid={'confirm-button-' + confirmText}
@@ -115,17 +114,29 @@ const AlertDialog = props => {
   );
 };
 
-AlertDialog.propTypes = {
-  title: PropTypes.string.isRequired,
-  content: PropTypes.string.isRequired,
-  open: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
-  handleConfirm: PropTypes.func.isRequired,
-  confirmDisabled: PropTypes.bool,
+DeleteDialog.propTypes = {
   cancelText: PropTypes.string,
+  confirmDisabled: PropTypes.bool,
   confirmText: PropTypes.string,
+  content: PropTypes.string.isRequired,
+  maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  onConfirm: PropTypes.func,
   isWorking: PropTypes.bool,
   testId: PropTypes.string,
+  title: PropTypes.string.isRequired,
 };
 
-export default AlertDialog;
+DeleteDialog.defaultProps = {
+  cancelText: 'CANCEL',
+  confirmDisabled: false,
+  confirmText: 'DELETE',
+  maxWidth: 'sm',
+  onClose: () => {},
+  onConfirm: () => {},
+  isWorking: false,
+  testId: 'delete-dialog',
+};
+
+export default DeleteDialog;

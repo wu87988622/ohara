@@ -141,8 +141,8 @@ const AutofillList = () => {
           'displayName',
         )} ? This action cannot be undone!`}
         open={isDeleteConfirmOpen}
-        handleClose={() => setIsDeleteConfirmOpen(false)}
-        handleConfirm={handleDelete}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
       />
     </Wrapper>
   );

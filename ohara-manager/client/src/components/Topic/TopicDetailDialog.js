@@ -54,7 +54,7 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
   return (
     <Dialog
       open={isOpen}
-      handleClose={onClose}
+      onClose={onClose}
       maxWidth="md"
       showActions={false}
       testId="view-topic-detail-dialog"

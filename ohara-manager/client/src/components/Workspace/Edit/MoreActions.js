@@ -153,8 +153,8 @@ function MoreActions() {
           </Typography>
         }
         confirmText={'RESET'}
-        handleClose={handleDialogClose}
-        handleConfirm={reset}
+        onClose={handleDialogClose}
+        onConfirm={reset}
       />
       <Progress
         createTitle={'Resetting'}

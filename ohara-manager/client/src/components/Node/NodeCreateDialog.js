@@ -49,11 +49,11 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
         return (
           <Dialog
             open={isOpen}
-            handleClose={() => {
+            onClose={() => {
               onClose();
               form.reset();
             }}
-            handleConfirm={() => {
+            onConfirm={() => {
               handleSubmit();
               // after creation, we should clear the input fields also
               form.reset();

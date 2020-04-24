@@ -25,10 +25,10 @@ import { Dialog } from 'components/common/Dialog';
 import { required, validServiceName, composeValidators } from 'utils/validate';
 
 const ToolboxAddGraphDialog = props => {
-  const { isOpen, handleClose, handleConfirm, kind } = props;
+  const { isOpen, onClose, onConfirm, kind } = props;
 
   const onSubmit = async (values, form) => {
-    await handleConfirm(values.newGraph);
+    await onConfirm(values.newGraph);
     setTimeout(form.reset);
   };
 
@@ -40,11 +40,11 @@ const ToolboxAddGraphDialog = props => {
         return (
           <Dialog
             open={isOpen}
-            handleClose={() => {
-              handleClose();
+            onClose={() => {
+              onClose();
               form.reset();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             title={`Add a new ${kind}`}
             confirmText="ADD"
             confirmDisabled={submitting || pristine || invalid}
@@ -77,8 +77,8 @@ const ToolboxAddGraphDialog = props => {
 
 ToolboxAddGraphDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
-  handleConfirm: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
   kind: PropTypes.string.isRequired,
 };
 

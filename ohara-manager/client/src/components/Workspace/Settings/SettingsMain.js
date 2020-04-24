@@ -169,7 +169,7 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
       return (
         <Dialog
           open={title === selectedComponent.name}
-          handleClose={handleClose}
+          onClose={handleClose}
           {...componentProps}
         />
       );

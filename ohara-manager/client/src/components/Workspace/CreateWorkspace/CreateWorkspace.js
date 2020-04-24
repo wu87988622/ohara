@@ -33,7 +33,7 @@ export default () => {
     <FullScreenDialog
       title={`Create workspace - ${capitalize(mode)}`}
       open={isDialogOpen}
-      handleClose={closeDialog}
+      onClose={closeDialog}
     >
       <CreateWorkspaceForm onCancel={closeDialog} onSubmit={createWorkspace} />
       <Progress

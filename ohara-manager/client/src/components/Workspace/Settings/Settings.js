@@ -74,7 +74,7 @@ const Settings = () => {
     <StyledFullScreenDialog
       title="Settings"
       open={isOpen}
-      handleClose={close}
+      onClose={close}
       testId="edit-workspace-dialog"
       isPageComponent={isPageComponent}
     >
@@ -97,8 +97,8 @@ const Settings = () => {
         <Dialog
           open={isDeleteOpen}
           title="abc"
-          handleClose={() => setIsDeleteOpen(false)}
-          handleConfirm={() => {}}
+          onClose={() => setIsDeleteOpen(false)}
+          onConfirm={() => {}}
           children="Dumb dialog"
         />
       </Wrapper>

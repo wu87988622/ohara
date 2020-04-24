@@ -128,8 +128,8 @@ function PluginCard({ plugin }) {
                 title="Delete plugin?"
                 content={`Are you sure you want to delete the plugin "${displayTitle}"? This action cannot be undone!`}
                 open={isConfirmOpen}
-                handleClose={() => setIsConfirmOpen(false)}
-                handleConfirm={handleDeleteClick}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleDeleteClick}
                 isWorking={isDeleting}
               />
             </>

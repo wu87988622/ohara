@@ -26,7 +26,7 @@ const EventLogContentDialog = () => {
   return (
     <>
       <Dialog
-        handleClose={close}
+        onClose={close}
         maxWidth="md"
         open={isOpen}
         showActions={false}

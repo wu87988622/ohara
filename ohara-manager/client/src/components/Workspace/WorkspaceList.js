@@ -80,7 +80,7 @@ function WorkspaceList() {
     <>
       <Dialog
         open={isOpen}
-        handleClose={close}
+        onClose={close}
         title={`Showing ${size(workspaces)} workspaces`}
         showActions={false}
         maxWidth="md"

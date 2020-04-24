@@ -49,8 +49,8 @@ const FullScreenDialog = props => {
     title,
     children,
     open,
-    handleClose,
-    handleSave,
+    onClose,
+    onSave,
     hasSave = false,
     testId = 'fullscreen-dialog',
     ...other
@@ -59,7 +59,7 @@ const FullScreenDialog = props => {
     <Dialog
       fullScreen
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       PaperProps={{
         style: {
           backgroundColor: '#f5f6fa',
@@ -74,13 +74,13 @@ const FullScreenDialog = props => {
             edge="start"
             color="inherit"
             data-testid={`${testId}-close-button`}
-            onClick={handleClose}
+            onClick={onClose}
           >
             <KeyboardBackspaceIcon />
           </StyledIconButton>
           <StyledTypography variant="h4">{title}</StyledTypography>
           {hasSave && (
-            <Button autoFocus color="inherit" onClick={handleSave}>
+            <Button autoFocus color="inherit" onClick={onSave}>
               save
             </Button>
           )}
@@ -96,11 +96,11 @@ const FullScreenDialog = props => {
 FullScreenDialog.propTypes = {
   children: PropTypes.node.isRequired,
   open: PropTypes.bool.isRequired,
-  handleClose: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   testId: PropTypes.string,
   hasSave: PropTypes.bool,
-  handleSave: PropTypes.func,
+  onSave: PropTypes.func,
 };
 
 export default FullScreenDialog;

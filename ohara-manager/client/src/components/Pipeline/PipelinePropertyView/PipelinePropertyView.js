@@ -311,7 +311,7 @@ const PipelinePropertyView = props => {
       )}
 
       <Dialog
-        handleClose={() => setIsOpen(false)}
+        onClose={() => setIsOpen(false)}
         open={isOpen}
         title={`Full tags content of ${tags.name}`}
         showActions={false}

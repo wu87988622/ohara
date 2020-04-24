@@ -62,8 +62,8 @@ const AutofillSelector = props => {
     <Dialog
       confirmDisabled={!selected}
       confirmText="Autofill"
-      handleClose={handleClose}
-      handleConfirm={handleSubmit}
+      onClose={handleClose}
+      onConfirm={handleSubmit}
       maxWidth="sm"
       open={isOpen}
       title="Select Autofill"

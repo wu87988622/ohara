@@ -131,11 +131,11 @@ const Navigator = ({ pipelineApi }) => {
           <Dialog
             open={isOpen}
             title="Add a new pipeline"
-            handleClose={() => {
+            onClose={() => {
               setIsOpen(false);
               form.reset();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             confirmDisabled={submitting || pristine || invalid}
             testId="new-pipeline-dialog"
           >

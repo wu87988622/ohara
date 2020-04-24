@@ -26,7 +26,7 @@ function NodeDetailDialog({ mode, node, isOpen, onClose }) {
   return (
     <Dialog
       open={isOpen}
-      handleClose={onClose}
+      onClose={onClose}
       title="View node detail"
       maxWidth="md"
       showActions={false}

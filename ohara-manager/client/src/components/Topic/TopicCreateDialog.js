@@ -60,11 +60,11 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm }) => {
           <Dialog
             confirmDisabled={submitting || pristine || invalid}
             confirmText="CREATE"
-            handleClose={() => {
+            onClose={() => {
               form.reset();
               onClose();
             }}
-            handleConfirm={handleSubmit}
+            onConfirm={handleSubmit}
             open={isOpen}
             title="Create topic"
           >

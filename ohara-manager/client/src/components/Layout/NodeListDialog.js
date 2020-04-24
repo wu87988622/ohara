@@ -42,7 +42,7 @@ const NodeListDialog = props => {
   };
 
   return (
-    <FullScreenDialog title="All nodes" open={isOpen} handleClose={onClose}>
+    <FullScreenDialog title="All nodes" open={isOpen} onClose={onClose}>
       <NodeTable
         nodes={nodes}
         onCreate={handleCreate}

@@ -351,7 +351,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                         <div></div>
 
                         <PipelinePropertyView
-                          handleClose={() => setSelectedCell(null)}
+                          onClose={() => setSelectedCell(null)}
                           element={selectedCell}
                           cellsMetrics={cellsMetricsRef.current}
                         />
@@ -685,8 +685,8 @@ const Pipeline = React.forwardRef((props, ref) => {
                       content={`Are you sure you want to delete the element: ${getCurrentCellName(
                         currentCellData,
                       )} ? This action cannot be undone!`}
-                      handleClose={handleDialogClose}
-                      handleConfirm={handleElementDelete}
+                      onClose={handleDialogClose}
+                      onConfirm={handleElementDelete}
                     />
                   </>
                 )}

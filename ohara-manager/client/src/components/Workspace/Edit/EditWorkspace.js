@@ -62,7 +62,7 @@ const EditWorkspace = () => {
       <FullScreenDialog
         title={`Workspace ${currentWorkspace.name}`}
         open={isEditWorkspaceDialogOpen}
-        handleClose={closeEditWorkspaceDialog}
+        onClose={closeEditWorkspaceDialog}
         testId="edit-workspace-dialog"
       >
         <Wrapper>

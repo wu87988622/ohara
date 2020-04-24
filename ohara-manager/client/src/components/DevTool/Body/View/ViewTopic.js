@@ -118,7 +118,7 @@ const ViewTopic = () => {
       <Dialog
         title="View topic source"
         open={!isEmpty(viewTopicMessage)}
-        handleClose={() => setViewTopicMessage({})}
+        onClose={() => setViewTopicMessage({})}
         children={
           <ReactJson
             src={get(
