@@ -16,8 +16,9 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { isFunction } from 'lodash';
+import { join, map, includes, isEmpty, isFunction, toUpper } from 'lodash';
 
+import Link from '@material-ui/core/Link';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 
@@ -42,7 +43,14 @@ const defaultOptions = {
 };
 
 function TopicTable(props) {
-  const { broker, topics: data, onCreate, onDelete, title } = props;
+  const {
+    broker,
+    topics: data,
+    onCreate,
+    onDelete,
+    onLinkClick,
+    title,
+  } = props;
 
   const options = { ...defaultOptions, ...props?.options };
 
@@ -107,6 +115,7 @@ function TopicTable(props) {
           {options?.showDeleteIcon && (
             <Tooltip title="Delete topic">
               <IconButton
+                disabled={!isEmpty(topic.pipelines)}
                 onClick={() => {
                   handleDeleteIconClick(topic);
                 }}
@@ -144,22 +153,59 @@ function TopicTable(props) {
           },
         ]}
         columns={[
-          { field: 'name', title: 'Name' },
           {
-            field: 'numberOfPartitions',
+            title: 'Name',
+            customFilterAndSearch: (filterValue, topic) => {
+              const isShared = topic?.tags?.isShared;
+              const value = isShared ? topic.name : topic?.tags?.displayName;
+              return includes(toUpper(value), toUpper(filterValue));
+            },
+            render: topic => {
+              const isShared = topic?.tags?.isShared;
+              return isShared ? topic.name : topic?.tags?.displayName;
+            },
+          },
+          {
             title: 'Partitions',
+            field: 'numberOfPartitions',
             type: 'numeric',
           },
           {
-            field: 'numberOfReplications',
             title: 'Replications',
+            field: 'numberOfReplications',
             type: 'numeric',
           },
-          // Completed in the next version, so hide it first
-          // 'Used by pipelines',
           {
-            field: 'state',
+            title: 'Pipelines',
+            customFilterAndSearch: (filterValue, topic) => {
+              const value = join(
+                map(topic?.pipelines, pipeline => pipeline.name),
+              );
+              return includes(toUpper(value), toUpper(filterValue));
+            },
+            render: topic => {
+              return (
+                <>
+                  {map(topic?.pipelines, pipeline => (
+                    <div key={pipeline.name}>
+                      <Tooltip title="Click the link to switch to that pipeline">
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => onLinkClick(pipeline)}
+                        >
+                          {pipeline.name}
+                        </Link>
+                      </Tooltip>
+                    </div>
+                  ))}
+                </>
+              );
+            },
+          },
+          {
             title: 'State',
+            field: 'state',
           },
           renderActionColumn(),
         ]}
@@ -200,11 +246,21 @@ TopicTable.propTypes = {
       name: PropTypes.string,
       numberOfPartitions: PropTypes.number,
       numberOfReplications: PropTypes.number,
+      pipelines: PropTypes.arrayOf(
+        PropTypes.shape({
+          name: PropTypes.string,
+        }),
+      ),
       state: PropTypes.string,
+      tags: PropTypes.shape({
+        displayName: PropTypes.string,
+        isShared: PropTypes.bool,
+      }),
     }),
   ),
   onCreate: PropTypes.func,
   onDelete: PropTypes.func,
+  onLinkClick: PropTypes.func,
   options: PropTypes.shape({
     onCreateIconClick: PropTypes.func,
     onDeleteIconClick: PropTypes.func,
@@ -222,6 +278,7 @@ TopicTable.defaultProps = {
   topics: [],
   onCreate: () => {},
   onDelete: () => {},
+  onLinkClick: () => {},
   options: defaultOptions,
   title: 'Topics',
 };

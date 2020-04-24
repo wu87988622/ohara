@@ -17,6 +17,7 @@
 import React from 'react';
 
 import { TopicTable } from 'components/Topic';
+import * as context from 'context';
 import * as hooks from 'hooks';
 
 function SharedTopicTable() {
@@ -24,6 +25,8 @@ function SharedTopicTable() {
   const topics = hooks.useTopicsInWorkspace(true);
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
+  const switchPipeline = hooks.useSwitchPipelineAction();
+  const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
 
   const handleCreate = topicToCreate => {
     createAndStartTopic(topicToCreate);
@@ -33,6 +36,13 @@ function SharedTopicTable() {
     stopAndDeleteTopic(topicToDelete);
   };
 
+  const handleLinkClick = pipelineClicked => {
+    if (pipelineClicked?.name) {
+      closeSettingsDialog();
+      switchPipeline(pipelineClicked.name);
+    }
+  };
+
   return (
     <>
       <TopicTable
@@ -40,6 +50,7 @@ function SharedTopicTable() {
         topics={topics}
         onCreate={handleCreate}
         onDelete={handleDelete}
+        onLinkClick={handleLinkClick}
         title="Shared topics"
       />
     </>

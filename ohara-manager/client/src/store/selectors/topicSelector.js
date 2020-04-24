@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { filter, map, some, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
+import { findPipelinesByGroup } from './pipelineSelector';
 
 const getEntities = state => state?.entities?.topics;
 
@@ -29,20 +30,30 @@ export const getTopicById = createSelector(
 );
 
 export const getAllTopics = createSelector([getEntities], entities =>
-  _.sortBy(_.values(entities), 'name'),
+  sortBy(values(entities), 'name'),
 );
 
 export const getTopicsByGroup = createSelector(
-  [getAllTopics, getGroupFromProps],
-  (allTopics, group) => _.filter(allTopics, topic => topic?.group === group),
+  [getAllTopics, getGroupFromProps, findPipelinesByGroup],
+  (allTopics, group, pipelines) => {
+    const topics = filter(allTopics, topic => topic?.group === group);
+    return map(topics, topic => {
+      return {
+        ...topic,
+        pipelines: filter(pipelines, pipeline => {
+          return some(pipeline?.objects, object => object.name === topic.name);
+        }),
+      };
+    });
+  },
 );
 
 export const getSharedTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => _.filter(topics, topic => topic?.tags?.isShared === true),
+  topics => filter(topics, topic => topic?.tags?.isShared === true),
 );
 
 export const getPipelineOnlyTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => _.filter(topics, topic => topic?.tags?.isShared === false),
+  topics => filter(topics, topic => topic?.tags?.isShared === false),
 );
