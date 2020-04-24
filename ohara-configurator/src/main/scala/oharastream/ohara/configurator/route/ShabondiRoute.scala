@@ -120,6 +120,11 @@ private[configurator] object ShabondiRoute {
         }
         throw new IllegalArgumentException(s"$key cannot be empty.")
       }
+      // TODO: support multiple nodes deployment, currently only support one node
+      if (clusterInfo.nodeNames.size != 1) {
+        val key = ShabondiDefinitions.NODE_NAMES_DEFINITION.key
+        throw new IllegalArgumentException(s"$key only support one node currently.")
+      }
       objectChecker.checkList
         .shabondi(clusterInfo.key)
         .brokerCluster(clusterInfo.brokerClusterKey, RUNNING)

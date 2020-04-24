@@ -72,7 +72,6 @@ The following are common settings to a stream app.
      {"group": "default", "name": "n"}
 
 #. tags (**object**) — the user defined parameters
-#. nodeNames (**array(string)**) — node list of stream running container
 #. aliveNodes (**array(string)**) — the nodes that host the running containers of stream cluster
 #. state (**option(string)**) — only started/failed stream has state (DEAD if all containers are not running, else RUNNING)
 #. error (**option(string)**) — the error message from a failed stream.

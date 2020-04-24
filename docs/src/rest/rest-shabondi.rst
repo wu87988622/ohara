@@ -44,6 +44,7 @@ The following are common setting both Shabondi source and sink:
 
 #. shabondi.client.port (**int**) - The Shabondi service client port
 #. imageName (**string**) — docker image
+#. nodeNames **array(string)** - The nodes that running this Shabondi. Currently, Shabondi not support multiple nodes deployment. So nodeNames only can be contained one node when start shabondi service, otherwise you'll get an error.
 #. tags (**object**) — the extra parameter for this object
 #. routes (**object**) -
 #. jmxPort (**int**) - the JVM jmx port for Shabondi service

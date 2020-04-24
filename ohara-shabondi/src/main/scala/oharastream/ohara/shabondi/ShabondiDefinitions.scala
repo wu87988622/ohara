@@ -58,8 +58,8 @@ object ShabondiDefinitions {
     .group(CORE_GROUP)
     .key("name")
     .orderInGroup(orderInGroup())
-    .displayName("Shabondi group")
-    .documentation("The unique group of this Shabondi")
+    .displayName("Shabondi name")
+    .documentation("The unique name of this Shabondi")
     .stringWithRandomDefault
     .permission(SettingDef.Permission.CREATE_ONLY)
     .build
@@ -123,6 +123,16 @@ object ShabondiDefinitions {
     .displayName("Broker list")
     .documentation("The broker list of current workspace")
     .internal
+    .build
+    .registerTo(basicDefinitionMap)
+
+  val NODE_NAMES_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("nodeNames")
+    .orderInGroup(orderInGroup())
+    .optional(Type.ARRAY)
+    .displayName("Node name list")
+    .documentation("The used node name list of this shabondi. Currently, only one node supported.")
     .build
     .registerTo(basicDefinitionMap)
 
