@@ -21,16 +21,16 @@ import com.typesafe.scalalogging.Logger
 import org.junit.Test
 import org.scalatest.Matchers._
 
-import scala.io.{Codec, Source}
+import sys.process._
 
 class TestApiUrl extends OharaTest {
   private[this] val log = Logger(classOf[TestApiUrl])
 
   @Test
   def testDocumentApiUrl(): Unit = {
-    log.info("defaultCharsetCodec={}", Codec.defaultCharsetCodec)
-    val html = Source.fromURL(oharastream.ohara.configurator.route.apiUrl)(Codec.UTF8).mkString
+    val command = "curl --silent --url %s".format(oharastream.ohara.configurator.route.apiUrl)
+    log.info("fetch html: {}", command)
 
-    html.contains("""<p class="caption"><span class="caption-text">REST APIs</span></p>""") should ===(true)
+    (command !!) should include("""<p class="caption"><span class="caption-text">REST APIs</span></p>""")
   }
 }
