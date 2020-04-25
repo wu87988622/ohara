@@ -16,9 +16,9 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { of, defer } from 'rxjs';
 import * as _ from 'lodash';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
@@ -29,18 +29,20 @@ export default action$ => {
   return action$.pipe(
     ofType(actions.updateConnector.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) => {
+    mergeMap(({ params, options }) => {
       const hasTopicKey = params.topicKeys.length > 0;
       const { cell, paperApi, topics } = options;
       const cells = paperApi.getCells();
-      return from(connectorApi.update(params)).pipe(
+      const connectorId = paperApi.getCell(params.name).id;
+
+      return defer(() => connectorApi.update(params)).pipe(
         map(res => normalize(res.data, schema.connector)),
-        map(entities => {
+        map(normalizedData => {
           const currentHasTopicKey =
-            _.get(entities, 'topicKeys', []).length > 0;
+            _.get(normalizedData, 'topicKeys', []).length > 0;
           if (currentHasTopicKey) {
-            const connectorId = paperApi.getCell(params.name).id;
-            const topicId = paperApi.getCell(entities.topicKeys[0].name).id;
+            const topicId = paperApi.getCell(normalizedData.topicKeys[0].name)
+              .id;
             let linkId;
             switch (cell.kind) {
               case KIND.source:
@@ -78,9 +80,11 @@ export default action$ => {
                 break;
             }
           }
-          return actions.updateConnector.success(entities);
+          return actions.updateConnector.success(
+            _.merge(normalizedData, { connectorId }),
+          );
         }),
-        startWith(actions.updateConnector.request()),
+        startWith(actions.updateConnector.request({ connectorId })),
         catchError(err => of(actions.updateConnector.failure(err))),
       );
     }),

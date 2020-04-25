@@ -14,35 +14,49 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { of, defer } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+} from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { CELL_STATUS } from 'const';
+import { getId } from 'utils/object';
 
-export default action$ => {
-  return action$.pipe(
-    ofType(actions.createConnector.TRIGGER),
-    map(action => action.payload),
-    switchMap(({ params, options }) =>
-      from(connectorApi.create(params)).pipe(
-        map(res => normalize(res.data, schema.connector)),
-        map(entities => {
-          options.paperApi.updateElement(params.id, {
-            status: CELL_STATUS.stopped,
-          });
-          return actions.createConnector.success(entities);
-        }),
-        startWith(actions.createConnector.request()),
-        catchError(err => {
-          options.paperApi.removeElement(params.id);
-          return of(actions.createConnector.failure(err));
-        }),
-      ),
-    ),
+const createConnector$ = values => {
+  const { params, options } = values;
+  const connectorId = getId(params);
+  return defer(() => connectorApi.create(params)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.connector)),
+    map(normalizedData => {
+      options.paperApi.updateElement(params.id, {
+        status: CELL_STATUS.stopped,
+      });
+      return merge(normalizedData, { connectorId });
+    }),
+    map(normalizedData => actions.createConnector.success(normalizedData)),
+    startWith(actions.createConnector.request({ connectorId })),
+    catchError(error => {
+      options.paperApi.removeElement(params.id);
+      return of(actions.createConnector.failure(merge(error, { connectorId })));
+    }),
   );
 };
+
+export default action$ =>
+  action$.pipe(
+    ofType(actions.createConnector.TRIGGER),
+    map(action => action.payload),
+    distinctUntilChanged(),
+    mergeMap(values => createConnector$(values)),
+  );

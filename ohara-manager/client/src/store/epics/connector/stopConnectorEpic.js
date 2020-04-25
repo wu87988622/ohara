@@ -14,71 +14,76 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer, throwError, iif } from 'rxjs';
+import { of, defer, throwError, iif, zip } from 'rxjs';
 import {
   catchError,
   map,
   startWith,
-  switchMap,
   retryWhen,
   delay,
-  concatAll,
   concatMap,
+  mergeMap,
+  distinctUntilChanged,
 } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
 import { CELL_STATUS } from 'const';
 
-const checkState$ = (values, options) =>
-  defer(() =>
-    connectorApi.get({ name: values.name, group: values.group }),
-  ).pipe(
-    map(res => normalize(res.data, schema.connector)),
-    map(normalize =>
-      iif(() => normalize.entities.connector.state, throwError, normalize),
-    ),
-    retryWhen(error =>
-      error.pipe(
-        concatMap((e, i) =>
-          iif(() => i > 4, throwError(e), of(e).pipe(delay(2000))),
+const stopConnector$ = values => {
+  const { params, options } = values;
+  const { paperApi } = options;
+  const connectorId = getId(params);
+  paperApi.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
+  return zip(
+    defer(() => connectorApi.stop(params)),
+    defer(() => connectorApi.get(params)).pipe(
+      map(res => {
+        if (res.data.state) throw res;
+        else return res.data;
+      }),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 4,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
         ),
       ),
     ),
-    map(res => {
-      options.paperApi.updateElement(values.id, {
+  ).pipe(
+    map(([, data]) => normalize(data, schema.connector)),
+    map(normalizedData => merge(normalizedData, { connectorId })),
+    map(normalizedData => {
+      paperApi.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
-      return actions.stopConnector.success(res);
+      return actions.stopConnector.success(normalizedData);
     }),
-    startWith(actions.fetchConnector.request()),
-  );
-
-export default action$ => {
-  return action$.pipe(
-    ofType(actions.stopConnector.TRIGGER),
-    map(action => action.payload),
-    switchMap(({ params, options }) => {
+    startWith(actions.stopConnector.request({ connectorId })),
+    catchError(error => {
       options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.pending,
+        status: CELL_STATUS.failed,
       });
-      return of(
-        defer(() => connectorApi.stop(params)).pipe(
-          map(() => actions.stopConnector.request()),
-        ),
-        checkState$(params, options),
-      ).pipe(
-        concatAll(),
-        catchError(res => {
-          options.paperApi.updateElement(params.id, {
-            status: CELL_STATUS.failed,
-          });
-          return of(actions.stopConnector.failure(res));
-        }),
-      );
+      return of(actions.stopConnector.failure(error));
     }),
   );
 };
+
+export default action$ =>
+  action$.pipe(
+    ofType(actions.stopConnector.TRIGGER),
+    map(action => action.payload),
+    distinctUntilChanged(),
+    mergeMap(values => stopConnector$(values)),
+  );

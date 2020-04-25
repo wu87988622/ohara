@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { of, defer } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
@@ -28,7 +28,7 @@ export default action$ => {
     ofType(actions.fetchConnectors.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
-      from(connectorApi.getAll(values)).pipe(
+      defer(() => connectorApi.getAll(values)).pipe(
         map(res => normalize(res.data, [schema.connector])),
         map(entities => actions.fetchConnectors.success(entities)),
         startWith(actions.fetchConnectors.request()),

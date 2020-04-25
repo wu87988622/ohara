@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError } from 'rxjs';
+import { of, defer, iif, throwError, zip } from 'rxjs';
 import {
   catchError,
   map,
   startWith,
-  switchMap,
   retryWhen,
   delay,
   concatMap,
-  concatAll,
+  distinctUntilChanged,
+  mergeMap,
 } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
@@ -32,53 +33,53 @@ import * as actions from 'store/actions';
 import { CELL_STATUS } from 'const';
 import { getId } from 'utils/object';
 
-const checkConnector$ = (values, options) =>
-  defer(() => connectorApi.getAll({ group: values.group })).pipe(
-    map(connectors =>
-      iif(
-        () => connectors.find(connector => connector.name === values.name),
-        throwError,
-        connectors,
-      ),
-    ),
-    retryWhen(error =>
-      error.pipe(
-        concatMap((e, i) =>
-          iif(() => i > 4, throwError(e), of(e).pipe(delay(2000))),
+const deleteConnector$ = values => {
+  const { params, options } = values;
+  const { paperApi } = options;
+  const connectorId = getId(params);
+  paperApi.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
+  return zip(
+    defer(() => connectorApi.remove(params)),
+    defer(() => connectorApi.getAll({ group: params.group })).pipe(
+      map(res => {
+        if (res.data.find(connector => connector.name === params.name))
+          throw res;
+        else return res.data;
+      }),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 4,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
         ),
       ),
     ),
+  ).pipe(
     map(() => {
-      options.paperApi.removeElement(values.id);
-      return actions.deleteConnector.success(
-        getId({ name: values.name, group: values.group }),
-      );
+      paperApi.removeElement(params.id);
+      return actions.deleteConnector.success({ connectorId });
     }),
-    startWith(actions.fetchConnector.request()),
+    startWith(actions.deleteConnector.request({ connectorId })),
+    catchError(error => {
+      paperApi.updateElement(params.id, {
+        status: CELL_STATUS.failed,
+      });
+      return of(actions.deleteConnector.failure(merge(error, { connectorId })));
+    }),
   );
+};
 
 export default action$ => {
   return action$.pipe(
     ofType(actions.deleteConnector.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.pending,
-      });
-      return of(
-        defer(() => connectorApi.remove(params)).pipe(
-          map(() => actions.deleteConnector.request()),
-        ),
-        checkConnector$(params, options),
-      ).pipe(
-        concatAll(),
-        catchError(res => {
-          options.paperApi.updateElement(params.id, {
-            status: CELL_STATUS.failed,
-          });
-          return of(actions.deleteConnector.failure(res));
-        }),
-      );
-    }),
+    distinctUntilChanged(),
+    mergeMap(values => deleteConnector$(values)),
   );
 };
