@@ -26,7 +26,7 @@ import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await

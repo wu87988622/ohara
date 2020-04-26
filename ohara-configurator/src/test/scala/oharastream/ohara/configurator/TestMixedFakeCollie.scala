@@ -20,7 +20,7 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, 
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global

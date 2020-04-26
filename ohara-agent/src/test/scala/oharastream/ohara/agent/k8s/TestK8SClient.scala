@@ -21,12 +21,11 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.{Http, server}
-import akka.stream.ActorMaterializer
 import oharastream.ohara.agent.k8s.K8SJson._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 import scala.concurrent.Await
@@ -737,9 +736,8 @@ class TestK8SClient extends OharaTest {
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system       = ActorSystem("my-system")
-    implicit val materializer = ActorMaterializer()
-    val server                = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    implicit val system = ActorSystem("my-system")
+    val server          = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
       override def port: Int        = server.localAddress.getPort

@@ -24,7 +24,7 @@ import oharastream.ohara.connector.ftp.FtpSource
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Ignore, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsArray, JsBoolean, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -26,7 +26,7 @@ import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.kafka.RowDefaultPartitioner
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue, JsValue}
 
 import scala.concurrent.ExecutionContext.Implicits.global

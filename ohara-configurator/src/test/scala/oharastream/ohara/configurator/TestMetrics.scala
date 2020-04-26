@@ -39,7 +39,7 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.shabondi.ShabondiType
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsNumber, JsString}
 
 import scala.jdk.CollectionConverters._

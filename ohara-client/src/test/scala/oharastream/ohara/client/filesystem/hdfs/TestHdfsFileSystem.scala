@@ -23,7 +23,7 @@ import oharastream.ohara.client.filesystem.{FileFilter, FileSystem, FileSystemTe
 import oharastream.ohara.common.exception.FileSystemException
 import oharastream.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestHdfsFileSystem extends FileSystemTestBase {
   private[this] val tempFolder: File = CommonUtils.createTempFolder("local_hdfs")

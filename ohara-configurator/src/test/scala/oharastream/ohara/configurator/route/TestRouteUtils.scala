@@ -21,7 +21,7 @@ import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.setting.SettingDef.Permission
 import org.junit.Test
 import spray.json.JsString
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestRouteUtils extends OharaTest {
   @Test

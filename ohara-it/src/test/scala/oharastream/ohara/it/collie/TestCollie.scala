@@ -35,7 +35,7 @@ import oharastream.ohara.metrics.BeanChannel
 import org.apache.kafka.common.errors.InvalidReplicationFactorException
 import org.junit.Test
 import org.junit.experimental.categories.Category
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

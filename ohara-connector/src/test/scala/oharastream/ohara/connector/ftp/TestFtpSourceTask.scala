@@ -28,7 +28,7 @@ import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import oharastream.ohara.kafka.connector.json.ConnectorFormatter
 import oharastream.ohara.testing.service.FtpServer
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 

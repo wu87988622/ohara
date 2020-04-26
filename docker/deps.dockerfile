@@ -77,7 +77,7 @@ RUN git checkout $COMMIT
 # download dependencies
 RUN ./gradlew clean build -x test
 # trigger download of database
-RUN ./gradlew clean ohara-client:test --tests TestDatabaseClient -PskipManager
+RUN ./gradlew cleanTest ohara-client:test --tests TestDatabaseClient -PskipManager
 
 # Add Tini
 ARG TINI_VERSION=v0.18.0

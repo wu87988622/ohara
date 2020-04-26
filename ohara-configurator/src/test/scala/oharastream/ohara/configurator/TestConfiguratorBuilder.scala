@@ -20,7 +20,6 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.{Http, server}
-import akka.stream.ActorMaterializer
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -28,8 +27,8 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import org.junit.Test
-import org.scalatest.Matchers._
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.Mockito
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -96,14 +95,14 @@ class TestConfiguratorBuilder extends OharaTest {
     an[IllegalArgumentException] should be thrownBy Configurator.builder
     // in fake mode, a fake collie will be created
       .fake(1, 1)
-      .serviceCollie(MockitoSugar.mock[ServiceCollie])
+      .serviceCollie(Mockito.mock(classOf[ServiceCollie]))
       .build()
 
   @Test
   def reassignK8sClient(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator.builder
-      .k8sClient(MockitoSugar.mock[K8SClient])
-      .k8sClient(MockitoSugar.mock[K8SClient])
+      .k8sClient(Mockito.mock(classOf[K8SClient]))
+      .k8sClient(Mockito.mock(classOf[K8SClient]))
       .build()
 
   @Test
@@ -161,8 +160,8 @@ class TestConfiguratorBuilder extends OharaTest {
   @Test
   def reassignServiceCollie(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator.builder
-      .serviceCollie(MockitoSugar.mock[ServiceCollie])
-      .serviceCollie(MockitoSugar.mock[ServiceCollie])
+      .serviceCollie(Mockito.mock(classOf[ServiceCollie]))
+      .serviceCollie(Mockito.mock(classOf[ServiceCollie]))
       .build()
 
   @Test
@@ -198,13 +197,12 @@ class TestConfiguratorBuilder extends OharaTest {
   @Test
   def assigningK8sBeforeHomeFolderShouldNotCauseException(): Unit =
     Configurator.builder
-      .k8sClient(MockitoSugar.mock[K8SClient])
+      .k8sClient(Mockito.mock(classOf[K8SClient]))
       .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(5)).getAbsolutePath)
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system       = ActorSystem("my-system")
-    implicit val materializer = ActorMaterializer()
-    val server                = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    implicit val system: ActorSystem = ActorSystem("my-system")
+    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
 
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString

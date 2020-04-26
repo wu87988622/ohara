@@ -25,7 +25,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global

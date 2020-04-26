@@ -20,7 +20,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator.Mode
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfiguratorMain extends OharaTest {

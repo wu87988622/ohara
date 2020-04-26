@@ -23,7 +23,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.it.IntegrationTest
 import oharastream.ohara.it.code.ClassUtils._
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestTestCases extends OharaTest {
   /**

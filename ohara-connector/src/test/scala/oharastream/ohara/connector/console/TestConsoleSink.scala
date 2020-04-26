@@ -18,7 +18,7 @@ package oharastream.ohara.connector.console
 
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 class TestConsoleSink extends OharaTest {
   @Test
   def testFrequenceDefinitions(): Unit = {

@@ -20,7 +20,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestPerformanceReport extends OharaTest {
   private[this] val groupName = "benchmark"

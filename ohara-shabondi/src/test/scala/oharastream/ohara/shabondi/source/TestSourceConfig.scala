@@ -19,11 +19,11 @@ package oharastream.ohara.shabondi.source
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.TopicKey
 import org.junit.Test
-import org.scalatest.Matchers
 
 import scala.jdk.CollectionConverters._
+import org.scalatest.matchers.should.Matchers._
 
-final class TestSourceConfig extends OharaTest with Matchers {
+final class TestSourceConfig extends OharaTest {
   private def topicKey1 = TopicKey.of("default", "topic1")
   private def topicKey2 = TopicKey.of("default", "topic2")
 

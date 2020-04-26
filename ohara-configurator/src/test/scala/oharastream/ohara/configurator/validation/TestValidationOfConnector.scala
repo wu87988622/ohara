@@ -23,7 +23,7 @@ import oharastream.ohara.configurator.{Configurator, FallibleSink}
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsString, _}
 
 import scala.jdk.CollectionConverters._

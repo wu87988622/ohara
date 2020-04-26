@@ -20,19 +20,18 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.{Http, server}
-import akka.stream.ActorMaterializer
 import oharastream.ohara.client.kafka.WorkerJson.{ConnectorCreationResponse, KafkaConnectorTaskId, _}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.connector.json.Creation
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 /**
   * https://github.com/oharastream/ohara/issues/873.
@@ -82,9 +81,8 @@ class Test873 extends OharaTest {
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system: ActorSystem             = ActorSystem("my-system")
-    implicit val materializer: ActorMaterializer = ActorMaterializer()
-    val server                                   = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    implicit val system: ActorSystem = ActorSystem("my-system")
+    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
       override def port: Int        = server.localAddress.getPort

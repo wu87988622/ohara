@@ -19,7 +19,7 @@ package oharastream.ohara.configurator.route
 import oharastream.ohara.common.rule.OharaTest
 import com.typesafe.scalalogging.Logger
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import sys.process._
 

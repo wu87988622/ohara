@@ -29,7 +29,7 @@ import oharastream.ohara.kafka.connector.TaskSetting
 import oharastream.ohara.testing.With3Brokers3Workers
 import oharastream.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}

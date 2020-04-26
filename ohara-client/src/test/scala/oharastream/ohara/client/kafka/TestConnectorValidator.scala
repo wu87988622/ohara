@@ -18,7 +18,7 @@ package oharastream.ohara.client.kafka
 
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 class TestConnectorValidator extends OharaTest {
   /**

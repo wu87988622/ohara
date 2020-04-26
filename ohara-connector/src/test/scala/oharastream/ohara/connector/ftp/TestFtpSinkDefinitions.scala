@@ -20,7 +20,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.setting.SettingDef.{Necessary, Permission, Reference}
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestFtpSinkDefinitions extends OharaTest {
   private[this] val ftpSink = new FtpSink

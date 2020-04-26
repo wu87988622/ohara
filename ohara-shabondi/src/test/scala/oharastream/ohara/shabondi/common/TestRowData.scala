@@ -19,10 +19,10 @@ package oharastream.ohara.shabondi.common
 import oharastream.ohara.common.data.Cell
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
-final class TestRowData extends OharaTest with Matchers {
+final class TestRowData extends OharaTest {
   @Test
   def testRowData(): Unit = {
     val jsonData =

@@ -26,7 +26,7 @@ import org.junit.Test
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestK8SServiceCollieImpl extends OharaTest {
   @Test

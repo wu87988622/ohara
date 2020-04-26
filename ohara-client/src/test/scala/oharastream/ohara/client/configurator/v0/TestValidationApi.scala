@@ -18,7 +18,7 @@ package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 class TestValidationApi extends OharaTest {
   @Test
   def nullHostname(): Unit = an[NullPointerException] should be thrownBy ValidationApi.access.hostname(null)

@@ -21,7 +21,7 @@ import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.shabondi.common.AbstractWebServer
 
 private[shabondi] class WebServer(config: SourceConfig) extends AbstractWebServer {
-  val routeHandler = SourceRouteHandler(config, materializer)
+  private[this] val routeHandler = SourceRouteHandler(config)
 
   override def routes: Route = routeHandler.route()
 

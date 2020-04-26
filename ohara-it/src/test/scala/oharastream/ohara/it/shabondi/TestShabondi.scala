@@ -34,7 +34,7 @@ import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

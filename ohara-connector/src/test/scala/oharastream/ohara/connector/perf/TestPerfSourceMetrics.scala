@@ -22,7 +22,7 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await

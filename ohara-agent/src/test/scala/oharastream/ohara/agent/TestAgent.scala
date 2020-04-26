@@ -21,7 +21,7 @@ import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.testing.service.SshdServer
 import oharastream.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestAgent extends OharaTest {
   private[this] val customCommands = Map(

@@ -23,7 +23,7 @@ import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.it.category.ClientGroup
 import org.junit.Test
 import org.junit.experimental.categories.Category
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

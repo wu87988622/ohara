@@ -20,23 +20,22 @@ import java.util
 import java.util.concurrent.{ExecutorService, Executors}
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.TopicAdmin
-import oharastream.ohara.testing.WithBroker
 import oharastream.ohara.shabondi.common.ShabondiUtils
 import oharastream.ohara.shabondi.sink.SinkConfig
 import oharastream.ohara.shabondi.source.SourceConfig
-import com.typesafe.scalalogging.Logger
+import oharastream.ohara.testing.WithBroker
 import org.junit.After
-import org.scalatest.Matchers
 
-import scala.jdk.CollectionConverters._
 import scala.collection.{immutable, mutable}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
-private[shabondi] abstract class BasicShabondiTest extends WithBroker with Matchers {
+private[shabondi] abstract class BasicShabondiTest extends WithBroker {
   protected val log = Logger(this.getClass())
 
   protected val brokerProps            = testUtil.brokersConnProps

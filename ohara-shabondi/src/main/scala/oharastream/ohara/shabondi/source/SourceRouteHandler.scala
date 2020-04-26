@@ -19,10 +19,11 @@ package oharastream.ohara.shabondi.source
 import java.util.concurrent.{ExecutorService, Executors}
 import java.util.function.Consumer
 
+import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
-import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.Releasable
@@ -33,17 +34,15 @@ import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHand
 import scala.concurrent.{ExecutionContext, Future}
 
 private[shabondi] object SourceRouteHandler {
-  def apply(config: SourceConfig, materializer: ActorMaterializer) =
-    new SourceRouteHandler(config, materializer)
+  def apply(config: SourceConfig)(implicit actorSystem: ActorSystem) =
+    new SourceRouteHandler(config)
 }
 private[shabondi] class SourceRouteHandler(
-  config: SourceConfig,
-  materializer: ActorMaterializer
-) extends RouteHandler {
+  config: SourceConfig
+)(implicit actorSystem: ActorSystem)
+    extends RouteHandler {
   import oharastream.ohara.shabondi.common.JsonSupport._
-
-  private val actorSystem = materializer.system
-  private val log         = Logging(actorSystem, classOf[SourceRouteHandler])
+  private val log = Logging(actorSystem, classOf[SourceRouteHandler])
 
   private val threadPool: ExecutorService = Executors.newFixedThreadPool(4)
   implicit private val ec                 = ExecutionContext.fromExecutorService(threadPool)
@@ -86,7 +85,7 @@ private[shabondi] class SourceRouteHandler(
     .queue[RowData](1024, OverflowStrategy.backpressure)
     .via(sendRowFlow)
     .toMat(Sink.ignore)(Keep.left)
-    .run()(materializer)
+    .run()
 
   override def route(): Route = {
     (post & path("v0")) {

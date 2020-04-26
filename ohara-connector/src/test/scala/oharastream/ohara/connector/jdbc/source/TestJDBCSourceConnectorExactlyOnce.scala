@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized.Parameters
 
 import scala.concurrent.duration._
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,7 +64,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     client.createTable(tableName, columns)
   }
 
-  private[this] var inputDataThread: Releasable = {
+  private[this] val inputDataThread: Releasable = {
     val pool            = Executors.newSingleThreadExecutor()
     val startTime: Long = CommonUtils.current()
     pool.execute(() => {

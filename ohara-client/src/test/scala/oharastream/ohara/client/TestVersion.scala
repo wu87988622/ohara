@@ -20,7 +20,7 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, WorkerApi, Zookeeper
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.VersionUtils
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestVersion extends OharaTest {
   @Test

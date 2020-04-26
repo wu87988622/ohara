@@ -18,7 +18,7 @@ package oharastream.ohara.connector.jdbc.source
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.kafka.connector.TaskSetting
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration

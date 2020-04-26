@@ -18,7 +18,7 @@ package oharastream.ohara.client.filesystem.ftp
 
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.duration._
 class TestFtpFileSystemBuilder extends OharaTest {

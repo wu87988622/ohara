@@ -19,7 +19,7 @@ package oharastream.ohara.it.code
 import oharastream.ohara.common.pattern.{Builder, Creator}
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import ClassUtils._
 
 /**

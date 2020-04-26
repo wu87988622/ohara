@@ -25,7 +25,6 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import oharastream.ohara.common.util.Releasable
 import spray.json.RootJsonFormat
@@ -132,8 +131,7 @@ private[ohara] object HttpExecutor {
     * a http executor with releasable interface. Actor system has to be closed in order to terminate process graceful.
     */
   private[this] class HttpExecutorImpl extends HttpExecutor with Releasable {
-    private[this] implicit val actorSystem: ActorSystem             = ActorSystem("Executor-SINGLETON")
-    private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+    private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-SINGLETON")
     //-------------------------------------------------[PRIVATE]-------------------------------------------------//
     private[this] def unmarshal[T, E <: HttpExecutor.Error](
       res: HttpResponse
@@ -233,9 +231,6 @@ private[ohara] object HttpExecutor {
     /**
       * I hate hard code but this method is used only when terminating configurator. Hence, it should be ok... by chia
       */
-    override def close(): Unit = {
-      actorMaterializer.shutdown()
-      Await.result(actorSystem.terminate(), 30 seconds)
-    }
+    override def close(): Unit = Await.result(actorSystem.terminate(), 30 seconds)
   }
 }

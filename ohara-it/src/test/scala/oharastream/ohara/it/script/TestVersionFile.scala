@@ -19,7 +19,7 @@ package oharastream.ohara.it.script
 import oharastream.ohara.common.util.{Releasable, VersionUtils}
 import oharastream.ohara.it.{ContainerPlatform, IntegrationTest, ServiceKeyHolder}
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

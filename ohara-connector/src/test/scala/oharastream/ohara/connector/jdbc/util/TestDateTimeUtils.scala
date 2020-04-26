@@ -20,7 +20,7 @@ import java.sql.Timestamp
 
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestDateTimeUtils extends OharaTest {
   @Test

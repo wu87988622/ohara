@@ -28,6 +28,7 @@ import spray.json._
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
+import org.scalatest.matchers.should.Matchers._
 
 final class TestSourceRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._

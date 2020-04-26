@@ -22,7 +22,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.service.Database
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestDatabaseClient extends OharaTest {
   private[this] val db = Database.local()

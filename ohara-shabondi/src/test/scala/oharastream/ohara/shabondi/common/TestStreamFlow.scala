@@ -17,7 +17,6 @@
 package oharastream.ohara.shabondi.common
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.{Done, NotUsed}
 import oharastream.ohara.common.data.{Cell, Row}
@@ -25,6 +24,7 @@ import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.{Consumer, RecordMetadata}
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -32,8 +32,7 @@ import scala.concurrent.{Await, Future}
 final class TestStreamFlow extends BasicShabondiTest {
   import oharastream.ohara.shabondi.common.ConvertSupport._
 
-  implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit lazy val system: ActorSystem = ActorSystem("shabondi-test")
   import system.dispatcher
 
   @Test

@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import oharastream.ohara.client.configurator.v0.{ConnectorApi, WorkerApi}
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

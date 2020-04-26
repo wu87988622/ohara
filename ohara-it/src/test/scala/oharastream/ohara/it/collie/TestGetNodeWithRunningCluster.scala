@@ -21,7 +21,7 @@ import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import org.junit.Test
 import org.junit.experimental.categories.Category
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

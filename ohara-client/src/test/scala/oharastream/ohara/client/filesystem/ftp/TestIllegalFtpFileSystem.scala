@@ -20,7 +20,7 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.service.FtpServer
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 class TestIllegalFtpFileSystem extends OharaTest {
   private[this] val server = FtpServer.local()

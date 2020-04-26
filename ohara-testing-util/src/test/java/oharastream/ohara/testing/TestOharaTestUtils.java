@@ -19,7 +19,6 @@ package oharastream.ohara.testing;
 import static org.junit.Assert.assertEquals;
 
 import oharastream.ohara.common.rule.OharaTest;
-import oharastream.ohara.testing.service.Database;
 import oharastream.ohara.testing.service.FtpServer;
 import oharastream.ohara.testing.service.Hdfs;
 import org.junit.Test;
@@ -55,17 +54,6 @@ public class TestOharaTestUtils extends OharaTest {
       for (int i = 0; i != 10; ++i) {
         if (fs == null) fs = util.ftpServer();
         else assertEquals(fs, util.ftpServer());
-      }
-    }
-  }
-
-  @Test
-  public void testDatabase() {
-    try (OharaTestUtils util = OharaTestUtils.of()) {
-      Database db = null;
-      for (int i = 0; i != 10; ++i) {
-        if (db == null) db = util.dataBase();
-        else assertEquals(db, util.dataBase());
       }
     }
   }

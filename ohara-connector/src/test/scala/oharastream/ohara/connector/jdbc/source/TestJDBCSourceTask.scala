@@ -29,11 +29,12 @@ import oharastream.ohara.testing.service.Database
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{After, Before, Test}
+import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
+
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
-import org.scalatestplus.mockito.MockitoSugar
 
 class TestJDBCSourceTask extends OharaTest {
   private[this] val db                  = Database.local()
@@ -77,12 +78,12 @@ class TestJDBCSourceTask extends OharaTest {
   @Test
   def testPoll(): Unit = {
     val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
-    val taskContext: SourceTaskContext           = MockitoSugar.mock[SourceTaskContext]
-    val offsetStorageReader: OffsetStorageReader = MockitoSugar.mock[OffsetStorageReader]
+    val taskContext: SourceTaskContext           = Mockito.mock(classOf[SourceTaskContext])
+    val offsetStorageReader: OffsetStorageReader = Mockito.mock(classOf[OffsetStorageReader])
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
 
-    val taskSetting: TaskSetting = MockitoSugar.mock[TaskSetting]
+    val taskSetting: TaskSetting = Mockito.mock(classOf[TaskSetting])
     when(taskSetting.stringValue(DB_URL)).thenReturn(db.url)
     when(taskSetting.stringValue(DB_USERNAME)).thenReturn(db.user)
     when(taskSetting.stringValue(DB_PASSWORD)).thenReturn(db.password)
@@ -198,12 +199,12 @@ class TestJDBCSourceTask extends OharaTest {
   @Test
   def testPollNewName(): Unit = {
     val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
-    val taskContext: SourceTaskContext           = MockitoSugar.mock[SourceTaskContext]
-    val offsetStorageReader: OffsetStorageReader = MockitoSugar.mock[OffsetStorageReader]
+    val taskContext: SourceTaskContext           = Mockito.mock(classOf[SourceTaskContext])
+    val offsetStorageReader: OffsetStorageReader = Mockito.mock(classOf[OffsetStorageReader])
     when(taskContext.offsetStorageReader()).thenReturn(offsetStorageReader)
     jdbcSourceTask.initialize(taskContext.asInstanceOf[SourceTaskContext])
 
-    val taskSetting: TaskSetting = MockitoSugar.mock[TaskSetting]
+    val taskSetting: TaskSetting = Mockito.mock(classOf[TaskSetting])
     when(taskSetting.stringValue(DB_URL)).thenReturn(db.url)
     when(taskSetting.stringValue(DB_USERNAME)).thenReturn(db.user)
     when(taskSetting.stringValue(DB_PASSWORD)).thenReturn(db.password)

@@ -26,14 +26,14 @@ import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.shabondi.ShabondiDefinitions._
 import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class TestShabondiRoute extends OharaTest with Matchers {
+class TestShabondiRoute extends OharaTest {
   private[this] var configurator: Configurator                     = _
   private[this] var nodeApi: NodeApi.Access                        = _
   private[this] var topicApi: TopicApi.Access                      = _

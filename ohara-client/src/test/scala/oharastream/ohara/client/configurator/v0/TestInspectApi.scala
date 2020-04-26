@@ -21,7 +21,7 @@ import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import org.junit.Test
 import spray.json.DefaultJsonProtocol._
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 class TestInspectApi extends OharaTest {

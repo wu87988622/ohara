@@ -26,29 +26,29 @@ versions["postgresql"] = project.hasProperty('postgresql.version') ? project.pro
 versions["mockito"] = project.hasProperty('mockito.version') ? project.properties['mockito.version'] : "1.10.19"
 versions["scala"] = project.hasProperty('scala.version') ? project.properties['scala.version'] : defaultScalaVersion
 if (!versions["scala"].startsWith(defaultScalaMinor)) throw new GradleException("${versions["scala"]} is not supported. ohara requires scala $defaultScalaMinor")
-  versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.5.26"
+  versions["akka"] = project.hasProperty('akka.version') ? project.properties['akka.version'] : "2.6.4"
 versions["akkaHttp"] = project.hasProperty('akka.http.version') ? project.properties['akka.http.version'] : "10.1.11"
-versions["scalatest"] = project.hasProperty('scalatest.version') ? project.properties['scalatest.version'] : "3.0.8"
+versions["scalatest"] = project.hasProperty('scalatest.version') ? project.properties['scalatest.version'] : "3.1.1"
 versions["junit"] = project.hasProperty('junit.version') ? project.properties['junit.version'] : "4.13"
-versions["javassist"] = project.hasProperty('javassist.version') ? project.properties['javassist.version'] : "3.24.1-GA"
-versions["slf4j"] = project.hasProperty('slf4j.version') ? project.properties['slf4j.version'] : "1.7.28"
+versions["javassist"] = project.hasProperty('javassist.version') ? project.properties['javassist.version'] : "3.27.0-GA"
+versions["slf4j"] = project.hasProperty('slf4j.version') ? project.properties['slf4j.version'] : "1.7.30"
 versions["scalaLogging"] = project.hasProperty('scalaLogging.version') ? project.properties['scalaLogging.version'] : "3.9.2"
-versions["scalaJava8Compat"] = project.hasProperty('scalaJava8Compat.version') ? project.properties['scalaJava8Compat.version'] : "0.9.0"
-versions["commonLang"] = project.hasProperty('commonLang.version') ? project.properties['commonLang.version'] : "3.7"
-versions["embeddedsql"] = project.hasProperty('embeddedsql.version') ? project.properties['embeddedsql.version'] : "4.1.2"
-versions["mysql"] = project.hasProperty('mysql.version') ? project.properties['mysql.version'] : "8.0.12"
+versions["scalaJava8Compat"] = project.hasProperty('scalaJava8Compat.version') ? project.properties['scalaJava8Compat.version'] : "0.9.1"
+versions["commonLang"] = project.hasProperty('commonLang.version') ? project.properties['commonLang.version'] : "3.10"
+versions["embeddedsql"] = project.hasProperty('embeddedsql.version') ? project.properties['embeddedsql.version'] : "4.6.1"
+versions["mysql"] = project.hasProperty('mysql.version') ? project.properties['mysql.version'] : "8.0.19"
 versions["ftpServer"] = project.hasProperty('ftpServer.version') ? project.properties['ftpServer.version'] : "1.1.1"
 versions["commonNet"] = project.hasProperty('commonNet.version') ? project.properties['commonNet.version'] : "3.6"
 versions["sshd"] = project.hasProperty('sshd.version') ? project.properties['sshd.version'] : "2.4.0"
 // commonIo has been included by apache hadoop so we use the identical version
-versions["commonsIo"] = project.hasProperty('commonsIo.version') ? project.properties['commonsIo.version'] : "2.4"
+versions["commonsIo"] = project.hasProperty('commonsIo.version') ? project.properties['commonsIo.version'] : "2.6"
 // Guava has been included by apache kafka so we use the identical version
-versions["guava"] = project.hasProperty('guava.version') ? project.properties['guava.version'] : "27.1-jre"
+versions["guava"] = project.hasProperty('guava.version') ? project.properties['guava.version'] : "29.0-jre"
 // rocksdb has been included by apache kafka so we use the identical version
-versions["rocksdb"] = project.hasProperty('rocksdb.version') ? project.properties['rocksdb.version'] : "5.18.3"
+versions["rocksdb"] = project.hasProperty('rocksdb.version') ? project.properties['rocksdb.version'] : "5.18.4"
 // jackson has been included by apache kafka so we use the identical version
-versions["jackson"] = project.hasProperty('jackson.version') ? project.properties['jackson.version'] : "2.10.1"
-versions["smbj"] = project.hasProperty('smbj.version') ? project.properties['smbj.version'] : "0.9.1"
+versions["jackson"] = project.hasProperty('jackson.version') ? project.properties['jackson.version'] : "2.10.2"
+versions["smbj"] = project.hasProperty('smbj.version') ? project.properties['smbj.version'] : "0.10.0"
 libs += [
   postgresql         : "postgresql:postgresql:$versions.postgresql",
   kafkaCore          : "org.apache.kafka:kafka_$defaultScalaMinor:$versions.kafka",

@@ -21,12 +21,11 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
 import oharastream.ohara.client.configurator.v0.ErrorApi
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -35,8 +34,7 @@ import scala.concurrent.{Await, Future}
 class TestResponseFromUnsupportedApis extends OharaTest {
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] implicit val actorSystem: ActorSystem             = ActorSystem("Executor-TestResponseFromUnsupportedApis")
-  private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+  private[this] implicit val actorSystem: ActorSystem = ActorSystem("Executor-TestResponseFromUnsupportedApis")
 
   private[this] val expectedMessage = oharastream.ohara.configurator.route.apiUrl
 
@@ -69,6 +67,5 @@ class TestResponseFromUnsupportedApis extends OharaTest {
   def tearDown(): Unit = {
     Releasable.close(configurator)
     result(actorSystem.terminate())
-    actorMaterializer.shutdown()
   }
 }

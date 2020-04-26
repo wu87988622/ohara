@@ -23,9 +23,9 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.connector.jdbc.datatype.{MySQLDataTypeConverter, RDBDataTypeConverter}
 import oharastream.ohara.connector.jdbc.util.{ColumnInfo, DateTimeUtils}
 import org.junit.Test
+import org.mockito.Mockito
 import org.mockito.Mockito._
-import org.scalatest.Matchers._
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers._
 
 class TestResultSetDataConverter extends OharaTest {
   private[this] val VARCHAR: String   = "VARCHAR"
@@ -36,7 +36,7 @@ class TestResultSetDataConverter extends OharaTest {
 
   @Test
   def testConverterRecord(): Unit = {
-    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
+    val resultSet: ResultSet = Mockito.mock(classOf[ResultSet])
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn("aaa")
     when(resultSet.getInt("column3")).thenReturn(10)
@@ -63,7 +63,7 @@ class TestResultSetDataConverter extends OharaTest {
 
   @Test
   def testNullValue(): Unit = {
-    val resultSet: ResultSet = MockitoSugar.mock[ResultSet]
+    val resultSet: ResultSet = Mockito.mock(classOf[ResultSet])
     when(resultSet.getTimestamp("column1", DateTimeUtils.CALENDAR)).thenReturn(new Timestamp(0L))
     when(resultSet.getString("column2")).thenReturn(null)
     when(resultSet.getDate("column3")).thenReturn(null)

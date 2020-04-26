@@ -30,7 +30,7 @@ import oharastream.ohara.kafka.connector.csv.CsvSinkConnector
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._

@@ -16,8 +16,6 @@
 
 package oharastream.ohara.shabondi.common
 
-import java.util.concurrent.atomic.AtomicReference
-
 import akka.Done
 import akka.actor.ActorSystem
 import akka.event.Logging
@@ -25,7 +23,6 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.settings.ServerSettings
-import akka.stream.ActorMaterializer
 import oharastream.ohara.common.util.Releasable
 
 import scala.concurrent._
@@ -37,23 +34,18 @@ import scala.util.{Failure, Success}
   * reference: akka.http.scaladsl.server.HttpApp
   */
 private[shabondi] abstract class AbstractWebServer extends Directives with Releasable {
-  protected val actorSystemRef = new AtomicReference[ActorSystem]()
-
-  implicit private val actorSystem = ActorSystem(Logging.simpleName(this).replaceAll("\\$", ""))
-  actorSystemRef.set(actorSystem)
-
-  implicit protected val materializer: ActorMaterializer = ActorMaterializer()
+  implicit protected val actorSystem: ActorSystem = ActorSystem(Logging.simpleName(this).replaceAll("\\$", ""))
 
   protected def routes: Route
 
   protected def postBinding(binding: ServerBinding): Unit = {
     val hostname = binding.localAddress.getHostName
     val port     = binding.localAddress.getPort
-    actorSystemRef.get().log.info(s"Server online at http://$hostname:$port/")
+    actorSystem.log.info(s"Server online at http://$hostname:$port/")
   }
 
   protected def postBindingFailure(cause: Throwable): Unit = {
-    actorSystemRef.get().log.error(cause, s"Error starting the server ${cause.getMessage}")
+    actorSystem.log.error(cause, s"Error starting the server ${cause.getMessage}")
   }
 
   protected def waitForShutdownSignal()(implicit ec: ExecutionContext): Future[Done] = {
@@ -70,7 +62,7 @@ private[shabondi] abstract class AbstractWebServer extends Directives with Relea
     promise.future
   }
 
-  protected def postServerShutdown(): Unit = actorSystemRef.get().log.info("Shutting down the server")
+  protected def postServerShutdown(): Unit = actorSystem.log.info("Shutting down the server")
 
   def start(bindInterface: String, port: Int): Unit = {
     start(bindInterface, port, ServerSettings(actorSystem))
@@ -102,11 +94,9 @@ private[shabondi] abstract class AbstractWebServer extends Directives with Relea
       .flatMap(_.unbind())
       .onComplete { _ =>
         postServerShutdown()
-        actorSystemRef.get().terminate()
+        actorSystem.terminate()
       }
   }
 
-  override def close(): Unit = {
-    actorSystemRef.get.terminate()
-  }
+  override def close(): Unit = actorSystem.terminate()
 }

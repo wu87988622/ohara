@@ -20,12 +20,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.common.util.ReleaseOnce;
-import oharastream.ohara.testing.service.Brokers;
-import oharastream.ohara.testing.service.Database;
-import oharastream.ohara.testing.service.FtpServer;
-import oharastream.ohara.testing.service.Hdfs;
-import oharastream.ohara.testing.service.Workers;
-import oharastream.ohara.testing.service.Zookeepers;
+import oharastream.ohara.testing.service.*;
 
 /**
  * This class create a kafka services having 1 zk instance and 1 broker default. Also, this class
@@ -42,7 +37,6 @@ import oharastream.ohara.testing.service.Zookeepers;
  * including the passed consumers (see run())
  */
 public class OharaTestUtils extends ReleaseOnce {
-  private Database database;
   private FtpServer ftpServer;
   private Hdfs hdfs;
   private Zookeepers zk;
@@ -98,11 +92,6 @@ public class OharaTestUtils extends ReleaseOnce {
     return hdfs;
   }
 
-  public Database dataBase() {
-    if (database == null) database = Database.builder().build();
-    return database;
-  }
-
   public FtpServer ftpServer() {
     if (ftpServer == null)
       ftpServer =
@@ -115,7 +104,6 @@ public class OharaTestUtils extends ReleaseOnce {
 
   @Override
   protected void doClose() {
-    Releasable.close(database);
     Releasable.close(ftpServer);
     Releasable.close(hdfs);
     Releasable.close(workers);

@@ -21,11 +21,11 @@ import java.time.{Duration => JDuration}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.TopicKey
 import org.junit.Test
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 
-final class TestSinkConfig extends OharaTest with Matchers {
+final class TestSinkConfig extends OharaTest {
   private def topicKey1 = TopicKey.of("default", "topic1")
   private def topicKey2 = TopicKey.of("default", "topic2")
 

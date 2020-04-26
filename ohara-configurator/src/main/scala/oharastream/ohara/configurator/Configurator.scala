@@ -24,7 +24,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives.{handleRejections, path, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
-import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent._
 import oharastream.ohara.agent.container.ContainerClient
@@ -300,8 +299,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] def finalRoute: server.Route =
     path(Remaining)(routeToOfficialUrl)
 
-  private[this] implicit val actorSystem: ActorSystem             = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
-  private[this] implicit val actorMaterializer: ActorMaterializer = ActorMaterializer()
+  private[this] implicit val actorSystem: ActorSystem = ActorSystem(s"${classOf[Configurator].getSimpleName}-system")
   private[this] val httpServer: Http.ServerBinding =
     try Await.result(
       Http().bindAndHandle(
@@ -331,8 +329,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         Some(httpServer.terminate(terminateTimeout).flatMap(_ => actorSystem.terminate()))
       else if (actorSystem == null) None
       else Some(actorSystem.terminate())
-    // manually close materializer in order to speedup the release of http server and actor system
-    if (actorMaterializer != null) actorMaterializer.shutdown()
     onceHttpTerminated.foreach { f =>
       try Await.result(f, terminateTimeout)
       catch {

@@ -18,36 +18,37 @@ package oharastream.ohara.shabondi.sink
 
 import java.time.{Duration => JDuration}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
-import akka.stream.ActorMaterializer
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.Releasable
-import com.typesafe.scalalogging.Logger
 import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.compat.java8.DurationConverters._
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
 private[shabondi] object SinkRouteHandler {
-  def apply(config: SinkConfig, materializer: ActorMaterializer) =
-    new SinkRouteHandler(config, materializer)
+  def apply(config: SinkConfig)(implicit actorSystem: ActorSystem) =
+    new SinkRouteHandler(config)
 }
 
-private[shabondi] class SinkRouteHandler(config: SinkConfig, materializer: ActorMaterializer) extends RouteHandler {
+private[shabondi] class SinkRouteHandler(config: SinkConfig)(implicit actorSystem: ActorSystem) extends RouteHandler {
   import oharastream.ohara.shabondi.common.JsonSupport._
-
-  private val actorSystem              = materializer.system
-  implicit private val contextExecutor = actorSystem.dispatcher
+  implicit private val contextExecutor: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val log              = Logger(classOf[SinkRouteHandler])
   private[sink] val dataGroups = SinkDataGroups(config)
 
   def scheduleFreeIdleGroups(interval: JDuration, idleTime: JDuration): Unit =
-    actorSystem.scheduler.schedule(1 second, interval.toScala) {
-      log.trace("scheduled free group, total group: {} ", dataGroups.size)
-      dataGroups.freeIdleGroup(idleTime)
+    actorSystem.scheduler.scheduleWithFixedDelay(1 second, interval.toScala) { () =>
+      {
+        log.trace("scheduled free group, total group: {} ", dataGroups.size)
+        dataGroups.freeIdleGroup(idleTime)
+      }
     }
 
   private val exceptionHandler = ExceptionHandler {

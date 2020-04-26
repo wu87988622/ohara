@@ -28,6 +28,7 @@ import org.junit.{After, Test}
 import scala.compat.java8.DurationConverters
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
+import org.scalatest.matchers.should.Matchers._
 
 final class TestSinkDataGroups extends BasicShabondiTest {
   // Extend the timeout to avoid the exception:

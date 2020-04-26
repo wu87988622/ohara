@@ -28,9 +28,9 @@ import oharastream.ohara.testing.service.Database
 import org.apache.kafka.connect.source.SourceTaskContext
 import org.apache.kafka.connect.storage.OffsetStorageReader
 import org.junit.{After, Before, Test}
+import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.scalatest.Matchers._
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 
@@ -40,9 +40,9 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
   private[this] val tableName                                = "TABLE1"
   private[this] val timestampColumnName                      = "COLUMN1"
   private[this] val jdbcSourceTask: JDBCSourceTask           = new JDBCSourceTask()
-  private[this] val taskContext: SourceTaskContext           = MockitoSugar.mock[SourceTaskContext]
-  private[this] val taskSetting: TaskSetting                 = MockitoSugar.mock[TaskSetting]
-  private[this] val offsetStorageReader: OffsetStorageReader = MockitoSugar.mock[OffsetStorageReader]
+  private[this] val taskContext: SourceTaskContext           = Mockito.mock(classOf[SourceTaskContext])
+  private[this] val taskSetting: TaskSetting                 = Mockito.mock(classOf[TaskSetting])
+  private[this] val offsetStorageReader: OffsetStorageReader = Mockito.mock(classOf[OffsetStorageReader])
 
   @Before
   def setup(): Unit = {

@@ -21,7 +21,7 @@ import oharastream.ohara.agent.k8s.K8SNodeReport
 import oharastream.ohara.client.configurator.v0.NodeApi
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

@@ -24,7 +24,7 @@ import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.Test
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global

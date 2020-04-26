@@ -26,7 +26,7 @@ import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.testing.OharaTestUtils
 import org.apache.kafka.connect.connector.Connector
-import org.scalatest.Matchers.{include, intercept, _}
+import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await

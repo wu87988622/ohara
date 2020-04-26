@@ -17,11 +17,11 @@
 package oharastream.ohara.shabondi.common
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Before, Test}
+import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -30,8 +30,7 @@ import scala.concurrent.{Await, Future}
 final class TestKafkaClient extends BasicShabondiTest {
   import oharastream.ohara.shabondi.common.ConvertSupport._
 
-  implicit lazy val system: ActorSystem        = ActorSystem("shabondi-test")
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit lazy val system: ActorSystem = ActorSystem("shabondi-test")
 
   private var TOPIC_1: String = _
 
