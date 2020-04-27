@@ -211,8 +211,6 @@ function TopicTable(props) {
         ]}
         data={data}
         options={{
-          paging: false,
-          search: true,
           showTitle: options?.showTitle,
         }}
       />

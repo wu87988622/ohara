@@ -16,11 +16,10 @@
 
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { find, isFunction, reject, some, sortBy, unionBy } from 'lodash';
+import { find, isFunction, sortBy, unionBy } from 'lodash';
 import moment from 'moment';
 import NumberFormat from 'react-number-format';
 
-import Checkbox from '@material-ui/core/Checkbox';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
@@ -79,7 +78,6 @@ function FileTable(props) {
   const [activeFile, setActiveFile] = useState();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const [selected, setSelected] = useState(options?.selectedFiles || []);
 
   const data = options?.comparison
     ? sortBy(unionBy(options?.comparedFiles, files, 'name'), ['name'])
@@ -145,34 +143,6 @@ function FileTable(props) {
   const handleRemoveDialogConfirm = fileToRemove => {
     onRemove(fileToRemove);
     setIsRemoveDialogOpen(false);
-  };
-
-  const handleRowSelected = (event, dataClicked) => {
-    if (dataClicked) {
-      const newSelected = some(selected, f => f.name === dataClicked.name)
-        ? reject(selected, f => f.name === dataClicked.name)
-        : [...selected, dataClicked];
-
-      setSelected(newSelected);
-      onSelectionChange(newSelected, dataClicked);
-    }
-    event.stopPropagation();
-  };
-
-  const renderSelectionColumn = () => {
-    const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
-    return {
-      cellStyle: style,
-      headerStyle: style,
-      hidden: !options?.selection,
-      render: file => (
-        <Checkbox
-          checked={some(selected, f => f.name === file.name)}
-          color="primary"
-          onChange={event => handleRowSelected(event, file)}
-        />
-      ),
-    };
   };
 
   const renderRowActions = () => {
@@ -302,7 +272,6 @@ function FileTable(props) {
           },
         ]}
         columns={[
-          renderSelectionColumn(),
           { title: 'Name', field: 'name' },
           {
             title: 'File size(KB)',
@@ -338,9 +307,10 @@ function FileTable(props) {
           renderRowActions(),
         ]}
         data={data}
+        onSelectionChange={onSelectionChange}
         options={{
-          paging: false,
-          search: true,
+          selection: options?.selection,
+          selectedData: options?.selectedFiles,
           showTitle: options?.showTitle,
           rowStyle: file => getRowStyle(file),
         }}

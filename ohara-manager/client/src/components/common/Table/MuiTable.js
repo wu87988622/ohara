@@ -14,47 +14,119 @@
  * limitations under the License.
  */
 
-import React, { forwardRef } from 'react';
-
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { assign, get, isString, isFunction, reject, size, some } from 'lodash';
 import Table from 'material-table';
-import AddBox from '@material-ui/icons/AddBox';
-import ArrowDownward from '@material-ui/icons/ArrowDownward';
-import Check from '@material-ui/icons/Check';
-import ChevronLeft from '@material-ui/icons/ChevronLeft';
-import ChevronRight from '@material-ui/icons/ChevronRight';
-import Clear from '@material-ui/icons/Clear';
-import DeleteOutline from '@material-ui/icons/DeleteOutline';
-import Edit from '@material-ui/icons/Edit';
-import FilterList from '@material-ui/icons/FilterList';
-import FirstPage from '@material-ui/icons/FirstPage';
-import LastPage from '@material-ui/icons/LastPage';
-import Remove from '@material-ui/icons/Remove';
-import SaveAlt from '@material-ui/icons/SaveAlt';
-import Search from '@material-ui/icons/Search';
-import ViewColumn from '@material-ui/icons/ViewColumn';
+import Checkbox from '@material-ui/core/Checkbox';
+import MuiTableIcons from './MuiTableIcons';
 
-const TableIcons = {
-  Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-  Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-  Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-  Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-  DetailPanel: forwardRef((props, ref) => (
-    <ChevronRight {...props} ref={ref} />
-  )),
-  Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-  Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
-  Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-  FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-  LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-  NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-  PreviousPage: forwardRef((props, ref) => (
-    <ChevronLeft {...props} ref={ref} />
-  )),
-  ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-  Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-  SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
-  ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-  ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
+const defaultProps = {
+  onSelectionChange: () => {},
+  options: {
+    paging: false,
+    predicate: 'name', // or function predicate(rowData) { return rowData.name; }
+    search: true,
+    selection: false,
+    selectedData: [],
+  },
 };
 
-export default props => <Table {...props} icons={TableIcons} />;
+const MuiTable = props => {
+  const { columns, data, onSelectionChange, options, ...restProps } = props;
+  const { predicate, selection, selectedData, ...restOptions } = assign(
+    defaultProps.options,
+    options,
+  );
+  const [selectedRows, setSelectedRows] = useState(selectedData || []);
+
+  const dataCount = size(data);
+  const selectedCount = size(selectedRows);
+
+  const finalPredicate = isFunction(predicate)
+    ? predicate
+    : object => get(object, predicate);
+
+  const isEqual = (object, otherObject) => {
+    const value = finalPredicate(object);
+    const otherValue = finalPredicate(otherObject);
+    return isString(value) && isString(otherValue) && value === otherValue;
+  };
+
+  const handleRowSelected = (event, rowData) => {
+    if (rowData) {
+      const shouldBeRemoved = some(selectedRows, selectedRowData =>
+        isEqual(selectedRowData, rowData),
+      );
+
+      const newSelectedRows = shouldBeRemoved
+        ? reject(selectedRows, selectedRowData =>
+            isEqual(selectedRowData, rowData),
+          )
+        : [...selectedRows, rowData];
+
+      setSelectedRows(newSelectedRows);
+      onSelectionChange(newSelectedRows, rowData);
+    }
+    event.stopPropagation();
+  };
+
+  const handleAllSelected = (_, checked) => {
+    setSelectedRows(checked ? data : []);
+    onSelectionChange(checked ? data : []);
+  };
+
+  const renderSelectionColumn = () => {
+    const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
+    return {
+      cellStyle: style,
+      headerStyle: style,
+      hidden: !selection,
+      render: rowData => (
+        <Checkbox
+          checked={some(selectedRows, selectedRowData =>
+            isEqual(selectedRowData, rowData),
+          )}
+          color="primary"
+          onChange={event => handleRowSelected(event, rowData)}
+        />
+      ),
+      sorting: false,
+      title: (
+        <Checkbox
+          checked={dataCount > 0 && selectedCount === dataCount}
+          color="primary"
+          indeterminate={selectedCount > 0 && selectedCount < dataCount}
+          onChange={handleAllSelected}
+        />
+      ),
+    };
+  };
+
+  return (
+    <Table
+      {...restProps}
+      columns={[renderSelectionColumn(), ...columns]}
+      data={data}
+      options={{ ...restOptions }}
+      icons={MuiTableIcons}
+    />
+  );
+};
+
+MuiTable.propTypes = {
+  columns: PropTypes.array.isRequired,
+  data: PropTypes.array.isRequired,
+  onSelectionChange: PropTypes.func,
+  options: PropTypes.shape({
+    paging: PropTypes.bool,
+    predicate: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    search: PropTypes.bool,
+    selection: PropTypes.bool,
+    selectedData: PropTypes.array,
+  }),
+};
+
+MuiTable.defaultProps = defaultProps;
+
+export default MuiTable;

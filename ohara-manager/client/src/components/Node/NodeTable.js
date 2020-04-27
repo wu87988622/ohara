@@ -24,15 +24,13 @@ import {
   isEmpty,
   isFunction,
   map,
-  reject,
   round,
-  some,
   sortBy,
   size,
   unionBy,
   uniq,
 } from 'lodash';
-import Checkbox from '@material-ui/core/Checkbox';
+
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import IconButton from '@material-ui/core/IconButton';
@@ -103,7 +101,6 @@ function NodeTable(props) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditorDialogOpen, setIsEditorDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const [selected, setSelected] = useState(options?.selectedNodes || []);
 
   const data = options?.comparison
     ? sortBy(unionBy(options?.comparedNodes, nodes, 'hostname'), ['hostname'])
@@ -191,37 +188,6 @@ function NodeTable(props) {
   const handleRemoveDialogConfirm = nodeToRemove => {
     onRemove(nodeToRemove);
     setIsRemoveDialogOpen(false);
-  };
-
-  const handleRowSelected = (event, dataClicked) => {
-    if (dataClicked) {
-      const newSelected = some(
-        selected,
-        n => n.hostname === dataClicked.hostname,
-      )
-        ? reject(selected, n => n.hostname === dataClicked.hostname)
-        : [...selected, dataClicked];
-
-      setSelected(newSelected);
-      onSelectionChange(newSelected, dataClicked);
-    }
-    event.stopPropagation();
-  };
-
-  const renderSelectionColumn = () => {
-    const style = { paddingLeft: '0px', paddingRight: '0px', width: '42px' };
-    return {
-      cellStyle: style,
-      headerStyle: style,
-      hidden: !options?.selection,
-      render: node => (
-        <Checkbox
-          checked={some(selected, n => n.hostname === node.hostname)}
-          color="primary"
-          onChange={event => handleRowSelected(event, node)}
-        />
-      ),
-    };
   };
 
   const renderResourceColumns = () => {
@@ -418,7 +384,6 @@ function NodeTable(props) {
           },
         ]}
         columns={[
-          renderSelectionColumn(),
           { title: 'Name', field: 'hostname' },
           ...renderResourceColumns(),
           renderServiceColumn(),
@@ -431,14 +396,17 @@ function NodeTable(props) {
           renderRowActions(),
         ]}
         data={data}
+        onSelectionChange={onSelectionChange}
         options={{
-          paging: false,
-          search: true,
+          predicate: 'hostname',
+          selection: options?.selection,
+          selectedData: options?.selectedNodes,
           showTitle: options?.showTitle,
           rowStyle: node => getRowStyle(node),
         }}
         title={title}
       />
+
       <NodeCreateDialog
         isOpen={isCreateDialogOpen}
         mode={options?.mode}
