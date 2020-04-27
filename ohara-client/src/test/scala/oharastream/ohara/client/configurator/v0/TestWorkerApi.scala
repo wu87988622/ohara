@@ -863,6 +863,7 @@ class TestWorkerApi extends OharaTest {
   def testNegativeMaxHeap(): Unit =
     an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
                                                                                                                               |  {
+                                                                                                                              |    "brokerClusterKey": "bk",
                                                                                                                               |    "nodeNames": ["node00"],
                                                                                                                               |    "xmx": -123
                                                                                                                               |  }
@@ -872,6 +873,7 @@ class TestWorkerApi extends OharaTest {
   def testNegativeInitHeap(): Unit =
     an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
                                                                                                                                |  {
+                                                                                                                               |    "brokerClusterKey": "bk",
                                                                                                                                |    "nodeNames": ["node00"],
                                                                                                                                |    "xms": -123
                                                                                                                                |  }
@@ -901,5 +903,16 @@ class TestWorkerApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     WorkerApi.WORKER_CLUSTER_INFO_FORMAT.read(WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
+
+  @Test
+  def testDataDir(): Unit = {
+    val creation = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+                                                          |  {
+                                                          |    "brokerClusterKey": "bk",
+                                                          |    "nodeNames": ["node00"]
+                                                          |  }
+      """.stripMargin.parseJson)
+    creation.volumeMaps.size shouldBe 0
   }
 }

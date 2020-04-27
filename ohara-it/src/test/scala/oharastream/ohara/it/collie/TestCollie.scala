@@ -109,13 +109,10 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     log.info(s"verify number of log... done")
     result(logApi.log4ZookeeperCluster(clusterKey)).logs
       .map(_.value)
-      .foreach(
-        log =>
-          withClue(log) {
-            log.toLowerCase().contains("exception") shouldBe false
-            log.isEmpty shouldBe false
-          }
-      )
+      .foreach { log =>
+        log.length should not be 0
+        log.toLowerCase should not contain "exception"
+      }
     log.info(s"verify log of zk clusters... done")
     result(containerApi.get(clusterKey)).flatMap(_.containers).foreach { container =>
       container.nodeName shouldBe nodeName
@@ -207,13 +204,10 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     result(logApi.log4BrokerCluster(clusterKey)).logs.size shouldBe 1
     result(logApi.log4BrokerCluster(clusterKey)).logs
       .map(_.value)
-      .foreach(
-        log =>
-          withClue(log) {
-            log.toLowerCase().contains("exception") shouldBe false
-            log.isEmpty shouldBe false
-          }
-      )
+      .foreach { log =>
+        log.length should not be 0
+        log.toLowerCase should not contain "exception"
+      }
     log.info("[BROKER] verify:log done")
     var curCluster = bkCluster
     testTopic(curCluster)
@@ -457,15 +451,13 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
     }
     val logs = result(logApi.log4WorkerCluster(clusterKey)).logs.map(_.value)
     logs.size shouldBe 1
-    logs.foreach(
-      log =>
-        withClue(log) {
-          log.contains("- ERROR") shouldBe false
-          // we cannot assume "k8s get logs" are complete since log may rotate
-          // so log could be empty in k8s environment
-          // also see : https://github.com/kubernetes/kubernetes/issues/11046#issuecomment-121140315
-        }
-    )
+    logs.foreach { log =>
+      log.length should not be 0
+      log.toLowerCase should not contain "- ERROR"
+    // we cannot assume "k8s get logs" are complete since log may rotate
+    // so log could be empty in k8s environment
+    // also see : https://github.com/kubernetes/kubernetes/issues/11046#issuecomment-121140315
+    }
     log.info("[WORKER] verify:log done")
     var curCluster = wkCluster
     testConnectors(curCluster)

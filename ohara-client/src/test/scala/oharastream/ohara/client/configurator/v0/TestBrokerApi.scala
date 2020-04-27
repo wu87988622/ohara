@@ -695,27 +695,37 @@ class TestBrokerApi extends OharaTest {
     BrokerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
-  def testMaxHeap(): Unit = BrokerApi.CREATION_JSON_FORMAT.read(s"""
+  def testMaxHeap(): Unit =
+    BrokerApi.CREATION_JSON_FORMAT
+      .read(s"""
                                                                    |  {
-                                                                   |    "zookeeperClusterKey": "zk",
+                                                                   |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION
+                 .key()}": "zk",
                                                                    |    "nodeNames": ["node00"],
                                                                    |    "xmx": 123
                                                                    |  }
-      """.stripMargin.parseJson).maxHeap shouldBe 123
+      """.stripMargin.parseJson)
+      .maxHeap shouldBe 123
 
   @Test
-  def testInitHeap(): Unit = BrokerApi.CREATION_JSON_FORMAT.read(s"""
+  def testInitHeap(): Unit =
+    BrokerApi.CREATION_JSON_FORMAT
+      .read(s"""
                                                                     |  {
-                                                                    |    "zookeeperClusterKey": "zk",
+                                                                    |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION
+                 .key()}": "zk",
                                                                     |    "nodeNames": ["node00"],
                                                                     |    "xms": 123
                                                                     |  }
-      """.stripMargin.parseJson).initHeap shouldBe 123
+      """.stripMargin.parseJson)
+      .initHeap shouldBe 123
 
   @Test
   def testNegativeMaxHeap(): Unit =
     an[DeserializationException] should be thrownBy BrokerApi.CREATION_JSON_FORMAT.read(s"""
                                                                                                                            |  {
+                                                                                                                           |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION
+                                                                                             .key()}": "zk",
                                                                                                                            |    "nodeNames": ["node00"],
                                                                                                                            |    "xmx": -123
                                                                                                                            |  }
@@ -752,5 +762,28 @@ class TestBrokerApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     BrokerApi.BROKER_CLUSTER_INFO_FORMAT.read(BrokerApi.BROKER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
+
+  @Test
+  def testDataDir(): Unit = {
+    val creation = BrokerApi.CREATION_JSON_FORMAT.read(s"""
+                                                             |  {
+                                                             |    "${ZOOKEEPER_CLUSTER_KEY_DEFINITION.key()}": "zk",
+                                                             |    "nodeNames": ["node00"],
+                                                             |    "${BrokerApi.LOG_DIRS_DEFINITION.key()}": [
+                                                             |      {
+                                                             |        "group": "g",
+                                                             |        "name": "n"
+                                                             |      },
+                                                             |      {
+                                                             |        "group": "g2",
+                                                             |        "name": "n"
+                                                             |      }
+                                                             |    ]
+                                                             |  }
+      """.stripMargin.parseJson)
+    creation.volumeMaps.size shouldBe 2
+    creation.dataFolders.contains(creation.volumeMaps(ObjectKey.of("g", "n")))
+    creation.dataFolders.contains(creation.volumeMaps(ObjectKey.of("g2", "n")))
   }
 }

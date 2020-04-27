@@ -92,8 +92,15 @@ trait ShabondiCollie extends Collie {
                     }
                     k + "=" + value
                 }.toSeq
-                doCreator(executionContext, containerInfo, newNode, routes, Seq(creation.shabondiClass) ++ arguments)
-                  .map(_ => Some(containerInfo))
+                doCreator(
+                  executionContext = executionContext,
+                  containerInfo = containerInfo,
+                  node = newNode,
+                  routes = routes,
+                  arguments = Seq(creation.shabondiClass) ++ arguments,
+                  // shabondi does not use volumes
+                  volumeMaps = Map.empty
+                ).map(_ => Some(containerInfo))
                   .recover {
                     case e: Throwable =>
                       log.error(s"failed to create stream container on ${newNode.hostname}", e)
@@ -113,7 +120,13 @@ trait ShabondiCollie extends Collie {
                   error = None,
                   containers = aliveContainers
                 )
-              postCreate(clusterStatus, existentNodes, routes)
+              postCreate(
+                clusterStatus = clusterStatus,
+                existentNodes = existentNodes,
+                routes = routes,
+                // shabondi does not use volumes
+                volumeMaps = Map.empty
+              )
             }
       }
     }

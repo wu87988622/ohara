@@ -19,7 +19,7 @@ package oharastream.ohara.client.configurator.v0
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
 import oharastream.ohara.common.annotations.Optional
-import oharastream.ohara.common.setting.SettingDef
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
@@ -38,8 +38,7 @@ object ZookeeperApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtils.VERSION}"
 
   //------------------------ The key name list in settings field ---------------------------------/
-  val ZOOKEEPER_HOME_FOLDER: String = "/home/ohara/default"
-  private[this] val _DEFINITIONS    = mutable.Map[String, SettingDef]()
+  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
     assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
@@ -91,10 +90,13 @@ object ZookeeperApi {
       .positiveNumber(SYNC_LIMIT_DEFAULT)
       .build()
   )
-  private[this] val DATA_DIR_KEY     = "dataDir"
-  private[this] val DATA_DIR_DEFAULT = s"$ZOOKEEPER_HOME_FOLDER/data"
+  private[this] val DATA_DIR_KEY = "dataDir"
   val DATA_DIR_DEFINITION: SettingDef = createDef(
-    _.key(DATA_DIR_KEY).documentation("the folder used to store zookeeper data").optional(DATA_DIR_DEFAULT).build()
+    _.key(DATA_DIR_KEY)
+      .documentation("the volume used to store zookeeper data")
+      .optional(SettingDef.Type.OBJECT_KEY)
+      .reference(SettingDef.Reference.VOLUME)
+      .build()
   )
 
   /**
@@ -116,7 +118,22 @@ object ZookeeperApi {
     def tickTime: Int                                                           = settings.tickTime.get
     def initLimit: Int                                                          = settings.initLimit.get
     def syncLimit: Int                                                          = settings.syncLimit.get
-    def dataDir: String                                                         = settings.dataDir.get
+    def dataFolder: String                                                      = "/tmp/zk_data"
+
+    /**
+      * @return the file containing zk quorum id. Noted that id file must be in data folder (see above)
+      */
+    def idFile: String = "/tmp/zk_data/myid"
+    override def volumeMaps: Map[ObjectKey, String] =
+      Map(DATA_DIR_KEY -> dataFolder)
+        .flatMap {
+          case (key, localPath) =>
+            settings.get(key).map(_ -> localPath)
+        }
+        .map {
+          case (js, localPath) =>
+            js.convertTo[ObjectKey] -> localPath
+        }
   }
 
   /**
@@ -144,8 +161,6 @@ object ZookeeperApi {
       noJsNull(settings).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
     def syncLimit: Option[Int] =
       noJsNull(settings).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
-    def dataDir: Option[String] =
-      noJsNull(settings).get(DATA_DIR_KEY).map(_.convertTo[String])
   }
 
   implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
@@ -177,7 +192,7 @@ object ZookeeperApi {
     def tickTime: Int                                                             = settings.tickTime
     def initLimit: Int                                                            = settings.initLimit
     def syncLimit: Int                                                            = settings.syncLimit
-    def dataDir: String                                                           = settings.dataDir
+    def dataDir: String                                                           = settings.dataFolder
 
     override protected def raw: Map[String, JsValue] = ZOOKEEPER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }

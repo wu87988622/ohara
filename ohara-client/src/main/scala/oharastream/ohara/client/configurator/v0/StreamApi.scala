@@ -71,6 +71,10 @@ object StreamApi {
 
     def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
+
+    // TODO: we should allow stream developers to define volume and then use it
+    // https://github.com/oharastream/ohara/issues/4621
+    override def volumeMaps: Map[ObjectKey, String] = Map.empty
   }
   implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](

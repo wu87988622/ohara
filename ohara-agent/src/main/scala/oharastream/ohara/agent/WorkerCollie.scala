@@ -23,6 +23,7 @@ import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -30,12 +31,11 @@ import oharastream.ohara.client.kafka.ConnectorAdmin
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WorkerCollie extends Collie {
-  protected val log              = Logger(classOf[WorkerCollie])
+  private[this] val log          = Logger(classOf[WorkerCollie])
   override val kind: ClusterKind = ClusterKind.WORKER
-
   // TODO: remove this hard code (see #2957)
-  private[this] val homeFolder: String = WorkerApi.WORKER_HOME_FOLDER
-  private[this] val configPath: String = s"$homeFolder/config/worker.config"
+  // this path must be equal to the config path defined by docker/wk.sh
+  private[this] val configPath: String = s"/home/ohara/default/config/worker.config"
 
   /**
     * This is a complicated process. We must address following issues.
@@ -61,16 +61,20 @@ trait WorkerCollie extends Collie {
       brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
       pluginInfos       <- dataCollie.values[FileInfo](creation.pluginKeys)
       sharedJarInfos    <- dataCollie.values[FileInfo](creation.sharedJarKeys)
+      volumeMaps <- Future
+        .traverse(creation.volumeMaps.keySet)(dataCollie.value[Volume])
+        .map(_.map(v => v -> creation.volumeMaps(v.key)).toMap)
     } yield (
       existentNodes,
       allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
       brokerClusterInfo,
       pluginInfos,
-      sharedJarInfos
+      sharedJarInfos,
+      volumeMaps
     )
 
     resolveRequiredInfos.flatMap {
-      case (existentNodes, newNodes, brokerClusterInfo, pluginInfos, sharedJarInfos) =>
+      case (existentNodes, newNodes, brokerClusterInfo, pluginInfos, sharedJarInfos, volumeMaps) =>
         val routes = resolveHostNames(
           (existentNodes.keys.map(_.hostname)
             ++ newNodes.map(_.hostname)
@@ -159,8 +163,14 @@ trait WorkerCollie extends Collie {
                 .append("connector.client.config.override.policy", "All")
                 .done
                 .build
-              doCreator(executionContext, containerInfo, newNode, routes, arguments)
-                .map(_ => Some(containerInfo))
+              doCreator(
+                executionContext = executionContext,
+                containerInfo = containerInfo,
+                node = newNode,
+                routes = routes,
+                arguments = arguments,
+                volumeMaps = volumeMaps
+              ).map(_ => Some(containerInfo))
                 .recover {
                   case e: Throwable =>
                     log.error(s"failed to create worker container on ${newNode.hostname}", e)
@@ -180,7 +190,8 @@ trait WorkerCollie extends Collie {
               error = None
             ),
             existentNodes = existentNodes,
-            routes = routes
+            routes = routes,
+            volumeMaps = volumeMaps
           )
         }
     }

@@ -16,6 +16,7 @@
 
 package oharastream.ohara.client.configurator.v0
 
+import oharastream.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue}
 
@@ -63,4 +64,11 @@ trait ClusterCreation extends BasicCreation {
   def maxHeap: Long = noJsNull(settings)(MAX_HEAP_KEY).convertTo[Long]
 
   def initHeap: Long = noJsNull(settings)(INIT_HEAP_KEY).convertTo[Long]
+
+  /**
+    * @return the volume object key and related container path. For example, "{"group":"a", "name": "b"}" -> "/tmp/aaa" means the
+    *         object key "{"group":"a", "name": "b"}" is mapped to a volume and the volume should be mounted on
+    *         container's "/tmp/aaa"
+    */
+  def volumeMaps: Map[ObjectKey, String] = Map.empty
 }

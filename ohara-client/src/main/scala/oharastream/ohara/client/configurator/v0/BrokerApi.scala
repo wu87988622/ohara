@@ -41,7 +41,6 @@ object BrokerApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtils.VERSION}"
 
   //------------------------ The key name list in settings field ---------------------------------/
-  val BROKER_HOME_FOLDER: String = "/home/ohara/default"
   private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
@@ -68,9 +67,13 @@ object BrokerApi {
       .build()
   )
   private[this] val LOG_DIRS_KEY: String = "log.dirs"
-  private[this] val LOG_DIRS_DEFAULT     = s"$BROKER_HOME_FOLDER/data"
   val LOG_DIRS_DEFINITION: SettingDef = createDef(
-    _.key(LOG_DIRS_KEY).documentation("the folder used to store data of broker").optional(LOG_DIRS_DEFAULT).build()
+    _.key(LOG_DIRS_KEY)
+      .documentation("the folder used to store data of broker")
+      // broker service can take multiples folders to speedup the I/O
+      .optional(SettingDef.Type.OBJECT_KEYS)
+      .reference(SettingDef.Reference.VOLUME)
+      .build()
   )
   private[this] val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
   private[this] val NUMBER_OF_PARTITIONS_DEFAULT     = 1
@@ -123,12 +126,38 @@ object BrokerApi {
     override def ports: Set[Int]       = Set(clientPort, jmxPort)
     def clientPort: Int                = settings.clientPort.get
     def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
-    def logDirs: String                = settings.logDirs.get
-    def numberOfPartitions: Int        = settings.numberOfPartitions.get
+    private[this] def logVolumeKeys: Set[ObjectKey] =
+      settings
+        .get(LOG_DIRS_KEY)
+        .map(_.convertTo[Set[ObjectKey]])
+        .getOrElse(Set.empty)
+
+    /**
+      * @param index dir index
+      * @return dir path with fixed postfix
+      */
+    private[this] def logDir(index: Int) = s"/tmp/bk_data_$index"
+
+    def dataFolders: String =
+      if (logVolumeKeys.isEmpty) "/tmp/bk_data"
+      else
+        logVolumeKeys.zipWithIndex
+          .map {
+            case (_, index) => logDir(index)
+          }
+          .mkString(",")
+    def numberOfPartitions: Int = settings.numberOfPartitions.get
     def numberOfReplications4OffsetsTopic: Int =
       settings.numberOfReplications4OffsetsTopic.get
     def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.get
     def numberOfIoThreads: Int      = settings.numberOfIoThreads.get
+
+    override def volumeMaps: Map[ObjectKey, String] =
+      if (logVolumeKeys.isEmpty) Map.empty
+      else
+        logVolumeKeys.zipWithIndex.map {
+          case (key, index) => key -> logDir(index)
+        }.toMap
   }
 
   /**
@@ -148,9 +177,6 @@ object BrokerApi {
 
     def zookeeperClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
-
-    def logDirs: Option[String] =
-      noJsNull(settings).get(LOG_DIRS_KEY).map(_.convertTo[String])
 
     def numberOfPartitions: Option[Int] =
       noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
@@ -203,7 +229,7 @@ object BrokerApi {
 
     def clientPort: Int                        = settings.clientPort
     def zookeeperClusterKey: ObjectKey         = settings.zookeeperClusterKey
-    def logDirs: String                        = settings.logDirs
+    def logDirs: String                        = settings.dataFolders
     def numberOfPartitions: Int                = settings.numberOfPartitions
     def numberOfReplications4OffsetsTopic: Int = settings.numberOfReplications4OffsetsTopic
     def numberOfNetworkThreads: Int            = settings.numberOfNetworkThreads

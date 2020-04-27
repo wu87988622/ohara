@@ -70,7 +70,8 @@ public class SettingDef implements JsonObject, Serializable {
     ZOOKEEPER_CLUSTER,
     BROKER_CLUSTER,
     WORKER_CLUSTER,
-    FILE
+    FILE,
+    VOLUME
   }
 
   // -------------------------------[value permission]-------------------------------//

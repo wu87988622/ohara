@@ -27,6 +27,7 @@ import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Por
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterState, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
@@ -174,13 +175,15 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     containerInfo: ContainerInfo,
     node: NodeApi.Node,
     route: Map[String, String],
-    arguments: Seq[String]
+    arguments: Seq[String],
+    volumeMaps: Map[Volume, String]
   ): Future[Unit] =
     throw new UnsupportedOperationException("fake collie doesn't support to doCreator function")
 
   override def postCreate(
     clusterStatus: ClusterStatus,
     existentNodes: Map[Node, ContainerInfo],
-    routes: Map[String, String]
+    routes: Map[String, String],
+    volumeMaps: Map[Volume, String]
   )(implicit executionContext: ExecutionContext): Future[Unit] = Future.unit
 }

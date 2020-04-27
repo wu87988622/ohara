@@ -23,19 +23,19 @@ import oharastream.ohara.client.configurator.v0.BrokerApi
 import oharastream.ohara.client.configurator.v0.BrokerApi.{BrokerClusterInfo, Creation}
 import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.kafka.TopicAdmin
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait BrokerCollie extends Collie {
-  protected val log = Logger(classOf[BrokerCollie])
+  private[this] val log = Logger(classOf[BrokerCollie])
 
   override val kind: ClusterKind = ClusterKind.BROKER
-
   // TODO: remove this hard code (see #2957)
-  private[this] val homeFolder: String = BrokerApi.BROKER_HOME_FOLDER
-  private[this] val configPath: String = s"$homeFolder/config/broker.config"
+  // this path must be equal to the config path defined by docker/bk.sh
+  private[this] val configPath: String = s"/home/ohara/default/config/broker.config"
 
   /**
     * This is a complicated process. We must address following issues.
@@ -60,14 +60,18 @@ trait BrokerCollie extends Collie {
         case None => Future.successful(Map.empty[Node, ContainerInfo])
       }
       zookeeperClusterInfo <- dataCollie.value[ZookeeperClusterInfo](creation.zookeeperClusterKey)
+      volumeMaps <- Future
+        .traverse(creation.volumeMaps.keySet)(dataCollie.value[Volume])
+        .map(_.map(v => v -> creation.volumeMaps(v.key)).toMap)
     } yield (
       existentNodes,
       allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
-      zookeeperClusterInfo
+      zookeeperClusterInfo,
+      volumeMaps
     )
 
     resolveRequiredInfos.flatMap {
-      case (existentNodes, newNodes, zookeeperClusterInfo) =>
+      case (existentNodes, newNodes, zookeeperClusterInfo, volumeMaps) =>
         val routes = resolveHostNames(
           (existentNodes.keys.map(_.hostname) ++ newNodes.map(_.hostname) ++ zookeeperClusterInfo.nodeNames).toSet
         ) ++ creation.routes
@@ -121,7 +125,7 @@ trait BrokerCollie extends Collie {
                 .mainConfigFile(configPath)
                 .file(configPath)
                 .append("zookeeper.connect", zookeepers)
-                .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.logDirs)
+                .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.dataFolders)
                 .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
                 .append(
                   BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
@@ -133,8 +137,14 @@ trait BrokerCollie extends Collie {
                 .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
                 .done
                 .build
-              doCreator(executionContext, containerInfo, newNode, routes, arguments)
-                .map(_ => Some(containerInfo))
+              doCreator(
+                executionContext = executionContext,
+                containerInfo = containerInfo,
+                node = newNode,
+                routes = routes,
+                arguments = arguments,
+                volumeMaps = volumeMaps
+              ).map(_ => Some(containerInfo))
                 .recover {
                   case e: Throwable =>
                     log.error(s"failed to create broker container on ${newNode.hostname}", e)
@@ -154,7 +164,8 @@ trait BrokerCollie extends Collie {
               error = None
             ),
             existentNodes = existentNodes,
-            routes = routes
+            routes = routes,
+            volumeMaps = volumeMaps
           )
         }
     }

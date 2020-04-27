@@ -26,6 +26,7 @@ import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest, ClusterState}
@@ -124,6 +125,7 @@ trait Collie {
     * @param node node
     * @param routes routes
     * @param arguments argument
+    * @param volumeMaps the volumes mounted to this service
     * @return async call
     */
   protected def doCreator(
@@ -131,7 +133,8 @@ trait Collie {
     containerInfo: ContainerInfo,
     node: Node,
     routes: Map[String, String],
-    arguments: Seq[String]
+    arguments: Seq[String],
+    volumeMaps: Map[Volume, String]
   ): Future[Unit]
 
   /**
@@ -140,13 +143,15 @@ trait Collie {
     * @param clusterStatus current cluster status
     * @param existentNodes the origin nodes
     * @param routes new routes
+    * @param volumeMaps the volumes mounted to this service
     * @param executionContext thread pool
     * @return async call
     */
   protected def postCreate(
     clusterStatus: ClusterStatus,
     existentNodes: Map[Node, ContainerInfo],
-    routes: Map[String, String]
+    routes: Map[String, String],
+    volumeMaps: Map[Volume, String]
   )(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**

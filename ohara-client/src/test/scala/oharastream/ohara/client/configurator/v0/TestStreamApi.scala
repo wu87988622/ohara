@@ -982,4 +982,20 @@ class TestStreamApi extends OharaTest {
                                                                              |    }
                                                                              |  }
      """.stripMargin.parseJson).nodeNames shouldBe Set.empty
+
+  @Test
+  def testDataDir(): Unit = {
+    val creation = StreamApi.CREATION_JSON_FORMAT.read(s"""
+                                                          |  {
+                                                          |    "jarKey": ${fakeJar.toJson},
+                                                          |    "from": [
+                                                          |    ],
+                                                          |    "to": [
+                                                          |    ],
+                                                          |    "brokerClusterKey": "bk",
+                                                          |    "nodeNames": ["node00"]
+                                                          |  }
+      """.stripMargin.parseJson)
+    creation.volumeMaps.size shouldBe 0
+  }
 }

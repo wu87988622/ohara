@@ -26,6 +26,7 @@ import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi.Creation
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.stream.Stream
 import oharastream.ohara.stream.config.StreamSetting
 import spray.json.JsString
@@ -37,7 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * It isolates the implementation of container manager from Configurator.
   */
 trait StreamCollie extends Collie {
-  protected val log = Logger(classOf[StreamCollie])
+  private[this] val log = Logger(classOf[StreamCollie])
   override def creator: StreamCollie.ClusterCreator =
     (executionContext, creation) => {
       implicit val exec: ExecutionContext = executionContext
@@ -53,22 +54,26 @@ trait StreamCollie extends Collie {
         }
         brokerClusterInfo <- dataCollie.value[BrokerClusterInfo](creation.brokerClusterKey)
         fileInfo          <- dataCollie.value[FileInfo](creation.jarKey)
+        volumeMaps <- Future
+          .traverse(creation.volumeMaps.keySet)(dataCollie.value[Volume])
+          .map(_.map(v => v -> creation.volumeMaps(v.key)).toMap)
       } yield (
         existentNodes,
         allNodes.filterNot(node => existentNodes.exists(_._1.hostname == node.hostname)),
         brokerClusterInfo,
-        fileInfo
+        fileInfo,
+        volumeMaps
       )
 
       resolveRequiredInfos
         .map {
-          case (existentNodes, newNodes, brokerClusterInfo, fileInfo) =>
+          case (existentNodes, newNodes, brokerClusterInfo, fileInfo, volumeMaps) =>
             if (existentNodes.nonEmpty)
               throw new UnsupportedOperationException(s"stream collie doesn't support to add node to a running cluster")
-            else (newNodes, brokerClusterInfo, fileInfo)
+            else (newNodes, brokerClusterInfo, fileInfo, volumeMaps)
         }
         .flatMap {
-          case (newNodes, brokerClusterInfo, fileInfo) =>
+          case (newNodes, brokerClusterInfo, fileInfo, volumeMaps) =>
             val routes = resolveHostNames(
               (newNodes.map(_.hostname)
                 ++ brokerClusterInfo.nodeNames
@@ -128,8 +133,14 @@ trait StreamCollie extends Collie {
                         case (k, v) => s"$k=$v"
                       }
 
-                  doCreator(executionContext, containerInfo, newNode, routes, arguments)
-                    .map(_ => Some(containerInfo))
+                  doCreator(
+                    executionContext = executionContext,
+                    containerInfo = containerInfo,
+                    node = newNode,
+                    routes = routes,
+                    arguments = arguments,
+                    volumeMaps = volumeMaps
+                  ).map(_ => Some(containerInfo))
                     .recover {
                       case e: Throwable =>
                         log.error(s"failed to create stream container on ${newNode.hostname}", e)
@@ -149,7 +160,8 @@ trait StreamCollie extends Collie {
                   error = None
                 ),
                 existentNodes = Map.empty,
-                routes = routes
+                routes = routes,
+                volumeMaps = volumeMaps
               )
             }
         }

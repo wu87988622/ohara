@@ -21,6 +21,7 @@ import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
 import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -81,7 +82,8 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
     containerInfo: ContainerInfo,
     node: Node,
     route: Map[String, String],
-    arguments: Seq[String]
+    arguments: Seq[String],
+    volumeMaps: Map[Volume, String]
   ): Future[Unit] =
     k8sClient.containerCreator
       .imageName(containerInfo.imageName)
@@ -98,11 +100,14 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
       .name(containerInfo.name)
       .threadPool(executionContext)
       .arguments(arguments)
+      // TODO: add volumes to containers
+      // https://github.com/oharastream/ohara/pull/4575
       .create()
 
   override protected def postCreate(
     clusterStatus: ClusterStatus,
     existentNodes: Map[Node, ContainerInfo],
-    routes: Map[String, String]
+    routes: Map[String, String],
+    volumeMaps: Map[Volume, String]
   )(implicit executionContext: ExecutionContext): Future[Unit] = Future.unit
 }

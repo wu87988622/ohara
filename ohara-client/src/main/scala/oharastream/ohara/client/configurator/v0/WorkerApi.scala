@@ -41,7 +41,6 @@ object WorkerApi {
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
 
   //------------------------ The key name list in settings field ---------------------------------/
-  val WORKER_HOME_FOLDER: String = "/home/ohara/default"
   private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
   private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
     val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
@@ -198,6 +197,10 @@ object WorkerApi {
     def freePorts: Set[Int]                                                     = settings.freePorts.get
 
     override def ports: Set[Int] = freePorts + clientPort + jmxPort
+
+    // TODO: we should allow connector developers to define volume and then use it
+    // https://github.com/oharastream/ohara/issues/4621
+    override def volumeMaps: Map[ObjectKey, String] = Map.empty
   }
 
   /**

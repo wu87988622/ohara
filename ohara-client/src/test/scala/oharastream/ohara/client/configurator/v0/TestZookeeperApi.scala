@@ -18,7 +18,7 @@ package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.SettingDef
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.util.CommonUtils
 import org.junit.Test
@@ -523,5 +523,22 @@ class TestZookeeperApi extends OharaTest {
       lastModified = CommonUtils.current()
     )
     ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.read(ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster)) shouldBe cluster
+  }
+
+  @Test
+  def testDataDir(): Unit = {
+    val creation = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+                                                             |  {
+                                                             |    "nodeNames": ["node00"],
+                                                             |    "${ZookeeperApi.DATA_DIR_DEFINITION.key()}": {
+                                                             |      "group": "g",
+                                                             |      "name": "n"
+                                                             |    }
+                                                             |  }
+      """.stripMargin.parseJson)
+
+    creation.volumeMaps.size shouldBe 1
+    creation.volumeMaps.head._1 shouldBe ObjectKey.of("g", "n")
+    creation.volumeMaps.head._2 shouldBe creation.dataFolder
   }
 }
