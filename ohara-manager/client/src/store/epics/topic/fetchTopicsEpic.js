@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, startWith } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
@@ -30,6 +30,7 @@ export default action$ =>
       defer(() => topicApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.topic])),
         map(normalizedData => actions.fetchTopics.success(normalizedData)),
+        startWith(actions.fetchTopics.request()),
         catchError(res => of(actions.fetchTopics.failure(res))),
       ),
     ),

@@ -25,7 +25,7 @@ import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 const shabondiId = getId(shabondiEntity);
 
 jest.mock('api/shabondiApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     getCells: () => [
       {
@@ -40,7 +40,7 @@ const paperApiClass = jest.fn(() => {
     addLink: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 const cell = {};
 
 const makeTestScheduler = () =>

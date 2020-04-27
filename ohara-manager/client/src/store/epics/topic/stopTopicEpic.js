@@ -14,56 +14,76 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from, zip, throwError } from 'rxjs';
+import { defer, from, zip, throwError, iif, of } from 'rxjs';
 import {
   catchError,
   map,
-  switchMap,
   retryWhen,
   delay,
-  take,
+  distinctUntilChanged,
+  mergeMap,
+  startWith,
+  concatMap,
 } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-export const stopTopic$ = params =>
-  zip(
+export const stopTopic$ = params => {
+  const topicId = getId(params);
+  return zip(
     defer(() => topicApi.stop(params)),
     defer(() => topicApi.get(params)).pipe(
       map(res => {
-        if (res.data.state) {
-          throw res;
-        }
-        return res;
+        if (res.data.state) throw res;
+        else return res.data;
       }),
-      retryWhen(error => error.pipe(delay(1000 * 2), take(10))),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 10,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
+      ),
     ),
   ).pipe(
-    map(([, res]) => normalize(res.data, schema.topic)),
+    map(([, data]) => normalize(data, schema.topic)),
+    map(normalizedData => merge(normalizedData, { topicId })),
     map(normalizedData => actions.stopTopic.success(normalizedData)),
-    catchError(res =>
+    startWith(actions.stopTopic.request({ topicId })),
+    catchError(error =>
       // Let the caller decides this Action should be terminated or trigger failure reducer
-      throwError(res),
+      throwError(error),
     ),
   );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.stopTopic.REQUEST),
+    ofType(actions.stopTopic.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
+    distinctUntilChanged(),
+    mergeMap(values =>
       stopTopic$(values).pipe(
-        catchError(error => {
+        catchError(error =>
           from([
             actions.stopTopic.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
-          ]);
-        }),
+            actions.createEventLog.trigger({
+              title: error,
+              type: LOG_LEVEL.error,
+            }),
+          ]),
+        ),
       ),
     ),
   );

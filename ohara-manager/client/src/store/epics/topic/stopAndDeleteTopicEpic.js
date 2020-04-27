@@ -14,30 +14,46 @@
  * limitations under the License.
  */
 
+import { get } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from, of } from 'rxjs';
-import { catchError, map, mergeMap, concatAll } from 'rxjs/operators';
+import { catchError, map, mergeMap, concatAll, tap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { LOG_LEVEL } from 'const';
 import { stopTopic$ } from './stopTopicEpic';
 import { deleteTopic$ } from './deleteTopicEpic';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "delete + stop" for single deletion request
 export default action$ =>
   action$.pipe(
-    ofType(actions.stopAndDeleteTopic.REQUEST),
+    ofType(actions.stopAndDeleteTopic.TRIGGER),
     map(action => action.payload),
-    mergeMap(values =>
-      of(stopTopic$(values), deleteTopic$(values)).pipe(
+    mergeMap(values => {
+      const { params, options } = values;
+      const paperApi = get(options, 'paperApi');
+      if (paperApi) {
+        paperApi.updateElement(params.id, {
+          status: CELL_STATUS.pending,
+        });
+      }
+      return of(stopTopic$(params), deleteTopic$(params)).pipe(
         concatAll(),
-        catchError(res =>
-          from([
+        tap(() => {
+          if (paperApi) paperApi.removeElement(params.id);
+        }),
+        catchError(res => {
+          if (paperApi) {
+            paperApi.updateElement(params.id, {
+              status: CELL_STATUS.failed,
+            });
+          }
+          return from([
             actions.stopAndDeleteTopic.failure(res),
             actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+      );
+    }),
   );

@@ -24,12 +24,12 @@ import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { noop } from 'rxjs';
 
 jest.mock('api/connectorApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     addLink: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 
 const connectorId = getId(connectorEntity);
 

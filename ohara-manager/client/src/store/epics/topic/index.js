@@ -15,7 +15,7 @@
  */
 
 import { combineEpics } from 'redux-observable';
-import fetchAllTopicsEpic from './fetchAllTopicsEpic';
+import fetchTopicsEpic from './fetchTopicsEpic';
 import createTopicEpic from './createTopicEpic';
 import deleteTopicEpic from './deleteTopicEpic';
 import updateTopicEpic from './updateTopicEpic';
@@ -25,7 +25,7 @@ import createAndStartTopicEpic from './createAndStartTopicEpic';
 import stopAndDeleteTopicEpic from './stopAndDeleteTopicEpic';
 
 export default combineEpics(
-  fetchAllTopicsEpic,
+  fetchTopicsEpic,
   createTopicEpic,
   deleteTopicEpic,
   updateTopicEpic,

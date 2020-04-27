@@ -15,25 +15,19 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
-import { of, noop } from 'rxjs';
+import { of } from 'rxjs';
 
-import startConnectorEpic from '../../connector/startConnectorEpic';
-import * as connectorApi from 'api/connectorApi';
+import stopTopicEpic from '../../topic/stopTopicEpic';
+import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
+import { entity as topicEntity } from 'api/__mocks__/topicApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
+import { LOG_LEVEL } from 'const';
 
-jest.mock('api/connectorApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+jest.mock('api/topicApi');
 
-const connectorId = getId(connectorEntity);
+const topicId = getId(topicEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -45,7 +39,7 @@ beforeEach(() => {
   jest.restoreAllMocks();
 });
 
-it('start connector should be worked correctly', () => {
+it('stop topic should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -55,35 +49,31 @@ it('start connector should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startConnector.TRIGGER,
-        payload: {
-          params: connectorEntity,
-          options: { paperApi },
-        },
+        type: actions.stopTopic.TRIGGER,
+        payload: topicEntity,
       },
     });
-    const output$ = startConnectorEpic(action$);
+    const output$ = stopTopicEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startConnector.REQUEST,
+        type: actions.stopTopic.REQUEST,
         payload: {
-          connectorId,
+          topicId,
         },
       },
       v: {
-        type: actions.startConnector.SUCCESS,
+        type: actions.stopTopic.SUCCESS,
         payload: {
-          connectorId,
+          topicId,
           entities: {
-            connectors: {
-              [connectorId]: {
-                ...connectorEntity,
-                state: SERVICE_STATE.RUNNING,
+            topics: {
+              [topicId]: {
+                ...topicEntity,
               },
             },
           },
-          result: connectorId,
+          result: topicId,
         },
       },
     });
@@ -94,15 +84,15 @@ it('start connector should be worked correctly', () => {
   });
 });
 
-it('start connector failed after reach retry limit', () => {
-  // mock a 20 times "failed started" result
-  const spyGet = jest.spyOn(connectorApi, 'get');
+it('stop topic failed after reach retry limit', () => {
+  // mock a 20 times "failed stoped" result
+  const spyGet = jest.spyOn(topicApi, 'get');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -111,39 +101,43 @@ it('start connector failed after reach retry limit', () => {
     of({
       status: 200,
       title: 'retry mock get data',
-      data: { ...connectorEntity, state: SERVICE_STATE.RUNNING },
+      data: { ...topicEntity },
     }),
   );
 
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
-    // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms v';
-    const subs = '    ^------------';
+    const input = '   ^-a             ';
+    // we failed after retry 11 times (11 * 2000ms = 22s)
+    const expected = '--a 21999ms (vy)';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {
-        type: actions.startConnector.TRIGGER,
-        payload: {
-          params: connectorEntity,
-          options: { paperApi },
-        },
+        type: actions.stopTopic.TRIGGER,
+        payload: topicEntity,
       },
     });
-    const output$ = startConnectorEpic(action$);
+    const output$ = stopTopicEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startConnector.REQUEST,
+        type: actions.stopTopic.REQUEST,
         payload: {
-          connectorId,
+          topicId,
         },
       },
       v: {
-        type: actions.startConnector.FAILURE,
+        type: actions.stopTopic.FAILURE,
         payload: 'exceed max retry times',
+      },
+      y: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          title: 'exceed max retry times',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 
@@ -153,7 +147,7 @@ it('start connector failed after reach retry limit', () => {
   });
 });
 
-it('start connector multiple times should be worked once', () => {
+it('stop topic multiple times should be worked once', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -163,33 +157,29 @@ it('start connector multiple times should be worked once', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startConnector.TRIGGER,
-        payload: {
-          params: connectorEntity,
-          options: { paperApi },
-        },
+        type: actions.stopTopic.TRIGGER,
+        payload: topicEntity,
       },
     });
-    const output$ = startConnectorEpic(action$);
+    const output$ = stopTopicEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startConnector.REQUEST,
-        payload: { connectorId },
+        type: actions.stopTopic.REQUEST,
+        payload: { topicId },
       },
       v: {
-        type: actions.startConnector.SUCCESS,
+        type: actions.stopTopic.SUCCESS,
         payload: {
-          connectorId,
+          topicId,
           entities: {
-            connectors: {
-              [connectorId]: {
-                ...connectorEntity,
-                state: SERVICE_STATE.RUNNING,
+            topics: {
+              [topicId]: {
+                ...topicEntity,
               },
             },
           },
-          result: connectorId,
+          result: topicId,
         },
       },
     });
@@ -200,17 +190,15 @@ it('start connector multiple times should be worked once', () => {
   });
 });
 
-it('start different connector should be worked correctly', () => {
+it('stop different topic should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const anotherConnectorEntity = {
-      ...connectorEntity,
-      name: 'anotherconnector',
+    const anotherTopicEntity = {
+      ...topicEntity,
+      name: 'anothertopic',
       group: 'default',
-      xms: 1111,
-      xmx: 2222,
-      clientPort: 3333,
+      numberOfPartitions: 10,
     };
     const input = '   ^-a--b           ';
     const expected = '--a--b 496ms y--z';
@@ -218,63 +206,55 @@ it('start different connector should be worked correctly', () => {
 
     const action$ = hot(input, {
       a: {
-        type: actions.startConnector.TRIGGER,
-        payload: {
-          params: connectorEntity,
-          options: { paperApi },
-        },
+        type: actions.stopTopic.TRIGGER,
+        payload: topicEntity,
       },
       b: {
-        type: actions.startConnector.TRIGGER,
-        payload: {
-          params: anotherConnectorEntity,
-          options: { paperApi },
-        },
+        type: actions.stopTopic.TRIGGER,
+        payload: anotherTopicEntity,
       },
     });
-    const output$ = startConnectorEpic(action$);
+    const output$ = stopTopicEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startConnector.REQUEST,
+        type: actions.stopTopic.REQUEST,
         payload: {
-          connectorId,
+          topicId,
         },
       },
       b: {
-        type: actions.startConnector.REQUEST,
+        type: actions.stopTopic.REQUEST,
         payload: {
-          connectorId: getId(anotherConnectorEntity),
+          topicId: getId(anotherTopicEntity),
         },
       },
       y: {
-        type: actions.startConnector.SUCCESS,
+        type: actions.stopTopic.SUCCESS,
         payload: {
-          connectorId,
+          topicId,
           entities: {
-            connectors: {
-              [connectorId]: {
-                ...connectorEntity,
-                state: SERVICE_STATE.RUNNING,
+            topics: {
+              [topicId]: {
+                ...topicEntity,
               },
             },
           },
-          result: connectorId,
+          result: topicId,
         },
       },
       z: {
-        type: actions.startConnector.SUCCESS,
+        type: actions.stopTopic.SUCCESS,
         payload: {
-          connectorId: getId(anotherConnectorEntity),
+          topicId: getId(anotherTopicEntity),
           entities: {
-            connectors: {
-              [getId(anotherConnectorEntity)]: {
-                ...anotherConnectorEntity,
-                state: SERVICE_STATE.RUNNING,
+            topics: {
+              [getId(anotherTopicEntity)]: {
+                ...anotherTopicEntity,
               },
             },
           },
-          result: getId(anotherConnectorEntity),
+          result: getId(anotherTopicEntity),
         },
       },
     });

@@ -25,13 +25,13 @@ import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 jest.mock('api/shabondiApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     updateElement: () => noop(),
     removeElement: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 
 const shabondiId = getId(shabondiEntity);
 

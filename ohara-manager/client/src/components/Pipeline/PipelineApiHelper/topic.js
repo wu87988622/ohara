@@ -33,16 +33,18 @@ const topic = () => {
       });
     }
 
-    createAndStartTopic({
-      id,
-      name,
-      tags: {
-        isShared: false,
-        displayName,
-        pipelineName: currentPipeline.name,
+    createAndStartTopic(
+      {
+        id,
+        name,
+        tags: {
+          isShared: false,
+          displayName,
+          pipelineName: currentPipeline.name,
+        },
       },
-      paperApi,
-    });
+      { paperApi },
+    );
   };
 
   const stopAndRemove = (params, paperApi) => {
@@ -54,11 +56,13 @@ const topic = () => {
       status: CELL_STATUS.pending,
     });
 
-    stopAndDeleteTopic({
-      id,
-      name,
-      paperApi,
-    });
+    stopAndDeleteTopic(
+      {
+        id,
+        name,
+      },
+      { paperApi },
+    );
   };
 
   return { createAndStart, stopAndRemove };

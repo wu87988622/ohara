@@ -14,24 +14,30 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, startWith } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.updateTopic.REQUEST),
+    ofType(actions.updateTopic.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      defer(() => topicApi.update(values)).pipe(
+    mergeMap(values => {
+      const topicId = getId(values);
+      return defer(() => topicApi.update(values)).pipe(
         map(res => normalize(res.data, schema.topic)),
-        map(normalizedData => actions.updateTopic.success(normalizedData)),
+        map(normalizedData =>
+          actions.updateTopic.success(merge(normalizedData, { topicId })),
+        ),
+        startWith(actions.updateTopic.request({ topicId })),
         catchError(res => of(actions.updateTopic.failure(res))),
-      ),
-    ),
+      );
+    }),
   );

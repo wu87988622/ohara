@@ -43,7 +43,7 @@ export const useTopicGroup = () => {
     return hashByGroupAndName(workspaceGroup, workspaceName);
 };
 
-export const useFetchAllTopicsAction = () => {
+export const useFetchTopicsAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.fetchTopics.trigger()), [dispatch]);
 };
@@ -58,7 +58,7 @@ export const useCreateTopicAction = () => {
   return useCallback(
     values =>
       dispatch(
-        actions.createTopic.request({ ...values, group, brokerClusterKey }),
+        actions.createTopic.trigger({ ...values, group, brokerClusterKey }),
       ),
     [brokerClusterKey, dispatch, group],
   );
@@ -68,7 +68,7 @@ export const useUpdateTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    values => dispatch(actions.updateTopic.request({ ...values, group })),
+    values => dispatch(actions.updateTopic.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -77,7 +77,7 @@ export const useDeleteTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    name => dispatch(actions.deleteTopic.request({ group, name })),
+    name => dispatch(actions.deleteTopic.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -86,7 +86,7 @@ export const useStartTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    name => dispatch(actions.startTopic.request({ group, name })),
+    name => dispatch(actions.startTopic.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -95,7 +95,7 @@ export const useStopTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    name => dispatch(actions.stopTopic.request({ group, name })),
+    name => dispatch(actions.stopTopic.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -108,12 +108,11 @@ export const useCreateAndStartTopicAction = () => {
     name: hooks.useWorkspaceName(),
   };
   return useCallback(
-    values =>
+    (values, options) =>
       dispatch(
-        actions.createAndStartTopic.request({
-          ...values,
-          group,
-          brokerClusterKey,
+        actions.createAndStartTopic.trigger({
+          params: { ...values, group, brokerClusterKey },
+          options,
         }),
       ),
     [brokerClusterKey, dispatch, group],
@@ -124,21 +123,26 @@ export const useStopAndDeleteTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    values =>
-      dispatch(actions.stopAndDeleteTopic.request({ ...values, group })),
+    (values, options) =>
+      dispatch(
+        actions.stopAndDeleteTopic.trigger({
+          params: { ...values, group },
+          options,
+        }),
+      ),
     [dispatch, group],
   );
 };
 
 export const useAllTopics = () => {
   const isTopicLoaded = hooks.useIsTopicLoaded();
-  const fetchAllTopics = hooks.useFetchAllTopicsAction();
+  const fetchTopics = hooks.useFetchTopicsAction();
   const getInfoById = selectors.makeGetInfoById();
   const brokerId = hooks.useBrokerId();
 
   useEffect(() => {
-    if (!isTopicLoaded) fetchAllTopics();
-  }, [fetchAllTopics, isTopicLoaded]);
+    if (!isTopicLoaded) fetchTopics();
+  }, [fetchTopics, isTopicLoaded]);
 
   return useSelector(state => {
     const topics = selectors.getAllTopics(state);

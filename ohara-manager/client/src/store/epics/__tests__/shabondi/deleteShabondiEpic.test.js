@@ -23,13 +23,13 @@ import { getId } from 'utils/object';
 import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 
 jest.mock('api/shabondiApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     updateElement: () => noop(),
     removeElement: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 
 const shabondiId = getId(shabondiEntity);
 

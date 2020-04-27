@@ -25,13 +25,13 @@ import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 jest.mock('api/connectorApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     updateElement: () => noop(),
     removeElement: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 
 const connectorId = getId(connectorEntity);
 

@@ -25,7 +25,7 @@ import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 const connectorId = getId(connectorEntity);
 
 jest.mock('api/connectorApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     getCells: () => [
       {
@@ -40,7 +40,7 @@ const paperApiClass = jest.fn(() => {
     addLink: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 const cell = {};
 
 const makeTestScheduler = () =>

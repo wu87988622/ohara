@@ -16,30 +16,29 @@
 
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, switchMap, mergeMap } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  mergeMap,
+  distinctUntilChanged,
+  startWith,
+} from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
-import { LOG_LEVEL } from 'const';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
-const handleSuccess = values => {
-  const { id, paperApi } = values;
-  if (paperApi) {
-    paperApi.removeElement(id);
-  }
-};
-
-export const deleteTopic$ = values =>
-  defer(() => topicApi.remove(values)).pipe(
-    mergeMap(res => {
-      handleSuccess(values);
-      const id = getId(values);
-      return from([
-        actions.deleteTopic.success(id),
+export const deleteTopic$ = params => {
+  const topicId = getId(params);
+  return defer(() => topicApi.remove(params)).pipe(
+    mergeMap(res =>
+      from([
+        actions.deleteTopic.success({ topicId }),
         actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
-      ]);
-    }),
+      ]),
+    ),
+    startWith(actions.deleteTopic.request({ topicId })),
     catchError(error =>
       from([
         actions.deleteTopic.failure(error),
@@ -47,19 +46,12 @@ export const deleteTopic$ = values =>
       ]),
     ),
   );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.deleteTopic.REQUEST),
+    ofType(actions.deleteTopic.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      deleteTopic$(values).pipe(
-        catchError(error =>
-          from([
-            actions.deleteTopic.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+    distinctUntilChanged(),
+    mergeMap(values => deleteTopic$(values)),
   );

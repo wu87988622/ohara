@@ -14,77 +14,67 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip } from 'rxjs';
 import {
   catchError,
   map,
-  switchMap,
+  startWith,
   retryWhen,
   delay,
-  take,
+  concatMap,
+  distinctUntilChanged,
+  mergeMap,
 } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { getCellState } from 'components/Pipeline/PipelineApiHelper/apiHelperUtils';
-import { LOG_LEVEL } from 'const';
+import { getId } from 'utils/object';
 
-const handleSuccess = (values, res) => {
-  const { id, paperApi } = values;
-  if (paperApi) {
-    const state = getCellState(res);
-    paperApi.updateElement(id, {
-      status: state,
-    });
-  }
-};
-
-const handleFail = values => {
-  const { id, paperApi } = values;
-  if (paperApi) {
-    paperApi.removeElement(id);
-  }
-};
-
-export const startTopic$ = values =>
-  zip(
-    defer(() => topicApi.start(values)),
-    defer(() => topicApi.get(values)).pipe(
+export const startTopic$ = params => {
+  const topicId = getId(params);
+  return zip(
+    defer(() => topicApi.start(params)),
+    defer(() => topicApi.get(params)).pipe(
       map(res => {
-        if (!res.data.state || res.data.state !== 'RUNNING') {
-          throw res;
-        }
-        return res;
+        if (!res.data.state || res.data.state !== 'RUNNING') throw res;
+        else return res.data;
       }),
-      retryWhen(error => error.pipe(delay(1000 * 2), take(5))),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 10,
+              throwError('exceed max retry times'),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
+      ),
     ),
   ).pipe(
-    map(([, res]) => {
-      handleSuccess(values, res);
-      return normalize(res.data, schema.topic);
-    }),
+    map(([, data]) => normalize(data, schema.topic)),
+    map(normalizedData => merge(normalizedData, { topicId })),
     map(normalizedData => actions.startTopic.success(normalizedData)),
-    catchError(res => {
-      handleFail(values);
-      return from([
-        actions.startTopic.failure(res),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-      ]);
-    }),
+    startWith(actions.startTopic.request({ topicId })),
+    catchError(error =>
+      // Let the caller decides this Action should be terminated or trigger failure reducer
+      throwError(error),
+    ),
   );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.startTopic.REQUEST),
+    ofType(actions.startTopic.TRIGGER),
     map(action => action.payload),
-    switchMap(values => startTopic$(values)),
-    catchError(res =>
-      from([
-        actions.startTopic.failure(res),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-      ]),
+    distinctUntilChanged(),
+    mergeMap(values =>
+      startTopic$(values).pipe(
+        catchError(error => of(actions.startTopic.failure(error))),
+      ),
     ),
   );

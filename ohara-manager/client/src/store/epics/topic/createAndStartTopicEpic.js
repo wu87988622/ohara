@@ -14,30 +14,50 @@
  * limitations under the License.
  */
 
+import { get } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, from } from 'rxjs';
-import { catchError, map, concatAll, mergeMap } from 'rxjs/operators';
+import { catchError, map, concatAll, mergeMap, tap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { createTopic$ } from './createTopicEpic';
 import { startTopic$ } from './startTopicEpic';
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "create + start" for single creation request
 export default action$ =>
   action$.pipe(
-    ofType(actions.createAndStartTopic.REQUEST),
+    ofType(actions.createAndStartTopic.TRIGGER),
     map(action => action.payload),
-    mergeMap(values =>
-      of(createTopic$(values), startTopic$(values)).pipe(
+    mergeMap(values => {
+      const { params, options } = values;
+      const paperApi = get(options, 'paperApi');
+      if (paperApi) {
+        paperApi.updateElement(params.id, {
+          status: CELL_STATUS.pending,
+        });
+      }
+      return of(createTopic$(params), startTopic$(params)).pipe(
         concatAll(),
-        catchError(res =>
-          from([
+        tap(() => {
+          if (paperApi) {
+            paperApi.updateElement(params.id, {
+              status: CELL_STATUS.running,
+            });
+          }
+        }),
+        catchError(res => {
+          if (paperApi) {
+            paperApi.updateElement(params.id, {
+              status: CELL_STATUS.failed,
+            });
+          }
+          return from([
             actions.createAndStartTopic.failure(res),
             actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+      );
+    }),
   );

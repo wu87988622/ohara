@@ -14,55 +14,48 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, from, throwError } from 'rxjs';
-import { catchError, map, switchMap, mergeMap } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  mergeMap,
+  distinctUntilChanged,
+  startWith,
+} from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
+import { getId } from 'utils/object';
 import * as schema from 'store/schema';
-import { CELL_STATUS } from 'const';
 import { LOG_LEVEL } from 'const';
 
-const handleSuccess = values => {
-  const { id, paperApi } = values;
-  if (paperApi) {
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
-  }
-};
-
-const handleFail = values => {
-  const { id, paperApi } = values;
-  if (paperApi) {
-    paperApi.removeElement(id);
-  }
-};
-
-export const createTopic$ = values =>
-  defer(() => topicApi.create(values)).pipe(
+export const createTopic$ = params => {
+  const topicId = getId(params);
+  return defer(() => topicApi.create(params)).pipe(
     mergeMap(res => {
       const normalizedData = normalize(res.data, schema.topic);
-      handleSuccess(values);
       return from([
-        actions.createTopic.success(normalizedData),
+        actions.createTopic.success(merge(normalizedData, { topicId })),
         actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
       ]);
     }),
+    startWith(actions.createTopic.request({ topicId })),
     catchError(res => {
-      handleFail(values);
       // Let the caller decides this Action should be terminated or trigger failure reducer
       return throwError(res);
     }),
   );
+};
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.createTopic.REQUEST),
+    ofType(actions.createTopic.TRIGGER),
     map(action => action.payload),
-    switchMap(values => createTopic$(values)),
+    distinctUntilChanged(),
+    mergeMap(values => createTopic$(values)),
     catchError(res =>
       from([
         actions.createTopic.failure(res),

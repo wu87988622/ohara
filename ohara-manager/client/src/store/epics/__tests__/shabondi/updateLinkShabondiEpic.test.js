@@ -24,12 +24,12 @@ import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 import { noop } from 'rxjs';
 
 jest.mock('api/shabondiApi');
-const paperApiClass = jest.fn(() => {
+const mockedPaperApi = jest.fn(() => {
   return {
     addLink: () => noop(),
   };
 });
-const paperApi = new paperApiClass();
+const paperApi = new mockedPaperApi();
 
 const shabondiId = getId(shabondiEntity);
 
