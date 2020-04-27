@@ -79,14 +79,18 @@ const Settings = () => {
       isPageComponent={isPageComponent}
     >
       <Wrapper>
-        <SettingsMenu
-          menu={menu}
-          selected={selectedMenu}
-          handleClick={handleMenuClick}
-          closePageComponent={resetSelectedItem}
-          isPageComponent={isPageComponent}
-          scrollRef={scrollRef}
-        />
+        {// This feature is disabled, see #4659
+        false && (
+          <SettingsMenu
+            menu={menu}
+            selected={selectedMenu}
+            handleClick={handleMenuClick}
+            closePageComponent={resetSelectedItem}
+            isPageComponent={isPageComponent}
+            scrollRef={scrollRef}
+          />
+        )}
+
         <SettingsMain
           sections={sections}
           handleChange={handleComponentChange}
