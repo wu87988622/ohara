@@ -32,8 +32,8 @@ export default function reducer(state = initialState, action) {
         ...state,
         loading: true,
         error: null,
+        selectedCell: null,
       };
-
     case actions.switchPipeline.SUCCESS:
       return {
         ...state,

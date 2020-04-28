@@ -749,6 +749,9 @@ const Paper = React.forwardRef((props, ref) => {
           ),
         );
       },
+      clearGraph(options) {
+        graph.clear(options);
+      },
       setScale(sx, sy) {
         if (sx === undefined) {
           throw new Error(

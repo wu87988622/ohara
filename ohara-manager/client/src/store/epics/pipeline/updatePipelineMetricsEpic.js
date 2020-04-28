@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of, timer } from 'rxjs';
+import { defer, of, timer, merge } from 'rxjs';
 import {
   switchMap,
   map,
@@ -64,7 +64,13 @@ export default action$ =>
             catchError(error => of(actions.startUpdateMetrics.failure(error))),
           ),
         ),
-        takeUntil(action$.ofType(actions.stopUpdateMetrics)),
+        takeUntil(
+          merge(
+            action$.ofType(actions.switchPipeline.TRIGGER),
+            action$.ofType(actions.stopUpdateMetrics.TRIGGER),
+            action$.ofType(actions.deletePipeline.SUCCESS),
+          ),
+        ),
       ),
     ),
   );

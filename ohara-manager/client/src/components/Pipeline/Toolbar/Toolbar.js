@@ -66,7 +66,6 @@ const Toolbar = props => {
   const deletePipeline = hooks.useDeletePipelineAction();
   const streamAndConnectorGroup = hooks.useStreamGroup();
   const topicGroup = hooks.useTopicGroup();
-  const stopUpdateMetrics = hooks.useStopUpdateMetricsAction();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
   const runningServices = useRunningServices();
@@ -293,12 +292,7 @@ const Toolbar = props => {
                 checked={isMetricsOn}
                 onChange={() => {
                   pipelineDispatch({ type: 'toggleMetricsButton' });
-                  const newIsMetricsOn = !isMetricsOn;
                   paperApi.toggleMetrics(!isMetricsOn);
-
-                  if (!newIsMetricsOn) {
-                    stopUpdateMetrics();
-                  }
                 }}
                 color="primary"
               />
@@ -317,6 +311,7 @@ const Toolbar = props => {
         content={deleteDialogContent}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
+        maxWidth="xs"
       />
     </StyledToolbar>
   );

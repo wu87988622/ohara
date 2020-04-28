@@ -29,6 +29,7 @@ import { AddSharedTopicIcon } from 'components/common/Icon';
 
 const Outline = ({ pipelineApi }) => {
   const selectedCell = hooks.useCurrentPipelineCell();
+  const currentPipeline = hooks.usePipeline();
 
   const getIcon = (kind, isShared) => {
     const { source, sink, stream, topic } = KIND;
@@ -49,6 +50,7 @@ const Outline = ({ pipelineApi }) => {
     <Scrollbar>
       <ul className="list">
         {pipelineApi &&
+          currentPipeline &&
           pipelineApi.getElements().map(element => {
             const { id, name, kind, isShared, displayName } = element;
 
