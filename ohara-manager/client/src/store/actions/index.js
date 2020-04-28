@@ -18,6 +18,7 @@ export * from './appActions';
 export * from './brokerActions';
 export * from './connectorActions';
 export * from './createWorkspaceActions';
+export * from './deleteWorkspaceActions';
 export * from './devToolActions';
 export * from './eventLogActions';
 export * from './fileActions';

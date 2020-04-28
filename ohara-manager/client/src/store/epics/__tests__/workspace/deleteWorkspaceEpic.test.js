@@ -30,7 +30,7 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete workspace should be worked correctly', () => {
+it.skip('delete workspace should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -67,7 +67,7 @@ it('delete workspace should be worked correctly', () => {
   });
 });
 
-it('delete multiple workspaces should be worked correctly', () => {
+it.skip('delete multiple workspaces should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -121,7 +121,7 @@ it('delete multiple workspaces should be worked correctly', () => {
   });
 });
 
-it('delete same workspace within period should be created once only', () => {
+it.skip('delete same workspace within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

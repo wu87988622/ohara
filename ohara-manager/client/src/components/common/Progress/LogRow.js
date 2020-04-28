@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-import Progress from './Progress';
-import LogProgress from './LogProgress';
-import Percentage from './Percentage';
+import React from 'react';
+import _ from 'lodash';
+import clx from 'classnames';
+import PropTypes from 'prop-types';
 
-export { Progress, Percentage, LogProgress };
+import { LOG_LEVEL } from 'const';
+import Row from './LogRowStyles';
+
+const LogRow = ({ rowData: log, style }) => {
+  const title = _.get(log, 'title');
+  const isError = _.get(log, 'type') === LOG_LEVEL.error;
+
+  return (
+    <Row style={style} className={clx({ error: isError })}>
+      <div>{title}</div>
+    </Row>
+  );
+};
+
+LogRow.propTypes = {
+  rowData: PropTypes.object.isRequired,
+  style: PropTypes.object.isRequired,
+};
+
+export default LogRow;
