@@ -26,11 +26,6 @@ import ShareIcon from '@material-ui/icons/Share';
 import Menu from '@material-ui/core/Menu';
 import Typography from '@material-ui/core/Typography';
 import ExtensionIcon from '@material-ui/icons/Extension';
-import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
-import FlightLandIcon from '@material-ui/icons/FlightLand';
-import WavesIcon from '@material-ui/icons/Waves';
-import StorageIcon from '@material-ui/icons/Storage';
-import classNames from 'classnames';
 import Scrollbar from 'react-scrollbars-custom';
 import { Form, Field } from 'react-final-form';
 import Link from '@material-ui/core/Link';
@@ -38,6 +33,7 @@ import Link from '@material-ui/core/Link';
 import * as context from 'context';
 import * as hooks from 'hooks';
 import * as validate from 'utils/validate';
+import Outline from './Outline';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import { Tabs as EditWorkspaceTabs } from 'components/Workspace/Edit';
@@ -49,8 +45,6 @@ import {
   PipelineList,
   StyledOutlineList,
 } from './NavigatorStyles';
-import { KIND } from 'const';
-import { AddSharedTopicIcon } from 'components/common/Icon';
 
 const Navigator = ({ pipelineApi }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -80,21 +74,6 @@ const Navigator = ({ pipelineApi }) => {
     createPipeline({ name });
     setTimeout(form.reset);
     setIsOpen(false);
-  };
-
-  const getIcon = (kind, isShared) => {
-    const { source, sink, stream, topic } = KIND;
-
-    if (kind === source) return <FlightTakeoffIcon />;
-    if (kind === sink) return <FlightLandIcon />;
-    if (kind === stream) return <WavesIcon />;
-    if (kind === topic) {
-      return isShared ? (
-        <AddSharedTopicIcon width={20} height={22} />
-      ) : (
-        <StorageIcon />
-      );
-    }
   };
 
   if (!currentWorkspace) return null;
@@ -137,6 +116,7 @@ const Navigator = ({ pipelineApi }) => {
             }}
             onConfirm={handleSubmit}
             confirmDisabled={submitting || pristine || invalid}
+            maxWidth="xs"
             testId="new-pipeline-dialog"
           >
             <form onSubmit={handleSubmit}>
@@ -222,44 +202,9 @@ const Navigator = ({ pipelineApi }) => {
           <ExtensionIcon />
           Outline
         </Typography>
-        {pipelineApi && currentPipeline && (
-          <div className="scrollbar-wrapper">
-            <Scrollbar>
-              <ul className="list">
-                {pipelineApi.getElements().map(element => {
-                  const {
-                    id,
-                    name,
-                    kind,
-                    isSelected,
-                    isShared,
-                    displayName,
-                  } = element;
-
-                  const isTopic = kind === KIND.topic;
-
-                  const className = classNames({
-                    'is-selected': isSelected,
-                    'is-shared': isTopic && isShared,
-                    'pipeline-only': isTopic && !isShared,
-                    [kind]: kind,
-                  });
-
-                  return (
-                    <li
-                      className={className}
-                      onClick={() => pipelineApi.highlight(id)}
-                      key={id}
-                    >
-                      {getIcon(kind, isShared)}
-                      {isTopic && !isShared ? displayName : name}
-                    </li>
-                  );
-                })}
-              </ul>
-            </Scrollbar>
-          </div>
-        )}
+        <div className="scrollbar-wrapper">
+          <Outline pipelineApi={pipelineApi} />
+        </div>
       </StyledOutlineList>
       <WorkspaceSettings />
     </StyledNavigator>

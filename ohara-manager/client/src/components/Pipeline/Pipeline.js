@@ -40,10 +40,13 @@ const Pipeline = React.forwardRef((props, ref) => {
   const currentWorkspace = hooks.useWorkspace();
   const currentPipeline = hooks.usePipeline();
   const setSelectedCell = hooks.useSetSelectedCellAction();
-  const fetchPipeline = hooks.useFetchPipelineAction();
+  const startUpdateMetrics = hooks.useStartUpdateMetricsAction();
   const selectedCell = hooks.useCurrentPipelineCell();
   const streams = hooks.useStreams();
   const isStreamLoaded = hooks.useIsStreamLoaded();
+  const stopUpdateMetrics = hooks.useStopUpdateMetricsAction();
+  const isConnectorLoaded = hooks.useIsConnectorLoaded();
+  const connectors = hooks.useConnectors();
 
   const {
     open: openPropertyDialog,
@@ -52,8 +55,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     data: propertyDialogData,
   } = context.usePipelinePropertyDialog();
 
-  const connectorLastUpdated = hooks.useIsConnectorLoaded();
-  const connectors = hooks.useConnectors();
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 
   const {
@@ -90,9 +91,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   const forceDeleteList = React.useRef({});
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentCellData, setCurrentCellData] = React.useState(null);
-  const [url, setUrl] = React.useState(null);
 
-  const workspaceName = hooks.useWorkspaceName();
   const pipelineName = hooks.usePipelineName();
 
   const handleDialogClose = () => {
@@ -127,8 +126,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   };
 
   const paperApiRef = useRef(null);
-  const cellsMetricsRef = useRef([]);
-  const isPaperApiReady = _.has(paperApiRef, 'current.state.isReady');
+  const pipelineObjectsRef = useRef([]);
 
   const prevPipeline = usePrevious(currentPipeline);
   // Reset toolbox states
@@ -144,63 +142,48 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   // If paper API is not ready, let's reset the pipeline state and re-render again
   useEffect(() => {
-    if (!isPaperApiReady && pipelineName) {
+    if (!paperApiRef.current && pipelineName) {
       pipelineDispatch({ type: 'resetPipeline' });
     }
-  }, [isPaperApiReady, pipelineDispatch, pipelineName]);
+  }, [pipelineDispatch, pipelineName]);
 
   useEffect(() => {
-    let timer;
-    if (pipelineState.isMetricsOn) {
-      if (currentPipeline) {
-        timer = setInterval(async () => {
-          const res = await fetchPipeline(currentPipeline.name);
-          if (isPaperApiReady) {
-            const objects = _.get(res, 'data[0].objects', []);
-            const nodeMetrics = objects.filter(
-              object => object.kind !== KIND.topic,
-            );
-            // Topic metrics are not displayed in Paper.
-            paperApiRef.current.updateMetrics(nodeMetrics);
-            cellsMetricsRef.current = objects;
-          }
-        }, 5000);
-      }
+    if (pipelineState.isMetricsOn && currentPipeline && paperApiRef.current) {
+      startUpdateMetrics(currentPipeline.name, {
+        paperApi: paperApiRef.current,
+        pipelineObjectsRef,
+      });
     }
+  }, [
+    currentPipeline,
+    pipelineState.isMetricsOn,
+    startUpdateMetrics,
+    stopUpdateMetrics,
+  ]);
 
-    return () => {
-      clearInterval(timer);
-    };
-  });
-
+  const prevPipelineName = usePrevious(pipelineName);
   useEffect(() => {
-    if (!workspaceName || !pipelineName) return;
-    if (url !== `${workspaceName}/${pipelineName}`) {
-      paperApiRef.current = null;
+    if (prevPipelineName !== pipelineName) {
       isInitialized.current = false;
-      setUrl(`${workspaceName}/${pipelineName}`);
     }
-  }, [workspaceName, pipelineName, url]);
+  }, [pipelineName, prevPipelineName]);
 
   useEffect(() => {
     // Only run this once since we only want to load the graph once and maintain
     // the local state ever since
 
-    if (!isPaperApiReady) return;
     if (isInitialized.current) return;
     if (!paperApiRef.current) return;
-
-    if (!connectorLastUpdated) return;
+    if (!isConnectorLoaded) return;
     if (!isStreamLoaded) return;
     if (pipelineName !== _.get(currentPipeline, 'name', null)) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
     isInitialized.current = true;
   }, [
-    connectorLastUpdated,
+    isConnectorLoaded,
     currentPipeline,
     getUpdatedCells,
-    isPaperApiReady,
     isStreamLoaded,
     pipelineName,
   ]);
@@ -211,7 +194,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     switch (kind) {
       case KIND.source:
       case KIND.sink:
-        updateConnector(cell, topics, values, paperApi);
+        updateConnector(cell, topics, values, connectors, paperApi);
         break;
       case KIND.stream:
         updateStream(cell, topics, values, streams, paperApi);
@@ -311,389 +294,382 @@ const Pipeline = React.forwardRef((props, ref) => {
 
   return (
     <>
-      {currentWorkspace && currentPipeline && (
-        <>
-          <PipelineDispatchContext.Provider value={pipelineDispatch}>
-            <PipelineStateContext.Provider value={pipelineState}>
-              <PaperContext.Provider value={{ ...paperApiRef.current }}>
-                {isPaperApiReady && (
-                  <Toolbar
-                    isToolboxOpen={pipelineState.isToolboxOpen}
-                    handleToolboxOpen={() =>
-                      pipelineDispatch({ type: 'openToolbox' })
+      {currentWorkspace && (
+        <PipelineDispatchContext.Provider value={pipelineDispatch}>
+          <PipelineStateContext.Provider value={pipelineState}>
+            <PaperContext.Provider value={{ ...paperApiRef.current }}>
+              {paperApiRef.current && currentPipeline && (
+                <Toolbar
+                  isToolboxOpen={pipelineState.isToolboxOpen}
+                  handleToolboxOpen={() =>
+                    pipelineDispatch({ type: 'openToolbox' })
+                  }
+                  handleToolbarClick={panel => {
+                    const activePanel = pipelineState.toolboxExpanded[panel];
+
+                    // Toggle the panel if it's already open
+                    if (!activePanel) {
+                      pipelineDispatch({ type: 'resetToolbox' });
                     }
-                    handleToolbarClick={panel => {
-                      const activePanel = pipelineState.toolboxExpanded[panel];
 
-                      // Toggle the panel if it's already open
-                      if (!activePanel) {
-                        pipelineDispatch({ type: 'resetToolbox' });
-                      }
+                    pipelineDispatch({
+                      type: 'setToolbox',
+                      payload: panel,
+                    });
+                  }}
+                />
+              )}
 
-                      pipelineDispatch({
-                        type: 'setToolbox',
-                        payload: panel,
-                      });
-                    }}
-                  />
-                )}
-
-                <PaperWrapper>
-                  {selectedCell && (
-                    <>
-                      <StyledSplitPane
-                        split="vertical"
-                        minSize={300}
-                        maxSize={500}
-                        defaultSize={320}
-                        primary="second"
-                      >
-                        <div></div>
-
-                        <PipelinePropertyView
-                          onClose={() => setSelectedCell(null)}
-                          element={selectedCell}
-                          cellsMetrics={cellsMetricsRef.current}
-                        />
-                      </StyledSplitPane>
-                    </>
-                  )}
-                  <Paper
-                    ref={paperApiRef}
-                    onCellSelect={element => setSelectedCell(element)}
-                    onCellDeselect={() => setSelectedCell(null)}
-                    onChange={_.debounce(
-                      paperApi => updateCells(paperApi),
-                      1000,
-                    )}
-                    onElementAdd={(cellData, paperApi) => {
-                      const { kind, isTemporary } = cellData;
-                      switch (kind) {
-                        case KIND.sink:
-                        case KIND.source:
-                          if (!isTemporary) {
-                            createConnector(cellData, paperApi);
-                          }
-                          break;
-
-                        case KIND.stream:
-                          if (!isTemporary) {
-                            createStream(cellData, paperApi);
-                          }
-                          break;
-
-                        case KIND.topic:
-                          createAndStartTopic(cellData, paperApi);
-                          break;
-
-                        default:
-                          break;
-                      }
-                    }}
-                    onCellConfig={(cellData, paperApi) => {
-                      const { className, displayName, kind, name } = cellData;
-                      let targetCell;
-                      switch (kind) {
-                        case KIND.source:
-                        case KIND.sink:
-                          targetCell = connectors.find(
-                            connector => connector.name === name,
-                          );
-                          break;
-                        case KIND.stream:
-                          targetCell = streams.find(
-                            stream => stream.name === name,
-                          );
-                          break;
-                        default:
-                          break;
-                      }
-                      const type = className
-                        .replace(PACKAGE_ROOT, '')
-                        .split('.')
-                        .slice(1)
-                        .shift();
-                      openPropertyDialog({
-                        title: `Edit the property of ${displayName} ${kind} ${type}`,
-                        classInfo: targetCell,
-                        cellData,
-                        paperApi,
-                      });
-                    }}
-                    onConnect={async (cells, paperApi) => {
-                      const {
-                        type,
-                        source,
-                        toStream,
-                        fromStream,
-                        sink,
-                        link,
-                        topic,
-                        firstLink,
-                        secondeLink,
-                      } = pipelineUtils.utils.getConnectionOrder(cells);
-                      let sourceRes;
-                      let sinkRes;
-                      let toStreamRes;
-                      let fromStreamRes;
-                      switch (type) {
-                        case CONNECTION_TYPE.SOURCE_TOPIC:
-                          updateLinkConnector(
-                            { connector: source, topic, link },
-                            paperApi,
-                          );
-                          break;
-                        case CONNECTION_TYPE.TOPIC_SINK:
-                          updateLinkConnector(
-                            { connector: sink, topic, link },
-                            paperApi,
-                          );
-                          break;
-                        case CONNECTION_TYPE.STREAM_TOPIC:
-                          updateStreamLinkTo(
-                            { toStream, topic, link },
-                            paperApi,
-                          );
-                          break;
-                        case CONNECTION_TYPE.TOPIC_STREAM:
-                          updateStreamLinkFrom(
-                            { fromStream, topic, link },
-                            paperApi,
-                          );
-                          break;
-                        case CONNECTION_TYPE.SOURCE_TOPIC_SINK:
-                          createAndStartTopic(
-                            ({
-                              id: topic.id,
-                              name: topic.name,
-                              className: topic.className,
-                            } = topic),
-                            paperApi,
-                          );
-                          sourceRes = await updateLinkConnector(
-                            { connector: source, topic, link: firstLink },
-                            paperApi,
-                          );
-                          if (sourceRes.error) {
-                            clean({ topic }, paperApi);
-                            return;
-                          }
-                          sinkRes = await updateLinkConnector(
-                            { connector: sink, topic, link: secondeLink },
-                            paperApi,
-                          );
-                          if (sinkRes.error) {
-                            clean({ source, topic }, paperApi);
-                            return;
-                          }
-                          break;
-                        case CONNECTION_TYPE.SOURCE_TOPIC_STREAM:
-                          createAndStartTopic(
-                            ({
-                              id: topic.id,
-                              name: topic.name,
-                              className: topic.className,
-                            } = topic),
-                            paperApi,
-                          );
-                          sourceRes = await updateLinkConnector(
-                            { connector: source, topic, link: firstLink },
-                            paperApi,
-                          );
-                          if (sourceRes.error) {
-                            clean({ topic }, paperApi);
-                            return;
-                          }
-                          fromStreamRes = await updateStreamLinkFrom(
-                            { fromStream, topic, link },
-                            paperApi,
-                          );
-                          if (fromStreamRes.error) {
-                            clean({ source, topic }, paperApi);
-                            return;
-                          }
-                          break;
-                        case CONNECTION_TYPE.STREAM_TOPIC_SINK:
-                          createAndStartTopic(
-                            ({
-                              id: topic.id,
-                              name: topic.name,
-                              className: topic.className,
-                            } = topic),
-                            paperApi,
-                          );
-                          toStreamRes = await updateStreamLinkTo(
-                            { toStream, topic, link },
-                            paperApi,
-                          );
-                          if (toStreamRes.error) {
-                            clean({ topic }, paperApi);
-                            return;
-                          }
-                          sinkRes = await updateLinkConnector(
-                            { connector: sink, topic, link: secondeLink },
-                            paperApi,
-                          );
-                          if (sinkRes.error) {
-                            clean({ to: toStream, topic }, paperApi);
-                            return;
-                          }
-                          break;
-                        case CONNECTION_TYPE.STREAM_TOPIC_STREAM:
-                          createAndStartTopic(
-                            ({
-                              id: topic.id,
-                              name: topic.name,
-                              className: topic.className,
-                            } = topic),
-                            paperApi,
-                          );
-                          toStreamRes = await updateStreamLinkTo(
-                            { toStream, topic, link },
-                            paperApi,
-                          );
-                          if (toStreamRes.error) {
-                            clean({ topic }, paperApi);
-                            return;
-                          }
-                          fromStreamRes = await updateStreamLinkFrom(
-                            { fromStream, topic, link },
-                            paperApi,
-                          );
-                          if (fromStreamRes.error) {
-                            clean({ to: toStream, topic }, paperApi);
-                            return;
-                          }
-                          break;
-                        default:
-                          break;
-                      }
-                    }}
-                    onDisconnect={(cells, paperApi) => {
-                      const {
-                        type,
-                        source,
-                        toStream,
-                        fromStream,
-                        sink,
-                        topic,
-                      } = pipelineUtils.utils.getConnectionOrder(cells);
-                      switch (type) {
-                        case CONNECTION_TYPE.SOURCE_TOPIC:
-                          clean({ source, topic }, paperApi, true);
-                          break;
-                        case CONNECTION_TYPE.STREAM_TOPIC:
-                          clean({ to: toStream, topic }, paperApi, true);
-                          break;
-                        case CONNECTION_TYPE.TOPIC_STREAM:
-                          clean({ from: fromStream, topic }, paperApi, true);
-                          break;
-                        case CONNECTION_TYPE.TOPIC_SINK:
-                          clean({ sink, topic }, paperApi, true);
-                          break;
-                        default:
-                          break;
-                      }
-                    }}
-                    onCellStart={(cellData, paperApi) => {
-                      switch (cellData.kind) {
-                        case KIND.sink:
-                        case KIND.source:
-                          startConnector(cellData, paperApi);
-                          break;
-
-                        case KIND.stream:
-                          startStream(cellData, paperApi);
-                          break;
-
-                        default:
-                          break;
-                      }
-                    }}
-                    onCellStop={(cellData, paperApi) => {
-                      switch (cellData.kind) {
-                        case KIND.sink:
-                        case KIND.source:
-                          stopConnector(cellData, paperApi);
-                          break;
-
-                        case KIND.stream:
-                          stopStream(cellData, paperApi);
-                          break;
-
-                        default:
-                          break;
-                      }
-                    }}
-                    onCellRemove={async cellData => {
-                      if (cellData.kind === KIND.topic) {
-                        const topicConnectors = connectors.filter(connector =>
-                          connector.topicKeys.find(
-                            topic => topic.name === cellData.name,
-                          ),
-                        );
-                        const topicToStream = streams.filter(stream =>
-                          stream.to.find(topic => topic.name === cellData.name),
-                        );
-                        const topicFromStream = streams.filter(stream =>
-                          stream.from.find(
-                            topic => topic.name === cellData.name,
-                          ),
-                        );
-
-                        forceDeleteList.current = {
-                          connectors: topicConnectors,
-                          toStreams: topicToStream,
-                          fromStreams: topicFromStream,
-                          topic: cellData,
-                        };
-
-                        if (cellData.isShared) {
-                          // If a shared topic is removed from the Paper, we should
-                          // re-render the Toolbox, so the topic can be re-added
-                          // into the Paper again
-                          pipelineDispatch({ type: 'setToolboxKey' });
-                        }
-                      }
-
-                      setIsOpen(true);
-                      setCurrentCellData(cellData);
-                    }}
-                  />
-
-                  {isPaperApiReady && (
-                    <Toolbox
-                      isOpen={pipelineState.isToolboxOpen}
-                      expanded={pipelineState.toolboxExpanded}
-                      pipelineDispatch={pipelineDispatch}
-                      toolboxKey={pipelineState.toolboxKey}
-                    />
-                  )}
-                </PaperWrapper>
-                {isPaperApiReady && (
+              <PaperWrapper>
+                {selectedCell && (
                   <>
-                    <PipelinePropertyDialog
-                      isOpen={isPropertyDialogOpen}
-                      onClose={closePropertyDialog}
-                      data={propertyDialogData}
-                      onSubmit={handleSubmit}
-                    />
+                    <StyledSplitPane
+                      split="vertical"
+                      minSize={300}
+                      maxSize={500}
+                      defaultSize={320}
+                      primary="second"
+                    >
+                      <div></div>
 
-                    <DeleteDialog
-                      open={isOpen}
-                      title="Delete the element"
-                      content={`Are you sure you want to delete the element: ${getCurrentCellName(
-                        currentCellData,
-                      )} ? This action cannot be undone!`}
-                      onClose={handleDialogClose}
-                      onConfirm={handleElementDelete}
-                    />
+                      <PipelinePropertyView
+                        handleClose={() => setSelectedCell(null)}
+                        element={selectedCell}
+                        isMetricsOn={pipelineState.isMetricsOn}
+                        pipelineObjects={pipelineObjectsRef.current}
+                      />
+                    </StyledSplitPane>
                   </>
                 )}
-              </PaperContext.Provider>
-            </PipelineStateContext.Provider>
-          </PipelineDispatchContext.Provider>
-        </>
+                <Paper
+                  ref={paperApiRef}
+                  onCellSelect={element => setSelectedCell(element)}
+                  onCellDeselect={() => setSelectedCell(null)}
+                  onChange={_.debounce(paperApi => updateCells(paperApi), 1000)}
+                  onElementAdd={(cellData, paperApi) => {
+                    const { kind, isTemporary } = cellData;
+                    switch (kind) {
+                      case KIND.sink:
+                      case KIND.source:
+                        if (!isTemporary) {
+                          createConnector(cellData, paperApi);
+                        }
+                        break;
+
+                      case KIND.stream:
+                        if (!isTemporary) {
+                          createStream(cellData, paperApi);
+                        }
+                        break;
+
+                      case KIND.topic:
+                        createAndStartTopic(cellData, paperApi);
+                        break;
+
+                      default:
+                        break;
+                    }
+                  }}
+                  onCellConfig={(cellData, paperApi) => {
+                    const { className, displayName, kind, name } = cellData;
+                    let targetCell;
+                    switch (kind) {
+                      case KIND.source:
+                      case KIND.sink:
+                        targetCell = connectors.find(
+                          connector => connector.name === name,
+                        );
+                        break;
+                      case KIND.stream:
+                        targetCell = streams.find(
+                          stream => stream.name === name,
+                        );
+                        break;
+                      default:
+                        break;
+                    }
+
+                    const type = className
+                      .replace(PACKAGE_ROOT, '')
+                      .split('.')
+                      .slice(1)
+                      .shift();
+                    openPropertyDialog({
+                      title: `Edit the property of ${displayName} ${kind} ${type}`,
+                      classInfo: targetCell,
+                      cellData,
+                      paperApi,
+                    });
+                  }}
+                  onConnect={async (cells, paperApi) => {
+                    const {
+                      type,
+                      source,
+                      toStream,
+                      fromStream,
+                      sink,
+                      link,
+                      topic,
+                      firstLink,
+                      secondeLink,
+                    } = pipelineUtils.utils.getConnectionOrder(cells);
+                    let sourceRes;
+                    let sinkRes;
+                    let toStreamRes;
+                    let fromStreamRes;
+                    switch (type) {
+                      case CONNECTION_TYPE.SOURCE_TOPIC:
+                        updateLinkConnector(
+                          { connector: source, topic, link },
+                          paperApi,
+                        );
+                        break;
+                      case CONNECTION_TYPE.TOPIC_SINK:
+                        updateLinkConnector(
+                          { connector: sink, topic, link },
+                          paperApi,
+                        );
+                        break;
+                      case CONNECTION_TYPE.STREAM_TOPIC:
+                        updateStreamLinkTo({ toStream, topic, link }, paperApi);
+                        break;
+                      case CONNECTION_TYPE.TOPIC_STREAM:
+                        updateStreamLinkFrom(
+                          { fromStream, topic, link },
+                          paperApi,
+                        );
+                        break;
+                      case CONNECTION_TYPE.SOURCE_TOPIC_SINK:
+                        createAndStartTopic(
+                          ({
+                            id: topic.id,
+                            name: topic.name,
+                            className: topic.className,
+                          } = topic),
+                          paperApi,
+                        );
+                        sourceRes = await updateLinkConnector(
+                          { connector: source, topic, link: firstLink },
+                          paperApi,
+                        );
+                        if (sourceRes.error) {
+                          clean({ topic }, paperApi);
+                          return;
+                        }
+                        sinkRes = await updateLinkConnector(
+                          { connector: sink, topic, link: secondeLink },
+                          paperApi,
+                        );
+                        if (sinkRes.error) {
+                          clean({ source, topic }, paperApi);
+                          return;
+                        }
+                        break;
+                      case CONNECTION_TYPE.SOURCE_TOPIC_STREAM:
+                        createAndStartTopic(
+                          ({
+                            id: topic.id,
+                            name: topic.name,
+                            className: topic.className,
+                          } = topic),
+                          paperApi,
+                        );
+                        sourceRes = await updateLinkConnector(
+                          { connector: source, topic, link: firstLink },
+                          paperApi,
+                        );
+                        if (sourceRes.error) {
+                          clean({ topic }, paperApi);
+                          return;
+                        }
+                        fromStreamRes = await updateStreamLinkFrom(
+                          { fromStream, topic, link },
+                          paperApi,
+                        );
+                        if (fromStreamRes.error) {
+                          clean({ source, topic }, paperApi);
+                          return;
+                        }
+                        break;
+                      case CONNECTION_TYPE.STREAM_TOPIC_SINK:
+                        createAndStartTopic(
+                          ({
+                            id: topic.id,
+                            name: topic.name,
+                            className: topic.className,
+                          } = topic),
+                          paperApi,
+                        );
+                        toStreamRes = await updateStreamLinkTo(
+                          { toStream, topic, link },
+                          paperApi,
+                        );
+                        if (toStreamRes.error) {
+                          clean({ topic }, paperApi);
+                          return;
+                        }
+                        sinkRes = await updateLinkConnector(
+                          { connector: sink, topic, link: secondeLink },
+                          paperApi,
+                        );
+                        if (sinkRes.error) {
+                          clean({ to: toStream, topic }, paperApi);
+                          return;
+                        }
+                        break;
+                      case CONNECTION_TYPE.STREAM_TOPIC_STREAM:
+                        createAndStartTopic(
+                          ({
+                            id: topic.id,
+                            name: topic.name,
+                            className: topic.className,
+                          } = topic),
+                          paperApi,
+                        );
+                        toStreamRes = await updateStreamLinkTo(
+                          { toStream, topic, link },
+                          paperApi,
+                        );
+                        if (toStreamRes.error) {
+                          clean({ topic }, paperApi);
+                          return;
+                        }
+                        fromStreamRes = await updateStreamLinkFrom(
+                          { fromStream, topic, link },
+                          paperApi,
+                        );
+                        if (fromStreamRes.error) {
+                          clean({ to: toStream, topic }, paperApi);
+                          return;
+                        }
+                        break;
+                      default:
+                        break;
+                    }
+                  }}
+                  onDisconnect={(cells, paperApi) => {
+                    const {
+                      type,
+                      source,
+                      toStream,
+                      fromStream,
+                      sink,
+                      topic,
+                    } = pipelineUtils.utils.getConnectionOrder(cells);
+                    switch (type) {
+                      case CONNECTION_TYPE.SOURCE_TOPIC:
+                        clean({ source, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.STREAM_TOPIC:
+                        clean({ to: toStream, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.TOPIC_STREAM:
+                        clean({ from: fromStream, topic }, paperApi, true);
+                        break;
+                      case CONNECTION_TYPE.TOPIC_SINK:
+                        clean({ sink, topic }, paperApi, true);
+                        break;
+                      default:
+                        break;
+                    }
+                  }}
+                  onCellStart={(cellData, paperApi) => {
+                    switch (cellData.kind) {
+                      case KIND.sink:
+                      case KIND.source:
+                        startConnector(cellData, paperApi);
+                        break;
+
+                      case KIND.stream:
+                        startStream(cellData, paperApi);
+                        break;
+
+                      default:
+                        break;
+                    }
+                  }}
+                  onCellStop={(cellData, paperApi) => {
+                    switch (cellData.kind) {
+                      case KIND.sink:
+                      case KIND.source:
+                        stopConnector(cellData, paperApi);
+                        break;
+
+                      case KIND.stream:
+                        stopStream(cellData, paperApi);
+                        break;
+
+                      default:
+                        break;
+                    }
+                  }}
+                  onCellRemove={async cellData => {
+                    if (cellData.kind === KIND.topic) {
+                      const topicConnectors = connectors.filter(connector =>
+                        connector.topicKeys.find(
+                          topic => topic.name === cellData.name,
+                        ),
+                      );
+                      const topicToStream = streams.filter(stream =>
+                        stream.to.find(topic => topic.name === cellData.name),
+                      );
+                      const topicFromStream = streams.filter(stream =>
+                        stream.from.find(topic => topic.name === cellData.name),
+                      );
+
+                      forceDeleteList.current = {
+                        connectors: topicConnectors,
+                        toStreams: topicToStream,
+                        fromStreams: topicFromStream,
+                        topic: cellData,
+                      };
+
+                      if (cellData.isShared) {
+                        // If a shared topic is removed from the Paper, we should
+                        // re-render the Toolbox, so the topic can be re-added
+                        // into the Paper again
+                        pipelineDispatch({ type: 'setToolboxKey' });
+                      }
+                    }
+
+                    setIsOpen(true);
+                    setCurrentCellData(cellData);
+                  }}
+                />
+
+                {paperApiRef.current && currentPipeline && (
+                  <Toolbox
+                    isOpen={pipelineState.isToolboxOpen}
+                    expanded={pipelineState.toolboxExpanded}
+                    pipelineDispatch={pipelineDispatch}
+                    toolboxKey={pipelineState.toolboxKey}
+                  />
+                )}
+              </PaperWrapper>
+              {paperApiRef.current && currentPipeline && (
+                <>
+                  <PipelinePropertyDialog
+                    isOpen={isPropertyDialogOpen}
+                    onClose={closePropertyDialog}
+                    data={propertyDialogData}
+                    onSubmit={handleSubmit}
+                  />
+
+                  <DeleteDialog
+                    open={isOpen}
+                    title="Delete the element"
+                    content={`Are you sure you want to delete the element: ${getCurrentCellName(
+                      currentCellData,
+                    )} ? This action cannot be undone!`}
+                    onClose={handleDialogClose}
+                    onConfirm={handleElementDelete}
+                    maxWidth="xs"
+                  />
+                </>
+              )}
+            </PaperContext.Provider>
+          </PipelineStateContext.Provider>
+        </PipelineDispatchContext.Provider>
       )}
     </>
   );

@@ -21,6 +21,7 @@ import { entity } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
+    case actions.updateStream.SUCCESS:
     case actions.removeStreamFromLink.SUCCESS:
     case actions.removeStreamToLink.SUCCESS:
     case actions.updateStreamFromLink.SUCCESS:

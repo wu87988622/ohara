@@ -222,7 +222,7 @@ const createConnectorCell = options => {
     },
     updateMeters(newMetrics) {
       const defaultMetrics = metrics;
-      const meters = _.get(newMetrics, 'meters');
+      const meters = newMetrics?.meters;
       const displayMetrics = meters.length > 0 ? meters : defaultMetrics;
       const metricsData = getMetrics(displayMetrics);
       this.$box.find('.metrics').html(metricsData);
@@ -317,11 +317,14 @@ function getIcon(kind) {
 
 function getMetrics(meters) {
   // Make sure we're getting
-  // 1. Same metrics data every time by sorting
+  // 1. Filter out meters that have the value of zero
+  // 2. Get the same metrics data every time by sorting
   // 2. And removing duplicate items
   // 3. Finally, just pick the values that need to be displayed
+
+  const removeZeroValue = ({ value }) => value;
   const results = _.map(
-    _.sortBy(_.uniqBy(meters, 'name'), 'name'),
+    _.sortBy(_.uniqBy(_.filter(meters, removeZeroValue), 'value'), 'name'),
     _.partialRight(_.pick, ['document', 'value']),
   );
 

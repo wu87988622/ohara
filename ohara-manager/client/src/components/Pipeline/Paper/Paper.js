@@ -119,8 +119,9 @@ const Paper = React.forwardRef((props, ref) => {
   React.useEffect(() => {
     onCellEventRef.current = {
       onElementAdd,
+      onChange,
     };
-  }, [onElementAdd]);
+  }, [onChange, onElementAdd]);
 
   React.useEffect(() => {
     const graph = graphRef.current;
@@ -317,7 +318,7 @@ const Paper = React.forwardRef((props, ref) => {
       }
 
       if (shouldUpdatePipeline) {
-        onChange(paperApi);
+        onCellEventRef.current.onChange(paperApi);
       }
 
       updateStatus(cell);
@@ -334,7 +335,7 @@ const Paper = React.forwardRef((props, ref) => {
       updateStatus(cell);
 
       if (shouldUpdatePipeline) {
-        onChange(paperApi);
+        onCellEventRef.current.onChange(paperApi);
       }
 
       cellChangeRef.current = updates;
@@ -350,7 +351,7 @@ const Paper = React.forwardRef((props, ref) => {
       updateStatus(cell);
 
       if (shouldUpdatePipeline) {
-        onChange(paperApi);
+        onCellEventRef.current.onChange(paperApi);
       }
 
       cellRemoveRef.current = cell;
@@ -821,13 +822,12 @@ const Paper = React.forwardRef((props, ref) => {
       },
 
       updateMetrics(elementArray) {
-        elementArray.map(element =>
-          // we need to display the metrics by each hostname
-          // https://github.com/oharastream/ohara/issues/4495
-          findElementView(element.name).updateMeters(
-            element[Object.keys(element)[0]].meters,
-          ),
-        );
+        elementArray.forEach(({ nodeMetrics, name }) => {
+          // Since there could be more than one node's metrics data available
+          // in the element, we will only display the first node
+          const firstNode = Object.keys(nodeMetrics)[0];
+          findElementView(name).updateMeters(nodeMetrics[firstNode]);
+        });
       },
 
       highlight(id) {

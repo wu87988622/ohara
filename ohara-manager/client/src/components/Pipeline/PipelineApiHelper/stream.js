@@ -34,8 +34,8 @@ const stream = () => {
     createStream(values, options);
   };
 
-  const update = (cell, topics, values, currentStreams, paperApi) => {
-    const options = { topics, cell, paperApi };
+  const update = (cell, topics, values, streams, paperApi) => {
+    const options = { topics, cell, streams, paperApi };
     updateStream(values, options);
   };
 

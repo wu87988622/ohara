@@ -27,11 +27,13 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
-    case actions.switchPipeline.REQUEST:
+    case actions.switchPipeline.TRIGGER:
       return {
         ...state,
         loading: true,
+        error: null,
       };
+
     case actions.switchPipeline.SUCCESS:
       return {
         ...state,

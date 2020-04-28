@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   map,
@@ -28,6 +28,7 @@ import {
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ =>
   action$.pipe(
@@ -43,7 +44,12 @@ export default action$ =>
           ]),
         ),
         startWith(actions.createPipeline.request()),
-        catchError(res => of(actions.createPipeline.failure(res))),
+        catchError(error =>
+          from([
+            actions.createPipeline.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

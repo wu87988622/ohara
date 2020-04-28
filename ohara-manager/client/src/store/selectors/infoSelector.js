@@ -15,7 +15,7 @@
  */
 
 import { createSelector } from 'reselect';
-import { getDefinition } from '../../api/utils/definitionsUtils';
+import { transformDef } from 'utils/definition';
 
 const getEntities = state => state?.entities?.infos;
 
@@ -23,11 +23,7 @@ const getIdFromProps = (_, props) => props?.id;
 
 export const getInfoById = createSelector(
   [getEntities, getIdFromProps],
-  (entities, id) => entities[id],
-);
-
-export const makeGetInfoById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => {
+  (entities, id) => {
     const entity = entities[id];
 
     if (!entity) return;
@@ -35,13 +31,14 @@ export const makeGetInfoById = () =>
     const newClassInfos = entity.classInfos.map(info => {
       return {
         ...info,
-        settingDefinitions: getDefinition(info.settingDefinitions),
+        settingDefinitions: transformDef(info.settingDefinitions),
       };
     });
 
     return {
       ...entity,
       classInfos: newClassInfos,
-      settingDefinitions: getDefinition(entity.settingDefinitions),
+      settingDefinitions: transformDef(entity.settingDefinitions),
     };
-  });
+  },
+);

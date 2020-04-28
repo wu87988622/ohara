@@ -59,7 +59,7 @@ export const useFetchPipelineAction = () => {
   const dispatch = useDispatch();
   const group = hooks.usePipelineGroup();
   return useCallback(
-    name => dispatch(actions.fetchPipeline.trigger({ group, name })),
+    name => dispatch(actions.fetchPipeline.trigger({ name, group })),
     [dispatch, group],
   );
 };
@@ -133,6 +133,27 @@ export const useDeletePipelineAction = () => {
 export const useSetSelectedCellAction = () => {
   const dispatch = useDispatch();
   return useCallback(cell => dispatch(actions.setSelectedCell.trigger(cell)), [
+    dispatch,
+  ]);
+};
+
+export const useStartUpdateMetricsAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.usePipelineGroup();
+  return useCallback(
+    (name, options) => {
+      const newParams = { group, name };
+      dispatch(
+        actions.startUpdateMetrics.trigger({ params: newParams, options }),
+      );
+    },
+    [dispatch, group],
+  );
+};
+
+export const useStopUpdateMetricsAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(() => dispatch(actions.stopUpdateMetrics.trigger()), [
     dispatch,
   ]);
 };

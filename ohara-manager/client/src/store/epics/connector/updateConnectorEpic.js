@@ -14,79 +14,93 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
-import * as _ from 'lodash';
+import { from, defer } from 'rxjs';
 import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { KIND } from 'const';
+import { LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
     ofType(actions.updateConnector.TRIGGER),
     map(action => action.payload),
-    mergeMap(({ params, options }) => {
-      const hasTopicKey = params.topicKeys.length > 0;
-      const { cell, paperApi, topics } = options;
-      const cells = paperApi.getCells();
-      const connectorId = paperApi.getCell(params.name).id;
+    mergeMap(({ values, options }) => {
+      const { paperApi } = options;
+      const connectorId = paperApi.getCell(values.name).id;
 
-      return defer(() => connectorApi.update(params)).pipe(
+      return defer(() => connectorApi.update(values)).pipe(
         map(res => normalize(res.data, schema.connector)),
         map(normalizedData => {
-          const currentHasTopicKey =
-            _.get(normalizedData, 'topicKeys', []).length > 0;
-          if (currentHasTopicKey) {
-            const topicId = paperApi.getCell(normalizedData.topicKeys[0].name)
-              .id;
-            let linkId;
-            switch (cell.kind) {
-              case KIND.source:
-                linkId = cells
-                  .filter(cell => cell.cellType === 'standard.Link')
-                  .find(
-                    cell =>
-                      cell.sourceId === connectorId &&
-                      cell.targetId === topicId,
-                  ).id;
-                break;
-              case KIND.sink:
-                linkId = cells
-                  .filter(cell => cell.cellType === 'standard.Link')
-                  .find(
-                    cell =>
-                      cell.sourceId === topicId &&
-                      cell.targetId === connectorId,
-                  ).id;
-                break;
-              default:
-                break;
-            }
-            paperApi.removeLink(linkId);
-          }
-          if (hasTopicKey) {
-            switch (cell.kind) {
-              case KIND.source:
-                paperApi.addLink(cell.id, topics[0].data.id);
-                break;
-              case KIND.sink:
-                paperApi.addLink(topics[0].data.id, cell.id);
-                break;
-              default:
-                break;
-            }
-          }
+          handleSuccess(values, options);
           return actions.updateConnector.success(
             _.merge(normalizedData, { connectorId }),
           );
         }),
         startWith(actions.updateConnector.request({ connectorId })),
-        catchError(err => of(actions.updateConnector.failure(err))),
+        catchError(error =>
+          from([
+            actions.updateConnector.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );
 };
+
+function handleSuccess(values, options) {
+  if (options.paperApi) return;
+
+  const { cell, paperApi, topics, connectors } = options;
+  const cells = paperApi.getCells();
+  const currentConnector = connectors.find(
+    connector => connector.name === values.name,
+  );
+  const hasTopicKey = values.topicKeys.length > 0;
+  const connectorId = paperApi.getCell(values.name).id;
+  const currentHasTopicKey = currentConnector.topicKeys.length > 0;
+
+  if (currentHasTopicKey) {
+    const topicId = paperApi.getCell(currentConnector.topicKeys[0].name).id;
+    let linkId;
+    switch (cell.kind) {
+      case KIND.source:
+        linkId = cells
+          .filter(cell => cell.cellType === 'standard.Link')
+          .find(
+            cell => cell.sourceId === connectorId && cell.targetId === topicId,
+          ).id;
+        break;
+      case KIND.sink:
+        linkId = cells
+          .filter(cell => cell.cellType === 'standard.Link')
+          .find(
+            cell => cell.sourceId === topicId && cell.targetId === connectorId,
+          ).id;
+        break;
+      default:
+        break;
+    }
+
+    paperApi.removeLink(linkId);
+  }
+
+  if (hasTopicKey) {
+    switch (cell.kind) {
+      case KIND.source:
+        paperApi.addLink(cell.id, topics[0].data.id);
+        break;
+      case KIND.sink:
+        paperApi.addLink(topics[0].data.id, cell.id);
+        break;
+      default:
+        break;
+    }
+  }
+}

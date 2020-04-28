@@ -17,7 +17,7 @@
 import * as hooks from 'hooks';
 
 const pipeline = () => {
-  const currentPipeline = hooks.usePipeline();
+  const currentPipelineName = hooks.usePipelineName();
   const updatePipeline = hooks.useUpdatePipelineAction();
 
   const updateCells = paperApi => {
@@ -32,7 +32,7 @@ const pipeline = () => {
       });
 
     updatePipeline({
-      name: currentPipeline.name,
+      name: currentPipelineName,
       endpoints,
       tags: {
         ...cellsJson,

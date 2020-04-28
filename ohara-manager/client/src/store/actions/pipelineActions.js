@@ -23,3 +23,5 @@ export const fetchPipelines = createRoutine('FETCH_PIPELINES');
 export const updatePipeline = createRoutine('UPDATE_PIPELINE');
 export const setSelectedCell = createRoutine('SET_SELECTED_CELL');
 export const switchPipeline = createRoutine('SWITCH_PIPELINE');
+export const startUpdateMetrics = createRoutine('START_UPDATE_METRICS');
+export const stopUpdateMetrics = createRoutine('STOP_UPDATE_METRICS');

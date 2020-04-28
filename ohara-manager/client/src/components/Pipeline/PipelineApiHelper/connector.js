@@ -35,10 +35,9 @@ const connector = () => {
     createConnector(params, options);
   };
 
-  const update = async (cell, topics, values, paperApi) => {
-    const params = { name: cell.name, ...values };
-    const options = { paperApi, cell, topics };
-    updateConnector(params, options);
+  const update = async (cell, topics, values, connectors, paperApi) => {
+    const options = { cell, topics, connectors, paperApi };
+    updateConnector({ name: cell.name, ...values }, options);
   };
 
   const start = async (values, paperApi) => {

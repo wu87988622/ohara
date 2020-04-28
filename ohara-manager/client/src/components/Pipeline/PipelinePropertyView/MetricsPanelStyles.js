@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
-import { createSelector } from 'reselect';
+import styled, { css } from 'styled-components';
 
-const getEntities = state => state?.entities?.connectors;
-const getGroupFromProps = (_, props) => props?.group;
-
-export const getConnectorByGroup = createSelector(
-  [getEntities, getGroupFromProps],
-  (entities, group) =>
-    _.values(entities).filter(connector => connector?.group === group),
+export const Wrapper = styled.div(
+  ({ theme }) => css`
+    .MuiExpansionPanelDetails-root {
+      .MuiTypography-h6 {
+        margin-bottom: ${theme.spacing(2)}px;
+      }
+    }
+  `,
 );

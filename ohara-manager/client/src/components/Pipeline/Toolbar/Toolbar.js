@@ -63,11 +63,10 @@ const Toolbar = props => {
   const isDeleting = hooks.useIsPipelineDeleting();
   const pipelineError = hooks.usePipelineError();
   const selectedCell = hooks.useCurrentPipelineCell();
-  const currentWorkspace = hooks.useWorkspace();
-  const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const deletePipeline = hooks.useDeletePipelineAction();
   const streamAndConnectorGroup = hooks.useStreamGroup();
   const topicGroup = hooks.useTopicGroup();
+  const stopUpdateMetrics = hooks.useStopUpdateMetricsAction();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
   const runningServices = useRunningServices();
@@ -129,7 +128,6 @@ const Toolbar = props => {
       }));
 
     deletePipeline({ name, cells }, { paperApi });
-    switchWorkspace(currentWorkspace?.name);
   };
 
   const handlePipelineControlsClose = () => {
@@ -295,7 +293,12 @@ const Toolbar = props => {
                 checked={isMetricsOn}
                 onChange={() => {
                   pipelineDispatch({ type: 'toggleMetricsButton' });
+                  const newIsMetricsOn = !isMetricsOn;
                   paperApi.toggleMetrics(!isMetricsOn);
+
+                  if (!newIsMetricsOn) {
+                    stopUpdateMetrics();
+                  }
                 }}
                 color="primary"
               />

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as _ from 'lodash';
@@ -41,7 +41,7 @@ export const useUpdateConnectorAction = () => {
   return (values, options) =>
     dispatch(
       actions.updateConnector.trigger({
-        params: { ...values, group },
+        values: { ...values, group },
         options,
       }),
     );
@@ -148,32 +148,35 @@ export const useConnectorGroup = () => {
 };
 
 export const useConnectors = () => {
-  const getConnectorByGroup = useMemo(
-    selectors.makeGetAllConnectorsByGroup,
-    [],
-  );
+  const isAppReady = hooks.useIsAppReady();
+  const workerId = hooks.useWorkerId();
   const group = useConnectorGroup();
   const fetchConnectors = useFetchConnectorsAction();
   const isConnectorLoaded = useIsConnectorLoaded();
   const isConnectorLoading = useIsConnectorLoading();
-  const getInfoById = selectors.makeGetInfoById();
-  const workerId = hooks.useWorkerId();
 
   useEffect(() => {
-    if (isConnectorLoaded || isConnectorLoading) return;
-    if (!group) return;
+    if (isConnectorLoaded || !isAppReady || isConnectorLoading || !group)
+      return;
 
     fetchConnectors();
-  }, [fetchConnectors, group, isConnectorLoaded, isConnectorLoading]);
+  }, [
+    fetchConnectors,
+    group,
+    isAppReady,
+    isConnectorLoaded,
+    isConnectorLoading,
+  ]);
 
   return useSelector(state => {
-    const connectors = getConnectorByGroup(state, { group });
+    const connectors = selectors.getConnectorByGroup(state, { group });
     const results = connectors.map(connector => {
-      const info = getInfoById(state, { id: workerId });
+      const info = selectors.getInfoById(state, { id: workerId });
       const settingDefinitions =
         info?.classInfos.find(
           def => def.className === connector.connector__class,
         ).settingDefinitions || [];
+
       return _.merge(connector, { settingDefinitions });
     });
     return results;

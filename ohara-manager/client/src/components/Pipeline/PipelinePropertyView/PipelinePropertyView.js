@@ -14,46 +14,33 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
-import TuneIcon from '@material-ui/icons/Tune';
 import CloseIcon from '@material-ui/icons/Close';
-import StorageIcon from '@material-ui/icons/Storage';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import SignalCellularAltIcon from '@material-ui/icons/SignalCellularAlt';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import PropertyField from './PipelinePropertyViewField';
 
+import SettingsPanel from './SettingsPanel';
+import NodePanel from './NodePanel';
+import MetricsPanel from './MetricsPanel';
+import * as hooks from 'hooks';
+import * as propertyUtils from './PipelinePropertyViewUtils';
 import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
-import * as hooks from 'hooks';
-import * as propertyUtils from './PipelinePropertyViewUtils';
-import * as defUtils from 'api/apiInterface/definitionInterface';
 
 const PipelinePropertyView = props => {
-  const { handleClose, element, cellsMetrics } = props;
-  const cellMetrics = cellsMetrics.find(cell => cell.name === element.name);
-  const metrics = _.isUndefined(cellMetrics)
-    ? { meters: [] }
-    : cellMetrics.metrics;
-
+  const { handleClose, element, pipelineObjects, isMetricsOn } = props;
   const topics = hooks.useTopicsInPipeline();
   const streams = hooks.useStreams();
   const connectors = hooks.useConnectors();
-  const [isOpen, setIsOpen] = useState(false);
-  const [tags, setTags] = useState({
+
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [tags, setTags] = React.useState({
     json: null,
     name: '',
   });
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(true);
-  const [isNodesExpanded, setIsNodesExpanded] = useState(false);
-  const [isMetricsExpanded, setIsMetricsExpanded] = useState(false);
 
   if (!element) return null;
   const { name: cellName, displayName } = element;
@@ -72,99 +59,9 @@ const PipelinePropertyView = props => {
     default:
       break;
   }
+
   if (!settings) return null;
-  const ignoreList = settings.settingDefinitions
-    .filter(def => def.internal)
-    .map(def => def.key)
-    .concat([
-      'brokerClusterKey',
-      'workerClusterKey',
-      'settings',
-      'stagingSettings',
-      'settingDefinitions',
-      'metrics',
-      'tasksStatus',
-    ]);
 
-  const handleFullButtonClick = (value, name) => {
-    setTags({
-      name,
-      json: value,
-    });
-
-    setIsOpen(true);
-  };
-
-  const renderSettings = (settings, key) => {
-    const { settingDefinitions: defs } = settings;
-    const currentSetting =
-      key === 'name'
-        ? settings.tags?.displayName
-          ? settings.tags.displayName
-          : settings[key]
-        : settings[key];
-    const defValueType = defUtils.Type;
-    const valueType = defs.find(def => def.key === key).valueType;
-    switch (valueType) {
-      case defValueType.TAGS:
-        return propertyUtils.tags({
-          currentSetting,
-          settings,
-          key,
-          defs,
-          propertyUtils,
-          handleFullButtonClick,
-        });
-      case defValueType.REMOTE_PORT:
-      case defValueType.BINDING_PORT:
-        return propertyUtils.defaultField({
-          currentSetting,
-          settings,
-          key,
-          defs,
-          isPort: true,
-        });
-      case defValueType.OBJECT_KEYS:
-        const objectArray = currentSetting
-          .map(value => value.name)
-          .map(value => {
-            if (topics.map(topic => topic.name).includes(value)) {
-              const topic = topics.find(topic => topic.name === value);
-              return topic.tags?.displayName
-                ? topic.tags?.displayName
-                : topic.name;
-            } else {
-              return value;
-            }
-          });
-        return propertyUtils.defaultField({
-          currentSetting: objectArray,
-          settings,
-          key,
-          defs,
-        });
-      case defValueType.TABLE:
-        return propertyUtils.objectKeys(key, defs, currentSetting);
-      case defValueType.PASSWORD:
-        // Don't display the real password
-        return propertyUtils.defaultField({
-          currentSetting: '*'.repeat(9),
-          settings,
-          key,
-          defs,
-        });
-      default:
-        return propertyUtils.defaultField({
-          currentSetting,
-          settings,
-          key,
-          defs,
-        });
-    }
-  };
-  const { tasksStatus = [] } = settings;
-  const hasNodesInfo = tasksStatus.length > 0;
-  const hasMetrics = metrics.meters.length > 0;
   return (
     <Wrapper variant="outlined" square>
       <div className="title-wrapper">
@@ -204,111 +101,17 @@ const PipelinePropertyView = props => {
         </IconButton>
       </div>
 
-      <ExpansionPanel
-        square
-        defaultExpanded={true}
-        expanded={isSettingsExpanded}
-      >
-        <ExpansionPanelSummary
-          onClick={() => setIsSettingsExpanded(prevState => !prevState)}
-          expandIcon={<ExpandMoreIcon />}
-        >
-          <TuneIcon fontSize="small" />
-          <Typography className="section-title" variant="h5">
-            Settings
-          </Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          {Object.keys(settings)
-            .filter(key => !ignoreList.includes(key))
-            .filter(key => {
-              // We're not displaying empty array or object
-              const item = settings[key];
-              if (_.isObject(item) && _.isEmpty(item)) return false;
-
-              return true;
-            })
-            .filter(key => {
-              return settings.settingDefinitions
-                .map(def => def.key)
-                .find(defKey => defKey === key);
-            })
-            .map(key => renderSettings(settings, key))}
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
-
-      {hasNodesInfo && (
-        <ExpansionPanel defaultExpanded={true} expanded={isNodesExpanded}>
-          <ExpansionPanelSummary
-            onClick={() => setIsNodesExpanded(prevState => !prevState)}
-            expandIcon={<ExpandMoreIcon />}
-          >
-            <StorageIcon fontSize="small" />
-            <Typography className="section-title" variant="h5">
-              Nodes
-            </Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            {tasksStatus
-              // UI now not support show master node.
-              .filter(node => !node.master)
-              .map(node => {
-                const { nodeName, state } = node;
-                return (
-                  <PropertyField
-                    key={nodeName}
-                    label="Name"
-                    value={nodeName}
-                    slot={
-                      <Typography
-                        variant="body2"
-                        className="node-status"
-                        component="span"
-                      >
-                        {state}
-                      </Typography>
-                    }
-                  />
-                );
-              })}
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-      )}
-
-      {hasMetrics && (
-        <ExpansionPanel defaultExpanded={true} expanded={isMetricsExpanded}>
-          <ExpansionPanelSummary
-            onClick={() => setIsMetricsExpanded(prevState => !prevState)}
-            expandIcon={<ExpandMoreIcon />}
-          >
-            <SignalCellularAltIcon fontSize="small" />
-            <Typography className="section-title" variant="h5">
-              Metrics
-            </Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            {metrics.meters.map(metric => {
-              const { document, value, unit } = metric;
-              return (
-                <PropertyField
-                  key={document}
-                  label={document}
-                  value={value}
-                  slot={
-                    <Typography
-                      variant="body2"
-                      className="metrics-unit"
-                      component="span"
-                    >
-                      {unit}
-                    </Typography>
-                  }
-                />
-              );
-            })}
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-      )}
+      <SettingsPanel
+        settings={settings}
+        setTags={setTags}
+        setFullTagViewDialogOpen={setIsOpen}
+      />
+      <NodePanel tasksStatus={settings?.tasksStatus} />
+      <MetricsPanel
+        pipelineObjects={pipelineObjects}
+        isMetricsOn={isMetricsOn}
+        currentCellName={cellName}
+      />
 
       <Dialog
         onClose={() => setIsOpen(false)}
@@ -328,8 +131,9 @@ const PipelinePropertyView = props => {
 
 PipelinePropertyView.propTypes = {
   handleClose: PropTypes.func.isRequired,
+  isMetricsOn: PropTypes.bool.isRequired,
   element: PropTypes.object,
-  cellsMetrics: PropTypes.array,
+  pipelineObjects: PropTypes.array,
 };
 
 export default PipelinePropertyView;

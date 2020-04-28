@@ -42,12 +42,12 @@ export default action$ =>
   );
 
 function handleSuccess(values, options) {
-  const { paperApi, cell, topics, currentStreams } = options;
+  if (!options.paperApi) return;
+
+  const { paperApi, cell, topics, streams } = options;
   const cells = paperApi.getCells();
 
-  const currentStream = currentStreams.find(
-    stream => stream.name === values.name,
-  );
+  const currentStream = streams.find(stream => stream.name === values.name);
 
   const hasTo = _.get(values, 'to', []).length > 0;
   const hasFrom = _.get(values, 'from', []).length > 0;

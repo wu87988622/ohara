@@ -23,17 +23,16 @@ import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-export default action$ => {
-  return action$.pipe(
+export default action$ =>
+  action$.pipe(
     ofType(actions.fetchConnectors.TRIGGER),
     map(action => action.payload),
     switchMap(values =>
       defer(() => connectorApi.getAll(values)).pipe(
         map(res => normalize(res.data, [schema.connector])),
-        map(entities => actions.fetchConnectors.success(entities)),
+        map(normalizedData => actions.fetchConnectors.success(normalizedData)),
         startWith(actions.fetchConnectors.request()),
-        catchError(err => of(actions.fetchConnectors.failure(err))),
+        catchError(error => of(actions.fetchConnectors.failure(error))),
       ),
     ),
   );
-};

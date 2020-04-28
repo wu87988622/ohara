@@ -59,6 +59,7 @@ export default (action$, state$, { history }) =>
       } else {
         history.push('/');
       }
+
       return of(actions.switchPipeline.success(headPipeline?.name));
     }),
   );

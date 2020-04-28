@@ -49,7 +49,6 @@ const Toolbox = props => {
   } = props;
 
   const currentWorker = hooks.useWorker();
-  const currentPipeline = hooks.usePipeline();
   const createFile = hooks.useCreateFileAction();
 
   const { open: openAddTopicDialog } = context.useAddTopicDialog();
@@ -69,7 +68,7 @@ const Toolbox = props => {
   const paperApi = React.useContext(PaperContext);
   const streams = useStreams();
   const [sources, sinks] = utils.getConnectorInfo(currentWorker);
-  const [topics, topicsData] = useTopics();
+  const [topics] = useTopics();
   const toolboxBodyRef = React.useRef(null);
   const scrollRef = React.useRef(0);
 
@@ -136,7 +135,6 @@ const Toolbox = props => {
 
     utils.removeTemporaryCell(paperApi);
     setIsOpen(false);
-    showMessage(`${newName} has been added`);
   };
 
   let sourceGraph = React.useRef(null);
@@ -206,14 +204,7 @@ const Toolbox = props => {
     };
 
     renderToolbox();
-  }, [
-    connectors,
-    currentPipeline,
-    paperApi,
-    searchResults,
-    showMessage,
-    topicsData,
-  ]);
+  }, [connectors, paperApi, searchResults, showMessage]);
 
   const handleScroll = () => {
     const scrollTop = toolboxBodyRef.current.scrollTop;

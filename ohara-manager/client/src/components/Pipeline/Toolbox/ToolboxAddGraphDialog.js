@@ -49,6 +49,7 @@ const ToolboxAddGraphDialog = props => {
             confirmText="ADD"
             confirmDisabled={submitting || pristine || invalid}
             loading={submitting}
+            maxWidth="xs"
           >
             <DialogContentText>
               Please note that once the name is added, it will become

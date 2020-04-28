@@ -32,7 +32,7 @@ export default action$ =>
         map(res => normalize(res.data, [schema.stream])),
         map(normalizedData => actions.fetchStreams.success(normalizedData)),
         startWith(actions.fetchStreams.request()),
-        catchError(err => of(actions.fetchStreams.failure(err))),
+        catchError(error => of(actions.fetchStreams.failure(error))),
       ),
     ),
   );

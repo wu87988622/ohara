@@ -25,6 +25,7 @@ const initialState = {
 export default function reducer(state = initialState, action) {
   switch (action.type) {
     case actions.fetchConnectors.REQUEST:
+    case actions.fetchConnectors.TRIGGER:
       return {
         ...state,
         loading: true,

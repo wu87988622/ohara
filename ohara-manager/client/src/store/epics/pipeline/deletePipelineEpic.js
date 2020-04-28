@@ -70,7 +70,7 @@ const deleteAllConnectors$ = (connectors, paperApi) => {
 
 const stopTopic$ = params => {
   return defer(() => topicApi.stop(params)).pipe(
-    map(() => actions.stopTopic.request()),
+    map(() => actions.stopTopic.request(params)),
   );
 };
 
@@ -133,7 +133,12 @@ const stopAndDeleteAllTopics$ = (topics, paperApi) => {
 
 const deletePipeline$ = params =>
   defer(() => pipelineApi.remove(params)).pipe(
-    map(() => actions.deletePipeline.success(getId(params))),
+    mergeMap(() => {
+      return from([
+        actions.deletePipeline.success(getId(params)),
+        actions.switchPipeline(),
+      ]);
+    }),
     startWith(actions.deletePipeline.request()),
   );
 

@@ -16,7 +16,7 @@
 
 import { values } from 'lodash';
 import { createSelector } from 'reselect';
-import { getDefinition } from '../../api/utils/definitionsUtils';
+import { transformDef } from 'utils/definition';
 
 const getEntities = state => state?.entities?.files;
 
@@ -44,7 +44,7 @@ export const getStreamInfo = createSelector(
       .map(entity => {
         return {
           ...entity,
-          settingDefinitions: getDefinition(entity.settingDefinitions),
+          settingDefinitions: transformDef(entity.settingDefinitions),
         };
       });
 

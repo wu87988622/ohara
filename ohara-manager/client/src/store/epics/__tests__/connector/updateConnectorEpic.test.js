@@ -60,7 +60,7 @@ it('update connector should be worked correctly', () => {
       a: {
         type: actions.updateConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, jmxPort: 999 },
+          values: { ...connectorEntity, jmxPort: 999 },
           options: { paperApi, cell },
         },
       },
@@ -106,21 +106,21 @@ it('update connector multiple times should got latest result', () => {
       a: {
         type: actions.updateConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          values: connectorEntity,
           options: { paperApi, cell },
         },
       },
       b: {
         type: actions.updateConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, nodeNames: ['n1', 'n2'] },
+          values: { ...connectorEntity, nodeNames: ['n1', 'n2'] },
           options: { paperApi, cell },
         },
       },
       c: {
         type: actions.updateConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, clientPort: 1234 },
+          values: { ...connectorEntity, clientPort: 1234 },
           options: { paperApi, cell },
         },
       },

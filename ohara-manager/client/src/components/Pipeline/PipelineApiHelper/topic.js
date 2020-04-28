@@ -20,8 +20,8 @@ import { CELL_STATUS } from 'const';
 const topic = () => {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
-  const currentPipeline = hooks.usePipeline();
   const toolBoxTopics = hooks.useTopicsInToolbox();
+  const currentPipelineName = hooks.usePipelineName();
 
   const createAndStart = (params, paperApi) => {
     const { id, name, displayName, isShared } = params;
@@ -40,7 +40,7 @@ const topic = () => {
         tags: {
           isShared: false,
           displayName,
-          pipelineName: currentPipeline.name,
+          pipelineName: currentPipelineName,
         },
       },
       { paperApi },

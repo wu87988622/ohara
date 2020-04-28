@@ -137,7 +137,6 @@ export const useStopAndDeleteTopicAction = () => {
 export const useAllTopics = () => {
   const isTopicLoaded = hooks.useIsTopicLoaded();
   const fetchTopics = hooks.useFetchTopicsAction();
-  const getInfoById = selectors.makeGetInfoById();
   const brokerId = hooks.useBrokerId();
 
   useEffect(() => {
@@ -147,7 +146,7 @@ export const useAllTopics = () => {
   return useSelector(state => {
     const topics = selectors.getAllTopics(state);
     const results = topics.map(topic => {
-      const info = getInfoById(state, { id: brokerId });
+      const info = selectors.getInfoById(state, { id: brokerId });
       const settingDefinitions =
         info?.classInfos.find(def => def.classType === KIND.topic)
           .settingDefinitions || [];
@@ -233,7 +232,7 @@ export const useTopicsInPipeline = () => {
 
 export const useTopic = name => {
   const brokerData = hooks.useBroker();
-  // broker only have "one" classInfo (i.e., topic definition)
+  // broker only has "one" classInfo (i.e., topic definition)
   const info = get(brokerData, 'classInfos[0]', {});
   const group = useTopicGroup();
   const id = getId({ group, name });
