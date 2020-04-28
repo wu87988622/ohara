@@ -23,14 +23,22 @@ import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
-import { Dialog } from 'components/common/Dialog';
+import { DeleteWorkspace } from './DangerZone';
+
+import { getKeyWithId } from 'utils/object';
 
 const Settings = () => {
   const { isOpen, close } = useEditWorkspaceDialog();
-  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState('');
   const [selectedComponent, setSelectedComponent] = React.useState(null);
   const scrollRef = React.useRef(null);
+
+  const openDeleteWorkspace = hooks.useOpenDeleteWorkspaceDialogAction();
+  const deleteWorkspace = hooks.useDeleteWorkspaceAction();
+  const workspaceId = hooks.useWorkspaceId();
+  const zookeeperId = hooks.useZookeeperId();
+  const brokerId = hooks.useBrokerId();
+  const workerId = hooks.useWorkerId();
 
   const workspace = hooks.useWorkspace();
 
@@ -40,8 +48,14 @@ const Settings = () => {
 
   const { menu, sections } = useConfig({
     openDeleteProgressDialog: () => {
-      setIsDeleteOpen(true);
       resetSelectedItem(null);
+      openDeleteWorkspace();
+      deleteWorkspace({
+        workspace: getKeyWithId(workspaceId),
+        zookeeper: getKeyWithId(zookeeperId),
+        broker: getKeyWithId(brokerId),
+        worker: getKeyWithId(workerId),
+      });
     },
     workspace,
   });
@@ -93,14 +107,7 @@ const Settings = () => {
           handleClose={resetSelectedItem}
           selectedComponent={selectedComponent}
         />
-
-        <Dialog
-          open={isDeleteOpen}
-          title="abc"
-          onClose={() => setIsDeleteOpen(false)}
-          onConfirm={() => {}}
-          children="Dumb dialog"
-        />
+        <DeleteWorkspace />
       </Wrapper>
     </StyledFullScreenDialog>
   );

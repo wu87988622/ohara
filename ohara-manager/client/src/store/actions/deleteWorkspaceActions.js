@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-import Progress from './Progress';
-import LogProgress from './LogProgress';
-import Percentage from './Percentage';
+import { createRoutine } from 'redux-routines';
 
-export { Progress, Percentage, LogProgress };
+export const openDeleteWorkspace = createRoutine('OPEN_DELETE_WORKSPACE');
+export const closeDeleteWorkspace = createRoutine('CLOSE_DELETE_WORKSPACE');
+export const pauseDeleteWorkspace = createRoutine('PAUSE_DELETE_WORKSPACE');
+export const resumeDeleteWorkspace = createRoutine('RESUME_DELETE_WORKSPACE');
+export const rollbackDeleteWorkspace = createRoutine(
+  'ROLLBACK_DELETE_WORKSPACE',
+);

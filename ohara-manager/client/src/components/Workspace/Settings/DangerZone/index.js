@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import Progress from './Progress';
-import LogProgress from './LogProgress';
-import Percentage from './Percentage';
+import DeleteWorkspace from './DeleteWorkspace';
 
-export { Progress, Percentage, LogProgress };
+export { DeleteWorkspace };

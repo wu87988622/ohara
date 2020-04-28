@@ -81,7 +81,6 @@ const CreateWorkspaceForm = props => {
         freePorts: times(5, generate.port),
       },
     });
-
     onSubmit(finalValues);
   };
 
