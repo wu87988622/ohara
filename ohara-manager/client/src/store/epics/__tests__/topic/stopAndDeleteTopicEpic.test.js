@@ -44,7 +44,7 @@ it('stop and delete topic should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                       ';
-    const expected = '--a 499ms (mn) 996ms (vz)';
+    const expected = '--a 499ms (mn) 996ms (vz) ';
     const subs = '    ^-------------------------';
 
     const action$ = hot(input, {

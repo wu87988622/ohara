@@ -58,7 +58,7 @@ const PipelinePropertyDialog = props => {
   const [selected, setSelected] = useState(null);
   const currentWorker = hooks.useWorker();
   const currentStreams = hooks.useStreams();
-  const currentConnectors = hooks.useConnectors();
+  const currentConnectors = [...hooks.useConnectors(), ...hooks.useShabondis()];
   const currentTopics = hooks.useTopicsInPipeline();
   const formRef = useRef(null);
 
@@ -101,7 +101,7 @@ const PipelinePropertyDialog = props => {
 
   const getTopicWithKey = (values, key) => {
     if (isArray(values[key])) return;
-    if (values[key] === 'Please select...') {
+    if (!values[key] || values[key] === 'Please select...') {
       values[key] = [];
       return;
     }
@@ -274,7 +274,13 @@ const PipelinePropertyDialog = props => {
         <RightBody>
           <PipelinePropertyForm
             definitions={groups.sort()}
-            freePorts={get(currentWorker, 'freePorts', [])}
+            freePorts={
+              // only the connectors of worker need freePorts
+              // we assign an empty array for RenderDefinition uses
+              get(cellData, 'className', '').includes(KIND.shabondi)
+                ? []
+                : get(currentWorker, 'freePorts', [])
+            }
             initialValues={targetCell}
             onSubmit={handleSubmit}
             ref={formRef}

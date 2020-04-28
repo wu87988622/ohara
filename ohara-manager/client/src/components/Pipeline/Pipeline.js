@@ -46,7 +46,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   const isStreamLoaded = hooks.useIsStreamLoaded();
   const stopUpdateMetrics = hooks.useStopUpdateMetricsAction();
   const isConnectorLoaded = hooks.useIsConnectorLoaded();
-  const connectors = hooks.useConnectors();
+  const connectors = [...hooks.useConnectors(), ...hooks.useShabondis()];
 
   const {
     open: openPropertyDialog,
@@ -204,7 +204,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     }
   };
 
-  const deleteTopic = async () => {
+  const deleteTopic = () => {
     const paperApi = paperApiRef.current;
 
     const {
@@ -214,27 +214,28 @@ const Pipeline = React.forwardRef((props, ref) => {
       topic,
     } = forceDeleteList.current;
 
-    await Promise.all(
-      connectors
-        .filter(connector => _.get(connector, 'state', null) === 'RUNNING')
-        .map(connector => {
-          const connectorCell = paperApi.getCell(connector.name);
-          return stopConnector(connectorCell, paperApi);
-        }),
-    );
-    await Promise.all(
-      [...toStreams, ...fromStreams]
-        .filter(stream => _.get(stream, 'state', null) === 'RUNNING')
-        .map(stream => {
-          const streamCell = paperApi.getCell(stream.name);
-          return stopStream(streamCell, paperApi);
-        }),
-    );
+    connectors
+      .filter(connector => _.get(connector, 'state', null) === 'RUNNING')
+      .map(connector => {
+        const connectorCell = paperApi.getCell(connector.name);
+        return stopConnector(connectorCell, paperApi);
+      });
+
+    [...toStreams, ...fromStreams]
+      .filter(stream => _.get(stream, 'state', null) === 'RUNNING')
+      .map(stream => {
+        const streamCell = paperApi.getCell(stream.name);
+        return stopStream(streamCell, paperApi);
+      });
 
     connectors.forEach(connector => {
       const connectorCell = paperApi.getCell(connector.name);
-      const kind = connectorCell.kind;
-      clean({ [kind]: connectorCell, paperApi });
+      const kind = _.get(connectorCell, 'kind');
+      // The connectors may be removed by user from UI but not removed from forceDeleteList
+      // we should skip those cells which had been removed already
+      if (kind) {
+        clean({ [kind]: connectorCell, paperApi });
+      }
     });
     toStreams.forEach(stream => {
       const streamCell = paperApi.getCell(stream.name);
@@ -248,17 +249,17 @@ const Pipeline = React.forwardRef((props, ref) => {
     stopAndRemoveTopic(topic, paperApi);
   };
 
-  const handleElementDelete = async () => {
+  const handleElementDelete = () => {
     const paperApi = paperApiRef.current;
     const { kind } = currentCellData;
 
     if (kind === KIND.topic) {
-      await deleteTopic();
+      deleteTopic();
       forceDeleteList.current = {};
     } else if (kind === KIND.source || kind === KIND.sink) {
-      await removeConnector(currentCellData, paperApi);
+      removeConnector(currentCellData, paperApi);
     } else if (kind === KIND.stream) {
-      await removeStream(currentCellData, paperApi);
+      removeStream(currentCellData, paperApi);
     }
 
     setIsOpen(false);
@@ -401,7 +402,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                       paperApi,
                     });
                   }}
-                  onConnect={async (cells, paperApi) => {
+                  onConnect={(cells, paperApi) => {
                     const {
                       type,
                       source,
@@ -448,7 +449,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           } = topic),
                           paperApi,
                         );
-                        sourceRes = await updateLinkConnector(
+                        sourceRes = updateLinkConnector(
                           { connector: source, topic, link: firstLink },
                           paperApi,
                         );
@@ -456,7 +457,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        sinkRes = await updateLinkConnector(
+                        sinkRes = updateLinkConnector(
                           { connector: sink, topic, link: secondeLink },
                           paperApi,
                         );
@@ -474,7 +475,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           } = topic),
                           paperApi,
                         );
-                        sourceRes = await updateLinkConnector(
+                        sourceRes = updateLinkConnector(
                           { connector: source, topic, link: firstLink },
                           paperApi,
                         );
@@ -482,7 +483,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        fromStreamRes = await updateStreamLinkFrom(
+                        fromStreamRes = updateStreamLinkFrom(
                           { fromStream, topic, link },
                           paperApi,
                         );
@@ -500,7 +501,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           } = topic),
                           paperApi,
                         );
-                        toStreamRes = await updateStreamLinkTo(
+                        toStreamRes = updateStreamLinkTo(
                           { toStream, topic, link },
                           paperApi,
                         );
@@ -508,7 +509,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        sinkRes = await updateLinkConnector(
+                        sinkRes = updateLinkConnector(
                           { connector: sink, topic, link: secondeLink },
                           paperApi,
                         );
@@ -526,7 +527,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           } = topic),
                           paperApi,
                         );
-                        toStreamRes = await updateStreamLinkTo(
+                        toStreamRes = updateStreamLinkTo(
                           { toStream, topic, link },
                           paperApi,
                         );
@@ -534,7 +535,7 @@ const Pipeline = React.forwardRef((props, ref) => {
                           clean({ topic }, paperApi);
                           return;
                         }
-                        fromStreamRes = await updateStreamLinkFrom(
+                        fromStreamRes = updateStreamLinkFrom(
                           { fromStream, topic, link },
                           paperApi,
                         );
@@ -603,13 +604,18 @@ const Pipeline = React.forwardRef((props, ref) => {
                         break;
                     }
                   }}
-                  onCellRemove={async cellData => {
+                  onCellRemove={cellData => {
                     if (cellData.kind === KIND.topic) {
-                      const topicConnectors = connectors.filter(connector =>
-                        connector.topicKeys.find(
+                      const topicConnectors = connectors.filter(connector => {
+                        const topics =
+                          _.get(connector, 'topicKeys') ||
+                          _.get(connector, 'shabondi__source__toTopics') ||
+                          _.get(connector, 'shabondi__sink__fromTopics') ||
+                          [];
+                        return topics.find(
                           topic => topic.name === cellData.name,
-                        ),
-                      );
+                        );
+                      });
                       const topicToStream = streams.filter(stream =>
                         stream.to.find(topic => topic.name === cellData.name),
                       );

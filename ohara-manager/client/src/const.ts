@@ -25,6 +25,7 @@ export enum KIND {
   stream = 'stream',
   sink = 'sink',
   source = 'source',
+  shabondi = 'shabondi',
   topic = 'topic',
   object = 'object',
 }

@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { Field } from 'react-final-form';
-import { toNumber } from 'lodash';
+import { toNumber, isEmpty } from 'lodash';
 
 import BindingPort from './BindingPort';
 import BooleanDef from './BooleanDef';
@@ -157,7 +157,10 @@ const RenderDefinition = props => {
           return RenderField({ ...def, input: Duration });
 
         case Type.BINDING_PORT:
-          return RenderField({ ...def, input: BindingPort, list: freePorts });
+          if (isEmpty(freePorts))
+            return RenderField({ ...def, input: RemotePort });
+          else
+            return RenderField({ ...def, input: BindingPort, list: freePorts });
 
         case Type.TAGS:
           return RenderField({ ...def, input: Tags });

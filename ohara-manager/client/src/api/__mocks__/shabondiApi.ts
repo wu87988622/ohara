@@ -86,11 +86,11 @@ export const remove = (): Observable<BasicResponse> =>
   );
 
 // simulate a promise request with a delay of 500ms
-export const getAll = (params: ServiceBody): Observable<ClusterResponseList> =>
+export const getAll = (): Observable<ClusterResponseList> =>
   of({
     status: 200,
     title: 'mock get all shabondi data',
-    data: entities.filter(entity => entity.group === params.group),
+    data: entities,
   }).pipe(delay(500));
 
 // simulate a promise request with a delay of 500ms

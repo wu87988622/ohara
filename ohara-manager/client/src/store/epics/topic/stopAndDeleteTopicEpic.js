@@ -38,11 +38,15 @@ export default action$ =>
           status: CELL_STATUS.pending,
         });
       }
-      return of(stopTopic$(params), deleteTopic$(params)).pipe(
+      return of(
+        stopTopic$(params),
+        deleteTopic$(params).pipe(
+          tap(() => {
+            if (paperApi) paperApi.removeElement(params.id);
+          }),
+        ),
+      ).pipe(
         concatAll(),
-        tap(() => {
-          if (paperApi) paperApi.removeElement(params.id);
-        }),
         catchError(res => {
           if (paperApi) {
             paperApi.updateElement(params.id, {

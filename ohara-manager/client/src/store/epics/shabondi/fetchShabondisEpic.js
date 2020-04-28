@@ -26,9 +26,8 @@ import * as schema from 'store/schema';
 export default action$ => {
   return action$.pipe(
     ofType(actions.fetchShabondis.TRIGGER),
-    map(action => action.payload),
-    switchMap(values =>
-      defer(() => shabondiApi.getAll(values)).pipe(
+    switchMap(() =>
+      defer(() => shabondiApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.shabondi])),
         map(normalizedData => actions.fetchShabondis.success(normalizedData)),
         startWith(actions.fetchShabondis.request()),

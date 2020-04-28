@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.shabondies;
+const getEntities = state => state?.entities?.shabondis;
 const getIdFromProps = (_, props) => props?.id;
 const getGroupFromProps = (_, props) => props?.group;
 

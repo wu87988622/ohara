@@ -34,7 +34,7 @@ const PipelinePropertyView = props => {
   const { handleClose, element, pipelineObjects, isMetricsOn } = props;
   const topics = hooks.useTopicsInPipeline();
   const streams = hooks.useStreams();
-  const connectors = hooks.useConnectors();
+  const connectors = [...hooks.useConnectors(), ...hooks.useShabondis()];
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [tags, setTags] = React.useState({

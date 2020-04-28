@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -58,7 +59,7 @@ export const useUpdateShabondiLinkAction = () => {
     );
 };
 
-export const useRemoveSourceLinkAction = () => {
+export const useRemoveShabondiSourceLinkAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
   return (values, options) =>
@@ -70,7 +71,7 @@ export const useRemoveSourceLinkAction = () => {
     );
 };
 
-export const useRemoveSinkLinkAction = () => {
+export const useRemoveShabondiSinkLinkAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
   return (values, options) =>
@@ -120,13 +121,7 @@ export const useDeleteShabondiAction = () => {
 
 export const useFetchShabondisAction = () => {
   const dispatch = useDispatch();
-  const group = useShabondiGroup();
-  return () =>
-    dispatch(
-      actions.fetchShabondis.trigger({
-        group,
-      }),
-    );
+  return () => dispatch(actions.fetchShabondis.trigger());
 };
 
 export const useIsShabondiLoaded = () => {
@@ -149,18 +144,25 @@ export const useShabondiGroup = () => {
 export const useShabondis = () => {
   const getShabondiByGroup = useMemo(selectors.makeGetAllShabondisByGroup, []);
   const group = useShabondiGroup();
+  const isShabondiLoaded = useIsShabondiLoaded();
+  const isShabondiLoading = useIsShabondiLoading();
   const fetchShabondis = useFetchShabondisAction();
+  const workerId = hooks.useWorkerId();
 
   useEffect(() => {
-    if (useIsShabondiLoaded || useIsShabondiLoading) return;
-
+    if (isShabondiLoaded || isShabondiLoading) return;
     fetchShabondis();
-  }, [fetchShabondis]);
+  }, [fetchShabondis, isShabondiLoaded, isShabondiLoading]);
 
-  return useSelector(
-    useCallback(state => getShabondiByGroup(state, { group }), [
-      getShabondiByGroup,
-      group,
-    ]),
-  );
+  return useSelector(state => {
+    const shabondis = getShabondiByGroup(state, { group });
+    const results = shabondis.map(shabondi => {
+      const info = selectors.getInfoById(state, { id: workerId });
+      const settingDefinitions =
+        info?.classInfos.find(def => def.className === shabondi.shabondi__class)
+          .settingDefinitions || [];
+      return merge(shabondi, { settingDefinitions });
+    });
+    return results;
+  });
 };

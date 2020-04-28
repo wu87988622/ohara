@@ -15,74 +15,144 @@
  */
 
 import * as hooks from 'hooks';
+import { port } from 'utils/generate';
+import { PACKAGE_ROOT, KIND } from 'const';
+
+const isShabondiType = className =>
+  className &&
+  className
+    .replace(PACKAGE_ROOT, '')
+    .split('.')
+    .slice(1)
+    .shift() === KIND.shabondi;
 
 const connector = () => {
   const createConnector = hooks.useCreateConnectorAction();
+  const createShabondi = hooks.useCreateShabondiAction();
   const startConnector = hooks.useStartConnectorAction();
+  const startShabondi = hooks.useStartShabondiAction();
   const stopConnector = hooks.useStopConnectorAction();
+  const stopShabondi = hooks.useStopShabondiAction();
   const deleteConnector = hooks.useDeleteConnectorAction();
+  const deleteShabondi = hooks.useDeleteShabondiAction();
   const updateConnector = hooks.useUpdateConnectorAction();
+  const updateShabondi = hooks.useUpdateShabondiAction();
   const updateConnectorLink = hooks.useUpdateConnectorLinkAction();
+  const updateShabondiLink = hooks.useUpdateShabondiLinkAction();
   const removeConnectorSourceLink = hooks.useRemoveSourceLinkAction();
+  const removeShabondiSourceLink = hooks.useRemoveShabondiSourceLinkAction();
   const removeConnectorSinkLink = hooks.useRemoveSinkLinkAction();
+  const removeShabondiSinkLink = hooks.useRemoveShabondiSinkLinkAction();
+  const brokerClusterKey = {
+    name: hooks.useBrokerName(),
+    group: hooks.useBrokerGroup(),
+  };
   const workerClusterKey = hooks.useWorkerClusterKey();
   const topicGroup = hooks.useTopicGroup();
 
-  const create = async (values, paperApi) => {
+  const create = (values, paperApi) => {
     const { id, name, className } = values;
-    const params = { id, name, connector__class: className, workerClusterKey };
+    const params = { id, name };
     const options = { paperApi };
-    createConnector(params, options);
+    isShabondiType(className)
+      ? createShabondi(
+          {
+            ...params,
+            // shabondi requires client port
+            // we randomize a default value and follow the backend rule that port > 1024
+            shabondi__client__port: port({ min: 1025 }),
+            shabondi__class: className,
+            brokerClusterKey,
+          },
+          options,
+        )
+      : createConnector(
+          { ...params, connector__class: className, workerClusterKey },
+          options,
+        );
   };
 
-  const update = async (cell, topics, values, connectors, paperApi) => {
+  const update = (cell, topics, values, connectors, paperApi) => {
+    const params = { name: cell.name, ...values };
     const options = { cell, topics, connectors, paperApi };
-    updateConnector({ name: cell.name, ...values }, options);
+    isShabondiType(cell.className)
+      ? updateShabondi(params, options)
+      : updateConnector(params, options);
   };
 
-  const start = async (values, paperApi) => {
-    const { id, name } = values;
+  const start = (values, paperApi) => {
+    const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    startConnector(params, options);
+    isShabondiType(className)
+      ? startShabondi(params, options)
+      : startConnector(params, options);
   };
 
-  const stop = async (values, paperApi) => {
-    const { id, name } = values;
+  const stop = (values, paperApi) => {
+    const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    stopConnector(params, options);
+    isShabondiType(className)
+      ? stopShabondi(params, options)
+      : stopConnector(params, options);
   };
 
-  const remove = async (values, paperApi) => {
-    const { id, name } = values;
+  const remove = (values, paperApi) => {
+    const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    deleteConnector(params, options);
+    isShabondiType(className)
+      ? deleteShabondi(params, options)
+      : deleteConnector(params, options);
   };
 
-  const updateLink = async (values, paperApi) => {
+  const updateLink = (values, paperApi) => {
     const { connector, topic, link } = values;
+    const topicKey = { name: topic.name, group: topicGroup };
     const params = {
       name: connector.name,
-      topicKeys: [{ name: topic.name, group: topicGroup }],
     };
     const options = { link, paperApi };
-    updateConnectorLink(params, options);
+    if (isShabondiType(connector.className)) {
+      if (connector.kind === KIND.sink) {
+        updateShabondiLink(
+          { ...params, shabondi__sink__fromTopics: [topicKey] },
+          options,
+        );
+      } else {
+        updateShabondiLink(
+          { ...params, shabondi__source__toTopics: [topicKey] },
+          options,
+        );
+      }
+    } else {
+      updateConnectorLink({ ...params, topicKeys: [topicKey] }, options);
+    }
   };
 
-  const removeSourceLink = async (values, topic, paperApi) => {
-    const { name, id } = values;
-    const params = { name, id, topicKeys: [] };
+  const removeSourceLink = (values, topic, paperApi) => {
+    const { name, id, className } = values;
+    const params = { name, id };
     const options = { topic, paperApi };
-    removeConnectorSourceLink(params, options);
+    isShabondiType(className)
+      ? removeShabondiSourceLink(
+          { ...params, shabondi__source__toTopics: [] },
+          options,
+        )
+      : removeConnectorSourceLink({ ...params, toicKeys: [] }, options);
   };
 
-  const removeSinkLink = async (values, topic, paperApi) => {
-    const { name, id } = values;
-    const params = { name, id, topicKeys: [] };
+  const removeSinkLink = (values, topic, paperApi) => {
+    const { name, id, className } = values;
+    const params = { name, id };
     const options = { topic, paperApi };
-    removeConnectorSinkLink(params, options);
+    isShabondiType(className)
+      ? removeShabondiSinkLink(
+          { ...params, shabondi__sink__fromTopics: [] },
+          options,
+        )
+      : removeConnectorSinkLink({ ...params, toicKeys: [] }, options);
   };
 
   return {
