@@ -309,6 +309,7 @@ function FileTable(props) {
         data={data}
         onSelectionChange={onSelectionChange}
         options={{
+          predicate: 'name',
           selection: options?.selection,
           selectedData: options?.selectedFiles,
           showTitle: options?.showTitle,
