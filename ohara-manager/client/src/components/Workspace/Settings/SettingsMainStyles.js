@@ -43,11 +43,11 @@ export const Wrapper = styled.div(
       padding-bottom: 0;
 
       .MuiListItem-root {
+        padding: 0;
         cursor: pointer;
         max-width: none;
         min-width: auto;
         min-height: auto;
-        padding: ${theme.spacing(1, 2)};
         border-bottom: 1px solid ${theme.palette.divider};
 
         &:hover {
@@ -60,6 +60,20 @@ export const Wrapper = styled.div(
       }
       .MuiListItemIcon-root {
         min-width: ${theme.spacing(5)}px;
+      }
+      .MuiListItemText-root {
+        margin: 0;
+      }
+    }
+
+    .MuiBadge-root {
+      display: flex;
+      width: 100%;
+      padding: ${theme.spacing(1, 2)};
+
+      .MuiBadge-badge {
+        color: ${theme.palette.common.white};
+        background-color: ${theme.palette.warning.main};
       }
     }
 

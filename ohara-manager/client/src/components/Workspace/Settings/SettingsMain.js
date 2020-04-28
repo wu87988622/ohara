@@ -23,15 +23,18 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
+import Badge from '@material-ui/core/Badge';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Box from '@material-ui/core/Box';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import { isEmpty } from 'lodash';
 
+import * as hooks from 'hooks';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { Wrapper } from './SettingsMainStyles';
 import { Dialog } from 'components/common/Dialog';
+import RestartIndicator from './RestartIndicator';
 
 const SettingsMain = ({
   sections,
@@ -44,9 +47,16 @@ const SettingsMain = ({
     'should-display': isEmpty(selectedComponent) || isDialog,
   });
 
+  const discardWorkspace = hooks.useDiscardWorkspaceChangedSettingsAction();
+  const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
+
   return (
     <Wrapper>
       <div className={sectionWrapperCls}>
+        <RestartIndicator
+          isOpen={shouldBeRestartWorkspace}
+          onDiscard={discardWorkspace}
+        />
         {sections.map(section => {
           const { heading, components, ref } = section;
           const listWrapperCls = cx('list-wrapper', {
@@ -67,6 +77,7 @@ const SettingsMain = ({
                       icon,
                       type,
                       subTitle,
+                      badge,
                       componentProps = {},
                     } = component;
                     const { children, handleClick } = componentProps;
@@ -98,24 +109,26 @@ const SettingsMain = ({
                         key={title}
                         onClick={event => onClick(event, title)}
                       >
-                        {icon && <ListItemIcon>{icon}</ListItemIcon>}
-                        <ListItemText primary={title} secondary={subTitle} />
+                        <Badge component="div" badgeContent={badge?.count}>
+                          {icon && <ListItemIcon>{icon}</ListItemIcon>}
+                          <ListItemText primary={title} secondary={subTitle} />
 
-                        {type === SETTINGS_COMPONENT_TYPES.PAGE && (
-                          <ListItemSecondaryAction>
-                            <IconButton
-                              edge="end"
-                              size="small"
-                              onClick={event => onClick(event, title)}
-                            >
-                              <ArrowRightIcon fontSize="small" />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        )}
+                          {type === SETTINGS_COMPONENT_TYPES.PAGE && (
+                            <ListItemSecondaryAction>
+                              <IconButton
+                                edge="end"
+                                size="small"
+                                onClick={event => onClick(event, title)}
+                              >
+                                <ArrowRightIcon fontSize="small" />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          )}
 
-                        {type === SETTINGS_COMPONENT_TYPES.CUSTOMIZED && (
-                          <>{children}</>
-                        )}
+                          {type === SETTINGS_COMPONENT_TYPES.CUSTOMIZED && (
+                            <>{children}</>
+                          )}
+                        </Badge>
                       </ListItem>
                     );
                   })}

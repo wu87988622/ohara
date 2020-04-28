@@ -28,6 +28,7 @@ import UnarchiveIcon from '@material-ui/icons/Unarchive';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
+import { useShouldBeRestartWorkspace } from 'hooks';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import AutofillPage from './pages/AutofillPage';
@@ -69,6 +70,14 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
 
 export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
   const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
+
+  const {
+    countOfChangedBrokerNodes,
+    countOfChangedWorkerNodes,
+    countOfChangedWorkerPlugins,
+    countOfChangedWorkerSharedJars,
+    countOfChangedZookeeperNodes,
+  } = useShouldBeRestartWorkspace();
 
   const menu = [
     {
@@ -161,6 +170,7 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         //   type: SETTINGS_COMPONENT_TYPES.PAGE,
         // },
         {
+          badge: { count: countOfChangedZookeeperNodes },
           icon: <StorageIcon />,
           title: 'Zookeeper nodes',
           subTitle: 'Nodes running the zookeeper',
@@ -181,6 +191,7 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         //   type: SETTINGS_COMPONENT_TYPES.PAGE,
         // },
         {
+          badge: { count: countOfChangedBrokerNodes },
           icon: <StorageIcon />,
           title: 'Broker nodes',
           subTitle: 'Nodes running the broker',
@@ -201,6 +212,7 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
         //   type: SETTINGS_COMPONENT_TYPES.PAGE,
         // },
         {
+          badge: { count: countOfChangedWorkerNodes },
           icon: <StorageIcon />,
           title: 'Worker nodes',
           subTitle: 'Nodes running the worker',
@@ -210,6 +222,9 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
           },
         },
         {
+          badge: {
+            count: countOfChangedWorkerPlugins + countOfChangedWorkerSharedJars,
+          },
           icon: <UnarchiveIcon />,
           title: 'Worker plugins and shared jars',
           type: SETTINGS_COMPONENT_TYPES.PAGE,

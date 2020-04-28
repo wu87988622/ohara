@@ -16,6 +16,7 @@
 
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { map, size, xor } from 'lodash';
 
 import { GROUP } from 'const';
 import * as hooks from 'hooks';
@@ -65,4 +66,74 @@ export const useUpdateWorkspaceAction = () => {
     values => dispatch(actions.updateWorkspace.trigger({ ...values, group })),
     [dispatch, group],
   );
+};
+
+export const useDiscardWorkspaceChangedSettingsAction = () => {
+  const broker = hooks.useBroker();
+  const worker = hooks.useWorker();
+  const workspace = hooks.useWorkspace();
+  const zookeeper = hooks.useZookeeper();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
+
+  return useCallback(() => {
+    updateWorkspace({ ...workspace, broker, worker, zookeeper });
+  }, [broker, worker, workspace, zookeeper, updateWorkspace]);
+};
+
+export const useShouldBeRestartWorkspace = () => {
+  const broker = hooks.useBroker();
+  const worker = hooks.useWorker();
+  const workspace = hooks.useWorkspace();
+  const zookeeper = hooks.useZookeeper();
+
+  const countOfChangedBrokerNodes = workspace?.broker?.nodeNames
+    ? size(xor(broker?.nodeNames, workspace.broker.nodeNames))
+    : 0;
+
+  const countOfChangedWorkerNodes = workspace?.worker?.nodeNames
+    ? size(xor(worker?.nodeNames, workspace.worker.nodeNames))
+    : 0;
+
+  const countOfChangedWorkerPlugins = workspace?.worker?.pluginKeys
+    ? size(
+        xor(
+          map(worker?.pluginKeys, key => key.name),
+          map(workspace.worker.pluginKeys, key => key.name),
+        ),
+      )
+    : 0;
+
+  const countOfChangedWorkerSharedJars = workspace?.worker?.sharedJarKeys
+    ? size(
+        xor(
+          map(worker?.sharedJarKeys, key => key.name),
+          map(workspace.worker.sharedJarKeys, key => key.name),
+        ),
+      )
+    : 0;
+
+  const countOfChangedZookeeperNodes = workspace?.zookeeper?.nodeNames
+    ? size(xor(zookeeper?.nodeNames, workspace.zookeeper.nodeNames))
+    : 0;
+
+  const shouldBeRestartBroker = countOfChangedBrokerNodes > 0;
+  const shouldBeRestartWorker =
+    countOfChangedWorkerNodes > 0 ||
+    countOfChangedWorkerPlugins > 0 ||
+    countOfChangedWorkerSharedJars > 0;
+  const shouldBeRestartZookeeper = countOfChangedZookeeperNodes > 0;
+  const shouldBeRestartWorkspace =
+    shouldBeRestartBroker || shouldBeRestartWorker || shouldBeRestartZookeeper;
+
+  return {
+    countOfChangedBrokerNodes,
+    countOfChangedWorkerNodes,
+    countOfChangedWorkerPlugins,
+    countOfChangedWorkerSharedJars,
+    countOfChangedZookeeperNodes,
+    shouldBeRestartBroker,
+    shouldBeRestartWorker,
+    shouldBeRestartWorkspace,
+    shouldBeRestartZookeeper,
+  };
 };
