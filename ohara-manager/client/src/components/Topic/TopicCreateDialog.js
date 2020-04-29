@@ -37,23 +37,14 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm }) => {
     size(get(broker, 'aliveNodes')),
   ]);
 
-  const handleSubmit = (values, form) => {
-    const finalValues = {
-      ...values,
-      numberOfPartitions: Number(values?.numberOfPartitions),
-      numberOfReplications: Number(values?.numberOfReplications),
-      tags: {
-        isShared: true,
-      },
-    };
-    onConfirm(finalValues);
-    onClose();
-    setTimeout(form.reset);
-  };
-
   return (
     <Form
-      onSubmit={handleSubmit}
+      onSubmit={(values, form) => {
+        onConfirm(values, form).then(() => {
+          form.reset();
+          onClose();
+        });
+      }}
       initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (

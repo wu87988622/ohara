@@ -46,6 +46,7 @@ export default action$ =>
               status: CELL_STATUS.running,
             });
           }
+          if (options?.onSuccess) options.onSuccess();
         }),
         catchError(res => {
           if (paperApi) {
@@ -53,6 +54,7 @@ export default action$ =>
               status: CELL_STATUS.failed,
             });
           }
+          if (options?.onError) options.onError(res);
           return from([
             actions.createAndStartTopic.failure(res),
             actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),

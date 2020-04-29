@@ -85,11 +85,6 @@ function TopicTable(props) {
     }
   };
 
-  const handleCreateDialogConfirm = topicToCreate => {
-    onCreate(topicToCreate);
-    setIsCreateDialogOpen(false);
-  };
-
   const handleDeleteDialogConfirm = topicToDelete => {
     onDelete(topicToDelete);
     setIsDeleteDialogOpen(false);
@@ -218,7 +213,7 @@ function TopicTable(props) {
         broker={broker}
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
-        onConfirm={handleCreateDialogConfirm}
+        onConfirm={onCreate}
       />
       <TopicDeleteDialog
         isOpen={isDeleteDialogOpen}
