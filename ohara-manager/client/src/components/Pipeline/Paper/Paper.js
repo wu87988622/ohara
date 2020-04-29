@@ -400,10 +400,12 @@ const Paper = React.forwardRef((props, ref) => {
 
     paper.on('element:start:button:pointerclick', elementView => {
       onCellStart(paperUtils.getCellData(elementView), paperApi);
+      elementView.toggleMetrics(true);
     });
 
     paper.on('element:stop:button:pointerclick', elementView => {
       onCellStop(paperUtils.getCellData(elementView), paperApi);
+      elementView.toggleMetrics(false);
     });
 
     paper.on('element:config:button:pointerclick', elementView => {

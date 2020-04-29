@@ -51,13 +51,11 @@ const MetricsPanel = props => {
           </Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          {Object.keys(metrics).map((metricsKey, index) => {
+          {Object.keys(metrics).map(key => {
             return (
-              <>
-                <Typography variant="h6" key={index}>
-                  {metricsKey}
-                </Typography>
-                {metrics[metricsKey].meters.map((meter, index) => {
+              <React.Fragment key={key}>
+                <Typography variant="h6">{key}</Typography>
+                {metrics[key].meters.map((meter, index) => {
                   const { document, value, unit } = meter;
                   return (
                     <PropertyField
@@ -76,7 +74,7 @@ const MetricsPanel = props => {
                     />
                   );
                 })}
-              </>
+              </React.Fragment>
             );
           })}
         </ExpansionPanelDetails>

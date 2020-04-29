@@ -28,7 +28,7 @@ const NodePanel = props => {
   const { tasksStatus } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
 
-  if (!tasksStatus) return null;
+  if (tasksStatus.length === 0) return null;
 
   return (
     <>

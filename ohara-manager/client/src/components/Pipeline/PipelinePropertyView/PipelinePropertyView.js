@@ -21,11 +21,11 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 
+import * as hooks from 'hooks';
+import * as propertyUtils from './PipelinePropertyViewUtils';
 import SettingsPanel from './SettingsPanel';
 import NodePanel from './NodePanel';
 import MetricsPanel from './MetricsPanel';
-import * as hooks from 'hooks';
-import * as propertyUtils from './PipelinePropertyViewUtils';
 import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
@@ -106,7 +106,11 @@ const PipelinePropertyView = props => {
         setTags={setTags}
         setFullTagViewDialogOpen={setIsOpen}
       />
-      <NodePanel tasksStatus={settings?.tasksStatus} />
+      {// For topic component, we should display its "partitionInfos" instead.
+      // Please see #4677 for more info about this
+      element.kind !== KIND.topic && (
+        <NodePanel tasksStatus={settings.tasksStatus} />
+      )}
       <MetricsPanel
         pipelineObjects={pipelineObjects}
         isMetricsOn={isMetricsOn}

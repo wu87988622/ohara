@@ -204,11 +204,11 @@ const createConnectorCell = options => {
     },
     toggleMetrics(isOpen) {
       const { $box, model } = this;
-      const isRunning =
-        model.get('status').toLowerCase() === CELL_STATUS.running;
+      const status = model.get('status').toLowerCase();
+      const isStopped = status === CELL_STATUS.stopped;
 
-      // Only display metrics related info when the component is running
-      if (isOpen && isRunning) {
+      // Only display metrics info when the component is not stopped
+      if (isOpen && !isStopped) {
         $box.find('.metrics').show();
         $box.find('.status').hide();
         model.set('isMetricsOn', true);
