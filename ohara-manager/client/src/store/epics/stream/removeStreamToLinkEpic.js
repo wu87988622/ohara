@@ -16,35 +16,34 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ =>
   action$.pipe(
     ofType(actions.removeStreamToLink.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) => {
-      return from(streamApi.update(params)).pipe(
+    switchMap(({ params, options }) =>
+      defer(() => streamApi.update(params)).pipe(
         map(res => normalize(res.data, schema.stream)),
         map(normalizedData =>
           actions.removeStreamToLink.success(normalizedData),
         ),
         startWith(actions.removeStreamToLink.request()),
-        catchError(err => {
-          handleError(options);
-          return of(actions.removeStreamToLink.failure(err));
+        catchError(error => {
+          if (options.paperApi) {
+            options.paperApi.addLink(params.id, options.topic.id);
+          }
+          return from([
+            actions.removeStreamToLink.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]);
         }),
-      );
-    }),
+      ),
+    ),
   );
-
-function handleError(options) {
-  const { id, topic, paperApi } = options;
-  if (paperApi) {
-    paperApi.addLink(id, topic.id);
-  }
-}

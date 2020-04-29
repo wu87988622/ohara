@@ -14,81 +14,79 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, zip, defer } from 'rxjs';
+import { of, defer, throwError, iif, zip, from } from 'rxjs';
 import {
-  switchMap,
+  catchError,
   map,
   startWith,
-  catchError,
   retryWhen,
   delay,
-  take,
+  concatMap,
+  mergeMap,
+  distinctUntilChanged,
 } from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { CELL_STATUS } from 'const';
-import { getCellState } from 'components/Pipeline/PipelineApiHelper/apiHelperUtils';
+import { getId } from 'utils/object';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
+
+export const stopStream$ = value => {
+  const { params, options } = value;
+  const { paperApi } = options;
+  const streamId = getId(params);
+  paperApi.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
+  return zip(
+    defer(() => streamApi.stop(params)),
+    defer(() => streamApi.get(params)).pipe(
+      map(res => {
+        if (res.data.state) throw res;
+        else return res.data;
+      }),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 4,
+              throwError({ title: 'stop stream exceeded max retry count' }),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
+      ),
+    ),
+  ).pipe(
+    map(([, data]) => normalize(data, schema.stream)),
+    map(normalizedData => merge(normalizedData, { streamId })),
+    map(normalizedData => {
+      paperApi.updateElement(params.id, {
+        status: CELL_STATUS.stopped,
+      });
+      return actions.stopStream.success(normalizedData);
+    }),
+    startWith(actions.stopStream.request({ streamId })),
+    catchError(error => {
+      options.paperApi.updateElement(params.id, {
+        status: CELL_STATUS.failed,
+      });
+      return from([
+        actions.stopStream.failure(merge(error, { streamId })),
+        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+      ]);
+    }),
+  );
+};
 
 export default action$ =>
   action$.pipe(
     ofType(actions.stopStream.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) => {
-      const { id, paperApi } = options;
-
-      if (paperApi) {
-        paperApi.updateElement(id, {
-          status: CELL_STATUS.pending,
-        });
-      }
-
-      return zip(
-        defer(() => streamApi.stop(params)),
-        defer(() => streamApi.get(params)).pipe(
-          map(res => {
-            if (res.data.state) {
-              throw res;
-            }
-
-            return res;
-          }),
-          retryWhen(error => error.pipe(delay(1000 * 2), take(5))),
-        ),
-      ).pipe(
-        map(([, res]) => {
-          handleSuccess(options, res);
-          return normalize(res.data, schema.stream);
-        }),
-        map(normalizedData => actions.stopStream.success(normalizedData)),
-        startWith(actions.stopStream.request()),
-        catchError(err => {
-          handleError(options);
-          return of(actions.stopStream.failure(err));
-        }),
-      );
-    }),
+    distinctUntilChanged(),
+    mergeMap(value => stopStream$(value)),
   );
-
-function handleSuccess(options, res) {
-  const { id, paperApi } = options;
-
-  if (paperApi) {
-    paperApi.updateElement(id, {
-      status: getCellState(res),
-    });
-  }
-}
-
-function handleError(options) {
-  const { paperApi, name } = options;
-
-  if (paperApi) {
-    paperApi.updateElement(name, {
-      status: CELL_STATUS.stopped,
-    });
-  }
-}

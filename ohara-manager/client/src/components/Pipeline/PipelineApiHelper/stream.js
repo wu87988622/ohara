@@ -24,14 +24,13 @@ const stream = () => {
   const stopStream = hooks.useStopStreamAction();
   const removeStreamToLink = hooks.useRemoveStreamToLinkAction();
   const removeStreamFromLink = hooks.useRemoveStreamFromLinkAction();
-  const updateStreamFromLink = hooks.useUpdateStreamFromLinkAction();
-  const updateStreamToLink = hooks.useUpdateStreamToLinkAction();
+  const updateStreamLink = hooks.useUpdateStreamLinkAction();
 
   const create = (params, paperApi) => {
-    const { id, name, className, jarKey } = params;
-    const values = { name, stream__class: className, jarKey };
-    const options = { id, paperApi };
-    createStream(values, options);
+    const { className } = params;
+    const newParams = { ...params, stream__class: className };
+    const options = { paperApi };
+    createStream(newParams, options);
   };
 
   const update = (cell, topics, values, streams, paperApi) => {
@@ -45,7 +44,7 @@ const stream = () => {
       to: [{ name: topic.name }],
     };
     const options = { link, paperApi };
-    updateStreamToLink(params, options);
+    updateStreamLink(params, options);
   };
 
   const updateLinkFrom = ({ fromStream, topic, link }, paperApi) => {
@@ -54,34 +53,31 @@ const stream = () => {
       from: [{ name: topic.name }],
     };
     const options = { link, paperApi };
-    updateStreamFromLink(params, options);
+    updateStreamLink(params, options);
   };
 
   const start = (params, paperApi) => {
-    const { id, name } = params;
-    startStream(name, { id, paperApi });
+    startStream(params, { paperApi });
   };
 
   const stop = (params, paperApi) => {
-    const { id, name } = params;
-    stopStream(name, { id, paperApi });
+    stopStream(params, { paperApi });
   };
 
   const remove = (params, paperApi) => {
-    const { id, name } = params;
-    deleteStream(name, { id, paperApi });
+    deleteStream(params, { paperApi });
   };
 
-  const removeLinkTo = ({ id, name }, topic, paperApi) => {
-    const params = { name, to: [] };
-    const options = { id, topic, paperApi };
-    removeStreamToLink(params, options);
+  const removeLinkTo = (params, topic, paperApi) => {
+    const newParams = { ...params, to: [] };
+    const options = { topic, paperApi };
+    removeStreamToLink(newParams, options);
   };
 
-  const removeLinkFrom = ({ id, name }, topic, paperApi) => {
-    const params = { name, from: [] };
-    const options = { id, topic, paperApi };
-    removeStreamFromLink(params, options);
+  const removeLinkFrom = (params, topic, paperApi) => {
+    const newParams = { ...params, from: [] };
+    const options = { topic, paperApi };
+    removeStreamFromLink(newParams, options);
   };
 
   return {

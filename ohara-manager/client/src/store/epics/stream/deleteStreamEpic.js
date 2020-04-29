@@ -14,32 +14,74 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { of, zip, defer, iif, throwError, from } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+  retryWhen,
+  concatMap,
+  delay,
+} from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
+import { getId } from 'utils/object';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-export default action$ =>
-  action$.pipe(
-    ofType(actions.deleteStream.TRIGGER),
-    map(action => action.payload),
-    switchMap(({ params, options }) =>
-      from(streamApi.remove(params)).pipe(
-        map(() => {
-          handleSuccess(options);
-          return actions.deleteStream.success(params);
-        }),
-        startWith(actions.deleteStream.request()),
-        catchError(error => of(actions.deleteStream.failure(error))),
+export const deleteStream$ = value => {
+  const { params, options } = value;
+  const { paperApi } = options;
+  const streamId = getId(params);
+  paperApi.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
+  return zip(
+    defer(() => streamApi.remove(params)),
+    defer(() => streamApi.getAll({ group: params.group })).pipe(
+      map(res => {
+        if (res.data.find(stream => stream.name === params.name)) throw res;
+        else return res.data;
+      }),
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 4,
+              throwError({ title: 'delete stream exceeded max retry count' }),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
       ),
     ),
+  ).pipe(
+    map(() => {
+      paperApi.removeElement(params.id);
+      return actions.deleteStream.success({ streamId });
+    }),
+    startWith(actions.deleteStream.request({ streamId })),
+    catchError(error => {
+      paperApi.updateElement(params.id, {
+        status: CELL_STATUS.failed,
+      });
+      return from([
+        actions.deleteStream.failure(merge(error, { streamId })),
+        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+      ]);
+    }),
   );
+};
 
-function handleSuccess(options) {
-  const { id, paperApi } = options;
-  if (paperApi) {
-    paperApi.removeElement(id);
-  }
-}
+export default action$ => {
+  return action$.pipe(
+    ofType(actions.deleteStream.TRIGGER),
+    map(action => action.payload),
+    distinctUntilChanged(),
+    mergeMap(value => deleteStream$(value)),
+  );
+};

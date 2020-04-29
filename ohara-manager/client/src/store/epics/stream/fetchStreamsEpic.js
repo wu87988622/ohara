@@ -16,23 +16,28 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { switchMap, map, startWith, catchError } from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ =>
   action$.pipe(
     ofType(actions.fetchStreams.TRIGGER),
-    map(action => action.payload),
     switchMap(() =>
-      from(streamApi.getAll()).pipe(
+      defer(() => streamApi.getAll()).pipe(
         map(res => normalize(res.data, [schema.stream])),
         map(normalizedData => actions.fetchStreams.success(normalizedData)),
         startWith(actions.fetchStreams.request()),
-        catchError(error => of(actions.fetchStreams.failure(error))),
+        catchError(error =>
+          from([
+            actions.fetchStreams.failure(error),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

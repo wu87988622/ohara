@@ -17,26 +17,36 @@
 import _ from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { defer, from } from 'rxjs';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 export default action$ =>
   action$.pipe(
     ofType(actions.updateStream.TRIGGER),
     map(action => action.payload),
-    switchMap(({ values, options }) => {
-      return from(streamApi.update(values)).pipe(
+    mergeMap(({ values, options }) => {
+      const streamId = getId(values);
+      return defer(() => streamApi.update(values)).pipe(
         map(res => normalize(res.data, schema.stream)),
         map(normalizedData => {
           handleSuccess(values, options);
-          return actions.updateStream.success(normalizedData);
+          return actions.updateStream.success(
+            _.merge(normalizedData, { streamId }),
+          );
         }),
-        startWith(actions.updateStream.request()),
-        catchError(err => of(actions.updateStream.failure(err))),
+        startWith(actions.updateStream.request({ streamId })),
+        catchError(error =>
+          from([
+            actions.updateStream.failure(_.merge(error, { streamId })),
+            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );

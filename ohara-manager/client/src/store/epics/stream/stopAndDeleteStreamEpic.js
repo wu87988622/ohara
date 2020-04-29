@@ -19,17 +19,17 @@ import { of } from 'rxjs';
 import { catchError, map, mergeMap, concatAll } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import stopStream$ from './stopStreamEpic';
-import deleteStream$ from './deleteStreamEpic';
+import { stopStream$ } from './stopStreamEpic';
+import { deleteStream$ } from './deleteStreamEpic';
 
 export default action$ =>
   action$.pipe(
-    ofType(actions.stopAndDeleteStream.REQUEST),
+    ofType(actions.stopAndDeleteStream.TRIGGER),
     map(action => action.payload),
-    mergeMap(values =>
-      of(stopStream$(values), deleteStream$(values)).pipe(
+    mergeMap(value =>
+      of(stopStream$(value), deleteStream$(value)).pipe(
         concatAll(),
-        catchError(res => of(actions.stopAndDeleteStream.failure(res))),
+        catchError(error => of(actions.stopAndDeleteStream.failure(error))),
       ),
     ),
   );

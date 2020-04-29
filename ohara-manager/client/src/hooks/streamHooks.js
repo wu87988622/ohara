@@ -114,16 +114,16 @@ export const useStopStreamAction = () => {
 };
 
 export const useStreams = () => {
-  const isAppReady = hooks.useIsAppReady();
   const group = useStreamGroup();
   const fetchStreams = useFetchStreamsAction();
   const isStreamLoaded = useIsStreamLoaded();
+  const isStreamLoading = useIsStreamLoading();
 
   useEffect(() => {
-    if (isStreamLoaded || !isAppReady || !group) return;
+    if (isStreamLoaded || isStreamLoading) return;
 
     fetchStreams();
-  }, [fetchStreams, group, isAppReady, isStreamLoaded]);
+  }, [fetchStreams, isStreamLoading, isStreamLoaded]);
 
   return useSelector(state => {
     const streams = selectors.getStreamByGroup(state, { group });
@@ -165,46 +165,31 @@ export const useRemoveStreamFromLinkAction = () => {
   );
 };
 
-export const useUpdateStreamFromLinkAction = () => {
+export const useUpdateStreamLinkAction = () => {
   const dispatch = useDispatch();
   const streamGroup = useStreamGroup();
   const topicGroup = hooks.useTopicGroup();
 
   return useCallback(
-    (params, options) => {
-      const newParams = {
-        ...params,
-        from: params.from.map(t => ({ ...t, group: topicGroup })),
-        group: streamGroup,
-      };
+    (values, options) => {
+      let newValues = {};
+      if (!_.isEmpty(values.from)) {
+        newValues = {
+          ...values,
+          from: values.from.map(t => ({ ...t, group: topicGroup })),
+          group: streamGroup,
+        };
+      } else if (!_.isEmpty(values.to)) {
+        newValues = {
+          ...values,
+          to: values.to.map(t => ({ ...t, group: topicGroup })),
+          group: streamGroup,
+        };
+      }
 
       return dispatch(
-        actions.updateStreamFromLink.trigger({
-          params: newParams,
-          options,
-        }),
-      );
-    },
-    [dispatch, streamGroup, topicGroup],
-  );
-};
-
-export const useUpdateStreamToLinkAction = () => {
-  const dispatch = useDispatch();
-  const streamGroup = useStreamGroup();
-  const topicGroup = hooks.useTopicGroup();
-
-  return useCallback(
-    (params, options) => {
-      const newParams = {
-        ...params,
-        to: params.to.map(t => ({ ...t, group: topicGroup })),
-        group: streamGroup,
-      };
-
-      return dispatch(
-        actions.updateStreamToLink.trigger({
-          params: newParams,
+        actions.updateStreamLink.trigger({
+          values: newValues,
           options,
         }),
       );
@@ -217,8 +202,13 @@ export const useStopAndDeleteStreamAction = () => {
   const dispatch = useDispatch();
   const group = useStreamGroup();
   return useCallback(
-    values =>
-      dispatch(actions.stopAndDeleteStream.request({ ...values, group })),
+    (params, options) =>
+      dispatch(
+        actions.stopAndDeleteStream.trigger({
+          params: { ...params, group },
+          options,
+        }),
+      ),
     [dispatch, group],
   );
 };

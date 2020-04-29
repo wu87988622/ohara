@@ -24,8 +24,7 @@ export default function reducer(state = {}, action) {
     case actions.updateStream.SUCCESS:
     case actions.removeStreamFromLink.SUCCESS:
     case actions.removeStreamToLink.SUCCESS:
-    case actions.updateStreamFromLink.SUCCESS:
-    case actions.updateStreamToLink.SUCCESS:
+    case actions.updateStreamLink.SUCCESS:
       return assign(state, action.payload.entities.streams);
 
     case actions.deleteStream.SUCCESS:

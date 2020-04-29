@@ -14,38 +14,52 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { defer, from } from 'rxjs';
+import {
+  catchError,
+  map,
+  startWith,
+  distinctUntilChanged,
+  mergeMap,
+} from 'rxjs/operators';
 
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+
+const createStream$ = value => {
+  const { values, options } = value;
+  const streamId = getId(values);
+  return defer(() => streamApi.create(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.stream)),
+    map(normalizedData => {
+      options.paperApi.updateElement(values.id, {
+        status: CELL_STATUS.stopped,
+      });
+      return merge(normalizedData, { streamId });
+    }),
+    map(normalizedData => actions.createStream.success(normalizedData)),
+    startWith(actions.createStream.request({ streamId })),
+    catchError(error => {
+      options.paperApi.removeElement(values.id);
+      return from([
+        actions.createStream.failure(merge(error, { streamId })),
+        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+      ]);
+    }),
+  );
+};
 
 export default action$ =>
   action$.pipe(
     ofType(actions.createStream.TRIGGER),
     map(action => action.payload),
-    switchMap(({ values, options }) => {
-      const { paperApi, id } = options;
-
-      return from(streamApi.create(values)).pipe(
-        map(res => normalize(res.data, schema.stream)),
-        map(normalizedData => {
-          if (paperApi) {
-            paperApi.updateElement(id, CELL_STATUS.stopped);
-          }
-          return actions.createStream.success(normalizedData);
-        }),
-        startWith(actions.createStream.request()),
-        catchError(err => {
-          if (paperApi) {
-            paperApi.removeElement(id);
-          }
-          return of(actions.createStream.failure(err));
-        }),
-      );
-    }),
+    distinctUntilChanged(),
+    mergeMap(value => createStream$(value)),
   );
