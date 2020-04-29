@@ -36,7 +36,6 @@ import * as validate from 'utils/validate';
 import Outline from './Outline';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import { Tabs as EditWorkspaceTabs } from 'components/Workspace/Edit';
 import WorkspaceSettings from 'components/Workspace/Settings';
 import {
   StyledNavigator,
@@ -65,8 +64,8 @@ const Navigator = ({ pipelineApi }) => {
     setAnchorEl(null);
   };
 
-  const handleMenuItemClick = tab => () => {
-    openEditWorkspaceDialog({ tab });
+  const handleMenuItemClick = pageName => () => {
+    openEditWorkspaceDialog(pageName);
     handleClose();
   };
 
@@ -96,8 +95,8 @@ const Navigator = ({ pipelineApi }) => {
       >
         <MenuItem
           className="settings"
-          key={EditWorkspaceTabs.SETTINGS}
-          onClick={handleMenuItemClick(EditWorkspaceTabs.SETTINGS)}
+          key={'settings'}
+          onClick={handleMenuItemClick('settings')}
         >
           Settings
         </MenuItem>

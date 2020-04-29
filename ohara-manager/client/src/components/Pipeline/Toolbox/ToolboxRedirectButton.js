@@ -22,20 +22,10 @@ import Typography from '@material-ui/core/Typography';
 
 import { Label } from 'components/common/Form';
 
-const ToolboxUploadButton = forwardRef(({ onChange, buttonText }, ref) => {
+const ToolboxRedirectButton = forwardRef(({ onClick, buttonText }, ref) => {
   return (
     <div className="add-button" ref={ref}>
-      <input
-        id="fileInput"
-        accept=".jar"
-        type="file"
-        onChange={onChange}
-        onClick={event => {
-          /* Allow file to be added multiple times */
-          event.target.value = null;
-        }}
-      />
-      <IconButton>
+      <IconButton onClick={onClick}>
         <Label htmlFor="fileInput">
           <AddIcon />
         </Label>
@@ -45,9 +35,9 @@ const ToolboxUploadButton = forwardRef(({ onChange, buttonText }, ref) => {
   );
 });
 
-ToolboxUploadButton.propTypes = {
+ToolboxRedirectButton.propTypes = {
   buttonText: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
-export default ToolboxUploadButton;
+export default ToolboxRedirectButton;

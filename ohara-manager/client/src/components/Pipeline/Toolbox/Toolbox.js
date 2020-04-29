@@ -19,24 +19,16 @@ import PropTypes from 'prop-types';
 import Draggable from 'react-draggable';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
 import * as joint from 'jointjs';
 
 import ToolboxAddGraphDialog from './ToolboxAddGraphDialog';
 import ToolboxSearch from './ToolboxSearch';
-import ToolboxUploadButton from './ToolboxUploadButton';
+import ToolboxBody from './ToolboxBody';
 import * as utils from './ToolboxUtils';
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { KIND } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
-import { AddTopicDialog } from 'components/Topic';
 import { useStreams, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { PaperContext } from '../Pipeline';
 
@@ -49,9 +41,6 @@ const Toolbox = props => {
   } = props;
 
   const currentWorker = hooks.useWorker();
-  const createFile = hooks.useCreateFileAction();
-
-  const { open: openAddTopicDialog } = context.useAddTopicDialog();
   const showMessage = hooks.useShowMessage();
 
   const [isOpen, setIsOpen] = React.useState(false);
@@ -91,13 +80,7 @@ const Toolbox = props => {
     connectors,
   });
 
-  const handleFileSelect = async event => {
-    const [file] = event.target.files;
-
-    if (file) createFile(file);
-  };
-
-  const handleAddGraph = async newName => {
+  const handleAddGraph = newName => {
     if (!utils.checkUniqueName(newName, paperApi)) {
       setIsOpen(false);
       utils.removeTemporaryCell(paperApi);
@@ -248,111 +231,15 @@ const Toolbox = props => {
           />
         </div>
 
-        <div
-          className="toolbox-body"
-          style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
-          ref={toolboxBodyRef}
-          onScroll={handleScroll}
-        >
-          <ExpansionPanel square expanded={expanded.source}>
-            <ExpansionPanelSummary
-              ref={panelSummaryRef}
-              expandIcon={<ExpandMoreIcon />}
-              onClick={() =>
-                pipelineDispatch({ type: 'setToolbox', payload: 'source' })
-              }
-            >
-              <Typography variant="subtitle1">Source</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails className="detail">
-              <List disablePadding>
-                <div id="source-list" className="toolbox-list"></div>
-              </List>
-
-              {false && (
-                <ToolboxUploadButton
-                  buttonText="Add source connectors"
-                  onChange={handleFileSelect}
-                  ref={panelAddButtonRef}
-                />
-              )}
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-
-          <ExpansionPanel square expanded={expanded.topic}>
-            <ExpansionPanelSummary
-              className="panel-title"
-              expandIcon={<ExpandMoreIcon />}
-              onClick={() =>
-                pipelineDispatch({ type: 'setToolbox', payload: 'topic' })
-              }
-            >
-              <Typography variant="subtitle1">Topic</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails className="detail">
-              <List disablePadding>
-                <div id="topic-list" className="toolbox-list"></div>
-              </List>
-
-              <div className="add-button">
-                <IconButton onClick={openAddTopicDialog}>
-                  <AddIcon />
-                </IconButton>
-                <Typography variant="subtitle2">Add topics</Typography>
-              </div>
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-
-          <AddTopicDialog uniqueId="toolbox" />
-
-          <ExpansionPanel square expanded={expanded.stream}>
-            <ExpansionPanelSummary
-              className="panel-title"
-              expandIcon={<ExpandMoreIcon />}
-              onClick={() =>
-                pipelineDispatch({ type: 'setToolbox', payload: 'stream' })
-              }
-            >
-              <Typography variant="subtitle1">Stream</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails className="detail">
-              <List disablePadding>
-                <div id="stream-list" className="toolbox-list"></div>
-              </List>
-
-              <ToolboxUploadButton
-                buttonText="Add streams"
-                onChange={handleFileSelect}
-                ref={panelAddButtonRef}
-              />
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-
-          <ExpansionPanel square expanded={expanded.sink}>
-            <ExpansionPanelSummary
-              className="panel-title"
-              expandIcon={<ExpandMoreIcon />}
-              onClick={() =>
-                pipelineDispatch({ type: 'setToolbox', payload: 'sink' })
-              }
-            >
-              <Typography variant="subtitle1">Sink</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails className="detail">
-              <List disablePadding>
-                <div id="sink-list" className="toolbox-list"></div>
-              </List>
-
-              {false && (
-                <ToolboxUploadButton
-                  buttonText="Add sink connectors"
-                  onChange={handleFileSelect}
-                  ref={panelAddButtonRef}
-                />
-              )}
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-        </div>
+        <ToolboxBody
+          toolboxHeight={toolboxHeight}
+          toolboxBodyRef={toolboxBodyRef}
+          panelAddButtonRef={panelAddButtonRef}
+          panelSummaryRef={panelSummaryRef}
+          handleScroll={handleScroll}
+          pipelineDispatch={pipelineDispatch}
+          expanded={expanded}
+        />
 
         <ToolboxAddGraphDialog
           isOpen={isOpen}

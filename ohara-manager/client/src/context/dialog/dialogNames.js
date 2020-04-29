@@ -15,6 +15,7 @@
  */
 
 export const EDIT_WORKSPACE_DIALOG = 'editWorkspace';
+export const WORKSPACE_SETTINGS_DIALOG = 'editWorkspace';
 export const ADD_TOPIC_DIALOG = 'addTopic';
 export const VIEW_TOPIC_DIALOG = 'viewTopic';
 export const LIST_NODE_DIALOG = 'listNode';

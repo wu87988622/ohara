@@ -24,11 +24,10 @@ import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
 import { DeleteWorkspace } from './DangerZone';
-
 import { getKeyWithId } from 'utils/object';
 
 const Settings = () => {
-  const { isOpen, close } = useEditWorkspaceDialog();
+  const { isOpen, close, data: pageName } = useEditWorkspaceDialog();
   const [selectedMenu, setSelectedMenu] = React.useState('');
   const [selectedComponent, setSelectedComponent] = React.useState(null);
   const scrollRef = React.useRef(null);
@@ -39,7 +38,6 @@ const Settings = () => {
   const zookeeperId = hooks.useZookeeperId();
   const brokerId = hooks.useBrokerId();
   const workerId = hooks.useWorkerId();
-
   const workspace = hooks.useWorkspace();
 
   const resetSelectedItem = () => {
@@ -68,9 +66,14 @@ const Settings = () => {
   const handleComponentChange = newPage => {
     const { ref, heading: currentSection, type, name } = newPage;
 
-    scrollRef.current = ref.current;
+    scrollRef.current = ref?.current;
     setSelectedMenu(currentSection); // sync the menu selected state
     setSelectedComponent({ name, type });
+  };
+
+  const handleClose = () => {
+    close();
+    resetSelectedItem();
   };
 
   // Use a different layout for rendering page component
@@ -82,13 +85,22 @@ const Settings = () => {
     if (!isPageComponent && scrollRef?.current) {
       scrollRef.current.scrollIntoView();
     }
-  }, [isPageComponent, menu, scrollRef, sections, selectedComponent]);
+  }, [isPageComponent]);
+
+  React.useEffect(() => {
+    if (pageName && pageName !== 'settings') {
+      handleComponentChange({
+        name: pageName,
+        type: SETTINGS_COMPONENT_TYPES.PAGE,
+      });
+    }
+  }, [pageName]);
 
   return (
     <StyledFullScreenDialog
       title="Settings"
       open={isOpen}
-      onClose={close}
+      onClose={handleClose}
       testId="edit-workspace-dialog"
       isPageComponent={isPageComponent}
     >
