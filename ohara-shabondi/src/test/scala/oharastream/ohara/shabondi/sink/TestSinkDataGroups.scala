@@ -48,7 +48,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
@@ -74,7 +74,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     val topicKey1                   = createTopicKey
     val rowCount                    = 999
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
@@ -119,7 +119,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     val topicKey1                   = createTopicKey
     val idleTime                    = JDuration.ofSeconds(3)
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Seq(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
       val group1Name   = "group1"
       val defaultGroup = dataGroups.defaultGroup

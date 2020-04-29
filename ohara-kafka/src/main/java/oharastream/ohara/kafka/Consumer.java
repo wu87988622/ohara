@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import oharastream.ohara.common.data.Serializer;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.kafka.connector.TopicPartition;
@@ -127,10 +128,37 @@ public interface Consumer<K, V> extends Releasable {
     assignment().forEach(p -> seek(p, offset));
   }
 
+  /**
+   * @return all partitions and offsets even if those partitions are not subscribed by this
+   *     consumer.
+   */
   Map<TopicPartition, Long> endOffsets();
 
   /** break the poll right now. */
   void wakeup();
+
+  /**
+   * subscribe other topics. Noted that current assignments will be replaced by this new topics.
+   *
+   * @param topicKeys topic keys
+   */
+  void subscribe(Set<TopicKey> topicKeys);
+
+  /**
+   * subscribe other partitions. Noted that current assignments will be replaced by this new
+   * partitions.
+   *
+   * @param assignments partitions
+   */
+  void assignments(Set<TopicPartition> assignments);
+
+  /**
+   * subscribe other partitions. Noted that current assignments will be replaced by this new
+   * partitions.
+   *
+   * @param assignments partitions and offsets
+   */
+  void assignments(Map<TopicPartition, Long> assignments);
 
   static Builder<byte[], byte[]> builder() {
     return new Builder<>().keySerializer(Serializer.BYTES).valueSerializer(Serializer.BYTES);
@@ -140,7 +168,8 @@ public interface Consumer<K, V> extends Releasable {
       implements oharastream.ohara.common.pattern.Builder<Consumer<Key, Value>> {
     private Map<String, String> options = Collections.emptyMap();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
-    private List<String> topicNames;
+    private Set<String> topicNames;
+    private Set<TopicPartition> assignments;
     private String groupId = String.format("ohara-consumer-%s", CommonUtils.randomString());
     private String connectionProps;
     private Serializer<?> keySerializer = null;
@@ -189,15 +218,34 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder<Key, Value> topicName(String topicName) {
-      return topicNames(Collections.singletonList(Objects.requireNonNull(topicName)));
+      return topicNames(Collections.singleton(Objects.requireNonNull(topicName)));
     }
 
     /**
+     * assign the specify topics to this consumer. You have to define either topicNames or
+     * assignments.
+     *
      * @param topicNames the topics you want to subscribe
      * @return this builder
      */
-    public Builder<Key, Value> topicNames(List<String> topicNames) {
+    public Builder<Key, Value> topicNames(Set<String> topicNames) {
+      if (assignments != null)
+        throw new IllegalArgumentException("assignments is defined so you can't subscribe topics");
       this.topicNames = CommonUtils.requireNonEmpty(topicNames);
+      return this;
+    }
+
+    /**
+     * assign the specify partitions to this consumer. You have to define either topicNames or
+     * assignments.
+     *
+     * @param assignments subscribed partitions
+     * @return this builder
+     */
+    public Builder<Key, Value> assignments(Set<TopicPartition> assignments) {
+      if (topicNames != null)
+        throw new IllegalArgumentException("assignments is defined so you can't subscribe topics");
+      this.assignments = CommonUtils.requireNonEmpty(assignments);
       return this;
     }
 
@@ -253,7 +301,6 @@ public interface Consumer<K, V> extends Releasable {
     }
 
     private void checkArguments() {
-      CommonUtils.requireNonEmpty(topicNames);
       CommonUtils.requireNonEmpty(connectionProps);
       CommonUtils.requireNonEmpty(groupId);
       Objects.requireNonNull(fromBegin);
@@ -279,7 +326,14 @@ public interface Consumer<K, V> extends Releasable {
               wrap((Serializer<Key>) keySerializer),
               wrap((Serializer<Value>) valueSerializer));
 
-      kafkaConsumer.subscribe(topicNames);
+      if (!CommonUtils.isEmpty(topicNames)) kafkaConsumer.subscribe(topicNames);
+      if (!CommonUtils.isEmpty(assignments))
+        kafkaConsumer.assign(
+            assignments.stream()
+                .map(
+                    tp ->
+                        new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition()))
+                .collect(Collectors.toList()));
 
       return new Consumer<Key, Value>() {
         private TopicPartition toTopicPartition(org.apache.kafka.common.TopicPartition tp) {
@@ -348,13 +402,51 @@ public interface Consumer<K, V> extends Releasable {
 
         @Override
         public Map<TopicPartition, Long> endOffsets() {
-          return kafkaConsumer.endOffsets(kafkaConsumer.assignment()).entrySet().stream()
+          return kafkaConsumer
+              .endOffsets(
+                  kafkaConsumer.listTopics().entrySet().stream()
+                      .flatMap(
+                          e ->
+                              e.getValue().stream()
+                                  .map(
+                                      p ->
+                                          new org.apache.kafka.common.TopicPartition(
+                                              p.topic(), p.partition())))
+                      .collect(Collectors.toList()))
+              .entrySet().stream()
               .collect(Collectors.toMap(e -> toTopicPartition(e.getKey()), Map.Entry::getValue));
         }
 
         @Override
         public void wakeup() {
           kafkaConsumer.wakeup();
+        }
+
+        @Override
+        public void subscribe(Set<TopicKey> topicKeys) {
+          kafkaConsumer.subscribe(
+              topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toList()));
+        }
+
+        @Override
+        public void assignments(Set<TopicPartition> assignments) {
+          kafkaConsumer.assign(
+              assignments.stream()
+                  .map(
+                      tp ->
+                          new org.apache.kafka.common.TopicPartition(
+                              tp.topicName(), tp.partition()))
+                  .collect(Collectors.toList()));
+        }
+
+        @Override
+        public void assignments(Map<TopicPartition, Long> assignments) {
+          assignments(assignments.keySet());
+          assignments.forEach(
+              (tp, offset) ->
+                  kafkaConsumer.seek(
+                      new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition()),
+                      Math.max(0, offset)));
         }
       };
     }

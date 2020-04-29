@@ -19,11 +19,14 @@ package oharastream.ohara.kafka;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.util.CommonUtils;
+import oharastream.ohara.kafka.connector.TopicPartition;
 import oharastream.ohara.testing.WithBroker;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.junit.After;
@@ -36,14 +39,21 @@ public class TestProducerToConsumer extends WithBroker {
   private final String topicName = CommonUtils.randomString();
 
   @Before
-  public void setup() {
+  public void setup() throws ExecutionException, InterruptedException {
+    createTopic(topicName, 1);
+  }
+
+  private void createTopic(String topicName, int numberOfPartitions)
+      throws ExecutionException, InterruptedException {
     try (TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps())) {
       client
           .topicCreator()
-          .numberOfPartitions(1)
+          .numberOfPartitions(numberOfPartitions)
           .numberOfReplications((short) 1)
           .topicName(topicName)
-          .create();
+          .create()
+          .toCompletableFuture()
+          .get();
     }
   }
 
@@ -280,8 +290,34 @@ public class TestProducerToConsumer extends WithBroker {
             records.stream().filter(record -> record.key().isPresent()).count(), count - 1);
         consumer
             .endOffsets()
-            .forEach((tp, offset) -> Assert.assertEquals(offset.longValue(), count));
+            .forEach(
+                (tp, offset) -> {
+                  if (tp.topicName().equals(topicName))
+                    Assert.assertEquals(offset.longValue(), count);
+                });
       }
+    }
+  }
+
+  @Test
+  public void testAssignments() throws ExecutionException, InterruptedException {
+    int numberOfPartitions = 3;
+    String topicName = CommonUtils.randomString();
+    createTopic(topicName, numberOfPartitions);
+    try (Consumer<String, String> consumer =
+        Consumer.builder()
+            .keySerializer(Serializer.STRING)
+            .valueSerializer(Serializer.STRING)
+            .connectionProps(testUtil().brokersConnProps())
+            .offsetFromBegin()
+            .build()) {
+      Set<TopicPartition> tps =
+          consumer.endOffsets().keySet().stream()
+              .filter(tp -> tp.topicName().equals(topicName))
+              .collect(Collectors.toSet());
+      Assert.assertEquals(numberOfPartitions, tps.size());
+      consumer.assignments(tps);
+      Assert.assertEquals(tps, consumer.assignment());
     }
   }
 

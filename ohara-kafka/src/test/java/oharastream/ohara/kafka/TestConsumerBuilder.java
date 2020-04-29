@@ -18,6 +18,7 @@ package oharastream.ohara.kafka;
 
 import java.util.Collections;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.kafka.connector.TopicPartition;
 import org.junit.Test;
 
 public class TestConsumerBuilder extends OharaTest {
@@ -39,7 +40,7 @@ public class TestConsumerBuilder extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyTopicNames() {
-    Consumer.builder().topicNames(Collections.emptyList());
+    Consumer.builder().topicNames(Collections.emptySet());
   }
 
   @Test(expected = NullPointerException.class)
@@ -60,5 +61,22 @@ public class TestConsumerBuilder extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void nullValueSerializer() {
     Consumer.builder().valueSerializer(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyAssignments() {
+    Consumer.builder().assignments(Collections.emptySet());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullAssignments() {
+    Consumer.builder().assignments(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void assignBothTopicAndAssignments() {
+    Consumer.builder()
+        .assignments(Collections.singleton(new TopicPartition("a", 1)))
+        .topicName("aa");
   }
 }

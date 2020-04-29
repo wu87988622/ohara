@@ -55,18 +55,20 @@ class TestInspectTopic extends WithBrokerWorker {
     val topicInfo = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
     result(topicApi.start(topicInfo.key))
 
-    val count = 10
+    val rowCount = 10
     val producer =
       Producer.builder().connectionProps(brokerClusterInfo.connectionProps).keySerializer(Serializer.ROW).build()
 
-    try {
-      (0 until count).foreach { _ =>
+    val rows = try {
+      (0 until rowCount).map { _ =>
+        val row = Row.of(Cell.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         producer
           .sender()
           .topicName(topicInfo.key.topicNameOnKafka())
-          .key(Row.of(Cell.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
+          .key(row)
           .send()
           .get()
+        row
       }
     } finally Releasable.close(producer)
 
@@ -78,9 +80,20 @@ class TestInspectTopic extends WithBrokerWorker {
       message.value should not be None
       message.error shouldBe None
     }
-    result(inspectApi.topicRequest.key(topicInfo.key).limit(1).query()).messages.size shouldBe 1
-    result(inspectApi.topicRequest.key(topicInfo.key).limit(2).query()).messages.size shouldBe 2
-    result(inspectApi.topicRequest.key(topicInfo.key).timeout(30 seconds).limit(count).query()).messages.size shouldBe count
+
+    def checkRow(json: JsValue, row: Row): Unit =
+      oharastream.ohara.client.configurator.v0.toRow(json.asJsObject) shouldBe row
+
+    def check(count: Int): Unit = {
+      val messages = result(inspectApi.topicRequest.key(topicInfo.key).limit(count).query()).messages
+      messages.size shouldBe count
+      // check the first row for all cases
+      checkRow(messages.head.value.get, rows.last)
+      checkRow(messages.last.value.get, rows(rows.size - count))
+    }
+    check(1)
+    check(5)
+    check(rowCount)
   }
 
   @Test

@@ -31,10 +31,10 @@ private[sink] object SinkDataGroups {
     new SinkDataGroups(config)
 }
 
-private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNames: Seq[String], pollTimeout: JDuration)
+private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNames: Set[String], pollTimeout: JDuration)
     extends Releasable {
   def this(config: SinkConfig) = {
-    this(config.objectKey, config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka), config.sinkPollTimeout)
+    this(config.objectKey, config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka).toSet, config.sinkPollTimeout)
   }
 
   private val threadPool: ExecutorService =

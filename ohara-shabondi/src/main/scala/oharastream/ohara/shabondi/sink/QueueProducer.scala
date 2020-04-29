@@ -33,7 +33,7 @@ private[sink] class QueueProducer(
   val groupName: String,
   val queue: JQueue[Row],
   val brokerProps: String,
-  val topicNames: Seq[String],
+  val topicNames: Set[String],
   val pollTimeout: JDuration,
   val rowCounter: Counter
 ) extends Runnable

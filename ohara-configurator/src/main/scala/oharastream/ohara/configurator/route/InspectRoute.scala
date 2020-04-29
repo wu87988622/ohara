@@ -16,6 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
+import java.lang
 import java.nio.charset.StandardCharsets
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -195,17 +196,24 @@ private[configurator] object InspectRoute {
                 val consumer = Consumer
                   .builder()
                   .connectionProps(connectionProps)
-                  .topicName(topicKey.topicNameOnKafka())
-                  // move the offset to first place so we can break the wait if there is no data
-                  .offsetFromBegin()
                   .build()
                 try {
                   val endTime = CommonUtils.current() + timeoutMs
-                  // first poll: it not only fetch data but also subscribe the partitions.
-                  consumer.poll(java.time.Duration.ofMillis(timeoutMs), 1)
-                  consumer.endOffsets().asScala.foreach {
-                    case (tp, offset) => consumer.seek(tp, offset - limit)
-                  }
+                  consumer.assignments(
+                    consumer
+                      .endOffsets()
+                      .asScala
+                      .filter {
+                        case (tp, _) =>
+                          tp.topicName() == topicKey.topicNameOnKafka()
+                      }
+                      .map {
+                        case (tp, offset) =>
+                          tp -> new lang.Long(offset - limit)
+                      }
+                      .toMap
+                      .asJava
+                  )
                   topicData(
                     consumer
                     // even if the timeout reach the limit, we still give a last try :)

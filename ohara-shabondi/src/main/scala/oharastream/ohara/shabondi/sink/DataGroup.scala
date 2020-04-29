@@ -29,7 +29,7 @@ private[sink] class DataGroup(
   val name: String,
   objectKey: ObjectKey,
   brokerProps: String,
-  topicNames: Seq[String],
+  topicNames: Set[String],
   pollTimeout: JDuration
 ) extends Releasable {
   private val log = Logger(classOf[RowQueue])
