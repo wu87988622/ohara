@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteTopic.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.topicId);
     case actions.createTopic.FAILURE:
     case actions.deleteTopic.FAILURE:
     case actions.updateTopic.FAILURE:
