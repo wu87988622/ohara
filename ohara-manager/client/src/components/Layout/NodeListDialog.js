@@ -30,7 +30,12 @@ const NodeListDialog = props => {
   const updateNode = hooks.useUpdateNodeAction();
 
   const handleCreate = nodeToCreate => {
-    createNode(nodeToCreate);
+    return new Promise((resolve, reject) => {
+      createNode(nodeToCreate, {
+        onSuccess: () => resolve(),
+        onError: error => reject(error),
+      });
+    });
   };
 
   const handleDelete = nodeToDelete => {

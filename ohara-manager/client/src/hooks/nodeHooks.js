@@ -91,9 +91,11 @@ export const useNodesInZookeeper = () => {
 
 export const useCreateNodeAction = () => {
   const dispatch = useDispatch();
-  return function(values) {
-    dispatch(actions.createNode.trigger(values));
-  };
+  return useCallback(
+    (values, options) =>
+      dispatch(actions.createNode.trigger({ params: values, options })),
+    [dispatch],
+  );
 };
 
 export const useUpdateNodeAction = () => {

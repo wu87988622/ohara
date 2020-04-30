@@ -54,7 +54,7 @@ it('create node should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.createNode.TRIGGER,
-        payload: nodeEntity,
+        payload: { params: nodeEntity },
       },
     });
     const output$ = createNodeEpic(action$);
@@ -94,11 +94,11 @@ it('create multiple nodes should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.createNode.TRIGGER,
-        payload: nodeEntity,
+        payload: { params: nodeEntity },
       },
       b: {
         type: actions.createNode.TRIGGER,
-        payload: anotherNodeEntity,
+        payload: { params: anotherNodeEntity },
       },
     });
     const output$ = createNodeEpic(action$);
@@ -151,7 +151,7 @@ it('create same node within period should be created once only', () => {
     const action$ = hot(input, {
       a: {
         type: actions.createNode.TRIGGER,
-        payload: nodeEntity,
+        payload: { params: nodeEntity },
       },
     });
     const output$ = createNodeEpic(action$);

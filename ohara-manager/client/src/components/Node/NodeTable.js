@@ -170,11 +170,6 @@ function NodeTable(props) {
     }
   };
 
-  const handleCreateDialogConfirm = nodeToCreate => {
-    onCreate(nodeToCreate);
-    setIsCreateDialogOpen(false);
-  };
-
   const handleDeleteDialogConfirm = nodeToDelete => {
     onDelete(nodeToDelete);
     setIsDeleteDialogOpen(false);
@@ -411,7 +406,7 @@ function NodeTable(props) {
         isOpen={isCreateDialogOpen}
         mode={options?.mode}
         onClose={() => setIsCreateDialogOpen(false)}
-        onConfirm={handleCreateDialogConfirm}
+        onConfirm={onCreate}
       />
       <NodeDeleteDialog
         isOpen={isDeleteDialogOpen}

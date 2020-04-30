@@ -39,12 +39,22 @@ export const createNodeEpic = action$ =>
     ofType(actions.createNode.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values =>
-      defer(() => nodeApi.create(values)).pipe(
+    mergeMap(({ params, options }) =>
+      defer(() => nodeApi.create(params)).pipe(
         map(res => normalize(res.data, schema.node)),
-        map(entities => actions.createNode.success(entities)),
+        map(entities => {
+          if (options?.onSuccess) {
+            options.onSuccess();
+          }
+          return actions.createNode.success(entities);
+        }),
         startWith(actions.createNode.request()),
-        catchError(res => of(actions.createNode.failure(res))),
+        catchError(res => {
+          if (options?.onError) {
+            options.onError(res);
+          }
+          return of(actions.createNode.failure(res));
+        }),
       ),
     ),
   );

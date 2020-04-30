@@ -17,6 +17,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
+import { FORM_ERROR } from 'final-form';
+import Typography from '@material-ui/core/Typography';
 
 import { MODE } from 'const';
 import { InputField } from 'components/common/Form';
@@ -30,22 +32,19 @@ import {
 } from 'utils/validate';
 
 const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
-  const handleSubmit = values => {
-    const { hostname, port, ...rest } = values;
-    const finalValues = {
-      port: Number(port),
-      hostname,
-      ...rest,
-    };
-    onConfirm(finalValues);
-    onClose();
-  };
-
   return (
     <Form
-      onSubmit={handleSubmit}
+      onSubmit={async (values, form) => {
+        try {
+          await onConfirm({ ...values, port: Number(values.port) });
+          setTimeout(form.reset);
+          onClose();
+        } catch (error) {
+          return { [FORM_ERROR]: error?.title };
+        }
+      }}
       initialValues={{}}
-      render={({ handleSubmit, form, submitting, pristine, invalid }) => {
+      render={({ handleSubmit, form, submitting, pristine, submitError }) => {
         return (
           <Dialog
             open={isOpen}
@@ -53,14 +52,10 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
               onClose();
               form.reset();
             }}
-            onConfirm={() => {
-              handleSubmit();
-              // after creation, we should clear the input fields also
-              form.reset();
-            }}
+            onConfirm={handleSubmit}
             title="Create node"
             confirmText="CREATE"
-            confirmDisabled={submitting || pristine || invalid}
+            confirmDisabled={submitting || pristine}
           >
             <form onSubmit={handleSubmit}>
               <Field
@@ -96,7 +91,6 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
                       max: 65535,
                     }}
                   />
-
                   <Field
                     name="user"
                     label="User"
@@ -107,7 +101,6 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
                     component={InputField}
                     fullWidth
                   />
-
                   <Field
                     name="password"
                     label="Password"
@@ -120,6 +113,11 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
                     fullWidth
                   />
                 </>
+              )}
+              {submitError && (
+                <Typography align="center" color="error" variant="h5">
+                  {submitError}
+                </Typography>
               )}
             </form>
           </Dialog>

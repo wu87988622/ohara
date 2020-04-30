@@ -42,7 +42,12 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
   );
 
   const handleCreate = nodeToCreate => {
-    createNode(nodeToCreate);
+    return new Promise((resolve, reject) => {
+      createNode(nodeToCreate, {
+        onSuccess: () => resolve(),
+        onError: error => reject(error),
+      });
+    });
   };
 
   const handleSelectionChange = selectNodes => {
