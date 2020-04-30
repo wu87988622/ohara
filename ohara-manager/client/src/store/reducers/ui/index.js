@@ -24,6 +24,7 @@ import file from './file';
 import intro from './intro';
 import node from './node';
 import pipeline from './pipeline';
+import restartWorkspace from './restartWorkspace';
 import shabondi from './shabondi';
 import stream from './stream';
 import snackbar from './snackbar';
@@ -42,6 +43,7 @@ export default combineReducers({
   intro,
   node,
   pipeline,
+  restartWorkspace,
   shabondi,
   stream,
   snackbar,
