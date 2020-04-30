@@ -122,12 +122,17 @@ function ZookeeperNodesPage() {
 
       <NodeSelectorDialog
         isOpen={isSelectorDialogOpen}
-        nodes={nodesInWorkspace}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
+        prompt="If you want to have more selectable nodes, please go to the nodes in the workspace to add new nodes."
         ref={selectorDialogRef}
-        selectedNodes={zookeeperNodesInWorkspace}
-        tableTitle="Workspace nodes"
+        tableProps={{
+          nodes: nodesInWorkspace,
+          options: {
+            selectedNodes: zookeeperNodesInWorkspace,
+          },
+          title: 'Workspace nodes',
+        }}
       />
     </>
   );

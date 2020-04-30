@@ -16,46 +16,39 @@
 
 import React, { useState, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
+import styled, { css } from 'styled-components';
 import { isEqual, sortedUniq } from 'lodash';
+import Typography from '@material-ui/core/Typography';
 
 import { Dialog } from 'components/common/Dialog';
-import { MODE } from 'const';
-import * as hooks from 'hooks';
 import NodeTable from './NodeTable';
 
-const NodeSelectorDialog = React.forwardRef((props, ref) => {
-  const {
-    dialogTitle,
-    isOpen,
-    mode,
-    nodes,
-    onClose,
-    onConfirm,
-    tableTitle,
-  } = props;
-  const createNode = hooks.useCreateNodeAction();
-  const [selectedNodes, setSelectedNodes] = useState(props.selectedNodes);
+const Wrapper = styled.div(
+  ({ theme }) => css`
+    .prompt {
+      margin: ${theme.spacing(1.5, 0)};
+    }
+  `,
+);
 
-  const saveable = isEqual(
-    sortedUniq(props.selectedNodes),
-    sortedUniq(selectedNodes),
+const NodeSelectorDialog = React.forwardRef((props, ref) => {
+  const { isOpen, onClose, onConfirm, prompt, tableProps, title } = props;
+
+  const [selectedNodes, setSelectedNodes] = useState(
+    tableProps?.options?.selectedNodes,
   );
 
-  const handleCreate = nodeToCreate => {
-    return new Promise((resolve, reject) => {
-      createNode(nodeToCreate, {
-        onSuccess: () => resolve(),
-        onError: error => reject(error),
-      });
-    });
-  };
+  const saveable = isEqual(
+    sortedUniq(selectedNodes),
+    sortedUniq(tableProps?.options?.selectedNodes),
+  );
 
   const handleSelectionChange = selectNodes => {
     setSelectedNodes(selectNodes);
   };
 
   const handleCancel = () => {
-    setSelectedNodes(props.selectedNodes);
+    setSelectedNodes(tableProps?.options?.selectedNodes);
     onClose();
   };
 
@@ -69,7 +62,7 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
 
   return (
     <Dialog
-      title={dialogTitle}
+      title={title}
       open={isOpen}
       onClose={handleCancel}
       onConfirm={handleConfirm}
@@ -77,43 +70,47 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
       confirmText="Save"
       maxWidth="md"
     >
-      <NodeTable
-        nodes={nodes}
-        onCreate={handleCreate}
-        onSelectionChange={handleSelectionChange}
-        options={{
-          mode,
-          selectedNodes,
-          selection: true,
-          showCreateIcon: mode !== MODE.K8S,
-          showDeleteIcon: false,
-          showEditorIcon: false,
-        }}
-        title={tableTitle}
-      />
+      <Wrapper>
+        {prompt && (
+          <Typography className="prompt" variant="h6">
+            {prompt}
+          </Typography>
+        )}
+        <NodeTable
+          {...tableProps}
+          onSelectionChange={handleSelectionChange}
+          options={{
+            ...tableProps?.options,
+            selection: true,
+            showCreateIcon: false,
+            showDeleteIcon: false,
+            showEditorIcon: false,
+          }}
+        />
+      </Wrapper>
     </Dialog>
   );
 });
 
 NodeSelectorDialog.propTypes = {
-  dialogTitle: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
-  mode: PropTypes.string,
-  nodes: PropTypes.array,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func,
-  selectedNodes: PropTypes.array,
-  tableTitle: PropTypes.string,
+  prompt: PropTypes.string,
+  tableProps: PropTypes.shape({
+    options: PropTypes.shape({
+      selectedNodes: PropTypes.array,
+    }),
+  }),
+  title: PropTypes.string,
 };
 
 NodeSelectorDialog.defaultProps = {
-  dialogTitle: 'Select nodes',
-  mode: MODE.K8S,
-  nodes: [],
   onClose: () => {},
   onConfirm: () => {},
-  selectedNodes: [],
-  tableTitle: 'Nodes',
+  prompt: null,
+  tableProps: {},
+  title: 'Select node',
 };
 
 export default NodeSelectorDialog;

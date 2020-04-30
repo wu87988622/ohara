@@ -22,6 +22,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 
 import * as context from 'context';
 import * as hooks from 'hooks';
+import { MODE } from 'const';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
 import { NodeSelectorDialog } from 'components/Node';
@@ -41,7 +42,10 @@ const NodesField = props => {
   } = props;
 
   const { data: configuratorInfo } = context.useConfiguratorState();
+  const mode = configuratorInfo?.mode;
   const allNodes = hooks.useAllNodes();
+  const createNode = hooks.useCreateNodeAction();
+
   const [selectedNodes, setSelectedNodes] = useState(() => {
     // value is an array of hostname, like ['dev01', 'dev02'].
     return filter(allNodes, node => includes(value, node.hostname));
@@ -100,18 +104,24 @@ const NodesField = props => {
       {renderFromHelper({ touched, error })}
 
       <NodeSelectorDialog
-        dialogTitle="Select nodes"
         isOpen={isSelectorDialogOpen}
-        mode={configuratorInfo?.mode}
-        nodes={allNodes}
         onClose={() => {
           onBlur();
           closeSelectorDialog();
         }}
         onConfirm={handleSelectorConfirm}
         ref={selectorDialogRef}
-        selectedNodes={selectedNodes}
-        tableTitle="All nodes"
+        tableProps={{
+          nodes: allNodes,
+          onCreate: createNode,
+          options: {
+            mode,
+            selectedNodes,
+            showCreateIcon: mode !== MODE.K8S,
+          },
+          title: 'All node',
+        }}
+        title="Select nodes"
       />
     </>
   );

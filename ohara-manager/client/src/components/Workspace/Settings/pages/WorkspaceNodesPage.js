@@ -149,12 +149,17 @@ function WorkspaceNodesPage() {
 
       <NodeSelectorDialog
         isOpen={isSelectorDialogOpen}
-        nodes={allNodes}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
         ref={selectorDialogRef}
-        selectedNodes={nodesInWorkspace}
-        tableTitle="All nodes"
+        tableProps={{
+          nodes: allNodes,
+          options: {
+            selectedNodes: nodesInWorkspace,
+            showAddIcon: true,
+          },
+          title: 'All nodes',
+        }}
       />
     </>
   );
