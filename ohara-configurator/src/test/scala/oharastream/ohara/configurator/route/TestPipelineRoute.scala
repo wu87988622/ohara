@@ -16,11 +16,13 @@
 
 package oharastream.ohara.configurator.route
 
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey}
+import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.{Configurator, FallibleSink}
+import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -43,6 +45,8 @@ class TestPipelineRoute extends OharaTest {
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
+
+  private[this] val shabondiApi = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val workerClusterInfo = result(
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
@@ -525,6 +529,47 @@ class TestPipelineRoute extends OharaTest {
     pipeline.objects.head.kind shouldBe TopicApi.KIND
   }
 
+  @Test
+  def testAddShabondiSourceAndSinkToPipeline(): Unit = {
+    val bk    = result(brokerApi.list()).head
+    val topic = result(topicApi.request.brokerClusterKey(bk.key).create())
+    result(topicApi.start(topic.key))
+
+    val shabondiSource = createShabondiService(ShabondiType.Source, bk.key, topic.key)
+    val shabondiSink   = createShabondiService(ShabondiType.Sink, bk.key, topic.key)
+
+    val pipeline = result(
+      pipelineApi.request
+        .name(CommonUtils.randomString(10))
+        .endpoint(topic)
+        .endpoint(shabondiSource)
+        .endpoint(shabondiSink)
+        .create()
+    )
+
+    pipeline.endpoints.size shouldBe 3
+    pipeline.objects.size shouldBe 3
+    pipeline.endpoints.map(_.key) should contain(shabondiSource.key)
+    pipeline.endpoints.map(_.key) should contain(shabondiSink.key)
+  }
+
+  private def createShabondiService(
+    shabondiType: ShabondiType,
+    bkKey: ObjectKey,
+    topicKey: TopicKey
+  ): ShabondiClusterInfo = {
+    val request = shabondiApi.request
+      .name(CommonUtils.randomString(10))
+      .brokerClusterKey(bkKey)
+      .nodeName(nodeNames.head)
+      .shabondiClass(shabondiType.className)
+      .clientPort(CommonUtils.availablePort())
+    shabondiType match {
+      case ShabondiType.Source => request.sourceToTopics(Set(topicKey))
+      case ShabondiType.Sink   => request.sinkFromTopics(Set(topicKey))
+    }
+    result(request.create())
+  }
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
