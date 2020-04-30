@@ -41,9 +41,6 @@ it('fetch connectors should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.fetchConnectors.TRIGGER,
-        payload: {
-          group: 'default',
-        },
       },
     });
     const output$ = fetchConnectorsEpic(action$);
@@ -56,14 +53,9 @@ it('fetch connectors should be worked correctly', () => {
         type: actions.fetchConnectors.SUCCESS,
         payload: {
           entities: {
-            [ENTITY_TYPE.connectors]: keyBy(
-              entities.filter(e => e.group === 'default'),
-              e => getId(e),
-            ),
+            [ENTITY_TYPE.connectors]: keyBy(entities, e => getId(e)),
           },
-          result: entities
-            .filter(e => e.group === 'default')
-            .map(e => getId(e)),
+          result: entities.map(e => getId(e)),
         },
       },
     });
@@ -85,15 +77,9 @@ it('fetch connector multiple times within period should be got latest result', (
     const action$ = hot(input, {
       a: {
         type: actions.fetchConnectors.TRIGGER,
-        payload: {
-          group: 'default',
-        },
       },
       b: {
         type: actions.fetchConnectors.TRIGGER,
-        payload: {
-          group: 'bar',
-        },
       },
     });
     const output$ = fetchConnectorsEpic(action$);
@@ -109,12 +95,9 @@ it('fetch connector multiple times within period should be got latest result', (
         type: actions.fetchConnectors.SUCCESS,
         payload: {
           entities: {
-            [ENTITY_TYPE.connectors]: keyBy(
-              entities.filter(e => e.group === 'bar'),
-              e => getId(e),
-            ),
+            [ENTITY_TYPE.connectors]: keyBy(entities, e => getId(e)),
           },
-          result: entities.filter(e => e.group === 'bar').map(e => getId(e)),
+          result: entities.map(e => getId(e)),
         },
       },
     });

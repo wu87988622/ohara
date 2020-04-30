@@ -121,13 +121,7 @@ export const useDeleteConnectorAction = () => {
 
 export const useFetchConnectorsAction = () => {
   const dispatch = useDispatch();
-  const group = useConnectorGroup();
-  return () =>
-    dispatch(
-      actions.fetchConnectors.trigger({
-        group,
-      }),
-    );
+  return () => dispatch(actions.fetchConnectors.trigger());
 };
 
 export const useIsConnectorLoaded = () => {
@@ -156,17 +150,10 @@ export const useConnectors = () => {
   const isConnectorLoading = useIsConnectorLoading();
 
   useEffect(() => {
-    if (isConnectorLoaded || !isAppReady || isConnectorLoading || !group)
-      return;
+    if (isConnectorLoaded || !isAppReady || isConnectorLoading) return;
 
     fetchConnectors();
-  }, [
-    fetchConnectors,
-    group,
-    isAppReady,
-    isConnectorLoaded,
-    isConnectorLoading,
-  ]);
+  }, [fetchConnectors, isAppReady, isConnectorLoaded, isConnectorLoading]);
 
   return useSelector(state => {
     const connectors = selectors.getConnectorByGroup(state, { group });
