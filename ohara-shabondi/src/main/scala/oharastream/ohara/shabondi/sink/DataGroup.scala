@@ -44,17 +44,17 @@ private[sink] class DataGroup(
       .register()
 
   val queue                = new RowQueue
-  val producer             = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout, rowCounter)
+  val queueProducer        = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout, rowCounter)
   private[this] val closed = new AtomicBoolean(false)
 
   def resume(): Unit =
     if (!closed.get) {
-      producer.resume()
+      queueProducer.resume()
     }
 
   def pause(): Unit =
     if (!closed.get) {
-      producer.pause()
+      queueProducer.pause()
     }
 
   def isIdle(idleTime: JDuration): Boolean = queue.isIdle(idleTime)
@@ -65,7 +65,7 @@ private[sink] class DataGroup(
       val addSuppressedException: Consumer[Throwable] = (ex: Throwable) => {
         if (exception == null) exception = ex else exception.addSuppressed(ex)
       }
-      Releasable.close(producer, addSuppressedException)
+      Releasable.close(queueProducer, addSuppressedException)
       Releasable.close(rowCounter, addSuppressedException)
       if (exception != null) throw exception
       log.info("Group {} closed.", name)

@@ -19,12 +19,13 @@ package oharastream.ohara.shabondi.sink
 import java.time.{Duration => JDuration}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
+import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ArrayBuffer
 import scala.compat.java8.DurationConverters._
@@ -68,14 +69,15 @@ private[shabondi] class SinkRouteHandler(config: SinkConfig)(implicit actorSyste
   }
 
   def route(): Route = handleExceptions(exceptionHandler) {
-    (get & path("v0" / "poll")) {
-      val group  = dataGroups.defaultGroup
-      val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
-      complete(result)
-    } ~ (get & path("v0" / "poll" / Segment)) { groupId =>
-      val group  = dataGroups.createIfAbsent(groupId)
-      val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
-      complete(result)
+    (get & path("groups" / Segment)) { groupId =>
+      if (StringUtils.isAlphanumeric(groupId)) {
+        val group  = dataGroups.createIfAbsent(groupId)
+        val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
+        complete(result)
+      } else {
+        val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Illegal group name, only accept alpha and numeric.")
+        complete(StatusCodes.NotAcceptable -> entity)
+      }
     }
   }
 

@@ -40,11 +40,8 @@ private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNam
   private val threadPool: ExecutorService =
     Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("SinkDataGroups-%d").build())
 
-  private val log                    = Logger(classOf[SinkDataGroups])
-  private[sink] val defaultGroupName = "default"
-  private val dataGroups             = new ConcurrentHashMap[String, DataGroup]()
-
-  def defaultGroup: DataGroup = createIfAbsent(defaultGroupName)
+  private val log        = Logger(classOf[SinkDataGroups])
+  private val dataGroups = new ConcurrentHashMap[String, DataGroup]()
 
   def removeGroup(name: String): Boolean = {
     val group = dataGroups.remove(name)
@@ -63,7 +60,7 @@ private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNam
       name, { n =>
         log.info("create data group: {}", n)
         val dataGroup = new DataGroup(n, objectKey, brokerProps, topicNames, pollTimeout)
-        threadPool.submit(dataGroup.producer)
+        threadPool.submit(dataGroup.queueProducer)
         dataGroup
       }
     )

@@ -55,7 +55,7 @@ final class TestSourceRoute extends BasicShabondiTest {
       (1 to requestCount).foreach { _ =>
         val jsonRow = sourceData.toJson.compactPrint
         val entity  = HttpEntity(ContentTypes.`application/json`, jsonRow)
-        val request = Post(uri = "/v0", entity)
+        val request = Post(uri = "/", entity)
 
         request ~> webServer.routes ~> check {
           entityAs[String] should ===("OK")

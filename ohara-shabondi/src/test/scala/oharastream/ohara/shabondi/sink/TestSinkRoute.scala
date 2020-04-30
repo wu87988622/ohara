@@ -19,6 +19,7 @@ package oharastream.ohara.shabondi.sink
 import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -27,6 +28,7 @@ import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi._
 import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
+import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -51,13 +53,10 @@ final class TestSinkRoute extends BasicShabondiTest {
     Future {
       log.debug("pollRowsRequest[{}] begin...", dataGroup)
       val resultRows = ArrayBuffer.empty[Row]
-      val request = dataGroup match {
-        case ""   => Get(uri = "/v0/poll")
-        case name => Get(uri = s"/v0/poll/$name")
-      }
-      var idx: Int = 0
-      val baseTime = System.currentTimeMillis()
-      var running  = true
+      val request    = Get(uri = s"/groups/$dataGroup")
+      var idx: Int   = 0
+      val baseTime   = System.currentTimeMillis()
+      var running    = true
       while (running) {
         idx += 1
         request ~> webServer.routes ~> check {
@@ -72,17 +71,51 @@ final class TestSinkRoute extends BasicShabondiTest {
     }(ec)
 
   @Test
-  def testDefaultGroup(): Unit = {
-    implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
-
+  def testInvalidGroupName(): Unit = {
     val topicKey1 = createTopicKey
     val config    = defaultSinkConfig(Seq(topicKey1))
     val webServer = new WebServer(config)
     webServer.routes // create route handle first.
 
     try {
-      val clientFetch: Future[Seq[Row]]  = pollRowsRequest(webServer, "", 10 * 1000, ec)
-      val clientFetch1: Future[Seq[Row]] = pollRowsRequest(webServer, "", 10 * 1000, ec)
+      val rowCount1 = 50
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount1, FiniteDuration(10, SECONDS))
+      log.info("produce {} rows", rowCount1)
+
+      assertThrows[TestFailedException] {
+        val request0 = Get(uri = s"/xxx")
+        request0 ~> webServer.routes ~> check {
+          status should ===(StatusCodes.OK)
+        }
+      }
+
+      val request1 = Get(uri = s"/groups/group0")
+      request1 ~> webServer.routes ~> check {
+        status should ===(StatusCodes.OK)
+      }
+
+      val request2 = Get(uri = s"/groups/sdf@abc")
+      request2 ~> webServer.routes ~> check {
+        status should ===(StatusCodes.NotAcceptable)
+        entityAs[String] should ===("Illegal group name, only accept alpha and numeric.")
+      }
+    } finally {
+      Releasable.close(webServer)
+    }
+  }
+  @Test
+  def testSingleGroup(): Unit = {
+    implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
+
+    val groupName = "g0"
+    val topicKey1 = createTopicKey
+    val config    = defaultSinkConfig(Seq(topicKey1))
+    val webServer = new WebServer(config)
+    webServer.routes // create route handle first.
+
+    try {
+      val clientFetch: Future[Seq[Row]]  = pollRowsRequest(webServer, groupName, 10 * 1000, ec)
+      val clientFetch1: Future[Seq[Row]] = pollRowsRequest(webServer, groupName, 10 * 1000, ec)
 
       val rowCount1 = 50
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount1, FiniteDuration(10, SECONDS))
@@ -105,7 +138,7 @@ final class TestSinkRoute extends BasicShabondiTest {
       val beans = counterMBeans()
       beans.size should ===(1)
       beans(0).key should ===(config.objectKey)
-      beans(0).item should ===("rows-default")
+      beans(0).item should ===(s"rows-$groupName")
       beans(0).getValue should ===(totalCount)
     } finally {
       Releasable.close(webServer)
@@ -123,11 +156,13 @@ final class TestSinkRoute extends BasicShabondiTest {
     webServer.routes // create route handle first.
 
     try {
+      val group0Name = "g0"
+      val group1Name = "g1"
       // two data group concurrent request
-      val clientFetch: Future[Seq[Row]]  = pollRowsRequest(webServer, "", 10 * 1000, ec)
-      val clientFetch1: Future[Seq[Row]] = pollRowsRequest(webServer, "group1", 10 * 1000, ec)
-      val clientFetch2: Future[Seq[Row]] = pollRowsRequest(webServer, "", 10 * 1000, ec)
-      val clientFetch3: Future[Seq[Row]] = pollRowsRequest(webServer, "group1", 10 * 1000, ec)
+      val clientFetch: Future[Seq[Row]]  = pollRowsRequest(webServer, group0Name, 10 * 1000, ec)
+      val clientFetch1: Future[Seq[Row]] = pollRowsRequest(webServer, group1Name, 10 * 1000, ec)
+      val clientFetch2: Future[Seq[Row]] = pollRowsRequest(webServer, group0Name, 10 * 1000, ec)
+      val clientFetch3: Future[Seq[Row]] = pollRowsRequest(webServer, group1Name, 10 * 1000, ec)
 
       val rowCount1 = 150
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount1, FiniteDuration(10, SECONDS))
@@ -156,7 +191,7 @@ final class TestSinkRoute extends BasicShabondiTest {
       beans.size should ===(2)
       beans.foreach { bean =>
         bean.item match {
-          case "rows-default" | "rows-group1" =>
+          case "rows-g0" | "rows-g1" =>
             bean.key should ===(config.objectKey)
             bean.getValue should ===(totalCount)
           case n =>
@@ -184,18 +219,19 @@ final class TestSinkRoute extends BasicShabondiTest {
 
     try {
       log.debug("Start poll request...")
+      val group0Name = "group0"
       val group1Name = "group1"
-      pollRowsRequest(webServer, "", 1 * 1000, ec)
+      pollRowsRequest(webServer, group0Name, 1 * 1000, ec)
       pollRowsRequest(webServer, group1Name, 1 * 1000, ec)
       TimeUnit.SECONDS.sleep(2)
 
       log.info("There should have two data groups.")
-      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group0Name) should ===(true)
       dataGroups.groupExist(group1Name) should ===(true)
 
-      pollRowsRequest(webServer, "", 2 * 1000, ec)
+      pollRowsRequest(webServer, group1Name, 2 * 1000, ec)
       CommonUtils.await(() => !dataGroups.groupExist(group1Name), java.time.Duration.ofSeconds(10))
-      CommonUtils.await(() => !dataGroups.groupExist(dataGroups.defaultGroupName), java.time.Duration.ofSeconds(10))
+      CommonUtils.await(() => !dataGroups.groupExist(group0Name), java.time.Duration.ofSeconds(10))
       dataGroups.size shouldBe 0
     } finally {
       Releasable.close(webServer)

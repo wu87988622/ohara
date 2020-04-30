@@ -41,7 +41,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
   }
 
   @Test
-  def testDefaultGroup(): Unit = {
+  def testSingleGroup(): Unit = {
     val threadPool: ExecutorService = newThreadPool()
     implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
     val objectKey                   = ObjectKey.of("g", "n")
@@ -52,8 +52,8 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
-      val queue  = dataGroups.defaultGroup.queue
-      val queue1 = dataGroups.defaultGroup.queue
+      val queue  = dataGroups.createIfAbsent("group0").queue
+      val queue1 = dataGroups.createIfAbsent("group0").queue
       queue should ===(queue1)
       dataGroups.size should ===(1)
 
@@ -78,17 +78,22 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount)
 
-      val queue  = dataGroups.defaultGroup.queue
-      val queue1 = dataGroups.createIfAbsent("group1").queue
-      val queue2 = dataGroups.createIfAbsent("group1").queue
-      queue1 should ===(queue2)
-      dataGroups.size should ===(2)
+      val queue   = dataGroups.createIfAbsent("group0").queue
+      val queue1  = dataGroups.createIfAbsent("group1").queue
+      val queue1a = dataGroups.createIfAbsent("group1").queue
+      val queue2  = dataGroups.createIfAbsent("group2").queue
+      queue should !==(queue1)
+      queue1 should !==(queue2)
+      queue1 should ===(queue1a)
+      dataGroups.size should ===(3)
 
       val rows  = countRows(queue, 10 * 1000, ec)
       val rows1 = countRows(queue1, 10 * 1000, ec)
+      val rows2 = countRows(queue2, 10 * 1000, ec)
 
       Await.result(rows, 30 seconds) should ===(rowCount)
       Await.result(rows1, 30 seconds) should ===(rowCount)
+      Await.result(rows2, 30 seconds) should ===(rowCount)
     } finally {
       Releasable.close(dataGroups)
       threadPool.shutdown()
@@ -121,25 +126,26 @@ final class TestSinkDataGroups extends BasicShabondiTest {
     val dataGroups =
       new SinkDataGroups(objectKey, brokerProps, Set(topicKey1.topicNameOnKafka), DurationConverters.toJava(10 seconds))
     try {
-      val group1Name   = "group1"
-      val defaultGroup = dataGroups.defaultGroup
-      val group1       = dataGroups.createIfAbsent(group1Name)
+      val group0Name = "group0"
+      val group1Name = "group1"
+      val group0     = dataGroups.createIfAbsent(group0Name)
+      val group1     = dataGroups.createIfAbsent(group1Name)
       dataGroups.size should ===(2)
 
       // test for not over idle time
-      countRows(defaultGroup.queue, 1 * 1000, ec)
+      countRows(group0.queue, 1 * 1000, ec)
       countRows(group1.queue, 1 * 1000, ec)
       TimeUnit.SECONDS.sleep(idleTime.getSeconds - 1)
       dataGroups.freeIdleGroup(idleTime)
-      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group0Name) should ===(true)
       dataGroups.groupExist(group1Name) should ===(true)
 
       // test for idle time has passed
-      countRows(defaultGroup.queue, 2 * 1000, ec)
+      countRows(group0.queue, 2 * 1000, ec)
       TimeUnit.SECONDS.sleep(idleTime.getSeconds)
       dataGroups.freeIdleGroup(idleTime)
       dataGroups.size should ===(1)
-      dataGroups.groupExist(dataGroups.defaultGroupName) should ===(true)
+      dataGroups.groupExist(group0Name) should ===(true)
       dataGroups.groupExist(group1Name) should ===(false)
     } finally {
       Releasable.close(dataGroups)

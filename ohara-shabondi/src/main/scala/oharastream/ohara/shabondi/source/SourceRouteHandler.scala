@@ -88,7 +88,7 @@ private[shabondi] class SourceRouteHandler(
     .run()
 
   override def route(): Route = {
-    (post & path("v0")) {
+    (post & pathEndOrSingleSlash) {
       handleExceptions(exceptionHandler) {
         entity(as[RowData]) { rowData =>
           totalRowsCounter.incrementAndGet()
