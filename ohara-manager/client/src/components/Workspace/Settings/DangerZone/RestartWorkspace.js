@@ -20,37 +20,37 @@ import LogProgress from 'components/common/Progress/LogProgress';
 import * as hooks from 'hooks';
 import { convertIdToKey } from 'utils/object';
 
-const DeleteWorkspace = () => {
-  const pause = hooks.usePauseDeleteWorkspaceAction();
-  const resume = hooks.useResumeDeleteWorkspaceAction();
-  const close = hooks.useCloseDeleteWorkspaceDialogAction();
-  const rollback = hooks.useRollbackDeleteWorkspaceAction();
-  const autoClose = hooks.useAutoCloseDeleteWorkspaceDialogAction();
-  const deleteWorkspace = hooks.useDeleteWorkspaceAction();
+const RestartWorkspace = () => {
+  const pause = hooks.usePauseRestartWorkspaceAction();
+  const close = hooks.useCloseRestartWorkspaceDialogAction();
+  const resume = hooks.useResumeRestartWorkspaceAction();
+  const rollback = hooks.useRollbackRestartWorkspaceAction();
+  const autoClose = hooks.useAutoCloseRestartWorkspaceDialogAction();
+  const startWorkspace = hooks.useRestartWorkspaceAction();
   const workspaceId = hooks.useWorkspaceId();
   const zookeeperId = hooks.useZookeeperId();
   const brokerId = hooks.useBrokerId();
   const workerId = hooks.useWorkerId();
   const workspace = hooks.useWorkspace();
 
-  const currentDeleteWorkspace = hooks.useDeleteWorkspace();
+  const currentRestartWorkspace = hooks.useRestartWorkspace();
   const {
     isOpen,
     skipList,
     isAutoClose,
     closeDisable,
-  } = currentDeleteWorkspace;
+  } = currentRestartWorkspace;
   const {
     steps,
     activeStep,
     message,
     isPause,
     log,
-  } = currentDeleteWorkspace.progress;
+  } = currentRestartWorkspace.progress;
 
   return (
     <LogProgress
-      createTitle={'Delete Workspace'}
+      createTitle={'Restart Workspace'}
       isOpen={isOpen}
       steps={steps}
       activeStep={activeStep}
@@ -60,7 +60,7 @@ const DeleteWorkspace = () => {
       data={log}
       onResume={() => {
         resume();
-        deleteWorkspace({
+        startWorkspace({
           workspace: convertIdToKey(workspaceId),
           zookeeper: convertIdToKey(zookeeperId),
           broker: convertIdToKey(brokerId),
@@ -70,7 +70,7 @@ const DeleteWorkspace = () => {
       }}
       onRollback={() => {
         rollback();
-        deleteWorkspace({
+        startWorkspace({
           workspace: convertIdToKey(workspaceId),
           zookeeper: convertIdToKey(zookeeperId),
           broker: convertIdToKey(brokerId),
@@ -90,4 +90,4 @@ const DeleteWorkspace = () => {
   );
 };
 
-export default DeleteWorkspace;
+export default RestartWorkspace;

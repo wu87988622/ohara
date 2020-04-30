@@ -23,8 +23,9 @@ import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
-import { DeleteWorkspace } from './DangerZone';
-import { getKeyWithId } from 'utils/object';
+import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
+
+import { convertIdToKey } from 'utils/object';
 
 const Settings = () => {
   const { isOpen, close, data: pageName } = useEditWorkspaceDialog();
@@ -34,11 +35,16 @@ const Settings = () => {
 
   const openDeleteWorkspace = hooks.useOpenDeleteWorkspaceDialogAction();
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
+  const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
+  const restartWorkspace = hooks.useRestartWorkspaceAction();
+  const workspace = hooks.useWorkspace();
   const workspaceId = hooks.useWorkspaceId();
   const zookeeperId = hooks.useZookeeperId();
   const brokerId = hooks.useBrokerId();
   const workerId = hooks.useWorkerId();
-  const workspace = hooks.useWorkspace();
+  const tmpWorker = hooks.useWorker();
+  const tmpBroker = hooks.useBroker();
+  const tmpZookeeper = hooks.useZookeeper();
 
   const resetSelectedItem = () => {
     setSelectedComponent(null);
@@ -49,10 +55,26 @@ const Settings = () => {
       resetSelectedItem(null);
       openDeleteWorkspace();
       deleteWorkspace({
-        workspace: getKeyWithId(workspaceId),
-        zookeeper: getKeyWithId(zookeeperId),
-        broker: getKeyWithId(brokerId),
-        worker: getKeyWithId(workerId),
+        workspace: convertIdToKey(workspaceId),
+        zookeeper: convertIdToKey(zookeeperId),
+        broker: convertIdToKey(brokerId),
+        worker: convertIdToKey(workerId),
+      });
+    },
+    openRestartProgressDialog: () => {
+      resetSelectedItem(null);
+      openRestartWorkspace();
+      restartWorkspace({
+        workspace: convertIdToKey(workspaceId),
+        zookeeper: convertIdToKey(zookeeperId),
+        broker: convertIdToKey(brokerId),
+        worker: convertIdToKey(workerId),
+        workerSettings: workspace.worker,
+        brokerSettings: workspace.broker,
+        zookeeperSettings: workspace.zookeeper,
+        tmpWorker,
+        tmpBroker,
+        tmpZookeeper,
       });
     },
     workspace,
@@ -123,6 +145,7 @@ const Settings = () => {
           handleClose={resetSelectedItem}
           selectedComponent={selectedComponent}
         />
+        <RestartWorkspace />
         <DeleteWorkspace />
       </Wrapper>
     </StyledFullScreenDialog>

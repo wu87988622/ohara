@@ -19,57 +19,57 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
 
-export const useOpenDeleteWorkspaceDialogAction = () => {
+export const useOpenRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.openDeleteWorkspace.trigger()), [
+  return useCallback(() => dispatch(actions.openRestartWorkspace.trigger()), [
     dispatch,
   ]);
 };
 
-export const useCloseDeleteWorkspaceDialogAction = () => {
+export const useCloseRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.closeDeleteWorkspace.trigger()), [
+  return useCallback(() => dispatch(actions.closeRestartWorkspace.trigger()), [
     dispatch,
   ]);
 };
 
-export const useAutoCloseDeleteWorkspaceDialogAction = () => {
+export const useAutoCloseRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    () => dispatch(actions.autoCloseDeleteWorkspace.trigger()),
+    () => dispatch(actions.autoCloseRestartWorkspace.trigger()),
     [dispatch],
   );
 };
 
-export const useDeleteWorkspace = () =>
-  useSelector(state => state.ui.deleteWorkspace);
+export const useRestartWorkspace = () =>
+  useSelector(state => state.ui.restartWorkspace);
 
-export const usePauseDeleteWorkspaceAction = () => {
+export const usePauseRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.pauseDeleteWorkspace.trigger()), [
+  return useCallback(() => dispatch(actions.pauseRestartWorkspace.trigger()), [
     dispatch,
   ]);
 };
 
-export const useResumeDeleteWorkspaceAction = () => {
+export const useResumeRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.resumeDeleteWorkspace.trigger()), [
+  return useCallback(() => dispatch(actions.resumeRestartWorkspace.trigger()), [
     dispatch,
   ]);
 };
 
-export const useRollbackDeleteWorkspaceAction = () => {
+export const useRollbackRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    () => dispatch(actions.rollbackDeleteWorkspace.trigger()),
+    () => dispatch(actions.rollbackRestartWorkspace.trigger()),
     [dispatch],
   );
 };
 
-export const useDeleteWorkspaceAction = () => {
+export const useRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    values => dispatch(actions.deleteWorkspace.trigger(values)),
+    values => dispatch(actions.restartWorkspace.trigger(values)),
     [dispatch],
   );
 };

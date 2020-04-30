@@ -23,3 +23,6 @@ export const resumeDeleteWorkspace = createRoutine('RESUME_DELETE_WORKSPACE');
 export const rollbackDeleteWorkspace = createRoutine(
   'ROLLBACK_DELETE_WORKSPACE',
 );
+export const autoCloseDeleteWorkspace = createRoutine(
+  'AUTO_CLOSE_DELETE_WORKSPACE',
+);

@@ -15,5 +15,6 @@
  */
 
 import DeleteWorkspace from './DeleteWorkspace';
+import RestartWorkspace from './RestartWorkspace';
 
-export { DeleteWorkspace };
+export { DeleteWorkspace, RestartWorkspace };

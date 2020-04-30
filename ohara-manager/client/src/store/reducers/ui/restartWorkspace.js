@@ -21,21 +21,22 @@ const defaultSteps = [
   'Stop Worker',
   'Stop Broker',
   'Stop Zookeeper',
-  'Delete Worker',
-  'Delete Broker',
-  'Delete Zookeeper',
+  'Start Zookeeper',
+  'Start Broker',
+  'Start Worker',
 ];
 
 const initialState = {
   isOpen: false,
   loading: false,
   isAutoClose: false,
+  closeDisable: true,
   progress: {
     open: false,
     steps: defaultSteps,
     activeStep: 0,
     log: [],
-    message: 'Start DeleteWorkspace... (0% complete)',
+    message: 'Start RestartWorkspace... (0% complete)',
     isPause: false,
   },
   skipList: [],
@@ -46,17 +47,22 @@ const initialState = {
 export default function reducer(state = initialState, action) {
   const now = new Date(Date.now()).toLocaleString();
   switch (action.type) {
-    case actions.openDeleteWorkspace.TRIGGER:
+    case actions.openRestartWorkspace.TRIGGER:
       return {
         ...state,
         isOpen: true,
       };
-    case actions.closeDeleteWorkspace.TRIGGER:
+    case actions.closeRestartWorkspace.TRIGGER:
       return {
         ...state,
         isOpen: false,
+        progress: {
+          ...state.progress,
+          message: '',
+          log: [],
+        },
       };
-    case actions.pauseDeleteWorkspace.TRIGGER:
+    case actions.pauseRestartWorkspace.TRIGGER:
       return {
         ...state,
         progress: {
@@ -64,11 +70,11 @@ export default function reducer(state = initialState, action) {
           isPause: true,
           log: [
             ...state.progress.log,
-            { title: `${now} Pause delete workspace...` },
+            { title: `${now} Pause Restart workspace...` },
           ],
         },
       };
-    case actions.resumeDeleteWorkspace.TRIGGER:
+    case actions.resumeRestartWorkspace.TRIGGER:
       return {
         ...state,
         progress: {
@@ -76,38 +82,35 @@ export default function reducer(state = initialState, action) {
           isPause: true,
           log: [
             ...state.progress.log,
-            { title: `${now} Resume delete workspace...` },
+            { title: `${now} Resume Restart workspace...` },
           ],
         },
       };
-    case actions.rollbackDeleteWorkspace.TRIGGER:
+    case actions.rollbackRestartWorkspace.TRIGGER:
       return {
         ...state,
         progress: {
           ...state.progress,
           log: [
             ...state.progress.log,
-            { title: `${now} Rollback delete workspace...` },
+            { title: `${now} Rollback Restart workspace...` },
           ],
         },
       };
-    case actions.autoCloseDeleteWorkspace.TRIGGER:
+    case actions.autoCloseRestartWorkspace.TRIGGER:
       const isAuto = state.isAutoClose ? false : true;
       return {
         ...state,
         isAutoClose: isAuto,
       };
-    case actions.createZookeeper.REQUEST:
+    case actions.updateZookeeper.REQUEST:
       return {
         ...state,
         skipList: [...state.skipList, ACTIONS.STOP_ZOOKEEPER],
         progress: {
           ...state.progress,
-          message: 'Wait create zookeeper... (7% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Start to create zookeeper...` },
-          ],
+          message: 'Update zookeeper... (43% complete)',
+          log: [...state.progress.log, { title: `${now} Update zookeeper...` }],
         },
       };
     case actions.startZookeeper.REQUEST:
@@ -116,24 +119,34 @@ export default function reducer(state = initialState, action) {
         skipList: [...state.skipList, ACTIONS.START_ZOOKEEPER],
         progress: {
           ...state.progress,
-          message: 'Wait start zookeeper... (7% complete)',
+          message: 'Wait start zookeeper... (52% complete)',
           log: [
             ...state.progress.log,
             { title: `${now} Wait to start zookeeper...` },
           ],
         },
       };
-    case actions.createBroker.REQUEST:
+    case actions.startZookeeper.SUCCESS:
+      return {
+        ...state,
+        progress: {
+          ...state.progress,
+          activeStep: 4,
+          message: 'Start zookeeper success... (59% complete)',
+          log: [
+            ...state.progress.log,
+            { title: `${now} Start zookeeper success...` },
+          ],
+        },
+      };
+    case actions.updateBroker.REQUEST:
       return {
         ...state,
         skipList: [...state.skipList, ACTIONS.STOP_BROKER],
         progress: {
           ...state.progress,
-          message: 'Wait create broker... (7% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Start to create broker...` },
-          ],
+          message: 'Update broker... (29% complete)',
+          log: [...state.progress.log, { title: `${now} Update broker...` }],
         },
       };
     case actions.startBroker.REQUEST:
@@ -142,40 +155,63 @@ export default function reducer(state = initialState, action) {
         skipList: [...state.skipList, ACTIONS.START_BROKER],
         progress: {
           ...state.progress,
-          message: 'Wait start broker... (7% complete)',
+          message: 'Wait start broker... (66% complete)',
           log: [
             ...state.progress.log,
             { title: `${now} Wait to start broker...` },
           ],
         },
       };
-    case actions.createWorker.REQUEST:
+    case actions.startBroker.SUCCESS:
+      return {
+        ...state,
+        progress: {
+          ...state.progress,
+          activeStep: 5,
+          message: 'Start broker success... (73% complete)',
+          log: [
+            ...state.progress.log,
+            { title: `${now} Start broker success...` },
+          ],
+        },
+      };
+    case actions.updateWorker.REQUEST:
       return {
         ...state,
         skipList: [...state.skipList, ACTIONS.STOP_WORKER],
         progress: {
           ...state.progress,
-          message: 'Wait create worker... (7% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Start to create worker...` },
-          ],
+          message: 'Update worker... (15% complete)',
+          log: [...state.progress.log, { title: `${now} Update worker...` }],
         },
       };
     case actions.startWorker.REQUEST:
       return {
         ...state,
+        activeStep: 6,
         skipList: [...state.skipList, ACTIONS.START_WORKER],
         progress: {
           ...state.progress,
-          message: 'Wait start worker... (7% complete)',
+          message: 'Wait start worker... (80% complete)',
           log: [
             ...state.progress.log,
             { title: `${now} Wait to start worker...` },
           ],
         },
       };
-
+    case actions.startWorker.SUCCESS:
+      return {
+        ...state,
+        progress: {
+          ...state.progress,
+          activeStep: 6,
+          message: 'Start worker success... (87% complete)',
+          log: [
+            ...state.progress.log,
+            { title: `${now} Start worker success...` },
+          ],
+        },
+      };
     case actions.stopWorker.REQUEST:
       return {
         ...state,
@@ -263,116 +299,16 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-    case actions.deleteWorker.REQUEST:
+    case actions.updateWorkspace.SUCCESS:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_WORKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait delete worker... (49% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Start to delete worker...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteWorker.SUCCESS:
-      return {
-        ...state,
-        progress: {
-          ...state.progress,
-          activeStep: 4,
-          message: 'Delete worker success... (56% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Delete worker success...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteBroker.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_BROKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait delete broker... (63% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Start to delete broker...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteBroker.SUCCESS:
-      return {
-        ...state,
-        progress: {
-          ...state.progress,
-          activeStep: 5,
-          message: 'Delete broker success... (70% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Delete broker success...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteZookeeper.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_ZOOKEEPER],
-        progress: {
-          ...state.progress,
-          message: 'Wait delete zookeeper... (77% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Start to delete zookeeper...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteZookeeper.SUCCESS:
-      return {
-        ...state,
-        progress: {
-          ...state.progress,
-          activeStep: 6,
-          message: 'Delete zookeeper success... (84% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Delete zookeeper success...`,
-            },
-          ],
-        },
-      };
-    case actions.deleteWorkspace.REQUEST:
-      return {
-        ...state,
-        progress: {
-          ...state.progress,
-          message: 'Wait delete workspace... (91% complete)',
-        },
-      };
-    case actions.deleteWorkspace.SUCCESS:
-      return {
-        ...state,
-        skipList: [],
+        closeDisable: false,
         progress: {
           ...state.progress,
           activeStep: 7,
-          message: 'Delete workspace success... (98% complete)',
-          log: [],
+          message: 'Restart workspace success... (100% complete)',
         },
       };
-
     default:
       return state;
   }

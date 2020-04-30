@@ -21,7 +21,7 @@ export const getId = object => `${object?.group}_${object?.name}`;
 
 export const getKey = object => pick(object, ['group', 'name']);
 
-export const getKeyWithId = value => {
+export const convertIdToKey = value => {
   return { group: value.split('_')[0], name: value.split('_')[1] };
 };
 

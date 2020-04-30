@@ -16,9 +16,13 @@
 
 import { createRoutine } from 'redux-routines';
 
-export const createWorkspace = createRoutine('CREATE_WORKSPACE');
-export const deleteWorkspace = createRoutine('DELETE_WORKSPACE');
-export const fetchWorkspaces = createRoutine('FETCH_WORKSPACES');
-export const updateWorkspace = createRoutine('UPDATE_WORKSPACE');
-export const switchWorkspace = createRoutine('SWITCH_WORKSPACE');
-export const restartWorkspace = createRoutine('RESTART_WORKSPACE');
+export const openRestartWorkspace = createRoutine('OPEN_RESTART_WORKSPACE');
+export const closeRestartWorkspace = createRoutine('CLOSE_RESTART_WORKSPACE');
+export const pauseRestartWorkspace = createRoutine('PAUSE_RESTART_WORKSPACE');
+export const resumeRestartWorkspace = createRoutine('RESUME_RESTART_WORKSPACE');
+export const rollbackRestartWorkspace = createRoutine(
+  'ROLLBACK_RESTART_WORKSPACE',
+);
+export const autoCloseRestartWorkspace = createRoutine(
+  'AUTO_CLOSE_RESTART_WORKSPACE',
+);

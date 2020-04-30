@@ -68,7 +68,11 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
             - children: a valid react children
 */
 
-export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
+export const useConfig = ({
+  openDeleteProgressDialog,
+  openRestartProgressDialog,
+  workspace,
+}) => {
   const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
 
   const {
@@ -308,7 +312,7 @@ export const useConfig = ({ openDeleteProgressDialog, workspace }) => {
             children: 'This will restart the zookeeper, broker and worker.',
             title: 'Are you absolutely sure?',
             confirmText: 'Restart',
-            handleConfirm: () => {},
+            onConfirm: openRestartProgressDialog,
             maxWidth: 'sm',
           },
         },

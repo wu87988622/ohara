@@ -34,6 +34,7 @@ import Typography from '@material-ui/core/Typography';
 import { VirtualizedList } from 'components/common/List';
 import LogRow from './LogRow';
 import * as s from './LogPropessStyles';
+import { DeleteDialog } from 'components/common/Dialog';
 
 const LogProgress = props => {
   const {
@@ -48,6 +49,10 @@ const LogProgress = props => {
     isPause,
     onResume,
     onRollback,
+    onClose,
+    onAutoClose,
+    isAutoClose,
+    closeDisable,
   } = props;
 
   const [completed, setCompleted] = useState(0);
@@ -59,6 +64,10 @@ const LogProgress = props => {
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isHide, setIsHide] = useState(true);
+  const [
+    isRollbackConfirmDialogOpen,
+    setIsRollbackConfirmDialogOpen,
+  ] = useState(false);
 
   const progress = useRef(() => {});
 
@@ -99,7 +108,7 @@ const LogProgress = props => {
       timer = setInterval(tick, 500);
     } else if (steps.length === activeStep && completed < 100) {
       timer = setInterval(tick, 500);
-    } else if (completed === 100) {
+    } else if (completed === 100 && isAutoClose) {
       setIsLoading(false);
     }
 
@@ -119,7 +128,15 @@ const LogProgress = props => {
     return () => {
       clearInterval(timer);
     };
-  }, [steps.length, activeStep, isOpen, completed, isLoading, createTitle]);
+  }, [
+    steps.length,
+    activeStep,
+    isOpen,
+    completed,
+    isLoading,
+    createTitle,
+    isAutoClose,
+  ]);
 
   return (
     <s.StyledDialog open={isLoading} maxWidth={'md'} fullWidth isHide={isHide}>
@@ -154,7 +171,7 @@ const LogProgress = props => {
             <Button
               className={'SuspendButton'}
               color="primary"
-              onClick={onRollback}
+              onClick={() => setIsRollbackConfirmDialogOpen(true)}
               isHide={isHide}
             >
               ROLLBACK
@@ -203,14 +220,31 @@ const LogProgress = props => {
         </Card>
       )}
       <div className={'FlexFooterDiv'}>
-        <FormControl className={'StyledFormControl'}>
+        <FormControl className={'StyledFormControl'} onClick={onAutoClose}>
           <FormControlLabel
             control={<Checkbox />}
             label="Close after successful restart"
           />
         </FormControl>
-        <Button className={'StyledCloseButton'}>CLOSE</Button>
+        <Button
+          className={'StyledCloseButton'}
+          onClick={onClose}
+          disabled={closeDisable}
+        >
+          CLOSE
+        </Button>
       </div>
+      <DeleteDialog
+        content="We will use the original settings before restarting to restore your workspace."
+        confirmText="Rollback"
+        onConfirm={() => {
+          setIsRollbackConfirmDialogOpen(false);
+          onRollback();
+        }}
+        onClose={() => setIsRollbackConfirmDialogOpen(false)}
+        open={isRollbackConfirmDialogOpen}
+        title="Are you absolutely sure?"
+      />
     </s.StyledDialog>
   );
 };
@@ -226,8 +260,13 @@ LogProgress.propTypes = {
   message: PropTypes.string,
   onPause: PropTypes.func,
   onResume: PropTypes.func,
+  onClick: PropTypes.func,
   isPause: PropTypes.bool,
   onRollback: PropTypes.func,
+  onAutoClose: PropTypes.func,
+  onClose: PropTypes.func,
+  isAutoClose: PropTypes.bool,
+  closeDisable: PropTypes.bool,
 };
 
 export default LogProgress;
