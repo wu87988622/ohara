@@ -108,7 +108,7 @@ const MuiTable = props => {
       {...restProps}
       columns={[renderSelectionColumn(), ...columns]}
       data={data}
-      options={{ ...restOptions }}
+      options={{ ...restOptions, paging: dataCount > 5 }}
       icons={MuiTableIcons}
     />
   );
