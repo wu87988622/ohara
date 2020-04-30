@@ -15,7 +15,6 @@
  */
 
 import WorkspaceList from './WorkspaceList';
-import { EditWorkspace } from './Edit';
 
-export { EditWorkspace, WorkspaceList };
+export { WorkspaceList };
 export * from './CreateWorkspace';
