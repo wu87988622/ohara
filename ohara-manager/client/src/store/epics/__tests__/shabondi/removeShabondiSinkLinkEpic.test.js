@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import removeSinkLinkEpic from '../../shabondi/removeSinkLinkEpic';
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
+import removeSinkLinkEpic from '../../shabondi/removeShabondiSinkLinkEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 import { noop } from 'rxjs';
+import removeShabondiSinkLinkEpic from '../../shabondi/removeShabondiSinkLinkEpic';
 
 jest.mock('api/shabondiApi');
 const mockedPaperApi = jest.fn(() => {
@@ -142,5 +146,58 @@ it('remove shabondi sink link multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of remove shabondi sink link should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock remove shabondi sink link failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.removeShabondiSinkLink.TRIGGER,
+        payload: {
+          params: shabondiEntity,
+          options: { paperApi, topic: {} },
+        },
+      },
+    });
+    const output$ = removeShabondiSinkLinkEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.removeShabondiSinkLink.REQUEST,
+      },
+      e: {
+        type: actions.removeShabondiSinkLink.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

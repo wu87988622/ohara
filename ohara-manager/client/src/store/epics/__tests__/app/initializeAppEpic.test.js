@@ -15,13 +15,16 @@
  */
 
 import { keyBy } from 'lodash';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import initializeAppEpic from '../../app/initializeAppEpic';
 import * as actions from 'store/actions';
+import * as workspaceApi from 'api/workspaceApi';
 
 import { entities as workspaceEntities } from 'api/__mocks__/workspaceApi';
 import { entities as pipelineEntities } from 'api/__mocks__/pipelineApi';
+import { LOG_LEVEL } from 'const';
 
 jest.mock('api/workspaceApi');
 jest.mock('api/pipelineApi');
@@ -231,5 +234,52 @@ it('multiple actions will only used the latest action', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of initial app should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get workspace list failed',
+  };
+  const spyCreate = jest
+    .spyOn(workspaceApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(eu)--|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.initializeApp.TRIGGER,
+        payload: {},
+      },
+    });
+    const output$ = initializeAppEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      e: {
+        type: actions.initializeApp.FAILURE,
+        payload: error,
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

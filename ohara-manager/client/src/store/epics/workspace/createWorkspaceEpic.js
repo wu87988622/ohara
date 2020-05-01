@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of, scheduled, asapScheduler } from 'rxjs';
+import { defer, of, scheduled, asapScheduler, from } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -96,7 +96,12 @@ export default (action$, state$) =>
         asapScheduler,
       ).pipe(
         concatAll(),
-        catchError(error => of(actions.createWorkspace.failure(error))),
+        catchError(err =>
+          from([
+            actions.createWorkspace.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );

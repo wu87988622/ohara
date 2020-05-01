@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as workerApi from 'api/workerApi';
 import updateWorkerEpic from '../../worker/updateWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
@@ -163,5 +166,57 @@ it('update worker multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update worker should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update worker failed',
+  };
+  const spyCreate = jest
+    .spyOn(workerApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateWorker.TRIGGER,
+        payload: workerEntity,
+      },
+    });
+    const output$ = updateWorkerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateWorker.REQUEST,
+        payload: { workerId: wkId },
+      },
+      e: {
+        type: actions.updateWorker.FAILURE,
+        payload: { ...error, workerId: wkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          workerId: wkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

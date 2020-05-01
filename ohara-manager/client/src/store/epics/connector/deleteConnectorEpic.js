@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -28,9 +28,9 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
-import { CELL_STATUS } from 'const';
 import { getId } from 'utils/object';
 
 const deleteConnector$ = values => {
@@ -53,7 +53,9 @@ const deleteConnector$ = values => {
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError('exceed max retry times'),
+              throwError({
+                title: 'delete connector exceeded max retry count',
+              }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -66,11 +68,14 @@ const deleteConnector$ = values => {
       return actions.deleteConnector.success({ connectorId });
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
-    catchError(error => {
+    catchError(err => {
       paperApi.updateElement(params.id, {
         status: CELL_STATUS.failed,
       });
-      return of(actions.deleteConnector.failure(merge(error, { connectorId })));
+      return from([
+        actions.deleteConnector.failure(merge(err, { connectorId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };

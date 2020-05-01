@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   switchMap,
   map,
@@ -30,6 +30,7 @@ import {
   throttleTime,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import * as nodeApi from 'api/nodeApi';
@@ -49,11 +50,14 @@ export const createNodeEpic = action$ =>
           return actions.createNode.success(entities);
         }),
         startWith(actions.createNode.request()),
-        catchError(res => {
+        catchError(err => {
           if (options?.onError) {
-            options.onError(res);
+            options.onError(err);
           }
-          return of(actions.createNode.failure(res));
+          return from([
+            actions.createNode.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]);
         }),
       ),
     ),
@@ -68,7 +72,12 @@ export const updateNodeEpic = action$ =>
         map(res => normalize(res.data, schema.node)),
         map(entities => actions.updateNode.success(entities)),
         startWith(actions.updateNode.request()),
-        catchError(res => of(actions.updateNode.failure(res))),
+        catchError(err =>
+          from([
+            actions.updateNode.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );
@@ -82,7 +91,12 @@ export const fetchNodesEpic = action$ =>
         map(res => normalize(res.data, [schema.node])),
         map(entities => actions.fetchNodes.success(entities)),
         startWith(actions.fetchNodes.request()),
-        catchError(res => of(actions.fetchNodes.failure(res))),
+        catchError(err =>
+          from([
+            actions.fetchNodes.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );
@@ -100,7 +114,7 @@ const deleteNode$ = hostname =>
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError('exceed max retry times'),
+              throwError({ title: 'delete node exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -110,7 +124,12 @@ const deleteNode$ = hostname =>
   ).pipe(
     map(() => actions.deleteNode.success(hostname)),
     startWith(actions.deleteNode.request()),
-    catchError(error => of(actions.deleteNode.failure(error))),
+    catchError(err =>
+      from([
+        actions.deleteNode.failure(err),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
+    ),
   );
 
 export const deleteNodeEpic = action$ =>

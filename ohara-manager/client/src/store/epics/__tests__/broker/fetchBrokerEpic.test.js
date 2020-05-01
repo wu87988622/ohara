@@ -14,24 +14,31 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as brokerApi from 'api/brokerApi';
 import fetchBrokerEpic from '../../broker/fetchBrokerEpic';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import { getId, getKey } from 'utils/object';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 import { brokerInfoEntity } from 'api/__mocks__/inspectApi';
 
 jest.mock('api/brokerApi');
 jest.mock('api/inspectApi');
 
-const key = { name: 'newbk', group: 'newworkspace' };
-const bkId = getId(key);
+const key = getKey(brokerEntity);
+const bkId = getId(brokerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
+
+beforeEach(() => {
+  jest.restoreAllMocks();
+});
 
 it('fetch broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
@@ -184,5 +191,57 @@ it('fetch broker multiple times without period should get latest result', () => 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch broker should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get broker failed',
+  };
+  const spyCreate = jest
+    .spyOn(brokerApi, 'get')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchBroker.TRIGGER,
+        payload: brokerEntity,
+      },
+    });
+    const output$ = fetchBrokerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchBroker.REQUEST,
+        payload: { brokerId: bkId },
+      },
+      e: {
+        type: actions.fetchBroker.FAILURE,
+        payload: { ...error, brokerId: bkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          brokerId: bkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

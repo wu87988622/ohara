@@ -36,7 +36,7 @@ export default action$ =>
         catchError(error => {
           handleError(options);
           return from([
-            actions.deleteStream.failure(error),
+            actions.updateStreamLink.failure(error),
             actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
           ]);
         }),

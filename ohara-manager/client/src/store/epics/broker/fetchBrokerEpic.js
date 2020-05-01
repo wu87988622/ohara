@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, of } from 'rxjs';
+import { defer, forkJoin, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -31,6 +31,7 @@ import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 const fetchBroker$ = params => {
   const brokerId = getId(params);
@@ -47,8 +48,11 @@ const fetchBroker$ = params => {
     map(normalizedData => merge(...normalizedData, { brokerId })),
     map(normalizedData => actions.fetchBroker.success(normalizedData)),
     startWith(actions.fetchBroker.request({ brokerId })),
-    catchError(error =>
-      of(actions.fetchBroker.failure(merge(error, { brokerId }))),
+    catchError(err =>
+      from([
+        actions.fetchBroker.failure(merge(err, { brokerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

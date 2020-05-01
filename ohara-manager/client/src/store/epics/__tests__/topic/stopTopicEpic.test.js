@@ -130,12 +130,13 @@ it('stop topic failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopTopic.FAILURE,
-        payload: 'exceed max retry times',
+        payload: { topicId, title: 'stop topic exceeded max retry count' },
       },
       y: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          title: 'exceed max retry times',
+          topicId,
+          title: 'stop topic exceeded max retry count',
           type: LOG_LEVEL.error,
         },
       },

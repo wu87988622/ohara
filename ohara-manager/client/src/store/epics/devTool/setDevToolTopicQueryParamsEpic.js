@@ -15,7 +15,7 @@
  */
 
 import { ofType } from 'redux-observable';
-import { of, asapScheduler, scheduled, queueScheduler } from 'rxjs';
+import { of, asapScheduler, scheduled, queueScheduler, from } from 'rxjs';
 import {
   map,
   catchError,
@@ -26,6 +26,7 @@ import {
   mapTo,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 
 export default action$ =>
@@ -63,7 +64,12 @@ export default action$ =>
         queueScheduler,
       ).pipe(
         mergeAll(),
-        catchError(res => of(actions.setDevToolTopicQueryParams.failure(res))),
+        catchError(err =>
+          from([
+            actions.setDevToolTopicQueryParams.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

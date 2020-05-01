@@ -16,7 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of, timer, merge } from 'rxjs';
+import { defer, timer, merge, from } from 'rxjs';
 import {
   switchMap,
   map,
@@ -28,7 +28,7 @@ import {
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { KIND } from 'const';
+import { KIND, LOG_LEVEL } from 'const';
 
 const updateMetrics = (res, options) => {
   const { pipelineObjectsRef, paperApi } = options;
@@ -61,7 +61,15 @@ export default action$ =>
               return actions.startUpdateMetrics.success(normalizedData);
             }),
             startWith(actions.startUpdateMetrics.request()),
-            catchError(error => of(actions.startUpdateMetrics.failure(error))),
+            catchError(err =>
+              from([
+                actions.startUpdateMetrics.failure(err),
+                actions.createEventLog.trigger({
+                  ...err,
+                  type: LOG_LEVEL.error,
+                }),
+              ]),
+            ),
           ),
         ),
         takeUntil(

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as zookeeperApi from 'api/zookeeperApi';
 import updateZookeeperEpic from '../../zookeeper/updateZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -163,5 +166,57 @@ it('update zookeeper multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update zookeeper should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update zookeeper failed',
+  };
+  const spyCreate = jest
+    .spyOn(zookeeperApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateZookeeper.TRIGGER,
+        payload: zookeeperEntity,
+      },
+    });
+    const output$ = updateZookeeperEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateZookeeper.REQUEST,
+        payload: { zookeeperId: zkId },
+      },
+      e: {
+        type: actions.updateZookeeper.FAILURE,
+        payload: { ...error, zookeeperId: zkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          zookeeperId: zkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

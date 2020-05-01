@@ -17,10 +17,10 @@
 import moment from 'moment';
 import * as _ from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, from, queueScheduler } from 'rxjs';
+import { defer, from, queueScheduler } from 'rxjs';
 import { catchError, concatMap, exhaustMap } from 'rxjs/operators';
 
-import { KIND, LOG_TIME_GROUP, GROUP } from 'const';
+import { KIND, LOG_TIME_GROUP, GROUP, LOG_LEVEL } from 'const';
 import * as logApi from 'api/logApi';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
@@ -108,7 +108,12 @@ export default (action$, state$) =>
             queueScheduler,
           ),
         ),
-        catchError(res => of(actions.fetchDevToolLog.failure(res))),
+        catchError(err =>
+          from([
+            actions.fetchDevToolLog.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

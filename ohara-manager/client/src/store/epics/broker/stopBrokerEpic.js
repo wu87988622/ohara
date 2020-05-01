@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip } from 'rxjs';
+import { defer, of, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   delay,
@@ -33,6 +33,7 @@ import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 const stopBroker$ = params => {
   const brokerId = getId(params);
@@ -48,7 +49,7 @@ const stopBroker$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError('exceed max retry times'),
+              throwError({ title: 'stop broker exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -60,8 +61,11 @@ const stopBroker$ = params => {
     map(normalizedData => merge(normalizedData, { brokerId })),
     map(normalizedData => actions.stopBroker.success(normalizedData)),
     startWith(actions.stopBroker.request({ brokerId })),
-    catchError(error =>
-      of(actions.stopBroker.failure(merge(error, { brokerId }))),
+    catchError(err =>
+      from([
+        actions.stopBroker.failure(merge(err, { brokerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

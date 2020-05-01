@@ -15,7 +15,7 @@
  */
 
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, of, from } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -381,7 +381,12 @@ export default (action$, state$) =>
         finalize$(workspaceKey),
       ).pipe(
         concatAll(),
-        catchError(error => of(actions.deleteWorkspace.failure(error))),
+        catchError(err =>
+          from([
+            actions.deleteWorkspace.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
         takeUntil(action$.pipe(ofType(actions.pauseDeleteWorkspace.TRIGGER))),
       );
     }),

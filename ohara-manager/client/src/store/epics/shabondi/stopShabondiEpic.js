@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer, throwError, iif, zip } from 'rxjs';
+import { of, defer, throwError, iif, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -33,10 +33,10 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-const stopShabondi$ = values => {
-  const { params, options } = values;
+const stopShabondi$ = value => {
+  const { params, options } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
   paperApi.updateElement(params.id, {
@@ -54,7 +54,7 @@ const stopShabondi$ = values => {
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError('exceed max retry times'),
+              throwError({ title: 'stop shabondi exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -71,11 +71,14 @@ const stopShabondi$ = values => {
       return actions.stopShabondi.success(normalizedData);
     }),
     startWith(actions.stopShabondi.request({ shabondiId })),
-    catchError(error => {
+    catchError(err => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.failed,
       });
-      return of(actions.stopShabondi.failure(error));
+      return from([
+        actions.stopShabondi.failure(merge(err, { shabondiId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
@@ -85,5 +88,5 @@ export default action$ =>
     ofType(actions.stopShabondi.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => stopShabondi$(values)),
+    mergeMap(value => stopShabondi$(value)),
   );

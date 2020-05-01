@@ -16,9 +16,10 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, switchMap, startWith } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -31,7 +32,12 @@ export default action$ =>
         map(res => normalize(res.data, [schema.topic])),
         map(normalizedData => actions.fetchTopics.success(normalizedData)),
         startWith(actions.fetchTopics.request()),
-        catchError(res => of(actions.fetchTopics.failure(res))),
+        catchError(err =>
+          from([
+            actions.fetchTopics.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

@@ -16,9 +16,10 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -36,7 +37,10 @@ export default action$ => {
         startWith(actions.updateShabondiLink.request()),
         catchError(err => {
           options.paperApi.removeElement(options.link.id);
-          return of(actions.updateShabondiLink.failure(err));
+          return from([
+            actions.updateShabondiLink.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]);
         }),
       ),
     ),

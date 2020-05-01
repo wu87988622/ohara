@@ -49,7 +49,7 @@ export const stopTopic$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError('exceed max retry times'),
+              throwError({ title: 'stop topic exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -75,13 +75,10 @@ export default action$ =>
     distinctUntilChanged(),
     mergeMap(values =>
       stopTopic$(values).pipe(
-        catchError(error =>
+        catchError(err =>
           from([
-            actions.stopTopic.failure(error),
-            actions.createEventLog.trigger({
-              title: error,
-              type: LOG_LEVEL.error,
-            }),
+            actions.stopTopic.failure(merge(err, { topicId: getId(values) })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
       ),

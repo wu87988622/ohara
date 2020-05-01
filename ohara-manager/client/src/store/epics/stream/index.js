@@ -24,7 +24,7 @@ import stopStreamEpic from './stopStreamEpic';
 import stopAndDeleteStreamEpic from './stopAndDeleteStreamEpic';
 import removeStreamToLinkEpic from './removeStreamToLinkEpic';
 import removeStreamFromLinkEpic from './removeStreamFromLinkEpic';
-import updateStreamLinkEpic from './updateStreamLinkEpic';
+import updateLinkStreamEpic from './updateLinkStreamEpic';
 
 export default combineEpics(
   createStreamEpic,
@@ -36,5 +36,5 @@ export default combineEpics(
   stopAndDeleteStreamEpic,
   removeStreamToLinkEpic,
   removeStreamFromLinkEpic,
-  updateStreamLinkEpic,
+  updateLinkStreamEpic,
 );

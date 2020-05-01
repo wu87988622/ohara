@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -29,6 +29,7 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -48,7 +49,7 @@ export const startTopic$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError('exceed max retry times'),
+              throwError({ title: 'start topic exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -74,7 +75,12 @@ export default action$ =>
     distinctUntilChanged(),
     mergeMap(values =>
       startTopic$(values).pipe(
-        catchError(error => of(actions.startTopic.failure(error))),
+        catchError(err =>
+          from([
+            actions.startTopic.failure(merge(err, { topicId: getId(values) })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

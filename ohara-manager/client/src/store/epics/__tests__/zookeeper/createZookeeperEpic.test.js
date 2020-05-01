@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as zookeeperApi from 'api/zookeeperApi';
 import createZookeeperEpic from '../../zookeeper/createZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -179,5 +182,57 @@ it('create same zookeeper within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create zookeeper should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create zookeeper failed',
+  };
+  const spyCreate = jest
+    .spyOn(zookeeperApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createZookeeper.TRIGGER,
+        payload: zookeeperEntity,
+      },
+    });
+    const output$ = createZookeeperEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createZookeeper.REQUEST,
+        payload: { zookeeperId: zkId },
+      },
+      e: {
+        type: actions.createZookeeper.FAILURE,
+        payload: { ...error, zookeeperId: zkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          zookeeperId: zkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

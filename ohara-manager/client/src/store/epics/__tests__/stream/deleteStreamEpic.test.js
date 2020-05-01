@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as streamApi from 'api/streamApi';
 import deleteStreamEpic from '../../stream/deleteStreamEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -183,5 +185,60 @@ it('delete same stream within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of delete stream should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock delete stream failed',
+  };
+  const spyCreate = jest
+    .spyOn(streamApi, 'remove')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteStream.TRIGGER,
+        payload: {
+          params: streamEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = deleteStreamEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteStream.REQUEST,
+        payload: { streamId },
+      },
+      e: {
+        type: actions.deleteStream.FAILURE,
+        payload: { ...error, streamId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          streamId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

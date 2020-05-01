@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -25,6 +25,7 @@ import {
   distinctUntilChanged,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -34,8 +35,11 @@ const deleteWorker$ = params => {
   return defer(() => workerApi.remove(params)).pipe(
     map(() => actions.deleteWorker.success({ workerId })),
     startWith(actions.deleteWorker.request({ workerId })),
-    catchError(error =>
-      of(actions.deleteWorker.failure(merge(error, { workerId }))),
+    catchError(err =>
+      from([
+        actions.deleteWorker.failure(merge(err, { workerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

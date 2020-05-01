@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as topicApi from 'api/topicApi';
 import deleteTopicEpic from '../../topic/deleteTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { LOG_LEVEL } from 'const';
 
 jest.mock('api/topicApi');
 
-const bkId = getId(topicEntity);
+const topicId = getId(topicEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -51,13 +53,13 @@ it('delete topic should be worked correctly', () => {
       a: {
         type: actions.deleteTopic.REQUEST,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       u: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       v: {
@@ -102,13 +104,13 @@ it('delete multiple topics should be worked correctly', () => {
       a: {
         type: actions.deleteTopic.REQUEST,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       u: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       b: {
@@ -169,13 +171,13 @@ it('delete same topic within period should be created once only', () => {
       a: {
         type: actions.deleteTopic.REQUEST,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       u: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
-          topicId: bkId,
+          topicId,
         },
       },
       v: {
@@ -192,5 +194,57 @@ it('delete same topic within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of delete topic should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock delete topic failed',
+  };
+  const spyCreate = jest
+    .spyOn(topicApi, 'remove')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteTopic.TRIGGER,
+        payload: topicEntity,
+      },
+    });
+    const output$ = deleteTopicEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteTopic.REQUEST,
+        payload: { topicId },
+      },
+      e: {
+        type: actions.deleteTopic.FAILURE,
+        payload: { ...error, topicId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          topicId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

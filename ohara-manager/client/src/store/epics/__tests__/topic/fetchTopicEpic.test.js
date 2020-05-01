@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as topicApi from 'api/topicApi';
 import fetchTopicsEpic from '../../topic/fetchTopicsEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
@@ -110,5 +113,54 @@ it('fetch topic multiple times within period should be got latest result', () =>
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch topic list should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get topic list failed',
+  };
+  const spyCreate = jest
+    .spyOn(topicApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchTopics.TRIGGER,
+      },
+    });
+    const output$ = fetchTopicsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchTopics.REQUEST,
+      },
+      e: {
+        type: actions.fetchTopics.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

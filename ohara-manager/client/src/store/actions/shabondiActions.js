@@ -17,7 +17,6 @@
 import { createRoutine } from 'redux-routines';
 
 export const fetchShabondis = createRoutine('FETCH_SHABONDIS');
-export const fetchShabondi = createRoutine('FETCH_SHABONDI');
 export const createShabondi = createRoutine('CREATE_SHABONDI');
 export const updateShabondi = createRoutine('UPDATE_SHABONDI');
 export const startShabondi = createRoutine('START_SHABONDI');

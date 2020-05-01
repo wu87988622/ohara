@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { sortBy, merge, mergeWith, omit, isArray } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, of, zip } from 'rxjs';
+import { defer, forkJoin, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -26,6 +26,7 @@ import {
   throttleTime,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
@@ -66,8 +67,11 @@ const fetchWorker$ = params => {
     map(normalizedData => merge(...normalizedData, { workerId })),
     map(normalizedData => actions.fetchWorker.success(normalizedData)),
     startWith(actions.fetchWorker.request({ workerId })),
-    catchError(error =>
-      of(actions.fetchWorker.failure(merge(error, { workerId }))),
+    catchError(err =>
+      from([
+        actions.fetchWorker.failure(merge(err, { workerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

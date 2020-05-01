@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as connectorApi from 'api/connectorApi';
 import updateConnectorEpic from '../../connector/updateConnectorEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -193,5 +195,60 @@ it('update connector multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update connector should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update connector failed',
+  };
+  const spyCreate = jest
+    .spyOn(connectorApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateConnector.TRIGGER,
+        payload: {
+          values: connectorEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = updateConnectorEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateConnector.REQUEST,
+        payload: { connectorId },
+      },
+      e: {
+        type: actions.updateConnector.FAILURE,
+        payload: { ...error, connectorId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          connectorId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

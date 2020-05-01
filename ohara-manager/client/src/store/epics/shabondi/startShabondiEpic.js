@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -29,15 +29,15 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
-const startShabondi$ = values => {
-  const { params, options } = values;
+const startShabondi$ = value => {
+  const { params, options } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
   paperApi.updateElement(params.id, {
@@ -56,7 +56,7 @@ const startShabondi$ = values => {
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError('exceed max retry times'),
+              throwError({ title: 'start shabondi exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -73,11 +73,14 @@ const startShabondi$ = values => {
       return actions.startShabondi.success(normalizedData);
     }),
     startWith(actions.startShabondi.request({ shabondiId })),
-    catchError(error => {
+    catchError(err => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.failed,
       });
-      return of(actions.startShabondi.failure(error));
+      return from([
+        actions.startShabondi.failure(merge(err, { shabondiId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
@@ -87,5 +90,5 @@ export default action$ =>
     ofType(actions.startShabondi.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => startShabondi$(values)),
+    mergeMap(value => startShabondi$(value)),
   );

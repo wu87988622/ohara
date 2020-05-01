@@ -15,11 +15,14 @@
  */
 
 import { keyBy } from 'lodash';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as connectorApi from 'api/connectorApi';
+import * as actions from 'store/actions';
 import fetchConnectorsEpic from '../../connector/fetchConnectorsEpic';
 import { ENTITY_TYPE } from 'store/schema';
-import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entities } from 'api/__mocks__/connectorApi';
 
@@ -105,5 +108,54 @@ it('fetch connector multiple times within period should be got latest result', (
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch connector should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get all connectors failed',
+  };
+  const spyCreate = jest
+    .spyOn(connectorApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchConnectors.TRIGGER,
+      },
+    });
+    const output$ = fetchConnectorsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchConnectors.REQUEST,
+      },
+      e: {
+        type: actions.fetchConnectors.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

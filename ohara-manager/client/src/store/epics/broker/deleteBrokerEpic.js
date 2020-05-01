@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -28,14 +28,18 @@ import {
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 const deleteBroker$ = params => {
   const brokerId = getId(params);
   return defer(() => brokerApi.remove(params)).pipe(
     map(() => actions.deleteBroker.success({ brokerId })),
     startWith(actions.deleteBroker.request({ brokerId })),
-    catchError(error =>
-      of(actions.deleteBroker.failure(merge(error, { brokerId }))),
+    catchError(err =>
+      from([
+        actions.deleteBroker.failure(merge(err, { brokerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

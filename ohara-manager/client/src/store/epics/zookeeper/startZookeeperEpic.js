@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip } from 'rxjs';
+import { defer, of, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   delay,
@@ -34,6 +34,7 @@ import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 export const startZookeeper$ = params => {
   const zookeeperId = getId(params);
@@ -50,7 +51,7 @@ export const startZookeeper$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError('exceed max retry times'),
+              throwError({ title: 'start zookeeper exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -62,8 +63,11 @@ export const startZookeeper$ = params => {
     map(normalizedData => merge(normalizedData, { zookeeperId })),
     map(normalizedData => actions.startZookeeper.success(normalizedData)),
     startWith(actions.startZookeeper.request({ zookeeperId })),
-    catchError(error =>
-      of(actions.startZookeeper.failure(merge(error, { zookeeperId }))),
+    catchError(err =>
+      from([
+        actions.startZookeeper.failure(merge(err, { zookeeperId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

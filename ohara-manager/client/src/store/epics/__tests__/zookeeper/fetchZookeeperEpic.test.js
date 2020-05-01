@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as zookeeperApi from 'api/zookeeperApi';
 import fetchZookeeperEpic from '../../zookeeper/fetchZookeeperEpic';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import { getId, getKey } from 'utils/object';
 import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 import { zookeeperInfoEntity } from 'api/__mocks__/inspectApi';
 
 jest.mock('api/zookeeperApi');
 jest.mock('api/inspectApi');
 
-const key = { name: 'newzk', group: 'newworkspace' };
+const key = getKey(zookeeperEntity);
 const zkId = getId(key);
 
 const makeTestScheduler = () =>
@@ -184,5 +187,57 @@ it('fetch zookeeper multiple times without period should get latest result', () 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch zookeeper should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get zookeeper failed',
+  };
+  const spyCreate = jest
+    .spyOn(zookeeperApi, 'get')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchZookeeper.TRIGGER,
+        payload: zookeeperEntity,
+      },
+    });
+    const output$ = fetchZookeeperEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchZookeeper.REQUEST,
+        payload: { zookeeperId: zkId },
+      },
+      e: {
+        type: actions.fetchZookeeper.FAILURE,
+        payload: { ...error, zookeeperId: zkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          zookeeperId: zkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

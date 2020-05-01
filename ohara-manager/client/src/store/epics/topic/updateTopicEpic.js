@@ -17,9 +17,10 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, mergeMap, startWith } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -37,7 +38,12 @@ export default action$ =>
           actions.updateTopic.success(merge(normalizedData, { topicId })),
         ),
         startWith(actions.updateTopic.request({ topicId })),
-        catchError(res => of(actions.updateTopic.failure(res))),
+        catchError(err =>
+          from([
+            actions.updateTopic.failure(merge(err, { topicId })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );

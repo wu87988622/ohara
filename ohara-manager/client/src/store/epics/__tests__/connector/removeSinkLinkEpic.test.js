@@ -16,12 +16,14 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
+import * as connectorApi from 'api/connectorApi';
 import removeSinkLinkEpic from '../../connector/removeSinkLinkEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
+import { LOG_LEVEL } from 'const';
 
 jest.mock('api/connectorApi');
 const mockedPaperApi = jest.fn(() => {
@@ -142,5 +144,58 @@ it('remove connector sink link multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of remove sink link should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock remove sink link failed',
+  };
+  const spyCreate = jest
+    .spyOn(connectorApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.removeConnectorSinkLink.TRIGGER,
+        payload: {
+          params: connectorEntity,
+          options: { paperApi, topic: {} },
+        },
+      },
+    });
+    const output$ = removeSinkLinkEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.removeConnectorSinkLink.REQUEST,
+      },
+      e: {
+        type: actions.removeConnectorSinkLink.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

@@ -15,8 +15,11 @@
  */
 
 import { keyBy } from 'lodash';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
 import fetchShabondisEpic from '../../shabondi/fetchShabondisEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
@@ -105,5 +108,54 @@ it('fetch shabondi multiple times within period should be got latest result', ()
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch shabondi list should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock fetch shabondi list failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchShabondis.TRIGGER,
+      },
+    });
+    const output$ = fetchShabondisEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchShabondis.REQUEST,
+      },
+      e: {
+        type: actions.fetchShabondis.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

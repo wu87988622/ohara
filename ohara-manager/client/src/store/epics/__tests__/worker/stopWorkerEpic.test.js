@@ -16,8 +16,9 @@
 
 import { TestScheduler } from 'rxjs/testing';
 
-import stopWorkerEpic from '../../worker/stopWorkerEpic';
+import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
+import stopWorkerEpic from '../../worker/stopWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -105,10 +106,10 @@ it('stop worker failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a             ';
     // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 21999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 21999ms (vu)';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {
@@ -127,7 +128,18 @@ it('stop worker failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopWorker.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          workerId: wkId,
+          title: 'stop worker exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          workerId: wkId,
+          title: 'stop worker exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

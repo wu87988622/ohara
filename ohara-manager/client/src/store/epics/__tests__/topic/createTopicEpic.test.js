@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as topicApi from 'api/topicApi';
 import createTopicEpic from '../../topic/createTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { LOG_LEVEL } from 'const';
 
 jest.mock('api/topicApi');
 
@@ -216,5 +218,57 @@ it('create same topic within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create topic should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create topic failed',
+  };
+  const spyCreate = jest
+    .spyOn(topicApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createTopic.TRIGGER,
+        payload: topicEntity,
+      },
+    });
+    const output$ = createTopicEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createTopic.REQUEST,
+        payload: { topicId },
+      },
+      e: {
+        type: actions.createTopic.FAILURE,
+        payload: { ...error, topicId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          topicId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

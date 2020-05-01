@@ -23,6 +23,7 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
+import { LOG_LEVEL } from 'const';
 
 jest.mock('api/connectorApi');
 const mockedPaperApi = jest.fn(() => {
@@ -117,10 +118,10 @@ it('stop connector failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a            ';
     // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 9999ms (vu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -142,7 +143,18 @@ it('stop connector failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopConnector.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          connectorId,
+          title: 'stop connector exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          connectorId,
+          title: 'stop connector exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

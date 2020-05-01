@@ -15,8 +15,11 @@
  */
 
 import { keyBy } from 'lodash';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as streamApi from 'api/streamApi';
 import fetchStreamsEpic from '../../stream/fetchStreamsEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
@@ -105,5 +108,54 @@ it('fetch stream multiple times within period should be got latest result', () =
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch stream list should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get stream list failed',
+  };
+  const spyCreate = jest
+    .spyOn(streamApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchStreams.TRIGGER,
+      },
+    });
+    const output$ = fetchStreamsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchStreams.REQUEST,
+      },
+      e: {
+        type: actions.fetchStreams.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

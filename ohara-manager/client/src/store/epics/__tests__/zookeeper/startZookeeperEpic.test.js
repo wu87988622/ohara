@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
+import { TestScheduler } from 'rxjs/testing';
 
-import startZookeeperEpic from '../../zookeeper/startZookeeperEpic';
+import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
+import startZookeeperEpic from '../../zookeeper/startZookeeperEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -108,10 +109,10 @@ it('start zookeeper failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a             ';
     // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 21999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 21999ms (vu)';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {
@@ -130,7 +131,18 @@ it('start zookeeper failed after reach retry limit', () => {
       },
       v: {
         type: actions.startZookeeper.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          zookeeperId: zkId,
+          title: 'start zookeeper exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          zookeeperId: zkId,
+          title: 'start zookeeper exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

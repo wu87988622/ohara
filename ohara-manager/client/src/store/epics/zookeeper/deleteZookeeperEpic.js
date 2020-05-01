@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -25,6 +25,7 @@ import {
   startWith,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -34,8 +35,11 @@ const deleteZookeeper$ = params => {
   return defer(() => zookeeperApi.remove(params)).pipe(
     map(() => actions.deleteZookeeper.success({ zookeeperId })),
     startWith(actions.deleteZookeeper.request({ zookeeperId })),
-    catchError(error =>
-      of(actions.deleteZookeeper.failure(merge(error, { zookeeperId }))),
+    catchError(err =>
+      from([
+        actions.deleteZookeeper.failure(merge(err, { zookeeperId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

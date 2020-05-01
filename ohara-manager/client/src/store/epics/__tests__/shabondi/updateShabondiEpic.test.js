@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
 import updateShabondiEpic from '../../shabondi/updateShabondiEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -60,7 +62,7 @@ it('update shabondi should be worked correctly', () => {
       a: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
-          params: { ...shabondiEntity, jmxPort: 999 },
+          values: { ...shabondiEntity, jmxPort: 999 },
           options: { paperApi, cell },
         },
       },
@@ -106,21 +108,21 @@ it('update shabondi multiple times should got latest result', () => {
       a: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          values: shabondiEntity,
           options: { paperApi, cell },
         },
       },
       b: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
-          params: { ...shabondiEntity, nodeNames: ['n1', 'n2'] },
+          values: { ...shabondiEntity, nodeNames: ['n1', 'n2'] },
           options: { paperApi, cell },
         },
       },
       c: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
-          params: { ...shabondiEntity, clientPort: 1234 },
+          values: { ...shabondiEntity, clientPort: 1234 },
           options: { paperApi, cell },
         },
       },
@@ -193,5 +195,60 @@ it('update shabondi multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update shabondi should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update shabondi failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateShabondi.TRIGGER,
+        payload: {
+          values: shabondiEntity,
+          options: { paperApi, cell },
+        },
+      },
+    });
+    const output$ = updateShabondiEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateShabondi.REQUEST,
+        payload: { shabondiId },
+      },
+      e: {
+        type: actions.updateShabondi.FAILURE,
+        payload: { ...error, shabondiId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          shabondiId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

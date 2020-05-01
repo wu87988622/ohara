@@ -17,27 +17,28 @@
 import * as _ from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
     ofType(actions.updateShabondi.TRIGGER),
     map(action => action.payload),
-    mergeMap(({ params, options }) => {
+    mergeMap(({ values, options }) => {
       const hasSourceTopicKey =
-        _.get(params, 'shabondi__source__toTopics', []).length > 0;
+        _.get(values, 'shabondi__source__toTopics', []).length > 0;
       const hasSinkTopicKey =
-        _.get(params, 'shabondi__sink__fromTopics', []).length > 0;
+        _.get(values, 'shabondi__sink__fromTopics', []).length > 0;
       const { cell, paperApi, topics } = options;
       const cells = paperApi.getCells();
-      const shabondiId = paperApi.getCell(params.name).id;
+      const shabondiId = paperApi.getCell(values.name).id;
 
-      return defer(() => shabondiApi.update(params)).pipe(
+      return defer(() => shabondiApi.update(values)).pipe(
         map(res => normalize(res.data, schema.shabondi)),
         map(normalizedData => {
           const currentHasSourceTopicKey =
@@ -78,7 +79,12 @@ export default action$ => {
           );
         }),
         startWith(actions.updateShabondi.request({ shabondiId })),
-        catchError(err => of(actions.updateShabondi.failure(err))),
+        catchError(err =>
+          from([
+            actions.updateShabondi.failure(_.merge(err, { shabondiId })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );

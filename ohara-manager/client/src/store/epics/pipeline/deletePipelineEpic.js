@@ -164,10 +164,10 @@ export default action$ =>
         deletePipeline$({ group, name }),
       ).pipe(
         concatAll(),
-        catchError(error => {
+        catchError(err => {
           return from([
-            actions.deletePipeline.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+            actions.deletePipeline.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),
       );

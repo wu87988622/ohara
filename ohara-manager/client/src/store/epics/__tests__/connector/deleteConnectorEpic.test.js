@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import deleteConnectorEpic from '../../connector/deleteConnectorEpic';
+import { LOG_LEVEL } from 'const';
+import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
+import deleteConnectorEpic from '../../connector/deleteConnectorEpic';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 
@@ -183,5 +185,60 @@ it('delete same connector within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of delete connector should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock delete connector failed',
+  };
+  const spyCreate = jest
+    .spyOn(connectorApi, 'remove')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteConnector.TRIGGER,
+        payload: {
+          params: connectorEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = deleteConnectorEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteConnector.REQUEST,
+        payload: { connectorId },
+      },
+      e: {
+        type: actions.deleteConnector.FAILURE,
+        payload: { ...error, connectorId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          connectorId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

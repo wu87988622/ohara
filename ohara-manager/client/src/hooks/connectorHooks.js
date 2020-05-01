@@ -29,7 +29,7 @@ export const useCreateConnectorAction = () => {
   return (values, options) =>
     dispatch(
       actions.createConnector.trigger({
-        params: { ...values, group },
+        values: { ...values, group },
         options,
       }),
     );

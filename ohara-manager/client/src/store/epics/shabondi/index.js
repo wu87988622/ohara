@@ -21,16 +21,16 @@ import stopShabondiEpic from './stopShabondiEpic';
 import deleteShabondiEpic from './deleteShabondiEpic';
 import updateShabondiEpic from './updateShabondiEpic';
 import updateLinkShabondiEpic from './updateLinkShabondiEpic';
-import removeSourceLinkEpic from './removeSourceLinkEpic';
-import removeSinkLinkEpic from './removeSinkLinkEpic';
+import removeShabondiSourceLinkEpic from './removeShabondiSourceLinkEpic';
+import removeShabondiSinkLinkEpic from './removeShabondiSinkLinkEpic';
 import fetchShabondisEpic from './fetchShabondisEpic';
 
 export default combineEpics(
   createShabondiEpic,
   deleteShabondiEpic,
   fetchShabondisEpic,
-  removeSourceLinkEpic,
-  removeSinkLinkEpic,
+  removeShabondiSourceLinkEpic,
+  removeShabondiSinkLinkEpic,
   startShabondiEpic,
   stopShabondiEpic,
   updateShabondiEpic,

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
 import {
@@ -39,10 +40,10 @@ export const deleteTopic$ = params => {
       ]),
     ),
     startWith(actions.deleteTopic.request({ topicId })),
-    catchError(error =>
+    catchError(err =>
       from([
-        actions.deleteTopic.failure(error),
-        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+        actions.deleteTopic.failure(merge(err, { topicId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
       ]),
     ),
   );

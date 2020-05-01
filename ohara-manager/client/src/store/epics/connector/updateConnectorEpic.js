@@ -43,10 +43,10 @@ export default action$ => {
           );
         }),
         startWith(actions.updateConnector.request({ connectorId })),
-        catchError(error =>
+        catchError(err =>
           from([
-            actions.updateConnector.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+            actions.updateConnector.failure(_.merge(err, { connectorId })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
       );

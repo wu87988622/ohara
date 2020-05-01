@@ -47,15 +47,15 @@ export default action$ =>
         ),
       ).pipe(
         concatAll(),
-        catchError(res => {
+        catchError(err => {
           if (paperApi) {
             paperApi.updateElement(params.id, {
               status: CELL_STATUS.failed,
             });
           }
           return from([
-            actions.stopAndDeleteTopic.failure(res),
-            actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
+            actions.stopAndDeleteTopic.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),
       );

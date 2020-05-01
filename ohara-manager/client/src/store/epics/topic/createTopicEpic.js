@@ -55,11 +55,14 @@ export default action$ =>
     ofType(actions.createTopic.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createTopic$(values)),
-    catchError(res =>
-      from([
-        actions.createTopic.failure(res),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
-      ]),
+    mergeMap(values =>
+      createTopic$(values).pipe(
+        catchError(err =>
+          from([
+            actions.createTopic.failure(merge(err, { topicId: getId(values) })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
     ),
   );

@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import * as connectorApi from 'api/connectorApi';
 import createConnectorEpic from '../../connector/createConnectorEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
+import { LOG_LEVEL } from 'const';
 
 jest.mock('api/connectorApi');
 const mockedPaperApi = jest.fn(() => {
@@ -50,7 +52,7 @@ it('create connector should be worked correctly', () => {
       a: {
         type: actions.createConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          values: connectorEntity,
           options: { paperApi },
         },
       },
@@ -100,14 +102,14 @@ it('create multiple connectors should be worked correctly', () => {
       a: {
         type: actions.createConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          values: connectorEntity,
           options: { paperApi },
         },
       },
       b: {
         type: actions.createConnector.TRIGGER,
         payload: {
-          params: anotherConnectorEntity,
+          values: anotherConnectorEntity,
           options: { paperApi },
         },
       },
@@ -171,7 +173,7 @@ it('create same connector within period should be created once only', () => {
       a: {
         type: actions.createConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          values: connectorEntity,
           options: { paperApi },
         },
       },
@@ -202,5 +204,60 @@ it('create same connector within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create connector should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create connector failed',
+  };
+  const spyCreate = jest
+    .spyOn(connectorApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createConnector.TRIGGER,
+        payload: {
+          values: connectorEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = createConnectorEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createConnector.REQUEST,
+        payload: { connectorId },
+      },
+      e: {
+        type: actions.createConnector.FAILURE,
+        payload: { ...error, connectorId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          connectorId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

@@ -17,9 +17,10 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -33,8 +34,11 @@ const updateWorker$ = values => {
     map(normalizedData => merge(normalizedData, { workerId })),
     map(normalizedData => actions.updateWorker.success(normalizedData)),
     startWith(actions.updateWorker.request({ workerId })),
-    catchError(error =>
-      of(actions.updateWorker.failure(merge(error, { workerId }))),
+    catchError(err =>
+      from([
+        actions.updateWorker.failure(merge(err, { workerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as streamApi from 'api/streamApi';
 import updateStreamEpic from '../../stream/updateStreamEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -200,5 +202,60 @@ it('update stream multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update stream should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update stream failed',
+  };
+  const spyCreate = jest
+    .spyOn(streamApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateStream.TRIGGER,
+        payload: {
+          values: streamEntity,
+          options: { paperApi, cell, currentStreams, topics, streams },
+        },
+      },
+    });
+    const output$ = updateStreamEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateStream.REQUEST,
+        payload: { streamId },
+      },
+      e: {
+        type: actions.updateStream.FAILURE,
+        payload: { ...error, streamId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          streamId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

@@ -16,9 +16,10 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -31,7 +32,12 @@ export default action$ => {
         map(res => normalize(res.data, [schema.shabondi])),
         map(normalizedData => actions.fetchShabondis.success(normalizedData)),
         startWith(actions.fetchShabondis.request()),
-        catchError(err => of(actions.fetchShabondis.failure(err))),
+        catchError(err =>
+          from([
+            actions.fetchShabondis.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       ),
     ),
   );

@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import removeSourceLinkEpic from '../../shabondi/removeSourceLinkEpic';
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
+import removeShabondiSourceLinkEpic from '../../shabondi/removeShabondiSourceLinkEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
-import { noop } from 'rxjs';
 
 jest.mock('api/shabondiApi');
 const mockedPaperApi = jest.fn(() => {
@@ -55,7 +57,7 @@ it('remove source link of shabondi should be worked correctly', () => {
         },
       },
     });
-    const output$ = removeSourceLinkEpic(action$);
+    const output$ = removeShabondiSourceLinkEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
@@ -111,7 +113,7 @@ it('remove shabondi source link multiple times should got latest result', () => 
         },
       },
     });
-    const output$ = removeSourceLinkEpic(action$);
+    const output$ = removeShabondiSourceLinkEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
@@ -142,5 +144,58 @@ it('remove shabondi source link multiple times should got latest result', () => 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of remove shabondi source link should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock remove shabondi source link failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.removeShabondiSourceLink.TRIGGER,
+        payload: {
+          params: shabondiEntity,
+          options: { paperApi, topic: {} },
+        },
+      },
+    });
+    const output$ = removeShabondiSourceLinkEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.removeShabondiSourceLink.REQUEST,
+      },
+      e: {
+        type: actions.removeShabondiSourceLink.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

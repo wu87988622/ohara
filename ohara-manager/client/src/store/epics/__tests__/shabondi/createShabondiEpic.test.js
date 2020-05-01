@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
 import createShabondiEpic from '../../shabondi/createShabondiEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -50,7 +52,7 @@ it('create shabondi should be worked correctly', () => {
       a: {
         type: actions.createShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          values: shabondiEntity,
           options: { paperApi },
         },
       },
@@ -100,14 +102,14 @@ it('create multiple shabondis should be worked correctly', () => {
       a: {
         type: actions.createShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          values: shabondiEntity,
           options: { paperApi },
         },
       },
       b: {
         type: actions.createShabondi.TRIGGER,
         payload: {
-          params: anotherShabondiEntity,
+          values: anotherShabondiEntity,
           options: { paperApi },
         },
       },
@@ -171,7 +173,7 @@ it('create same shabondi within period should be created once only', () => {
       a: {
         type: actions.createShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          values: shabondiEntity,
           options: { paperApi },
         },
       },
@@ -202,5 +204,60 @@ it('create same shabondi within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create shabondi should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create shabondi failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createShabondi.TRIGGER,
+        payload: {
+          values: shabondiEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = createShabondiEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createShabondi.REQUEST,
+        payload: { shabondiId },
+      },
+      e: {
+        type: actions.createShabondi.FAILURE,
+        payload: { ...error, shabondiId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          shabondiId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

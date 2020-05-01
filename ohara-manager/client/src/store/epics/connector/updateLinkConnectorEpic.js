@@ -16,12 +16,13 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
@@ -36,7 +37,10 @@ export default action$ => {
         startWith(actions.updateConnectorLink.request()),
         catchError(err => {
           options.paperApi.removeElement(options.link.id);
-          return of(actions.updateConnectorLink.failure(err));
+          return from([
+            actions.updateConnectorLink.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]);
         }),
       ),
     ),

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
 import {
   createNodeEpic,
   updateNodeEpic,
@@ -179,6 +180,56 @@ it('create same node within period should be created once only', () => {
   });
 });
 
+it('throw exception of create node should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create node failed',
+  };
+  const spyCreate = jest
+    .spyOn(nodeApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createNode.TRIGGER,
+        payload: nodeEntity,
+      },
+    });
+    const output$ = createNodeEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createNode.REQUEST,
+      },
+      e: {
+        type: actions.createNode.FAILURE,
+        payload: error,
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
+  });
+});
+
 // update action
 it('update node should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
@@ -300,6 +351,56 @@ it('update node multiple times should got latest result', () => {
   });
 });
 
+it('throw exception of update node should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update node failed',
+  };
+  const spyCreate = jest
+    .spyOn(nodeApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateNode.TRIGGER,
+        payload: nodeEntity,
+      },
+    });
+    const output$ = updateNodeEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateNode.REQUEST,
+      },
+      e: {
+        type: actions.updateNode.FAILURE,
+        payload: error,
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
+  });
+});
+
 // fetch action
 it('fetch node list should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
@@ -377,6 +478,56 @@ it('fetch node list multiple times within period should get first result', () =>
   });
 });
 
+it('throw exception of fetch node list should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock fetch node list failed',
+  };
+  const spyCreate = jest
+    .spyOn(nodeApi, 'getAll')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchNodes.TRIGGER,
+        payload: nodeEntity,
+      },
+    });
+    const output$ = fetchNodesEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchNodes.REQUEST,
+      },
+      e: {
+        type: actions.fetchNodes.FAILURE,
+        payload: error,
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
+  });
+});
+
 // delete action
 it('delete node should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
@@ -411,7 +562,7 @@ it('delete node should be worked correctly', () => {
 });
 
 it('delete node failed after reach retry limit', () => {
-  // mock a 20 times "failed delete" result
+  // mock a 20 times "failed deleted" result
   const spyGet = jest.spyOn(nodeApi, 'getAll');
   for (let i = 0; i < 20; i++) {
     spyGet.mockReturnValueOnce(
@@ -434,10 +585,10 @@ it('delete node failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a            ';
     // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 9999ms (vu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -453,7 +604,16 @@ it('delete node failed after reach retry limit', () => {
       },
       v: {
         type: actions.deleteNode.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          title: 'delete node exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          title: 'delete node exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

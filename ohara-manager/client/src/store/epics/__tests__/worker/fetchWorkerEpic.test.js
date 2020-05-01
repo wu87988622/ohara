@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as workerApi from 'api/workerApi';
 import fetchWorkerEpic from '../../worker/fetchWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import { workerInfoEntity } from 'api/__mocks__/inspectApi';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import { getId, getKey } from 'utils/object';
 
 jest.mock('api/workerApi');
 jest.mock('api/inspectApi');
 
-const key = { name: 'newwk', group: 'newworkspace' };
-const wkId = getId(key);
+const key = getKey(workerEntity);
+const wkId = getId(workerEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -184,5 +187,57 @@ it('fetch worker multiple times without period should get latest result', () => 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch worker should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock get worker failed',
+  };
+  const spyCreate = jest
+    .spyOn(workerApi, 'get')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchWorker.TRIGGER,
+        payload: workerEntity,
+      },
+    });
+    const output$ = fetchWorkerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchWorker.REQUEST,
+        payload: { workerId: wkId },
+      },
+      e: {
+        type: actions.fetchWorker.FAILURE,
+        payload: { ...error, workerId: wkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          workerId: wkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

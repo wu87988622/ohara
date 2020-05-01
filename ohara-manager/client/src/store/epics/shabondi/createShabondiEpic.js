@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -26,29 +26,32 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { CELL_STATUS } from 'const';
 import { getId } from 'utils/object';
 
-const createShabondi$ = values => {
-  const { params, options } = values;
-  const shabondiId = getId(params);
-  return defer(() => shabondiApi.create(params)).pipe(
+const createShabondi$ = value => {
+  const { values, options } = value;
+  const shabondiId = getId(values);
+  return defer(() => shabondiApi.create(values)).pipe(
     map(res => res.data),
     map(data => normalize(data, schema.shabondi)),
     map(normalizedData => {
-      options.paperApi.updateElement(params.id, {
+      options.paperApi.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { shabondiId });
     }),
     map(normalizedData => actions.createShabondi.success(normalizedData)),
     startWith(actions.createShabondi.request({ shabondiId })),
-    catchError(error => {
-      options.paperApi.removeElement(params.id);
-      return of(actions.createShabondi.failure(merge(error, { shabondiId })));
+    catchError(err => {
+      options.paperApi.removeElement(values.id);
+      return from([
+        actions.createShabondi.failure(merge(err, { shabondiId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
@@ -58,5 +61,5 @@ export default action$ =>
     ofType(actions.createShabondi.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createShabondi$(values)),
+    mergeMap(value => createShabondi$(value)),
   );

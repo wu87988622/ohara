@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -26,6 +26,7 @@ import {
   startWith,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -39,8 +40,11 @@ export const createZookeeper$ = values => {
     map(normalizedData => merge(normalizedData, { zookeeperId })),
     map(normalizedData => actions.createZookeeper.success(normalizedData)),
     startWith(actions.createZookeeper.request({ zookeeperId })),
-    catchError(error =>
-      of(actions.createZookeeper.failure(merge(error, { zookeeperId }))),
+    catchError(err =>
+      from([
+        actions.createZookeeper.failure(merge(err, { zookeeperId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { defer, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -26,29 +26,32 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { CELL_STATUS } from 'const';
 import { getId } from 'utils/object';
 
-const createConnector$ = values => {
-  const { params, options } = values;
-  const connectorId = getId(params);
-  return defer(() => connectorApi.create(params)).pipe(
+const createConnector$ = value => {
+  const { values, options } = value;
+  const connectorId = getId(values);
+  return defer(() => connectorApi.create(values)).pipe(
     map(res => res.data),
     map(data => normalize(data, schema.connector)),
     map(normalizedData => {
-      options.paperApi.updateElement(params.id, {
+      options.paperApi.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { connectorId });
     }),
     map(normalizedData => actions.createConnector.success(normalizedData)),
     startWith(actions.createConnector.request({ connectorId })),
-    catchError(error => {
-      options.paperApi.removeElement(params.id);
-      return of(actions.createConnector.failure(merge(error, { connectorId })));
+    catchError(err => {
+      options.paperApi.removeElement(values.id);
+      return from([
+        actions.createConnector.failure(merge(err, { connectorId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
@@ -58,5 +61,5 @@ export default action$ =>
     ofType(actions.createConnector.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createConnector$(values)),
+    mergeMap(value => createConnector$(value)),
   );

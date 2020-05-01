@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as brokerApi from 'api/brokerApi';
 import createBrokerEpic from '../../broker/createBrokerEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -179,5 +182,57 @@ it('create same broker within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create broker should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create broker failed',
+  };
+  const spyCreate = jest
+    .spyOn(brokerApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createBroker.TRIGGER,
+        payload: brokerEntity,
+      },
+    });
+    const output$ = createBrokerEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createBroker.REQUEST,
+        payload: { brokerId: bkId },
+      },
+      e: {
+        type: actions.createBroker.FAILURE,
+        payload: { ...error, brokerId: bkId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          brokerId: bkId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

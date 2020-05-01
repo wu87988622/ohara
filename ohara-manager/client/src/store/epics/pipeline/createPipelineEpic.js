@@ -44,10 +44,10 @@ export default action$ =>
           ]),
         ),
         startWith(actions.createPipeline.request()),
-        catchError(error =>
+        catchError(err =>
           from([
-            actions.createPipeline.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+            actions.createPipeline.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
       ),

@@ -48,16 +48,16 @@ export default action$ =>
           }
           if (options?.onSuccess) options.onSuccess();
         }),
-        catchError(res => {
+        catchError(err => {
           if (paperApi) {
             paperApi.updateElement(params.id, {
               status: CELL_STATUS.failed,
             });
           }
-          if (options?.onError) options.onError(res);
+          if (options?.onError) options.onError(err);
           return from([
-            actions.createAndStartTopic.failure(res),
-            actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.error }),
+            actions.createAndStartTopic.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),
       );

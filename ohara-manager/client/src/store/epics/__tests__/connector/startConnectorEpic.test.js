@@ -17,9 +17,10 @@
 import { TestScheduler } from 'rxjs/testing';
 import { of, noop } from 'rxjs';
 
-import startConnectorEpic from '../../connector/startConnectorEpic';
+import { LOG_LEVEL } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
+import startConnectorEpic from '../../connector/startConnectorEpic';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -118,10 +119,10 @@ it('start connector failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a            ';
     // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 9999ms (vu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -143,7 +144,18 @@ it('start connector failed after reach retry limit', () => {
       },
       v: {
         type: actions.startConnector.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          connectorId,
+          title: 'start connector exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          connectorId,
+          title: 'start connector exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

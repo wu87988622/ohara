@@ -17,13 +17,14 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, of, from, forkJoin } from 'rxjs';
+import { defer, from, forkJoin } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ =>
   action$.pipe(
@@ -49,7 +50,12 @@ export default action$ =>
             }),
           ]),
         ),
-        catchError(res => of(actions.initializeApp.failure(res))),
+        catchError(err =>
+          from([
+            actions.initializeApp.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
       );
     }),
   );

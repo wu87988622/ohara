@@ -33,10 +33,10 @@ export default action$ =>
         map(res => normalize(res.data, schema.pipeline)),
         map(entities => actions.updatePipeline.success(entities)),
         startWith(actions.updatePipeline.request()),
-        catchError(error =>
+        catchError(err =>
           from([
-            actions.createPipeline.failure(error),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+            actions.updatePipeline.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
       ),

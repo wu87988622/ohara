@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip } from 'rxjs';
+import { defer, of, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   delay,
@@ -29,6 +29,7 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -49,7 +50,7 @@ const stopWorker$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError('exceed max retry times'),
+              throwError({ title: 'stop worker exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -61,8 +62,11 @@ const stopWorker$ = params => {
     map(normalizedData => merge(normalizedData, { workerId })),
     map(normalizedData => actions.stopWorker.success(normalizedData)),
     startWith(actions.stopWorker.request({ workerId })),
-    catchError(error =>
-      of(actions.stopWorker.failure(merge(error, { workerId }))),
+    catchError(err =>
+      from([
+        actions.stopWorker.failure(merge(err, { workerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

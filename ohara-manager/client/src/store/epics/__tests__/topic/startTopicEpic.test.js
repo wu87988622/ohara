@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
+import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
 import startTopicEpic from '../../topic/startTopicEpic';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
@@ -107,10 +108,10 @@ it('start topic failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a             ';
     // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 21999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 21999ms (vz)';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {
@@ -129,7 +130,15 @@ it('start topic failed after reach retry limit', () => {
       },
       v: {
         type: actions.startTopic.FAILURE,
-        payload: 'exceed max retry times',
+        payload: { topicId, title: 'start topic exceeded max retry count' },
+      },
+      z: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          topicId,
+          title: 'start topic exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

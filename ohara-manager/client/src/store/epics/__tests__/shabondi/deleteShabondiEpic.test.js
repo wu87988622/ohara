@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
 import deleteShabondiEpic from '../../shabondi/deleteShabondiEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -183,5 +185,60 @@ it('delete same shabondi within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of delete shabondi should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock delete shabondi failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'remove')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteShabondi.TRIGGER,
+        payload: {
+          params: shabondiEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = deleteShabondiEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteShabondi.REQUEST,
+        payload: { shabondiId },
+      },
+      e: {
+        type: actions.deleteShabondi.FAILURE,
+        payload: { ...error, shabondiId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          shabondiId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

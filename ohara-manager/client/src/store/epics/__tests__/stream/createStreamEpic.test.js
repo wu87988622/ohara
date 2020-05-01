@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { noop } from 'rxjs';
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as streamApi from 'api/streamApi';
 import createStreamEpic from '../../stream/createStreamEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -202,5 +204,60 @@ it('create same stream within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of create stream should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock create stream failed',
+  };
+  const spyCreate = jest
+    .spyOn(streamApi, 'create')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.createStream.TRIGGER,
+        payload: {
+          values: streamEntity,
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = createStreamEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.createStream.REQUEST,
+        payload: { streamId },
+      },
+      e: {
+        type: actions.createStream.FAILURE,
+        payload: { ...error, streamId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          streamId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

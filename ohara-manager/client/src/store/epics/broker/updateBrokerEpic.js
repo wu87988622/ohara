@@ -17,13 +17,14 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { LOG_LEVEL } from 'const';
 
 const updateBroker$ = values => {
   const brokerId = getId(values);
@@ -33,8 +34,11 @@ const updateBroker$ = values => {
     map(normalizedData => merge(normalizedData, { brokerId })),
     map(normalizedData => actions.updateBroker.success(normalizedData)),
     startWith(actions.updateBroker.request({ brokerId })),
-    catchError(error =>
-      of(actions.updateBroker.failure(merge(error, { brokerId }))),
+    catchError(err =>
+      from([
+        actions.updateBroker.failure(merge(err, { brokerId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

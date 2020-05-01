@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import updateStreamLinkEpic from '../../stream/updateStreamLinkEpic';
+import { LOG_LEVEL } from 'const';
+import * as streamApi from 'api/streamApi';
+import updateLinkStreamEpic from '../../stream/updateLinkStreamEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as streamEntity } from 'api/__mocks__/streamApi';
-import { noop } from 'rxjs';
 
 jest.mock('api/streamApi');
 const mockedPaperApi = jest.fn(() => {
   return {
     addLink: () => noop(),
+    removeElement: () => noop(),
   };
 });
 const paperApi = new mockedPaperApi();
@@ -55,7 +58,7 @@ it('remove sink link of stream should be worked correctly', () => {
         },
       },
     });
-    const output$ = updateStreamLinkEpic(action$);
+    const output$ = updateLinkStreamEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
@@ -111,7 +114,7 @@ it('remove stream sink link multiple times should got latest result', () => {
         },
       },
     });
-    const output$ = updateStreamLinkEpic(action$);
+    const output$ = updateLinkStreamEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
@@ -142,5 +145,58 @@ it('remove stream sink link multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update stream link should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update stream link failed',
+  };
+  const spyCreate = jest
+    .spyOn(streamApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateStreamLink.TRIGGER,
+        payload: {
+          params: streamEntity,
+          options: { paperApi, link: {} },
+        },
+      },
+    });
+    const output$ = updateLinkStreamEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateStreamLink.REQUEST,
+      },
+      e: {
+        type: actions.updateStreamLink.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

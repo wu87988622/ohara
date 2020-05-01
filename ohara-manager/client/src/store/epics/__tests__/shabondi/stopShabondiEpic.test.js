@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { TestScheduler } from 'rxjs/testing';
 import { of, noop } from 'rxjs';
+import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
 import stopShabondiEpic from '../../shabondi/stopShabondiEpic';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
@@ -117,10 +118,10 @@ it('stop shabondi failed after reach retry limit', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a          ';
+    const input = '   ^-a            ';
     // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms v';
-    const subs = '    ^------------';
+    const expected = '--a 9999ms (vu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -142,7 +143,18 @@ it('stop shabondi failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopShabondi.FAILURE,
-        payload: 'exceed max retry times',
+        payload: {
+          shabondiId,
+          title: 'stop shabondi exceeded max retry count',
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          shabondiId,
+          title: 'stop shabondi exceeded max retry count',
+          type: LOG_LEVEL.error,
+        },
       },
     });
 

@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -28,13 +28,13 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
-import { CELL_STATUS } from 'const';
 import { getId } from 'utils/object';
 
-const deleteShabondi$ = values => {
-  const { params, options } = values;
+const deleteShabondi$ = value => {
+  const { params, options } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
   paperApi.updateElement(params.id, {
@@ -65,11 +65,14 @@ const deleteShabondi$ = values => {
       return actions.deleteShabondi.success({ shabondiId });
     }),
     startWith(actions.deleteShabondi.request({ shabondiId })),
-    catchError(error => {
+    catchError(err => {
       paperApi.updateElement(params.id, {
         status: CELL_STATUS.failed,
       });
-      return of(actions.deleteShabondi.failure(merge(error, { shabondiId })));
+      return from([
+        actions.deleteShabondi.failure(merge(err, { shabondiId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
@@ -79,6 +82,6 @@ export default action$ => {
     ofType(actions.deleteShabondi.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => deleteShabondi$(values)),
+    mergeMap(value => deleteShabondi$(value)),
   );
 };

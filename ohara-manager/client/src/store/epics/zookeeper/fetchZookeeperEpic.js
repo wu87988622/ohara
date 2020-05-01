@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, of } from 'rxjs';
+import { defer, forkJoin, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -26,6 +26,7 @@ import {
   throttleTime,
 } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
@@ -47,8 +48,11 @@ const fetchZookeeper$ = params => {
     map(normalizedData => merge(...normalizedData, { zookeeperId })),
     map(normalizedData => actions.fetchZookeeper.success(normalizedData)),
     startWith(actions.fetchZookeeper.request({ zookeeperId })),
-    catchError(error =>
-      of(actions.fetchZookeeper.failure(merge(error, { zookeeperId }))),
+    catchError(err =>
+      from([
+        actions.fetchZookeeper.failure(merge(err, { zookeeperId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

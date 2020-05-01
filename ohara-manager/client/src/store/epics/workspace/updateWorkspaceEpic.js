@@ -17,9 +17,10 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { defer, from } from 'rxjs';
 import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
+import { LOG_LEVEL } from 'const';
 import * as workspaceApi from 'api/workspaceApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -33,8 +34,11 @@ const updateWorkspace$ = values => {
     map(normalizedData => merge(normalizedData, { workspaceId })),
     map(normalizedData => actions.updateWorkspace.success(normalizedData)),
     startWith(actions.updateWorkspace.request({ workspaceId })),
-    catchError(error =>
-      of(actions.updateWorkspace.failure(merge(error, { workspaceId }))),
+    catchError(err =>
+      from([
+        actions.updateWorkspace.failure(merge(err, { workspaceId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
     ),
   );
 };

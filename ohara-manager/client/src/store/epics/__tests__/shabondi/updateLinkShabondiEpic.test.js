@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
+import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as shabondiApi from 'api/shabondiApi';
 import updateLinkShabondiEpic from '../../shabondi/updateLinkShabondiEpic';
 import { ENTITY_TYPE } from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
-import { noop } from 'rxjs';
 
 jest.mock('api/shabondiApi');
 const mockedPaperApi = jest.fn(() => {
   return {
     addLink: () => noop(),
+    removeElement: () => noop(),
   };
 });
 const paperApi = new mockedPaperApi();
@@ -142,5 +145,58 @@ it('remove shabondi sink link multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update shabondi link should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update shabondi link failed',
+  };
+  const spyCreate = jest
+    .spyOn(shabondiApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateShabondiLink.TRIGGER,
+        payload: {
+          params: shabondiEntity,
+          options: { paperApi, link: {} },
+        },
+      },
+    });
+    const output$ = updateLinkShabondiEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateShabondiLink.REQUEST,
+      },
+      e: {
+        type: actions.updateShabondiLink.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

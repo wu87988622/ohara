@@ -16,27 +16,31 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
-    ofType(actions.removeShabondiSinkLink.TRIGGER),
+    ofType(actions.removeShabondiSourceLink.TRIGGER),
     map(action => action.payload),
     switchMap(({ params, options }) =>
       from(shabondiApi.update(params)).pipe(
         map(res => normalize(res.data, schema.shabondi)),
         map(normalizedData =>
-          actions.removeShabondiSinkLink.success(normalizedData),
+          actions.removeShabondiSourceLink.success(normalizedData),
         ),
-        startWith(actions.removeShabondiSinkLink.request()),
+        startWith(actions.removeShabondiSourceLink.request()),
         catchError(err => {
           options.paperApi.addLink(params.id, options.topic.id);
-          return of(actions.removeShabondiSinkLink.failure(err));
+          return from([
+            actions.removeShabondiSourceLink.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]);
         }),
       ),
     ),

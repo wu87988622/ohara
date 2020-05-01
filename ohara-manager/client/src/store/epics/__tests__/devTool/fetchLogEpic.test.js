@@ -21,8 +21,9 @@ import { StateObservable } from 'redux-observable';
 import fetchLogEpic from '../../devTool/fetchLogEpic';
 import * as logApi from 'api/logApi';
 import * as actions from 'store/actions';
-import { LOG_TIME_GROUP, KIND, GROUP } from 'const';
+import { LOG_TIME_GROUP, KIND, GROUP, LOG_LEVEL } from 'const';
 import { makeLog } from 'api/__mocks__/logApi';
+import { throwError } from 'rxjs';
 
 jest.mock('api/logApi');
 
@@ -606,5 +607,61 @@ it('fetch stream log multiple times should be executed the first one until finis
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of fetch log should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock fetch log failed',
+  };
+  const spyCreate = jest
+    .spyOn(logApi, 'getConfiguratorLog')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(eu)--|';
+    const subs = '    ^-------!';
+
+    const state$ = new StateObservable(
+      hot('v', {
+        v: set(
+          stateValues,
+          'entities.devTool.log.query.logType',
+          KIND.configurator,
+        ),
+      }),
+    );
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchDevToolLog.TRIGGER,
+      },
+    });
+    const output$ = fetchLogEpic(action$, state$);
+
+    expectObservable(output$).toBe(expected, {
+      e: {
+        type: actions.fetchDevToolLog.FAILURE,
+        payload: { ...error },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

@@ -29,7 +29,7 @@ export const useCreateShabondiAction = () => {
   return (values, options) =>
     dispatch(
       actions.createShabondi.trigger({
-        params: { ...values, group },
+        values: { ...values, group },
         options,
       }),
     );
@@ -41,7 +41,7 @@ export const useUpdateShabondiAction = () => {
   return (values, options) =>
     dispatch(
       actions.updateShabondi.trigger({
-        params: { ...values, group },
+        values: { ...values, group },
         options,
       }),
     );
@@ -50,10 +50,10 @@ export const useUpdateShabondiAction = () => {
 export const useUpdateShabondiLinkAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.updateShabondiLink.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );
@@ -62,10 +62,10 @@ export const useUpdateShabondiLinkAction = () => {
 export const useRemoveShabondiSourceLinkAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.removeShabondiSourceLink.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );
@@ -74,10 +74,10 @@ export const useRemoveShabondiSourceLinkAction = () => {
 export const useRemoveShabondiSinkLinkAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.removeShabondiSinkLink.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );
@@ -86,10 +86,10 @@ export const useRemoveShabondiSinkLinkAction = () => {
 export const useStartShabondiAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.startShabondi.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );
@@ -98,10 +98,10 @@ export const useStartShabondiAction = () => {
 export const useStopShabondiAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.stopShabondi.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );
@@ -110,10 +110,10 @@ export const useStopShabondiAction = () => {
 export const useDeleteShabondiAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
-  return (values, options) =>
+  return (params, options) =>
     dispatch(
       actions.deleteShabondi.trigger({
-        params: { ...values, group },
+        params: { ...params, group },
         options,
       }),
     );

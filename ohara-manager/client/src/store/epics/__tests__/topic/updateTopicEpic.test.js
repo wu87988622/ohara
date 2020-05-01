@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
+import { LOG_LEVEL } from 'const';
+import * as topicApi from 'api/topicApi';
 import updateTopicEpic from '../../topic/updateTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
@@ -163,5 +166,57 @@ it('update topic multiple times should got latest result', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+  });
+});
+
+it('throw exception of update topic should also trigger event log action', () => {
+  const error = {
+    status: -1,
+    data: {},
+    title: 'mock update topic failed',
+  };
+  const spyCreate = jest
+    .spyOn(topicApi, 'update')
+    .mockReturnValueOnce(throwError(error));
+
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a-----|';
+    const expected = '--(aeu)-|';
+    const subs = '    ^-------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.updateTopic.TRIGGER,
+        payload: topicEntity,
+      },
+    });
+    const output$ = updateTopicEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateTopic.REQUEST,
+        payload: { topicId },
+      },
+      e: {
+        type: actions.updateTopic.FAILURE,
+        payload: { ...error, topicId },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          ...error,
+          topicId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyCreate).toHaveBeenCalled();
   });
 });

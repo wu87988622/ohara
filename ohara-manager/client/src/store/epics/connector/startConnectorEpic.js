@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip } from 'rxjs';
+import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
   map,
@@ -34,7 +34,7 @@ import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 
 const startConnector$ = values => {
   const { params, options } = values;
@@ -56,7 +56,7 @@ const startConnector$ = values => {
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError('exceed max retry times'),
+              throwError({ title: 'start connector exceeded max retry count' }),
               of(value).pipe(delay(2000)),
             ),
           ),
@@ -73,11 +73,14 @@ const startConnector$ = values => {
       return actions.startConnector.success(normalizedData);
     }),
     startWith(actions.startConnector.request({ connectorId })),
-    catchError(error => {
+    catchError(err => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.failed,
       });
-      return of(actions.startConnector.failure(error));
+      return from([
+        actions.startConnector.failure(merge(err, { connectorId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]);
     }),
   );
 };
