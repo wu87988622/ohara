@@ -19,9 +19,9 @@ import { ofType } from 'redux-observable';
 import { of } from 'rxjs';
 import { filter, switchMap, withLatestFrom } from 'rxjs/operators';
 
-import { GROUP } from 'const';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
+import { GROUP } from 'const';
 import { getId } from 'utils/object';
 import { hashByGroupAndName } from 'utils/sha';
 
@@ -56,8 +56,6 @@ export default (action$, state$, { history }) =>
         history.push(`/${workspaceName}/${headPipeline.name}`);
       } else if (workspaceName) {
         history.push(`/${workspaceName}`);
-      } else {
-        history.push('/');
       }
 
       return of(actions.switchPipeline.success(headPipeline?.name));

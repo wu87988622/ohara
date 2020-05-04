@@ -14,24 +14,31 @@
  * limitations under the License.
  */
 
-import { PipelineResponseList } from 'api/apiInterface/pipelineInterface';
-import { hashByGroupAndName } from 'utils/sha';
 import { of, Observable } from 'rxjs';
 import { delay } from 'rxjs/operators';
+
+import {
+  PipelineResponseList,
+  PipelineRequest,
+  PipelineResponse,
+} from 'api/apiInterface/pipelineInterface';
+import { BasicResponse } from 'api/apiInterface/basicInterface';
+import { hashByGroupAndName } from 'utils/sha';
+
+export const entity = {
+  name: 'pp',
+  group: hashByGroupAndName('workspace', 'workspace1'),
+  endpoints: [],
+  objects: [],
+  jarKeys: [],
+  lastModified: 0,
+  tags: {},
+};
 
 export const entities = [
   {
     name: 'p1',
     group: hashByGroupAndName('workspace', 'workspace1'),
-    endpoints: [],
-    objects: [],
-    jarKeys: [],
-    lastModified: 0,
-    tags: {},
-  },
-  {
-    name: 'p1',
-    group: hashByGroupAndName('workspace', 'workspace2'),
     endpoints: [],
     objects: [],
     jarKeys: [],
@@ -47,7 +54,24 @@ export const entities = [
     lastModified: 0,
     tags: {},
   },
+  {
+    name: 'p3',
+    group: hashByGroupAndName('workspace', 'workspace3'),
+    endpoints: [],
+    objects: [],
+    jarKeys: [],
+    lastModified: 0,
+    tags: {},
+  },
 ];
+
+export const get = (): Observable<PipelineResponse> =>
+  of({
+    status: 200,
+    title: 'Get pipeline mock',
+    data: entity,
+  }).pipe(delay(6));
+
 // simulate a promise request with a delay of 6 ms
 export const getAll = (): Observable<PipelineResponseList> =>
   of({
@@ -55,3 +79,24 @@ export const getAll = (): Observable<PipelineResponseList> =>
     title: 'mock pipeline data',
     data: entities,
   }).pipe(delay(6));
+
+export const create = (params: PipelineRequest): Observable<PipelineResponse> =>
+  of({
+    status: 200,
+    title: 'Create pipeline mock',
+    data: { ...entity, ...params },
+  }).pipe(delay(2000));
+
+export const remove = (): Observable<BasicResponse> =>
+  of({
+    status: 200,
+    title: 'Delete pipeline',
+    data: {},
+  }).pipe(delay(500));
+
+export const update = (params: PipelineRequest): Observable<PipelineResponse> =>
+  of({
+    status: 200,
+    title: 'Update pipeline mock',
+    data: { ...entity, ...params },
+  }).pipe(delay(100));

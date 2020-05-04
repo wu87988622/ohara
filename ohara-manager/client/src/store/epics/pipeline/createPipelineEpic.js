@@ -37,10 +37,10 @@ export default action$ =>
     switchMap(values =>
       from(pipelineApi.create(values)).pipe(
         map(res => normalize(res.data, schema.pipeline)),
-        mergeMap(entities =>
+        mergeMap(normalizedData =>
           from([
-            actions.createPipeline.success(entities),
-            actions.switchPipeline({ name: values?.name }),
+            actions.createPipeline.success(normalizedData),
+            actions.switchPipeline.trigger({ name: values?.name }),
           ]),
         ),
         startWith(actions.createPipeline.request()),

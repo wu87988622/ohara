@@ -41,7 +41,7 @@ const deleteStream$ = (params, paperApi) => {
   return defer(() => streamApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { shouldUpdatePipeline: false });
-      return actions.deleteStream.success(params);
+      return actions.deleteStream.success({ name, group });
     }),
   );
 };
@@ -57,7 +57,7 @@ const deleteConnector$ = (params, paperApi) => {
   return defer(() => connectorApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { shouldUpdatePipeline: false });
-      return actions.deleteConnector.success(params);
+      return actions.deleteConnector.success({ name, group });
     }),
   );
 };
@@ -85,14 +85,14 @@ const waitUntilTopicStopped$ = (params, paperApi) => {
         { status: CELL_STATUS.stopped },
         { shouldUpdatePipeline: false },
       );
-      return actions.stopTopic.success(res);
+      return actions.stopTopic.success(res.data);
     }),
     retryWhen(errors =>
       errors.pipe(
         concatMap((value, index) =>
           iif(
             () => index > 2,
-            throwError('exceed max retry times'),
+            throwError({ title: 'stop topic exceeded max retry count' }),
             of(value).pipe(delay(2000)),
           ),
         ),
@@ -106,7 +106,7 @@ const deleteTopic$ = (params, paperApi) => {
   return defer(() => topicApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { shouldUpdatePipeline: false });
-      return actions.deleteTopic.success(params);
+      return actions.deleteTopic.success({ name, group });
     }),
   );
 };
@@ -136,7 +136,7 @@ const deletePipeline$ = params =>
     mergeMap(() => {
       return from([
         actions.deletePipeline.success(getId(params)),
-        actions.switchPipeline(),
+        actions.switchPipeline.trigger(),
       ]);
     }),
     startWith(actions.deletePipeline.request()),

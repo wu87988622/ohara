@@ -28,10 +28,10 @@ export default action$ =>
   action$.pipe(
     ofType(actions.updatePipeline.TRIGGER),
     map(action => action.payload),
-    switchMap(values =>
-      from(pipelineApi.update(values)).pipe(
+    switchMap(values => {
+      return from(pipelineApi.update(values)).pipe(
         map(res => normalize(res.data, schema.pipeline)),
-        map(entities => actions.updatePipeline.success(entities)),
+        map(normalizedData => actions.updatePipeline.success(normalizedData)),
         startWith(actions.updatePipeline.request()),
         catchError(err =>
           from([
@@ -39,6 +39,6 @@ export default action$ =>
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
-      ),
-    ),
+      );
+    }),
   );

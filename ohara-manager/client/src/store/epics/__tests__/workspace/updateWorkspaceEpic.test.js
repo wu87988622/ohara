@@ -73,7 +73,7 @@ it('update workspace should be worked correctly', () => {
   });
 });
 
-it('update workspace multiple times should got latest result', () => {
+it('should only get the latest result when updating a workspace multiple times', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

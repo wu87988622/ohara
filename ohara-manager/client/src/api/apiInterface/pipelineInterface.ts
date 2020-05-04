@@ -52,6 +52,9 @@ export interface PipelineRequest {
   name: string;
   group: string;
   endpoints: EndPoint[];
+  objects: ObjectAbstract[];
+  jarKeys: ObjectKey[];
+  lastModified: number;
   tags: {
     [k: string]: any;
   };

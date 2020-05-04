@@ -55,7 +55,7 @@ export default action$ =>
           defer(() => pipelineApi.get(params)).pipe(
             map(res => {
               updateMetrics(res, options);
-              return normalize(res.data, [schema.pipeline]);
+              return normalize(res.data, schema.pipeline);
             }),
             map(normalizedData => {
               return actions.startUpdateMetrics.success(normalizedData);
@@ -74,9 +74,13 @@ export default action$ =>
         ),
         takeUntil(
           merge(
-            action$.ofType(actions.switchPipeline.TRIGGER),
-            action$.ofType(actions.stopUpdateMetrics.TRIGGER),
-            action$.ofType(actions.deletePipeline.SUCCESS),
+            action$.pipe(
+              ofType(
+                actions.switchPipeline.TRIGGER,
+                actions.stopUpdateMetrics.TRIGGER,
+                actions.deletePipeline.SUCCESS,
+              ),
+            ),
           ),
         ),
       ),

@@ -42,6 +42,7 @@ export interface ClusterData {
   };
   [k: string]: any;
 }
+
 export interface ClusterResponse extends BasicResponse {
   data: ClusterData;
 }
