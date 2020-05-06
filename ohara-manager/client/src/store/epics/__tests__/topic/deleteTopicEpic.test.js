@@ -33,13 +33,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete topic should be worked correctly', () => {
+it('should delete a topic', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a           ';
+    const input = '   ^-a            ';
     const expected = '--a 999ms (uv)';
-    const subs = '    ^-------------';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -57,18 +57,13 @@ it('delete topic should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId,
-        },
-      },
-      v: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock delete topic data',
-          type: LOG_LEVEL.info,
-          data: {},
         },
       },
     });
@@ -79,12 +74,12 @@ it('delete topic should be worked correctly', () => {
   });
 });
 
-it('delete multiple topics should be worked correctly', () => {
+it('should delete multiple topics', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
-    const expected = '--a---b 995ms (uy)(vz)';
+    const expected = '--a---b 995ms (uv)(xy)';
     const subs = '    ^---------------------';
     const anotherTopicEntity = { ...topicEntity, name: 'bk01' };
 
@@ -108,6 +103,10 @@ it('delete multiple topics should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId,
@@ -119,28 +118,14 @@ it('delete multiple topics should be worked correctly', () => {
           topicId: getId(anotherTopicEntity),
         },
       },
-      v: {
+      x: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      y: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId: getId(anotherTopicEntity),
-        },
-      },
-      y: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock delete topic data',
-          type: LOG_LEVEL.info,
-          data: {},
-        },
-      },
-      z: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock delete topic data',
-          type: LOG_LEVEL.info,
-          data: {},
         },
       },
     });
@@ -175,18 +160,13 @@ it('delete same topic within period should be created once only', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId,
-        },
-      },
-      v: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock delete topic data',
-          type: LOG_LEVEL.info,
-          data: {},
         },
       },
     });

@@ -60,9 +60,12 @@ const deleteShabondi$ = value => {
       ),
     ),
   ).pipe(
-    map(() => {
+    mergeMap(() => {
       paperApi.removeElement(params.id);
-      return actions.deleteShabondi.success({ shabondiId });
+      return from([
+        actions.setSelectedCell.trigger(null),
+        actions.deleteShabondi.success({ shabondiId }),
+      ]);
     }),
     startWith(actions.deleteShabondi.request({ shabondiId })),
     catchError(err => {

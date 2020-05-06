@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from, throwError } from 'rxjs';
+import { defer, from, throwError, of } from 'rxjs';
 import {
   catchError,
   map,
@@ -37,10 +37,9 @@ export const createTopic$ = params => {
   return defer(() => topicApi.create(params)).pipe(
     mergeMap(res => {
       const normalizedData = normalize(res.data, schema.topic);
-      return from([
+      return of(
         actions.createTopic.success(merge(normalizedData, { topicId })),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
-      ]);
+      );
     }),
     startWith(actions.createTopic.request({ topicId })),
     catchError(res => {

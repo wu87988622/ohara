@@ -42,9 +42,9 @@ it('stop and delete stream should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                   ';
-    const expected = '--a 499ms (mn) 996ms v';
-    const subs = '    ^---------------------';
+    const input = '   ^-a                     ';
+    const expected = '--a 499ms (mn) 996ms (uv)';
+    const subs = '    ^-----------------------';
 
     const action$ = hot(input, {
       a: {
@@ -83,6 +83,10 @@ it('stop and delete stream should be worked correctly', () => {
         payload: {
           streamId,
         },
+      },
+      u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
       },
       v: {
         type: actions.deleteStream.SUCCESS,

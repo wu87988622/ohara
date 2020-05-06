@@ -16,7 +16,7 @@
 
 import { get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, mergeMap, concatAll, tap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
@@ -38,14 +38,16 @@ export default action$ =>
           status: CELL_STATUS.pending,
         });
       }
-      return of(
+      return from([
         stopTopic$(params),
         deleteTopic$(params).pipe(
-          tap(() => {
-            if (paperApi) paperApi.removeElement(params.id);
+          tap(action => {
+            if (action.type === actions.deleteTopic.SUCCESS && paperApi) {
+              paperApi.removeElement(params.id);
+            }
           }),
         ),
-      ).pipe(
+      ]).pipe(
         concatAll(),
         catchError(err => {
           if (paperApi) {
