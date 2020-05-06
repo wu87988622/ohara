@@ -80,11 +80,11 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
           {...tableProps}
           onSelectionChange={handleSelectionChange}
           options={{
-            ...tableProps?.options,
             selection: true,
             showCreateIcon: false,
             showDeleteIcon: false,
             showEditorIcon: false,
+            ...tableProps?.options,
           }}
         />
       </Wrapper>
