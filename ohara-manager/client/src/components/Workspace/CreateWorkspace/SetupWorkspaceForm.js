@@ -27,7 +27,15 @@ import * as validate from 'utils/validate';
 import InputField from 'components/common/Form/InputField';
 
 const SetupWorkspaceForm = props => {
-  const { handleSubmit, previousStep, invalid, pristine, submitting } = props;
+  const {
+    handleSubmit,
+    previousStep,
+    invalid,
+    pristine,
+    submitting,
+    anyTouched,
+    touch,
+  } = props;
 
   const change = hooks.useReduxFormChangeAction();
   const defaultWorkspaceName = hooks.useUniqueWorkspaceName();
@@ -35,9 +43,12 @@ const SetupWorkspaceForm = props => {
   const workspaces = hooks.useAllWorkspaces();
 
   React.useEffect(() => {
-    if (!formValues?.workspace?.name)
+    if (!formValues?.workspace?.name && !anyTouched) {
       change(FORM.CREATE_WORKSPACE, 'workspace.name', defaultWorkspaceName);
-  }, [change, defaultWorkspaceName, formValues]);
+      // Reset `anyTouched` so we won't run it again when users are editing the form
+      touch(FORM.CREATE_WORKSPACE);
+    }
+  }, [anyTouched, change, defaultWorkspaceName, formValues, touch]);
 
   const workspaceNameRules = [
     validate.required,
@@ -81,9 +92,11 @@ const SetupWorkspaceForm = props => {
 SetupWorkspaceForm.propTypes = {
   handleSubmit: PropTypes.func.isRequired,
   previousStep: PropTypes.func.isRequired,
+  touch: PropTypes.func.isRequired,
   invalid: PropTypes.bool.isRequired,
   pristine: PropTypes.bool.isRequired,
   submitting: PropTypes.bool.isRequired,
+  anyTouched: PropTypes.bool.isRequired,
 };
 
 export default reduxForm({
