@@ -25,7 +25,7 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import PropertyField from './PipelinePropertyViewField';
 
 const NodePanel = props => {
-  const { tasksStatus } = props;
+  const { tasksStatus = [] } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   if (tasksStatus.length === 0) return null;

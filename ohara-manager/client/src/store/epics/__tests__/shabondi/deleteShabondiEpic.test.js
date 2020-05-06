@@ -45,13 +45,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete shabondi should be worked correctly', () => {
+it('should delete a shabondi', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -72,6 +72,10 @@ it('delete shabondi should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteShabondi.SUCCESS,
         payload: {
           shabondiId,
@@ -85,13 +89,13 @@ it('delete shabondi should be worked correctly', () => {
   });
 });
 
-it('delete multiple shabondis should be worked correctly', () => {
+it('should delete multiple shabondis', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const input = '   ^-a---b               ';
+    const expected = '--a---b 995ms (uv)(xy)';
+    const subs = '    ^---------------------';
     const anotherShabondiEntity = {
       ...shabondiEntity,
       name: 'anothershabondi',
@@ -123,6 +127,10 @@ it('delete multiple shabondis should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteShabondi.SUCCESS,
         payload: {
           shabondiId,
@@ -134,7 +142,11 @@ it('delete multiple shabondis should be worked correctly', () => {
           shabondiId: getId(anotherShabondiEntity),
         },
       },
-      v: {
+      x: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      y: {
         type: actions.deleteShabondi.SUCCESS,
         payload: {
           shabondiId: getId(anotherShabondiEntity),
@@ -152,9 +164,9 @@ it('delete same shabondi within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const input = '   ^-aa 10s a----';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -175,6 +187,10 @@ it('delete same shabondi within period should be created once only', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteShabondi.SUCCESS,
         payload: {
           shabondiId,

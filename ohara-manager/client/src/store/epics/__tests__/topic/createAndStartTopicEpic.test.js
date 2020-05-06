@@ -20,7 +20,6 @@ import createAndStartTopicEpic from '../../topic/createAndStartTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { LOG_LEVEL } from 'const';
 import { noop } from 'rxjs';
 
 jest.mock('api/topicApi');
@@ -44,7 +43,7 @@ it('create and start topic should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                     ';
-    const expected = '--a 1999ms (mun) 495ms v';
+    const expected = '--a 1999ms (mn) 496ms v';
     const subs = '    ^-----------------------';
 
     const action$ = hot(input, {
@@ -75,15 +74,6 @@ it('create and start topic should be worked correctly', () => {
             },
           },
           result: topicId,
-        },
-      },
-      u: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock create topic data',
-          type: LOG_LEVEL.info,
-          data: topicEntity,
         },
       },
       n: {

@@ -63,9 +63,12 @@ const deleteConnector$ = values => {
       ),
     ),
   ).pipe(
-    map(() => {
+    mergeMap(() => {
       paperApi.removeElement(params.id);
-      return actions.deleteConnector.success({ connectorId });
+      return from([
+        actions.setSelectedCell.trigger(null),
+        actions.deleteConnector.success({ connectorId }),
+      ]);
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
     catchError(err => {

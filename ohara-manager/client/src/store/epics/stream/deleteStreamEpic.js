@@ -60,9 +60,12 @@ export const deleteStream$ = value => {
       ),
     ),
   ).pipe(
-    map(() => {
+    mergeMap(() => {
       paperApi.removeElement(params.id);
-      return actions.deleteStream.success({ streamId });
+      return from([
+        actions.setSelectedCell.trigger(null),
+        actions.deleteStream.success({ streamId }),
+      ]);
     }),
     startWith(actions.deleteStream.request({ streamId })),
     catchError(error => {

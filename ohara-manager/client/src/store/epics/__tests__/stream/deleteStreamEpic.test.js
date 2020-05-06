@@ -45,13 +45,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete stream should be worked correctly', () => {
+it('should delete a stream', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -72,6 +72,10 @@ it('delete stream should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteStream.SUCCESS,
         payload: {
           streamId,
@@ -85,13 +89,13 @@ it('delete stream should be worked correctly', () => {
   });
 });
 
-it('delete multiple streams should be worked correctly', () => {
+it('should delete multiple streams', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const input = '   ^-a---b               ';
+    const expected = '--a---b 995ms (uv)(xy)';
+    const subs = '    ^---------------------';
     const anotherStreamEntity = {
       ...streamEntity,
       name: 'anotherstream',
@@ -123,6 +127,10 @@ it('delete multiple streams should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteStream.SUCCESS,
         payload: {
           streamId,
@@ -134,7 +142,11 @@ it('delete multiple streams should be worked correctly', () => {
           streamId: getId(anotherStreamEntity),
         },
       },
-      v: {
+      x: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      y: {
         type: actions.deleteStream.SUCCESS,
         payload: {
           streamId: getId(anotherStreamEntity),
@@ -152,9 +164,9 @@ it('delete same stream within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const input = '   ^-aa 10s a------';
+    const expected = '--a 999ms (uv)--';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {
@@ -175,6 +187,10 @@ it('delete same stream within period should be created once only', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteStream.SUCCESS,
         payload: {
           streamId,

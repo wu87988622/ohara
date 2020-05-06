@@ -56,16 +56,16 @@ const stream = () => {
     updateStreamLink(params, options);
   };
 
-  const start = (params, paperApi) => {
-    startStream(params, { paperApi });
+  const start = ({ id, name }, paperApi) => {
+    startStream({ id, name }, { paperApi });
   };
 
-  const stop = (params, paperApi) => {
-    stopStream(params, { paperApi });
+  const stop = ({ id, name }, paperApi) => {
+    stopStream({ id, name }, { paperApi });
   };
 
-  const remove = (params, paperApi) => {
-    deleteStream(params, { paperApi });
+  const remove = ({ id, name }, paperApi) => {
+    deleteStream({ id, name }, { paperApi });
   };
 
   const removeLinkTo = (params, topic, paperApi) => {

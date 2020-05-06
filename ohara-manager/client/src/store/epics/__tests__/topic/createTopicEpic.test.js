@@ -33,13 +33,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('create topic should be worked correctly', () => {
+it('should create a topic', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a            ';
-    const expected = '--a 1999ms (uv)';
-    const subs = '    ^--------------';
+    const input = '   ^-a         ';
+    const expected = '--a 1999ms u';
+    const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
@@ -68,15 +68,6 @@ it('create topic should be worked correctly', () => {
           result: topicId,
         },
       },
-      v: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock create topic data',
-          type: LOG_LEVEL.info,
-          data: topicEntity,
-        },
-      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -85,13 +76,13 @@ it('create topic should be worked correctly', () => {
   });
 });
 
-it('create multiple topics should be worked correctly', () => {
+it('should create multiple topics', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a---b                ';
-    const expected = '--a---b 1995ms (uy)(vz)';
-    const subs = '    ^----------------------';
+    const input = '   ^-ab          ';
+    const expected = '--ab 1998ms uv';
+    const subs = '    ^-------------';
     const anotherTopicEntity = { ...topicEntity, name: 'topic2' };
 
     const action$ = hot(input, {
@@ -143,24 +134,6 @@ it('create multiple topics should be worked correctly', () => {
           result: getId(anotherTopicEntity),
         },
       },
-      y: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock create topic data',
-          type: LOG_LEVEL.info,
-          data: topicEntity,
-        },
-      },
-      z: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock create topic data',
-          type: LOG_LEVEL.info,
-          data: anotherTopicEntity,
-        },
-      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -173,9 +146,9 @@ it('create same topic within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a     ';
-    const expected = '--a 1999ms (uv)';
-    const subs = '    ^--------------';
+    const input = '   ^-aa 10s a  ';
+    const expected = '--a 1999ms u';
+    const subs = '    ^-----------';
 
     const action$ = hot(input, {
       a: {
@@ -202,15 +175,6 @@ it('create same topic within period should be created once only', () => {
             },
           },
           result: topicId,
-        },
-      },
-      v: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock create topic data',
-          type: LOG_LEVEL.info,
-          data: topicEntity,
         },
       },
     });

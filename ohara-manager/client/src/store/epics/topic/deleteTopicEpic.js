@@ -33,12 +33,12 @@ import { LOG_LEVEL } from 'const';
 export const deleteTopic$ = params => {
   const topicId = getId(params);
   return defer(() => topicApi.remove(params)).pipe(
-    mergeMap(res =>
-      from([
+    mergeMap(() => {
+      return from([
+        actions.setSelectedCell.trigger(null),
         actions.deleteTopic.success({ topicId }),
-        actions.createEventLog.trigger({ ...res, type: LOG_LEVEL.info }),
-      ]),
-    ),
+      ]);
+    }),
     startWith(actions.deleteTopic.request({ topicId })),
     catchError(err =>
       from([

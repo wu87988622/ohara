@@ -45,13 +45,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('delete connector should be worked correctly', () => {
+it('should delete a connector', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -72,6 +72,10 @@ it('delete connector should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteConnector.SUCCESS,
         payload: {
           connectorId,
@@ -85,13 +89,13 @@ it('delete connector should be worked correctly', () => {
   });
 });
 
-it('delete multiple connectors should be worked correctly', () => {
+it('should delete multiple connectors', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const input = '   ^-a---b               ';
+    const expected = '--a---b 995ms (uv)(xy)';
+    const subs = '    ^---------------------';
     const anotherConnectorEntity = {
       ...connectorEntity,
       name: 'anotherconnector',
@@ -123,6 +127,10 @@ it('delete multiple connectors should be worked correctly', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteConnector.SUCCESS,
         payload: {
           connectorId,
@@ -134,7 +142,11 @@ it('delete multiple connectors should be worked correctly', () => {
           connectorId: getId(anotherConnectorEntity),
         },
       },
-      v: {
+      x: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      y: {
         type: actions.deleteConnector.SUCCESS,
         payload: {
           connectorId: getId(anotherConnectorEntity),
@@ -152,9 +164,9 @@ it('delete same connector within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const input = '   ^-aa 10s a----';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
 
     const action$ = hot(input, {
       a: {
@@ -175,6 +187,10 @@ it('delete same connector within period should be created once only', () => {
         },
       },
       u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
         type: actions.deleteConnector.SUCCESS,
         payload: {
           connectorId,

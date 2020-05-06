@@ -20,7 +20,6 @@ import stopAndDeleteTopicEpic from '../../topic/stopAndDeleteTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { LOG_LEVEL } from 'const';
 import { noop } from 'rxjs';
 
 jest.mock('api/topicApi');
@@ -39,13 +38,13 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('stop and delete topic should be worked correctly', () => {
+it('should stop and then delete the topic', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                       ';
-    const expected = '--a 499ms (mn) 996ms (vz) ';
-    const subs = '    ^-------------------------';
+    const input = '   ^-a                      ';
+    const expected = '--a 499ms (mn) 996ms (vz)';
+    const subs = '    ^------------------------';
 
     const action$ = hot(input, {
       a: {
@@ -86,18 +85,13 @@ it('stop and delete topic should be worked correctly', () => {
         },
       },
       v: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      z: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId,
-        },
-      },
-      z: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          status: 200,
-          title: 'mock delete topic data',
-          type: LOG_LEVEL.info,
-          data: {},
         },
       },
     });
