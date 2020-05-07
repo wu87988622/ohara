@@ -48,7 +48,6 @@ services:
       args:
         KAFKA_VERSION: 2.5.0
         LOG_VERSION: 1.7.25
-        GRADLE_VERSION: 6.3
         COMMON_LANG_VERSION: 3.7
         ROCKDB_VERSION: 5.7.3
         BRANCH: master
