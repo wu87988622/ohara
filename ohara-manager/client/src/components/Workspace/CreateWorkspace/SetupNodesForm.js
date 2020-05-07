@@ -16,17 +16,13 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { size } from 'lodash';
 import { Field, reduxForm } from 'redux-form';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 
 import { FORM } from 'const';
 import NodesField from './NodesField';
-
-const required = value => {
-  return size(value) > 0 ? undefined : 'This is a required field';
-};
+import validate from './validate';
 
 const SetupNodesForm = props => {
   const { handleSubmit, previousStep, invalid, pristine, submitting } = props;
@@ -38,7 +34,6 @@ const SetupNodesForm = props => {
           label="Workspace nodes"
           component={NodesField}
           required
-          validate={required}
         />
       </Paper>
       <div className="buttons">
@@ -68,4 +63,5 @@ export default reduxForm({
   form: FORM.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
+  validate,
 })(SetupNodesForm);
