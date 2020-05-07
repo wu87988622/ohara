@@ -18,6 +18,7 @@ import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
+import * as hooks from 'hooks';
 
 export const useOpenRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
@@ -72,4 +73,15 @@ export const useRestartWorkspaceAction = () => {
     values => dispatch(actions.restartWorkspace.trigger(values)),
     [dispatch],
   );
+};
+
+export const useResetClustersAction = () => {
+  const fetchZookeeper = hooks.useFetchZookeeperAction();
+  const fetchBroker = hooks.useFetchBrokerAction();
+  const fetchWorker = hooks.useFetchWorkerAction();
+  return useCallback(() => {
+    fetchZookeeper();
+    fetchBroker();
+    fetchWorker();
+  }, [fetchBroker, fetchWorker, fetchZookeeper]);
 };
