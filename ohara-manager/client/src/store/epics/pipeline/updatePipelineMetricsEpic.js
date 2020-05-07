@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, timer, merge, from } from 'rxjs';
 import {
@@ -27,23 +26,7 @@ import {
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 import { KIND, LOG_LEVEL } from 'const';
-
-const updateMetrics = (res, options) => {
-  const { pipelineObjectsRef, paperApi } = options;
-  const { objects } = res.data;
-  if (paperApi) {
-    // Topic metrics are not displayed in Paper cell.
-    const nodeMetrics = objects.filter(object => object.kind !== KIND.topic);
-
-    paperApi.updateMetrics(nodeMetrics);
-
-    // Cell doesn't contain metrics data so we're using a ref here to store
-    // these objects and pass to PropertyView component
-    pipelineObjectsRef.current = objects;
-  }
-};
 
 export default action$ =>
   action$.pipe(
@@ -54,22 +37,20 @@ export default action$ =>
         switchMap(() =>
           defer(() => pipelineApi.get(params)).pipe(
             map(res => {
-              updateMetrics(res, options);
-              return normalize(res.data, schema.pipeline);
-            }),
-            map(normalizedData => {
-              return actions.startUpdateMetrics.success(normalizedData);
+              const { objects } = res.data;
+              updateMetrics(objects, options);
+              return actions.startUpdateMetrics.success();
             }),
             startWith(actions.startUpdateMetrics.request()),
-            catchError(err =>
-              from([
+            catchError(err => {
+              return from([
                 actions.startUpdateMetrics.failure(err),
                 actions.createEventLog.trigger({
                   ...err,
                   type: LOG_LEVEL.error,
                 }),
-              ]),
-            ),
+              ]);
+            }),
           ),
         ),
         takeUntil(
@@ -79,6 +60,7 @@ export default action$ =>
                 actions.switchPipeline.TRIGGER,
                 actions.stopUpdateMetrics.TRIGGER,
                 actions.deletePipeline.SUCCESS,
+                actions.startUpdateMetrics.FAILURE,
               ),
             ),
           ),
@@ -86,3 +68,17 @@ export default action$ =>
       ),
     ),
   );
+
+function updateMetrics(objects, options) {
+  const { pipelineObjectsRef, paperApi } = options;
+  if (paperApi) {
+    // Topic metrics are not displayed in Paper cell.
+    const nodeMetrics = objects.filter(object => object.kind !== KIND.topic);
+
+    paperApi.updateMetrics(nodeMetrics);
+
+    // Cell doesn't contain metrics data so we're using a ref here to store
+    // these objects and pass to PropertyView component
+    pipelineObjectsRef.current = objects;
+  }
+}
