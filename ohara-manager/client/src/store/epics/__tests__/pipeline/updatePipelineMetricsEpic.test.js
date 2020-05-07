@@ -18,16 +18,15 @@ import { TestScheduler } from 'rxjs/testing';
 
 import * as actions from 'store/actions';
 import updatePipelineMetricsEpic from '../../pipeline/updatePipelineMetricsEpic';
-import { getId } from 'utils/object';
 import { entity as pipelineEntity } from 'api/__mocks__/pipelineApi';
 
 jest.mock('api/pipelineApi');
 
-const pipelineId = getId(pipelineEntity);
-
 const paperApi = {
   updateMetrics: jest.fn(),
 };
+
+beforeEach(jest.resetAllMocks);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -38,7 +37,7 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, flush } = helpers;
 
-    const input = '   ^-a 20000ms (k|)                               ';
+    const input = '   ^-a 20000ms                                 (k|)';
     const expected = '--a 5ms b 7993ms a 5ms b 7993ms a 5ms b 3994ms |';
 
     const action$ = hot(input, {
@@ -68,19 +67,54 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
       },
       b: {
         type: actions.startUpdateMetrics.SUCCESS,
-        payload: {
-          result: pipelineId,
-          entities: {
-            pipelines: {
-              [pipelineId]: pipelineEntity,
-            },
-          },
-        },
       },
     });
 
     flush();
 
     expect(paperApi.updateMetrics).toHaveBeenCalledTimes(3);
+  });
+});
+
+it('should terminate the request if an error occurs', () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, flush } = helpers;
+
+    const input = '   ^-a 10000ms                 (k|)';
+    const expected = '--a 5ms b 7993ms a 5ms b 1994ms |';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.startUpdateMetrics.TRIGGER,
+        payload: {
+          params: {
+            group: pipelineEntity.group,
+            name: pipelineEntity.name,
+          },
+          options: {
+            paperApi,
+            pipelineObjectsRef: { current: null },
+          },
+        },
+      },
+      k: {
+        type: actions.startUpdateMetrics.FAILURE,
+      },
+    });
+
+    const output$ = updatePipelineMetricsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.startUpdateMetrics.REQUEST,
+      },
+      b: {
+        type: actions.startUpdateMetrics.SUCCESS,
+      },
+    });
+
+    flush();
+
+    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(2);
   });
 });
