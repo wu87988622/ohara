@@ -84,6 +84,7 @@ const DeleteWorkspace = () => {
       }}
       onClose={() => close()}
       onAutoClose={() => autoClose()}
+      onResetClusters={() => {}}
       isAutoClose={isAutoClose}
       closeDisable={closeDisable}
     />
