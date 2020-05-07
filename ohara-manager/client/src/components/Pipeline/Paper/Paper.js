@@ -349,7 +349,6 @@ const Paper = React.forwardRef((props, ref) => {
       const { shouldUpdatePipeline = true } = options;
 
       updateStatus(cell);
-
       if (shouldUpdatePipeline) {
         onCellEventRef.current.onChange(paperApi);
       }
@@ -734,6 +733,7 @@ const Paper = React.forwardRef((props, ref) => {
                 },
                 {
                   shouldSkipOnElementAdd: true,
+                  shouldUpdatePipeline: false,
                 },
               );
             }
