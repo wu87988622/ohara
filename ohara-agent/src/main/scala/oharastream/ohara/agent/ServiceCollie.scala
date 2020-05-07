@@ -87,11 +87,12 @@ abstract class ServiceCollie extends Releasable {
     */
   def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
     for {
-      zkMap     <- zookeeperCollie.clusters()
-      bkMap     <- brokerCollie.clusters()
-      wkMap     <- workerCollie.clusters()
-      streamMap <- streamCollie.clusters()
-    } yield zkMap ++ bkMap ++ wkMap ++ streamMap
+      zkMap       <- zookeeperCollie.clusters()
+      bkMap       <- brokerCollie.clusters()
+      wkMap       <- workerCollie.clusters()
+      streamMap   <- streamCollie.clusters()
+      shabondiMap <- shabondiCollie.clusters()
+    } yield zkMap ++ bkMap ++ wkMap ++ streamMap ++ shabondiMap
 
   /**
     * list the docker images hosted by nodes
