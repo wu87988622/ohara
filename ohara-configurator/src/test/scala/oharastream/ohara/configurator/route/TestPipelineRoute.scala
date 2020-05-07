@@ -535,6 +535,7 @@ class TestPipelineRoute extends OharaTest {
     val topic = result(topicApi.request.brokerClusterKey(bk.key).create())
     result(topicApi.start(topic.key))
 
+    // Create shabondi and pipeline
     val shabondiSource = createShabondiService(ShabondiType.Source, bk.key, topic.key)
     val shabondiSink   = createShabondiService(ShabondiType.Sink, bk.key, topic.key)
 
@@ -549,8 +550,25 @@ class TestPipelineRoute extends OharaTest {
 
     pipeline.endpoints.size shouldBe 3
     pipeline.objects.size shouldBe 3
+    pipeline.objects.foreach { obj =>
+      obj.kind match {
+        case "topic"    => obj.state shouldBe Some("RUNNING")
+        case "shabondi" => obj.state shouldBe None
+        case k          => fail(s"Invalid object kind: $k")
+      }
+    }
     pipeline.endpoints.map(_.key) should contain(shabondiSource.key)
     pipeline.endpoints.map(_.key) should contain(shabondiSink.key)
+
+    // Start shabondi and pipeline
+    result(shabondiApi.start(shabondiSource.key))
+    result(shabondiApi.start(shabondiSink.key))
+    val pipeline1: PipelineApi.Pipeline = result(pipelineApi.list()).head
+
+    pipeline1.objects.size shouldBe 3
+    pipeline1.objects.foreach { obj =>
+      obj.state shouldBe Some("RUNNING")
+    }
   }
 
   private def createShabondiService(
