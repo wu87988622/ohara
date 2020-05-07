@@ -23,8 +23,9 @@ import Paper from '@material-ui/core/Paper';
 
 import { FORM } from 'const';
 import * as hooks from 'hooks';
-import * as validate from 'utils/validate';
 import InputField from 'components/common/Form/InputField';
+import { checkDuplicate } from 'utils/validate';
+import validate from './validate';
 
 const SetupWorkspaceForm = props => {
   const {
@@ -50,15 +51,6 @@ const SetupWorkspaceForm = props => {
     }
   }, [anyTouched, change, defaultWorkspaceName, formValues, touch]);
 
-  const workspaceNameRules = [
-    validate.required,
-    validate.validServiceName,
-    validate.checkDuplicate(map(workspaces, 'name')),
-    // Configurator API only accept length <= 25
-    // we use the same rules here
-    validate.maxLength(25),
-  ];
-
   return (
     <form onSubmit={handleSubmit}>
       <Paper className="fields">
@@ -71,7 +63,7 @@ const SetupWorkspaceForm = props => {
           component={InputField}
           autoFocus
           required
-          validate={validate.composeValidators(...workspaceNameRules)}
+          validate={checkDuplicate(map(workspaces, 'name'))}
         />
       </Paper>
       <div className="buttons">
@@ -103,4 +95,5 @@ export default reduxForm({
   form: FORM.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
+  validate,
 })(SetupWorkspaceForm);

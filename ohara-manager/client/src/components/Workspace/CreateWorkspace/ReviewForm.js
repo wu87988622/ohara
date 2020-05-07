@@ -27,6 +27,7 @@ import TableCell from '@material-ui/core/TableCell';
 
 import { FORM } from 'const';
 import * as hooks from 'hooks';
+import validate from './validate';
 
 const ReviewForm = props => {
   const { handleSubmit, previousStep } = props;
@@ -69,4 +70,5 @@ export default reduxForm({
   form: FORM.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
+  validate,
 })(ReviewForm);
