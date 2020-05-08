@@ -22,7 +22,12 @@ import { Form, Field } from 'react-final-form';
 
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
-import { required, validServiceName, composeValidators } from 'utils/validate';
+import {
+  required,
+  validServiceName,
+  composeValidators,
+  maxLength,
+} from 'utils/validate';
 
 const ToolboxAddGraphDialog = props => {
   const { isOpen, onClose, onConfirm, kind } = props;
@@ -63,7 +68,11 @@ const ToolboxAddGraphDialog = props => {
                 name="newGraph"
                 label={`${capitalize(kind)} Name`}
                 component={InputField}
-                validate={composeValidators(required, validServiceName)}
+                validate={composeValidators(
+                  required,
+                  validServiceName,
+                  maxLength(25),
+                )}
                 disabled={submitting}
                 autoFocus
                 required
