@@ -40,7 +40,7 @@ const deleteStream$ = (params, paperApi) => {
   const { id, name, group } = params;
   return defer(() => streamApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      paperApi.removeElement(id, { skipGraphEvents: true });
       return actions.deleteStream.success({ name, group });
     }),
   );
@@ -56,7 +56,7 @@ const deleteConnector$ = (params, paperApi) => {
   const { id, name, group } = params;
   return defer(() => connectorApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      paperApi.removeElement(id, { skipGraphEvents: true });
       return actions.deleteConnector.success({ name, group });
     }),
   );
@@ -83,7 +83,7 @@ const waitUntilTopicStopped$ = (params, paperApi) => {
       paperApi.updateElement(
         id,
         { status: CELL_STATUS.stopped },
-        { shouldUpdatePipeline: false },
+        { skipGraphEvents: true },
       );
       return actions.stopTopic.success(res.data);
     }),
@@ -105,7 +105,7 @@ const deleteTopic$ = (params, paperApi) => {
   const { id, name, group } = params;
   return defer(() => topicApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { shouldUpdatePipeline: false });
+      paperApi.removeElement(id, { skipGraphEvents: true });
       return actions.deleteTopic.success({ name, group });
     }),
   );

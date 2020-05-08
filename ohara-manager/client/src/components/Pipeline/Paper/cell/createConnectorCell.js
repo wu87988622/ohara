@@ -211,11 +211,11 @@ const createConnectorCell = options => {
       if (isOpen && !isStopped) {
         $box.find('.metrics').show();
         $box.find('.status').hide();
-        model.set('isMetricsOn', true);
+        model.set('isMetricsOn', true, { skipGraphEvents: true });
       } else {
         $box.find('.metrics').hide();
         $box.find('.status').show();
-        model.set('isMetricsOn', false);
+        model.set('isMetricsOn', false, { skipGraphEvents: true });
       }
 
       return this;
@@ -228,13 +228,13 @@ const createConnectorCell = options => {
       this.$box.find('.metrics').html(metricsData);
       return this;
     },
-    updateElement(cellData) {
+    updateElement(cellData, options) {
       const { $box, model } = this;
 
       // Status
       const status = cellData.status.toLowerCase();
       $box.find('.status-value').text(status);
-      model.set('status', status);
+      model.set('status', status, options);
 
       // Display name
       $box.find('.display-name').text(displayName);

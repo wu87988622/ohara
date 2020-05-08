@@ -153,13 +153,13 @@ const createTopicCell = options => {
       this.model.set('isSelected', isSelected);
       return this;
     },
-    updateElement(cellData) {
+    updateElement(cellData, options) {
       const { $box } = this;
       const { status } = cellData;
       $box.find('.display-name').text(displayName);
       $box.find('.topic-status').attr('fill', statusColors[status]);
 
-      this.model.set('status', status);
+      this.model.set('status', status, options);
       return this;
     },
     updatePosition() {

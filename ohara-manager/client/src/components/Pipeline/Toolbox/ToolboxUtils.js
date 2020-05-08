@@ -341,11 +341,14 @@ export const enableDragAndDrop = params => {
             // A temporary cell which gives users a better idea of
             // where the graph will be added at. It will be removed
             // once the real graph is added
-            paperApi.addElement({
-              ...params,
-              isTemporary: true,
-              displayName: 'newgraph',
-            });
+            paperApi.addElement(
+              {
+                ...params,
+                isTemporary: true,
+                displayName: 'newgraph',
+              },
+              { skipGraphEvents: true },
+            );
           }
         }
         // Clean up
