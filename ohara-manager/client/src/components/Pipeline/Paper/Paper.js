@@ -709,7 +709,7 @@ const Paper = React.forwardRef((props, ref) => {
       },
       loadGraph(cells) {
         // Clear the graph before loading
-        graph.clear();
+        graph.clear({ skipGraphEvents: true });
 
         cells
           // Elements should be render first, and then the links
