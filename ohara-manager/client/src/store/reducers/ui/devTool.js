@@ -34,6 +34,7 @@ const initialState = {
     query: {
       logType: '',
       hostName: '',
+      shabondiKey: {},
       streamKey: {},
       timeGroup: LOG_TIME_GROUP.latest,
       timeRange: 10,

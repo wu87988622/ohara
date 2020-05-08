@@ -29,6 +29,7 @@ const values = {
   params: {
     logType: '',
     hostName: 'node01',
+    shabondiKey: {},
     streamKey: {},
     timeGroup: LOG_TIME_GROUP.customize,
     timeRange: 10,
@@ -41,9 +42,9 @@ it('set devTool log query params should be executed correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a--------b-----c------d----|';
-    const expected = '--(abcde)--(pqr)-(tuv)--(xy)-|';
-    const subs = '    ^----------------------------!';
+    const input = '   ^-a--------b------c------d------e----|';
+    const expected = '--(abcde)--(ijk)--(pqr)--(tuv)--(xy)-|';
+    const subs = '    ^------------------------------------!';
 
     const action$ = hot(input, {
       a: {
@@ -53,17 +54,24 @@ it('set devTool log query params should be executed correctly', () => {
       b: {
         type: actions.setDevToolLogQueryParams.TRIGGER,
         payload: {
-          params: { streamName: 'app' },
-          streamGroup: 'group1',
+          params: { shabondiName: 'shd1' },
+          shabondiGroup: 'group1',
         },
       },
       c: {
         type: actions.setDevToolLogQueryParams.TRIGGER,
         payload: {
-          params: { logType: KIND.zookeeper },
+          params: { streamName: 'app' },
+          streamGroup: 'group1',
         },
       },
       d: {
+        type: actions.setDevToolLogQueryParams.TRIGGER,
+        payload: {
+          params: { logType: KIND.zookeeper },
+        },
+      },
+      e: {
         type: actions.setDevToolLogQueryParams.TRIGGER,
         payload: {
           params: { logType: KIND.stream },
@@ -102,6 +110,21 @@ it('set devTool log query params should be executed correctly', () => {
         payload: {
           endTime: '2020-04-16',
         },
+      },
+      i: {
+        type: actions.setDevToolLogQueryParams.SUCCESS,
+        payload: {
+          hostName: '',
+        },
+      },
+      j: {
+        type: actions.setDevToolLogQueryParams.SUCCESS,
+        payload: {
+          shabondiKey: { name: 'shd1', group: 'group1' },
+        },
+      },
+      k: {
+        type: actions.fetchDevToolLog.TRIGGER,
       },
       p: {
         type: actions.setDevToolLogQueryParams.SUCCESS,

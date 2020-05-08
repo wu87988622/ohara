@@ -18,7 +18,6 @@ import { combineReducers } from 'redux';
 import _ from 'lodash';
 import brokers from './brokers';
 import connectors from './connectors';
-import devTool from './devTool';
 import eventLogs from './eventLogs';
 import files from './files';
 import infos from './infos';
@@ -51,7 +50,6 @@ export const entity = type => (state = {}, action) => {
 export default combineReducers({
   brokers,
   connectors,
-  devTool,
   eventLogs,
   files,
   infos,

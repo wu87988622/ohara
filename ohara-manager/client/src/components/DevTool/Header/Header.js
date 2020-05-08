@@ -70,7 +70,11 @@ const Header = () => {
       setTabName(TAB.log);
       const service = getService(kind);
       setLogQueryParams({ logType: service });
-      if (kind === KIND.stream) {
+      if (kind === KIND.shabondi) {
+        setLogQueryParams({
+          shabondiName: get(selectedCell, CELL_PROPS.displayName, ''),
+        });
+      } else if (kind === KIND.stream) {
         setLogQueryParams({
           streamName: get(selectedCell, CELL_PROPS.displayName, ''),
         });

@@ -20,6 +20,7 @@ import brokers from './brokers';
 import connector from './connector';
 import createWorkspace from './createWorkspace';
 import deleteWorkspace from './deleteWorkspace';
+import devTool from './devTool';
 import file from './file';
 import intro from './intro';
 import node from './node';
@@ -39,6 +40,7 @@ export default combineReducers({
   connector,
   createWorkspace,
   deleteWorkspace,
+  devTool,
   file,
   intro,
   node,
