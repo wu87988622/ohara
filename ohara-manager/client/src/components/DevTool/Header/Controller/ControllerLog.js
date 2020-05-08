@@ -38,6 +38,7 @@ import { LOG_SERVICES } from 'api/apiInterface/logInterface';
 import { StyledSearchBody, StyledTextField } from './ControllerStyles';
 
 const ControllerLog = () => {
+  const shabondis = hooks.useShabondis();
   const streams = hooks.useStreams();
 
   const refetchLog = hooks.useRefetchDevToolLog();
@@ -46,12 +47,14 @@ const ControllerLog = () => {
   const {
     hostName,
     logType,
+    shabondiKey,
     streamKey,
     timeGroup,
     timeRange,
     startTime,
     endTime,
   } = query;
+  const shabondiName = get(shabondiKey, 'name', '');
   const streamName = get(streamKey, 'name', '');
 
   const currentLog = useCurrentLogs();
@@ -63,7 +66,9 @@ const ControllerLog = () => {
       const addSlash = window.location.pathname === '/' ? '' : '/';
       window.open(
         `${window.location}${addSlash}view?type=${TAB.log}&logType=${logType}`
-          .concat(`&hostname=${hostName}&streamName=${streamName}`)
+          .concat(
+            `&hostname=${hostName}&shabondiName=${shabondiName}&streamName=${streamName}`,
+          )
           .concat(
             `&timeGroup=${timeGroup}&timeRange=${timeRange}&startTime=${startTime}&endTime=${endTime}`,
           ),
@@ -88,6 +93,7 @@ const ControllerLog = () => {
     // true -> disabled
     if (isFetching) return true;
     if (!logType) return true;
+    if (logType === KIND.shabondi && isEmpty(shabondiKey)) return true;
     if (logType === KIND.stream && !isEmpty(streamKey)) return true;
   };
 
@@ -100,6 +106,16 @@ const ControllerLog = () => {
         disabled={isFetching}
         testId="log-type-select"
       />
+      {logType === KIND.shabondi && (
+        <Select
+          value={shabondiName}
+          onChange={event =>
+            setLogQueryParams({ shabondiName: event.target.value })
+          }
+          list={shabondis.map(shabondi => shabondi.name)}
+          disabled={isFetching}
+        />
+      )}
       {logType === KIND.stream && (
         <Select
           value={streamName}
@@ -114,6 +130,7 @@ const ControllerLog = () => {
       <Select
         disabled={
           !logType ||
+          (logType === KIND.shabondi && isEmpty(shabondiKey)) ||
           (logType === KIND.stream && !isEmpty(streamKey)) ||
           isFetching ||
           isEmpty(hostName)

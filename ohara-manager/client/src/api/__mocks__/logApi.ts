@@ -72,6 +72,14 @@ export const getWorkerLog = (key: ObjectKey): Observable<LogResponse> =>
   }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
+export const getShabondiLog = (key: ObjectKey): Observable<LogResponse> =>
+  of({
+    status: 200,
+    title: 'mock shabondi log data',
+    data: getLog(key),
+  }).pipe(delay(100));
+
+// simulate a promise request with a delay of 100ms
 export const getStreamLog = (key: ObjectKey): Observable<LogResponse> =>
   of({
     status: 200,

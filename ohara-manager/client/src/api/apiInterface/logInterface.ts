@@ -21,6 +21,7 @@ export enum LOG_SERVICES {
   zookeeper = 'zookeepers',
   broker = 'brokers',
   worker = 'workers',
+  shabondi = 'shabondis',
   stream = 'streams',
 }
 

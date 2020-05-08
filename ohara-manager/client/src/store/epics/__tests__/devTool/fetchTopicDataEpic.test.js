@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 const stateValues = {
-  entities: {
+  ui: {
     devTool: {
       topicData: {
         query: {

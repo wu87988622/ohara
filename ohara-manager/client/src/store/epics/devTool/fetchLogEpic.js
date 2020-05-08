@@ -47,6 +47,7 @@ export default (action$, state$) =>
         const log = getDevToolLog(state$.value);
         const {
           logType,
+          shabondiKey,
           streamKey,
           timeGroup,
           timeRange,
@@ -81,6 +82,10 @@ export default (action$, state$) =>
             });
           case KIND.worker:
             return logApi.getWorkerLog(wkId(), {
+              sinceSeconds: getTimeSeconds(),
+            });
+          case KIND.shabondi:
+            return logApi.getShabondiLog(shabondiKey, {
               sinceSeconds: getTimeSeconds(),
             });
           case KIND.stream:

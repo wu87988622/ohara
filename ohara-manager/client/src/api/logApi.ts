@@ -47,6 +47,18 @@ export const getWorkerLog = (objectKey: ObjectKey, queryParams?: object) => {
   return fetchServiceLog(LOG_SERVICES.worker, objectKey, queryParams);
 };
 
+export const getShabondiLog = (objectKey: ObjectKey, queryParams?: object) => {
+  return fetchServiceLog(LOG_SERVICES.shabondi, objectKey, queryParams)
+    .then(res => {
+      res.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.shabondi} "${objectKey.name}" info successfully.`;
+      return res;
+    })
+    .catch((error: LogResponse) => {
+      error.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.shabondi} "${objectKey.name}" info failed.`;
+      throw error;
+    });
+};
+
 export const getStreamLog = (objectKey: ObjectKey, queryParams?: object) => {
   return fetchServiceLog(LOG_SERVICES.stream, objectKey, queryParams)
     .then(res => {

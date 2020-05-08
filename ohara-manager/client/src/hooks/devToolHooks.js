@@ -74,13 +74,18 @@ export const useRefetchDevToolLog = () => {
 };
 export const useSetDevToolLogQueryParams = () => {
   const dispatch = useDispatch();
+  const shabondiGroup = hooks.useShabondiGroup();
   const streamGroup = hooks.useStreamGroup();
   return useCallback(
     params =>
       dispatch(
-        actions.setDevToolLogQueryParams.trigger({ params, streamGroup }),
+        actions.setDevToolLogQueryParams.trigger({
+          params,
+          shabondiGroup,
+          streamGroup,
+        }),
       ),
-    [dispatch, streamGroup],
+    [dispatch, shabondiGroup, streamGroup],
   );
 };
 

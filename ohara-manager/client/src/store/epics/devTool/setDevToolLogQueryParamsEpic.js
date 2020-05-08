@@ -77,6 +77,25 @@ export default action$ =>
             ),
           ),
           of(values).pipe(
+            filter(() => !!values.params.shabondiName),
+            switchMap(() =>
+              scheduled(
+                [
+                  // provide an initial value when switching to stream
+                  actions.setDevToolLogQueryParams.success({ hostName: '' }),
+                  actions.setDevToolLogQueryParams.success({
+                    shabondiKey: {
+                      name: values.params.shabondiName,
+                      group: values.shabondiGroup,
+                    },
+                  }),
+                  actions.fetchDevToolLog.trigger(),
+                ],
+                asapScheduler,
+              ),
+            ),
+          ),
+          of(values).pipe(
             filter(() => !!values.params.streamName),
             switchMap(() =>
               scheduled(

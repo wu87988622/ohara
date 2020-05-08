@@ -37,12 +37,13 @@ beforeEach(() => {
 });
 
 const stateValues = {
-  entities: {
+  ui: {
     devTool: {
       log: {
         query: {
           logType: '',
           hostName: '',
+          shabondiKey: { name: 'shd1', group: 'default' },
           streamKey: { name: 'app1', group: 'default' },
           timeGroup: LOG_TIME_GROUP.latest,
           timeRange: 10,
@@ -51,8 +52,6 @@ const stateValues = {
         },
       },
     },
-  },
-  ui: {
     workspace: {
       name: 'workspace1',
     },
@@ -65,11 +64,7 @@ it('fetch configurator log should be executed correctly', () => {
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(
-          stateValues,
-          'entities.devTool.log.query.logType',
-          KIND.configurator,
-        ),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.configurator),
       }),
     );
 
@@ -121,11 +116,7 @@ it('fetch configurator log multiple times should be executed the first one until
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(
-          stateValues,
-          'entities.devTool.log.query.logType',
-          KIND.configurator,
-        ),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.configurator),
       }),
     );
 
@@ -178,11 +169,7 @@ it('fetch zookeeper log should be executed correctly', () => {
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(
-          stateValues,
-          'entities.devTool.log.query.logType',
-          KIND.zookeeper,
-        ),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.zookeeper),
       }),
     );
 
@@ -236,11 +223,7 @@ it('fetch zookeeper log multiple times should be executed the first one until fi
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(
-          stateValues,
-          'entities.devTool.log.query.logType',
-          KIND.zookeeper,
-        ),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.zookeeper),
       }),
     );
 
@@ -294,7 +277,7 @@ it('fetch broker log should be executed correctly', () => {
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.broker),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.broker),
       }),
     );
 
@@ -348,7 +331,7 @@ it('fetch broker log multiple times should be executed the first one until finis
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.broker),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.broker),
       }),
     );
 
@@ -402,7 +385,7 @@ it('fetch worker log should be executed correctly', () => {
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.worker),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.worker),
       }),
     );
 
@@ -456,7 +439,7 @@ it('fetch worker log multiple times should be executed the first one until finis
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.worker),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.worker),
       }),
     );
 
@@ -504,19 +487,72 @@ it('fetch worker log multiple times should be executed the first one until finis
   });
 });
 
+it('fetch shabondi log should be executed correctly', () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const state$ = new StateObservable(
+      hot('v', {
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.shabondi),
+      }),
+    );
+
+    const logs = makeLog(stateValues.ui.devTool.log.query.shabondiKey).split(
+      '\n',
+    );
+    const input = '   ^-a----------|';
+    const expected = '--- 99ms (ab|)';
+    const subs = '    ^------------!';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.fetchDevToolLog.TRIGGER,
+        payload: {},
+      },
+    });
+    const output$ = fetchLogEpic(action$, state$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.fetchDevToolLog.SUCCESS,
+        payload: [
+          {
+            logs,
+            name: 'node01',
+          },
+          {
+            logs,
+            name: 'node02',
+          },
+        ],
+      },
+      b: {
+        type: actions.setDevToolLogQueryParams.SUCCESS,
+        payload: {
+          hostName: 'node01',
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+  });
+});
+
 it('fetch stream log should be executed correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.stream),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.stream),
       }),
     );
 
-    const logs = makeLog(
-      stateValues.entities.devTool.log.query.streamKey,
-    ).split('\n');
+    const logs = makeLog(stateValues.ui.devTool.log.query.streamKey).split(
+      '\n',
+    );
     const input = '   ^-a----------|';
     const expected = '--- 99ms (ab|)';
     const subs = '    ^------------!';
@@ -563,13 +599,13 @@ it('fetch stream log multiple times should be executed the first one until finis
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(stateValues, 'entities.devTool.log.query.logType', KIND.stream),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.stream),
       }),
     );
 
-    const logs = makeLog(
-      stateValues.entities.devTool.log.query.streamKey,
-    ).split('\n');
+    const logs = makeLog(stateValues.ui.devTool.log.query.streamKey).split(
+      '\n',
+    );
     const input = '   ^-a-a-a  98ms a--------|';
     const expected = '--- 99ms (ab) 99ms (ab|)';
     const subs = '    ^------  98ms ---------!';
@@ -629,11 +665,7 @@ it('throw exception of fetch log should also trigger event log action', () => {
 
     const state$ = new StateObservable(
       hot('v', {
-        v: set(
-          stateValues,
-          'entities.devTool.log.query.logType',
-          KIND.configurator,
-        ),
+        v: set(stateValues, 'ui.devTool.log.query.logType', KIND.configurator),
       }),
     );
 
