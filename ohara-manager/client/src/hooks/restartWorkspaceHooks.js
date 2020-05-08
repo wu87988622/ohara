@@ -75,7 +75,7 @@ export const useRestartWorkspaceAction = () => {
   );
 };
 
-export const useResetClustersAction = () => {
+export const useRefreshWorkspaceAction = () => {
   const fetchZookeeper = hooks.useFetchZookeeperAction();
   const fetchBroker = hooks.useFetchBrokerAction();
   const fetchWorker = hooks.useFetchWorkerAction();

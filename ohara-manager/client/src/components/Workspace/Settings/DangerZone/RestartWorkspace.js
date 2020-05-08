@@ -27,7 +27,7 @@ const RestartWorkspace = () => {
   const rollback = hooks.useRollbackRestartWorkspaceAction();
   const autoClose = hooks.useAutoCloseRestartWorkspaceDialogAction();
   const startWorkspace = hooks.useRestartWorkspaceAction();
-  const resetClusters = hooks.useResetClustersAction();
+  const resetClusters = hooks.useRefreshWorkspaceAction();
   const workspaceId = hooks.useWorkspaceId();
   const zookeeperId = hooks.useZookeeperId();
   const brokerId = hooks.useBrokerId();
