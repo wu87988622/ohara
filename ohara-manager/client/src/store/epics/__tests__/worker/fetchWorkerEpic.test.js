@@ -36,7 +36,7 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('fetch worker should be worked correctly', () => {
+it('should fetch a worker', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

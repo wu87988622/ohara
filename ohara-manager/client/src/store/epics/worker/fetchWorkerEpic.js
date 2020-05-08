@@ -17,13 +17,16 @@
 import { normalize } from 'normalizr';
 import { sortBy, merge, mergeWith, omit, isArray } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, zip, from } from 'rxjs';
+import { of, defer, forkJoin, iif, zip, from, throwError } from 'rxjs';
 import {
   catchError,
   map,
   switchMap,
   startWith,
   throttleTime,
+  retryWhen,
+  concatMap,
+  delay,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
@@ -48,10 +51,29 @@ const fetchWorker$ = params => {
       map(data => normalize(data, schema.worker)),
     ),
     zip(
-      defer(() => inspectApi.getWorkerInfo(params)),
       defer(() => inspectApi.getShabondiInfo()),
+      defer(() => inspectApi.getWorkerInfo(params)).pipe(
+        map(res => {
+          // Ensure classInfos are loaded since it's required in our UI
+          if (res.data.classInfos.length === 0) throw res;
+          return res;
+        }),
+        retryWhen(errors =>
+          errors.pipe(
+            concatMap((value, retry) =>
+              iif(
+                () => retry > 10,
+                throwError({
+                  title: 'Fetch worker request exceeded max retry count',
+                }),
+                of(value).pipe(delay(2000)),
+              ),
+            ),
+          ),
+        ),
+      ),
     ).pipe(
-      map(([wkInfo, shabondiInfo]) =>
+      map(([shabondiInfo, wkInfo]) =>
         mergeWith(
           wkInfo.data,
           // we only need to inject the shabondi classes into worker.classInfos

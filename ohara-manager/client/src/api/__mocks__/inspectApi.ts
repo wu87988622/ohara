@@ -74,7 +74,29 @@ export const zookeeperInfoEntity = {
 };
 
 export const workerInfoEntity = {
-  classInfos: [],
+  classInfos: [
+    {
+      className: 'oharastream.ohara.connector.console.ConsoleSink',
+      classType: 'sink',
+      settingDefinitions: [
+        {
+          blacklist: [],
+          displayName: 'Connector name',
+          documentation: 'the name of this connector',
+          group: 'core',
+          internal: false,
+          key: 'name',
+          necessary: Necessary.RANDOM_DEFAULT,
+          orderInGroup: 2,
+          permission: Permission.CREATE_ONLY,
+          recommendedValues: [],
+          reference: Reference.NONE,
+          tableKeys: [],
+          valueType: Type.STRING,
+        },
+      ],
+    },
+  ],
   imageName: 'oharastream/connect-worker:0.11.0-SNAPSHOT',
   settingDefinitions: [
     {
