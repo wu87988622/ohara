@@ -94,6 +94,20 @@ object LogApi {
           .build()
       )
 
+    def log4ShabondiCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
+      exec.get[ClusterLog, ErrorApi.Error](_url(ShabondiApi.SHABONDI_PREFIX_PATH, clusterKey))
+
+    def log4ShabondiCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
+      implicit executionContext: ExecutionContext
+    ): Future[ClusterLog] =
+      exec.get[ClusterLog, ErrorApi.Error](
+        urlBuilder
+          .key(clusterKey)
+          .prefix(ShabondiApi.SHABONDI_PREFIX_PATH)
+          .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
+          .build()
+      )
+
     def log4Configurator()(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
 

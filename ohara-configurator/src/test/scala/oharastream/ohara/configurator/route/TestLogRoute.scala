@@ -18,11 +18,14 @@ package oharastream.ohara.configurator.route
 
 import java.text.SimpleDateFormat
 
+import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
+import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
@@ -34,6 +37,8 @@ class TestLogRoute extends OharaTest {
 
   private[this] val logApi = LogApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val nodeApi = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] val zkApi = ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val bkApi = BrokerApi.access.hostname(configurator.hostname).port(configurator.port)
@@ -42,11 +47,22 @@ class TestLogRoute extends OharaTest {
 
   private[this] val streamApi = StreamApi.access.hostname(configurator.hostname).port(configurator.port)
 
+  private[this] val shabondiApi = ShabondiApi.access.hostname(configurator.hostname).port(configurator.port)
+
   private[this] val fileApi = FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+
+  private def startTopic(bkKey: ObjectKey): TopicInfo = {
+    val topic = TopicKey.of("default", CommonUtils.randomString(5))
+    val topicInfo = result(
+      topicApi.request.key(topic).brokerClusterKey(bkKey).create()
+    )
+    result(topicApi.start(topicInfo.key))
+    topicInfo
+  }
 
   @Test
   def fetchLogFromZookeeper(): Unit = {
@@ -74,11 +90,12 @@ class TestLogRoute extends OharaTest {
 
   @Test
   def fetchLogFromStream(): Unit = {
-    val file      = result(fileApi.request.file(RouteUtils.streamFile).upload())
-    val fromTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val file              = result(fileApi.request.file(RouteUtils.streamFile).upload())
+    val brokerClusterInfo = result(bkApi.list()).head
+    val fromTopic         = startTopic(brokerClusterInfo.key)
     result(topicApi.start(fromTopic.key))
     result(topicApi.get(fromTopic.key)).state should not be None
-    val toTopic = result(topicApi.request.brokerClusterKey(result(bkApi.list()).head.key).create())
+    val toTopic = startTopic(brokerClusterInfo.key)
     result(topicApi.start(toTopic.key))
     result(topicApi.get(toTopic.key)).state should not be None
     val nodeNames = result(zkApi.list()).head.nodeNames
@@ -100,11 +117,80 @@ class TestLogRoute extends OharaTest {
   }
 
   @Test
+  def fetchLogFromShabondiSource(): Unit = {
+    val availableNodeNames = result(nodeApi.list()).map(_.hostname)
+    val brokerClusterInfo  = result(bkApi.list()).head
+    val topicInfo          = startTopic(brokerClusterInfo.key)
+
+    val shabondiKey            = ObjectKey.of("group", "name")
+    val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
+    createShabondiService(
+      ShabondiType.Source,
+      brokerClusterInfo,
+      shabondiKey,
+      clientPort,
+      Set(nodeName),
+      Set(topicInfo.key)
+    )
+    result(shabondiApi.start(shabondiKey))
+
+    val clusterLogs = result(logApi.log4ShabondiCluster(shabondiKey))
+    clusterLogs.clusterKey shouldBe shabondiKey
+    clusterLogs.logs.isEmpty shouldBe false
+  }
+
+  @Test
+  def fetchLogFromShabondiSink(): Unit = {
+    val availableNodeNames = result(nodeApi.list()).map(_.hostname)
+    val brokerClusterInfo  = result(bkApi.list()).head
+    val topicInfo          = startTopic(brokerClusterInfo.key)
+
+    val shabondiKey            = ObjectKey.of("group", "name")
+    val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
+    createShabondiService(
+      ShabondiType.Sink,
+      brokerClusterInfo,
+      shabondiKey,
+      clientPort,
+      Set(nodeName),
+      Set(topicInfo.key)
+    )
+    result(shabondiApi.start(shabondiKey))
+
+    val clusterLogs = result(logApi.log4ShabondiCluster(shabondiKey))
+    clusterLogs.clusterKey shouldBe shabondiKey
+    clusterLogs.logs.isEmpty shouldBe false
+  }
+
+  private def createShabondiService(
+    shabondiType: ShabondiType,
+    bkClusterInfo: BrokerApi.BrokerClusterInfo,
+    key: ObjectKey,
+    clientPort: Int,
+    nodeNames: Set[String],
+    topicKeys: Set[TopicKey]
+  ): ShabondiClusterInfo = {
+    val request = shabondiApi.request
+      .name(key.name)
+      .group(key.group)
+      .brokerClusterKey(bkClusterInfo.key)
+      .nodeNames(nodeNames) // note: nodeNames only support one node currently.
+      .shabondiClass(shabondiType.className)
+      .clientPort(clientPort)
+    shabondiType match {
+      case ShabondiType.Source => request.sourceToTopics(topicKeys)
+      case ShabondiType.Sink   => request.sinkFromTopics(topicKeys)
+    }
+    result(request.create())
+  }
+  @Test
   def fetchLogFromUnknown(): Unit = {
     val unknownKey = ObjectKey.of("default", CommonUtils.randomString(10))
     an[IllegalArgumentException] should be thrownBy result(logApi.log4ZookeeperCluster(unknownKey))
     an[IllegalArgumentException] should be thrownBy result(logApi.log4BrokerCluster(unknownKey))
     an[IllegalArgumentException] should be thrownBy result(logApi.log4WorkerCluster(unknownKey))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4StreamCluster(unknownKey))
+    an[IllegalArgumentException] should be thrownBy result(logApi.log4ShabondiCluster(unknownKey))
   }
 
   /**

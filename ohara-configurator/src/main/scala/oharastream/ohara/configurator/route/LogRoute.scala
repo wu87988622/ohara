@@ -31,6 +31,7 @@ import oharastream.ohara.client.configurator.v0.LogApi._
 import oharastream.ohara.client.configurator.v0.StreamApi._
 import oharastream.ohara.client.configurator.v0.WorkerApi._
 import oharastream.ohara.client.configurator.v0.ZookeeperApi._
+import oharastream.ohara.client.configurator.v0.ShabondiApi._
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -144,6 +145,12 @@ object LogRoute {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
             route(clusterKey, collie.streamCollie.logs(clusterKey, sinceSeconds))
+        }
+      } ~ path(SHABONDI_PREFIX_PATH / Segment) { clusterName =>
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+          case (group, sinceSeconds) =>
+            val clusterKey = ObjectKey.of(group, clusterName)
+            route(clusterKey, collie.shabondiCollie.logs(clusterKey, sinceSeconds))
         }
       }
     }

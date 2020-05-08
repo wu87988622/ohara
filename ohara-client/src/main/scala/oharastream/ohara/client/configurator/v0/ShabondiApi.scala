@@ -32,9 +32,8 @@ import spray.json._
 import scala.concurrent.{ExecutionContext, Future}
 
 final object ShabondiApi {
-  val KIND: String          = "shabondi"
-  val SHABONDI_SERVICE_NAME = "shabondi"
-  val SHABONDI_PREFIX_PATH  = "shabondis"
+  val KIND: String         = "shabondi"
+  val SHABONDI_PREFIX_PATH = "shabondis"
 
   val IMAGE_NAME_DEFAULT: String = ShabondiDefinitions.IMAGE_NAME_DEFAULT
 

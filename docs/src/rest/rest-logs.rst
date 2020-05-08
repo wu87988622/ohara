@@ -54,6 +54,7 @@ get the log of a running cluster
   - brokers
   - workers
   - streams
+  - shabondis
 
 Example Response
   .. code-block:: json
