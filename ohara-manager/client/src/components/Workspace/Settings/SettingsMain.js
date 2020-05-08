@@ -17,24 +17,15 @@
 import React from 'react';
 import cx from 'classnames';
 import PropTypes from 'prop-types';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
-import Badge from '@material-ui/core/Badge';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import Box from '@material-ui/core/Box';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import { isEmpty } from 'lodash';
+import Typography from '@material-ui/core/Typography';
 
 import * as hooks from 'hooks';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 import { Wrapper } from './SettingsMainStyles';
-import { Dialog } from 'components/common/Dialog';
 import RestartIndicator from './RestartIndicator';
+import SectionList from './SectionList';
+import SectionComponent from './SectionComponent';
 
 const SettingsMain = ({
   sections,
@@ -70,132 +61,26 @@ const SettingsMain = ({
                 {heading}
               </Typography>
               <div className={listWrapperCls}>
-                <List component="ul">
-                  {components.map(component => {
-                    const {
-                      title,
-                      icon,
-                      type,
-                      subTitle,
-                      badge,
-                      componentProps = {},
-                    } = component;
-                    const { children, handleClick } = componentProps;
-
-                    const onClick = (event, title) => {
-                      switch (type) {
-                        case SETTINGS_COMPONENT_TYPES.PAGE:
-                        case SETTINGS_COMPONENT_TYPES.DIALOG:
-                          return handleChange({
-                            name: title,
-                            type,
-                            heading,
-                            ref,
-                          });
-
-                        case SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
-                          return (
-                            typeof handleClick === 'function' &&
-                            handleClick(event, title)
-                          );
-
-                        default:
-                          throw new Error(`Unknown type of ${type}`);
-                      }
-                    };
-
-                    return (
-                      <ListItem
-                        key={title}
-                        onClick={event => onClick(event, title)}
-                      >
-                        <Badge component="div" badgeContent={badge?.count}>
-                          {icon && <ListItemIcon>{icon}</ListItemIcon>}
-                          <ListItemText primary={title} secondary={subTitle} />
-
-                          {type === SETTINGS_COMPONENT_TYPES.PAGE && (
-                            <ListItemSecondaryAction>
-                              <IconButton
-                                edge="end"
-                                size="small"
-                                onClick={event => onClick(event, title)}
-                              >
-                                <ArrowRightIcon fontSize="small" />
-                              </IconButton>
-                            </ListItemSecondaryAction>
-                          )}
-
-                          {type === SETTINGS_COMPONENT_TYPES.CUSTOMIZED && (
-                            <>{children}</>
-                          )}
-                        </Badge>
-                      </ListItem>
-                    );
-                  })}
-                </List>
+                <SectionList
+                  list={components}
+                  handleChange={handleChange}
+                  sectionHeading={heading}
+                  sectionRef={ref}
+                  selectedComponent={selectedComponent}
+                />
               </div>
             </section>
           );
         })}
       </div>
-
-      {selectedComponent &&
-        sections.map(section =>
-          section.components.map(component => {
-            const { title } = component;
-            return (
-              <Box hidden={title !== selectedComponent.name} key={title}>
-                {componentRenderer({
-                  component,
-                  selectedComponent,
-                  handleClose,
-                })}
-              </Box>
-            );
-          }),
-        )}
+      <SectionComponent
+        sections={sections}
+        selectedComponent={selectedComponent}
+        handleClose={handleClose}
+      />
     </Wrapper>
   );
 };
-
-function componentRenderer({ component, selectedComponent, handleClose }) {
-  const { title, type, componentProps } = component;
-
-  switch (type) {
-    case SETTINGS_COMPONENT_TYPES.PAGE:
-      return (
-        <div className="section-page">
-          <div className="section-page-header">
-            <IconButton edge="start" color="inherit" onClick={handleClose}>
-              <KeyboardBackspaceIcon />
-            </IconButton>
-            <Typography variant="h4" component="h2">
-              {title}
-            </Typography>
-          </div>
-
-          <div className="section-page-content">{componentProps?.children}</div>
-        </div>
-      );
-
-    case SETTINGS_COMPONENT_TYPES.DIALOG:
-      return (
-        <Dialog
-          open={title === selectedComponent.name}
-          onClose={handleClose}
-          {...componentProps}
-        />
-      );
-
-    case SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
-      return null;
-
-    default:
-      throw new Error(
-        `Couldn't render the component with an unknown type of ${type}`,
-      );
-  }
-}
 
 SettingsMain.propTypes = {
   sections: PropTypes.arrayOf(
