@@ -332,10 +332,6 @@ const Pipeline = React.forwardRef((props, ref) => {
       firstLink,
       secondeLink,
     } = pipelineUtils.utils.getConnectionOrder(cells);
-    let sourceRes;
-    let sinkRes;
-    let toStreamRes;
-    let fromStreamRes;
     switch (type) {
       case CONNECTION_TYPE.SOURCE_TOPIC:
         updateLinkConnector({ connector: source, topic, link }, paperApi);
@@ -358,22 +354,15 @@ const Pipeline = React.forwardRef((props, ref) => {
           } = topic),
           paperApi,
         );
-        sourceRes = updateLinkConnector(
+        updateLinkConnector(
           { connector: source, topic, link: firstLink },
           paperApi,
         );
-        if (sourceRes.error) {
-          clean({ topic }, paperApi);
-          return;
-        }
-        sinkRes = updateLinkConnector(
+        updateLinkConnector(
           { connector: sink, topic, link: secondeLink },
           paperApi,
         );
-        if (sinkRes.error) {
-          clean({ source, topic }, paperApi);
-          return;
-        }
+
         break;
       case CONNECTION_TYPE.SOURCE_TOPIC_STREAM:
         createAndStartTopic(
@@ -384,22 +373,12 @@ const Pipeline = React.forwardRef((props, ref) => {
           } = topic),
           paperApi,
         );
-        sourceRes = updateLinkConnector(
+        updateLinkConnector(
           { connector: source, topic, link: firstLink },
           paperApi,
         );
-        if (sourceRes.error) {
-          clean({ topic }, paperApi);
-          return;
-        }
-        fromStreamRes = updateStreamLinkFrom(
-          { fromStream, topic, link },
-          paperApi,
-        );
-        if (fromStreamRes.error) {
-          clean({ source, topic }, paperApi);
-          return;
-        }
+        updateStreamLinkFrom({ fromStream, topic, link }, paperApi);
+
         break;
       case CONNECTION_TYPE.STREAM_TOPIC_SINK:
         createAndStartTopic(
@@ -410,19 +389,11 @@ const Pipeline = React.forwardRef((props, ref) => {
           } = topic),
           paperApi,
         );
-        toStreamRes = updateStreamLinkTo({ toStream, topic, link }, paperApi);
-        if (toStreamRes.error) {
-          clean({ topic }, paperApi);
-          return;
-        }
-        sinkRes = updateLinkConnector(
+        updateStreamLinkTo({ toStream, topic, link }, paperApi);
+        updateLinkConnector(
           { connector: sink, topic, link: secondeLink },
           paperApi,
         );
-        if (sinkRes.error) {
-          clean({ to: toStream, topic }, paperApi);
-          return;
-        }
         break;
       case CONNECTION_TYPE.STREAM_TOPIC_STREAM:
         createAndStartTopic(
@@ -433,19 +404,8 @@ const Pipeline = React.forwardRef((props, ref) => {
           } = topic),
           paperApi,
         );
-        toStreamRes = updateStreamLinkTo({ toStream, topic, link }, paperApi);
-        if (toStreamRes.error) {
-          clean({ topic }, paperApi);
-          return;
-        }
-        fromStreamRes = updateStreamLinkFrom(
-          { fromStream, topic, link },
-          paperApi,
-        );
-        if (fromStreamRes.error) {
-          clean({ to: toStream, topic }, paperApi);
-          return;
-        }
+        updateStreamLinkTo({ toStream, topic, link }, paperApi);
+        updateStreamLinkFrom({ fromStream, topic, link }, paperApi);
         break;
       default:
         break;

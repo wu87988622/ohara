@@ -44,13 +44,15 @@ const mockedPaperApi = jest.fn(() => {
 });
 const paperApi = new mockedPaperApi();
 const cell = {};
+const topics = [];
+const connectors = [];
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('update connector should be worked correctly', () => {
+it('should update connector', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -63,7 +65,7 @@ it('update connector should be worked correctly', () => {
         type: actions.updateConnector.TRIGGER,
         payload: {
           values: { ...connectorEntity, jmxPort: 999 },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
     });
@@ -109,21 +111,21 @@ it('update connector multiple times should got latest result', () => {
         type: actions.updateConnector.TRIGGER,
         payload: {
           values: connectorEntity,
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
       b: {
         type: actions.updateConnector.TRIGGER,
         payload: {
           values: { ...connectorEntity, nodeNames: ['n1', 'n2'] },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
       c: {
         type: actions.updateConnector.TRIGGER,
         payload: {
           values: { ...connectorEntity, clientPort: 1234 },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
     });

@@ -38,6 +38,7 @@ export default action$ => {
         map(res => normalize(res.data, schema.connector)),
         map(normalizedData => {
           handleSuccess(values, options);
+
           return actions.updateConnector.success(
             _.merge(normalizedData, { connectorId }),
           );
@@ -55,7 +56,7 @@ export default action$ => {
 };
 
 function handleSuccess(values, options) {
-  if (options.paperApi) return;
+  if (!options.paperApi) return;
 
   const { cell, paperApi, topics, connectors } = options;
   const cells = paperApi.getCells();
@@ -64,7 +65,7 @@ function handleSuccess(values, options) {
   );
   const hasTopicKey = values.topicKeys.length > 0;
   const connectorId = paperApi.getCell(values.name).id;
-  const currentHasTopicKey = currentConnector.topicKeys.length > 0;
+  const currentHasTopicKey = currentConnector?.topicKeys.length > 0;
 
   if (currentHasTopicKey) {
     const topicId = paperApi.getCell(currentConnector.topicKeys[0].name).id;

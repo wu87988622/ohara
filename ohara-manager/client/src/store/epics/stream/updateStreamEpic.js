@@ -58,7 +58,6 @@ function handleSuccess(values, options) {
   const cells = paperApi.getCells();
 
   const currentStream = streams.find(stream => stream.name === values.name);
-
   const hasTo = _.get(values, 'to', []).length > 0;
   const hasFrom = _.get(values, 'from', []).length > 0;
   const currentHasTo = _.get(currentStream, 'to', []).length > 0;
