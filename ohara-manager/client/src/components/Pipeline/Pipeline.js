@@ -143,7 +143,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (currentPipeline?.name) return;
     if (!paperApiRef.current) return;
 
-    paperApiRef.current.clearGraph({ shouldUpdatePipeline: false });
+    paperApiRef.current.clearGraph({ skipGraphEvents: true });
   }, [currentPipeline]);
 
   // Only run this once since we only want to load the graph once and maintain

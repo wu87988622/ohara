@@ -300,56 +300,47 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Binding custom event handlers
     // Graph Events
+
+    // OnChange event handler is called on graph's `add`, `change` and `remove` events
     graph.on('add', (cell, child, options = {}) => {
       if (!paperApi) return;
       if (_.isEqual(cellAddRef.current, cell)) return;
       // half-way link is not counted in the `add` event
       if (cell.isLink() && !cell.target().id) return;
-
-      const {
-        shouldSkipOnElementAdd = false,
-        shouldUpdatePipeline = true,
-      } = options;
-
+      const { skipGraphEvents = false } = options;
       const data = paperUtils.getCellData(cell);
 
-      if (!shouldSkipOnElementAdd) {
+      if (!skipGraphEvents) {
         onCellEventRef.current.onElementAdd(data, paperApi);
-      }
-
-      if (shouldUpdatePipeline) {
         onCellEventRef.current.onChange(paperApi);
       }
 
       updateStatus(cell);
-      // OnChange event handler is called on graph's `add`, `change` and `remove` events
       cellAddRef.current = cell;
     });
 
-    graph.on('change', (cell, updates, options = {}) => {
+    graph.on('change', (cell, options = {}) => {
       if (!paperApi) return;
-      if (_.isEqual(cellChangeRef.current, updates)) return;
+      if (_.isEqual(cellChangeRef.current, options)) return;
       if (cell.isLink() && !cell.target().id) return;
-      const { shouldUpdatePipeline = true } = options;
+      const { skipGraphEvents = false } = options;
 
       updateStatus(cell);
-
-      if (shouldUpdatePipeline) {
+      if (!skipGraphEvents) {
         onCellEventRef.current.onChange(paperApi);
       }
 
-      cellChangeRef.current = updates;
+      cellChangeRef.current = options;
     });
 
     graph.on('remove', (cell, child, options = {}) => {
       if (!paperApi) return;
       if (_.isEqual(cellRemoveRef.current, cell)) return;
       if (cell.isLink() && !cell.target().id) return;
-
-      const { shouldUpdatePipeline = true } = options;
-
+      const { skipGraphEvents = false } = options;
       updateStatus(cell);
-      if (shouldUpdatePipeline) {
+
+      if (!skipGraphEvents) {
         onCellEventRef.current.onChange(paperApi);
       }
 
@@ -650,7 +641,7 @@ const Paper = React.forwardRef((props, ref) => {
           }
         }
       },
-      addLink(sourceId, targetId) {
+      addLink(sourceId, targetId, options) {
         if (typeof sourceId !== 'string') {
           throw new Error(
             `paperApi: addLink(sourceId: string, targetId: string?) invalid argument sourceId`,
@@ -671,22 +662,22 @@ const Paper = React.forwardRef((props, ref) => {
             line: { stroke: 'translate' },
           });
 
-          return graph.addCell(newLink);
+          return graph.addCell(newLink, options);
         }
 
         newLink.target({ id: targetId });
-        graph.addCell(newLink);
+        graph.addCell(newLink, options);
 
         return paperUtils.getCellData(newLink);
       },
-      removeLink(id) {
+      removeLink(id, options) {
         if (typeof id !== 'string') {
           throw new Error(
             `paperApi: removeLink(id: string) invalid argument id`,
           );
         }
 
-        graph.removeCells(graph.getCell(id));
+        graph.removeCells(graph.getCell(id), options);
       },
       getCell(id) {
         if (typeof id !== 'string') {
@@ -732,14 +723,13 @@ const Paper = React.forwardRef((props, ref) => {
                   isSelected: false, // we don't want to recovery this state for now
                 },
                 {
-                  shouldSkipOnElementAdd: true,
-                  shouldUpdatePipeline: false,
+                  skipGraphEvents: true,
                 },
               );
             }
 
             if (type === 'standard.Link') {
-              this.addLink(source.id, target.id);
+              this.addLink(source.id, target.id, { skipGraphEvents: true });
             }
           });
 

@@ -187,7 +187,7 @@ export const createConnection = params => {
           },
         },
         {
-          shouldSkipOnElementAdd: true,
+          skipGraphEvents: true,
         },
       );
 
