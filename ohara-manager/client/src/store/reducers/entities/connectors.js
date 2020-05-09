@@ -22,6 +22,9 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.updateConnector.SUCCESS:
+    case actions.removeConnectorSourceLink.SUCCESS:
+    case actions.removeConnectorSinkLink.SUCCESS:
+    case actions.updateConnectorLink.SUCCESS:
       return assign(state, action.payload.entities.connectors);
 
     case actions.deleteConnector.SUCCESS:

@@ -140,7 +140,7 @@ const connector = () => {
           { ...params, shabondi__source__toTopics: [] },
           options,
         )
-      : removeConnectorSourceLink({ ...params, toicKeys: [] }, options);
+      : removeConnectorSourceLink({ ...params, topicKeys: [] }, options);
   };
 
   const removeSinkLink = (values, topic, paperApi) => {
@@ -152,7 +152,7 @@ const connector = () => {
           { ...params, shabondi__sink__fromTopics: [] },
           options,
         )
-      : removeConnectorSinkLink({ ...params, toicKeys: [] }, options);
+      : removeConnectorSinkLink({ ...params, topicKeys: [] }, options);
   };
 
   return {

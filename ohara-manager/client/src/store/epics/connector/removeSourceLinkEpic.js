@@ -31,7 +31,9 @@ export default action$ => {
     switchMap(({ params, options }) =>
       from(connectorApi.update(params)).pipe(
         map(res => normalize(res.data, schema.connector)),
-        map(entities => actions.removeConnectorSourceLink.success(entities)),
+        map(normalizedData =>
+          actions.removeConnectorSourceLink.success(normalizedData),
+        ),
         startWith(actions.removeConnectorSourceLink.request()),
         catchError(err => {
           options.paperApi.addLink(params.id, options.topic.id);
