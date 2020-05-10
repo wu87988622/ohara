@@ -17,8 +17,8 @@
 package oharastream.ohara.kafka.connector.json;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ public class TestValidation extends OharaTest {
   @Test
   public void testRequiredSettings() {
     String className = CommonUtils.randomString();
-    List<String> topicNames = Collections.singletonList(CommonUtils.randomString());
+    Set<String> topicNames = Collections.singleton(CommonUtils.randomString());
     Validation validation = Validation.of(className, topicNames);
     Assert.assertEquals(className, validation.className());
     Assert.assertEquals(topicNames, validation.topicNames());

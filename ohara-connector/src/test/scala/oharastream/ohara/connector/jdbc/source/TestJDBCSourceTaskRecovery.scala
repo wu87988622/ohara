@@ -100,7 +100,7 @@ class TestJDBCSourceTaskRecovery extends OharaTest {
     )
 
     when(taskSetting.columns).thenReturn(columns.asJava)
-    when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
+    when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
   }
 
   @Test

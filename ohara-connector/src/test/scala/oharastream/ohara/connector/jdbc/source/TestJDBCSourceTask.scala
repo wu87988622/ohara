@@ -104,7 +104,7 @@ class TestJDBCSourceTask extends OharaTest {
     )
 
     when(taskSetting.columns).thenReturn(columns.asJava)
-    when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
+    when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
     jdbcSourceTask.run(taskSetting)
 
     val rows1: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
@@ -223,7 +223,7 @@ class TestJDBCSourceTask extends OharaTest {
     )
 
     when(taskSetting.columns).thenReturn(columns.asJava)
-    when(taskSetting.topicNames()).thenReturn(Seq("topic1").asJava)
+    when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
     when(taskSetting.durationOption(JDBC_FREQUENCE_TIME))
       .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
     jdbcSourceTask.run(taskSetting)

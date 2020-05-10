@@ -35,15 +35,15 @@ public class Validation implements JsonObject {
    * Construct a Validation with basic required arguments only.
    *
    * @param className class name
-   * @param topicsName topic names
+   * @param topicsNames topic names
    * @return validation
    */
-  public static Validation of(String className, List<String> topicsName) {
+  public static Validation of(String className, Set<String> topicsNames) {
     return new Validation(
         ImmutableMap.of(
             ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key(),
                 CommonUtils.requireNonEmpty(className),
-            ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsName)));
+            ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsNames)));
   }
 
   public static Validation of(Map<String, String> settings) {
@@ -105,7 +105,7 @@ public class Validation implements JsonObject {
    *
    * @return topics name
    */
-  public List<String> topicNames() {
-    return StringList.ofKafkaList(value(ConnectorDefUtils.TOPIC_NAMES_DEFINITION));
+  public Set<String> topicNames() {
+    return new HashSet<>(StringList.ofKafkaList(value(ConnectorDefUtils.TOPIC_NAMES_DEFINITION)));
   }
 }

@@ -95,7 +95,7 @@ public class TestCsvSourceConfig extends OharaTest {
   @Test
   public void testTopicNames() {
     CsvSourceConfig config = config(TOPIC_NAMES_DEFINITION.key(), "10");
-    Assert.assertEquals(config.topicNames(), Collections.singletonList("10"));
+    Assert.assertEquals(config.topicNames(), Collections.singleton("10"));
   }
 
   @Test
