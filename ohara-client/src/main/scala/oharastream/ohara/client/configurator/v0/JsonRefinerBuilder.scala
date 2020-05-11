@@ -149,11 +149,11 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
         if (!definition.internal()) requireType[Duration](definition.key())
       case Type.REMOTE_PORT =>
         if (definition.hasDefault)
-          nullToShort(definition.key(), definition.defaultShort)
+          nullToInt(definition.key(), definition.defaultInt())
         if (!definition.internal()) requireConnectionPort(definition.key())
       case Type.BINDING_PORT =>
         if (definition.hasDefault)
-          nullToShort(definition.key(), definition.defaultShort)
+          nullToInt(definition.key(), definition.defaultInt)
         else if (definition.necessary() == Necessary.RANDOM_DEFAULT)
           nullToJsValue(definition.key(), () => JsNumber(CommonUtils.availablePort()))
         if (!definition.internal()) requireConnectionPort(definition.key())

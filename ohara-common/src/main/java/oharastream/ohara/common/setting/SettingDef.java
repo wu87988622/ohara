@@ -525,8 +525,10 @@ public class SettingDef implements JsonObject, Serializable {
    * @return default value in int type
    */
   public int defaultInt() {
-    if (valueType == Type.INT || valueType == Type.POSITIVE_INT)
-      return (int) Objects.requireNonNull(defaultValue);
+    if (valueType == Type.INT
+        || valueType == Type.POSITIVE_INT
+        || valueType == Type.BINDING_PORT
+        || valueType == Type.REMOTE_PORT) return (int) Objects.requireNonNull(defaultValue);
     throw new IllegalStateException("expected type: int, but actual:" + valueType);
   }
 
@@ -952,13 +954,23 @@ public class SettingDef implements JsonObject, Serializable {
     }
 
     /**
-     * set the type to binding REMOTE_PORT
+     * set the type to binding port and add default value.
      *
      * @param defaultValue the default CLASS value
      * @return builder
      */
     public Builder optionalBindingPort(int defaultValue) {
       return checkAndSet(Type.BINDING_PORT, Necessary.OPTIONAL, defaultValue);
+    }
+
+    /**
+     * set the type to remote port and add default value.
+     *
+     * @param defaultValue the default CLASS value
+     * @return builder
+     */
+    public Builder optionalRemotePort(int defaultValue) {
+      return checkAndSet(Type.REMOTE_PORT, Necessary.OPTIONAL, defaultValue);
     }
 
     /**
