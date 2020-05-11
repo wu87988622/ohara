@@ -26,8 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -44,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestCsvRecordConverter extends OharaTest {
-  private final List<String> topicNames = Arrays.asList("T1", "T2");
+  private final Set<String> topicNames = new HashSet<>(Arrays.asList("T1", "T2"));
   private final List<Column> schema =
       Arrays.asList(
           Column.builder().name("cf1").dataType(DataType.STRING).order(0).build(),
@@ -65,7 +67,7 @@ public class TestCsvRecordConverter extends OharaTest {
   private CsvRecordConverter createConverter() {
     return CsvRecordConverter.builder()
         .path(path)
-        .topics(topicNames)
+        .topicNames(topicNames)
         .offsetCache(new FakeOffsetCache())
         .build();
   }
@@ -73,7 +75,7 @@ public class TestCsvRecordConverter extends OharaTest {
   private CsvRecordConverter createConverter(List<Column> schema) {
     return CsvRecordConverter.builder()
         .path(path)
-        .topics(topicNames)
+        .topicNames(topicNames)
         .offsetCache(new FakeOffsetCache())
         .schema(schema)
         .build();
@@ -280,7 +282,7 @@ public class TestCsvRecordConverter extends OharaTest {
     converter =
         CsvRecordConverter.builder()
             .path(path)
-            .topics(topicNames)
+            .topicNames(topicNames)
             .offsetCache(
                 new OffsetCache() {
                   @Override

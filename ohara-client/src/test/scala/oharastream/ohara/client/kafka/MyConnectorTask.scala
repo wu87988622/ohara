@@ -24,7 +24,7 @@ class MyConnectorTask extends RowSourceTask {
   private[this] var lastSent: Long    = 0
   private[this] var topicName: String = _
 
-  override protected def run(settings: TaskSetting): Unit = this.topicName = settings.topicNames().get(0)
+  override protected def run(settings: TaskSetting): Unit = this.topicName = settings.topicNames().iterator().next
 
   override protected def terminate(): Unit = {
     // do nothing

@@ -31,6 +31,7 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.kafka.connector.TaskSetting;
@@ -62,7 +63,7 @@ public interface CsvSourceConfig {
   String encode();
 
   /** @return target topics */
-  List<String> topicNames();
+  Set<String> topicNames();
 
   /** @return the rules to control the output records */
   List<Column> columns();
@@ -127,7 +128,7 @@ public interface CsvSourceConfig {
       }
 
       @Override
-      public List<String> topicNames() {
+      public Set<String> topicNames() {
         return setting.topicNames();
       }
 

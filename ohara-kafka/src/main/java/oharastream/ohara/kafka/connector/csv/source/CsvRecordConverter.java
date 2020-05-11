@@ -40,7 +40,7 @@ public class CsvRecordConverter implements RecordConverter {
   }
 
   private final String path;
-  private final List<String> topics;
+  private final Set<String> topicNames;
   private final List<Column> schema;
 
   private final Map<String, String> partition;
@@ -174,7 +174,7 @@ public class CsvRecordConverter implements RecordConverter {
 
   @VisibleForTesting
   List<RowSourceRecord> toRecords(Row row, int index) {
-    return this.topics.stream()
+    return this.topicNames.stream()
         .map(
             t ->
                 RowSourceRecord.builder()
@@ -190,7 +190,7 @@ public class CsvRecordConverter implements RecordConverter {
       implements oharastream.ohara.common.pattern.Builder<CsvRecordConverter> {
     // Required parameters
     private String path;
-    private List<String> topics;
+    private Set<String> topicNames;
     private OffsetCache offsetCache;
     private int maximumNumberOfLines = Integer.MAX_VALUE;
 
@@ -204,8 +204,8 @@ public class CsvRecordConverter implements RecordConverter {
       return this;
     }
 
-    public Builder topics(List<String> val) {
-      topics = val;
+    public Builder topicNames(Set<String> val) {
+      topicNames = new HashSet<>(Objects.requireNonNull(val));
       return this;
     }
 
@@ -229,7 +229,7 @@ public class CsvRecordConverter implements RecordConverter {
     @Override
     public CsvRecordConverter build() {
       CommonUtils.requireNonEmpty(path);
-      CommonUtils.requireNonEmpty(topics);
+      CommonUtils.requireNonEmpty(topicNames);
       Objects.requireNonNull(offsetCache);
       return new CsvRecordConverter(this);
     }
@@ -237,7 +237,7 @@ public class CsvRecordConverter implements RecordConverter {
 
   private CsvRecordConverter(Builder builder) {
     path = builder.path;
-    topics = builder.topics;
+    topicNames = builder.topicNames;
     schema = builder.schema;
     cache = builder.offsetCache;
     maximumNumberOfLines = builder.maximumNumberOfLines;

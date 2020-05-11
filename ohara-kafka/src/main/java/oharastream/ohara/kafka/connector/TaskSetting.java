@@ -21,11 +21,13 @@ import static oharastream.ohara.common.util.CommonUtils.toDuration;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.setting.ConnectorKey;
@@ -280,8 +282,8 @@ public class TaskSetting {
     return stringValue(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key());
   }
 
-  public List<String> topicNames() {
-    return stringList(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key());
+  public Set<String> topicNames() {
+    return new HashSet<>(stringList(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()));
   }
 
   public List<Column> columns() {
