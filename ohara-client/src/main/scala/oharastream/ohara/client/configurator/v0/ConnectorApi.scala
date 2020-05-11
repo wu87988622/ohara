@@ -98,7 +98,7 @@ object ConnectorApi {
     def partitionClass: String = settings.partitionerClass.get
   }
 
-  val DEFINITIONS: Map[String, SettingDef] = ConnectorDefUtils.DEFAULT.asScala.toMap
+  val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala.values.toSeq
 
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
@@ -107,7 +107,7 @@ object ConnectorApi {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
-      .definitions(DEFINITIONS.values.toSeq)
+      .definitions(DEFINITIONS)
       .rejectEmptyString()
       .valueChecker(
         COLUMNS_KEY, {

@@ -888,11 +888,11 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def nameDefinitionShouldBeNonUpdatable(): Unit =
-    StreamApi.DEFINITIONS(NAME_KEY).permission() shouldBe Permission.CREATE_ONLY
+    StreamApi.DEFINITIONS.find(_.key() == NAME_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def groupDefinitionShouldBeNonUpdatable(): Unit =
-    StreamApi.DEFINITIONS(GROUP_KEY).permission() shouldBe Permission.CREATE_ONLY
+    StreamApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
   def testMaxHeap(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""

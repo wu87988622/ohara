@@ -133,15 +133,19 @@ private[configurator] object TopicRoute {
   private[this] def creationToTopicInfo(
     creation: Creation
   )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[TopicInfo] =
-    objectChecker.checkList.brokerCluster(creation.brokerClusterKey).check().map { _ =>
-      TopicInfo(
-        settings = creation.settings,
-        partitionInfos = Seq.empty,
-        nodeMetrics = Map.empty,
-        state = None,
-        lastModified = CommonUtils.current()
-      )
-    }
+    objectChecker.checkList
+      .brokerCluster(creation.brokerClusterKey)
+      .references(creation.settings, DEFINITIONS)
+      .check()
+      .map { _ =>
+        TopicInfo(
+          settings = creation.settings,
+          partitionInfos = Seq.empty,
+          nodeMetrics = Map.empty,
+          state = None,
+          lastModified = CommonUtils.current()
+        )
+      }
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,

@@ -25,7 +25,7 @@ import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.shabondi.ShabondiDefinitions
+import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -68,7 +68,17 @@ final object ShabondiApi {
     private val updating         = new ShabondiClusterUpdating(noJsNull(settings))
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
-    def shabondiClass: String         = updating.shabondiClass.get
+    def shabondiClass: String = updating.shabondiClass.get
+
+    /**
+      * a helper to fetch the related definitions.
+      * @return definitions to this shabondi type
+      */
+    def definitions: Seq[SettingDef] =
+      if (shabondiClass == ShabondiType.Source.className) SOURCE_ALL_DEFINITIONS
+      else if (shabondiClass == ShabondiType.Sink.className) SOURCE_ALL_DEFINITIONS
+      else throw DeserializationException(s"$shabondiClass is NOT supported")
+
     def clientPort: Int               = updating.clientPort.get
     def brokerClusterKey: ObjectKey   = updating.brokerClusterKey.get
     def sourceToTopics: Set[TopicKey] = updating.sourceToTopics.getOrElse(null)

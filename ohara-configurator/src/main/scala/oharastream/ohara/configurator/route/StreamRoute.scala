@@ -61,6 +61,7 @@ private[configurator] object StreamRoute {
           )
         creation.toTopicKeys
       }
+      .references(creation.settings, DEFINITIONS)
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>
@@ -128,7 +129,7 @@ private[configurator] object StreamRoute {
               creationToClusterInfo(
                 access.request
                   .settings(previous.settings)
-                  .settings(keepEditableFields(updating.settings, StreamApi.DEFINITIONS.values.toSeq))
+                  .settings(keepEditableFields(updating.settings, StreamApi.DEFINITIONS))
                   // the key is not in update's settings so we have to add it to settings
                   .key(key)
                   .creation

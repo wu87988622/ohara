@@ -37,6 +37,7 @@ object WorkerRoute {
       .brokerCluster(creation.brokerClusterKey)
       .files(creation.pluginKeys)
       .files(creation.sharedJarKeys)
+      .references(creation.settings, DEFINITIONS)
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>

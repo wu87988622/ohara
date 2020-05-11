@@ -1484,7 +1484,7 @@ class TestJsonRefiner extends OharaTest {
 
     val key2 = CommonUtils.randomString()
     an[DeserializationException] should be thrownBy format
-      .more(SettingDef.builder().key(key2).build())
+      .more(Seq(SettingDef.builder().key(key2).build()))
       .read(s"""
                |  {
                |    "$key": "a"
