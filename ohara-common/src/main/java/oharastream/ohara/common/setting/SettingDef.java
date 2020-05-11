@@ -66,6 +66,7 @@ public class SettingDef implements JsonObject, Serializable {
   // -------------------------------[reference]-------------------------------//
   public enum Reference {
     NONE,
+    NODE,
     TOPIC,
     ZOOKEEPER_CLUSTER,
     BROKER_CLUSTER,

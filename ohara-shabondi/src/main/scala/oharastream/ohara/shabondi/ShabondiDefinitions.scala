@@ -130,8 +130,9 @@ object ShabondiDefinitions {
     .key("nodeNames")
     .orderInGroup(orderInGroup())
     .optional(Type.ARRAY)
+    .reference(SettingDef.Reference.NODE)
     .displayName("Node name list")
-    .documentation("The used node name list of this shabondi. Currently, only one node supported.")
+    .documentation("The node which Shabondi deployed. Only one node supported currently.")
     .build
     .registerTo(basicDefinitionMap)
 
