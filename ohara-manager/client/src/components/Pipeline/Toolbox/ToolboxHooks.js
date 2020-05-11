@@ -78,7 +78,7 @@ export const useToolboxHeight = ({ expanded, searchResults, connectors }) => {
     const toolboxOffsetTop = toolboxRef.current.state.y + 8; // offset top of toolbox
     const toolboxHeaderHeight = toolboxHeaderRef.current.clientHeight;
     const summaryHeight = panelSummaryRef.current.clientHeight * 4; // we have 4 summaries
-    const itemHeight = 40; // The item is added by JointJS, we cannot get the height, therefore, the hard coded value
+    const itemHeight = 38; // Since the item is added by JointJS, we cannot get the height, therefore, the hard coded value
     const addButtonHeight = panelAddButtonRef.current.clientHeight;
     const toolbarHeight = 72;
 
