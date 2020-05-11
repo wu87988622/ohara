@@ -76,7 +76,6 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
           )
       )
       names.foreach { name =>
-        result(containerClient.volumes()).size shouldBe names.size
         result(containerClient.volumes(name)).head.path shouldBe "/tmp"
         result(containerClient.volumes(name)).head.name shouldBe name
         result(containerClient.volumes(name)).head.nodeName shouldBe platform.nodeNames.head
