@@ -47,7 +47,8 @@ const updateWorkspace$ = (values, isRollback) =>
   of(
     defer(() =>
       workspaceApi.update({
-        ...values,
+        name: values.name,
+        group: values.group,
         worker: null,
         broker: null,
         zookeeper: null,
