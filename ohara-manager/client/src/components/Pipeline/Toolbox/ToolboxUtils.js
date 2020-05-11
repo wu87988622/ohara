@@ -131,8 +131,8 @@ export const createToolboxList = params => {
   displaySources.forEach((source, index) => {
     sourceGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 40 },
-        size: { width: 272 - 8 * 2, height: 40 },
+        position: { x: 10, y: index * 38 },
+        size: { width: 272 - 8 * 2, height: 38 },
         name: source.name,
         kind: source.kind,
         icon: sourceIcon,
@@ -151,8 +151,8 @@ export const createToolboxList = params => {
 
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 40 },
-        size: { width: 272 - 8 * 2, height: 40 },
+        position: { x: 10, y: index * 38 },
+        size: { width: 272 - 8 * 2, height: 38 },
         name: topic.name,
         kind: topic.kind,
         className: topic.className,
@@ -170,8 +170,8 @@ export const createToolboxList = params => {
   displayStreams.forEach((stream, index) => {
     streamGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 40 },
-        size: { width: 272 - 8 * 2, height: 40 },
+        position: { x: 10, y: index * 38 },
+        size: { width: 272 - 8 * 2, height: 38 },
         name: stream.name,
         kind: stream.kind,
         icon: streamIcon,
@@ -186,8 +186,8 @@ export const createToolboxList = params => {
   displaySinks.forEach((sink, index) => {
     sinkGraph.current.addCell(
       new joint.shapes.html.Element({
-        position: { x: 10, y: index * 40 },
-        size: { width: 272 - 8 * 2, height: 40 },
+        position: { x: 10, y: index * 38 },
+        size: { width: 272 - 8 * 2, height: 38 },
         name: sink.name,
         kind: sink.kind,
         icon: sinkIcon,
