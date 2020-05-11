@@ -68,10 +68,7 @@ export default function reducer(state = initialState, action) {
         progress: {
           ...state.progress,
           isPause: true,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Pause Restart workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [SUSPEND]` }],
         },
       };
     case actions.resumeRestartWorkspace.TRIGGER:
@@ -80,10 +77,7 @@ export default function reducer(state = initialState, action) {
         progress: {
           ...state.progress,
           isPause: true,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Resume Restart workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [RESUME]` }],
         },
       };
     case actions.rollbackRestartWorkspace.TRIGGER:
@@ -91,10 +85,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Rollback Restart workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [ROLLBACK]` }],
         },
       };
     case actions.autoCloseRestartWorkspace.TRIGGER:
@@ -307,6 +298,7 @@ export default function reducer(state = initialState, action) {
           ...state.progress,
           activeStep: 7,
           message: 'Restart workspace success... (100% complete)',
+          isPause: false,
         },
       };
     default:

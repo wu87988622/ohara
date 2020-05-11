@@ -62,10 +62,7 @@ export default function reducer(state = initialState, action) {
         progress: {
           ...state.progress,
           isPause: true,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Pause delete workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [PAUSE]` }],
         },
       };
     case actions.resumeDeleteWorkspace.TRIGGER:
@@ -74,10 +71,7 @@ export default function reducer(state = initialState, action) {
         progress: {
           ...state.progress,
           isPause: true,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Resume delete workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [RESUME]` }],
         },
       };
     case actions.rollbackDeleteWorkspace.TRIGGER:
@@ -85,10 +79,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
-          log: [
-            ...state.progress.log,
-            { title: `${now} Rollback delete workspace...` },
-          ],
+          log: [...state.progress.log, { title: `${now} [ROLLBACK]` }],
         },
       };
     case actions.autoCloseDeleteWorkspace.TRIGGER:
