@@ -47,9 +47,8 @@ const AddTopicDialog = props => {
       name: topicName,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
-      tags: {
-        isShared: true,
-      },
+      displayName: topicName,
+      isShared: true,
     });
     setTimeout(form.reset);
     closeDialog();

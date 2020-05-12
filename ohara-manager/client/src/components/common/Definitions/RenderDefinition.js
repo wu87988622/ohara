@@ -59,22 +59,6 @@ const RenderDefinition = props => {
     freePorts,
   } = props;
 
-  const finalTopics = topics.map(topic => {
-    const { name, tags } = topic;
-    const finalTopic = { name: '', tags: { displayName: '' } };
-    if (!tags.isShared) {
-      finalTopic.name = tags.displayName;
-      finalTopic.tags.displayName = name;
-      finalTopic.tags.isShared = tags.isShared;
-    } else {
-      finalTopic.name = name;
-      finalTopic.tags.displayName = name;
-      finalTopic.tags.isShared = tags.isShared;
-    }
-
-    return finalTopic;
-  });
-
   const parseValueByType = type => value => {
     // we only convert the necessary values to correct type
     return isNumberType(type) ? toNumber(value) : value;
@@ -210,7 +194,7 @@ const RenderDefinition = props => {
           return RenderField({
             ...def,
             input: Reference,
-            list: finalTopics,
+            list: topics,
           });
 
         case ReferenceEnum.FILE:

@@ -31,9 +31,10 @@ export default (action$, state$) =>
       defer(() => {
         const getDevToolTopicData = selectors.makeGetDevToolTopicData();
         const topicData = getDevToolTopicData(state$.value);
+        const topicName = topicData.query.name;
         return inspectApi.getTopicData({
           key: {
-            name: topicData.query.name,
+            name: topicName,
             group: values.group,
           },
           limit: topicData.query.limit,

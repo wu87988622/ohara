@@ -151,13 +151,10 @@ function TopicTable(props) {
           {
             title: 'Name',
             customFilterAndSearch: (filterValue, topic) => {
-              const isShared = topic?.tags?.isShared;
-              const value = isShared ? topic.name : topic?.tags?.displayName;
-              return includes(toUpper(value), toUpper(filterValue));
+              return includes(toUpper(topic.displayName), toUpper(filterValue));
             },
             render: topic => {
-              const isShared = topic?.tags?.isShared;
-              return isShared ? topic.name : topic?.tags?.displayName;
+              return topic.displayName;
             },
           },
           {

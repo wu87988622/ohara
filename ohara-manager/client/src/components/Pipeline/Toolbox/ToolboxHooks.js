@@ -31,11 +31,11 @@ export const useTopics = () => {
   };
 
   const topics = [pipelineOnlyTopic, ...topicsDataInToolBox].map(topic => ({
-    displayName: topic.tags.displayName || '',
+    displayName: topic.displayName || '',
     kind: KIND.topic,
     className: KIND.topic,
     name: topic.name,
-    isShared: topic.tags.isShared,
+    isShared: topic.isShared,
     status: topic.state,
   }));
 

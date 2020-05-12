@@ -15,7 +15,7 @@
  */
 
 import { normalize } from 'normalizr';
-import { merge } from 'lodash';
+import { merge, get } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, forkJoin, from } from 'rxjs';
 import {
@@ -26,12 +26,15 @@ import {
   throttleTime,
 } from 'rxjs/operators';
 
+import { UISettingDef, Type } from 'api/apiInterface/definitionInterface';
 import * as brokerApi from 'api/brokerApi';
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
+
+const addSettingDefByKeyAndType = (key, type) => new UISettingDef(key, type);
 
 const fetchBroker$ = params => {
   const brokerId = getId(params);
@@ -41,6 +44,15 @@ const fetchBroker$ = params => {
       map(data => normalize(data, schema.broker)),
     ),
     defer(() => inspectApi.getBrokerInfo(params)).pipe(
+      // add UI SettingDef to the broker info
+      // Note: it is a workaround solution!
+      map(res => {
+        get(res.data.classInfos, '[0].settingDefinitions', []).push(
+          addSettingDefByKeyAndType('displayName', Type.STRING),
+          addSettingDefByKeyAndType('isShared', Type.BOOLEAN),
+        );
+        return res;
+      }),
       map(res => merge(res.data, params)),
       map(data => normalize(data, schema.info)),
     ),

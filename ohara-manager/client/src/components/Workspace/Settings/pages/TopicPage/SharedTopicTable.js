@@ -35,9 +35,8 @@ function SharedTopicTable() {
           ...topicToCreate,
           numberOfPartitions: Number(topicToCreate?.numberOfPartitions),
           numberOfReplications: Number(topicToCreate?.numberOfReplications),
-          tags: {
-            isShared: true,
-          },
+          displayName: topicToCreate.name,
+          isShared: true,
         },
         {
           onSuccess: () => resolve(),

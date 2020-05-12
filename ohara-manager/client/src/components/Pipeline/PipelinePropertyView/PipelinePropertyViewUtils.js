@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import _ from 'lodash';
 import WavesIcon from '@material-ui/icons/Waves';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
@@ -70,9 +69,8 @@ export const tags = params => {
   const displayValue =
     value.length > 2 ? value.substring(0, 30) + dots + '}' : value;
   const isTruncated = displayValue.endsWith(dots + '}');
-  const isPipelineTopic =
-    settings.classType === 'topic' && _.has(settings, 'tags.isShared');
-  const name = isPipelineTopic ? settings.tags.displayName : settings.name;
+  const isPipelineTopic = settings.classType === 'topic' && !settings.isShared;
+  const name = isPipelineTopic ? settings.displayName : settings.name;
 
   return (
     <PropertyField

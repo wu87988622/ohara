@@ -21,7 +21,6 @@ import { useLocation, useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { Typography } from '@material-ui/core';
 
-import { usePrevious } from 'utils/hooks';
 import { TAB } from 'context/devTool/const';
 import { ViewTopic, ViewLog } from './View';
 import * as hooks from 'hooks';
@@ -34,13 +33,12 @@ const cache = new CellMeasurerCache({
 
 const WindowDiv = styled.div`
   height: 100vh;
+  overflow: auto;
 `;
 
 const DataWindow = () => {
   const location = useLocation();
   const { workspaceName, pipelineName } = useParams();
-  const switchWorkspace = hooks.useSwitchWorkspaceAction();
-  const switchPipeline = hooks.useSwitchPipelineAction();
   const isWorkspaceReady = hooks.useIsWorkspaceReady();
   const isTopicDataQueried = hooks.useIsDevToolTopicDataQueried();
   const isLogQueried = hooks.useIsDevToolLogQueried();
@@ -63,8 +61,7 @@ const DataWindow = () => {
   const startTime = searchParams.get('startTime') || '';
   const endTime = searchParams.get('endTime') || '';
 
-  const prevWorkspaceName = usePrevious(workspaceName);
-  const prevPipelineName = usePrevious(pipelineName);
+  hooks.useInitializeApp(workspaceName, pipelineName);
 
   React.useEffect(() => {
     function handleResize() {
@@ -76,18 +73,6 @@ const DataWindow = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []); // Empty array ensures that effect is only run on mount and unmount
-
-  React.useEffect(() => {
-    if (workspaceName && workspaceName !== prevWorkspaceName) {
-      switchWorkspace(workspaceName);
-    }
-  }, [prevWorkspaceName, switchWorkspace, workspaceName]);
-
-  React.useEffect(() => {
-    if (pipelineName && pipelineName !== prevPipelineName) {
-      switchPipeline(pipelineName);
-    }
-  }, [pipelineName, prevPipelineName, switchPipeline]);
 
   React.useEffect(() => {
     if (isWorkspaceReady && !isTopicDataQueried) {
@@ -132,7 +117,11 @@ const DataWindow = () => {
 
   switch (type) {
     case TAB.topic:
-      return <ViewTopic />;
+      return (
+        <WindowDiv>
+          <ViewTopic />
+        </WindowDiv>
+      );
     case TAB.log:
       return (
         <WindowDiv>

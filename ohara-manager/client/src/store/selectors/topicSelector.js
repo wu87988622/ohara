@@ -50,10 +50,10 @@ export const getTopicsByGroup = createSelector(
 
 export const getSharedTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => filter(topics, topic => topic?.tags?.isShared === true),
+  topics => filter(topics, topic => topic?.isShared === true),
 );
 
 export const getPipelineOnlyTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => filter(topics, topic => topic?.tags?.isShared === false),
+  topics => filter(topics, topic => topic?.isShared === false),
 );

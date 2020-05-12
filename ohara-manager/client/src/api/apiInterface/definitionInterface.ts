@@ -136,6 +136,40 @@ export interface SettingDef {
   prefix?: string;
 }
 
+export class UISettingDef implements SettingDef {
+  key: string;
+  group: string;
+  displayName: string;
+  orderInGroup: number;
+  valueType: Type;
+  necessary: Necessary;
+  defaultValue?: any;
+  documentation: string;
+  reference?: Reference | undefined;
+  regex?: string | undefined;
+  internal: boolean;
+  permission: Permission;
+  tableKeys: TableColumn[];
+  recommendedValues: string[];
+  blacklist: string[];
+  prefix?: string | undefined;
+
+  constructor(key: string, type: Type) {
+    this.key = key;
+    this.group = 'default';
+    this.displayName = key;
+    this.orderInGroup = -1;
+    this.valueType = type;
+    this.necessary = Necessary.REQUIRED;
+    this.documentation = `${key} of UI SettingDef`;
+    this.internal = true;
+    this.permission = Permission.CREATE_ONLY;
+    this.tableKeys = [];
+    this.recommendedValues = [];
+    this.blacklist = [];
+  }
+}
+
 export interface ClassInfo {
   classType: string;
   className: string;
