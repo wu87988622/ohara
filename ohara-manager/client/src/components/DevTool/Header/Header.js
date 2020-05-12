@@ -63,7 +63,9 @@ const Header = () => {
       if (tabName === TAB.log) {
         setLogQueryParams({ logType: KIND.broker });
       } else {
-        setTopicQueryParams(get(selectedCell, CELL_PROPS.displayName, ''));
+        setTopicQueryParams({
+          name: get(selectedCell, CELL_PROPS.name, ''),
+        });
       }
     } else if (!isEmpty(kind)) {
       // the selected cell is a source, sink, or stream

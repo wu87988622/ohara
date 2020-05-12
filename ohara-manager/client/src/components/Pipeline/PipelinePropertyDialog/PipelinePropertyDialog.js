@@ -16,7 +16,7 @@
 
 import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { find, filter, isEmpty, capitalize, pick, isArray, get } from 'lodash';
+import { find, capitalize, pick, isArray, get } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -105,23 +105,12 @@ const PipelinePropertyDialog = props => {
       values[key] = [];
       return;
     }
-    const isPipelineOnlyTopic = !isEmpty(
-      filter(values[key], topicKey => topicKey.startsWith('T')),
+
+    const matchedTopic = find(
+      currentTopics,
+      topic => topic.displayName === values[key],
     );
-    if (isPipelineOnlyTopic) {
-      const pipelineOnlyTopic = find(
-        currentTopics,
-        topic => topic.tags.displayName === values[key],
-      );
-      values[key] = [
-        { name: pipelineOnlyTopic.name, group: pipelineOnlyTopic.group },
-      ];
-    } else {
-      const publicTopic = currentTopics.filter(
-        topic => topic.name === values[key],
-      )[0];
-      values[key] = [{ name: publicTopic.name, group: publicTopic.group }];
-    }
+    values[key] = [{ name: matchedTopic.name, group: matchedTopic.group }];
   };
 
   const isJsonString = str => {

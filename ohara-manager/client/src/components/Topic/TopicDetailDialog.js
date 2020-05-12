@@ -48,9 +48,6 @@ const Wrapper = styled.div(
 const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
   if (!topic) return null;
 
-  const isShared = topic?.tags?.isShared;
-  const displayName = isShared ? topic?.name : topic?.tags?.displayName;
-
   return (
     <Dialog
       open={isOpen}
@@ -71,7 +68,7 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
                   <TableBody>
                     <TableRow>
                       <TableCell>Name</TableCell>
-                      <TableCell>{displayName}</TableCell>
+                      <TableCell>{topic.displayName}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Partitions</TableCell>
@@ -88,7 +85,7 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
                     <TableRow>
                       <TableCell>Type</TableCell>
                       <TableCell>
-                        <TopicChip isShared={isShared} />
+                        <TopicChip isShared={topic.isShared} />
                       </TableCell>
                     </TableRow>
                     <TableRow>

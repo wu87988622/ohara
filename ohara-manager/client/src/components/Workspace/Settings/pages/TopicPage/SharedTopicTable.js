@@ -33,11 +33,10 @@ function SharedTopicTable() {
       createAndStartTopic(
         {
           ...topicToCreate,
+          displayName: topicToCreate.name,
+          isShared: true,
           numberOfPartitions: Number(topicToCreate?.numberOfPartitions),
           numberOfReplications: Number(topicToCreate?.numberOfReplications),
-          tags: {
-            isShared: true,
-          },
         },
         {
           onSuccess: () => resolve(),

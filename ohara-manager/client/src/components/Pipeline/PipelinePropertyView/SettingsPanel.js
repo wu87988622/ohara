@@ -50,8 +50,8 @@ const SettingsPanel = props => {
     const { settingDefinitions: defs } = settings;
     const currentSetting =
       key === 'name'
-        ? settings.tags?.displayName
-          ? settings.tags.displayName
+        ? settings?.displayName
+          ? settings.displayName
           : settings[key]
         : settings[key];
     const defValueType = defUtils.Type;
@@ -81,9 +81,7 @@ const SettingsPanel = props => {
           .map(value => {
             if (topics.map(topic => topic.name).includes(value)) {
               const topic = topics.find(topic => topic.name === value);
-              return topic.tags?.displayName
-                ? topic.tags?.displayName
-                : topic.name;
+              return topic?.displayName ? topic.displayName : topic.name;
             } else {
               return value;
             }
@@ -158,9 +156,7 @@ const SettingsPanel = props => {
 SettingsPanel.propTypes = {
   settings: PropTypes.shape({
     settingDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
-    tags: PropTypes.shape({
-      displayName: PropTypes.string,
-    }).isRequired,
+    displayName: PropTypes.string.isRequired,
   }).isRequired,
   setTags: PropTypes.func.isRequired,
   setFullTagViewDialogOpen: PropTypes.func.isRequired,

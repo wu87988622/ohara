@@ -33,10 +33,6 @@ import { StyledSearchBody } from './ControllerStyles';
 
 const ControllerTopic = () => {
   const topics = hooks.useTopicsInWorkspace();
-  const displayTopicNames = topics.map(topic => {
-    // pipeline only topic names are stored in tags, the name field is randomly generated.
-    return topic.tags.isShared ? topic.name : topic.tags.displayName;
-  });
 
   const setTopicQueryParams = hooks.useSetDevToolTopicQueryParams();
   const refetchTopic = hooks.useRefetchDevToolTopicDataAction();
@@ -45,32 +41,10 @@ const ControllerTopic = () => {
 
   const prevName = usePrevious(name);
 
-  const pipelineOnlyTopic =
-    // Only pipeline only topics are able to use capital letters as name
-    name.startsWith('T') &&
-    topics.find(topic => topic.tags.displayName === name);
-  const actualTopicName = pipelineOnlyTopic ? pipelineOnlyTopic.name : name;
-
-  // React.useEffect(() => {
-  //   if (lastUpdated && prevName === name) return;
-  //   if (isEmpty(name)) return;
-
-  //   if (!topics.map(topic => topic.name).includes(actualTopicName)) return;
-  //   fetchTopicData();
-  // }, [
-  //   lastUpdated,
-  //   limit,
-  //   name,
-  //   actualTopicName,
-  //   prevName,
-  //   topics,
-  //   fetchTopicData,
-  // ]);
-
   const handleOpenNewWindow = () => {
     if (name)
       window.open(
-        `${window.location}/view?type=${TAB.topic}&topicName=${actualTopicName}&topicLimit=${limit}`,
+        `${window.location}/view?type=${TAB.topic}&topicName=${name}&topicLimit=${limit}`,
       );
   };
 
@@ -84,12 +58,16 @@ const ControllerTopic = () => {
     <>
       <Tooltip title="Select topic">
         <Select
-          value={displayTopicNames.includes(name) ? name : ''}
+          value={topics.find(topic => topic.name === name)?.displayName || ''}
           onChange={event =>
             prevName !== event.target.value &&
-            setTopicQueryParams({ name: event.target.value })
+            setTopicQueryParams({
+              name: topics.find(
+                topic => topic.displayName === event.target.value,
+              ).name,
+            })
           }
-          list={displayTopicNames}
+          list={topics.map(topic => topic.displayName)}
           disabled={isFetching}
         />
       </Tooltip>

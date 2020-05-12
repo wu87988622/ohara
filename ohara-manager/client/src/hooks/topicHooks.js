@@ -189,7 +189,7 @@ export const useTopicsInToolbox = () => {
       state =>
         reject(
           selectors.getTopicsByGroup(state, { group }),
-          topic => !topic.tags.isShared || topic.state !== 'RUNNING',
+          topic => !topic.isShared || topic.state !== 'RUNNING',
         ),
       [group],
     ),
@@ -216,12 +216,8 @@ export const useTopicsInPipeline = () => {
             ({ name, group }) => name === topic.name && group === topic.group,
           );
         }).sort((current, next) => {
-          const currentName = current.tags.isShared
-            ? current.name
-            : current.tags.displayName;
-          const nextName = next.tags.isShared
-            ? next.name
-            : next.tags.displayName;
+          const currentName = current.displayName;
+          const nextName = next.displayName;
           return currentName.localeCompare(nextName);
         });
       },

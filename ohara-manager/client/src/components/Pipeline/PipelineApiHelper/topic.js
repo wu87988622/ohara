@@ -21,7 +21,6 @@ const topic = () => {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const toolBoxTopics = hooks.useTopicsInToolbox();
-  const currentPipelineName = hooks.usePipelineName();
 
   const createAndStart = (params, paperApi) => {
     const { id, name, displayName, isShared } = params;
@@ -37,11 +36,8 @@ const topic = () => {
       {
         id,
         name,
-        tags: {
-          isShared: false,
-          displayName,
-          pipelineName: currentPipelineName,
-        },
+        displayName,
+        isShared: false,
       },
       { paperApi },
     );

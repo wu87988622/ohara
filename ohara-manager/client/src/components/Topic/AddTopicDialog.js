@@ -45,11 +45,10 @@ const AddTopicDialog = props => {
     const { name: topicName } = values;
     createAndStartTopic({
       name: topicName,
+      displayName: topicName,
+      isShared: true,
       numberOfPartitions: Number(values.numberOfPartitions),
       numberOfReplications: Number(values.numberOfReplications),
-      tags: {
-        isShared: true,
-      },
     });
     setTimeout(form.reset);
     closeDialog();

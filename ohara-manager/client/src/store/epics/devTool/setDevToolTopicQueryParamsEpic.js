@@ -54,6 +54,7 @@ export default action$ =>
                   }),
                   actions.fetchDevToolTopicData.trigger({
                     group: values.topicGroup,
+                    topics: values.topics,
                   }),
                 ],
                 asapScheduler,

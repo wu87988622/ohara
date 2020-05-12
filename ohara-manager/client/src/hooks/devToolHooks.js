@@ -32,9 +32,10 @@ export const useIsDevToolTopicDataQueried = () => {
 export const useFetchDevToolTopicDataAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useTopicGroup();
+  const topics = hooks.useTopicsInWorkspace();
   return useCallback(
-    () => dispatch(actions.fetchDevToolTopicData.trigger({ group })),
-    [dispatch, group],
+    () => dispatch(actions.fetchDevToolTopicData.trigger({ group, topics })),
+    [dispatch, group, topics],
   );
 };
 export const useRefetchDevToolTopicDataAction = () => {
@@ -44,15 +45,18 @@ export const useRefetchDevToolTopicDataAction = () => {
 export const useSetDevToolTopicQueryParams = () => {
   const dispatch = useDispatch();
   const topicGroup = hooks.useTopicGroup();
+  // we need to pass topics here since fetchTopicData should be triggered after setting
+  const topics = hooks.useTopicsInWorkspace();
   return useCallback(
     params =>
       dispatch(
         actions.setDevToolTopicQueryParams.trigger({
           params,
           topicGroup,
+          topics,
         }),
       ),
-    [dispatch, topicGroup],
+    [dispatch, topicGroup, topics],
   );
 };
 

@@ -32,7 +32,6 @@ const ViewTopic = () => {
   const [viewTopicMessage, setViewTopicMessage] = React.useState({});
 
   const { data, isFetching } = hooks.useDevToolTopicData();
-  const messages = get(data, 'messages', []);
 
   const getHeaders = messages => {
     let headers = [];
@@ -110,9 +109,9 @@ const ViewTopic = () => {
     <>
       <Table
         fixedHeader
-        headers={getHeaders(messages).map(header => capitalize(header))}
+        headers={getHeaders(data).map(header => capitalize(header))}
         isLoading={isFetching}
-        children={renderDataBody(messages)}
+        children={renderDataBody(data)}
         testId="view-topic-table"
       />
       <Dialog
