@@ -726,4 +726,26 @@ public class TestSettingDef extends OharaTest {
         def.toJsonString(), def.toJsonString().contains(SettingDef.DEFAULT_VALUE_KEY));
     Assert.assertFalse(def.toJsonString(), def.toJsonString().contains(SettingDef.PREFIX_KEY));
   }
+
+  @Test
+  public void testDefaultShortOnBindingPort() {
+    Assert.assertEquals(
+        12345,
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optionalBindingPort(12345)
+            .build()
+            .defaultInt());
+  }
+
+  @Test
+  public void testDefaultShortOnRemotePort() {
+    Assert.assertEquals(
+        12345,
+        SettingDef.builder()
+            .key(CommonUtils.randomString())
+            .optionalRemotePort(12345)
+            .build()
+            .defaultInt());
+  }
 }
