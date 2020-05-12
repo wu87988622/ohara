@@ -103,12 +103,12 @@ Network Configurations
 
 We are trying to do everything for you. However, your network your
 problem (reference to Hadoop’s
-`motto <https://wiki.apache.org/hadoop/YourNetworkYourProblem>`__. A bad
+`motto <https://cwiki.apache.org/confluence/display/HADOOP2/YourNetworkYourProblem>`__. A bad
 network configurations can bring any kind of exception in any time, and
 it is hard to diagnose your network problems. In order to make each
 container be able to find each other, please ensure following common
 problems (reference to
-`Hadoop <https://wiki.apache.org/hadoop/YourNetworkYourProblem>`__
+`Hadoop <https://cwiki.apache.org/confluence/display/HADOOP2/YourNetworkYourProblem>`__
 again) don’t happen on your nodes.
 
 1. DNS and reverse DNS broken/non-existent.
