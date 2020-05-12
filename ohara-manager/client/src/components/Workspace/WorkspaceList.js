@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, toNumber, size, filter, isEqual } from 'lodash';
+import { toNumber, size, filter, isEqual } from 'lodash';
 import moment from 'moment';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
@@ -71,32 +71,30 @@ function WorkspaceList() {
 
   const pickBrokerKey = object => {
     return {
-      name: get(object, 'brokerClusterKey.name'),
-      group: get(object, 'brokerClusterKey.group'),
+      name: object?.brokerClusterKey?.name,
+      group: object?.brokerClusterKey?.group,
     };
   };
+
+  const workspaceCount = size(workspaces);
 
   return (
     <>
       <Dialog
         open={isOpen}
         onClose={close}
-        title={`Showing ${size(workspaces)} workspaces`}
+        title={`Showing ${workspaceCount} ${
+          workspaceCount > 1 ? 'workspaces' : 'workspace'
+        }`}
         showActions={false}
         maxWidth="md"
       >
         <Wrapper>
           <Grid container spacing={2}>
             {workspaces.map(workspace => {
-              const name = get(workspace, 'name');
-              const nodeNames = get(workspace, 'nodeNames');
-
-              const lastModified = get(
-                workspace,
-                // TODO: Displaying `stagingSettings` for now. This is not the correct
-                // place to get the date, we should come back and fix this
-                'stagingSettings.lastModified',
-              );
+              const name = workspace?.name;
+              const nodeNames = workspace?.nodeNames;
+              const lastModified = workspace?.lastModified;
 
               const avatarText = name.substring(0, 2).toUpperCase();
               const updatedText = moment(toNumber(lastModified)).fromNow();
