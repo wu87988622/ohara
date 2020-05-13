@@ -156,7 +156,6 @@ function WorkspaceNodesPage() {
           nodes: allNodes,
           options: {
             selectedNodes: nodesInWorkspace,
-            showAddIcon: true,
           },
           title: 'All nodes',
         }}
