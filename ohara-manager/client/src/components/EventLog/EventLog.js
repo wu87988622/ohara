@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { isEmpty, delay, get, size, take } from 'lodash';
+import { isEmpty, delay, size, take } from 'lodash';
 
 import StatusBar from 'components/common/StatusBar';
 import EventLogList from './EventLogList';
@@ -41,8 +41,8 @@ const EventLog = () => {
   }, [fetchEventLogs]);
 
   React.useEffect(() => {
-    const unlimited = get(settings, 'unlimited');
-    const limit = get(settings, 'limit');
+    const unlimited = settings?.unlimited;
+    const limit = settings?.limit;
 
     if (unlimited || isEmpty(logs)) return;
 
@@ -67,8 +67,8 @@ const EventLog = () => {
     const count = size(logs);
     if (!count) return 'No log';
 
-    const limit = get(settings, 'data.limit');
-    const unlimited = get(settings, 'data.unlimited');
+    const limit = settings?.limit;
+    const unlimited = settings?.unlimited;
     if (unlimited) {
       return `There are ${count} currently`;
     } else {
