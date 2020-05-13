@@ -17,7 +17,7 @@
 package oharastream.ohara.shabondi.common
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 
 import scala.jdk.CollectionConverters._
 object ShabondiUtils {
@@ -46,5 +46,10 @@ object ShabondiUtils {
   def logArgs(args: Map[String, String]): Unit = {
     log.info("Arguments:")
     args.foreach { case (k, v) => log.info(s"    $k=$v") }
+  }
+
+  def apiUrl: String = {
+    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
+    s"https://ohara.readthedocs.io/en/$docVersion/shabondi.html"
   }
 }

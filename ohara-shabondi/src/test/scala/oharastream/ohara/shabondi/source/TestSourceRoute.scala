@@ -47,6 +47,33 @@ final class TestSourceRoute extends BasicShabondiTest {
     }
 
   @Test
+  def testInvalidRequest(): Unit = {
+    val topicKey1 = createTopicKey
+    val config    = defaultSourceConfig(Seq(topicKey1))
+    val webServer = new WebServer(config)
+
+    val request = Get("/")
+    request ~> webServer.routes ~> check {
+      response.status should ===(StatusCodes.MethodNotAllowed)
+      contentType should ===(ContentTypes.`text/plain(UTF-8)`)
+    }
+
+    val request2 = Post("/")
+    request2 ~> webServer.routes ~> check {
+      response.status should ===(StatusCodes.BadRequest)
+      contentType should ===(ContentTypes.`text/plain(UTF-8)`)
+    }
+
+    val jsonRow  = sourceData.toJson.compactPrint
+    val entity   = HttpEntity(ContentTypes.`application/json`, jsonRow)
+    val request3 = Post("/", entity)
+    request3 ~> webServer.routes ~> check {
+      response.status should ===(StatusCodes.OK)
+      contentType should ===(ContentTypes.`text/plain(UTF-8)`)
+    }
+  }
+
+  @Test
   def testSourceRoute(): Unit = {
     val topicKey1 = createTopicKey
     val config    = defaultSourceConfig(Seq(topicKey1))

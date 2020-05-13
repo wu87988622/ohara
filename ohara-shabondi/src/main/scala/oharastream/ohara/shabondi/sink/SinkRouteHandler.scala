@@ -24,7 +24,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.Releasable
-import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler}
+import oharastream.ohara.shabondi.common.{JsonSupport, RouteHandler, ShabondiUtils}
 import org.apache.commons.lang3.StringUtils
 
 import scala.collection.mutable.ArrayBuffer
@@ -68,16 +68,25 @@ private[shabondi] class SinkRouteHandler(config: SinkConfig)(implicit actorSyste
     buffer.toSeq
   }
 
+  private def apiUrl = ShabondiUtils.apiUrl
+
   def route(): Route = handleExceptions(exceptionHandler) {
-    (get & path("groups" / Segment)) { groupId =>
-      if (StringUtils.isAlphanumeric(groupId)) {
-        val group  = dataGroups.createIfAbsent(groupId)
-        val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
-        complete(result)
-      } else {
-        val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Illegal group name, only accept alpha and numeric.")
-        complete(StatusCodes.NotAcceptable -> entity)
+    path("groups" / Segment) { groupId =>
+      get {
+        if (StringUtils.isAlphanumeric(groupId)) {
+          val group  = dataGroups.createIfAbsent(groupId)
+          val result = fullyPollQueue(group.queue).map(row => JsonSupport.toRowData(row))
+          complete(result)
+        } else {
+          val entity =
+            HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Illegal group name, only accept alpha and numeric.")
+          complete(StatusCodes.NotAcceptable -> entity)
+        }
+      } ~ {
+        complete(StatusCodes.MethodNotAllowed -> s"Unsupported method, please reference: $apiUrl")
       }
+    } ~ {
+      complete(StatusCodes.NotFound -> s"Please reference: $apiUrl")
     }
   }
 

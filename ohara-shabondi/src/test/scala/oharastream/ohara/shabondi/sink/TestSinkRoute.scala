@@ -19,7 +19,7 @@ package oharastream.ohara.shabondi.sink
 import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -28,7 +28,6 @@ import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi._
 import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
-import org.scalatest.exceptions.TestFailedException
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -71,38 +70,46 @@ final class TestSinkRoute extends BasicShabondiTest {
     }(ec)
 
   @Test
-  def testInvalidGroupName(): Unit = {
+  def testInvalidRequest(): Unit = {
     val topicKey1 = createTopicKey
     val config    = defaultSinkConfig(Seq(topicKey1))
     val webServer = new WebServer(config)
-    webServer.routes // create route handle first.
+    webServer.routes
 
     try {
       val rowCount1 = 50
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1.topicNameOnKafka, rowCount1, FiniteDuration(10, SECONDS))
       log.info("produce {} rows", rowCount1)
 
-      assertThrows[TestFailedException] {
-        val request0 = Get(uri = s"/xxx")
-        request0 ~> webServer.routes ~> check {
-          status should ===(StatusCodes.OK)
-        }
+      // test invalid endpoint
+      val request0 = Get(uri = s"/xxx")
+      request0 ~> webServer.routes ~> check {
+        status should ===(StatusCodes.NotFound)
       }
 
-      val request1 = Get(uri = s"/groups/group0")
+      // test not allowed method
+      val request1 = Post(uri = s"/groups/group0")
       request1 ~> webServer.routes ~> check {
-        status should ===(StatusCodes.OK)
+        status should ===(StatusCodes.MethodNotAllowed)
       }
 
-      val request2 = Get(uri = s"/groups/sdf@abc")
+      // test invalid group name
+      val request2 = Get(uri = s"/groups/group-0")
       request2 ~> webServer.routes ~> check {
         status should ===(StatusCodes.NotAcceptable)
         entityAs[String] should ===("Illegal group name, only accept alpha and numeric.")
+      }
+
+      val request3 = Get(uri = s"/groups/group0")
+      request3 ~> webServer.routes ~> check {
+        status should ===(StatusCodes.OK)
+        contentType should ===(ContentTypes.`application/json`)
       }
     } finally {
       Releasable.close(webServer)
     }
   }
+
   @Test
   def testSingleGroup(): Unit = {
     implicit val ec = ExecutionContext.fromExecutorService(newThreadPool())
