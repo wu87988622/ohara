@@ -203,6 +203,7 @@ function TopicTable(props) {
         ]}
         data={data}
         options={{
+          rowStyle: null,
           showTitle: options?.showTitle,
         }}
       />
