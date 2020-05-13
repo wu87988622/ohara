@@ -108,7 +108,7 @@ function SharedJarTable() {
         ...workspace?.worker?.sharedJarKeys,
         getKey(fileClicked),
       ];
-      updateSharedJarKeysToWorkspace([newSharedJarKeys]);
+      updateSharedJarKeysToWorkspace(newSharedJarKeys);
     } else {
       handleRemove(fileClicked);
     }
@@ -121,7 +121,7 @@ function SharedJarTable() {
         onRemove={handleRemove}
         options={{
           comparison: true,
-          comparedNodes: workerSharedJars,
+          comparedFiles: workerSharedJars,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
           showAddIcon: true,
