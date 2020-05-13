@@ -108,7 +108,7 @@ function PluginTable() {
         ...workspace?.worker?.pluginKeys,
         getKey(fileClicked),
       ];
-      updatePluginKeysToWorkspace([newPluginKeys]);
+      updatePluginKeysToWorkspace(newPluginKeys);
     } else {
       handleRemove(fileClicked);
     }
@@ -121,7 +121,7 @@ function PluginTable() {
         onRemove={handleRemove}
         options={{
           comparison: true,
-          comparedNodes: workerPlugins,
+          comparedFiles: workerPlugins,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
           showAddIcon: true,
