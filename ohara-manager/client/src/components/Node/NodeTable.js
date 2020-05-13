@@ -394,10 +394,10 @@ function NodeTable(props) {
         onSelectionChange={onSelectionChange}
         options={{
           predicate: 'hostname',
+          rowStyle: node => getRowStyle(node),
           selection: options?.selection,
           selectedData: options?.selectedNodes,
           showTitle: options?.showTitle,
-          rowStyle: node => getRowStyle(node),
         }}
         title={title}
       />

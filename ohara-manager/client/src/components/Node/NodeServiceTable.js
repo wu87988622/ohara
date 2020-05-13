@@ -106,6 +106,7 @@ function NodeServiceTable({ node }) {
       data={sortBy(flatClusters, 'workspaceName')}
       options={{
         paging: false,
+        rowStyle: null,
         search: flatClusters.length > 5,
       }}
     />
