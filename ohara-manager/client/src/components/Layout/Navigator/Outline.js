@@ -30,6 +30,7 @@ import { AddSharedTopicIcon } from 'components/common/Icon';
 const Outline = ({ pipelineApi }) => {
   const selectedCell = hooks.useCurrentPipelineCell();
   const currentPipeline = hooks.usePipeline();
+  const elements = currentPipeline?.tags?.cells || [];
 
   const getIcon = (kind, isShared) => {
     const { source, sink, stream, topic } = KIND;
@@ -46,34 +47,34 @@ const Outline = ({ pipelineApi }) => {
     }
   };
 
+  if (!pipelineApi) return null;
+
   return (
     <Scrollbar>
       <ul className="list">
-        {pipelineApi &&
-          currentPipeline &&
-          pipelineApi.getElements().map(element => {
-            const { id, name, kind, isShared, displayName } = element;
+        {elements.map(element => {
+          const { id, name, kind, isShared, displayName } = element;
 
-            const isTopic = kind === KIND.topic;
+          const isTopic = kind === KIND.topic;
 
-            const className = cx({
-              'is-selected': selectedCell?.name === element.name,
-              'is-shared': isTopic && isShared,
-              'pipeline-only': isTopic && !isShared,
-              [kind]: kind,
-            });
+          const className = cx({
+            'is-selected': selectedCell?.name === element.name,
+            'is-shared': isTopic && isShared,
+            'pipeline-only': isTopic && !isShared,
+            [kind]: kind,
+          });
 
-            return (
-              <li
-                className={className}
-                onClick={() => pipelineApi.highlight(id)}
-                key={id}
-              >
-                {getIcon(kind, isShared)}
-                {isTopic && !isShared ? displayName : name}
-              </li>
-            );
-          })}
+          return (
+            <li
+              className={className}
+              onClick={() => pipelineApi.highlight(id)}
+              key={id}
+            >
+              {getIcon(kind, isShared)}
+              {isTopic && !isShared ? displayName : name}
+            </li>
+          );
+        })}
       </ul>
     </Scrollbar>
   );
@@ -82,7 +83,6 @@ const Outline = ({ pipelineApi }) => {
 Outline.propTypes = {
   pipelineApi: PropTypes.shape({
     highlight: PropTypes.func.isRequired,
-    getElements: PropTypes.func.isRequired,
   }),
 };
 

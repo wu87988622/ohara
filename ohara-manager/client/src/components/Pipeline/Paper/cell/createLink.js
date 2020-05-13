@@ -17,12 +17,15 @@
 import * as joint from 'jointjs';
 
 const createLink = options => {
-  const { sourceId, targetId } = options;
+  const { sourceId, targetId, data = {} } = options;
+  const { vertices = [] } = data;
 
   const link = new joint.shapes.standard.Link();
   link.source({ id: sourceId });
   link.target({ id: targetId });
   link.attr({ line: { stroke: '#9e9e9e' } });
+  link.vertices(vertices);
+
   return link;
 };
 

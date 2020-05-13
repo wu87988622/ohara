@@ -125,9 +125,14 @@ const Pipeline = React.forwardRef((props, ref) => {
   const paperApiRef = useRef(null);
   const pipelineObjectsRef = useRef([]);
 
+  const prevWorkspace = usePrevious(currentWorkspace);
   const prevPipeline = usePrevious(currentPipeline);
   useEffect(() => {
-    if (prevPipeline?.name === currentPipeline?.name) return;
+    if (
+      prevWorkspace?.name === currentWorkspace?.name &&
+      prevPipeline?.name === currentPipeline?.name
+    )
+      return;
 
     // Allow the Paper to reload again
     isInitialized.current = false;
@@ -135,7 +140,13 @@ const Pipeline = React.forwardRef((props, ref) => {
     // re-renders Toolbox
     pipelineDispatch({ type: 'resetToolbox' });
     pipelineDispatch({ type: 'setToolboxKey' });
-  }, [currentPipeline, pipelineDispatch, prevPipeline]);
+  }, [
+    currentPipeline,
+    currentWorkspace,
+    pipelineDispatch,
+    prevPipeline,
+    prevWorkspace,
+  ]);
 
   // When users create a new workspace and there has no pipeline yet
   // we need to clean up the Paper state from previous workspace
@@ -510,18 +521,9 @@ const Pipeline = React.forwardRef((props, ref) => {
   // Public APIs
   React.useImperativeHandle(ref, () => {
     if (!paperApiRef.current) return null;
-
     const paperApi = paperApiRef.current;
 
     return {
-      getElements() {
-        return paperApi
-          .getCells()
-          .filter(
-            cell => cell.cellType === 'html.Element' || !cell.isTemporary,
-          );
-      },
-
       highlight(id) {
         paperApi.highlight(id);
         const selectedCell = paperApi.getCell(id);

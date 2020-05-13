@@ -45,8 +45,7 @@ const mockedPaperApi = jest.fn(() => {
 });
 const paperApi = new mockedPaperApi();
 const cell = {};
-const streams = [];
-const currentStreams = [streamEntity];
+const streams = [streamEntity];
 const topics = [
   { key: 'from', data: { id: streamEntity.from } },
   { key: 'to', data: { id: streamEntity.to } },
@@ -70,7 +69,7 @@ it('update stream should be worked correctly', () => {
         type: actions.updateStream.TRIGGER,
         payload: {
           values: { ...streamEntity, jmxPort: 999 },
-          options: { paperApi, cell, currentStreams, topics, streams },
+          options: { paperApi, cell, topics, streams },
         },
       },
     });
@@ -116,21 +115,21 @@ it('update stream multiple times should got latest result', () => {
         type: actions.updateStream.TRIGGER,
         payload: {
           values: streamEntity,
-          options: { paperApi, cell, currentStreams, topics, streams },
+          options: { paperApi, cell, topics, streams },
         },
       },
       b: {
         type: actions.updateStream.TRIGGER,
         payload: {
           values: { ...streamEntity, nodeNames: ['n1', 'n2'] },
-          options: { paperApi, cell, currentStreams, topics, streams },
+          options: { paperApi, cell, topics, streams },
         },
       },
       c: {
         type: actions.updateStream.TRIGGER,
         payload: {
           values: { ...streamEntity, clientPort: 1234 },
-          options: { paperApi, cell, currentStreams, topics, streams },
+          options: { paperApi, cell, topics, streams },
         },
       },
     });
@@ -227,7 +226,7 @@ it('throw exception of update stream should also trigger event log action', () =
         type: actions.updateStream.TRIGGER,
         payload: {
           values: streamEntity,
-          options: { paperApi, cell, currentStreams, topics, streams },
+          options: { paperApi, cell, topics, streams },
         },
       },
     });
