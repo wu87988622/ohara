@@ -126,7 +126,10 @@ export default action$ =>
                   hostName: '',
                 }),
               ];
-              if (values.params.logType !== KIND.stream)
+              if (
+                values.params.logType !== KIND.stream &&
+                values.params.logType !== KIND.shabondi
+              )
                 outActions.push(actions.fetchDevToolLog.trigger());
               return scheduled(outActions, asapScheduler);
             }),

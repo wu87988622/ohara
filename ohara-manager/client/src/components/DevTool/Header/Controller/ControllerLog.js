@@ -94,7 +94,8 @@ const ControllerLog = () => {
     if (isFetching) return true;
     if (!logType) return true;
     if (logType === KIND.shabondi && isEmpty(shabondiKey)) return true;
-    if (logType === KIND.stream && !isEmpty(streamKey)) return true;
+    if (logType === KIND.stream && isEmpty(streamKey)) return true;
+    if (isEmpty(hostName)) return true;
   };
 
   return (
@@ -113,7 +114,7 @@ const ControllerLog = () => {
             setLogQueryParams({ shabondiName: event.target.value })
           }
           list={shabondis.map(shabondi => shabondi.name)}
-          disabled={isFetching}
+          disabled={isFetching || isEmpty(shabondis)}
         />
       )}
       {logType === KIND.stream && (
@@ -123,18 +124,12 @@ const ControllerLog = () => {
             setLogQueryParams({ streamName: event.target.value })
           }
           list={streams.map(stream => stream.name)}
-          disabled={isFetching}
+          disabled={isFetching || isEmpty(streams)}
         />
       )}
 
       <Select
-        disabled={
-          !logType ||
-          (logType === KIND.shabondi && isEmpty(shabondiKey)) ||
-          (logType === KIND.stream && !isEmpty(streamKey)) ||
-          isFetching ||
-          isEmpty(hostName)
-        }
+        disabled={getDisableState()}
         value={hostName}
         onChange={event => setLogQueryParams({ hostName: event.target.value })}
         list={hosts}
