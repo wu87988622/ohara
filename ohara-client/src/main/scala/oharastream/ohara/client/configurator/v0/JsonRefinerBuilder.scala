@@ -75,7 +75,10 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     // remove the value if the field is readonly
     if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
     definition.regex().ifPresent(regex => stringRestriction(definition.key(), regex))
-    if (!definition.internal() && definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
+    if (!definition.internal()) {
+      if (definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
+    }
+
     definition.valueType() match {
       case Type.BOOLEAN =>
         if (definition.hasDefault)

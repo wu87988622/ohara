@@ -39,6 +39,7 @@ private[configurator] object ShabondiRoute {
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
+      .references(creation.settings, creation.definitions)
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
         ShabondiClusterInfo(

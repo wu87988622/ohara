@@ -33,15 +33,19 @@ object ZookeeperRoute {
   private[this] def creationToClusterInfo(
     creation: Creation
   )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
-    objectChecker.checkList.nodeNames(creation.nodeNames).check().map { _ =>
-      ZookeeperClusterInfo(
-        settings = creation.settings,
-        aliveNodes = Set.empty,
-        state = None,
-        error = None,
-        lastModified = CommonUtils.current()
-      )
-    }
+    objectChecker.checkList
+      .nodeNames(creation.nodeNames)
+      .references(creation.settings, DEFINITIONS)
+      .check()
+      .map { _ =>
+        ZookeeperClusterInfo(
+          settings = creation.settings,
+          aliveNodes = Set.empty,
+          state = None,
+          error = None,
+          lastModified = CommonUtils.current()
+        )
+      }
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,

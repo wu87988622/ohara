@@ -43,6 +43,11 @@ private[configurator] object ConnectorRoute {
     objectChecker.checkList
       .workerCluster(creation.workerClusterKey)
       .topics(creation.topicKeys)
+      /**
+        * TODO: we should add custom definitions to checks
+        * https://github.com/oharastream/ohara/issues/4506
+        */
+      .references(creation.settings, DEFINITIONS)
       .check()
       .map(_.workerClusterInfos.head)
       // if the worker cluster is running, we try to fetch definitions and add them to the settings for the ignored key-values.
@@ -206,7 +211,7 @@ private[configurator] object ConnectorRoute {
             creationToConnectorInfo(
               access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, ConnectorApi.DEFINITIONS.values.toSeq))
+                .settings(keepEditableFields(updating.settings, ConnectorApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .name(key.name)
                 .group(key.group)

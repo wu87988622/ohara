@@ -35,8 +35,12 @@ object BrokerRoute {
   private[this] def creationToClusterInfo(
     creation: Creation
   )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[BrokerClusterInfo] =
-    objectChecker.checkList.nodeNames(creation.nodeNames).zookeeperCluster(creation.zookeeperClusterKey).check().map {
-      _ =>
+    objectChecker.checkList
+      .nodeNames(creation.nodeNames)
+      .zookeeperCluster(creation.zookeeperClusterKey)
+      .references(creation.settings, DEFINITIONS)
+      .check()
+      .map { _ =>
         BrokerClusterInfo(
           settings = creation.settings,
           aliveNodes = Set.empty,
@@ -44,7 +48,7 @@ object BrokerRoute {
           error = None,
           lastModified = CommonUtils.current()
         )
-    }
+      }
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,

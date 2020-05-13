@@ -111,7 +111,8 @@ package object v0 {
 
   private[v0] def noJsNull(jsValue: JsValue): Map[String, JsValue] = noJsNull(jsValue.asJsObject.fields)
 
-  private[v0] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefinerBuilder[ObjectKey]
+  // accessable to ohara-configurator module
+  private[ohara] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefinerBuilder[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
 

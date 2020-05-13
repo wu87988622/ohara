@@ -19,7 +19,7 @@ package oharastream.ohara.configurator.route
 import oharastream.ohara.agent.{ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ClusterInfo
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, OBJECT_KEY_FORMAT}
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -29,10 +29,11 @@ import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
+import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.store.DataStore
+import spray.json.{JsArray, JsObject, JsValue}
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
@@ -72,8 +73,52 @@ object ObjectChecker {
   }
 
   trait CheckList {
-    //---------------[volume]---------------//
+    //---------------[generic]---------------//
 
+    /**
+      * check the value having reference to Ohara object.
+      * Noted that this method check only the existent key-value. If the key is NOT existent, it still pass even if the
+      * reference is required.
+      * TODO: we should check all definitions in Creation phase
+      * https://github.com/oharastream/ohara/issues/4506
+      * @param settings raw setting
+      * @param definitions definitions
+      * @return this check list
+      */
+    def references(settings: Map[String, JsValue], definitions: Seq[SettingDef]): CheckList = {
+      def add(obj: JsValue, definition: SettingDef): Unit = {
+        obj match {
+          case obj: JsObject => reference(OBJECT_KEY_FORMAT.read(obj), definition.reference())
+          case JsArray(objs) => objs.foreach(obj => add(obj, definition))
+          case _             => // nothing
+        }
+      }
+      definitions
+        .filterNot(_.reference() == SettingDef.Reference.NONE)
+        .filter(d => d.valueType() == SettingDef.Type.OBJECT_KEY || d.valueType() == SettingDef.Type.OBJECT_KEYS)
+        .foreach(definition => settings.get(definition.key()).foreach(obj => add(obj, definition)))
+      this
+    }
+
+    /**
+      * make sure the object key is referenced to correct object.
+      * @param objectKey object key
+      * @param reference object reference
+      * @return this check list
+      */
+    private[this] def reference(objectKey: ObjectKey, reference: SettingDef.Reference): CheckList =
+      reference match {
+        case SettingDef.Reference.NONE              => this
+        case SettingDef.Reference.TOPIC             => topic(TopicKey.of(objectKey.group(), objectKey.name()))
+        case SettingDef.Reference.ZOOKEEPER_CLUSTER => zookeeperCluster(objectKey)
+        case SettingDef.Reference.BROKER_CLUSTER    => brokerCluster(objectKey)
+        case SettingDef.Reference.WORKER_CLUSTER    => workerCluster(objectKey)
+        case SettingDef.Reference.FILE              => file(objectKey)
+        case SettingDef.Reference.VOLUME            => volume(objectKey)
+        case _                                      => throw new RuntimeException(s"$reference is NOT added to related check!!!")
+      }
+
+    //---------------[volume]---------------//
     /**
       * check all volumes. It invokes a loop to all volumes and then fetch their state - a expensive operation!!!
       * @return check list
