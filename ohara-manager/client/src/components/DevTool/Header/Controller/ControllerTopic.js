@@ -32,7 +32,7 @@ import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody } from './ControllerStyles';
 
 const ControllerTopic = () => {
-  const topics = hooks.useTopicsInWorkspace();
+  const topics = hooks.useTopicsInPipeline();
 
   const setTopicQueryParams = hooks.useSetDevToolTopicQueryParams();
   const refetchTopic = hooks.useRefetchDevToolTopicDataAction();
@@ -52,6 +52,7 @@ const ControllerTopic = () => {
     // true -> disabled
     if (isFetching) return true;
     if (isEmpty(name)) return true;
+    if (isEmpty(topics)) return true;
   };
 
   return (
@@ -68,7 +69,7 @@ const ControllerTopic = () => {
             })
           }
           list={topics.map(topic => topic.displayName)}
-          disabled={isFetching}
+          disabled={isFetching || isEmpty(topics)}
         />
       </Tooltip>
       <Tooltip title="Fetch the data again">
