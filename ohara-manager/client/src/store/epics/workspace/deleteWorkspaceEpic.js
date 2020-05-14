@@ -28,6 +28,7 @@ import {
   withLatestFrom,
   takeUntil,
   takeWhile,
+  mergeMap,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -35,6 +36,7 @@ import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as workspaceApi from 'api/workspaceApi';
 import * as zookeeperApi from 'api/zookeeperApi';
+import * as fileApi from 'api/fileApi';
 import { ACTIONS } from 'const';
 import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
@@ -95,6 +97,24 @@ const deleteWorker$ = (values, isRollback, skipList) =>
   ).pipe(
     takeWhile(() => !isRollback || !skipList.includes(ACTIONS.DELETE_WORKER)),
     concatAll(),
+  );
+
+const deleteFile$ = file =>
+  defer(() => fileApi.remove(file)).pipe(
+    map(() => getId(file)),
+    map(id => actions.deleteFile.success(id)),
+    startWith(actions.deleteFile.request()),
+    catchError(err =>
+      from([
+        actions.deleteFile.failure(err),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+      ]),
+    ),
+  );
+
+const deleteAllFiles$ = files =>
+  of(...files).pipe(
+    mergeMap(file => deleteFile$({ name: file.name, group: file.group })),
   );
 
 const stopZookeeper$ = (params, skipList) =>
@@ -345,6 +365,7 @@ export default (action$, state$) =>
         tmpWorker = {},
         tmpBroker = {},
         tmpZookeeper = {},
+        files = [],
       } = action.payload;
 
       const workspaceKey = workspace;
@@ -377,6 +398,7 @@ export default (action$, state$) =>
         deleteBroker$(brokerKey, isRollback, skipList),
         deleteZookeeper$(zookeeperKey, isRollback, skipList),
         deleteWorkspace$(workspaceKey, isRollback),
+        deleteAllFiles$(files),
 
         finalize$(workspaceKey),
       ).pipe(

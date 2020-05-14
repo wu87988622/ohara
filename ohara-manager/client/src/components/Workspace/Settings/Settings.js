@@ -50,6 +50,7 @@ const Settings = () => {
   const topics = hooks.useTopicsInWorkspace();
   const streams = hooks.useStreams();
   const shabondis = hooks.useShabondis();
+  const files = hooks.useFiles();
 
   const hasRunningConnectors = connectors.find(
     connector => connector.state === CLUSTER_STATE.RUNNING,
@@ -81,6 +82,7 @@ const Settings = () => {
         zookeeper: convertIdToKey(zookeeperId),
         broker: convertIdToKey(brokerId),
         worker: convertIdToKey(workerId),
+        files,
       });
     },
     openRestartProgressDialog: () => {
