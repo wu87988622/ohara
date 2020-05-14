@@ -16,10 +16,11 @@
 
 import React from 'react';
 import { Field } from 'react-final-form';
-import { toNumber, isEmpty } from 'lodash';
+import { toNumber, isEmpty, includes } from 'lodash';
 
 import BindingPort from './BindingPort';
 import BooleanDef from './BooleanDef';
+import Chooser from './Chooser';
 import Duration from './Duration';
 import IntDef from './IntDef';
 import JdbcTable from './JdbcTable';
@@ -53,6 +54,7 @@ const RenderDefinition = props => {
     def,
     topics = [],
     files,
+    nodes = [],
     defType,
     ref,
     fieldProps = {},
@@ -64,20 +66,17 @@ const RenderDefinition = props => {
     return isNumberType(type) ? toNumber(value) : value;
   };
 
-  const RenderField = params => {
+  const getFieldProps = def => {
     const {
       key,
       displayName,
       documentation,
-      input,
       necessary,
       permission,
-      tableKeys = [],
-      list = [],
-    } = params;
+      valueType,
+    } = def;
 
     let disabled = false;
-
     switch (permission) {
       case 'READ_ONLY':
         disabled = true;
@@ -98,110 +97,139 @@ const RenderDefinition = props => {
     const ensuredFieldProps = {
       ...fieldProps,
       key,
-      list,
       name: key,
-      tableKeys,
       label: displayName,
       helperText: documentation,
-      component: input,
       disabled,
       required: necessary === 'REQUIRED',
-      validate: validWithDef(params),
-      parse: parseValueByType(def.valueType),
-      type: def.valueType === Type.BOOLEAN ? 'checkbox' : null,
+      validate: validWithDef(def),
+      parse: parseValueByType(valueType),
     };
 
-    if (ref) ensuredFieldProps.refs = ref;
+    if (ref) {
+      ensuredFieldProps.refs = ref;
+    }
 
-    return <Field {...ensuredFieldProps} />;
+    return ensuredFieldProps;
   };
 
   const renderDefinitionField = () => {
-    if (def.reference === ReferenceEnum.NONE) {
-      switch (def.valueType) {
-        case Type.STRING:
-          return RenderField({ ...def, input: StringDef });
+    const { valueType, reference } = def;
+    const fieldProps = getFieldProps(def);
 
-        case Type.REMOTE_PORT:
-          return RenderField({ ...def, input: RemotePort });
+    // Only the following types have support reference:
+    // 1. ARRAY
+    // 2. OBJECT_KEYS
+    // 3. STRING
+    const valueTypesForSupport = [Type.ARRAY, Type.OBJECT_KEYS, Type.STRING];
+    const referencesForSupport = [
+      ReferenceEnum.TOPIC,
+      ReferenceEnum.FILE,
+      ReferenceEnum.NODE,
+    ];
 
-        case Type.INT:
-          return RenderField({ ...def, input: IntDef });
-
-        case Type.CLASS:
-          return RenderField({ ...def, input: ClassDef });
-
-        case Type.PASSWORD:
-          return RenderField({ ...def, input: Password });
-
-        case Type.POSITIVE_INT:
-          return RenderField({ ...def, input: PositiveInt });
-
-        case Type.DURATION:
-          return RenderField({ ...def, input: Duration });
-
-        case Type.BINDING_PORT:
-          if (isEmpty(freePorts))
-            return RenderField({ ...def, input: RemotePort });
-          else
-            return RenderField({ ...def, input: BindingPort, list: freePorts });
-
-        case Type.TAGS:
-          return RenderField({ ...def, input: Tags });
-
-        case Type.JDBC_TABLE:
-          return RenderField({ ...def, input: JdbcTable });
-
-        case Type.TABLE:
-          return RenderField({ ...def, input: Table });
-
-        case Type.BOOLEAN:
-          return RenderField({ ...def, input: BooleanDef });
-
-        case Type.LONG:
-          return RenderField({ ...def, input: Long });
-
-        case Type.SHORT:
-          return RenderField({ ...def, input: Short });
-
-        case Type.DOUBLE:
-          return RenderField({ ...def, input: Double });
-
-        case Type.ARRAY:
-          return RenderField({ ...def, input: ArrayDef });
-
-        case Type.POSITIVE_SHORT:
-          return RenderField({ ...def, input: PositiveShort });
-
-        case Type.POSITIVE_LONG:
-          return RenderField({ ...def, input: PositiveLong });
-
-        case Type.POSITIVE_DOUBLE:
-          return RenderField({ ...def, input: PositiveDouble });
-
-        case Type.OBJECT_KEYS:
-          return RenderField({ ...def, input: ObjectKeys });
-
-        case Type.OBJECT_KEY:
-          return RenderField({ ...def, input: ObjectKey });
-
+    if (
+      includes(referencesForSupport, reference) &&
+      includes(valueTypesForSupport, valueType)
+    ) {
+      const multiple =
+        valueType === Type.ARRAY || valueType === Type.OBJECT_KEYS;
+      switch (reference) {
+        case ReferenceEnum.TOPIC:
+          return <Field {...fieldProps} component={Reference} list={topics} />;
+        case ReferenceEnum.FILE:
+          return <Field {...fieldProps} component={Reference} list={files} />;
+        case ReferenceEnum.NODE:
+          return (
+            <Field
+              {...fieldProps}
+              component={Chooser}
+              multipleChoice={multiple}
+              options={nodes.map(node => node.hostname)}
+            />
+          );
         default:
-          return RenderField({ ...def, input: StringDef });
+          throw new Error(`Unsupported reference: ${reference}`);
       }
     } else {
-      switch (def.reference) {
-        case ReferenceEnum.TOPIC:
-          return RenderField({
-            ...def,
-            input: Reference,
-            list: topics,
-          });
+      switch (valueType) {
+        case Type.STRING:
+          return <Field {...fieldProps} component={StringDef} />;
 
-        case ReferenceEnum.FILE:
-          return RenderField({ ...def, input: Reference, list: files });
+        case Type.REMOTE_PORT:
+          return <Field {...fieldProps} component={RemotePort} />;
+
+        case Type.INT:
+          return <Field {...fieldProps} component={IntDef} />;
+
+        case Type.CLASS:
+          return <Field {...fieldProps} component={ClassDef} />;
+
+        case Type.PASSWORD:
+          return <Field {...fieldProps} component={Password} />;
+
+        case Type.POSITIVE_INT:
+          return <Field {...fieldProps} component={PositiveInt} />;
+
+        case Type.DURATION:
+          return <Field {...fieldProps} component={Duration} />;
+
+        case Type.BINDING_PORT:
+          if (isEmpty(freePorts)) {
+            return <Field {...fieldProps} component={RemotePort} />;
+          } else {
+            return (
+              <Field {...fieldProps} component={BindingPort} list={freePorts} />
+            );
+          }
+
+        case Type.TAGS:
+          return <Field {...fieldProps} component={Tags} />;
+
+        case Type.JDBC_TABLE:
+          return <Field {...fieldProps} component={JdbcTable} />;
+
+        case Type.TABLE:
+          return <Field {...fieldProps} component={Table} tableKeys={[]} />;
+
+        case Type.BOOLEAN:
+          return (
+            <Field
+              {...fieldProps}
+              component={BooleanDef}
+              type={valueType === Type.BOOLEAN ? 'checkbox' : null}
+            />
+          );
+
+        case Type.LONG:
+          return <Field {...fieldProps} component={Long} />;
+
+        case Type.SHORT:
+          return <Field {...fieldProps} component={Short} />;
+
+        case Type.DOUBLE:
+          return <Field {...fieldProps} component={Double} />;
+
+        case Type.ARRAY:
+          return <Field {...fieldProps} component={ArrayDef} />;
+
+        case Type.POSITIVE_SHORT:
+          return <Field {...fieldProps} component={PositiveShort} />;
+
+        case Type.POSITIVE_LONG:
+          return <Field {...fieldProps} component={PositiveLong} />;
+
+        case Type.POSITIVE_DOUBLE:
+          return <Field {...fieldProps} component={PositiveDouble} />;
+
+        case Type.OBJECT_KEYS:
+          return <Field {...fieldProps} component={ObjectKeys} />;
+
+        case Type.OBJECT_KEY:
+          return <Field {...fieldProps} component={ObjectKey} />;
 
         default:
-          return RenderField({ ...def, input: Reference });
+          return <Field {...fieldProps} component={StringDef} />;
       }
     }
   };

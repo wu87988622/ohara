@@ -28,6 +28,7 @@ const scrollIntoViewOption = { behavior: 'smooth', block: 'start' };
 
 const PipelinePropertyForm = React.forwardRef((props, ref) => {
   const files = hooks.useFiles();
+  const nodes = hooks.useNodesInWorkspace();
 
   const {
     definitions = [],
@@ -74,6 +75,7 @@ const PipelinePropertyForm = React.forwardRef((props, ref) => {
                         def,
                         topics,
                         files,
+                        nodes,
                         ref: fieldRefs[def.key],
                         defType: EDITABLE,
                         freePorts,

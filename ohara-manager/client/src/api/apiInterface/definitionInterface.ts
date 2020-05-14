@@ -27,6 +27,7 @@ export enum Reference {
   BROKER_CLUSTER = 'BROKER_CLUSTER',
   WORKER_CLUSTER = 'WORKER_CLUSTER',
   FILE = 'FILE',
+  NODE = 'NODE',
 }
 
 export enum Permission {
