@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-import { omit, assign } from 'lodash';
+import { omit } from 'lodash';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
 import { entity } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
-    case actions.updateConnector.SUCCESS:
-    case actions.removeConnectorSourceLink.SUCCESS:
-    case actions.removeConnectorSinkLink.SUCCESS:
-    case actions.updateConnectorLink.SUCCESS:
-      return assign(state, action.payload.entities.connectors);
-
     case actions.deleteConnector.SUCCESS:
       return omit(state, action.payload);
     default:

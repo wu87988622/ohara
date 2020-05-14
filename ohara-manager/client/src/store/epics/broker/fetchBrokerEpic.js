@@ -34,7 +34,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-const addSettingDefByKeyAndType = (key, type) => new UISettingDef(key, type);
+const addSettingDefByKeyAndType = (...args) => new UISettingDef(...args);
 
 const fetchBroker$ = params => {
   const brokerId = getId(params);
@@ -48,7 +48,7 @@ const fetchBroker$ = params => {
       // Note: it is a workaround solution!
       map(res => {
         get(res.data.classInfos, '[0].settingDefinitions', []).push(
-          addSettingDefByKeyAndType('displayName', Type.STRING),
+          addSettingDefByKeyAndType('displayName', Type.STRING, false),
           addSettingDefByKeyAndType('isShared', Type.BOOLEAN),
         );
         return res;

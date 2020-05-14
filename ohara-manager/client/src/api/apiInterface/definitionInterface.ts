@@ -155,7 +155,7 @@ export class UISettingDef implements SettingDef {
   blacklist: string[];
   prefix?: string | undefined;
 
-  constructor(key: string, type: Type) {
+  constructor(key: string, type: Type, internal: boolean = true) {
     this.key = key;
     this.group = 'default';
     this.displayName = key;
@@ -163,7 +163,7 @@ export class UISettingDef implements SettingDef {
     this.valueType = type;
     this.necessary = Necessary.REQUIRED;
     this.documentation = `${key} of UI SettingDef`;
-    this.internal = true;
+    this.internal = internal;
     this.permission = Permission.CREATE_ONLY;
     this.tableKeys = [];
     this.recommendedValues = [];

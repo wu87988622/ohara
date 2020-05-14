@@ -15,7 +15,7 @@
  */
 
 import { combineReducers } from 'redux';
-import _ from 'lodash';
+import { isArray, mergeWith, isEmpty } from 'lodash';
 import brokers from './brokers';
 import connectors from './connectors';
 import eventLogs from './eventLogs';
@@ -30,18 +30,24 @@ import workers from './workers';
 import workspaces from './workspaces';
 import zookeepers from './zookeepers';
 
+// Allow empty array in the new state to override previous state
+const customizer = (object, source) =>
+  isArray(source) && isEmpty(source) ? source : object;
+
 export const entity = type => (state = {}, action) => {
   const { payload } = action;
 
   const hasEntities = payload?.entities || payload?.[0]?.entities;
 
   if (hasEntities) {
-    if (_.isArray(payload)) {
-      const [result] = payload.map(p => _.merge({}, state, p.entities[type]));
+    if (isArray(payload)) {
+      const [result] = payload.map(p =>
+        mergeWith(p.entities[type], state, customizer),
+      );
       return result;
     }
 
-    return _.merge({}, state, payload.entities[type]);
+    return mergeWith(payload.entities[type], state, customizer);
   }
 
   return state;

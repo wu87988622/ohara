@@ -67,16 +67,6 @@ export const createConnection = params => {
   const targetId = targetElement.get(CELL_PROPS.id);
   const targetType = targetElement.get(CELL_PROPS.kind);
   const targetDisplayName = targetElement.get(CELL_PROPS.displayName);
-  const targetConnectedLinks = graph.getConnectedLinks(targetElement);
-
-  const isLoopLink = () => {
-    return targetConnectedLinks.some(link => {
-      return (
-        sourceId === link.get(CELL_PROPS.source).id ||
-        sourceId === link.get(CELL_PROPS.target).id
-      );
-    });
-  };
 
   const handleError = message => {
     showMessage(message);
@@ -96,8 +86,6 @@ export const createConnection = params => {
     handleError(
       `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
     );
-  } else if (isLoopLink()) {
-    handleError(`A connection is already in place for these two cells`);
   } else {
     const predecessors = graph.getPredecessors(targetElement);
     const targetHasSource = predecessors.some(

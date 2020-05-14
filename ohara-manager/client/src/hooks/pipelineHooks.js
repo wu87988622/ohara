@@ -180,6 +180,7 @@ export const usePipeline = () => {
     state => selectors.getPipelineById(state, { id: pipelineId }),
     [pipelineId],
   );
+
   return useSelector(selector);
 };
 

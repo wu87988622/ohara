@@ -48,12 +48,7 @@ const SettingsPanel = props => {
 
   const renderSettings = (settings, key) => {
     const { settingDefinitions: defs } = settings;
-    const currentSetting =
-      key === 'name'
-        ? settings?.displayName
-          ? settings.displayName
-          : settings[key]
-        : settings[key];
+    const currentSetting = settings[key];
     const defValueType = defUtils.Type;
     const valueType = defs.find(def => def.key === key).valueType;
     switch (valueType) {
@@ -156,7 +151,7 @@ const SettingsPanel = props => {
 SettingsPanel.propTypes = {
   settings: PropTypes.shape({
     settingDefinitions: PropTypes.arrayOf(PropTypes.object).isRequired,
-    displayName: PropTypes.string.isRequired,
+    displayName: PropTypes.string,
   }).isRequired,
   setTags: PropTypes.func.isRequired,
   setFullTagViewDialogOpen: PropTypes.func.isRequired,

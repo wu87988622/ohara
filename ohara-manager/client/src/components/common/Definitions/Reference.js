@@ -32,12 +32,12 @@ const Reference = props => {
   } = omit(props, ['tableKeys']);
 
   const placeholder = 'Please select...';
-  const _list = [
+  const newList = [
     { name: placeholder, tags: { displayName: placeholder } },
     ...list,
   ];
 
-  const _value = () => {
+  const getDisplayValue = () => {
     if (isPlainObject(value)) {
       if (has(value, 'displayName')) {
         return value.displayName;
@@ -47,7 +47,8 @@ const Reference = props => {
         return placeholder;
       }
     } else if (isArray(value) && value.length > 0) {
-      return value[0].name;
+      const { displayName } = list.find(item => item.name === value[0].name);
+      return displayName;
     } else if (list.length === 0 || value.length === 0) {
       return placeholder;
     } else {
@@ -57,7 +58,7 @@ const Reference = props => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
-  const menuItemValue = item => {
+  const getMenuDisplayValue = item => {
     if (has(item, 'displayName')) {
       return item.displayName;
     } else {
@@ -72,21 +73,22 @@ const Reference = props => {
       fullWidth
       onChange={onChange}
       name={name}
-      value={_value()}
+      value={getDisplayValue()}
       helperText={hasError ? meta.error : helperText}
       error={hasError}
       InputProps={restInput}
       select
     >
-      {_list.map(item => {
+      {newList.map(item => {
         const disabled = disables.includes(item.name);
+        const menuDisplayValue = getMenuDisplayValue(item);
         return (
           <MenuItem
             disabled={disabled}
             key={item.name}
-            value={menuItemValue(item)}
+            value={menuDisplayValue}
           >
-            {item.name}
+            {menuDisplayValue}
           </MenuItem>
         );
       })}
