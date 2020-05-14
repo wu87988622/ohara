@@ -26,7 +26,7 @@ import { StateObservable } from 'redux-observable';
 import { getId, getKey } from 'utils/object';
 import { ENTITY_TYPE } from 'store/schema';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { FORM, LOG_LEVEL } from 'const';
+import { FORM, LOG_LEVEL, GROUP } from 'const';
 
 jest.mock('api/zookeeperApi');
 jest.mock('api/brokerApi');
@@ -47,16 +47,16 @@ it('create workspace should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a            ';
-    const expected = `--a 2999ms b\
-                      999ms c 1999ms d\
-                      999ms e 1999ms f\
-                      999ms g 1999ms h\
-                      999ms m  499ms n\
-                      999ms o  499ms p\
-                      999ms q  499ms r\
+    const input = '   ^-a                ';
+    const expected = `--a 2999ms b       \
+                      999ms c 1999ms (id)\
+                      996ms e 1999ms (jf)\
+                      996ms g 1999ms (kh)\
+                      996ms m  499ms n   \
+                      999ms o  499ms p   \
+                      999ms q  499ms r   \
                       999ms (tuvwxyz)`;
-    const subs = '    ^--------------';
+    const subs = '    ^------------------';
 
     const action$ = hot(input, {
       a: {
@@ -91,6 +91,14 @@ it('create workspace should be worked correctly', () => {
         type: actions.createZookeeper.REQUEST,
         payload: { zookeeperId: zkId },
       },
+      i: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: zookeeperEntity.name,
+          group: GROUP.WORKSPACE,
+          zookeeper: zookeeperEntity,
+        },
+      },
       d: {
         type: actions.createZookeeper.SUCCESS,
         payload: {
@@ -107,6 +115,14 @@ it('create workspace should be worked correctly', () => {
         type: actions.createBroker.REQUEST,
         payload: { brokerId: bkId },
       },
+      j: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: brokerEntity.name,
+          group: GROUP.WORKSPACE,
+          broker: brokerEntity,
+        },
+      },
       f: {
         type: actions.createBroker.SUCCESS,
         payload: {
@@ -122,6 +138,14 @@ it('create workspace should be worked correctly', () => {
       g: {
         type: actions.createWorker.REQUEST,
         payload: { workerId: wkId },
+      },
+      k: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: workerEntity.name,
+          group: GROUP.WORKSPACE,
+          worker: workerEntity,
+        },
       },
       h: {
         type: actions.createWorker.SUCCESS,

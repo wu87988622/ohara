@@ -17,7 +17,7 @@
 import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import createZookeeperEpic from '../../zookeeper/createZookeeperEpic';
 import * as actions from 'store/actions';
@@ -27,6 +27,7 @@ import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 jest.mock('api/zookeeperApi');
 
 const zkId = getId(zookeeperEntity);
+const workspaceKey = { name: zookeeperEntity.name, group: GROUP.WORKSPACE };
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -37,9 +38,9 @@ it('create zookeeper should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
-    const subs = '    ^-----------';
+    const input = '   ^-a            ';
+    const expected = '--a 1999ms (bu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -54,6 +55,13 @@ it('create zookeeper should be worked correctly', () => {
         type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          zookeeper: zookeeperEntity,
         },
       },
       u: {
@@ -80,9 +88,9 @@ it('create multiple zookeepers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
+    const input = '   ^-a---b                ';
+    const expected = '--a---b 1995ms (xu)(yv)';
+    const subs = '    ^----------------------';
     const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
@@ -104,6 +112,13 @@ it('create multiple zookeepers should be worked correctly', () => {
           zookeeperId: zkId,
         },
       },
+      x: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          zookeeper: zookeeperEntity,
+        },
+      },
       u: {
         type: actions.createZookeeper.SUCCESS,
         payload: {
@@ -120,6 +135,14 @@ it('create multiple zookeepers should be worked correctly', () => {
         type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: getId(anotherZookeeperEntity),
+        },
+      },
+      y: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: anotherZookeeperEntity.name,
+          group: GROUP.WORKSPACE,
+          zookeeper: anotherZookeeperEntity,
         },
       },
       v: {
@@ -146,9 +169,9 @@ it('create same zookeeper within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
+    const input = '   ^-aa 10s a       ';
+    const expected = '--a 1999ms (bu)--';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
@@ -163,6 +186,13 @@ it('create same zookeeper within period should be created once only', () => {
         type: actions.createZookeeper.REQUEST,
         payload: {
           zookeeperId: zkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          zookeeper: zookeeperEntity,
         },
       },
       u: {

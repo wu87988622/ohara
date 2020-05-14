@@ -24,21 +24,33 @@ import {
   map,
   startWith,
   mergeMap,
+  switchMap,
 } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 
 export const createBroker$ = values => {
   const brokerId = getId(values);
   return defer(() => brokerApi.create(values)).pipe(
     map(res => res.data),
-    map(data => normalize(data, schema.broker)),
-    map(normalizedData => merge(normalizedData, { brokerId })),
-    map(normalizedData => actions.createBroker.success(normalizedData)),
+    switchMap(data => {
+      const normalizedData = merge(normalize(data, schema.broker), {
+        brokerId,
+      });
+      return from([
+        actions.updateWorkspace.trigger({
+          broker: data,
+          // the workspace name of current object should be as same as the broker name
+          name: values.name,
+          group: GROUP.WORKSPACE,
+        }),
+        actions.createBroker.success(normalizedData),
+      ]);
+    }),
     startWith(actions.createBroker.request({ brokerId })),
     catchError(err =>
       from([

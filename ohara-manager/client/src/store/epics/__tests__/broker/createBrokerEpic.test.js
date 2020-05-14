@@ -17,7 +17,7 @@
 import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 import * as brokerApi from 'api/brokerApi';
 import createBrokerEpic from '../../broker/createBrokerEpic';
 import * as actions from 'store/actions';
@@ -27,6 +27,7 @@ import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
 jest.mock('api/brokerApi');
 
 const bkId = getId(brokerEntity);
+const workspaceKey = { name: brokerEntity.name, group: GROUP.WORKSPACE };
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -37,9 +38,9 @@ it('create broker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
-    const subs = '    ^-----------';
+    const input = '   ^-a            ';
+    const expected = '--a 1999ms (bu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -54,6 +55,13 @@ it('create broker should be worked correctly', () => {
         type: actions.createBroker.REQUEST,
         payload: {
           brokerId: bkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          broker: brokerEntity,
         },
       },
       u: {
@@ -80,9 +88,9 @@ it('create multiple brokers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
+    const input = '   ^-a---b                ';
+    const expected = '--a---b 1995ms (xu)(yv)';
+    const subs = '    ^----------------------';
     const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
 
     const action$ = hot(input, {
@@ -104,6 +112,13 @@ it('create multiple brokers should be worked correctly', () => {
           brokerId: bkId,
         },
       },
+      x: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          broker: brokerEntity,
+        },
+      },
       u: {
         type: actions.createBroker.SUCCESS,
         payload: {
@@ -120,6 +135,14 @@ it('create multiple brokers should be worked correctly', () => {
         type: actions.createBroker.REQUEST,
         payload: {
           brokerId: getId(anotherBrokerEntity),
+        },
+      },
+      y: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: anotherBrokerEntity.name,
+          group: GROUP.WORKSPACE,
+          broker: anotherBrokerEntity,
         },
       },
       v: {
@@ -146,9 +169,9 @@ it('create same broker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
+    const input = '   ^-aa 10s a       ';
+    const expected = '--a 1999ms (bu)--';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
@@ -163,6 +186,13 @@ it('create same broker within period should be created once only', () => {
         type: actions.createBroker.REQUEST,
         payload: {
           brokerId: bkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          broker: brokerEntity,
         },
       },
       u: {
