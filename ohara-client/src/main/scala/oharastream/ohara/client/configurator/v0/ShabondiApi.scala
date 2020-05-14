@@ -56,6 +56,7 @@ final object ShabondiApi {
     override def ports: Set[Int]    = settings.ports
     def shabondiClass: String       = settings.shabondiClass
     def clientPort: Int             = settings.clientPort
+    def endpoint: String            = settings.endpoint
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
 
     def sourceToTopics: Set[TopicKey] = settings.sourceToTopics
@@ -80,6 +81,7 @@ final object ShabondiApi {
       else throw DeserializationException(s"$shabondiClass is NOT supported")
 
     def clientPort: Int               = updating.clientPort.get
+    def endpoint: String              = updating.endpoint.get
     def brokerClusterKey: ObjectKey   = updating.brokerClusterKey.get
     def sourceToTopics: Set[TopicKey] = updating.sourceToTopics.getOrElse(null)
     def sinkFromTopics: Set[TopicKey] = updating.sinkFromTopics.getOrElse(null)
@@ -89,6 +91,7 @@ final object ShabondiApi {
     import ShabondiDefinitions._
     def shabondiClass: Option[String] = noJsNull(settings).get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
     def clientPort: Option[Int]       = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
+    def endpoint: Option[String]      = noJsNull(settings).get(ENDPOINT_DEFINITION.key).map(_.convertTo[String])
     def brokerClusterKey: Option[ObjectKey] =
       noJsNull(settings).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
     def sourceToTopics: Option[Set[TopicKey]] =

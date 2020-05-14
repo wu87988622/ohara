@@ -121,6 +121,7 @@ class TestShabondiRoute extends OharaTest {
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
+    clusterInfo.endpoint should ===(s"http://$nodeName:$clientPort/")
   }
 
   @Test
@@ -136,6 +137,7 @@ class TestShabondiRoute extends OharaTest {
     clusterInfo.nodeNames should contain(nodeName)
     clusterInfo.sourceToTopics should be(empty)
     clusterInfo.imageName should ===(IMAGE_NAME_DEFAULT)
+    clusterInfo.endpoint should ===(s"http://$nodeName:$clientPort/")
 
     val newClientPort = CommonUtils.availablePort()
     val updatedClusterInfo = await(
@@ -150,6 +152,7 @@ class TestShabondiRoute extends OharaTest {
     updatedClusterInfo.clientPort should ===(newClientPort)
     updatedClusterInfo.sourceToTopics should ===(Set(topicKey))
     updatedClusterInfo.imageName should ===("ohara/shabondi")
+    updatedClusterInfo.endpoint should ===(s"http://$nodeName:$newClientPort/")
   }
 
   @Test
@@ -165,6 +168,7 @@ class TestShabondiRoute extends OharaTest {
     clusterInfo.nodeNames should contain(nodeName)
     clusterInfo.sinkFromTopics should be(empty)
     clusterInfo.imageName should ===(IMAGE_NAME_DEFAULT)
+    clusterInfo.endpoint should ===(s"http://$nodeName:$clientPort/groups/" + "${groupName}")
 
     val newClientPort = CommonUtils.availablePort()
     val updatedClusterInfo = await(
@@ -187,7 +191,9 @@ class TestShabondiRoute extends OharaTest {
     updatedClusterInfo.imageName should ===("ohara/shabondi")
     updatedClusterInfo.settings should contain(SINK_POLL_TIMEOUT_DEFINITION.key -> JsString("PT10S"))
     updatedClusterInfo.settings should contain(SINK_GROUP_IDLETIME.key          -> JsString("PT30M"))
+    updatedClusterInfo.endpoint should ===(s"http://$nodeName:$newClientPort/groups/" + "${groupName}")
   }
+
   @Test
   def testSourceStart(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))

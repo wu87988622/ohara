@@ -26,10 +26,10 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import oharastream.ohara.common.data.Serializer
-import oharastream.ohara.common.util.Releasable
+import oharastream.ohara.common.util.{Releasable}
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.basic.Counter
-import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHandler}
+import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHandler, ShabondiUtils}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -87,17 +87,23 @@ private[shabondi] class SourceRouteHandler(
     .toMat(Sink.ignore)(Keep.left)
     .run()
 
-  override def route(): Route = {
-    (post & pathEndOrSingleSlash) {
-      handleExceptions(exceptionHandler) {
+  override def route(): Route = handleExceptions(exceptionHandler) {
+    pathEndOrSingleSlash {
+      post {
         entity(as[RowData]) { rowData =>
           totalRowsCounter.incrementAndGet()
           rowQueue.offer(rowData)
           complete(StatusCodes.OK)
+        } ~ {
+          complete(
+            StatusCodes.BadRequest -> s"Invalid format of request body, please reference: ${ShabondiUtils.apiUrl}"
+          )
         }
-      } // handleExceptions
+      } ~ {
+        complete(StatusCodes.MethodNotAllowed -> s"Unsupported method, please reference: ${ShabondiUtils.apiUrl}")
+      }
     }
-  }
+  } // handleExceptions
 
   override def close(): Unit = {
     var exception: Throwable = null

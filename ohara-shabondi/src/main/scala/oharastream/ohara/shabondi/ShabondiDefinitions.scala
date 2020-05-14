@@ -93,6 +93,17 @@ object ShabondiDefinitions {
     .build
     .registerTo(basicDefinitionMap)
 
+  val ENDPOINT_DEFINITION = SettingDef.builder
+    .group(CORE_GROUP)
+    .key("shabondi.endpoint")
+    .orderInGroup(orderInGroup())
+    .optional(Type.STRING)
+    .displayName("Endpoint")
+    .documentation("the endpoint of this Shabondi service")
+    .permission(SettingDef.Permission.READ_ONLY)
+    .build
+    .registerTo(basicDefinitionMap)
+
   val JMX_PORT_DEFINITION = SettingDef.builder
     .group(CORE_GROUP)
     .key("jmxPort")

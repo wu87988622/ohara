@@ -25,11 +25,27 @@ import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, ST
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
+import spray.json.{JsString}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ShabondiRoute {
   import ShabondiApi._
+
+  private def updateEndpointSetting(creation: ShabondiClusterCreation): ShabondiClusterCreation = {
+    if (creation.nodeNames.isEmpty) {
+      creation
+    } else {
+      val nodeName   = creation.nodeNames.head
+      val clientPort = creation.clientPort
+      val value = ShabondiType(creation.shabondiClass) match {
+        case ShabondiType.Source => s"http://$nodeName:$clientPort/"
+        case ShabondiType.Sink   => s"http://$nodeName:$clientPort/groups/" + "${groupName}"
+      }
+      val endpointItem = (ShabondiDefinitions.ENDPOINT_DEFINITION.key, JsString(value))
+      new ShabondiClusterCreation(creation.settings + endpointItem)
+    }
+  }
 
   private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
     implicit objectChecker: ObjectChecker,
@@ -42,20 +58,21 @@ private[configurator] object ShabondiRoute {
       .references(creation.settings, creation.definitions)
       .check()
       .map { _: ObjectChecker.ObjectInfos =>
+        val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
+          .more(
+            (shabondiType match {
+              case ShabondiType.Source => ShabondiDefinitions.sourceOnlyDefinitions
+              case ShabondiType.Sink   => ShabondiDefinitions.sinkOnlyDefinitions
+            })
+            // we should add definition having default value to complete Creation request but
+            // TODO: we should check all definitions in Creation phase
+            // https://github.com/oharastream/ohara/issues/4506
+              .filter(_.hasDefault)
+          )
+          .refine(creation)
+
         ShabondiClusterInfo(
-          settings = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
-            .more(
-              (shabondiType match {
-                case ShabondiType.Source => ShabondiDefinitions.sourceOnlyDefinitions
-                case ShabondiType.Sink   => ShabondiDefinitions.sinkOnlyDefinitions
-              })
-              // we should add definition having default value to complete Creation request but
-              // TODO: we should check all definitions in Creation phase
-              // https://github.com/oharastream/ohara/issues/4506
-                .filter(_.hasDefault)
-            )
-            .refine(creation)
-            .settings,
+          settings = updateEndpointSetting(refinedCreation).settings,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,
