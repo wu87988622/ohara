@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
-import { KIND } from 'const';
 import { hashByGroupAndName } from 'utils/sha';
 
 export const useIsFileLoaded = () => {
@@ -76,21 +75,4 @@ export const useFiles = () => {
   }, [fetchFiles, isLoaded]);
 
   return useSelector(state => selectors.getFilesByGroup(state, { group }));
-};
-
-export const useStreamFiles = () => {
-  const files = useFiles();
-  const streams = useMemo(
-    () =>
-      files.filter(file => {
-        return file.classInfos.find(classInfo => {
-          const { settingDefinitions: defs } = classInfo;
-          const { defaultValue: kind } = defs.find(def => def.key === 'kind');
-          return kind === KIND.stream;
-        });
-      }),
-    [files],
-  );
-
-  return streams;
 };
