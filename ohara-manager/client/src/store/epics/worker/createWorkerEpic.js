@@ -24,9 +24,10 @@ import {
   startWith,
   distinctUntilChanged,
   mergeMap,
+  switchMap,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -36,9 +37,20 @@ export const createWorker$ = values => {
   const workerId = getId(values);
   return defer(() => workerApi.create(values)).pipe(
     map(res => res.data),
-    map(data => normalize(data, schema.worker)),
-    map(normalizedData => merge(normalizedData, { workerId })),
-    map(normalizedData => actions.createWorker.success(normalizedData)),
+    switchMap(data => {
+      const normalizedData = merge(normalize(data, schema.worker), {
+        workerId,
+      });
+      return from([
+        actions.updateWorkspace.trigger({
+          worker: data,
+          // the workspace name of current object should be as same as the worker name
+          name: values.name,
+          group: GROUP.WORKSPACE,
+        }),
+        actions.createWorker.success(normalizedData),
+      ]);
+    }),
     startWith(actions.createWorker.request({ workerId })),
     catchError(err =>
       from([

@@ -17,7 +17,7 @@
 import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 import * as workerApi from 'api/workerApi';
 import createWorkerEpic from '../../worker/createWorkerEpic';
 import * as actions from 'store/actions';
@@ -27,6 +27,7 @@ import { entity as workerEntity } from 'api/__mocks__/workerApi';
 jest.mock('api/workerApi');
 
 const wkId = getId(workerEntity);
+const workspaceKey = { name: workerEntity.name, group: GROUP.WORKSPACE };
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -37,9 +38,9 @@ it('create worker should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
-    const subs = '    ^-----------';
+    const input = '   ^-a            ';
+    const expected = '--a 1999ms (bu)';
+    const subs = '    ^--------------';
 
     const action$ = hot(input, {
       a: {
@@ -54,6 +55,13 @@ it('create worker should be worked correctly', () => {
         type: actions.createWorker.REQUEST,
         payload: {
           workerId: wkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          worker: workerEntity,
         },
       },
       u: {
@@ -80,9 +88,9 @@ it('create multiple workers should be worked correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
+    const input = '   ^-a---b                ';
+    const expected = '--a---b 1995ms (xu)(yv)';
+    const subs = '    ^----------------------';
     const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
@@ -104,6 +112,13 @@ it('create multiple workers should be worked correctly', () => {
           workerId: wkId,
         },
       },
+      x: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          worker: workerEntity,
+        },
+      },
       u: {
         type: actions.createWorker.SUCCESS,
         payload: {
@@ -120,6 +135,14 @@ it('create multiple workers should be worked correctly', () => {
         type: actions.createWorker.REQUEST,
         payload: {
           workerId: getId(anotherWorkerEntity),
+        },
+      },
+      y: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          name: anotherWorkerEntity.name,
+          group: GROUP.WORKSPACE,
+          worker: anotherWorkerEntity,
         },
       },
       v: {
@@ -146,9 +169,9 @@ it('create same worker within period should be created once only', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
+    const input = '   ^-aa 10s a       ';
+    const expected = '--a 1999ms (bu)--';
+    const subs = '    ^----------------';
 
     const action$ = hot(input, {
       a: {
@@ -163,6 +186,13 @@ it('create same worker within period should be created once only', () => {
         type: actions.createWorker.REQUEST,
         payload: {
           workerId: wkId,
+        },
+      },
+      b: {
+        type: actions.updateWorkspace.TRIGGER,
+        payload: {
+          ...workspaceKey,
+          worker: workerEntity,
         },
       },
       u: {

@@ -24,9 +24,10 @@ import {
   map,
   mergeMap,
   startWith,
+  switchMap,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, GROUP } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -36,9 +37,20 @@ export const createZookeeper$ = values => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.create(values)).pipe(
     map(res => res.data),
-    map(data => normalize(data, schema.zookeeper)),
-    map(normalizedData => merge(normalizedData, { zookeeperId })),
-    map(normalizedData => actions.createZookeeper.success(normalizedData)),
+    switchMap(data => {
+      const normalizedData = merge(normalize(data, schema.zookeeper), {
+        zookeeperId,
+      });
+      return from([
+        actions.updateWorkspace.trigger({
+          zookeeper: data,
+          // the workspace name of current object should be as same as the zookeeper name
+          name: values.name,
+          group: GROUP.WORKSPACE,
+        }),
+        actions.createZookeeper.success(normalizedData),
+      ]);
+    }),
     startWith(actions.createZookeeper.request({ zookeeperId })),
     catchError(err =>
       from([
