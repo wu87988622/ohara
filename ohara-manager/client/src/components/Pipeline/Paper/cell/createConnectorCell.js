@@ -44,7 +44,7 @@ const createConnectorCell = options => {
     },
     paperApi,
     jarKey,
-    isMetricsOn,
+    showMetrics,
     isTemporary = false,
     isSelected = false,
   } = options;
@@ -146,7 +146,7 @@ const createConnectorCell = options => {
         }.bind(this),
       );
 
-      this.toggleMetrics(isMetricsOn);
+      this.toggleMetrics(showMetrics);
       this.updatePosition();
       return this;
     },
@@ -205,17 +205,18 @@ const createConnectorCell = options => {
     toggleMetrics(isOpen) {
       const { $box, model } = this;
       const status = model.get('status').toLowerCase();
-      const isStopped = status === CELL_STATUS.stopped;
-
       // Only display metrics info when the component is not stopped
-      if (isOpen && !isStopped) {
+      if (
+        isOpen &&
+        (status === CELL_STATUS.running || status === CELL_STATUS.pending)
+      ) {
         $box.find('.metrics').show();
         $box.find('.status').hide();
-        model.set('isMetricsOn', true, { skipGraphEvents: true });
+        model.set('showMetrics', true, { skipGraphEvents: true });
       } else {
         $box.find('.metrics').hide();
         $box.find('.status').show();
-        model.set('isMetricsOn', false, { skipGraphEvents: true });
+        model.set('showMetrics', false, { skipGraphEvents: true });
       }
 
       return this;
@@ -294,7 +295,7 @@ const createConnectorCell = options => {
     position,
     status,
     isTemporary,
-    isMetricsOn,
+    showMetrics,
     jarKey,
     isSelected,
     size: {

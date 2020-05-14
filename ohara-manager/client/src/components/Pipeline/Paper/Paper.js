@@ -390,7 +390,7 @@ const Paper = React.forwardRef((props, ref) => {
 
     paper.on('element:start:button:pointerclick', elementView => {
       onCellStart(paperUtils.getCellData(elementView), paperApi);
-      elementView.toggleMetrics(true);
+      isMetricsOn && elementView.toggleMetrics(true);
     });
 
     paper.on('element:stop:button:pointerclick', elementView => {
@@ -416,7 +416,7 @@ const Paper = React.forwardRef((props, ref) => {
     function showMenu(elementView) {
       elementView.showElement('menu').hover();
 
-      if (elementView.model.get('isMetricsOn')) {
+      if (elementView.model.get('showMetrics')) {
         return elementView.hideElement('metrics');
       }
       elementView.hideElement('status');
@@ -425,7 +425,7 @@ const Paper = React.forwardRef((props, ref) => {
     function hideMenu(elementView) {
       elementView.unHover().hideElement('menu');
 
-      if (elementView.model.get('isMetricsOn')) {
+      if (elementView.model.get('showMetrics')) {
         return elementView.showElement('metrics');
       }
       elementView.showElement('status');
@@ -439,7 +439,7 @@ const Paper = React.forwardRef((props, ref) => {
           .hideElement('menu')
           .setIsSelected(false);
 
-        if (elementView.model.get('isMetricsOn')) {
+        if (elementView.model.get('showMetrics')) {
           return elementView.showElement('metrics');
         }
         elementView.showElement('status');
@@ -507,6 +507,7 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
+    isMetricsOn,
     onCellConfig,
     onCellDeselect,
     onCellRemove,
@@ -544,7 +545,7 @@ const Paper = React.forwardRef((props, ref) => {
         const newData = {
           ...data,
           statusColors,
-          isMetricsOn,
+          showMetrics: isMetricsOn,
           paperApi: ref.current,
         };
 
@@ -601,12 +602,14 @@ const Paper = React.forwardRef((props, ref) => {
 
           // Update element status
           const status = elementView.model.get('status').toLowerCase();
+
           switch (status) {
             case CELL_STATUS.running:
               elementView.disableMenu(['link', 'start', 'config', 'remove']);
               break;
             case CELL_STATUS.failed:
               elementView.disableMenu(['link', 'config', 'remove']);
+              elementView.toggleMetrics(false); // Stop displaying metrics once an error occurs
               break;
             case CELL_STATUS.stopped:
               elementView.enableMenu();
@@ -641,14 +644,14 @@ const Paper = React.forwardRef((props, ref) => {
           }
         }
       },
-      addLink(sourceId, targetId, options) {
+      addLink(sourceId, targetId, data, options) {
         if (typeof sourceId !== 'string') {
           throw new Error(
             `paperApi: addLink(sourceId: string, targetId: string?) invalid argument sourceId`,
           );
         }
 
-        const newLink = createLink({ sourceId });
+        const newLink = createLink({ sourceId, data });
 
         // TargetId is not supplied, meaning, the target is not decided yet,
         // so we will assign mouse position later on. This allows user to control
@@ -715,7 +718,7 @@ const Paper = React.forwardRef((props, ref) => {
           // Elements should be render first, and then the links
           .sort((a, b) => a.type.localeCompare(b.type))
           .forEach(cell => {
-            const { type, source, target } = cell;
+            const { type, source, target, vertices } = cell;
             if (type === 'html.Element') {
               return this.addElement(
                 {
@@ -729,7 +732,14 @@ const Paper = React.forwardRef((props, ref) => {
             }
 
             if (type === 'standard.Link') {
-              this.addLink(source.id, target.id, { skipGraphEvents: true });
+              this.addLink(
+                source.id,
+                target.id,
+                {
+                  vertices,
+                },
+                { skipGraphEvents: true },
+              );
             }
           });
 

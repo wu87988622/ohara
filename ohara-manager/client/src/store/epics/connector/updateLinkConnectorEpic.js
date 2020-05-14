@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
@@ -28,7 +28,7 @@ export default action$ => {
   return action$.pipe(
     ofType(actions.updateConnectorLink.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) =>
+    mergeMap(({ params, options }) =>
       from(connectorApi.update(params)).pipe(
         map(res => normalize(res.data, schema.connector)),
         map(normalizedData =>
