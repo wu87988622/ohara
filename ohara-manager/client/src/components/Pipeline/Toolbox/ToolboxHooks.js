@@ -42,27 +42,38 @@ export const useTopics = () => {
   return [topics, topicsDataInToolBox];
 };
 
-const restructureStream = streamClass => {
-  const { name, group, classInfos } = streamClass;
-  const result = classInfos.map(classInfo => ({
-    name: classInfo.className.split('.').pop(),
-    kind: KIND.stream,
-    className: classInfo.className,
-    jarKey: { name, group },
-  }));
+const getStreamsFromFiles = (results, file) => {
+  const { group, name, classInfos } = file;
+  const streams = classInfos.filter(({ settingDefinitions: defs }) =>
+    defs.find(def => def.key === 'kind' && def.defaultValue === KIND.stream),
+  );
 
-  return result;
+  if (streams.length > 0) {
+    results = results.concat(
+      streams.map(({ className }) => ({
+        name: className.split('.').pop(),
+        kind: KIND.stream,
+        jarKey: { group, name },
+        className,
+      })),
+    );
+  }
+
+  return results;
 };
 
 export const useStreams = () => {
-  const streamFiles = hooks.useStreamFiles();
-  const streams = streamFiles
-    .map(restructureStream)
-    .filter(stream => !_.isEmpty(stream))
-    .sort((a, b) => a[0].className.localeCompare(b[0].className))
-    .reduce((acc, cur) => acc.concat(cur), []);
+  const files = hooks.useFiles();
+  const currentWorkspace = hooks.useWorkspace();
 
-  return streams;
+  return files
+    .filter(file =>
+      currentWorkspace?.stream?.jarKeys.some(
+        jarKey => jarKey.name === file.name,
+      ),
+    )
+    .reduce(getStreamsFromFiles, [])
+    .sort((a, b) => a.className.localeCompare(b.className));
 };
 
 export const useToolboxHeight = ({ expanded, searchResults, connectors }) => {
