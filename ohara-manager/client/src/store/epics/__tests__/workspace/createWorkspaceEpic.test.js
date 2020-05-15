@@ -62,7 +62,7 @@ it('create workspace should be worked correctly', () => {
                       996ms m  499ms n   \
                       999ms o  499ms p   \
                       999ms q  499ms r   \
-                      999ms (tuvwxyz)`;
+                      999ms (tuvwxyzl)`;
     const subs = '    ^------------------';
 
     const action$ = hot(input, {
@@ -256,6 +256,9 @@ it('create workspace should be worked correctly', () => {
       z: {
         type: actions.switchWorkspace.TRIGGER,
         payload: getKey(workspaceEntity),
+      },
+      l: {
+        type: actions.fetchNodes.TRIGGER,
       },
     });
 
