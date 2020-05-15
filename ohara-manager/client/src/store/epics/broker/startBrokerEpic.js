@@ -36,6 +36,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
+// Note: The caller SHOULD handle the error of this action
 export const startBroker$ = params => {
   const brokerId = getId(params);
   return zip(
@@ -63,12 +64,6 @@ export const startBroker$ = params => {
     map(normalizedData => merge(normalizedData, { brokerId })),
     map(normalizedData => actions.startBroker.success(normalizedData)),
     startWith(actions.startBroker.request({ brokerId })),
-    catchError(err =>
-      from([
-        actions.startBroker.failure(merge(err, { brokerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -77,5 +72,16 @@ export default action$ =>
     ofType(actions.startBroker.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => startBroker$(params)),
+    mergeMap(params =>
+      startBroker$(params).pipe(
+        catchError(err =>
+          from([
+            actions.startBroker.failure(
+              merge(err, { brokerId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

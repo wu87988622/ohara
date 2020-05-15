@@ -35,6 +35,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
+// Note: The caller SHOULD handle the error of this action
 export const startTopic$ = params => {
   const topicId = getId(params);
   return zip(
@@ -61,10 +62,6 @@ export const startTopic$ = params => {
     map(normalizedData => merge(normalizedData, { topicId })),
     map(normalizedData => actions.startTopic.success(normalizedData)),
     startWith(actions.startTopic.request({ topicId })),
-    catchError(error =>
-      // Let the caller decides this Action should be terminated or trigger failure reducer
-      throwError(error),
-    ),
   );
 };
 
