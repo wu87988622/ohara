@@ -203,17 +203,20 @@ const PipelinePropertyDialog = props => {
       <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
-          <StyleFilter
-            placeholder="Quick filter"
-            variant="outlined"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <FilterListIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+          {// Unimplemented feature
+          false && (
+            <StyleFilter
+              placeholder="Quick filter"
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FilterListIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
           <div>
             {groups.sort().map((group, index) => {
               const title = group[0].group;

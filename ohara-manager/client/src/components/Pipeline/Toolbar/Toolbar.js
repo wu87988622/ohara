@@ -145,6 +145,12 @@ const Toolbar = props => {
     return `${Math.trunc(percentage)}%`;
   };
 
+  const hasElements =
+    paperApi
+      .getCells()
+      .filter(cell => cell.cellType === 'html.Element')
+      .filter(element => element.kind !== KIND.topic).length > 0;
+
   return (
     <StyledToolbar>
       <div className="toolbox-controls">
@@ -274,10 +280,12 @@ const Toolbar = props => {
           open={Boolean(pipelineAnchorEl)}
           onClose={handlePipelineControlsClose}
         >
-          <MenuItem onClick={handlePipelineStart}>
+          <MenuItem onClick={handlePipelineStart} disabled={!hasElements}>
             Start all components
           </MenuItem>
-          <MenuItem onClick={handlePipelineStop}>Stop all components</MenuItem>
+          <MenuItem onClick={handlePipelineStop} disabled={!hasElements}>
+            Stop all components
+          </MenuItem>
           <MenuItem onClick={handlePipelineDelete}>
             Delete this pipeline
           </MenuItem>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Type } from 'api/apiInterface/definitionInterface';
+import { Type, Permission } from 'api/apiInterface/definitionInterface';
 
 export const transformDef = settingDefinitions => {
   const defs = settingDefinitions;
@@ -37,6 +37,12 @@ export const transformDef = settingDefinitions => {
         // The value `.` doesn't work very well with final form
         if (def[key].includes('.')) {
           def[key] = def[key].replace(/\./g, '__');
+        }
+
+        // As of the release of 0.10, UI hasn't added support for partitioner yet
+        // and so this field is hardcoded to "read only" in the Frontend for now
+        if (def[key] === 'producer__override__partitioner__class') {
+          def.permission = Permission.READ_ONLY;
         }
 
         // Some keys are hidden from our UI
