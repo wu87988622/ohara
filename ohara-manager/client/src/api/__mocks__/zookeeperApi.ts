@@ -58,7 +58,7 @@ export const create = (params: ServiceBody): Observable<ClusterResponse> =>
   of({
     status: 200,
     title: 'mock create zookeeper data',
-    data: { ...runtimeData, ...params },
+    data: { ...(omit(runtimeData, 'state') as ClusterData), ...params },
   }).pipe(delay(2000));
 
 // simulate a promise request with a delay of 1s

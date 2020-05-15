@@ -35,6 +35,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
+// Note: The caller SHOULD handle the error of this action
 export const stopTopic$ = params => {
   const topicId = getId(params);
   return zip(
@@ -61,10 +62,6 @@ export const stopTopic$ = params => {
     map(normalizedData => merge(normalizedData, { topicId })),
     map(normalizedData => actions.stopTopic.success(normalizedData)),
     startWith(actions.stopTopic.request({ topicId })),
-    catchError(error =>
-      // Let the caller decides this Action should be terminated or trigger failure reducer
-      throwError(error),
-    ),
   );
 };
 

@@ -36,6 +36,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
+// Note: The caller SHOULD handle the error of this action
 export const startWorker$ = params => {
   const workerId = getId(params);
   return zip(
@@ -63,12 +64,6 @@ export const startWorker$ = params => {
     map(normalizedData => merge(normalizedData, { workerId })),
     map(normalizedData => actions.startWorker.success(normalizedData)),
     startWith(actions.startWorker.request({ workerId })),
-    catchError(err =>
-      from([
-        actions.startWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -77,5 +72,16 @@ export default action$ =>
     ofType(actions.startWorker.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => startWorker$(params)),
+    mergeMap(params =>
+      startWorker$(params).pipe(
+        catchError(err =>
+          from([
+            actions.startWorker.failure(
+              merge(err, { workerId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from, throwError, of } from 'rxjs';
+import { defer, from, of } from 'rxjs';
 import {
   catchError,
   map,
@@ -32,6 +32,7 @@ import { getId } from 'utils/object';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
+// Note: The caller SHOULD handle the error of this action
 export const createTopic$ = params => {
   const topicId = getId(params);
   return defer(() => topicApi.create(params)).pipe(
@@ -42,10 +43,6 @@ export const createTopic$ = params => {
       );
     }),
     startWith(actions.createTopic.request({ topicId })),
-    catchError(res => {
-      // Let the caller decides this Action should be terminated or trigger failure reducer
-      return throwError(res);
-    }),
   );
 };
 
