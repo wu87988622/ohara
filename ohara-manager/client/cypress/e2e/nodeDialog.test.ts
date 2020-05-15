@@ -185,10 +185,6 @@ describe('NodeDialog of AppBar', () => {
     // wait for inspect worker
     cy.wait(15000);
 
-    // wait a little time for workspace ready
-    cy.reload();
-    cy.wait(6000);
-
     cy.findByTitle('Node list')
       .should('exist')
       .click();

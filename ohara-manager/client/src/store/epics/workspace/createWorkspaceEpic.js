@@ -72,6 +72,8 @@ const finalize$ = params =>
     ),
     // Switch to the workspace you just created
     of(actions.switchWorkspace.trigger(params)),
+    // Refetch node list after creation successfully in order to get the runtime data
+    of(actions.fetchNodes.trigger()),
   ).pipe(concatAll());
 
 export default (action$, state$) =>

@@ -345,6 +345,8 @@ const finalize$ = params =>
         type: LOG_LEVEL.info,
       }),
     ),
+    // Refetch node list after creation successfully in order to get the runtime data
+    of(actions.fetchNodes.trigger()),
   ).pipe(concatAll());
 
 export default (action$, state$) =>
