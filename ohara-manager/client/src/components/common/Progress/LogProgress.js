@@ -116,7 +116,6 @@ const LogProgress = props => {
 
     if (!isOpen) {
       setIsLoading(false);
-      onResetClusters();
     }
 
     if (!isLoading) {

@@ -75,13 +75,20 @@ export const useRestartWorkspaceAction = () => {
   );
 };
 
-export const useRefreshWorkspaceAction = () => {
+export const useRefreshWorkspaceAction = params => {
   const fetchZookeeper = hooks.useFetchZookeeperAction();
   const fetchBroker = hooks.useFetchBrokerAction();
   const fetchWorker = hooks.useFetchWorkerAction();
   return useCallback(() => {
-    fetchZookeeper();
-    fetchBroker();
-    fetchWorker();
-  }, [fetchBroker, fetchWorker, fetchZookeeper]);
+    fetchZookeeper(params.zkName);
+    fetchBroker(params.bkName);
+    fetchWorker(params.wkName);
+  }, [
+    fetchBroker,
+    fetchWorker,
+    fetchZookeeper,
+    params.bkName,
+    params.wkName,
+    params.zkName,
+  ]);
 };

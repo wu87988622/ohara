@@ -21,13 +21,20 @@ import * as hooks from 'hooks';
 import { convertIdToKey } from 'utils/object';
 
 const RestartWorkspace = () => {
+  const brokerName = hooks.useBrokerName();
+  const workerName = hooks.useWorkerName();
+  const zookeeperName = hooks.useZookeeperName();
   const pause = hooks.usePauseRestartWorkspaceAction();
   const close = hooks.useCloseRestartWorkspaceDialogAction();
   const resume = hooks.useResumeRestartWorkspaceAction();
   const rollback = hooks.useRollbackRestartWorkspaceAction();
   const autoClose = hooks.useAutoCloseRestartWorkspaceDialogAction();
   const startWorkspace = hooks.useRestartWorkspaceAction();
-  const resetClusters = hooks.useRefreshWorkspaceAction();
+  const resetClusters = hooks.useRefreshWorkspaceAction({
+    zkName: zookeeperName,
+    bkName: brokerName,
+    wkName: workerName,
+  });
   const workspaceId = hooks.useWorkspaceId();
   const zookeeperId = hooks.useZookeeperId();
   const brokerId = hooks.useBrokerId();
