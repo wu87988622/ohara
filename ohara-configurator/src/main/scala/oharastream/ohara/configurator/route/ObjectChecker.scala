@@ -33,7 +33,7 @@ import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, To
 import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.store.DataStore
-import spray.json.{JsArray, JsObject, JsValue}
+import spray.json.{JsArray, JsObject, JsString, JsValue}
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
@@ -88,15 +88,27 @@ object ObjectChecker {
     def references(settings: Map[String, JsValue], definitions: Seq[SettingDef]): CheckList = {
       def add(obj: JsValue, definition: SettingDef): Unit = {
         obj match {
-          case obj: JsObject => reference(OBJECT_KEY_FORMAT.read(obj), definition.reference())
-          case JsArray(objs) => objs.foreach(obj => add(obj, definition))
-          case _             => // nothing
+          case JsString(name) => reference(ObjectKey.of(GROUP_DEFAULT, name), definition.reference())
+          case obj: JsObject  => reference(OBJECT_KEY_FORMAT.read(obj), definition.reference())
+          case JsArray(objs)  => objs.foreach(obj => add(obj, definition))
+          case _              => // nothing
         }
       }
       definitions
-        .filterNot(_.reference() == SettingDef.Reference.NONE)
-        .filter(d => d.valueType() == SettingDef.Type.OBJECT_KEY || d.valueType() == SettingDef.Type.OBJECT_KEYS)
-        .foreach(definition => settings.get(definition.key()).foreach(obj => add(obj, definition)))
+        .foreach(
+          definition =>
+            settings.get(definition.key()).foreach { obj =>
+              definition.reference() match {
+                case SettingDef.Reference.NONE => // skip
+                case SettingDef.Reference.NODE if definition.valueType() == SettingDef.Type.ARRAY =>
+                  add(obj, definition)
+                case _
+                    if definition.valueType() == SettingDef.Type.OBJECT_KEY || definition
+                      .valueType() == SettingDef.Type.OBJECT_KEYS =>
+                  add(obj, definition)
+              }
+            }
+        )
       this
     }
 
@@ -109,6 +121,7 @@ object ObjectChecker {
     private[this] def reference(objectKey: ObjectKey, reference: SettingDef.Reference): CheckList =
       reference match {
         case SettingDef.Reference.NONE              => this
+        case SettingDef.Reference.NODE              => node(objectKey)
         case SettingDef.Reference.TOPIC             => topic(TopicKey.of(objectKey.group(), objectKey.name()))
         case SettingDef.Reference.ZOOKEEPER_CLUSTER => zookeeperCluster(objectKey)
         case SettingDef.Reference.BROKER_CLUSTER    => brokerCluster(objectKey)
