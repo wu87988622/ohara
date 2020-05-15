@@ -71,6 +71,8 @@ object ShabondiDefinitions {
     .displayName("Image name")
     .documentation("The image name of this Shabondi running with")
     .optional(IMAGE_NAME_DEFAULT)
+    // Currently, in manager, user cannot change the image name after shabondi creation
+    .permission(SettingDef.Permission.CREATE_ONLY)
     .build
     .registerTo(basicDefinitionMap)
 

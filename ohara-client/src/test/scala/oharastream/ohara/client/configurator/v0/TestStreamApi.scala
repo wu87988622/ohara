@@ -436,7 +436,7 @@ class TestStreamApi extends OharaTest {
                                                   |      "group": "g",
                                                   |      "name": "n"
                                                   |    },
-                                                  |    "imageName": "",
+                                                  |    "imageName": "${StreamApi.IMAGE_NAME_DEFAULT}",
                                                   |    "nodeNames": ["n"],
                                                   |    "brokerClusterKey": {
                                                   |      "group": "g",

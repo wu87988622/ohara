@@ -217,7 +217,7 @@ class TestZookeeperApi extends OharaTest {
                                                         |    "nodeNames": [
                                                         |      "node"
                                                         |    ],
-                                                        |    "imageName": ""
+                                                        |    "imageName": "${ZookeeperApi.IMAGE_NAME_DEFAULT}"
                                                         |  }
                                                         |  """.stripMargin.parseJson)
       .settings(IMAGE_NAME_KEY)
