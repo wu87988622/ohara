@@ -30,6 +30,7 @@ const initialState = {
   isOpen: false,
   loading: false,
   isAutoClose: false,
+  closeDisable: true,
   progress: {
     open: false,
     steps: defaultSteps,
@@ -49,6 +50,8 @@ export default function reducer(state = initialState, action) {
     case actions.openDeleteWorkspace.TRIGGER:
       return {
         ...state,
+        isAutoClose: false,
+        closeDisable: true,
         isOpen: true,
       };
     case actions.closeDeleteWorkspace.TRIGGER:
@@ -355,6 +358,7 @@ export default function reducer(state = initialState, action) {
     case actions.deleteWorkspace.SUCCESS:
       return {
         ...state,
+        closeDisable: false,
         skipList: [],
         progress: {
           ...state.progress,
