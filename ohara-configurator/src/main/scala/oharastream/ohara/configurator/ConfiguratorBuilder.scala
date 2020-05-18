@@ -135,7 +135,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           )
         }
         .foreach(r => store.addIfAbsent(r))
-      val collie = new FakeServiceCollie(createCollie(), store, bkConnectionProps, wkConnectionProps)
+      val collie = new FakeServiceCollie(createCollie(), bkConnectionProps, wkConnectionProps)
       val bkCluster = {
         val pair = bkConnectionProps.split(",")
         val host = pair.map(_.split(":").head).head
@@ -220,7 +220,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
         throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
       val store  = getOrCreateStore()
-      val collie = new FakeServiceCollie(createCollie(), store)
+      val collie = new FakeServiceCollie(createCollie())
 
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>

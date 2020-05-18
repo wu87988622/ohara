@@ -169,7 +169,7 @@ object K8SClient {
         override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
           removePod(name, false)
 
-        override def logs(name: String, sinceSeconds: Option[Long])(
+        override def log(name: String, sinceSeconds: Option[Long])(
           implicit executionContext: ExecutionContext
         ): Future[Map[ContainerName, String]] =
           containerNames(name)

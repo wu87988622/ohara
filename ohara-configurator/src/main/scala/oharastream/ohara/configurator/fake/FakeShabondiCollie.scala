@@ -16,12 +16,13 @@
 
 package oharastream.ohara.configurator.fake
 
+import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{ClusterKind, DataCollie, ShabondiCollie}
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
-private[configurator] class FakeShabondiCollie(dataCollie: DataCollie)
+private[configurator] class FakeShabondiCollie(val containerClient: ContainerClient, dataCollie: DataCollie)
     extends FakeCollie(dataCollie)
     with ShabondiCollie {
   override def creator: ShabondiCollie.ClusterCreator =

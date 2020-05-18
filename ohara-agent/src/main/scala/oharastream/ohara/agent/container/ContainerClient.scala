@@ -102,7 +102,7 @@ trait ContainerClient extends Releasable {
     * @return container log
     */
   def logs(name: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
-    logs(name, None)
+    log(name, None)
 
   /**
     * get container log
@@ -111,7 +111,7 @@ trait ContainerClient extends Releasable {
     * @param executionContext thread pool
     * @return container log
     */
-  def logs(name: String, sinceSeconds: Option[Long])(
+  def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerName, String]]
 
@@ -126,14 +126,6 @@ trait ContainerClient extends Releasable {
     * @return all container images on all hosted nodes.
     */
   def imageNames()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[String]]]
-
-  /**
-    * @param executionContext thread pool
-    * @return all container images on specify node.
-    */
-  def imageNames(nodeName: String)(implicit executionContext: ExecutionContext): Future[Seq[String]] =
-    imageNames()
-      .map(_.getOrElse(nodeName, throw new NoSuchElementException(s"$nodeName does not exists!!!")))
 
   /**
     * @param executionContext thread pool

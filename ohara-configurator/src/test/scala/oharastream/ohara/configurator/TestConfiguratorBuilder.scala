@@ -113,7 +113,7 @@ class TestConfiguratorBuilder extends OharaTest {
     val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sApiServer(apiServer.url).build()
-      Await.result(configurator.containerClient.logs(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -125,7 +125,7 @@ class TestConfiguratorBuilder extends OharaTest {
     val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sNamespace(namespace).k8sApiServer(apiServer.url).build()
-      Await.result(configurator.containerClient.logs(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -138,7 +138,7 @@ class TestConfiguratorBuilder extends OharaTest {
     try {
       val k8sClient                  = K8SClient.builder.apiServerURL(apiServer.url).build()
       val configurator: Configurator = Configurator.builder.k8sClient(k8sClient).build()
-      Await.result(configurator.containerClient.logs(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -153,7 +153,7 @@ class TestConfiguratorBuilder extends OharaTest {
 
       val configurator: Configurator =
         Configurator.builder.k8sClient(k8sClient).build()
-      Await.result(configurator.containerClient.logs(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
     } finally apiServer.close()
   }
 

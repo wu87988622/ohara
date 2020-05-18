@@ -126,31 +126,31 @@ object LogRoute {
           case (group, sinceSeconds) =>
             val clusterKey =
               ObjectKey.of(group, clusterName)
-            route(clusterKey, collie.zookeeperCollie.logs(clusterKey, sinceSeconds))
+            route(clusterKey, collie.zookeeperCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path(BROKER_PREFIX_PATH / Segment) { clusterName =>
         parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
-            route(clusterKey, collie.brokerCollie.logs(clusterKey, sinceSeconds))
+            route(clusterKey, collie.brokerCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path(WORKER_PREFIX_PATH / Segment) { clusterName =>
         parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
-            route(clusterKey, collie.workerCollie.logs(clusterKey, sinceSeconds))
+            route(clusterKey, collie.workerCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path(STREAM_PREFIX_PATH / Segment) { clusterName =>
         parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
-            route(clusterKey, collie.streamCollie.logs(clusterKey, sinceSeconds))
+            route(clusterKey, collie.streamCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path(SHABONDI_PREFIX_PATH / Segment) { clusterName =>
         parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
-            route(clusterKey, collie.shabondiCollie.logs(clusterKey, sinceSeconds))
+            route(clusterKey, collie.shabondiCollie.log(clusterKey, sinceSeconds))
         }
       }
     }

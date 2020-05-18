@@ -252,7 +252,7 @@ package object route {
       .flatMap { clusters =>
         serviceCollie.imageNames().map { nodesImages =>
           req.nodeNames.foreach { nodeName =>
-            val images = nodesImages.find(_._1.hostname == nodeName).map(_._2).getOrElse(Seq.empty)
+            val images = nodesImages.find(_._1 == nodeName).map(_._2).getOrElse(Seq.empty)
             if (!images.contains(req.imageName))
               throw new IllegalArgumentException(
                 s"$nodeName does not have image:${req.imageName}. It has images:${images.mkString(",")}"

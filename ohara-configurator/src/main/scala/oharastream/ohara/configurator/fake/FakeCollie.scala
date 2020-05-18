@@ -99,7 +99,7 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
     }
   }
 
-  override def logs(objectKey: ObjectKey, sinceSeconds: Option[Long])(
+  override def log(objectKey: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerName, String]] =
     exist(objectKey).flatMap(if (_) Future.successful {

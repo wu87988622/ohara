@@ -16,12 +16,15 @@
 
 package oharastream.ohara.configurator.fake
 
+import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{ClusterKind, DataCollie, StreamCollie}
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
-private[configurator] class FakeStreamCollie(dataCollie: DataCollie) extends FakeCollie(dataCollie) with StreamCollie {
+private[configurator] class FakeStreamCollie(val containerClient: ContainerClient, dataCollie: DataCollie)
+    extends FakeCollie(dataCollie)
+    with StreamCollie {
   override def creator: StreamCollie.ClusterCreator =
     (_, creation) =>
       if (clusterCache.asScala.exists(_._1 == creation.key))

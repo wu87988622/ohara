@@ -17,8 +17,7 @@
 package oharastream.ohara.agent.k8s
 
 import oharastream.ohara.agent._
-import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
+import oharastream.ohara.client.configurator.v0.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,15 +35,6 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, val containerC
 
   override val shabondiCollie: ShabondiCollie = new K8SBasicCollieImpl(dataCollie, containerClient) with ShabondiCollie
 
-  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
-    dataCollie.values[Node]().flatMap { nodes =>
-      Future
-        .traverse(nodes) { node =>
-          containerClient.imageNames(node.name).map(images => node -> images)
-        }
-        .map(_.toMap)
-    }
-
   override def verifyNode(node: Node)(implicit executionContext: ExecutionContext): Future[String] =
     containerClient
       .checkNode(node.name)
@@ -54,17 +44,6 @@ private[ohara] class K8SServiceCollieImpl(dataCollie: DataCollie, val containerC
         else
           throw new IllegalStateException(s"${node.name} node doesn't running container. cause: ${statusInfo.message}")
       })
-
-  override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    containerClient.containerNames()
-
-  override def log(containerName: String, sinceSeconds: Option[Long])(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerName, String]] =
-    containerClient.logs(containerName, sinceSeconds)
-
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
-    containerClient.resources()
 
   override def close(): Unit = {
     // do nothing
