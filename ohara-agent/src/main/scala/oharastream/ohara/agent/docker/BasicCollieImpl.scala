@@ -16,18 +16,16 @@
 
 package oharastream.ohara.agent.docker
 
-import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
 import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 private abstract class BasicCollieImpl(
   val dataCollie: DataCollie,
-  dockerClient: DockerClient,
+  val containerClient: DockerClient,
   clusterCache: ServiceCache
 ) extends Collie {
   final override def clusters()(implicit executionContext: ExecutionContext): Future[Seq[ClusterStatus]] =
@@ -39,7 +37,7 @@ private abstract class BasicCollieImpl(
     Future
       .traverse(existentNodes.values.map(_.name))(
         name =>
-          dockerClient.containerInspector
+          containerClient.containerInspector
             .name(name)
             .asRoot()
             .append("/etc/hosts", routes.map {
@@ -64,8 +62,8 @@ private abstract class BasicCollieImpl(
     Future
       .traverse(beRemovedContainers)(
         containerInfo =>
-          if (force) dockerClient.forceRemove(containerInfo.name)
-          else dockerClient.remove(containerInfo.name)
+          if (force) containerClient.forceRemove(containerInfo.name)
+          else containerClient.remove(containerInfo.name)
       )
       .map { _ =>
         val newContainers =
@@ -73,14 +71,6 @@ private abstract class BasicCollieImpl(
         if (newContainers.isEmpty) clusterCache.remove(clusterInfo)
         else clusterCache.put(clusterInfo.copy(containers = newContainers))
       }
-
-  override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerName, String]] =
-    cluster(key)
-      .map(_.containers)
-      .flatMap(Future.traverse(_)(container => dockerClient.logs(container.name, sinceSeconds)))
-      .map(_.flatten.toMap)
 
   override protected def toClusterState(containers: Seq[ContainerInfo]): Option[ClusterState] =
     if (containers.isEmpty) None
@@ -108,7 +98,7 @@ private abstract class BasicCollieImpl(
     arguments: Seq[String],
     volumeMaps: Map[Volume, String]
   ): Future[Unit] =
-    dockerClient.containerCreator
+    containerClient.containerCreator
       .imageName(containerInfo.imageName)
       .portMappings(
         containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap

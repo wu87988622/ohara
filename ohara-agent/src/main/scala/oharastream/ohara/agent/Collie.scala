@@ -19,7 +19,7 @@ package oharastream.ohara.agent
 import java.util.Objects
 
 import oharastream.ohara.agent.Collie.ClusterCreator
-import oharastream.ohara.agent.container.ContainerName
+import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
@@ -44,6 +44,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Collie is a cute dog helping us to "manage" a bunch of sheep.
   */
 trait Collie {
+  /**
+    * @return internal container client
+    */
+  protected def containerClient: ContainerClient
+
   /**
     * remove whole cluster by specified key. The process, mostly, has a graceful shutdown
     * which can guarantee the data consistency. However, the graceful downing whole cluster may take some time...
@@ -99,9 +104,13 @@ trait Collie {
     * @param key cluster key
     * @return all log content from cluster. Each container has a log.
     */
-  def logs(key: ObjectKey, sinceSeconds: Option[Long])(
+  def log(key: ObjectKey, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerName, String]]
+  ): Future[Map[ContainerName, String]] =
+    cluster(key)
+      .map(_.containers)
+      .flatMap(Future.traverse(_)(container => containerClient.log(container.name, sinceSeconds)))
+      .map(_.flatten.toMap)
 
   /**
     * create a cluster creator. The subclass should have following rules.

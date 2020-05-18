@@ -44,7 +44,7 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
     )
 
   private[this] def log(name: String, sinceSeconds: Option[Long]): String =
-    result(containerClient.logs(name, sinceSeconds)).head._2
+    result(containerClient.log(name, sinceSeconds)).head._2
 
   @Test
   def testLog(): Unit = {

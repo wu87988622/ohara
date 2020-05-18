@@ -59,7 +59,7 @@ class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], co
   override def remove(name: String)(implicit executionContext: ExecutionContext): Future[Unit] =
     Future.failed(new UnsupportedOperationException("FakeK8SClient does not support remove function"))
 
-  override def logs(name: String, sinceSeconds: Option[Long])(
+  override def log(name: String, sinceSeconds: Option[Long])(
     implicit executionContext: ExecutionContext
   ): Future[Map[ContainerName, String]] =
     containerNames(name).map(_.map(n => n -> s"fake k8s log for $name").toMap)

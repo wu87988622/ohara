@@ -18,11 +18,9 @@ package oharastream.ohara.agent.docker
 
 import java.util.concurrent.ExecutorService
 
-import oharastream.ohara.agent.ClusterKind
-import oharastream.ohara.agent.container.ContainerName
-import oharastream.ohara.agent.{ClusterStatus, _}
+import oharastream.ohara.agent.{ClusterKind, ClusterStatus, _}
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
+import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.Releasable
 
@@ -32,7 +30,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 // accessible to configurator
 private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataCollie, cacheThreadPool: ExecutorService)
     extends ServiceCollie {
-  val containerClient: DockerClient = DockerClient(dataCollie)
+  override val containerClient: DockerClient = DockerClient(dataCollie)
 
   private[this] val clusterCache: ServiceCache = ServiceCache.builder
     .frequency(cacheTimeout)
@@ -87,15 +85,6 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
     Releasable.close(() => cacheThreadPool.shutdownNow())
   }
 
-  override def imageNames()(implicit executionContext: ExecutionContext): Future[Map[Node, Seq[String]]] =
-    dataCollie.values[Node]().flatMap { nodes =>
-      Future
-        .traverse(nodes) { node =>
-          containerClient.imageNames(node.name).map(images => node -> images)
-        }
-        .map(_.toMap)
-    }
-
   /**
     * The default implementation has the following checks.
     * 1) run hello-world image
@@ -109,14 +98,4 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
           s"succeed to check the docker resources on ${node.name}"
         else throw new IllegalStateException(s"the docker on ${node.hostname} is unavailable")
       }
-
-  override def containerNames()(implicit executionContext: ExecutionContext): Future[Seq[ContainerName]] =
-    containerClient.containerNames()
-
-  override def log(containerName: String, sinceSeconds: Option[Long])(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerName, String]] = containerClient.logs(containerName, sinceSeconds)
-
-  override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
-    containerClient.resources()
 }

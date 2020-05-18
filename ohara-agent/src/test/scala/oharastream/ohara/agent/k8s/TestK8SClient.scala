@@ -255,8 +255,8 @@ class TestK8SClient extends OharaTest {
     }
     try {
       val client           = K8SClient.builder.apiServerURL(s.url).build()
-      val imagesFromServer = Await.result(client.imageNames(node), 30 seconds)
-      imagesFromServer shouldBe images
+      val imagesFromServer = Await.result(client.imageNames(), 30 seconds)
+      imagesFromServer shouldBe Map(node -> images)
     } finally s.close()
   }
 
@@ -274,7 +274,7 @@ class TestK8SClient extends OharaTest {
     val s       = log(podName)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      Await.result(client.logs(podName, None), 10 seconds)
+      Await.result(client.log(podName, None), 10 seconds)
     } finally s.close()
   }
 

@@ -125,7 +125,7 @@ object ServiceKeyHolder {
             try {
               println(s"[-----------------------------------${container.name}-----------------------------------]")
               // Before 10 minutes container log. Avoid the OutOfMemory of Java heap
-              val containerLogs = try result(client.logs(container.name, Option(600)))
+              val containerLogs = try result(client.log(container.name, Option(600)))
               catch {
                 case e: Throwable =>
                   s"failed to fetch the logs for container:${container.name}. caused by:${e.getMessage}"

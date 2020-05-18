@@ -18,6 +18,7 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
+import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{ClusterKind, DataCollie, NoSuchClusterException, WorkerCollie}
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -26,8 +27,11 @@ import oharastream.ohara.common.setting.ObjectKey
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeWorkerCollie(dataCollie: DataCollie, wkConnectionProps: String)
-    extends FakeCollie(dataCollie)
+private[configurator] class FakeWorkerCollie(
+  val containerClient: ContainerClient,
+  dataCollie: DataCollie,
+  wkConnectionProps: String
+) extends FakeCollie(dataCollie)
     with WorkerCollie {
   /**
     * cache all connectors info in-memory so we should keep instance for each fake cluster.

@@ -259,7 +259,7 @@ object DockerClient {
         )
         .map(_ => ())
 
-    override def logs(name: String, sinceSeconds: Option[Long])(
+    override def log(name: String, sinceSeconds: Option[Long])(
       implicit executionContext: ExecutionContext
     ): Future[Map[ContainerName, String]] =
       containerNames(name)

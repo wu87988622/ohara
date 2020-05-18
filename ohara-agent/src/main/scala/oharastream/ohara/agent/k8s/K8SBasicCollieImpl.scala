@@ -16,39 +16,30 @@
 
 package oharastream.ohara.agent.k8s
 
-import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
 import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.common.setting.ObjectKey
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sClient: K8SClient) extends Collie {
+private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, val containerClient: K8SClient)
+    extends Collie {
   override protected def doRemove(clusterInfo: ClusterStatus, beRemovedContainer: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Unit] =
-    Future.sequence(beRemovedContainer.map(c => k8sClient.remove(c.name))).map(_ => ())
+    Future.sequence(beRemovedContainer.map(c => containerClient.remove(c.name))).map(_ => ())
 
   override protected def doForceRemove(clusterInfo: ClusterStatus, containerInfos: Seq[ContainerInfo])(
     implicit executionContext: ExecutionContext
   ): Future[Unit] =
-    Future.sequence(containerInfos.map(c => k8sClient.forceRemove(c.name))).map(_ => ())
-
-  override def logs(key: ObjectKey, sinceSeconds: Option[Long])(
-    implicit executionContext: ExecutionContext
-  ): Future[Map[ContainerName, String]] =
-    cluster(key)
-      .map(_.containers)
-      .flatMap(Future.traverse(_)(container => k8sClient.logs(container.name, sinceSeconds)))
-      .map(_.flatten.toMap)
+    Future.sequence(containerInfos.map(c => containerClient.forceRemove(c.name))).map(_ => ())
 
   override def clusters()(
     implicit executionContext: ExecutionContext
   ): Future[Seq[ClusterStatus]] =
-    k8sClient
+    containerClient
       .containers()
       .map(_.filter(container => Collie.matched(container.name, kind)))
       .map(
@@ -85,7 +76,7 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, k8sC
     arguments: Seq[String],
     volumeMaps: Map[Volume, String]
   ): Future[Unit] =
-    k8sClient.containerCreator
+    containerClient.containerCreator
       .imageName(containerInfo.imageName)
       .portMappings(
         containerInfo.portMappings.map(portMapping => portMapping.hostPort -> portMapping.containerPort).toMap

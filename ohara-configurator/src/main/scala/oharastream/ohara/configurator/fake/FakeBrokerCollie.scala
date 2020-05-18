@@ -18,6 +18,7 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentSkipListMap
 
+import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{BrokerCollie, ClusterKind, DataCollie, NoSuchClusterException}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.annotations.VisibleForTesting
@@ -26,8 +27,11 @@ import oharastream.ohara.kafka.TopicAdmin
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[configurator] class FakeBrokerCollie(dataCollie: DataCollie, bkConnectionProps: String)
-    extends FakeCollie(dataCollie)
+private[configurator] class FakeBrokerCollie(
+  val containerClient: ContainerClient,
+  dataCollie: DataCollie,
+  bkConnectionProps: String
+) extends FakeCollie(dataCollie)
     with BrokerCollie {
   /**
     * cache all topics info in-memory so we should keep instance for each fake cluster.

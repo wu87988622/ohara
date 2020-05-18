@@ -55,7 +55,7 @@ class TestDockerClient extends IntegrationTest {
         .command(s"""/bin/bash -c \"ping $webHost\"""")
         .create()
     )
-    result(client.logs(name, None)).head._2 should include(webHost)
+    result(client.log(name, None)).head._2 should include(webHost)
   }
 
   @Test
