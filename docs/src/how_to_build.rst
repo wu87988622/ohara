@@ -26,7 +26,7 @@ Prerequisites
 
 -  OpenJDK 1.8
 -  Scala 2.13.2
--  Gradle 6.4.0
+-  Gradle 6.4.1
 -  Node.js 8.12.0
 -  Yarn 1.13.0 or greater
 -  Docker 19.03.8 (Docker multi-stage, which is supported by Docker 17.05 or higher, is
