@@ -19,16 +19,11 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import DialogContent from '@material-ui/core/DialogContent';
 import Dialog from '@material-ui/core/Dialog';
-import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Toolbar from '@material-ui/core/Toolbar';
-import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
-
-const StyledIconButton = styled(IconButton)`
-  margin-right: ${props => props.theme.spacing(2)}px;
-`;
+import CloseIcon from '@material-ui/icons/Close';
 
 const StyledDialogContent = styled(DialogContent)`
   max-width: 1400px;
@@ -50,8 +45,6 @@ const FullScreenDialog = props => {
     children,
     open,
     onClose,
-    onSave,
-    hasSave = false,
     testId = 'fullscreen-dialog',
     ...other
   } = props;
@@ -70,20 +63,14 @@ const FullScreenDialog = props => {
     >
       <AppBar>
         <Toolbar>
-          <StyledIconButton
-            edge="start"
+          <StyledTypography variant="h4">{title}</StyledTypography>
+          <IconButton
             color="inherit"
             data-testid={`${testId}-close-button`}
             onClick={onClose}
           >
-            <KeyboardBackspaceIcon />
-          </StyledIconButton>
-          <StyledTypography variant="h4">{title}</StyledTypography>
-          {hasSave && (
-            <Button autoFocus color="inherit" onClick={onSave}>
-              save
-            </Button>
-          )}
+            <CloseIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <StyledDialogContent>
@@ -99,8 +86,6 @@ FullScreenDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   testId: PropTypes.string,
-  hasSave: PropTypes.bool,
-  onSave: PropTypes.func,
 };
 
 export default FullScreenDialog;
