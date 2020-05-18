@@ -410,6 +410,7 @@ function NodeTable(props) {
         onSelectionChange={onSelectionChange}
         options={{
           predicate: 'hostname',
+          prompt: options?.prompt,
           rowStyle: node => getRowStyle(node),
           selection: options?.selection,
           selectedData: options?.selectedNodes,
@@ -502,6 +503,7 @@ NodeTable.propTypes = {
     onUndoIconClick: PropTypes.func,
     onRefreshIconClick: PropTypes.func,
     onRemoveIconClick: PropTypes.func,
+    prompt: PropTypes.string,
     selection: PropTypes.bool,
     selectedNodes: PropTypes.array,
     showAddIcon: PropTypes.bool,

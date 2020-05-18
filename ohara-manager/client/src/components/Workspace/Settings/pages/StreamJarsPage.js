@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { every, filter, find, map, some, reject } from 'lodash';
 
 import { FileSelectorDialog, FileTable } from 'components/File';
@@ -30,11 +30,13 @@ function StreamJarsPage() {
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
 
-  const streamJars = filter(
-    map(workspace?.stream?.jarKeys, jarKey =>
-      find(files, file => file.name === jarKey.name),
-    ),
-  );
+  const streamJars = useMemo(() => {
+    return filter(
+      map(workspace?.stream?.jarKeys, jarKey =>
+        find(files, file => file.name === jarKey.name),
+      ),
+    );
+  }, [workspace, files]);
 
   const updateStreamJarKeysToWorkspace = newJarKeys => {
     updateWorkspace({
@@ -119,13 +121,17 @@ function StreamJarsPage() {
 
       <FileSelectorDialog
         isOpen={isSelectorDialogOpen}
-        files={files}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
         onUpload={handleUpload}
         ref={selectorDialogRef}
-        selectedFiles={streamJars}
-        tableTitle="Workspace files"
+        tableProps={{
+          files,
+          options: {
+            selectedFiles: streamJars,
+          },
+          title: 'Files',
+        }}
       />
     </>
   );

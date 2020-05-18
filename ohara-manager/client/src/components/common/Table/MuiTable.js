@@ -16,16 +16,27 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import styled, { css } from 'styled-components';
 import { assign, get, isString, isFunction, reject, size, some } from 'lodash';
 import Table from 'material-table';
 import Checkbox from '@material-ui/core/Checkbox';
+import Typography from '@material-ui/core/Typography';
 import MuiTableIcons from './MuiTableIcons';
+
+const Styles = styled.div(
+  ({ theme }) => css`
+    .prompt {
+      margin: ${theme.spacing(1, 0.5, 0)};
+    }
+  `,
+);
 
 const defaultProps = {
   onSelectionChange: () => {},
   options: {
     paging: false,
     predicate: 'name', // or function predicate(rowData) { return rowData.name; }
+    prompt: null,
     search: true,
     selection: false,
     selectedData: [],
@@ -104,13 +115,26 @@ const MuiTable = props => {
   };
 
   return (
-    <Table
-      {...restProps}
-      columns={[renderSelectionColumn(), ...columns]}
-      data={data}
-      options={{ ...restOptions, paging: dataCount > 5 }}
-      icons={MuiTableIcons}
-    />
+    <Styles>
+      <Table
+        {...restProps}
+        columns={[renderSelectionColumn(), ...columns]}
+        data={data}
+        options={{ ...restOptions, paging: dataCount > 5 }}
+        icons={MuiTableIcons}
+      />
+      {options?.prompt && (
+        <Typography
+          color="textSecondary"
+          className="prompt"
+          display="block"
+          gutterBottom
+          variant="caption"
+        >
+          {options.prompt}
+        </Typography>
+      )}
+    </Styles>
   );
 };
 
@@ -121,6 +145,7 @@ MuiTable.propTypes = {
   options: PropTypes.shape({
     paging: PropTypes.bool,
     predicate: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    prompt: PropTypes.string,
     search: PropTypes.bool,
     selection: PropTypes.bool,
     selectedData: PropTypes.array,

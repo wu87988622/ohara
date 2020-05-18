@@ -16,23 +16,13 @@
 
 import React, { useState, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
-import styled, { css } from 'styled-components';
 import { isEqual, sortedUniq } from 'lodash';
-import Typography from '@material-ui/core/Typography';
 
 import { Dialog } from 'components/common/Dialog';
 import NodeTable from './NodeTable';
 
-const Wrapper = styled.div(
-  ({ theme }) => css`
-    .prompt {
-      margin: ${theme.spacing(1.5, 0)};
-    }
-  `,
-);
-
 const NodeSelectorDialog = React.forwardRef((props, ref) => {
-  const { isOpen, onClose, onConfirm, prompt, tableProps, title } = props;
+  const { isOpen, onClose, onConfirm, tableProps, title } = props;
 
   const [selectedNodes, setSelectedNodes] = useState(
     tableProps?.options?.selectedNodes,
@@ -70,24 +60,17 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
       confirmText="Save"
       maxWidth="md"
     >
-      <Wrapper>
-        {prompt && (
-          <Typography className="prompt" variant="h6">
-            {prompt}
-          </Typography>
-        )}
-        <NodeTable
-          {...tableProps}
-          onSelectionChange={handleSelectionChange}
-          options={{
-            selection: true,
-            showCreateIcon: false,
-            showDeleteIcon: false,
-            showEditorIcon: false,
-            ...tableProps?.options,
-          }}
-        />
-      </Wrapper>
+      <NodeTable
+        {...tableProps}
+        onSelectionChange={handleSelectionChange}
+        options={{
+          selection: true,
+          showCreateIcon: false,
+          showDeleteIcon: false,
+          showEditorIcon: false,
+          ...tableProps?.options,
+        }}
+      />
     </Dialog>
   );
 });
@@ -96,7 +79,6 @@ NodeSelectorDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func,
-  prompt: PropTypes.string,
   tableProps: PropTypes.shape({
     options: PropTypes.shape({
       selectedNodes: PropTypes.array,
@@ -108,7 +90,6 @@ NodeSelectorDialog.propTypes = {
 NodeSelectorDialog.defaultProps = {
   onClose: () => {},
   onConfirm: () => {},
-  prompt: null,
   tableProps: {},
   title: 'Select node',
 };

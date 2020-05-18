@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { filter, find, map, some, reject } from 'lodash';
 
 import { NodeSelectorDialog, NodeTable } from 'components/Node';
@@ -24,21 +24,29 @@ import * as hooks from 'hooks';
 function WorkerNodesPage() {
   const { data: configuratorInfo } = context.useConfiguratorState();
   const workspace = hooks.useWorkspace();
-
+  const worker = hooks.useWorker();
   const nodesInWorker = hooks.useNodesInWorker();
-
   const nodesInWorkspace = hooks.useNodesInWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
 
-  const workerNodesInWorkspace = workspace?.worker?.nodeNames
-    ? filter(
-        map(workspace.worker.nodeNames, nodeName =>
-          find(nodesInWorkspace, node => node.hostname === nodeName),
-        ),
-      )
-    : nodesInWorker;
+  const documentation = useMemo(() => {
+    return find(
+      worker?.settingDefinitions,
+      definition => definition.key === 'nodeNames',
+    )?.documentation;
+  }, [worker]);
+
+  const workerNodesInWorkspace = useMemo(() => {
+    return workspace?.worker?.nodeNames
+      ? filter(
+          map(workspace.worker.nodeNames, nodeName =>
+            find(nodesInWorkspace, node => node.hostname === nodeName),
+          ),
+        )
+      : nodesInWorker;
+  }, [workspace, nodesInWorkspace, nodesInWorker]);
 
   const handleAddIconClick = () => {
     setIsSelectorDialogOpen(true);
@@ -113,6 +121,7 @@ function WorkerNodesPage() {
           mode: configuratorInfo?.mode,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
+          prompt: documentation,
           showAddIcon: true,
           showCreateIcon: false,
           showDeleteIcon: false,
@@ -126,11 +135,12 @@ function WorkerNodesPage() {
         isOpen={isSelectorDialogOpen}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
-        prompt="If you want to have more selectable nodes, please go to the nodes in the workspace to add new nodes."
         ref={selectorDialogRef}
         tableProps={{
           nodes: nodesInWorkspace,
           options: {
+            prompt:
+              'If you want to have more selectable nodes, please go to the nodes in the workspace to add new nodes.',
             selectedNodes: workerNodesInWorkspace,
           },
           title: 'Workspace nodes',

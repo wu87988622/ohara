@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { every, filter, find, map, some, reject } from 'lodash';
 
 import { FileSelectorDialog, FileTable } from 'components/File';
@@ -28,22 +28,35 @@ function PluginTable() {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const createFile = hooks.useCreateFileAction();
 
+  const documentation = useMemo(
+    () =>
+      find(
+        worker?.settingDefinitions,
+        definition => definition.key === 'pluginKeys',
+      )?.documentation,
+    [worker],
+  );
+
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
 
-  const workerPlugins = filter(
-    map(worker?.pluginKeys, pluginKey =>
-      find(files, file => file.name === pluginKey.name),
-    ),
-  );
+  const workerPlugins = useMemo(() => {
+    return filter(
+      map(worker?.pluginKeys, pluginKey =>
+        find(files, file => file.name === pluginKey.name),
+      ),
+    );
+  }, [worker, files]);
 
-  const workspacePlugins = workspace?.worker?.pluginKeys
-    ? filter(
-        map(workspace.worker.pluginKeys, pluginKey =>
-          find(files, file => file.name === pluginKey.name),
-        ),
-      )
-    : workerPlugins;
+  const workspacePlugins = useMemo(() => {
+    return workspace?.worker?.pluginKeys
+      ? filter(
+          map(workspace.worker.pluginKeys, pluginKey =>
+            find(files, file => file.name === pluginKey.name),
+          ),
+        )
+      : workerPlugins;
+  }, [workspace, workerPlugins, files]);
 
   const updatePluginKeysToWorkspace = newPluginKeys => {
     updateWorkspace({
@@ -124,6 +137,7 @@ function PluginTable() {
           comparedFiles: workerPlugins,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
+          prompt: documentation,
           showAddIcon: true,
           showUploadIcon: false,
           showDeleteIcon: false,
@@ -135,13 +149,17 @@ function PluginTable() {
 
       <FileSelectorDialog
         isOpen={isSelectorDialogOpen}
-        files={files}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
         onUpload={handleUpload}
         ref={selectorDialogRef}
-        selectedFiles={workspacePlugins}
-        tableTitle="Workspace files"
+        tableProps={{
+          files,
+          options: {
+            selectedFiles: workspacePlugins,
+          },
+          title: 'Files',
+        }}
       />
     </>
   );

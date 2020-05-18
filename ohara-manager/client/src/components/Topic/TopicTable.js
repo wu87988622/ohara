@@ -203,6 +203,7 @@ function TopicTable(props) {
         ]}
         data={data}
         options={{
+          prompt: options?.prompt,
           rowStyle: null,
           showTitle: options?.showTitle,
         }}
@@ -256,6 +257,7 @@ TopicTable.propTypes = {
     onCreateIconClick: PropTypes.func,
     onDeleteIconClick: PropTypes.func,
     onDetailIconClick: PropTypes.func,
+    prompt: PropTypes.string,
     showCreateIcon: PropTypes.bool,
     showDeleteIcon: PropTypes.bool,
     showDetailIcon: PropTypes.bool,
