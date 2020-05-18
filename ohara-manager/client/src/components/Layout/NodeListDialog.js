@@ -28,6 +28,7 @@ const NodeListDialog = props => {
   const createNode = hooks.useCreateNodeAction();
   const deleteNode = hooks.useDeleteNodeAction();
   const updateNode = hooks.useUpdateNodeAction();
+  const fetchNodes = hooks.useFetchNodesAction();
 
   const handleCreate = nodeToCreate => {
     return new Promise((resolve, reject) => {
@@ -55,10 +56,12 @@ const NodeListDialog = props => {
         onUpdate={handleUpdate}
         options={{
           mode,
+          onRefreshIconClick: fetchNodes,
           selection: false,
           showCreateIcon: mode !== MODE.K8S,
           showDeleteIcon: mode === MODE.DOCKER,
           showEditorIcon: mode === MODE.DOCKER,
+          showRefreshIcon: mode === MODE.K8S,
         }}
         title="All nodes"
       />

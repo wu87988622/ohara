@@ -42,6 +42,7 @@ import ClearIcon from '@material-ui/icons/Clear';
 import CreateIcon from '@material-ui/icons/Create';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import RefreshOutlinedIcon from '@material-ui/icons/RefreshOutlined';
 import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 
@@ -65,6 +66,7 @@ const defaultOptions = {
   onDetailIconClick: null,
   onEditorIconClick: null,
   onUndoIconClick: null,
+  onRefreshIconClick: null,
   onRemoveIconClick: null,
   selection: false,
   selectedNodes: [],
@@ -74,6 +76,7 @@ const defaultOptions = {
   showDetailIcon: true,
   showEditorIcon: true,
   showUndoIcon: false,
+  showRefreshIcon: false,
   showRemoveIcon: false,
   showTitle: true,
   showServicesColumn: true,
@@ -158,6 +161,12 @@ function NodeTable(props) {
   const handleUndoIconClick = node => {
     if (isFunction(options?.onUndoIconClick)) {
       options.onUndoIconClick(node);
+    }
+  };
+
+  const handleRefreshIconClick = () => {
+    if (isFunction(options?.onRefreshIconClick)) {
+      options.onRefreshIconClick();
     }
   };
 
@@ -377,6 +386,13 @@ function NodeTable(props) {
             onClick: handleCreateIconClick,
             tooltip: 'Create Node',
           },
+          {
+            hidden: !options?.showRefreshIcon,
+            icon: () => <RefreshOutlinedIcon />,
+            isFreeAction: true,
+            onClick: handleRefreshIconClick,
+            tooltip: 'Refresh Nodes',
+          },
         ]}
         columns={[
           { title: 'Name', field: 'hostname' },
@@ -484,6 +500,7 @@ NodeTable.propTypes = {
     onDetailIconClick: PropTypes.func,
     onEditorIconClick: PropTypes.func,
     onUndoIconClick: PropTypes.func,
+    onRefreshIconClick: PropTypes.func,
     onRemoveIconClick: PropTypes.func,
     selection: PropTypes.bool,
     selectedNodes: PropTypes.array,
@@ -493,6 +510,7 @@ NodeTable.propTypes = {
     showDetailIcon: PropTypes.bool,
     showEditorIcon: PropTypes.bool,
     showUndoIcon: PropTypes.bool,
+    showRefreshIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
     showServicesColumn: PropTypes.bool,
