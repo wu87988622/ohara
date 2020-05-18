@@ -68,7 +68,7 @@ public final class StreamDefUtils {
           .documentation("The image name of this stream running with")
           .optional("oharastream/stream:" + VersionUtils.VERSION)
           // In manager, user cannot change the image name
-          .permission(SettingDef.Permission.READ_ONLY)
+          .permission(SettingDef.Permission.CREATE_ONLY)
           .build();
 
   public static final SettingDef NAME_DEFINITION =

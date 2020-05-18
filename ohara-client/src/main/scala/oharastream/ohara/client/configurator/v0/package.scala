@@ -368,7 +368,7 @@ package object v0 {
     _.key(IMAGE_NAME_KEY)
       .optional(defaultImage)
       .documentation("the docker image of this service")
-      .permission(SettingDef.Permission.READ_ONLY)
+      .permission(SettingDef.Permission.CREATE_ONLY)
       .build()
 
   private[v0] def clientPortDefinition: SettingDef.Builder => SettingDef =

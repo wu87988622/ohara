@@ -151,7 +151,7 @@ class TestShabondiRoute extends OharaTest {
     )
     updatedClusterInfo.clientPort should ===(newClientPort)
     updatedClusterInfo.sourceToTopics should ===(Set(topicKey))
-    updatedClusterInfo.imageName should ===("ohara/shabondi")
+    updatedClusterInfo.imageName should ===(IMAGE_NAME_DEFAULT)
     updatedClusterInfo.endpoint should ===(s"http://$nodeName:$newClientPort/")
   }
 
@@ -188,7 +188,7 @@ class TestShabondiRoute extends OharaTest {
     )
     updatedClusterInfo.clientPort should ===(newClientPort)
     updatedClusterInfo.sinkFromTopics should ===(Set(topicKey))
-    updatedClusterInfo.imageName should ===("ohara/shabondi")
+    updatedClusterInfo.imageName should ===(IMAGE_NAME_DEFAULT)
     updatedClusterInfo.settings should contain(SINK_POLL_TIMEOUT_DEFINITION.key -> JsString("PT10S"))
     updatedClusterInfo.settings should contain(SINK_GROUP_IDLETIME.key          -> JsString("PT30M"))
     updatedClusterInfo.endpoint should ===(s"http://$nodeName:$newClientPort/groups/" + "${groupName}")

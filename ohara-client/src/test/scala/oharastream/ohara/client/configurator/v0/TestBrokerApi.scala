@@ -258,7 +258,7 @@ class TestBrokerApi extends OharaTest {
                                                   |      "name": "n"
                                                   |    },
                                                   |    "nodeNames": ["n"],
-                                                  |    "imageName": ""
+                                                  |    "imageName": "${BrokerApi.IMAGE_NAME_DEFAULT}"
                                                   |  }
                                                   |  """.stripMargin.parseJson)
       .settings(IMAGE_NAME_KEY)
