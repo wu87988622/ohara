@@ -73,7 +73,7 @@ private[configurator] object PipelineRoute {
                 ObjectAbstract(
                   group = data.group,
                   name = data.name,
-                  kind = classInfo.classType,
+                  kind = classInfo.classType.key(),
                   className = Some(data.className),
                   state = None,
                   error = None,

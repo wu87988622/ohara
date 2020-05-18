@@ -25,7 +25,7 @@ import akka.http.scaladsl.model._
 import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.v0.InspectApi.FileContent
 import oharastream.ohara.common.annotations.Optional
-import oharastream.ohara.common.setting.{ObjectKey, SettingDef, WithDefinitions}
+import oharastream.ohara.common.setting.{ClassType, ObjectKey, SettingDef, WithDefinitions}
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
@@ -51,10 +51,19 @@ object FileInfoApi {
   case class Updating(tags: Option[Map[String, JsValue]])
   final implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
 
-  case class ClassInfo(classType: String, className: String, settingDefinitions: Seq[SettingDef])
+  private[this] implicit val CLASS_TYPE_FORMAT: RootJsonFormat[ClassType] = new RootJsonFormat[ClassType] {
+    override def write(obj: ClassType): JsValue = JsString(obj.key())
+    override def read(json: JsValue): ClassType = json match {
+      case JsString(v) => ClassType.valueOf(v.toUpperCase())
+      case _           => throw DeserializationException(s"unmatched type: ${json.getClass.getName}. expected: String")
+    }
+  }
+
+  case class ClassInfo(classType: ClassType, className: String, settingDefinitions: Seq[SettingDef])
   object ClassInfo {
     /**
       * create connector class information. The type is from setting definitions.
+      *
       * @param className class name
       * @param settingDefinitions setting definitions
       * @return class information
@@ -62,8 +71,8 @@ object FileInfoApi {
     def apply(className: String, settingDefinitions: Seq[SettingDef]): ClassInfo =
       ClassInfo(
         classType = settingDefinitions.find(_.key() == WithDefinitions.KIND_KEY).map(_.defaultString()) match {
-          case Some(kind) => kind
-          case None       => "unknown"
+          case Some(kind) => ClassType.valueOf(kind.toUpperCase())
+          case None       => ClassType.UNKNOWN
         },
         className = className,
         settingDefinitions = settingDefinitions

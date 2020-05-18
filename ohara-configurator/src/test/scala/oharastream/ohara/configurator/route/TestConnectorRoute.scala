@@ -20,8 +20,8 @@ import oharastream.ohara.client.configurator.v0.ConnectorApi.State
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
-import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey, WithDefinitions}
+import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.kafka.RowDefaultPartitioner
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
@@ -675,6 +675,45 @@ class TestConnectorRoute extends OharaTest {
         .workerClusterKey(workerClusterInfo.key)
         .create()
     ).partitionClass shouldBe classOf[RowDefaultPartitioner].getName
+  }
+
+  @Test
+  def testDefaultAuthor(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    ).settings(WithDefinitions.AUTHOR_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.USER
+  }
+
+  @Test
+  def testDefaultVersion(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    ).settings(WithDefinitions.VERSION_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.VERSION
+  }
+
+  @Test
+  def testDefaultRevision(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("oharastream.ohara.connector.ftp.FtpSink")
+        .settings(fakeFtpSettings)
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    ).settings(WithDefinitions.REVISION_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.REVISION
   }
 
   @After

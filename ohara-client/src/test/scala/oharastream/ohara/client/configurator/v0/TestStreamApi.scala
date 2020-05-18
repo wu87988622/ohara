@@ -196,7 +196,7 @@ class TestStreamApi extends OharaTest {
     creationApi.nodeNames should not be Set.empty
     creationApi.tags shouldBe Map.empty
 
-    val creationJson = StreamApi.CREATION_JSON_FORMAT.read(s"""
+    val creationJson = StreamApi.CREATION_FORMAT.read(s"""
                                                   |  {
                                                   |    "jarKey": ${fakeJar.toJson},
                                                   |    "from": [
@@ -277,7 +277,7 @@ class TestStreamApi extends OharaTest {
     val from     = topicKey()
     val to       = topicKey()
     val nodeName = "n0"
-    val creation = StreamApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = StreamApi.CREATION_FORMAT.read(s"""
       |  {
       |    "from": [
       |      {
@@ -309,7 +309,7 @@ class TestStreamApi extends OharaTest {
     creation.nodeNames shouldBe Set(nodeName)
 
     val name      = CommonUtils.randomString(10)
-    val creation2 = StreamApi.CREATION_JSON_FORMAT.read(s"""
+    val creation2 = StreamApi.CREATION_FORMAT.read(s"""
        |  {
        |    "name": "$name",
        |    "from": [
@@ -342,7 +342,7 @@ class TestStreamApi extends OharaTest {
   }
 
   @Test
-  def testDefaultName(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""
+  def testDefaultName(): Unit = StreamApi.CREATION_FORMAT.read(s"""
        |  {
        |    "jarKey": ${fakeJar.toJson},
        |    "nodeNames": ["n"],
@@ -368,7 +368,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseNameField(): Unit =
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -399,7 +399,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseGroupField(): Unit =
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -429,7 +429,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    StreamApi.CREATION_JSON_FORMAT
+    StreamApi.CREATION_FORMAT
       .read(s"""
                                                   |  {
                                                   |    "jarKey": {
@@ -454,7 +454,7 @@ class TestStreamApi extends OharaTest {
     val name = CommonUtils.randomString(10)
 
     // no jarKey is OK
-    StreamApi.CREATION_JSON_FORMAT.read(s"""
+    StreamApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "$name",
       |    "jarKey": ${fakeJar.toJson},
@@ -479,7 +479,7 @@ class TestStreamApi extends OharaTest {
       |  """.stripMargin.parseJson)
 
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": "",
            |    "nodeNames": ["n"],
@@ -508,7 +508,7 @@ class TestStreamApi extends OharaTest {
   def parseJmxPortField(): Unit = {
     // zero port
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "name": "${CommonUtils.randomString(10)}",
            |    "jarKey": {
@@ -539,7 +539,7 @@ class TestStreamApi extends OharaTest {
 
     // negative port
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "name": "${CommonUtils.randomString(10)}",
            |    "jarKey": {
@@ -570,7 +570,7 @@ class TestStreamApi extends OharaTest {
 
     // not connection port
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "name": "${CommonUtils.randomString(10)}",
            |    "jarKey": {
@@ -623,7 +623,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseImageNameFieldOnUpdate(): Unit =
     intercept[DeserializationException] {
-      StreamApi.UPDATING_JSON_FORMAT.read(s"""
+      StreamApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -654,7 +654,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseFromFieldOnCreation(): Unit =
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -681,7 +681,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseFromFieldOnUpdate(): Unit =
     intercept[DeserializationException] {
-      StreamApi.UPDATING_JSON_FORMAT.read(s"""
+      StreamApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -695,7 +695,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseToFieldOnCreation(): Unit =
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -717,7 +717,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseToFieldOnUpdate(): Unit =
     intercept[DeserializationException] {
-      StreamApi.UPDATING_JSON_FORMAT.read(s"""
+      StreamApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -731,7 +731,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseNodeNamesFieldOnCreation(): Unit =
     intercept[DeserializationException] {
-      StreamApi.CREATION_JSON_FORMAT.read(s"""
+      StreamApi.CREATION_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -761,7 +761,7 @@ class TestStreamApi extends OharaTest {
   @Test
   def parseNodeNamesFieldOnUpdate(): Unit = {
     intercept[DeserializationException] {
-      StreamApi.UPDATING_JSON_FORMAT.read(s"""
+      StreamApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "jarKey": {
            |      "group": "g",
@@ -773,7 +773,7 @@ class TestStreamApi extends OharaTest {
     }.getMessage should include("the value of \"nodeNames\" can't be empty string")
 
     // pass
-    StreamApi.UPDATING_JSON_FORMAT.read(s"""
+    StreamApi.UPDATING_FORMAT.read(s"""
                                            |  {
                                            |    "jarKey": {
                                            |      "group": "g",
@@ -895,7 +895,7 @@ class TestStreamApi extends OharaTest {
     StreamApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
-  def testMaxHeap(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""
+  def testMaxHeap(): Unit = StreamApi.CREATION_FORMAT.read(s"""
                                                                    |  {
                                                                    |    "brokerClusterKey": "bk",
                                                                    |    "nodeNames": ["node00"],
@@ -905,7 +905,7 @@ class TestStreamApi extends OharaTest {
       """.stripMargin.parseJson).maxHeap shouldBe 123
 
   @Test
-  def testInitHeap(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""
+  def testInitHeap(): Unit = StreamApi.CREATION_FORMAT.read(s"""
                                                                     |  {
                                                                     |    "brokerClusterKey": "bk",
                                                                     |    "nodeNames": ["node00"],
@@ -916,7 +916,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testNegativeMaxHeap(): Unit =
-    an[DeserializationException] should be thrownBy StreamApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy StreamApi.CREATION_FORMAT.read(s"""
                                                                                                                            |  {
                                                                                                                            |    "nodeNames": ["node00"],
                                                                                                                            |    "xmx": -123
@@ -925,7 +925,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testNegativeInitHeap(): Unit =
-    an[DeserializationException] should be thrownBy StreamApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy StreamApi.CREATION_FORMAT.read(s"""
                                                                                                                             |  {
                                                                                                                             |    "nodeNames": ["node00"],
                                                                                                                             |    "xms": -123
@@ -969,7 +969,7 @@ class TestStreamApi extends OharaTest {
   }
 
   @Test
-  def emptyNodeNamesIsLegal(): Unit = StreamApi.CREATION_JSON_FORMAT.read(s"""
+  def emptyNodeNamesIsLegal(): Unit = StreamApi.CREATION_FORMAT.read(s"""
                                                                              |  {
                                                                              |    "jarKey": ${fakeJar.toJson},
                                                                              |    "from": [
@@ -985,7 +985,7 @@ class TestStreamApi extends OharaTest {
 
   @Test
   def testDataDir(): Unit = {
-    val creation = StreamApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = StreamApi.CREATION_FORMAT.read(s"""
                                                           |  {
                                                           |    "jarKey": ${fakeJar.toJson},
                                                           |    "from": [

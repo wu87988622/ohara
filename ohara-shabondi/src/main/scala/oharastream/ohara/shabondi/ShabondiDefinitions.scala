@@ -210,10 +210,6 @@ object ShabondiDefinitions {
 
   //-------------- Definitions of Shabondi Source -----------------
 
-  val SOURCE_KIND_DEFINITION: SettingDef = WithDefinitions
-    .kindDefinition(WithDefinitions.Type.SOURCE.key)
-    .registerTo(sourceDefinitionMap)
-
   val SOURCE_TO_TOPICS_DEFINITION = SettingDef.builder
     .key("shabondi.source.toTopics")
     .group(CORE_GROUP)
@@ -226,10 +222,6 @@ object ShabondiDefinitions {
     .registerTo(sourceDefinitionMap)
 
   //-------------- Definitions of Shabondi Sink -----------------
-
-  val SINK_KIND_DEFINITION: SettingDef = WithDefinitions
-    .kindDefinition(WithDefinitions.Type.SINK.key)
-    .registerTo(sinkDefinitionMap)
 
   val SINK_FROM_TOPICS_DEFINITION = SettingDef.builder
     .key("shabondi.sink.fromTopics")

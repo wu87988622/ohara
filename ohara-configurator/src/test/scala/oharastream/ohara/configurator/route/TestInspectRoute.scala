@@ -30,7 +30,7 @@ import oharastream.ohara.client.configurator.v0.{
 }
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ClassType, ObjectKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.{Configurator, ReflectionUtils}
@@ -237,7 +237,7 @@ class TestInspectRoute extends OharaTest {
       definition shouldBe BrokerApi.DEFINITIONS.find(_.key() == definition.key()).get
     }
     info.classInfos.size shouldBe 1
-    info.classInfos.head.classType shouldBe "topic"
+    info.classInfos.head.classType shouldBe ClassType.TOPIC
     info.classInfos.head.settingDefinitions.size shouldBe TopicApi.DEFINITIONS.size
   }
 
@@ -290,11 +290,11 @@ class TestInspectRoute extends OharaTest {
     val info = result(inspectApi.shabondiInfo())
     info.imageName shouldBe ShabondiApi.IMAGE_NAME_DEFAULT
     info.settingDefinitions should not be Seq.empty
-    info.classInfos(0).classType shouldBe ShabondiType.Source.name
+    info.classInfos(0).classType shouldBe ClassType.SOURCE
     info.classInfos(0).className shouldBe ShabondiType.Source.className
     info.classInfos(0).settingDefinitions should not be Seq.empty
 
-    info.classInfos(1).classType shouldBe ShabondiType.Sink.name
+    info.classInfos(1).classType shouldBe ClassType.SINK
     info.classInfos(1).className shouldBe ShabondiType.Sink.className
     info.classInfos(1).settingDefinitions should not be Seq.empty
   }

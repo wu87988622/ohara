@@ -314,11 +314,6 @@ object ConnectorAdmin {
                   Some(
                     ClassInfo(
                       className = p.className,
-                      classType = definitions
-                        .filter(_.hasDefault)
-                        .find(_.key() == WithDefinitions.KIND_KEY)
-                        .map(_.defaultString)
-                        .getOrElse("connector"),
                       settingDefinitions = definitions
                     )
                   )

@@ -42,7 +42,7 @@ import oharastream.ohara.client.configurator.v0.{
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.{Row, Serializer}
-import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
+import oharastream.ohara.common.setting.{ClassType, ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.fake.FakeConnectorAdmin
@@ -112,7 +112,7 @@ private[configurator] object InspectRoute {
     classInfos = Seq(
       ClassInfo(
         className = "N/A",
-        classType = "topic",
+        classType = ClassType.TOPIC,
         settingDefinitions = TopicApi.DEFINITIONS
       )
     )
@@ -122,8 +122,8 @@ private[configurator] object InspectRoute {
     imageName = ShabondiApi.IMAGE_NAME_DEFAULT,
     settingDefinitions = ShabondiDefinitions.basicDefinitions,
     classInfos = Seq(
-      ClassInfo(ShabondiType.Source.name, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
-      ClassInfo(ShabondiType.Sink.name, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
+      ClassInfo(ClassType.SOURCE, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
+      ClassInfo(ClassType.SINK, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
     )
   )
 

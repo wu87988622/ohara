@@ -22,6 +22,7 @@ import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ClassType;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.setting.WithDefinitions;
 import org.apache.kafka.common.Node;
@@ -56,13 +57,13 @@ public class TestRowPartitioner extends OharaTest {
   @Test
   public void testKind() {
     Assert.assertEquals(
-        WithDefinitions.Type.PARTITIONER.key(),
+        ClassType.PARTITIONER.key(),
         new RowDefaultPartitioner()
             .settingDefinitions()
             .get(WithDefinitions.KIND_KEY)
             .defaultString());
     Assert.assertEquals(
-        WithDefinitions.Type.PARTITIONER.key(),
+        ClassType.PARTITIONER.key(),
         new CountRowPartitioner()
             .settingDefinitions()
             .get(WithDefinitions.KIND_KEY)

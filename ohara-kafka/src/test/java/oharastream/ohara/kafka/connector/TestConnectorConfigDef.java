@@ -18,6 +18,7 @@ package oharastream.ohara.kafka.connector;
 
 import java.util.stream.Stream;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ClassType;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.WithDefinitions;
 import oharastream.ohara.common.util.CommonUtils;
@@ -49,10 +50,10 @@ public class TestConnectorConfigDef extends OharaTest {
   public void testSinkKind() {
     DumbSink sink = new DumbSink();
     Assert.assertEquals(
-        WithDefinitions.Type.SINK.key(),
+        ClassType.SINK.key(),
         sink.config().configKeys().get(WithDefinitions.KIND_KEY).defaultValue);
     Assert.assertEquals(
-        WithDefinitions.Type.SINK.key(),
+        ClassType.SINK.key(),
         sink.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
   }
 
@@ -60,10 +61,10 @@ public class TestConnectorConfigDef extends OharaTest {
   public void testSourceKind() {
     DumbSource source = new DumbSource();
     Assert.assertEquals(
-        WithDefinitions.Type.SOURCE.key(),
+        ClassType.SOURCE.key(),
         source.config().configKeys().get(WithDefinitions.KIND_KEY).defaultValue);
     Assert.assertEquals(
-        WithDefinitions.Type.SOURCE.key(),
+        ClassType.SOURCE.key(),
         source.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
   }
 

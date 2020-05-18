@@ -42,10 +42,10 @@ object MetricsApi {
     def duration: Option[Long] = lastModified.flatMap(last => startTime.map(s => last - s))
   }
 
-  implicit val METER_JSON_FORMAT: RootJsonFormat[Meter] = jsonFormat8(Meter)
+  implicit val METER_FORMAT: RootJsonFormat[Meter] = jsonFormat8(Meter)
   final case class Metrics(meters: Seq[Meter])
   object Metrics {
     val EMPTY: Metrics = Metrics(Seq.empty)
   }
-  implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics.apply)
+  implicit val METRICS_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics.apply)
 }

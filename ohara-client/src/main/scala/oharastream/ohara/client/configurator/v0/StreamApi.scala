@@ -19,7 +19,7 @@ import java.util.Objects
 
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
-import oharastream.ohara.client.configurator.v0.MetricsApi.{METRICS_JSON_FORMAT, Metrics}
+import oharastream.ohara.client.configurator.v0.MetricsApi.{METRICS_FORMAT, Metrics}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
@@ -76,7 +76,7 @@ object StreamApi {
     // https://github.com/oharastream/ohara/issues/4621
     override def volumeMaps: Map[ObjectKey, String] = Map.empty
   }
-  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -104,7 +104,7 @@ object StreamApi {
     def toTopicKeys: Option[Set[TopicKey]] =
       noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
-  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
+  implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -216,7 +216,7 @@ object StreamApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -225,7 +225,7 @@ object StreamApi {
     @VisibleForTesting
     private[v0] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

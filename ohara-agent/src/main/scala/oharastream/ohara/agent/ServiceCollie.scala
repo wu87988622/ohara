@@ -138,14 +138,6 @@ abstract class ServiceCollie extends Releasable {
   def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] =
     containerClient.resources()
 
-  /**
-    * load the connectors class and stream classes from specific urls
-    * @param urls urls
-    * @return (sources, sinks, streams)
-    */
-  def classNames(urls: Seq[URL]): ClassNames =
-    classNames(new Reflections(new ConfigurationBuilder().addUrls(urls.asJava)))
-
   private[this] def classNames(reflections: Reflections): ClassNames = {
     def fetch(clz: Class[_]): Set[String] =
       try

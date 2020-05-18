@@ -16,11 +16,26 @@
 
 package oharastream.ohara.stream;
 
+import java.util.Collections;
+import java.util.Map;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
+import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.stream.config.StreamSetting;
 
 public class SimpleApplicationForOharaEnv extends Stream {
+
+  /** this custom definitions is used for testing. see TestStreamRoute */
+  public static final String DEFAULT_KEY = "testing_key";
+
+  public static final String DEFAULT_VALUE = "testing_value";
+
+  @Override
+  protected Map<String, SettingDef> customSettingDefinitions() {
+    return Collections.singletonMap(
+        DEFAULT_KEY, SettingDef.builder().key(DEFAULT_KEY).optional(DEFAULT_VALUE).build());
+  }
+
   /**
    * This is a simple version of stream running in ohara environment. Please packaging this file
    * into a jar, and uploading by API or Ohara UI

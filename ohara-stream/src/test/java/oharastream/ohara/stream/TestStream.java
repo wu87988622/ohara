@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.ClassType;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.setting.WithDefinitions;
 import oharastream.ohara.common.util.CommonUtils;
@@ -58,7 +59,7 @@ public class TestStream extends OharaTest {
   public void testKind() {
     CustomStream app = new CustomStream();
     Assert.assertEquals(
-        WithDefinitions.Type.STREAM.key(),
+        ClassType.STREAM.key(),
         app.settingDefinitions().get(WithDefinitions.KIND_KEY).defaultString());
   }
 

@@ -20,7 +20,7 @@ import akka.http.scaladsl.server
 import oharastream.ohara.agent._
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi._
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ClassType, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
@@ -32,7 +32,6 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
   private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: ObjectChecker,
-    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): Future[StreamClusterInfo] =
     objectChecker.checkList
@@ -65,7 +64,7 @@ private[configurator] object StreamRoute {
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>
-        val available = serviceCollie.classNames(fileInfos.map(_.url.get)).streams
+        val available = fileInfos.flatMap(_.classInfos).filter(_.classType == ClassType.STREAM).map(_.className)
         val className = creation.className.getOrElse {
           available.size match {
             case 0 =>
@@ -84,9 +83,20 @@ private[configurator] object StreamRoute {
           throw DeserializationException(s"the class:$className is not in files:${fileInfos.map(_.key).mkString(",")}")
 
         StreamClusterInfo(
-          // TODO: we should check all definitions in Creation phase
-          // https://github.com/oharastream/ohara/issues/4506
-          settings = StreamApi.access.request.settings(creation.settings).className(className).creation.settings,
+          settings = CREATION_FORMAT
+            .more(
+              fileInfos
+                .flatMap(_.classInfos)
+                .filter(_.className == className)
+                .head
+                .settingDefinitions
+                // we should add definition having default value to complete Creation request but
+                // TODO: we should check all definitions in Creation phase
+                // https://github.com/oharastream/ohara/issues/4506
+                .filter(_.hasDefault)
+            )
+            .refine(StreamApi.access.request.settings(creation.settings).className(className).creation)
+            .settings,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,
@@ -97,14 +107,12 @@ private[configurator] object StreamRoute {
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,
-    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, StreamClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
     implicit objectChecker: ObjectChecker,
-    serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>

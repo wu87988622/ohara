@@ -16,9 +16,7 @@
 
 package oharastream.ohara.common.setting;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.VersionUtils;
 
@@ -88,31 +86,6 @@ public interface WithDefinitions {
   String KIND_KEY = "kind";
   int KIND_ORDER = REVISION_ORDER + 1;
 
-  static SettingDef kindDefinition(String kind) {
-    return SettingDef.builder()
-        .displayName(KIND_KEY)
-        .key(KIND_KEY)
-        .documentation(KIND_KEY)
-        .group(META_GROUP)
-        .optional(CommonUtils.requireNonEmpty(kind))
-        .orderInGroup(KIND_ORDER)
-        .permission(SettingDef.Permission.READ_ONLY)
-        .build();
-  }
-
-  /** the type of official classes which implement the definitions. */
-  enum Type {
-    SOURCE,
-    SINK,
-    PARTITIONER,
-    STREAM,
-    UNKNOWN;
-
-    public String key() {
-      return name().toLowerCase();
-    }
-  }
-
   /**
    * merge two collections of definitions. the priority of system's definitions is highest so it is
    * able to override the duplicate key in user's definitions. This method also adds version, author
@@ -134,34 +107,31 @@ public interface WithDefinitions {
     finalDefinitions.putIfAbsent(WithDefinitions.VERSION_KEY, WithDefinitions.VERSION_DEFINITION);
     finalDefinitions.putIfAbsent(WithDefinitions.REVISION_KEY, WithDefinitions.REVISION_DEFINITION);
     finalDefinitions.computeIfAbsent(
-        WithDefinitions.KIND_KEY,
+        KIND_KEY,
         key -> {
-          String kind = null;
+          Optional<String> kind;
           Class<?> clz = ref.getClass();
           // this class is in the super model so it can't reference the classes from sub model
           // we use unit tests to avoid the class renaming.
           do {
-            switch (clz.getName()) {
-              case "oharastream.ohara.kafka.connector.RowSourceConnector":
-              case "oharastream.ohara.shabondi.ShabondiSource":
-                kind = Type.SOURCE.key();
-                break;
-              case "oharastream.ohara.kafka.connector.RowSinkConnector":
-              case "oharastream.ohara.shabondi.ShabondiSink":
-                kind = Type.SINK.key();
-                break;
-              case "oharastream.ohara.stream.Stream":
-                kind = Type.STREAM.key();
-                break;
-              case "oharastream.ohara.kafka.RowPartitioner":
-                kind = Type.PARTITIONER.key();
-                break;
-            }
-            if (kind != null) break;
+            final Class<?> current = clz;
+            kind =
+                Arrays.stream(ClassType.values())
+                    .filter(t -> t.bases.contains(current.getName()))
+                    .findFirst()
+                    .map(ClassType::key);
+            if (kind.isPresent()) break;
             clz = clz.getSuperclass();
           } while (clz != null);
-          if (kind == null) kind = Type.UNKNOWN.key();
-          return kindDefinition(kind);
+          return SettingDef.builder()
+              .displayName(KIND_KEY)
+              .key(KIND_KEY)
+              .documentation(KIND_KEY)
+              .group(META_GROUP)
+              .optional(CommonUtils.requireNonEmpty(kind.orElse(ClassType.UNKNOWN.key())))
+              .orderInGroup(KIND_ORDER)
+              .permission(SettingDef.Permission.READ_ONLY)
+              .build();
         });
     return Collections.unmodifiableMap(finalDefinitions);
   }

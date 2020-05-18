@@ -21,8 +21,8 @@ import java.nio.file.Files
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
-import oharastream.ohara.common.util.{CommonUtils, Releasable}
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey, WithDefinitions}
+import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator
 import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
@@ -922,6 +922,53 @@ class TestStreamRoute extends OharaTest {
         .maxHeap(12345)
         .create()
     ).maxHeap shouldBe 12345
+
+  /**
+    * this test uses the dumb key-value of oharastream.ohara.stream.SimpleApplicationForOharaEnv
+    */
+  @Test
+  def testDefaultValue(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).settings("testing_key").asInstanceOf[JsString].value shouldBe "testing_value"
+
+  @Test
+  def testDefaultAuthor(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).settings(WithDefinitions.AUTHOR_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.USER
+
+  @Test
+  def testDefaultVersion(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).settings(WithDefinitions.VERSION_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.VERSION
+
+  @Test
+  def testDefaultRevision(): Unit =
+    result(
+      streamApi.request
+        .brokerClusterKey(brokerClusterInfo.key)
+        .jarKey(fileInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).settings(WithDefinitions.REVISION_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.REVISION
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)

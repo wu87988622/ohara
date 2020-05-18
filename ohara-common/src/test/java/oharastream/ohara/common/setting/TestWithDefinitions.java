@@ -97,7 +97,7 @@ public class TestWithDefinitions extends OharaTest {
   @Test
   public void kindShouldBeUnknown() {
     Assert.assertEquals(
-        WithDefinitions.Type.UNKNOWN.key(),
+        ClassType.UNKNOWN.key(),
         WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
             .get(WithDefinitions.KIND_KEY)
             .defaultString());
