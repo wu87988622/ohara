@@ -87,6 +87,9 @@ class TestAgent extends OharaTest {
   def emptyPassword(): Unit = an[IllegalArgumentException] should be thrownBy Agent.builder.password("")
 
   @Test
+  def nullTimeout(): Unit = an[NullPointerException] should be thrownBy Agent.builder.timeout(null)
+
+  @Test
   def nullCharset(): Unit = an[NullPointerException] should be thrownBy Agent.builder.charset(null)
 
   @After

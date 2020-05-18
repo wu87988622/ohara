@@ -20,9 +20,12 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.{Charset, StandardCharsets}
 import java.rmi.RemoteException
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.sshd.client.SshClient
+
+import scala.concurrent.duration.Duration
 
 /**
   * represent a remote node. Default implementation is based on ssh.
@@ -54,11 +57,12 @@ object Agent {
   def builder: Builder = new Builder()
 
   class Builder private[agent] extends oharastream.ohara.common.pattern.Builder[Agent] {
-    private[this] var hostname: String = _
-    private[this] var port: Int        = 22
-    private[this] var user: String     = _
-    private[this] var password: String = _
-    private[this] var charset          = StandardCharsets.US_ASCII
+    private[this] var hostname: String  = _
+    private[this] var port: Int         = 22
+    private[this] var user: String      = _
+    private[this] var password: String  = _
+    private[this] var timeout: Duration = Duration(3, TimeUnit.SECONDS)
+    private[this] var charset           = StandardCharsets.US_ASCII
 
     /**
       * set remote hostname
@@ -101,6 +105,16 @@ object Agent {
     }
 
     /**
+      * set remote's ssh connection timeout
+      * @param password ssh password
+      * @return this builder
+      */
+    def timeout(timeout: Duration): Builder = {
+      this.timeout = Objects.requireNonNull(timeout)
+      this
+    }
+
+    /**
       * set charset in communication
       * @param charset ssh charset
       * @return this builder
@@ -116,10 +130,14 @@ object Agent {
       private[this] val user: String     = CommonUtils.requireNonEmpty(Builder.this.user)
       private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
-      private[this] val client           = SshClient.setUpDefaultSimpleClient()
+      private[this] val client = {
+        val c = SshClient.setUpDefaultSimpleClient()
+        c.setAuthenticationTimeout(timeout.toMillis)
+        c.setConnectTimeout(timeout.toMillis)
+        c
+      }
+
       override def execute(command: String): Option[String] = {
-        // The default timeout for sshClient is Long.MAX_VALUE (see SimpleClientConfigurator.java in apache.sshd.client)
-        // Should we set a smaller timeout for session ?...by Sam
         val session = client.sessionLogin(hostname, port, user, password)
         try {
           val stdOut = new ByteArrayOutputStream
