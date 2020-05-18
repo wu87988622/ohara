@@ -45,6 +45,7 @@ const NodesField = props => {
   const mode = configuratorInfo?.mode;
   const allNodes = hooks.useAllNodes();
   const createNode = hooks.useCreateNodeAction();
+  const fetchNodes = hooks.useFetchNodesAction();
 
   const [selectedNodes, setSelectedNodes] = useState(() => {
     // value is an array of hostname, like ['dev01', 'dev02'].
@@ -116,8 +117,10 @@ const NodesField = props => {
           onCreate: createNode,
           options: {
             mode,
+            onRefreshIconClick: fetchNodes,
             selectedNodes,
             showCreateIcon: mode !== MODE.K8S,
+            showRefreshIcon: mode === MODE.K8S,
           },
           title: 'All node',
         }}
