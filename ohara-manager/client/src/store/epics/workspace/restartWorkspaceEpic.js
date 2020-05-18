@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { merge } from 'lodash';
+import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, of } from 'rxjs';
 import {
@@ -39,6 +41,7 @@ import { ACTIONS } from 'const';
 import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import * as schema from 'store/schema';
 
 const duration = 1000;
 const retry = 10;
@@ -56,7 +59,11 @@ const updateWorkspace$ = (values, isRollback) =>
     ).pipe(
       delay(duration),
       map(res => res.data),
-      map(() => actions.updateWorkspace.success(getId(values))),
+      map(data => normalize(data, schema.workspace)),
+      map(normalizedData =>
+        merge(normalizedData, { workspaceId: getId(values) }),
+      ),
+      map(normalizedData => actions.updateWorkspace.success(normalizedData)),
       startWith(actions.updateWorkspace.request()),
     ),
   ).pipe(
