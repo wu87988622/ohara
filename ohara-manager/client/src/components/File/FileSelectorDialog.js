@@ -22,20 +22,14 @@ import { Dialog } from 'components/common/Dialog';
 import FileTable from './FileTable';
 
 const FileSelectorDialog = React.forwardRef((props, ref) => {
-  const {
-    dialogTitle,
-    isOpen,
-    files,
-    onClose,
-    onConfirm,
-    onUpload,
-    tableTitle,
-  } = props;
-  const [selectedFiles, setSelectedFiles] = useState(props.selectedFiles);
+  const { isOpen, onClose, onConfirm, onUpload, tableProps, title } = props;
+  const [selectedFiles, setSelectedFiles] = useState(
+    tableProps?.options?.selectedFiles,
+  );
 
   const saveable = isEqual(
-    sortedUniq(props.selectedFiles),
     sortedUniq(selectedFiles),
+    sortedUniq(tableProps?.options?.selectedFiles),
   );
 
   const handleSelectionChange = selectFiles => {
@@ -43,7 +37,7 @@ const FileSelectorDialog = React.forwardRef((props, ref) => {
   };
 
   const handleCancel = () => {
-    setSelectedFiles(props.selectedFiles);
+    setSelectedFiles(tableProps?.options?.selectedFiles);
     onClose();
   };
 
@@ -57,7 +51,7 @@ const FileSelectorDialog = React.forwardRef((props, ref) => {
 
   return (
     <Dialog
-      title={dialogTitle}
+      title={title}
       open={isOpen}
       onClose={handleCancel}
       onConfirm={handleConfirm}
@@ -66,39 +60,38 @@ const FileSelectorDialog = React.forwardRef((props, ref) => {
       maxWidth="md"
     >
       <FileTable
-        files={files}
+        {...tableProps}
         onSelectionChange={handleSelectionChange}
         onUpload={onUpload}
         options={{
-          selectedFiles,
           selection: true,
           showDeleteIcon: false,
+          ...tableProps?.options,
         }}
-        title={tableTitle}
       />
     </Dialog>
   );
 });
 
 FileSelectorDialog.propTypes = {
-  dialogTitle: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
-  files: PropTypes.array,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func,
   onUpload: PropTypes.func,
-  selectedFiles: PropTypes.array,
-  tableTitle: PropTypes.string,
+  tableProps: PropTypes.shape({
+    options: PropTypes.shape({
+      selectedFiles: PropTypes.array,
+    }),
+  }),
+  title: PropTypes.string,
 };
 
 FileSelectorDialog.defaultProps = {
-  dialogTitle: 'Select files',
-  files: [],
   onClose: () => {},
   onConfirm: () => {},
   onUpload: () => {},
-  selectedFiles: [],
-  tableTitle: 'Files',
+  tableProps: {},
+  title: 'Select file',
 };
 
 export default FileSelectorDialog;

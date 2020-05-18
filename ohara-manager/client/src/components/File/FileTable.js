@@ -310,6 +310,7 @@ function FileTable(props) {
         onSelectionChange={onSelectionChange}
         options={{
           predicate: 'name',
+          prompt: options?.prompt,
           rowStyle: file => getRowStyle(file),
           selection: options?.selection,
           selectedData: options?.selectedFiles,
@@ -368,6 +369,7 @@ FileTable.propTypes = {
     onUndoIconClick: PropTypes.func,
     onUploadIconClick: PropTypes.func,
     onRemoveIconClick: PropTypes.func,
+    prompt: PropTypes.string,
     selection: PropTypes.bool,
     selectedFiles: PropTypes.array,
     showAddIcon: PropTypes.bool,
