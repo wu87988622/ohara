@@ -20,22 +20,18 @@ import { find, isFunction, sortBy, unionBy } from 'lodash';
 import moment from 'moment';
 import NumberFormat from 'react-number-format';
 
-import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import AddIcon from '@material-ui/icons/Add';
-import ClearIcon from '@material-ui/icons/Clear';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
-import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
-import DeleteIcon from '@material-ui/icons/Delete';
-import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
 
 import Table from 'components/common/Table/MuiTable';
 import FileDeleteDialog from './FileDeleteDialog';
 import FileRemoveDialog from './FileRemoveDialog';
 import FileDownload from './FileDownload';
 import FileUpload from './FileUpload';
+import Actions from './Actions';
 
 const defaultOptions = {
   comparison: false,
@@ -175,57 +171,46 @@ function FileTable(props) {
         ? options?.disabledRemoveIcon(file)
         : options?.disabledRemoveIcon;
 
+      const deleteTooltip = isFunction(options?.deleteTooltip)
+        ? options?.deleteTooltip(file)
+        : options?.deleteTooltip;
+
+      const removeTooltip = isFunction(options?.removeTooltip)
+        ? options?.removeTooltip(file)
+        : options?.removeTooltip;
+
       return (
-        <>
-          {options?.showDownloadIcon && (
-            <Tooltip title="Download file">
-              <IconButton
-                onClick={() => {
-                  handleDownloadIconClick(file);
-                }}
-              >
-                <CloudDownloadIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showDeleteIcon && (
-            <Tooltip title="Delete file">
-              <IconButton
-                component="div"
-                disabled={disabledDeleteIcon}
-                onClick={() => {
-                  handleDeleteIconClick(file);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {showRemoveIcon(file) && (
-            <Tooltip title="Remove file">
-              <IconButton
-                component="div"
-                disabled={disabledRemoveIcon}
-                onClick={() => {
-                  handleRemoveIconClick(file);
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {showUndoIcon(file) && (
-            <Tooltip title={getUndoTooltipTitle(file)}>
-              <IconButton
-                onClick={() => {
-                  handleUndoIconClick(file);
-                }}
-              >
-                <SettingsBackupRestoreIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </>
+        <Actions
+          actions={[
+            {
+              hidden: !options?.showDownloadIcon,
+              name: 'download',
+              onClick: handleDownloadIconClick,
+              tooltip: 'Download file',
+            },
+            {
+              disabled: disabledDeleteIcon,
+              hidden: !options?.showDeleteIcon,
+              name: 'delete',
+              onClick: handleDeleteIconClick,
+              tooltip: deleteTooltip || 'Delete file',
+            },
+            {
+              disabled: disabledRemoveIcon,
+              hidden: !showRemoveIcon(file),
+              name: 'remove',
+              onClick: handleRemoveIconClick,
+              tooltip: removeTooltip || 'Remove file',
+            },
+            {
+              hidden: !showUndoIcon(file),
+              name: 'undo',
+              onClick: handleUndoIconClick,
+              tooltip: getUndoTooltipTitle(file),
+            },
+          ]}
+          data={file}
+        />
       );
     };
 
@@ -379,6 +364,8 @@ FileTable.propTypes = {
     showUploadIcon: PropTypes.bool,
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
+    deleteTooltip: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    removeTooltip: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   }),
   title: PropTypes.string,
 };

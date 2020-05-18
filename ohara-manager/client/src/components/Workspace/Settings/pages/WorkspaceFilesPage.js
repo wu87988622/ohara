@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { capitalize, join, includes, some, toUpper } from 'lodash';
 
 import { FileTable } from 'components/File';
@@ -40,18 +40,21 @@ function WorkspaceFilesPage() {
     if (file) createFile(file);
   };
 
-  const isUsedByWorker = file => {
-    return (
+  const isUsedByWorker = useCallback(
+    file =>
       some(worker?.pluginKeys, key => key.name === file?.name) ||
       some(worker?.sharedJarKeys, key => key.name === file?.name) ||
       some(workspace?.worker?.pluginKeys, key => key.name === file?.name) ||
-      some(workspace?.worker?.sharedJarKeys, key => key.name === file?.name)
-    );
-  };
+      some(workspace?.worker?.sharedJarKeys, key => key.name === file?.name),
+    [worker, workspace],
+  );
 
-  const isUsedByStream = file => {
-    return some(workspace?.stream?.jarKeys, key => key.name === file?.name);
-  };
+  const isUsedByStream = useCallback(
+    file => some(workspace?.stream?.jarKeys, key => key.name === file?.name),
+    [workspace],
+  );
+
+  const isDeleteDisabled = file => isUsedByWorker(file) || isUsedByStream(file);
 
   return (
     <>
@@ -79,8 +82,11 @@ function WorkspaceFilesPage() {
               },
             },
           ],
-          disabledDeleteIcon: file => {
-            return isUsedByWorker(file) || isUsedByStream(file);
+          disabledDeleteIcon: file => isDeleteDisabled(file),
+          deleteTooltip: file => {
+            return isDeleteDisabled(file)
+              ? 'Cannot delete files that are in use'
+              : null;
           },
         }}
         title="Workspace files"
