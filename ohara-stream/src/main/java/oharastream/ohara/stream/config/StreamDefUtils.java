@@ -166,6 +166,7 @@ public final class StreamDefUtils {
           // when creating pipeline. Noted that our services (zk, bk and wk) still require user to
           // define the node names in creating.
           .optional(Type.ARRAY)
+          .reference(SettingDef.Reference.NODE)
           .build();
 
   public static final SettingDef ROUTES_DEFINITION =

@@ -86,8 +86,9 @@ package object v0 {
   val SETTINGS_KEY: String = "settings"
 
   /**
-    * Noted: there are other two definition having "nodeNames""
-    * 1) StreamDefinitions.NODE_NAMES_DEFINITION
+    * Noted: there are other two definition having "nodeNames"
+    * 1) StreamDefUtils.NODE_NAMES_DEFINITION
+    * 1) ShabondiDefinitions.NODE_NAMES_DEFINITION
     */
   val NODE_NAMES_KEY: String = "nodeNames"
   val IMAGE_NAME_KEY: String = "imageName"
@@ -384,6 +385,7 @@ package object v0 {
     _.key(NODE_NAMES_KEY)
       .documentation("the nodes hosting this cluster")
       .blacklist(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
+      .reference(SettingDef.Reference.NODE)
       .build()
 
   private[v0] def routesDefinition: SettingDef.Builder => SettingDef =

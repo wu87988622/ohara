@@ -39,7 +39,7 @@ import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.client.configurator.v0._
 import oharastream.ohara.common.setting.ObjectKey
-import oharastream.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce}
+import oharastream.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.route._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
@@ -408,6 +408,7 @@ object Configurator {
       LOG.info(
         s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}"
       )
+      LOG.info("VersionUtils info: " + VersionUtils.jsonString())
       LOG.info("enter ctrl+c to terminate the configurator")
 
       while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) TimeUnit.SECONDS.sleep(2)
