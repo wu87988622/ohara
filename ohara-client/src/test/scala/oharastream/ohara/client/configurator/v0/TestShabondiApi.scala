@@ -19,7 +19,6 @@ package oharastream.ohara.client.configurator.v0
 import oharastream.ohara.client.configurator.v0.ShabondiApi.SOURCE_ALL_DEFINITIONS
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.shabondi.ShabondiDefinitions._
-import oharastream.ohara.shabondi.ShabondiType
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json._
@@ -38,7 +37,7 @@ class TestShabondiApi extends OharaTest {
                 |      "name": "n"
                 |    },
                 |    "${NODE_NAMES_DEFINITION.key()}": ["nn"],
-                |    "${SHABONDI_CLASS_DEFINITION.key()}": "${ShabondiType.Source.className}"
+                |    "${SHABONDI_CLASS_DEFINITION.key()}": "${ShabondiApi.SHABONDI_SOURCE_CLASS_NAME}"
                 |  }
                 |""".stripMargin.parseJson)
       .definitions shouldBe SOURCE_ALL_DEFINITIONS
@@ -56,7 +55,7 @@ class TestShabondiApi extends OharaTest {
                 |      "name": "n"
                 |    },
                 |    "${NODE_NAMES_DEFINITION.key()}": ["nn"],
-                |    "${SHABONDI_CLASS_DEFINITION.key()}": "${ShabondiType.Sink.className}"
+                |    "${SHABONDI_CLASS_DEFINITION.key()}": "${ShabondiApi.SHABONDI_SINK_CLASS_NAME}"
                 |  }
                 |""".stripMargin.parseJson)
       .definitions shouldBe SOURCE_ALL_DEFINITIONS

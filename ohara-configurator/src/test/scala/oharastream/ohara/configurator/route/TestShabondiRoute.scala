@@ -25,7 +25,6 @@ import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.shabondi.ShabondiDefinitions._
-import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 import spray.json._
@@ -85,7 +84,7 @@ class TestShabondiRoute extends OharaTest {
       shabondiApi.request
         .group(objectKey.group)
         .name(objectKey.name)
-        .shabondiClass(ShabondiType.Source.className)
+        .shabondiClass(ShabondiApi.SHABONDI_SOURCE_CLASS_NAME)
         .clientPort(clientPort)
         .brokerClusterKey(brokerClusterInfo.key)
         .nodeName(nodeName)
@@ -113,11 +112,12 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceCreate(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    val clusterInfo            = createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    val clusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.shabondiClass should ===(ShabondiType.Source.className)
+    clusterInfo.shabondiClass should ===(ShabondiApi.SHABONDI_SOURCE_CLASS_NAME)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -127,11 +127,12 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceUpdate(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    val clusterInfo            = createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set.empty)
+    val clusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set.empty)
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.shabondiClass should ===(ShabondiType.Source.className)
+    clusterInfo.shabondiClass should ===(ShabondiApi.SHABONDI_SOURCE_CLASS_NAME)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -158,11 +159,12 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkUpdate(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    val clusterInfo            = createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set.empty)
+    val clusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set.empty)
 
     clusterInfo.group should ===(objectKey.group)
     clusterInfo.name should ===(objectKey.name)
-    clusterInfo.shabondiClass should ===(ShabondiType.Sink.className)
+    clusterInfo.shabondiClass should ===(ShabondiApi.SHABONDI_SINK_CLASS_NAME)
     clusterInfo.clientPort should ===(clientPort)
     clusterInfo.brokerClusterKey should ===(brokerClusterInfo.key)
     clusterInfo.nodeNames should contain(nodeName)
@@ -197,7 +199,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceStart(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
 
@@ -214,7 +216,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkStart(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
 
@@ -231,7 +233,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceStartAndStop(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
     awaitTrue(() => {
@@ -256,7 +258,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkStartAndStop(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
     awaitTrue(() => {
@@ -281,7 +283,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceCanDelete(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     val shabondiList1 = await(shabondiApi.list())
@@ -291,7 +293,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkCanDelete(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     val shabondiList1 = await(shabondiApi.list())
@@ -301,7 +303,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceDeleteWhenRunning(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
 
@@ -311,7 +313,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkDeleteWhenRunning(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.start(objectKey))
 
@@ -321,7 +323,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceCanDeleteMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     await(shabondiApi.delete(objectKey))
@@ -331,7 +333,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkCanDeleteMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
 
     await(shabondiApi.delete(objectKey))
     await(shabondiApi.delete(objectKey))
@@ -341,7 +343,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSourceCanStopMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
     await(shabondiApi.start(objectKey))
 
     await(shabondiApi.stop(objectKey))
@@ -352,7 +354,7 @@ class TestShabondiRoute extends OharaTest {
   @Test
   def testSinkCanStopMultipleTimes(): Unit = {
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(nodeName), Set(topicKey))
+    createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, objectKey, clientPort, Set(nodeName), Set(topicKey))
     await(shabondiApi.start(objectKey))
 
     await(shabondiApi.stop(objectKey))
@@ -366,7 +368,13 @@ class TestShabondiRoute extends OharaTest {
     await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
 
     val clientPort = CommonUtils.availablePort()
-    createShabondiService(ShabondiType.Source, objectKey, clientPort, Set(availableNodeNames(0)), Set(notStartedTopic))
+    createShabondiService(
+      ShabondiApi.SHABONDI_SOURCE_CLASS,
+      objectKey,
+      clientPort,
+      Set(availableNodeNames(0)),
+      Set(notStartedTopic)
+    )
 
     an[IllegalArgumentException] should be thrownBy await(shabondiApi.start(objectKey))
   }
@@ -377,7 +385,13 @@ class TestShabondiRoute extends OharaTest {
     await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
 
     val clientPort = CommonUtils.availablePort()
-    createShabondiService(ShabondiType.Sink, objectKey, clientPort, Set(availableNodeNames(0)), Set(notStartedTopic))
+    createShabondiService(
+      ShabondiApi.SHABONDI_SINK_CLASS,
+      objectKey,
+      clientPort,
+      Set(availableNodeNames(0)),
+      Set(notStartedTopic)
+    )
 
     an[IllegalArgumentException] should be thrownBy await(shabondiApi.start(objectKey))
   }
@@ -388,7 +402,7 @@ class TestShabondiRoute extends OharaTest {
     await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
 
     createShabondiService(
-      ShabondiType.Source,
+      ShabondiApi.SHABONDI_SOURCE_CLASS,
       objectKey,
       CommonUtils.availablePort(),
       Set(availableNodeNames(0)),
@@ -404,7 +418,7 @@ class TestShabondiRoute extends OharaTest {
     await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
 
     createShabondiService(
-      ShabondiType.Sink,
+      ShabondiApi.SHABONDI_SINK_CLASS,
       objectKey,
       CommonUtils.availablePort(),
       Set(availableNodeNames(0)),
@@ -415,7 +429,7 @@ class TestShabondiRoute extends OharaTest {
   }
 
   private def createShabondiService(
-    shabondiType: ShabondiType,
+    shabondiClass: Class[_],
     key: ObjectKey,
     clientPort: Int,
     nodeNames: Set[String],
@@ -426,11 +440,11 @@ class TestShabondiRoute extends OharaTest {
       .group(key.group)
       .brokerClusterKey(brokerClusterInfo.key)
       .nodeNames(nodeNames) // note: nodeNames only support one node currently.
-      .shabondiClass(shabondiType.className)
+      .shabondiClass(shabondiClass.getName)
       .clientPort(clientPort)
-    shabondiType match {
-      case ShabondiType.Source => request.sourceToTopics(topicKeys)
-      case ShabondiType.Sink   => request.sinkFromTopics(topicKeys)
+    shabondiClass match {
+      case ShabondiApi.SHABONDI_SOURCE_CLASS => request.sourceToTopics(topicKeys)
+      case ShabondiApi.SHABONDI_SINK_CLASS   => request.sinkFromTopics(topicKeys)
     }
     await(request.create())
   }

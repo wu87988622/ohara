@@ -36,7 +36,6 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.route.RouteUtils
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.BeanChannel
-import oharastream.ohara.shabondi.ShabondiType
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
@@ -319,8 +318,8 @@ class TestMetrics extends WithBrokerWorker {
     result(topicApi.start(topic1.key))
 
     // ----- create Shabondi Source & Sink & Pipeline
-    val shabondiSource = createShabondiService(ShabondiType.Source, bkKey, topic1.key)
-    val shabondiSink   = createShabondiService(ShabondiType.Sink, bkKey, topic1.key)
+    val shabondiSource = createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, bkKey, topic1.key)
+    val shabondiSink   = createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, bkKey, topic1.key)
     // ----- create Pipeline: Shabondi Source --> Topic --> Shabondi Sink
     val pipelineApi = PipelineApi.access.hostname(configurator.hostname).port(configurator.port)
     val pipeline = result(
@@ -366,7 +365,7 @@ class TestMetrics extends WithBrokerWorker {
   }
 
   private def createShabondiService(
-    shabondiType: ShabondiType,
+    shabondiClass: Class[_],
     bkKey: ObjectKey,
     topicKey: TopicKey
   ): ShabondiClusterInfo = {
@@ -374,11 +373,11 @@ class TestMetrics extends WithBrokerWorker {
       .name(CommonUtils.randomString(10))
       .brokerClusterKey(bkKey)
       .nodeName(nodeNames.head)
-      .shabondiClass(shabondiType.className)
+      .shabondiClass(shabondiClass.getName)
       .clientPort(CommonUtils.availablePort())
-    shabondiType match {
-      case ShabondiType.Source => request.sourceToTopics(Set(topicKey))
-      case ShabondiType.Sink   => request.sinkFromTopics(Set(topicKey))
+    shabondiClass match {
+      case ShabondiApi.SHABONDI_SOURCE_CLASS => request.sourceToTopics(Set(topicKey))
+      case ShabondiApi.SHABONDI_SINK_CLASS   => request.sinkFromTopics(Set(topicKey))
     }
     result(request.create())
   }

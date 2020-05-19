@@ -30,11 +30,10 @@ import oharastream.ohara.client.configurator.v0.{
 }
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.{ClassType, ObjectKey}
+import oharastream.ohara.common.setting.{ClassType, ObjectKey, WithDefinitions}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.{Configurator, ReflectionUtils}
-import oharastream.ohara.shabondi.ShabondiType
 import oharastream.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
@@ -291,12 +290,24 @@ class TestInspectRoute extends OharaTest {
     info.imageName shouldBe ShabondiApi.IMAGE_NAME_DEFAULT
     info.settingDefinitions should not be Seq.empty
     info.classInfos(0).classType shouldBe ClassType.SOURCE
-    info.classInfos(0).className shouldBe ShabondiType.Source.className
+    info.classInfos(0).className shouldBe ShabondiApi.SHABONDI_SOURCE_CLASS_NAME
     info.classInfos(0).settingDefinitions should not be Seq.empty
+    info
+      .classInfos(0)
+      .settingDefinitions
+      .find(_.key() == WithDefinitions.KIND_KEY)
+      .get
+      .defaultString() shouldBe ClassType.SOURCE.key()
 
     info.classInfos(1).classType shouldBe ClassType.SINK
-    info.classInfos(1).className shouldBe ShabondiType.Sink.className
+    info.classInfos(1).className shouldBe ShabondiApi.SHABONDI_SINK_CLASS_NAME
     info.classInfos(1).settingDefinitions should not be Seq.empty
+    info
+      .classInfos(1)
+      .settingDefinitions
+      .find(_.key() == WithDefinitions.KIND_KEY)
+      .get
+      .defaultString() shouldBe ClassType.SINK.key()
   }
 
   @After

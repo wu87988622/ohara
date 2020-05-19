@@ -79,7 +79,7 @@ private[shabondi] abstract class BasicShabondiTest extends WithBroker {
     val args = mutable.ArrayBuffer(
       GROUP_DEFINITION.key + "=" + CommonUtils.randomString(5),
       NAME_DEFINITION.key + "=" + CommonUtils.randomString(3),
-      SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Source.className,
+      SHABONDI_CLASS_DEFINITION.key + "=" + classOf[ShabondiSource].getName,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
     )
@@ -97,7 +97,7 @@ private[shabondi] abstract class BasicShabondiTest extends WithBroker {
     val args = mutable.ArrayBuffer(
       GROUP_DEFINITION.key + "=" + CommonUtils.randomString(5),
       NAME_DEFINITION.key + "=" + CommonUtils.randomString(3),
-      SHABONDI_CLASS_DEFINITION.key + "=" + ShabondiType.Sink.className,
+      SHABONDI_CLASS_DEFINITION.key + "=" + classOf[ShabondiSink].getName,
       CLIENT_PORT_DEFINITION.key + "=8080",
       BROKERS_DEFINITION.key + "=" + testUtil.brokersConnProps
     )

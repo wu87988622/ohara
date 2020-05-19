@@ -24,8 +24,8 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
-import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
-import spray.json.{JsString}
+import oharastream.ohara.shabondi.ShabondiDefinitions
+import spray.json.JsString
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,9 +38,9 @@ private[configurator] object ShabondiRoute {
     } else {
       val nodeName   = creation.nodeNames.head
       val clientPort = creation.clientPort
-      val value = ShabondiType(creation.shabondiClass) match {
-        case ShabondiType.Source => s"http://$nodeName:$clientPort/"
-        case ShabondiType.Sink   => s"http://$nodeName:$clientPort/groups/" + "${groupName}"
+      val value = creation.shabondiClass match {
+        case SHABONDI_SOURCE_CLASS_NAME => s"http://$nodeName:$clientPort/"
+        case SHABONDI_SINK_CLASS_NAME   => s"http://$nodeName:$clientPort/groups/" + "${groupName}"
       }
       val endpointItem = (ShabondiDefinitions.ENDPOINT_DEFINITION.key, JsString(value))
       new ShabondiClusterCreation(creation.settings + endpointItem)
@@ -51,7 +51,6 @@ private[configurator] object ShabondiRoute {
     implicit objectChecker: ObjectChecker,
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
-    val shabondiType = ShabondiType(creation.shabondiClass)
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
@@ -60,9 +59,9 @@ private[configurator] object ShabondiRoute {
       .map { _: ObjectChecker.ObjectInfos =>
         val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
           .more(
-            (shabondiType match {
-              case ShabondiType.Source => ShabondiDefinitions.sourceOnlyDefinitions
-              case ShabondiType.Sink   => ShabondiDefinitions.sinkOnlyDefinitions
+            (creation.shabondiClass match {
+              case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.sourceOnlyDefinitions
+              case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => ShabondiDefinitions.sinkOnlyDefinitions
             })
             // we should add definition having default value to complete Creation request but
             // TODO: we should check all definitions in Creation phase
@@ -101,17 +100,17 @@ private[configurator] object ShabondiRoute {
             .creation
           creationToClusterInfo(creation)
         case Some(previous) =>
-          val shabondiType = ShabondiType(previous.shabondiClass)
           objectChecker.checkList
             .check()
             .flatMap { _ =>
               val creation = ShabondiApi.access.request
                 .settings(previous.settings)
                 .settings {
-                  shabondiType match {
-                    case ShabondiType.Source =>
+                  previous.shabondiClass match {
+                    case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME =>
                       keepEditableFields(updating.settings, ShabondiApi.SOURCE_ALL_DEFINITIONS)
-                    case ShabondiType.Sink => keepEditableFields(updating.settings, ShabondiApi.SINK_ALL_DEFINITIONS)
+                    case ShabondiApi.SHABONDI_SINK_CLASS_NAME =>
+                      keepEditableFields(updating.settings, ShabondiApi.SINK_ALL_DEFINITIONS)
                   }
                 }
                 .key(key)
@@ -126,15 +125,14 @@ private[configurator] object ShabondiRoute {
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
     (clusterInfo: ShabondiClusterInfo, _: String, _: Map[String, String]) => {
-      val shabondiType = ShabondiType(clusterInfo.shabondiClass)
-      val checkTopics = shabondiType match {
-        case ShabondiType.Source => clusterInfo.sourceToTopics
-        case ShabondiType.Sink   => clusterInfo.sinkFromTopics
+      val checkTopics = clusterInfo.shabondiClass match {
+        case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => clusterInfo.sourceToTopics
+        case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => clusterInfo.sinkFromTopics
       }
       if (checkTopics.isEmpty) {
-        val key = shabondiType match {
-          case ShabondiType.Source => ShabondiDefinitions.SOURCE_TO_TOPICS_DEFINITION.key
-          case ShabondiType.Sink   => ShabondiDefinitions.SINK_FROM_TOPICS_DEFINITION.key
+        val key = clusterInfo.shabondiClass match {
+          case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.SOURCE_TO_TOPICS_DEFINITION.key
+          case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => ShabondiDefinitions.SINK_FROM_TOPICS_DEFINITION.key
         }
         throw new IllegalArgumentException(s"$key cannot be empty.")
       }

@@ -22,7 +22,6 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.{Configurator, FallibleSink}
-import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsTrue}
@@ -536,8 +535,8 @@ class TestPipelineRoute extends OharaTest {
     result(topicApi.start(topic.key))
 
     // Create shabondi and pipeline
-    val shabondiSource = createShabondiService(ShabondiType.Source, bk.key, topic.key)
-    val shabondiSink   = createShabondiService(ShabondiType.Sink, bk.key, topic.key)
+    val shabondiSource = createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, bk.key, topic.key)
+    val shabondiSink   = createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, bk.key, topic.key)
 
     val pipeline = result(
       pipelineApi.request
@@ -572,7 +571,7 @@ class TestPipelineRoute extends OharaTest {
   }
 
   private def createShabondiService(
-    shabondiType: ShabondiType,
+    shabondiClass: Class[_],
     bkKey: ObjectKey,
     topicKey: TopicKey
   ): ShabondiClusterInfo = {
@@ -580,11 +579,11 @@ class TestPipelineRoute extends OharaTest {
       .name(CommonUtils.randomString(10))
       .brokerClusterKey(bkKey)
       .nodeName(nodeNames.head)
-      .shabondiClass(shabondiType.className)
+      .shabondiClass(shabondiClass.getName)
       .clientPort(CommonUtils.availablePort())
-    shabondiType match {
-      case ShabondiType.Source => request.sourceToTopics(Set(topicKey))
-      case ShabondiType.Sink   => request.sinkFromTopics(Set(topicKey))
+    shabondiClass match {
+      case ShabondiApi.SHABONDI_SOURCE_CLASS => request.sourceToTopics(Set(topicKey))
+      case ShabondiApi.SHABONDI_SINK_CLASS   => request.sinkFromTopics(Set(topicKey))
     }
     result(request.create())
   }

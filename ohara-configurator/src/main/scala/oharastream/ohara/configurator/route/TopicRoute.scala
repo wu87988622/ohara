@@ -20,15 +20,14 @@ import oharastream.ohara.agent.BrokerCollie
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi
 import oharastream.ohara.client.configurator.v0.TopicApi._
+import oharastream.ohara.client.configurator.v0.{ShabondiApi, TopicApi}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo
-import oharastream.ohara.shabondi.ShabondiType
 import spray.json.JsString
 
 import scala.compat.java8.FutureConverters._
@@ -208,13 +207,12 @@ private[configurator] object TopicRoute {
         s"topic:${topicInfo.key} is used by running streams:${conflictStreams.map(_.key).mkString(",")}"
       )
 
-    val conflictShabondis = shabondiClusterInfos.filter { clusterInfo =>
-      val shabondiType = ShabondiType(clusterInfo.shabondiClass)
-      shabondiType match {
-        case ShabondiType.Source => clusterInfo.sourceToTopics.contains(topicInfo.key)
-        case ShabondiType.Sink   => clusterInfo.sinkFromTopics.contains(topicInfo.key)
+    val conflictShabondis = shabondiClusterInfos.filter({ clusterInfo =>
+      clusterInfo.shabondiClass match {
+        case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => clusterInfo.sourceToTopics.contains(topicInfo.key)
+        case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => clusterInfo.sinkFromTopics.contains(topicInfo.key)
       }
-    }
+    })
     if (conflictShabondis.nonEmpty)
       throw new IllegalArgumentException(
         s"topic:${topicInfo.key} is used by running shabondis:${conflictShabondis.map(_.key).mkString(",")}"

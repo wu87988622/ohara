@@ -25,7 +25,7 @@ import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
+import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiSink, ShabondiSource}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -34,6 +34,11 @@ import scala.concurrent.{ExecutionContext, Future}
 final object ShabondiApi {
   val KIND: String         = "shabondi"
   val SHABONDI_PREFIX_PATH = "shabondis"
+
+  val SHABONDI_SOURCE_CLASS: Class[ShabondiSource] = classOf[ShabondiSource]
+  val SHABONDI_SOURCE_CLASS_NAME: String           = SHABONDI_SOURCE_CLASS.getName
+  val SHABONDI_SINK_CLASS: Class[ShabondiSink]     = classOf[ShabondiSink]
+  val SHABONDI_SINK_CLASS_NAME: String             = SHABONDI_SINK_CLASS.getName
 
   val IMAGE_NAME_DEFAULT: String = ShabondiDefinitions.IMAGE_NAME_DEFAULT
 
@@ -76,8 +81,8 @@ final object ShabondiApi {
       * @return definitions to this shabondi type
       */
     def definitions: Seq[SettingDef] =
-      if (shabondiClass == ShabondiType.Source.className) SOURCE_ALL_DEFINITIONS
-      else if (shabondiClass == ShabondiType.Sink.className) SOURCE_ALL_DEFINITIONS
+      if (shabondiClass == SHABONDI_SOURCE_CLASS_NAME) SOURCE_ALL_DEFINITIONS
+      else if (shabondiClass == SHABONDI_SINK_CLASS_NAME) SOURCE_ALL_DEFINITIONS
       else throw DeserializationException(s"$shabondiClass is NOT supported")
 
     def clientPort: Int               = updating.clientPort.get

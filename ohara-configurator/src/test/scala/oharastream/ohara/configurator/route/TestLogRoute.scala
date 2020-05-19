@@ -25,7 +25,6 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
-import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
@@ -125,7 +124,7 @@ class TestLogRoute extends OharaTest {
     val shabondiKey            = ObjectKey.of("group", "name")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
     createShabondiService(
-      ShabondiType.Source,
+      ShabondiApi.SHABONDI_SOURCE_CLASS,
       brokerClusterInfo,
       shabondiKey,
       clientPort,
@@ -148,7 +147,7 @@ class TestLogRoute extends OharaTest {
     val shabondiKey            = ObjectKey.of("group", "name")
     val (clientPort, nodeName) = (CommonUtils.availablePort(), availableNodeNames(0))
     createShabondiService(
-      ShabondiType.Sink,
+      ShabondiApi.SHABONDI_SINK_CLASS,
       brokerClusterInfo,
       shabondiKey,
       clientPort,
@@ -163,7 +162,7 @@ class TestLogRoute extends OharaTest {
   }
 
   private def createShabondiService(
-    shabondiType: ShabondiType,
+    shabondiClass: Class[_],
     bkClusterInfo: BrokerApi.BrokerClusterInfo,
     key: ObjectKey,
     clientPort: Int,
@@ -175,11 +174,11 @@ class TestLogRoute extends OharaTest {
       .group(key.group)
       .brokerClusterKey(bkClusterInfo.key)
       .nodeNames(nodeNames) // note: nodeNames only support one node currently.
-      .shabondiClass(shabondiType.className)
+      .shabondiClass(shabondiClass.getName)
       .clientPort(clientPort)
-    shabondiType match {
-      case ShabondiType.Source => request.sourceToTopics(topicKeys)
-      case ShabondiType.Sink   => request.sinkFromTopics(topicKeys)
+    shabondiClass match {
+      case ShabondiApi.SHABONDI_SOURCE_CLASS => request.sourceToTopics(topicKeys)
+      case ShabondiApi.SHABONDI_SINK_CLASS   => request.sinkFromTopics(topicKeys)
     }
     result(request.create())
   }

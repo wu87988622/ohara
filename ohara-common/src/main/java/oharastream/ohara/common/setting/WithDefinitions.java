@@ -100,6 +100,23 @@ public interface WithDefinitions {
       Object ref,
       Map<String, SettingDef> systemDefinedDefinitions,
       Map<String, SettingDef> userDefinedDefinitions) {
+    return merge(ref.getClass(), systemDefinedDefinitions, userDefinedDefinitions);
+  }
+
+  /**
+   * merge two collections of definitions. the priority of system's definitions is highest so it is
+   * able to override the duplicate key in user's definitions. This method also adds version, author
+   * and revision to the final definitions if they are absent.
+   *
+   * @param refClass the object class used to detect the kind
+   * @param systemDefinedDefinitions system level definitions
+   * @param userDefinedDefinitions user level definitions
+   * @return a collections of definitions consisting of both input definitions.
+   */
+  static Map<String, SettingDef> merge(
+      Class<?> refClass,
+      Map<String, SettingDef> systemDefinedDefinitions,
+      Map<String, SettingDef> userDefinedDefinitions) {
     Map<String, SettingDef> finalDefinitions = new TreeMap<>(userDefinedDefinitions);
     finalDefinitions.putAll(systemDefinedDefinitions);
     // add system-defined definitions if developers does NOT define them
@@ -110,7 +127,7 @@ public interface WithDefinitions {
         KIND_KEY,
         key -> {
           Optional<String> kind;
-          Class<?> clz = ref.getClass();
+          Class<?> clz = refClass;
           // this class is in the super model so it can't reference the classes from sub model
           // we use unit tests to avoid the class renaming.
           do {

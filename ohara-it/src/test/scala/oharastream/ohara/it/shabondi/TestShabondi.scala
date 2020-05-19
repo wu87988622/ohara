@@ -17,12 +17,12 @@
 package oharastream.ohara.it.shabondi
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.{
   BrokerApi,
   ClusterInfo,
+  ClusterState,
   ContainerApi,
   ShabondiApi,
   TopicApi,
@@ -32,7 +32,6 @@ import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.metrics.BeanChannel
-import oharastream.ohara.shabondi.ShabondiType
 import org.junit.{Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
@@ -96,17 +95,18 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     log.info(s"assert broker cluster [$bkKey]...done")
 
     // ----- create Shabondi Source
-    val shabondiSource: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Source, topic1.key)
+    val shabondiSource: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, topic1.key)
     log.info(s"shabondi creation [$shabondiSource]...done")
 
     // assert Shabondi Source cluster info
     val clusterInfo = result(shabondiApi.get(shabondiSource.key))
-    clusterInfo.shabondiClass shouldBe ShabondiType.Source.className
+    clusterInfo.shabondiClass shouldBe ShabondiApi.SHABONDI_SOURCE_CLASS_NAME
     clusterInfo.sourceToTopics shouldBe Set(topic1.key)
     clusterInfo.state shouldBe None
     clusterInfo.error shouldBe None
 
-    assertStartAndStop(ShabondiType.Source, shabondiSource)
+    assertStartAndStop(ShabondiApi.SHABONDI_SOURCE_CLASS, shabondiSource)
   }
 
   @Test
@@ -122,17 +122,18 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     log.info(s"assert broker cluster [$bkKey]...done")
 
     // ----- create Shabondi Sink
-    val shabondiSink: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Sink, topic1.key)
+    val shabondiSink: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, topic1.key)
     log.info(s"shabondi creation [$shabondiSink]...done")
 
     // assert Shabondi Sink cluster info
     val clusterInfo = result(shabondiApi.get(shabondiSink.key))
-    clusterInfo.shabondiClass shouldBe ShabondiType.Sink.className
+    clusterInfo.shabondiClass shouldBe ShabondiApi.SHABONDI_SINK_CLASS_NAME
     clusterInfo.sinkFromTopics shouldBe Set(topic1.key)
     clusterInfo.state shouldBe None
     clusterInfo.error shouldBe None
 
-    assertStartAndStop(ShabondiType.Sink, shabondiSink)
+    assertStartAndStop(ShabondiApi.SHABONDI_SINK_CLASS, shabondiSink)
   }
 
   @Test
@@ -148,8 +149,10 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     log.info(s"assert broker cluster [$bkKey]...done")
 
     // ----- create Shabondi Source & Sink
-    val shabondiSource: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Source, topic1.key)
-    val shabondiSink: ShabondiApi.ShabondiClusterInfo   = createShabondiService(ShabondiType.Sink, topic1.key)
+    val shabondiSource: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, topic1.key)
+    val shabondiSink: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, topic1.key)
 
     // ---- Start Shabondi Source & Sink
     result(shabondiApi.start(shabondiSource.key))
@@ -183,8 +186,10 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     log.info(s"assert broker cluster [$bkKey]...done")
 
     // ----- create Shabondi Source & Sink
-    val shabondiSource: ShabondiApi.ShabondiClusterInfo = createShabondiService(ShabondiType.Source, topic1.key)
-    val shabondiSink: ShabondiApi.ShabondiClusterInfo   = createShabondiService(ShabondiType.Sink, topic1.key)
+    val shabondiSource: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SOURCE_CLASS, topic1.key)
+    val shabondiSink: ShabondiApi.ShabondiClusterInfo =
+      createShabondiService(ShabondiApi.SHABONDI_SINK_CLASS, topic1.key)
 
     // ---- Start Shabondi Source & Sink
     result(shabondiApi.start(shabondiSource.key))
@@ -213,21 +218,21 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
     topicInfo
   }
 
-  private def createShabondiService(shabondiType: ShabondiType, topicKey: TopicKey): ShabondiClusterInfo = {
+  private def createShabondiService(shabondiClass: Class[_], topicKey: TopicKey): ShabondiClusterInfo = {
     val request = shabondiApi.request
       .key(serviceKeyHolder.generateClusterKey())
       .brokerClusterKey(bkKey)
       .nodeName(nodeNames.head)
-      .shabondiClass(shabondiType.className)
+      .shabondiClass(shabondiClass.getName)
       .clientPort(CommonUtils.availablePort())
-    shabondiType match {
-      case ShabondiType.Source => request.sourceToTopics(Set(topicKey))
-      case ShabondiType.Sink   => request.sinkFromTopics(Set(topicKey))
+    shabondiClass match {
+      case ShabondiApi.SHABONDI_SOURCE_CLASS => request.sourceToTopics(Set(topicKey))
+      case ShabondiApi.SHABONDI_SINK_CLASS   => request.sinkFromTopics(Set(topicKey))
     }
     result(request.create())
   }
 
-  private def assertStartAndStop(shabondiType: ShabondiType, clusterInfo: ShabondiClusterInfo): Unit = {
+  private def assertStartAndStop(shabondiClass: Class[_], clusterInfo: ShabondiClusterInfo): Unit = {
     // ---- Start Shabondi service
     result(shabondiApi.start(clusterInfo.key))
     await(() => {
@@ -237,7 +242,7 @@ class TestShabondi(platform: ContainerPlatform) extends WithRemoteConfigurator(p
 
     { // assert Shabondi Source cluster info
       val resultInfo = result(shabondiApi.get(clusterInfo.key))
-      resultInfo.shabondiClass shouldBe shabondiType.className
+      resultInfo.shabondiClass shouldBe shabondiClass.getName
       resultInfo.nodeNames shouldBe Set(nodeNames.head)
       resultInfo.aliveNodes shouldBe Set(nodeNames.head)
       resultInfo.deadNodes shouldBe Set.empty

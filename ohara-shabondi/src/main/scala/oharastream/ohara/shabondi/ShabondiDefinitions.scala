@@ -19,11 +19,12 @@ package oharastream.ohara.shabondi
 import java.time.{Duration => JDuration}
 import java.util.concurrent.atomic.AtomicInteger
 
-import oharastream.ohara.common.util.VersionUtils
-import oharastream.ohara.common.setting.{SettingDef, WithDefinitions}
 import oharastream.ohara.common.setting.SettingDef.Type
-import scala.jdk.CollectionConverters._
+import oharastream.ohara.common.setting.{SettingDef, WithDefinitions}
+import oharastream.ohara.common.util.VersionUtils
+
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 
 object ShabondiDefinitions {
   private val basicDefinitionMap  = mutable.Map.empty[String, SettingDef]
@@ -39,8 +40,18 @@ object ShabondiDefinitions {
   def sourceOnlyDefinitions: Seq[SettingDef] = sourceDefinitionMap.values.toList
   def sinkOnlyDefinitions: Seq[SettingDef]   = sinkDefinitionMap.values.toList
 
-  def sourceDefinitions: Seq[SettingDef] = basicDefinitionMap.values.toList ++ sourceDefinitionMap.values.toList
-  def sinkDefinitions: Seq[SettingDef]   = basicDefinitionMap.values.toList ++ sinkDefinitionMap.values.toList
+  def sourceDefinitions: Seq[SettingDef] =
+    WithDefinitions
+      .merge(classOf[ShabondiSource], basicDefinitionMap.asJava, sourceDefinitionMap.asJava)
+      .asScala
+      .values
+      .toSeq
+  def sinkDefinitions: Seq[SettingDef] =
+    WithDefinitions
+      .merge(classOf[ShabondiSink], basicDefinitionMap.asJava, sinkDefinitionMap.asJava)
+      .asScala
+      .values
+      .toSeq
 
   val GROUP_DEFINITION = SettingDef.builder
     .group(CORE_GROUP)
@@ -80,7 +91,7 @@ object ShabondiDefinitions {
     .group(CORE_GROUP)
     .key("shabondi.class")
     .orderInGroup(orderInGroup())
-    .required(Set(ShabondiType.Source.className, ShabondiType.Sink.className).asJava)
+    .required(Set(classOf[ShabondiSource].getName, classOf[ShabondiSink].getName).asJava)
     .documentation("the class name of Shabondi service")
     .permission(SettingDef.Permission.CREATE_ONLY)
     .build

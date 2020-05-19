@@ -50,7 +50,7 @@ import oharastream.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
-import oharastream.ohara.shabondi.{ShabondiDefinitions, ShabondiType}
+import oharastream.ohara.shabondi.ShabondiDefinitions
 import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.{DeserializationException, JsNull, JsObject}
 
@@ -122,8 +122,8 @@ private[configurator] object InspectRoute {
     imageName = ShabondiApi.IMAGE_NAME_DEFAULT,
     settingDefinitions = ShabondiDefinitions.basicDefinitions,
     classInfos = Seq(
-      ClassInfo(ClassType.SOURCE, ShabondiType.Source.className, ShabondiDefinitions.sourceDefinitions),
-      ClassInfo(ClassType.SINK, ShabondiType.Sink.className, ShabondiDefinitions.sinkDefinitions)
+      ClassInfo(ClassType.SOURCE, ShabondiApi.SHABONDI_SOURCE_CLASS_NAME, ShabondiDefinitions.sourceDefinitions),
+      ClassInfo(ClassType.SINK, ShabondiApi.SHABONDI_SINK_CLASS_NAME, ShabondiDefinitions.sinkDefinitions)
     )
   )
 
