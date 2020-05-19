@@ -26,6 +26,7 @@ import { useConfig } from './SettingsHooks';
 import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
 
 import { convertIdToKey } from 'utils/object';
+import { CLUSTER_STATE } from 'const';
 
 const Settings = () => {
   const { isOpen, close, data: pageName } = useEditWorkspaceDialog();
@@ -45,7 +46,28 @@ const Settings = () => {
   const tmpWorker = hooks.useWorker();
   const tmpBroker = hooks.useBroker();
   const tmpZookeeper = hooks.useZookeeper();
+  const connectors = hooks.useConnectors();
+  const topics = hooks.useTopicsInWorkspace();
+  const streams = hooks.useStreams();
+  const shabondis = hooks.useShabondis();
 
+  const hasRunningConnectors = connectors.find(
+    connector => connector.state === CLUSTER_STATE.RUNNING,
+  );
+  const hasRunningStreams = streams.find(
+    stream => stream.state === CLUSTER_STATE.RUNNING,
+  );
+  const hasRunningShabondis = shabondis.find(
+    shabondi => shabondi.state === CLUSTER_STATE.RUNNING,
+  );
+  let hasRunningServices = false;
+  let restartConfirmMessage =
+    'This will restart the zookeeper, broker and worker.';
+
+  if (hasRunningConnectors || hasRunningStreams || hasRunningShabondis) {
+    restartConfirmMessage = `Oops, there are still some running services in ${workspace.name}. You should stop them first and then you will be able to restart this workspace.`;
+    hasRunningServices = true;
+  }
   const resetSelectedItem = () => {
     setSelectedComponent(null);
   };
@@ -75,8 +97,11 @@ const Settings = () => {
         tmpWorker,
         tmpBroker,
         tmpZookeeper,
+        topics,
       });
     },
+    restartConfirmMessage,
+    hasRunningServices,
     workspace,
   });
 

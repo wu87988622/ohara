@@ -28,6 +28,7 @@ import {
   withLatestFrom,
   takeUntil,
   takeWhile,
+  mergeMap,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -35,6 +36,7 @@ import * as brokerApi from 'api/brokerApi';
 import * as workerApi from 'api/workerApi';
 import * as workspaceApi from 'api/workspaceApi';
 import * as zookeeperApi from 'api/zookeeperApi';
+import * as topicApi from 'api/topicApi';
 import { ACTIONS } from 'const';
 import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
@@ -208,6 +210,18 @@ const stopWorker$ = params =>
     ),
   ).pipe(concatAll());
 
+const stopTopic$ = topic =>
+  of(
+    defer(() => topicApi.stop(topic)).pipe(
+      delay(duration),
+      map(() => actions.stopTopic.request()),
+      catchError(error => of(actions.stopTopic.failure(error))),
+    ),
+  ).pipe(concatAll());
+
+const stopTopics$ = topics =>
+  of(...topics).pipe(mergeMap(topics => stopTopic$(topics)));
+
 const startZookeeper$ = (params, skipList) =>
   of(
     defer(() => zookeeperApi.start(params)).pipe(
@@ -243,6 +257,18 @@ const startWorker$ = (params, skipList) =>
     takeWhile(() => !skipList.includes(ACTIONS.START_WORKER)),
     concatAll(),
   );
+
+const startTopic$ = topic =>
+  of(
+    defer(() => topicApi.start(topic)).pipe(
+      delay(duration),
+      map(() => actions.startTopic.request()),
+      catchError(error => of(actions.startTopic.failure(error))),
+    ),
+  ).pipe(concatAll());
+
+const startTopics$ = topics =>
+  of(...topics).pipe(mergeMap(topics => startTopic$(topics)));
 
 const waitStartZookeeper$ = params =>
   of(
@@ -288,6 +314,24 @@ const waitStartWorker$ = params =>
       catchError(error => of(actions.startWorker.failure(error))),
     ),
   ).pipe(concatAll());
+
+const waitStartTopic$ = params =>
+  of(
+    defer(() => topicApi.get(params)).pipe(
+      map(res => res.data),
+      map(data => {
+        if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
+          throw data;
+        }
+        return actions.startTopic.success(data);
+      }),
+      retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
+      catchError(error => of(actions.startTopic.failure(error))),
+    ),
+  ).pipe(concatAll());
+
+const waitStartTopics$ = topics =>
+  of(...topics).pipe(mergeMap(topics => waitStartTopic$(topics)));
 
 const waitStopZookeeper$ = params =>
   of(
@@ -337,6 +381,24 @@ const waitStopWorker$ = params =>
     ),
   ).pipe(concatAll());
 
+const waitStopTopic$ = params =>
+  of(
+    defer(() => topicApi.get(params)).pipe(
+      map(res => res.data),
+      map(data => {
+        if (data?.state) {
+          throw data;
+        }
+        return actions.stopTopic.success(data);
+      }),
+      retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
+      catchError(error => of(actions.stopTopic.failure(error))),
+    ),
+  ).pipe(concatAll());
+
+const waitStopTopics$ = topics =>
+  of(...topics).pipe(mergeMap(topics => waitStopTopic$(topics)));
+
 const finalize$ = params =>
   of(
     of(
@@ -367,6 +429,7 @@ export default (action$, state$) =>
         tmpWorker = {},
         tmpBroker = {},
         tmpZookeeper = {},
+        topics = [],
       } = action.payload;
 
       const workspaceKey = workspace;
@@ -381,6 +444,9 @@ export default (action$, state$) =>
           { objectKey: workerKey, tmp: tmpWorker, settings: workerSettings },
           isRollback,
         ),
+
+        stopTopics$(topics),
+        waitStopTopics$(topics),
 
         stopBroker$(brokerKey, skipList),
         waitStopBroker$({
@@ -414,6 +480,9 @@ export default (action$, state$) =>
 
         startBroker$(brokerKey, skipList),
         waitStartBroker$(brokerKey),
+
+        startTopics$(topics),
+        waitStartTopics$(topics),
 
         startWorker$(workerKey, skipList),
         waitStartWorker$(workerKey),
