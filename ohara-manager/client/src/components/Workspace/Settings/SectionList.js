@@ -32,7 +32,7 @@ const SectionList = props => {
   const { list, handleChange, sectionHeading, sectionRef } = props;
 
   return (
-    <List component="ul">
+    <List className="section-list" component="ul">
       {list.map(item => {
         const {
           title,

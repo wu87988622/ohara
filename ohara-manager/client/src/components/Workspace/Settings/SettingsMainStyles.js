@@ -38,7 +38,7 @@ export const Wrapper = styled.div(
       }
     }
 
-    .MuiList-padding {
+    .section-list {
       padding-top: 0;
       padding-bottom: 0;
 

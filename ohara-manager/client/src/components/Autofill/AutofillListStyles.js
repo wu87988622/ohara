@@ -21,5 +21,9 @@ export default styled.div(
     .add-button {
       margin-top: ${theme.spacing(2)}px;
     }
+
+    .MuiListItem-divider {
+      padding: ${theme.spacing(2)}px;
+    }
   `,
 );
