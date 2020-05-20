@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteZookeeper.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.zookeeperId);
     default:
       return entity(ENTITY_TYPE.zookeepers)(state, action);
   }

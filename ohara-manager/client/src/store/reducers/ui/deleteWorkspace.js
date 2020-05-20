@@ -15,7 +15,6 @@
  */
 
 import * as actions from 'store/actions';
-import { ACTIONS } from 'const';
 
 const defaultSteps = [
   'Stop Worker',
@@ -29,8 +28,6 @@ const defaultSteps = [
 const initialState = {
   isOpen: false,
   loading: false,
-  isAutoClose: false,
-  closeDisable: true,
   progress: {
     open: false,
     steps: defaultSteps,
@@ -38,8 +35,8 @@ const initialState = {
     log: [],
     message: 'Start DeleteWorkspace... (0% complete)',
     isPause: false,
+    isRollback: false,
   },
-  skipList: [],
   lastUpdated: null,
   error: null,
 };
@@ -50,14 +47,12 @@ export default function reducer(state = initialState, action) {
     case actions.openDeleteWorkspace.TRIGGER:
       return {
         ...state,
-        isAutoClose: false,
-        closeDisable: true,
         isOpen: true,
-      };
-    case actions.closeDeleteWorkspace.TRIGGER:
-      return {
-        ...state,
-        isOpen: false,
+        progress: {
+          ...state.progress,
+          isRollback: false,
+          log: [],
+        },
       };
     case actions.pauseDeleteWorkspace.TRIGGER:
       return {
@@ -73,7 +68,7 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
-          isPause: true,
+          isPause: false,
           log: [...state.progress.log, { title: `${now} [RESUME]` }],
         },
       };
@@ -82,19 +77,13 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
+          isRollback: true,
           log: [...state.progress.log, { title: `${now} [ROLLBACK]` }],
         },
-      };
-    case actions.autoCloseDeleteWorkspace.TRIGGER:
-      const isAuto = state.isAutoClose ? false : true;
-      return {
-        ...state,
-        isAutoClose: isAuto,
       };
     case actions.createZookeeper.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_ZOOKEEPER],
         progress: {
           ...state.progress,
           message: 'Wait create zookeeper... (7% complete)',
@@ -107,7 +96,6 @@ export default function reducer(state = initialState, action) {
     case actions.startZookeeper.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.START_ZOOKEEPER],
         progress: {
           ...state.progress,
           message: 'Wait start zookeeper... (7% complete)',
@@ -120,7 +108,6 @@ export default function reducer(state = initialState, action) {
     case actions.createBroker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_BROKER],
         progress: {
           ...state.progress,
           message: 'Wait create broker... (7% complete)',
@@ -133,7 +120,6 @@ export default function reducer(state = initialState, action) {
     case actions.startBroker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.START_BROKER],
         progress: {
           ...state.progress,
           message: 'Wait start broker... (7% complete)',
@@ -146,7 +132,6 @@ export default function reducer(state = initialState, action) {
     case actions.createWorker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_WORKER],
         progress: {
           ...state.progress,
           message: 'Wait create worker... (7% complete)',
@@ -159,7 +144,6 @@ export default function reducer(state = initialState, action) {
     case actions.startWorker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.START_WORKER],
         progress: {
           ...state.progress,
           message: 'Wait start worker... (7% complete)',
@@ -173,7 +157,6 @@ export default function reducer(state = initialState, action) {
     case actions.stopWorker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_WORKER],
         progress: {
           ...state.progress,
           message: 'Wait stop worker... (7% complete)',
@@ -201,7 +184,6 @@ export default function reducer(state = initialState, action) {
     case actions.stopBroker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_BROKER],
         progress: {
           ...state.progress,
           message: 'Wait stop broker... (21% complete)',
@@ -229,7 +211,6 @@ export default function reducer(state = initialState, action) {
     case actions.stopZookeeper.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_ZOOKEEPER],
         progress: {
           ...state.progress,
           message: 'Wait stop zookeeper... (35% complete)',
@@ -260,7 +241,6 @@ export default function reducer(state = initialState, action) {
     case actions.deleteWorker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_WORKER],
         progress: {
           ...state.progress,
           message: 'Wait delete worker... (49% complete)',
@@ -290,7 +270,6 @@ export default function reducer(state = initialState, action) {
     case actions.deleteBroker.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_BROKER],
         progress: {
           ...state.progress,
           message: 'Wait delete broker... (63% complete)',
@@ -320,7 +299,6 @@ export default function reducer(state = initialState, action) {
     case actions.deleteZookeeper.REQUEST:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.DELETE_ZOOKEEPER],
         progress: {
           ...state.progress,
           message: 'Wait delete zookeeper... (77% complete)',
@@ -358,8 +336,6 @@ export default function reducer(state = initialState, action) {
     case actions.deleteWorkspace.SUCCESS:
       return {
         ...state,
-        closeDisable: false,
-        skipList: [],
         progress: {
           ...state.progress,
           activeStep: 7,

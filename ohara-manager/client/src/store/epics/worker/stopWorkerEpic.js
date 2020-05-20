@@ -35,7 +35,8 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const stopWorker$ = params => {
+// Note: The caller SHOULD handle the error of this action
+export const stopWorker$ = params => {
   const workerId = getId(params);
   return zip(
     defer(() => workerApi.stop(params)),
@@ -62,12 +63,6 @@ const stopWorker$ = params => {
     map(normalizedData => merge(normalizedData, { workerId })),
     map(normalizedData => actions.stopWorker.success(normalizedData)),
     startWith(actions.stopWorker.request({ workerId })),
-    catchError(err =>
-      from([
-        actions.stopWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -76,5 +71,14 @@ export default action$ =>
     ofType(actions.stopWorker.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => stopWorker$(params)),
+    mergeMap(params =>
+      stopWorker$(params).pipe(
+        catchError(err =>
+          from([
+            actions.stopWorker.failure(merge(err, { workerId: getId(params) })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

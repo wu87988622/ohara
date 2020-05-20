@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteStream.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.streamId);
     default:
       return entity(ENTITY_TYPE.streams)(state, action);
   }

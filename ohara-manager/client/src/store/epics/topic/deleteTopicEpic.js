@@ -30,6 +30,7 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
+// Note: The caller SHOULD handle the error of this action
 export const deleteTopic$ = params => {
   const topicId = getId(params);
   return defer(() => topicApi.remove(params)).pipe(
@@ -40,12 +41,6 @@ export const deleteTopic$ = params => {
       ]);
     }),
     startWith(actions.deleteTopic.request({ topicId })),
-    catchError(err =>
-      from([
-        actions.deleteTopic.failure(merge(err, { topicId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -54,5 +49,14 @@ export default action$ =>
     ofType(actions.deleteTopic.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => deleteTopic$(values)),
+    mergeMap(params =>
+      deleteTopic$(params).pipe(
+        catchError(err =>
+          from([
+            actions.deleteTopic.failure(merge(err, { topicId: getId(params) })),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

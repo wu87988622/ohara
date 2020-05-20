@@ -30,17 +30,12 @@ import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-const deleteZookeeper$ = params => {
+// Note: The caller SHOULD handle the error of this action
+export const deleteZookeeper$ = params => {
   const zookeeperId = getId(params);
   return defer(() => zookeeperApi.remove(params)).pipe(
     map(() => actions.deleteZookeeper.success({ zookeeperId })),
     startWith(actions.deleteZookeeper.request({ zookeeperId })),
-    catchError(err =>
-      from([
-        actions.deleteZookeeper.failure(merge(err, { zookeeperId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -49,5 +44,16 @@ export default action$ =>
     ofType(actions.deleteZookeeper.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => deleteZookeeper$(params)),
+    mergeMap(params =>
+      deleteZookeeper$(params).pipe(
+        catchError(err =>
+          from([
+            actions.deleteZookeeper.failure(
+              merge(err, { zookeeperId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

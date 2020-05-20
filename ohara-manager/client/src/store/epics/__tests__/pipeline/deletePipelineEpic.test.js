@@ -92,15 +92,13 @@ it('should delete a pipeline', () => {
       a: {
         type: actions.deleteConnector.SUCCESS,
         payload: {
-          name: connectorEntity.name,
-          group: connectorEntity.group,
+          connectorId: getId(connectorEntity),
         },
       },
       b: {
         type: actions.deleteStream.SUCCESS,
         payload: {
-          name: streamEntity.name,
-          group: streamEntity.group,
+          streamId: getId(streamEntity),
         },
       },
       c: {
@@ -119,16 +117,20 @@ it('should delete a pipeline', () => {
       e: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
-          name: topicEntity.name,
-          group: topicEntity.group,
+          topicId: getId(topicEntity),
         },
       },
       f: {
         type: actions.deletePipeline.REQUEST,
+        payload: {
+          pipelineId: getId(pipelineEntity),
+        },
       },
       g: {
         type: actions.deletePipeline.SUCCESS,
-        payload: getId(pipelineEntity),
+        payload: {
+          pipelineId: getId(pipelineEntity),
+        },
       },
       h: {
         type: actions.switchPipeline.TRIGGER,

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
+import * as hooks from 'hooks';
+import * as selectors from 'store/selectors';
+import { getKey } from 'utils/object';
 
 export const useOpenDeleteWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
@@ -26,23 +29,15 @@ export const useOpenDeleteWorkspaceDialogAction = () => {
   ]);
 };
 
-export const useCloseDeleteWorkspaceDialogAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.closeDeleteWorkspace.trigger()), [
-    dispatch,
-  ]);
-};
-
-export const useAutoCloseDeleteWorkspaceDialogAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(
-    () => dispatch(actions.autoCloseDeleteWorkspace.trigger()),
-    [dispatch],
-  );
-};
-
 export const useDeleteWorkspace = () =>
   useSelector(state => state.ui.deleteWorkspace);
+
+export const useIsRollback = () => {
+  const getProgress = useMemo(selectors.makeGetDeleteWorkspaceProgress, []);
+  return useSelector(
+    useCallback(state => getProgress(state).isRollback, [getProgress]),
+  );
+};
 
 export const usePauseDeleteWorkspaceAction = () => {
   const dispatch = useDispatch();
@@ -68,8 +63,25 @@ export const useRollbackDeleteWorkspaceAction = () => {
 
 export const useDeleteWorkspaceAction = () => {
   const dispatch = useDispatch();
+  const zookeeperKey = getKey(hooks.useZookeeper());
+  const brokerKey = getKey(hooks.useBroker());
+  const workerKey = getKey(hooks.useWorker());
+  const workspaceKey = getKey(hooks.useWorkspace());
+
+  const values = {
+    zookeeperKey,
+    brokerKey,
+    workerKey,
+    workspaceKey,
+  };
   return useCallback(
-    values => dispatch(actions.deleteWorkspace.trigger(values)),
-    [dispatch],
+    options =>
+      dispatch(
+        actions.deleteWorkspace.trigger({
+          values,
+          options,
+        }),
+      ),
+    [dispatch, values],
   );
 };

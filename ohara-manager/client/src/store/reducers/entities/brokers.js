@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteBroker.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.brokerId);
     default:
       return entity(ENTITY_TYPE.brokers)(state, action);
   }

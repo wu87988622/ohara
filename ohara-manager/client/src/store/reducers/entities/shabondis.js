@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteShabondi.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.shabondiId);
     case actions.updateShabondi.SUCCESS:
       return assign(
         {},

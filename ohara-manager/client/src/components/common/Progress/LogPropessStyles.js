@@ -18,7 +18,7 @@ import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 
 const StyledDialog = styled(Dialog)(
-  ({ isHide }) => css`
+  ({ isHide, isDeleteDialog }) => css`
     .MuiDialog-paperFullWidth {
       height: ${isHide ? '' : '600px'};
     }
@@ -32,7 +32,7 @@ const StyledDialog = styled(Dialog)(
       justify-content: flex-end;
     }
     .FlexFooterDiv {
-      display: flex;
+      display: ${isDeleteDialog ? 'none' : 'flex'};
     }
     .StyledProgress {
       flex: ${isHide ? 1 : '100%'};

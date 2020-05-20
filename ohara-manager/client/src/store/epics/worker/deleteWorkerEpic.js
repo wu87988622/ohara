@@ -16,13 +16,16 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { defer, from, zip, iif, of, throwError } from 'rxjs';
 import {
   catchError,
   map,
   startWith,
   mergeMap,
   distinctUntilChanged,
+  retryWhen,
+  concatMap,
+  delay,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
@@ -30,17 +33,36 @@ import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-const deleteWorker$ = params => {
+// Note: The caller SHOULD handle the error of this action
+export const deleteWorker$ = params => {
   const workerId = getId(params);
-  return defer(() => workerApi.remove(params)).pipe(
+  return zip(
+    defer(() => workerApi.remove(params)),
+    defer(() => workerApi.getAll({ group: params.group })).pipe(
+      map(res => {
+        if (
+          res.data.length > 0 &&
+          res.data.map(value => value.name).includes(params.name)
+        )
+          throw res;
+        else return res.data;
+      }),
+
+      retryWhen(errors =>
+        errors.pipe(
+          concatMap((value, index) =>
+            iif(
+              () => index > 10,
+              throwError({ title: 'delete worker exceeded max retry count' }),
+              of(value).pipe(delay(2000)),
+            ),
+          ),
+        ),
+      ),
+    ),
+  ).pipe(
     map(() => actions.deleteWorker.success({ workerId })),
     startWith(actions.deleteWorker.request({ workerId })),
-    catchError(err =>
-      from([
-        actions.deleteWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -49,5 +71,16 @@ export default action$ =>
     ofType(actions.deleteWorker.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => deleteWorker$(params)),
+    mergeMap(params =>
+      deleteWorker$(params).pipe(
+        catchError(err =>
+          from([
+            actions.deleteWorker.failure(
+              merge(err, { workerId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

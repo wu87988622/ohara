@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteFile.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.fileId);
     default:
       return entity(ENTITY_TYPE.files)(state, action);
   }

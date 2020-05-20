@@ -35,7 +35,8 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-const stopZookeeper$ = params => {
+// Note: The caller SHOULD handle the error of this action
+export const stopZookeeper$ = params => {
   const zookeeperId = getId(params);
   return zip(
     defer(() => zookeeperApi.stop(params)),
@@ -61,12 +62,6 @@ const stopZookeeper$ = params => {
     map(normalizedData => merge(normalizedData, { zookeeperId })),
     map(normalizedData => actions.stopZookeeper.success(normalizedData)),
     startWith(actions.stopZookeeper.request({ zookeeperId })),
-    catchError(err =>
-      from([
-        actions.stopZookeeper.failure(merge(err, { zookeeperId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -75,5 +70,16 @@ export default action$ =>
     ofType(actions.stopZookeeper.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => stopZookeeper$(params)),
+    mergeMap(params =>
+      stopZookeeper$(params).pipe(
+        catchError(err =>
+          from([
+            actions.stopZookeeper.failure(
+              merge(err, { zookeeperId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

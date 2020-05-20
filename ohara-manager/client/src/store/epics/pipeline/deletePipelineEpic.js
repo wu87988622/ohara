@@ -38,10 +38,11 @@ import { KIND, CELL_STATUS, LOG_LEVEL } from 'const';
 
 const deleteStream$ = (params, paperApi) => {
   const { id, name, group } = params;
+  const streamId = getId({ name, group });
   return defer(() => streamApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { skipGraphEvents: true });
-      return actions.deleteStream.success({ name, group });
+      return actions.deleteStream.success({ streamId });
     }),
   );
 };
@@ -54,10 +55,11 @@ const deleteAllStreams$ = (streams, paperApi) => {
 
 const deleteConnector$ = (params, paperApi) => {
   const { id, name, group } = params;
+  const connectorId = getId({ name, group });
   return defer(() => connectorApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { skipGraphEvents: true });
-      return actions.deleteConnector.success({ name, group });
+      return actions.deleteConnector.success({ connectorId });
     }),
   );
 };
@@ -103,10 +105,11 @@ const waitUntilTopicStopped$ = (params, paperApi) => {
 
 const deleteTopic$ = (params, paperApi) => {
   const { id, name, group } = params;
+  const topicId = getId({ name, group });
   return defer(() => topicApi.remove({ name, group })).pipe(
     map(() => {
       paperApi.removeElement(id, { skipGraphEvents: true });
-      return actions.deleteTopic.success({ name, group });
+      return actions.deleteTopic.success({ topicId });
     }),
   );
 };
@@ -131,16 +134,18 @@ const stopAndDeleteAllTopics$ = (topics, paperApi) => {
   );
 };
 
-const deletePipeline$ = params =>
-  defer(() => pipelineApi.remove(params)).pipe(
+const deletePipeline$ = params => {
+  const pipelineId = getId(params);
+  return defer(() => pipelineApi.remove(params)).pipe(
     mergeMap(() => {
       return from([
-        actions.deletePipeline.success(getId(params)),
+        actions.deletePipeline.success({ pipelineId }),
         actions.switchPipeline.trigger(),
       ]);
     }),
-    startWith(actions.deletePipeline.request()),
+    startWith(actions.deletePipeline.request({ pipelineId })),
   );
+};
 
 export default action$ =>
   action$.pipe(

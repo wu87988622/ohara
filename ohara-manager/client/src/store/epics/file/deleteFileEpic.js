@@ -34,17 +34,17 @@ export default action$ =>
     ofType(actions.deleteFile.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
-      defer(() => fileApi.remove(params)).pipe(
-        map(() => getId(params)),
-        map(id => actions.deleteFile.success(id)),
-        startWith(actions.deleteFile.request()),
+    mergeMap(params => {
+      const fileId = getId(params);
+      return defer(() => fileApi.remove(params)).pipe(
+        map(() => actions.deleteFile.success({ fileId })),
+        startWith(actions.deleteFile.request({ fileId })),
         catchError(err =>
           from([
             actions.deleteFile.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]),
         ),
-      ),
-    ),
+      );
+    }),
   );

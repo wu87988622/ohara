@@ -52,10 +52,11 @@ it('delete file should be worked correctly', () => {
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.deleteFile.REQUEST,
+        payload: { fileId },
       },
       u: {
         type: actions.deleteFile.SUCCESS,
-        payload: fileId,
+        payload: { fileId },
       },
     });
 
@@ -89,17 +90,19 @@ it('delete multiple files should be worked correctly', () => {
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.deleteFile.REQUEST,
+        payload: { fileId },
       },
       u: {
         type: actions.deleteFile.SUCCESS,
-        payload: fileId,
+        payload: { fileId },
       },
       b: {
         type: actions.deleteFile.REQUEST,
+        payload: { fileId: getId(anotherFileEntity) },
       },
       v: {
         type: actions.deleteFile.SUCCESS,
-        payload: getId(anotherFileEntity),
+        payload: { fileId: getId(anotherFileEntity) },
       },
     });
 
@@ -128,10 +131,11 @@ it('delete same file within period should be deleted once only', () => {
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.deleteFile.REQUEST,
+        payload: { fileId },
       },
       u: {
         type: actions.deleteFile.SUCCESS,
-        payload: fileId,
+        payload: { fileId },
       },
     });
 
@@ -168,6 +172,7 @@ it('throw exception of delete file should also trigger event log action', () => 
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.deleteFile.REQUEST,
+        payload: { fileId },
       },
       e: {
         type: actions.deleteFile.FAILURE,

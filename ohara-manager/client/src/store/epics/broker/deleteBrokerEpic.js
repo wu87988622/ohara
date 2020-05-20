@@ -30,17 +30,12 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-const deleteBroker$ = params => {
+// Note: The caller SHOULD handle the error of this action
+export const deleteBroker$ = params => {
   const brokerId = getId(params);
   return defer(() => brokerApi.remove(params)).pipe(
     map(() => actions.deleteBroker.success({ brokerId })),
     startWith(actions.deleteBroker.request({ brokerId })),
-    catchError(err =>
-      from([
-        actions.deleteBroker.failure(merge(err, { brokerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -49,5 +44,16 @@ export default action$ =>
     ofType(actions.deleteBroker.TRIGGER),
     map(action => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => deleteBroker$(params)),
+    mergeMap(params =>
+      deleteBroker$(params).pipe(
+        catchError(err =>
+          from([
+            actions.deleteBroker.failure(
+              merge(err, { brokerId: getId(params) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

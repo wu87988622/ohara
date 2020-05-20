@@ -77,10 +77,9 @@ const Settings = () => {
       resetSelectedItem(null);
       openDeleteWorkspace();
       deleteWorkspace({
-        workspace: convertIdToKey(workspaceId),
-        zookeeper: convertIdToKey(zookeeperId),
-        broker: convertIdToKey(brokerId),
-        worker: convertIdToKey(workerId),
+        // after delete workspace
+        // this Settings Dialog should be closed
+        onSuccess: () => close(),
       });
     },
     openRestartProgressDialog: () => {

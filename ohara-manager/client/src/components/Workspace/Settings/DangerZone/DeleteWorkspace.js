@@ -18,28 +18,15 @@ import React from 'react';
 import LogProgress from 'components/common/Progress/LogProgress';
 
 import * as hooks from 'hooks';
-import { convertIdToKey } from 'utils/object';
 
 const DeleteWorkspace = () => {
   const pause = hooks.usePauseDeleteWorkspaceAction();
   const resume = hooks.useResumeDeleteWorkspaceAction();
-  const close = hooks.useCloseDeleteWorkspaceDialogAction();
   const rollback = hooks.useRollbackDeleteWorkspaceAction();
-  const autoClose = hooks.useAutoCloseDeleteWorkspaceDialogAction();
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
-  const workspaceId = hooks.useWorkspaceId();
-  const zookeeperId = hooks.useZookeeperId();
-  const brokerId = hooks.useBrokerId();
-  const workerId = hooks.useWorkerId();
-  const workspace = hooks.useWorkspace();
 
   const currentDeleteWorkspace = hooks.useDeleteWorkspace();
-  const {
-    isOpen,
-    skipList,
-    isAutoClose,
-    closeDisable,
-  } = currentDeleteWorkspace;
+  const { isOpen } = currentDeleteWorkspace;
   const {
     steps,
     activeStep,
@@ -60,33 +47,12 @@ const DeleteWorkspace = () => {
       data={log}
       onResume={() => {
         resume();
-        deleteWorkspace({
-          workspace: convertIdToKey(workspaceId),
-          zookeeper: convertIdToKey(zookeeperId),
-          broker: convertIdToKey(brokerId),
-          worker: convertIdToKey(workerId),
-          skipList,
-        });
+        deleteWorkspace();
       }}
       onRollback={() => {
         rollback();
-        deleteWorkspace({
-          workspace: convertIdToKey(workspaceId),
-          zookeeper: convertIdToKey(zookeeperId),
-          broker: convertIdToKey(brokerId),
-          worker: convertIdToKey(workerId),
-          skipList,
-          isRollBack: true,
-          tmpWorker: workspace.worker,
-          tmpBroker: workspace.Broker,
-          tmpZookeeper: workspace.Zookeeper,
-        });
+        deleteWorkspace();
       }}
-      onClose={() => close()}
-      onAutoClose={() => autoClose()}
-      onResetClusters={() => {}}
-      isAutoClose={isAutoClose}
-      closeDisable={closeDisable}
     />
   );
 };

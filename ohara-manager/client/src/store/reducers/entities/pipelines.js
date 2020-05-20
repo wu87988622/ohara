@@ -22,7 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deletePipeline.SUCCESS:
-      return omit(state, action.payload);
+      return omit(state, action.payload?.pipelineId);
     default:
       return entity(ENTITY_TYPE.pipelines)(state, action);
   }

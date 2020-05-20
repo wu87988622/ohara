@@ -142,7 +142,13 @@ const LogProgress = props => {
   ]);
 
   return (
-    <s.StyledDialog open={isLoading} maxWidth={'md'} fullWidth isHide={isHide}>
+    <s.StyledDialog
+      open={isLoading}
+      maxWidth={'md'}
+      fullWidth
+      isHide={isHide}
+      isDeleteDialog={createTitle === 'Delete Workspace'}
+    >
       <DialogTitle>{title}</DialogTitle>
       {!isHide && (
         <Stepper activeStep={activeStep}>
