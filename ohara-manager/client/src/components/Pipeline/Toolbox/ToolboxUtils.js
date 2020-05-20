@@ -370,17 +370,17 @@ export function getConnectorInfo(worker) {
   if (worker && worker.classInfos) {
     worker.classInfos.forEach(info => {
       const { className, settingDefinitions: defs } = info;
-      const kind = defs.find(def => def.key === 'kind').defaultValue;
+      const kind = defs.find(def => def.key === 'kind')?.defaultValue;
       const displayClassName = className.split('.').pop();
-      if (kind === KIND.source) {
-        return sources.push({
+      if (kind === KIND.sink) {
+        return sinks.push({
           name: displayClassName,
           kind,
           className,
         });
       }
 
-      sinks.push({ name: displayClassName, kind, className });
+      sources.push({ name: displayClassName, kind, className });
     });
   }
 
