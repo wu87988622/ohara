@@ -48,6 +48,8 @@ export default action$ =>
               name: workspaceName,
               pipelineName,
             }),
+            // we need to re-fetch the notification for AppBar
+            actions.updateNotifications.trigger(),
           ]),
         ),
         catchError(err =>

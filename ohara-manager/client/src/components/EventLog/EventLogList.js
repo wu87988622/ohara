@@ -33,7 +33,11 @@ const MemorizeList = React.memo(
       rowRenderer={EventLogRow}
     />
   ),
-  (prevProps, nextProps) => isEqual(prevProps.data, nextProps.data),
+  (prevProps, nextProps) =>
+    isEqual(prevProps.data, nextProps.data) &&
+    // Even if data is not changed
+    // We still need to re-render for "isLoading" changed
+    prevProps.isLoading === nextProps.isLoading,
 );
 
 MemorizeList.propTypes = {

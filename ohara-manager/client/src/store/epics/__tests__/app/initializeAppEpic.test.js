@@ -38,9 +38,9 @@ it('initial app correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-|        ';
-    const expected = '--------(ab|)';
-    const subs = '    ^---!--------';
+    const input = '   ^-a-|         ';
+    const expected = '--------(abc|)';
+    const subs = '    ^---!---------';
 
     const action$ = hot(input, {
       a: {
@@ -71,6 +71,9 @@ it('initial app correctly', () => {
         type: actions.switchWorkspace.TRIGGER,
         payload: {},
       },
+      c: {
+        type: actions.updateNotifications.TRIGGER,
+      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -86,9 +89,9 @@ it('switch to existed workspace correctly', () => {
     const switchData = {
       workspaceName: 'workspace1',
     };
-    const input = '   ^-a-|        ';
-    const expected = '--------(ab|)';
-    const subs = '    ^---!--------';
+    const input = '   ^-a-|         ';
+    const expected = '--------(abc|)';
+    const subs = '    ^---!---------';
 
     const action$ = hot(input, {
       a: {
@@ -121,6 +124,9 @@ it('switch to existed workspace correctly', () => {
           name: switchData.workspaceName,
         },
       },
+      c: {
+        type: actions.updateNotifications.TRIGGER,
+      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -137,9 +143,9 @@ it('switch to existed workspace and pipeline correctly', () => {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a-|        ';
-    const expected = '--------(ab|)';
-    const subs = '    ^---!--------';
+    const input = '   ^-a-|         ';
+    const expected = '--------(abc|)';
+    const subs = '    ^---!---------';
 
     const action$ = hot(input, {
       a: {
@@ -173,6 +179,9 @@ it('switch to existed workspace and pipeline correctly', () => {
           pipelineName: switchData.pipelineName,
         },
       },
+      c: {
+        type: actions.updateNotifications.TRIGGER,
+      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -189,9 +198,9 @@ it('multiple actions will only used the latest action', () => {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a--b-|        ';
-    const expected = '-----------(ab|)';
-    const subs = '    ^------!--------';
+    const input = '   ^-a--b-|         ';
+    const expected = '-----------(abc|)';
+    const subs = '    ^------!---------';
 
     const action$ = hot(input, {
       a: {
@@ -228,6 +237,9 @@ it('multiple actions will only used the latest action', () => {
           name: 'workspace2',
           pipelineName: switchData.pipelineName,
         },
+      },
+      c: {
+        type: actions.updateNotifications.TRIGGER,
       },
     });
 

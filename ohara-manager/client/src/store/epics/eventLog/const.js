@@ -14,19 +14,5 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
-import { createSelector } from 'reselect';
-
-const getEntities = state => state?.entities?.eventLogs;
-
-export const makeGetEventLogs = () =>
-  createSelector([getEntities], entities => entities);
-
-export const makeGetNotifications = () =>
-  createSelector([getEntities], entities => _.get(entities, 'notifications'));
-
-export const makeGetSettings = () =>
-  createSelector([getEntities], entities => _.get(entities, 'settings'));
-
-export const isEventLogFetching = state =>
-  !!_.get(state, ['ui', 'eventLog', 'isFetching']);
+export const errorKey = 'event_log_notification_error';
+export const infoKey = 'event_log_notification_info';

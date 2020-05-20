@@ -18,6 +18,7 @@ import { TestScheduler } from 'rxjs/testing';
 import { StateObservable } from 'redux-observable';
 
 import updateNotificationsEpic from '../../eventLog/updateNotificationsEpic';
+import { infoKey, errorKey } from '../../eventLog/const';
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
 
@@ -51,6 +52,8 @@ it('update notification should be executed correctly', () => {
   };
 
   makeTestScheduler().run(helpers => {
+    localStorage.setItem(infoKey, 10);
+    localStorage.setItem(errorKey, 6);
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab--|';
@@ -83,9 +86,9 @@ it('update notification should be executed correctly', () => {
     infoValues.info = stateValues.entities.eventLogs.settings.data.limit;
 
     const errValues = Object.assign({}, infoValues);
-    // "error" count was small than "limit"
-    // will be incremented
+    // "error" count was small than "limit" will be incremented
     errValues.error++;
+
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.updateNotifications.SUCCESS,
@@ -94,6 +97,69 @@ it('update notification should be executed correctly', () => {
       b: {
         type: actions.updateNotifications.SUCCESS,
         payload: errValues,
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+  });
+});
+
+it('empty payload for update notification should be executed correctly', () => {
+  const stateValues = {
+    entities: {
+      eventLogs: {
+        notifications: {
+          data: {
+            info: 10,
+            error: 6,
+          },
+        },
+        settings: {
+          data: {
+            limit: 10,
+            unlimited: false,
+          },
+        },
+      },
+    },
+  };
+
+  makeTestScheduler().run(helpers => {
+    localStorage.setItem(infoKey, 10);
+    localStorage.setItem(errorKey, 6);
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-ab--|';
+    const expected = '--ab--|';
+    const subs = '    ^-----!';
+
+    const state$ = new StateObservable(hot('v', { v: stateValues }));
+    const action$ = hot(input, {
+      a: {
+        type: actions.createEventLog.SUCCESS,
+      },
+      b: {
+        type: actions.updateNotifications.TRIGGER,
+        payload: {},
+      },
+    });
+    const output$ = updateNotificationsEpic(action$, state$);
+
+    const infoValues = Object.assign(
+      {},
+      stateValues.entities.eventLogs.notifications.data,
+    );
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.updateNotifications.SUCCESS,
+        payload: infoValues,
+      },
+      b: {
+        type: actions.updateNotifications.SUCCESS,
+        payload: infoValues,
       },
     });
 

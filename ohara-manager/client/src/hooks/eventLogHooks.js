@@ -57,6 +57,14 @@ export const useClearEventNotificationsAction = () => {
 };
 
 // data selector
+export const useIsEventLogFetching = () => {
+  const selector = useCallback(
+    state => selectors.isEventLogFetching(state),
+    [],
+  );
+  return useSelector(selector);
+};
+
 export const useEventLogs = () => {
   const getEventLogs = useMemo(selectors.makeGetEventLogs, []);
   return useSelector(useCallback(state => getEventLogs(state), [getEventLogs]));

@@ -15,14 +15,23 @@
  */
 
 import { ofType } from 'redux-observable';
-import { of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { of, from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
+import { infoKey, errorKey } from './const';
 
 export default action$ =>
   action$.pipe(
     ofType(actions.clearNotifications.TRIGGER),
-    map(() => actions.clearNotifications.success()),
+    switchMap(() => {
+      localStorage.removeItem(infoKey);
+      localStorage.removeItem(errorKey);
+      return from([
+        actions.clearNotifications.success(),
+        // we need to re-fetch the notification for AppBar
+        actions.updateNotifications.trigger(),
+      ]);
+    }),
     catchError(res => of(actions.clearNotifications.failure(res))),
   );

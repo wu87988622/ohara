@@ -28,9 +28,9 @@ it('clear notifications should be executed correctly', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a---|';
-    const expected = '--a---|';
-    const subs = '    ^-----!';
+    const input = '   ^-a------|';
+    const expected = '--(ab)---|';
+    const subs = '    ^--------!';
 
     const action$ = hot(input, {
       a: {
@@ -42,6 +42,9 @@ it('clear notifications should be executed correctly', () => {
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.clearNotifications.SUCCESS,
+      },
+      b: {
+        type: actions.updateNotifications.TRIGGER,
       },
     });
 

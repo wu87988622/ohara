@@ -14,34 +14,42 @@
  * limitations under the License.
  */
 
-import { min } from 'lodash';
+import { min, isEmpty } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of } from 'rxjs';
 import { map, catchError, concatMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
+import { infoKey, errorKey } from './const';
 
-const increaseNotification$ = (type, state$) => {
-  const { error, info } = state$.value.entities.eventLogs.notifications.data;
+const increaseNotification$ = (entity, state$) => {
+  const info = parseInt(localStorage.getItem(infoKey)) || 0;
+  const error = parseInt(localStorage.getItem(errorKey)) || 0;
   const { limit, unlimited } = state$.value.entities.eventLogs.settings.data;
 
-  const nextCount = type === LOG_LEVEL.info ? info + 1 : error + 1;
+  // update the state by local storage only
+  if (isEmpty(entity)) return of({ error, info });
+
+  const nextCount = entity.type === LOG_LEVEL.info ? info + 1 : error + 1;
   const countToUpdate = unlimited ? nextCount : min([nextCount, limit]);
-  const ensuredData =
-    type === LOG_LEVEL.info
-      ? { error, info: countToUpdate }
-      : { error: countToUpdate, info };
-  return of(ensuredData);
+  if (entity.type === LOG_LEVEL.info) {
+    localStorage.setItem(infoKey, countToUpdate);
+    return of({ error, info: countToUpdate });
+  } else {
+    localStorage.setItem(errorKey, countToUpdate);
+    return of({ error: countToUpdate, info });
+  }
 };
 
 export default (action$, state$) =>
   action$.pipe(
     // we listen the create event epic
-    ofType(actions.createEventLog.SUCCESS),
+    ofType(actions.createEventLog.SUCCESS, actions.updateNotifications.TRIGGER),
+    map(action => action.payload),
     concatMap(entity =>
-      increaseNotification$(entity.payload.type, state$).pipe(
-        map(entity => actions.updateNotifications.success(entity)),
+      increaseNotification$(entity, state$).pipe(
+        map(data => actions.updateNotifications.success(data)),
         catchError(res => of(actions.updateNotifications.failure(res))),
       ),
     ),

@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-import { reject, includes } from 'lodash';
 import * as actions from 'store/actions';
-import { ENTITY_TYPE } from 'store/schema';
-import { entity } from './index';
 
 const initialState = {
-  data: [],
-  settings: {
-    data: {
-      limit: 1000,
-      unlimited: false,
-    },
-  },
-  notifications: {
-    data: {
-      info: 0,
-      error: 0,
-    },
-  },
+  isFetching: false,
+  lastUpdated: null,
+  error: null,
 };
 
 export default function reducer(state = initialState, action) {
@@ -40,55 +27,50 @@ export default function reducer(state = initialState, action) {
     case actions.fetchEventLogs.TRIGGER:
       return {
         ...state,
-        data: [],
+        isFetching: true,
       };
     case actions.fetchEventLogs.SUCCESS:
       return {
         ...state,
-        data: action.payload || [],
+        isFetching: false,
+        lastUpdated: new Date(),
       };
     case actions.createEventLog.SUCCESS:
       return {
         ...state,
-        data: [...state.data, action.payload],
+        isFetching: false,
+        lastUpdated: new Date(),
       };
     case actions.deleteEventLogs.SUCCESS:
       return {
         ...state,
-        data: reject(state.data, log => {
-          return includes(action.payload, log.key);
-        }),
+        isFetching: false,
+        lastUpdated: new Date(),
       };
     case actions.clearEventLogs.SUCCESS:
       return {
         ...state,
-        data: [],
+        isFetching: false,
+        lastUpdated: new Date(),
       };
     case actions.updateSettings.SUCCESS:
       return {
         ...state,
         settings: {
           ...state.settings,
-          data: { ...state.settings.data, ...action.payload },
+          isFetching: false,
+          lastUpdated: new Date(),
         },
       };
-    case actions.updateNotifications.SUCCESS:
+    case actions.fetchEventLogs.FAILURE:
+    case actions.createEventLog.FAILURE:
+    case actions.clearEventLogs.FAILURE:
       return {
         ...state,
-        notifications: {
-          ...state.notifications,
-          data: { ...state.notifications.data, ...action.payload },
-        },
-      };
-    case actions.clearNotifications.SUCCESS:
-      return {
-        ...state,
-        notifications: {
-          ...state.notifications,
-          data: { ...initialState.notifications.data },
-        },
+        isFetching: false,
+        error: action.payload,
       };
     default:
-      return entity(ENTITY_TYPE.eventLogs)(state, action);
+      return state;
   }
 }

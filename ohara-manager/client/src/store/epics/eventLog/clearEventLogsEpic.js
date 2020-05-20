@@ -15,8 +15,8 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, of, asapScheduler } from 'rxjs';
-import { concatMap, switchMap, catchError } from 'rxjs/operators';
+import { from, of, defer } from 'rxjs';
+import { switchMap, catchError } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
@@ -26,22 +26,19 @@ localForage.config({
   storeName: 'event_logs',
 });
 
-const clearLocalForge$ = () => from(localForage.clear());
+const clearLocalForge$ = () => defer(() => localForage.clear());
 
 export default action$ =>
   action$.pipe(
     ofType(actions.clearEventLogs.TRIGGER),
     switchMap(() =>
       clearLocalForge$().pipe(
-        concatMap(() =>
-          from(
-            [
-              actions.clearEventLogs.success(),
-              // re-fetch the latest event logs again
-              actions.fetchEventLogs.trigger(),
-            ],
-            asapScheduler,
-          ),
+        switchMap(() =>
+          from([
+            actions.clearEventLogs.success(),
+            // re-fetch the latest event logs again
+            actions.fetchEventLogs.trigger(),
+          ]),
         ),
         catchError(res => of(actions.clearEventLogs.failure(res))),
       ),

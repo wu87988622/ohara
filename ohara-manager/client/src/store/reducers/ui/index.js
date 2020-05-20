@@ -21,6 +21,7 @@ import connector from './connector';
 import createWorkspace from './createWorkspace';
 import deleteWorkspace from './deleteWorkspace';
 import devTool from './devTool';
+import eventLog from './eventLog';
 import file from './file';
 import intro from './intro';
 import node from './node';
@@ -41,6 +42,7 @@ export default combineReducers({
   createWorkspace,
   deleteWorkspace,
   devTool,
+  eventLog,
   file,
   intro,
   node,

@@ -27,7 +27,7 @@ import * as hooks from 'hooks';
 const EventLog = () => {
   // used to keep filtered log
   const [logs, setLogs] = useState([]);
-  const { isFetching } = hooks.useEventLogs();
+  const isFetching = hooks.useIsEventLogFetching();
   const { data: settings } = hooks.useEventSettings();
   const { data: notifications } = hooks.useEventNotifications();
 

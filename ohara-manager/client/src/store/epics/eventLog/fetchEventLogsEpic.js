@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import _ from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, defer, zip } from 'rxjs';
-import { switchMap, map, catchError, mergeMap } from 'rxjs/operators';
+import {
+  switchMap,
+  map,
+  catchError,
+  mergeMap,
+  defaultIfEmpty,
+} from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
@@ -30,15 +36,15 @@ localForage.config({
 const getLogFromLocalForge$ = () =>
   defer(() => localForage.keys()).pipe(
     mergeMap(keys =>
-      zip(...keys.map(key => defer(() => localForage.getItem(key)))),
+      zip(..._.map(keys, key => defer(() => localForage.getItem(key)))),
     ),
     map(values =>
       values.map(value => ({
-        key: get(value, 'key'),
-        type: get(value, 'type'),
-        title: get(value, 'title'),
-        createAt: get(value, 'createAt'),
-        payload: get(value, 'payload'),
+        key: _.get(value, 'key'),
+        type: _.get(value, 'type'),
+        title: _.get(value, 'title'),
+        createAt: _.get(value, 'createAt'),
+        payload: _.get(value, 'payload'),
       })),
     ),
   );
@@ -48,6 +54,7 @@ export default action$ =>
     ofType(actions.fetchEventLogs.TRIGGER),
     switchMap(() =>
       getLogFromLocalForge$().pipe(
+        defaultIfEmpty(),
         map(data => actions.fetchEventLogs.success(data)),
         catchError(res => of(actions.fetchEventLogs.failure(res))),
       ),
