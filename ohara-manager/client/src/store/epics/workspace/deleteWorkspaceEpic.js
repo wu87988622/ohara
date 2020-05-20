@@ -28,6 +28,7 @@ import {
   takeUntil,
   takeWhile,
   concatMap,
+  mergeMap,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -44,6 +45,7 @@ import { deleteBroker$ } from '../broker/deleteBrokerEpic';
 import { deleteZookeeper$ } from '../zookeeper/deleteZookeeperEpic';
 import { stopTopic$ } from '../topic/stopTopicEpic';
 import { deleteTopic$ } from '../topic/deleteTopicEpic';
+import { deleteFile$ } from '../file/deleteFileEpic';
 
 const deleteWorkspace$ = params => {
   const workspaceId = getId(params);
@@ -88,13 +90,13 @@ export default (action$, state$) =>
         zookeeperKey,
         brokerKey,
         workerKey,
+        files,
       } = action.payload.values;
       const options = action.payload.options;
 
       const isServiceRunning = isRunning(state$);
       const isServiceOrphan = isOrphanObject(state$);
       const isServiceNonExisted = isNonExistedObject(state$);
-
       return of(
         stopWorker$(workerKey).pipe(
           takeWhile(() => isServiceRunning(workerKey, schema.worker)),
@@ -157,6 +159,11 @@ export default (action$, state$) =>
 
         of(
           deleteWorkspace$(workspaceKey),
+          of(...files).pipe(
+            mergeMap(file =>
+              deleteFile$({ name: file.name, group: file.group }),
+            ),
+          ),
           of(
             actions.createEventLog.trigger({
               title: `Successfully Delete workspace ${workspaceKey.name}.`,
