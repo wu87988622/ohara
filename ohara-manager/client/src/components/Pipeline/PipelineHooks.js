@@ -43,14 +43,12 @@ export const usePipelineState = () => {
           ...state,
           isToolboxOpen: true,
         };
-
       case 'closeToolbox':
         return {
           ...state,
           isToolboxOpen: false,
           toolboxExpanded: initialState.toolboxExpanded,
         };
-
       case 'setToolbox':
         return {
           ...state,
@@ -59,7 +57,6 @@ export const usePipelineState = () => {
             [payload]: !state.toolboxExpanded[payload],
           },
         };
-
       case 'setMultiplePanels':
         return {
           ...state,
@@ -68,19 +65,18 @@ export const usePipelineState = () => {
             ...payload,
           },
         };
-
-      case 'setToolboxKey':
-        return {
-          ...state,
-          toolboxKey: state.toolboxKey + 1,
-        };
-
-      case 'resetToolbox':
+      case 'resetToolboxExpanded':
         return {
           ...state,
           toolboxExpanded: initialState.toolboxExpanded,
         };
-
+      case 'resetToolbox':
+        return {
+          ...state,
+          toolboxExpanded: initialState.toolboxExpanded,
+          isToolboxOpen: initialState.isToolboxOpen,
+          toolboxKey: state.toolboxKey + 1,
+        };
       case 'toggleMetricsButton':
         setIsMetricsOn(!state.isMetricsOn);
         return {

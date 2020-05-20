@@ -137,9 +137,8 @@ const Pipeline = React.forwardRef((props, ref) => {
     // Allow the Paper to reload again
     isInitialized.current = false;
 
-    // re-renders Toolbox
+    // reset Toolbox since pipeline was changed
     pipelineDispatch({ type: 'resetToolbox' });
-    pipelineDispatch({ type: 'setToolboxKey' });
   }, [
     currentPipeline,
     currentWorkspace,
@@ -500,13 +499,6 @@ const Pipeline = React.forwardRef((props, ref) => {
         fromStreams: topicFromStream,
         topic: cellData,
       };
-
-      if (cellData.isShared) {
-        // If a shared topic is removed from the Paper, we should
-        // re-render the Toolbox, so the topic can be re-added
-        // into the Paper again
-        pipelineDispatch({ type: 'setToolboxKey' });
-      }
     }
 
     setIsOpen(true);
@@ -544,7 +536,7 @@ const Pipeline = React.forwardRef((props, ref) => {
 
                     // Toggle the panel if it's already open
                     if (!activePanel) {
-                      pipelineDispatch({ type: 'resetToolbox' });
+                      pipelineDispatch({ type: 'resetToolboxExpanded' });
                     }
 
                     pipelineDispatch({
