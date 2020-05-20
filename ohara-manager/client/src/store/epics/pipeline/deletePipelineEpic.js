@@ -31,10 +31,12 @@ import {
 import * as pipelineApi from 'api/pipelineApi';
 import * as streamApi from 'api/streamApi';
 import * as connectorApi from 'api/connectorApi';
+import * as shabondiApi from 'api/shabondiApi';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { KIND, CELL_STATUS, LOG_LEVEL } from 'const';
+import { isShabondi } from 'components/Pipeline/PipelineUtils';
 
 const deleteStream$ = (params, paperApi) => {
   const { id, name, group } = params;
@@ -67,6 +69,22 @@ const deleteConnector$ = (params, paperApi) => {
 const deleteAllConnectors$ = (connectors, paperApi) => {
   return of(...connectors).pipe(
     mergeMap(connector => deleteConnector$(connector, paperApi)),
+  );
+};
+
+const deleteShabondi$ = (params, paperApi) => {
+  const { id, name, group } = params;
+  return defer(() => shabondiApi.remove({ name, group })).pipe(
+    map(() => {
+      paperApi.removeElement(id, { skipGraphEvents: true });
+      return actions.deleteShabondi.success(getId(name, group));
+    }),
+  );
+};
+
+const deleteAllShabondis$ = (shabondis, paperApi) => {
+  return of(...shabondis).pipe(
+    mergeMap(shabondi => deleteShabondi$(shabondi, paperApi)),
   );
 };
 
@@ -161,15 +179,18 @@ export default action$ =>
       const { name, group, cells } = params;
       const { paperApi } = options;
       const streams = cells.filter(cell => cell.kind === KIND.stream);
-      const connectors = cells.filter(
-        cell => cell.kind === KIND.source || cell.kind === KIND.sink,
-      );
+      const connectors = cells
+        .filter(cell => !isShabondi(cell.className))
+        .filter(cell => cell.kind === KIND.source || cell.kind === KIND.sink);
+
+      const shabondis = cells.filter(cell => isShabondi(cell.className));
       const topics = cells.filter(
         cell => cell.kind === KIND.topic && !cell.isShared,
       );
 
       return of(
         deleteAllConnectors$(connectors, paperApi),
+        deleteAllShabondis$(shabondis, paperApi),
         deleteAllStreams$(streams, paperApi),
         stopAndDeleteAllTopics$(topics, paperApi),
         deletePipeline$({ group, name }),

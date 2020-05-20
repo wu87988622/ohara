@@ -83,13 +83,13 @@ it('remove sink link of shabondi should be worked correctly', () => {
   });
 });
 
-it('remove shabondi sink link multiple times should got latest result', () => {
+it('should handle multiple actions', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-b 60ms c 10s        ';
-    const expected = '--a-b 60ms d 39ms 60ms w';
-    const subs = '    ^-----------------------';
+    const input = '   ^-a-b 60ms c 10s            ';
+    const expected = '--a-b 60ms c 36ms d-e 60ms f';
+    const subs = '    ^---------------------------';
 
     const action$ = hot(input, {
       a: {
@@ -123,18 +123,37 @@ it('remove shabondi sink link multiple times should got latest result', () => {
       b: {
         type: actions.updateShabondiLink.REQUEST,
       },
-      d: {
+      c: {
         type: actions.updateShabondiLink.REQUEST,
       },
-      w: {
+      d: {
         type: actions.updateShabondiLink.SUCCESS,
         payload: {
           entities: {
             shabondis: {
-              [shabondiId]: {
-                ...shabondiEntity,
-                clientPort: 1234,
-              },
+              [shabondiId]: shabondiEntity,
+            },
+          },
+          result: shabondiId,
+        },
+      },
+      e: {
+        type: actions.updateShabondiLink.SUCCESS,
+        payload: {
+          entities: {
+            shabondis: {
+              [shabondiId]: { ...shabondiEntity, nodeNames: ['n1', 'n2'] },
+            },
+          },
+          result: shabondiId,
+        },
+      },
+      f: {
+        type: actions.updateShabondiLink.SUCCESS,
+        payload: {
+          entities: {
+            shabondis: {
+              [shabondiId]: { ...shabondiEntity, clientPort: 1234 },
             },
           },
           result: shabondiId,

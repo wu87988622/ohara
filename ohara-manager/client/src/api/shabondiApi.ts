@@ -23,11 +23,6 @@ import {
   ClusterResponseList,
 } from './apiInterface/clusterInterface';
 
-export const SHABONDI_CLASS = {
-  source: 'oharastream.ohara.shabondi.ShabondiSource',
-  sink: 'oharastream.ohara.shabondi.ShabondiSink',
-};
-
 const shabondiApi = new API(RESOURCE.SHABONDI);
 
 export const create = (params: ServiceBody) => {

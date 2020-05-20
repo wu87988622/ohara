@@ -21,6 +21,7 @@ export enum SOURCES {
   ftp = 'oharastream.ohara.connector.ftp.FtpSource',
   smb = 'oharastream.ohara.connector.smb.SmbSource',
   perf = 'oharastream.ohara.connector.perf.PerfSource',
+  shabondi = 'oharastream.ohara.shabondi.ShabondiSource',
 }
 
 export enum SINKS {
@@ -28,6 +29,7 @@ export enum SINKS {
   ftp = 'oharastream.ohara.connector.ftp.FtpSink',
   hdfs = 'oharastream.ohara.connector.hdfs.sink.HDFSSink',
   smb = 'oharastream.ohara.connector.smb.SmbSink',
+  shabondi = 'oharastream.ohara.shabondi.ShabondiSink',
 }
 
 export enum State {

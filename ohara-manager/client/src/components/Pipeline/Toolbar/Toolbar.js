@@ -118,11 +118,7 @@ const Toolbar = props => {
       )
       .sort((a, b) => a.kind.localeCompare(b.kind))
       .map(cell => ({
-        id: cell.id,
-        name: cell.name,
-        kind: cell.kind,
-        status: cell.status,
-        isShared: cell.isShared,
+        ...cell,
         group: cell.kind === KIND.topic ? topicGroup : streamAndConnectorGroup,
       }));
 

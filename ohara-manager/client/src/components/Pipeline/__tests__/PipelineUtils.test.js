@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-import { PACKAGE_ROOT, KIND } from 'const';
+import { isShabondi } from '../PipelineUtils';
+import { SOURCES, SINKS } from 'api/apiInterface/connectorInterface';
 
-export const getPipelineOnlyTopicDisplayNames = topicCells => {
-  const topicIndex = topicCells
-    .filter(topicCell => !topicCell.isShared)
-    .map(topicCell => topicCell.displayName.replace('T', ''))
-    .sort((a, b) => a - b);
+describe('isShabondi', () => {
+  it('should return false when not matching', () => {
+    expect(isShabondi('abc')).toBe(false);
+    expect(isShabondi(SOURCES.jdbc)).toBe(false);
+    expect(isShabondi(SINKS.ftp)).toBe(false);
+  });
 
-  if (topicIndex.length === 0) return 'T1';
-  return `T${Number(topicIndex.pop()) + 1}`;
-};
-
-export const isShabondi = className =>
-  className &&
-  className
-    .replace(PACKAGE_ROOT, '')
-    .split('.')
-    .slice(1)
-    .shift() === KIND.shabondi;
+  it('should return true when className is matched', () => {
+    expect(isShabondi(SOURCES.shabondi)).toBe(true);
+    expect(isShabondi(SINKS.shabondi)).toBe(true);
+  });
+});

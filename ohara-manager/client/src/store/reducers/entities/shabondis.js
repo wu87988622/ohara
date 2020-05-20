@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assign, omit } from 'lodash';
+import { omit } from 'lodash';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
 import { entity } from './index';
@@ -22,13 +22,7 @@ import { entity } from './index';
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteShabondi.SUCCESS:
-      return omit(state, action.payload?.shabondiId);
-    case actions.updateShabondi.SUCCESS:
-      return assign(
-        {},
-        state,
-        action.payload.entities?.[ENTITY_TYPE.shabondis],
-      );
+      return omit(state, action.payload);
     default:
       return entity(ENTITY_TYPE.shabondis)(state, action);
   }

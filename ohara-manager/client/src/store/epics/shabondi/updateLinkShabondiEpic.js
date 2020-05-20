@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
@@ -28,7 +28,7 @@ export default action$ => {
   return action$.pipe(
     ofType(actions.updateShabondiLink.TRIGGER),
     map(action => action.payload),
-    switchMap(({ params, options }) =>
+    mergeMap(({ params, options }) =>
       from(shabondiApi.update(params)).pipe(
         map(res => normalize(res.data, schema.shabondi)),
         map(normalizedData =>

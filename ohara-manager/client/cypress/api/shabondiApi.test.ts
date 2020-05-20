@@ -28,6 +28,7 @@ import {
   assertSettingsByDefinitions,
 } from '../utils';
 import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
+import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 
 const generateShabondi = async () => {
   const { node, broker } = await createServices({
@@ -52,7 +53,7 @@ const generateShabondi = async () => {
   const shabondi = {
     name: shabondiName,
     group: generate.serviceName({ prefix: 'group' }),
-    shabondi__class: shabondiApi.SHABONDI_CLASS.source,
+    shabondi__class: SOURCES.shabondi,
     shabondi__client__port: 1234,
     nodeNames: [node.hostname],
     brokerClusterKey: {

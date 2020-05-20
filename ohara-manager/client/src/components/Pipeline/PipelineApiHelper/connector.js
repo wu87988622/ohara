@@ -16,15 +16,8 @@
 
 import * as hooks from 'hooks';
 import { port } from 'utils/generate';
-import { PACKAGE_ROOT, KIND } from 'const';
-
-const isShabondiType = className =>
-  className &&
-  className
-    .replace(PACKAGE_ROOT, '')
-    .split('.')
-    .slice(1)
-    .shift() === KIND.shabondi;
+import { KIND } from 'const';
+import { isShabondi } from '../PipelineUtils';
 
 const connector = () => {
   const createConnector = hooks.useCreateConnectorAction();
@@ -54,7 +47,7 @@ const connector = () => {
     const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? createShabondi(
           {
             ...params,
@@ -75,7 +68,7 @@ const connector = () => {
   const update = (cell, topics, values, connectors, paperApi) => {
     const params = { name: cell.name, ...values };
     const options = { cell, topics, connectors, paperApi };
-    isShabondiType(cell.className)
+    isShabondi(cell.className)
       ? updateShabondi(params, options)
       : updateConnector(params, options);
   };
@@ -84,7 +77,7 @@ const connector = () => {
     const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? startShabondi(params, options)
       : startConnector(params, options);
   };
@@ -93,7 +86,7 @@ const connector = () => {
     const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? stopShabondi(params, options)
       : stopConnector(params, options);
   };
@@ -102,7 +95,7 @@ const connector = () => {
     const { id, name, className } = values;
     const params = { id, name };
     const options = { paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? deleteShabondi(params, options)
       : deleteConnector(params, options);
   };
@@ -114,7 +107,7 @@ const connector = () => {
       name: connector.name,
     };
     const options = { link, paperApi };
-    if (isShabondiType(connector.className)) {
+    if (isShabondi(connector.className)) {
       if (connector.kind === KIND.sink) {
         updateShabondiLink(
           { ...params, shabondi__sink__fromTopics: [topicKey] },
@@ -135,7 +128,7 @@ const connector = () => {
     const { name, id, className } = values;
     const params = { name, id };
     const options = { topic, paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? removeShabondiSourceLink(
           { ...params, shabondi__source__toTopics: [] },
           options,
@@ -147,7 +140,7 @@ const connector = () => {
     const { name, id, className } = values;
     const params = { name, id };
     const options = { topic, paperApi };
-    isShabondiType(className)
+    isShabondi(className)
       ? removeShabondiSinkLink(
           { ...params, shabondi__sink__fromTopics: [] },
           options,

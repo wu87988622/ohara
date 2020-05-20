@@ -25,11 +25,13 @@ import { entity as pipelineEntity } from 'api/__mocks__/pipelineApi';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { entity as streamEntity } from 'api/__mocks__/streamApi';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
+import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 
 jest.mock('api/pipelineApi');
 jest.mock('api/connectorApi');
 jest.mock('api/streamApi');
 jest.mock('api/topicApi');
+jest.mock('api/shabondiApi');
 
 const mockedPaperApi = jest.fn(() => {
   return {
@@ -44,12 +46,21 @@ const cells = [
     kind: KIND.stream,
     name: streamEntity.name,
     group: streamEntity.group,
+    className: streamEntity['stream.class'],
     status: CELL_STATUS.stopped,
   },
   {
     kind: KIND.source,
     name: connectorEntity.name,
     group: connectorEntity.group,
+    className: connectorEntity['connector.class'],
+    status: CELL_STATUS.stopped,
+  },
+  {
+    kind: KIND.source,
+    name: shabondiEntity.name,
+    group: shabondiEntity.group,
+    className: shabondiEntity.shabondi__class,
     status: CELL_STATUS.stopped,
   },
   {
@@ -69,9 +80,12 @@ it('should delete a pipeline', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                                                ';
-    const expected = '-- 1s a 999ms b 9ms c 499ms d 999ms (ef) 496ms (gh)';
-    const subs = '    ^--------------------------------------------------';
+    // prettier-ignore
+    const input = '   ^-a                                                         ';
+    // prettier-ignore
+    const expected =  '-- 1s a 999ms b 999ms c 9ms d 499ms e 999ms (fg) 496ms (hi)';
+    // prettier-ignore
+    const subs = '    ^-----------------------------------------------------------';
 
     const action$ = hot(input, {
       a: {
@@ -96,12 +110,16 @@ it('should delete a pipeline', () => {
         },
       },
       b: {
+        type: actions.deleteShabondi.SUCCESS,
+        payload: getId(shabondiEntity.name, shabondiEntity.group),
+      },
+      c: {
         type: actions.deleteStream.SUCCESS,
         payload: {
           streamId: getId(streamEntity),
         },
       },
-      c: {
+      d: {
         type: actions.stopTopic.REQUEST,
         payload: {
           kind: KIND.topic,
@@ -110,29 +128,29 @@ it('should delete a pipeline', () => {
           status: CELL_STATUS.running,
         },
       },
-      d: {
+      e: {
         type: actions.stopTopic.SUCCESS,
         payload: topicEntity,
       },
-      e: {
+      f: {
         type: actions.deleteTopic.SUCCESS,
         payload: {
           topicId: getId(topicEntity),
         },
       },
-      f: {
+      g: {
         type: actions.deletePipeline.REQUEST,
         payload: {
           pipelineId: getId(pipelineEntity),
         },
       },
-      g: {
+      h: {
         type: actions.deletePipeline.SUCCESS,
         payload: {
           pipelineId: getId(pipelineEntity),
         },
       },
-      h: {
+      i: {
         type: actions.switchPipeline.TRIGGER,
       },
     });
