@@ -54,7 +54,13 @@ const stopShabondi$ = value => {
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError({ title: 'stop shabondi exceeded max retry count' }),
+              throwError({
+                data: value?.data,
+                meta: value?.meta,
+                title:
+                  `Try to stop shabondi: "${params.name}" failed after retry ${index} times. ` +
+                  `Expected state is nonexistent, Actual state: ${value.data.state}`,
+              }),
               of(value).pipe(delay(2000)),
             ),
           ),

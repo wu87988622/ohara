@@ -60,11 +60,15 @@ const fetchWorker$ = params => {
         }),
         retryWhen(errors =>
           errors.pipe(
-            concatMap((value, retry) =>
+            concatMap((value, index) =>
               iif(
-                () => retry > 10,
+                () => index > 10,
                 throwError({
-                  title: 'Fetch worker request exceeded max retry count',
+                  data: value?.data,
+                  meta: value?.meta,
+                  title:
+                    `Try to fetch connector list from worker: "${params.name}" failed after retry ${index} times. ` +
+                    `Expected classInfos is not Empty, Actual classInfos: ${value.data.classInfos}`,
                 }),
                 of(value).pipe(delay(2000)),
               ),

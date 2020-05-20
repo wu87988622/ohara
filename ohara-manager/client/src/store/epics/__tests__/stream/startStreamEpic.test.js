@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
 import { of, noop } from 'rxjs';
 
@@ -103,7 +104,7 @@ it('start stream failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(streamEntity) },
       }),
     );
   }
@@ -144,13 +145,20 @@ it('start stream failed after reach retry limit', () => {
       },
       v: {
         type: actions.startStream.FAILURE,
-        payload: { streamId, title: 'start stream exceeded max retry count' },
+        payload: {
+          streamId,
+          data: streamEntity,
+          meta: undefined,
+          title: `Try to start stream: "${streamEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
+        },
       },
       z: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           streamId,
-          title: 'start stream exceeded max retry count',
+          data: streamEntity,
+          meta: undefined,
+          title: `Try to start stream: "${streamEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

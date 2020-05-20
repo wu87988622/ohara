@@ -92,7 +92,7 @@ it('stop topic failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: { ...topicEntity, state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -130,13 +130,20 @@ it('stop topic failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopTopic.FAILURE,
-        payload: { topicId, title: 'stop topic exceeded max retry count' },
+        payload: {
+          topicId,
+          data: { ...topicEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop topic: "${topicEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
+        },
       },
       y: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           topicId,
-          title: 'stop topic exceeded max retry count',
+          data: { ...topicEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop topic: "${topicEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },

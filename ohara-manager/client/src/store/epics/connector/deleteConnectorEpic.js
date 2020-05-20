@@ -54,7 +54,9 @@ const deleteConnector$ = values => {
             iif(
               () => index > 4,
               throwError({
-                title: 'delete connector exceeded max retry count',
+                data: value?.data,
+                meta: value?.meta,
+                title: `Try to remove connector: "${params.name}" failed after retry ${index} times.`,
               }),
               of(value).pipe(delay(2000)),
             ),

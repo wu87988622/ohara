@@ -102,7 +102,7 @@ it('stop stream failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: { ...streamEntity, state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -143,13 +143,20 @@ it('stop stream failed after reach retry limit', () => {
       },
       v: {
         type: actions.stopStream.FAILURE,
-        payload: { streamId, title: 'stop stream exceeded max retry count' },
+        payload: {
+          streamId,
+          data: { ...streamEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop stream: "${streamEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
+        },
       },
       z: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           streamId,
-          title: 'stop stream exceeded max retry count',
+          data: { ...streamEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop stream: "${streamEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
@@ -92,7 +93,7 @@ it('start topic failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(topicEntity, 'state') },
       }),
     );
   }
@@ -130,13 +131,20 @@ it('start topic failed after reach retry limit', () => {
       },
       v: {
         type: actions.startTopic.FAILURE,
-        payload: { topicId, title: 'start topic exceeded max retry count' },
+        payload: {
+          topicId,
+          data: topicEntity,
+          meta: undefined,
+          title: `Try to start topic: "${topicEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
+        },
       },
       z: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           topicId,
-          title: 'start topic exceeded max retry count',
+          data: topicEntity,
+          meta: undefined,
+          title: `Try to start topic: "${topicEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

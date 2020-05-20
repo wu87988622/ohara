@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
+import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import { LOG_LEVEL } from 'const';
@@ -23,7 +25,6 @@ import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { of } from 'rxjs';
 
 jest.mock('api/workerApi');
 
@@ -90,7 +91,7 @@ it('start worker failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(workerEntity, 'state') },
       }),
     );
   }
@@ -130,14 +131,18 @@ it('start worker failed after reach retry limit', () => {
         type: actions.startWorker.FAILURE,
         payload: {
           workerId: wkId,
-          title: 'start worker exceeded max retry count',
+          data: workerEntity,
+          meta: undefined,
+          title: `Try to start worker: "${workerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           workerId: wkId,
-          title: 'start worker exceeded max retry count',
+          data: workerEntity,
+          meta: undefined,
+          title: `Try to start worker: "${workerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

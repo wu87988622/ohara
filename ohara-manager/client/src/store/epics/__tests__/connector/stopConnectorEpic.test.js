@@ -102,7 +102,7 @@ it('stop connector failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: { ...connectorEntity, state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -145,14 +145,18 @@ it('stop connector failed after reach retry limit', () => {
         type: actions.stopConnector.FAILURE,
         payload: {
           connectorId,
-          title: 'stop connector exceeded max retry count',
+          data: connectorEntity.tasksStatus,
+          meta: undefined,
+          title: `Try to stop connector: "${connectorEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           connectorId,
-          title: 'stop connector exceeded max retry count',
+          data: connectorEntity.tasksStatus,
+          meta: undefined,
+          title: `Try to stop connector: "${connectorEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },

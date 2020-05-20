@@ -605,13 +605,17 @@ it('delete node failed after reach retry limit', () => {
       v: {
         type: actions.deleteNode.FAILURE,
         payload: {
-          title: 'delete node exceeded max retry count',
+          data: [nodeEntity],
+          meta: undefined,
+          title: `Try to remove node: "${nodeEntity.hostname}" failed after retry 5 times.`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          title: 'delete node exceeded max retry count',
+          data: [nodeEntity],
+          meta: undefined,
+          title: `Try to remove node: "${nodeEntity.hostname}" failed after retry 5 times.`,
           type: LOG_LEVEL.error,
         },
       },

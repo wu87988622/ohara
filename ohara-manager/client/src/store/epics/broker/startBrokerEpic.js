@@ -52,7 +52,13 @@ export const startBroker$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError({ title: 'start broker exceeded max retry count' }),
+              throwError({
+                data: value?.data,
+                meta: value?.meta,
+                title:
+                  `Try to start broker: "${params.name}" failed after retry ${index} times. ` +
+                  `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
+              }),
               of(value).pipe(delay(2000)),
             ),
           ),

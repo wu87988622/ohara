@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
 import { of, noop } from 'rxjs';
 
@@ -103,7 +104,7 @@ it('start connector failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(connectorEntity, 'state') },
       }),
     );
   }
@@ -146,14 +147,18 @@ it('start connector failed after reach retry limit', () => {
         type: actions.startConnector.FAILURE,
         payload: {
           connectorId,
-          title: 'start connector exceeded max retry count',
+          data: connectorEntity,
+          meta: undefined,
+          title: `Try to start connector: "${connectorEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           connectorId,
-          title: 'start connector exceeded max retry count',
+          data: connectorEntity,
+          meta: undefined,
+          title: `Try to start connector: "${connectorEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

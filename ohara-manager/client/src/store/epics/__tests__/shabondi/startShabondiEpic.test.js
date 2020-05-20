@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { of, noop } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
@@ -103,7 +104,7 @@ it('start shabondi failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(shabondiEntity, 'state') },
       }),
     );
   }
@@ -146,14 +147,18 @@ it('start shabondi failed after reach retry limit', () => {
         type: actions.startShabondi.FAILURE,
         payload: {
           shabondiId,
-          title: 'start shabondi exceeded max retry count',
+          data: shabondiEntity,
+          meta: undefined,
+          title: `Try to start shabondi: "${shabondiEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           shabondiId,
-          title: 'start shabondi exceeded max retry count',
+          data: shabondiEntity,
+          meta: undefined,
+          title: `Try to start shabondi: "${shabondiEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

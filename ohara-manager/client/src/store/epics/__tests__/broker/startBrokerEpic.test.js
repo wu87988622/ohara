@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
 
@@ -93,7 +94,7 @@ it('start broker failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(brokerEntity, 'state') },
       }),
     );
   }
@@ -133,14 +134,18 @@ it('start broker failed after reach retry limit', () => {
         type: actions.startBroker.FAILURE,
         payload: {
           brokerId: bkId,
-          title: 'start broker exceeded max retry count',
+          data: brokerEntity,
+          meta: undefined,
+          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           brokerId: bkId,
-          title: 'start broker exceeded max retry count',
+          data: brokerEntity,
+          meta: undefined,
+          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

@@ -50,7 +50,13 @@ export const startTopic$ = params => {
           concatMap((value, index) =>
             iif(
               () => index > 10,
-              throwError({ title: 'start topic exceeded max retry count' }),
+              throwError({
+                data: value?.data,
+                meta: value?.meta,
+                title:
+                  `Try to start topic: "${params.name}" failed after retry ${index} times. ` +
+                  `Expected state: RUNNING, Actual state: ${value.data.state}`,
+              }),
               of(value).pipe(delay(2000)),
             ),
           ),

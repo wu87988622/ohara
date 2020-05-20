@@ -114,7 +114,11 @@ const deleteNode$ = hostname =>
           concatMap((value, index) =>
             iif(
               () => index > 4,
-              throwError({ title: 'delete node exceeded max retry count' }),
+              throwError({
+                data: value?.data,
+                meta: value?.meta,
+                title: `Try to remove node: "${hostname}" failed after retry ${index} times.`,
+              }),
               of(value).pipe(delay(2000)),
             ),
           ),

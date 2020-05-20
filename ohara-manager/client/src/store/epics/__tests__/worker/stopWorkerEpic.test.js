@@ -90,7 +90,7 @@ it('stop worker failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -130,14 +130,18 @@ it('stop worker failed after reach retry limit', () => {
         type: actions.stopWorker.FAILURE,
         payload: {
           workerId: wkId,
-          title: 'stop worker exceeded max retry count',
+          data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop worker: "${workerEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           workerId: wkId,
-          title: 'stop worker exceeded max retry count',
+          data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop worker: "${workerEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },

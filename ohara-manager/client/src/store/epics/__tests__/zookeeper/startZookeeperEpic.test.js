@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
@@ -93,7 +94,7 @@ it('start zookeeper failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: {},
+        data: { ...omit(zookeeperEntity, 'state') },
       }),
     );
   }
@@ -133,14 +134,18 @@ it('start zookeeper failed after reach retry limit', () => {
         type: actions.startZookeeper.FAILURE,
         payload: {
           zookeeperId: zkId,
-          title: 'start zookeeper exceeded max retry count',
+          data: zookeeperEntity,
+          meta: undefined,
+          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           zookeeperId: zkId,
-          title: 'start zookeeper exceeded max retry count',
+          data: zookeeperEntity,
+          meta: undefined,
+          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

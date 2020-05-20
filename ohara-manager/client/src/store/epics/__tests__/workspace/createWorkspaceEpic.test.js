@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { StateObservable } from 'redux-observable';
@@ -274,7 +275,7 @@ it('create workspace should be failure if one of the services start failed', () 
     of({
       status: 200,
       title: 'retry mock get data',
-      data: {},
+      data: { ...omit(brokerEntity, 'state') },
     }),
   );
 
@@ -421,13 +422,17 @@ it('create workspace should be failure if one of the services start failed', () 
       x: {
         type: actions.createWorkspace.FAILURE,
         payload: {
-          title: 'start broker exceeded max retry count',
+          data: brokerEntity,
+          meta: undefined,
+          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       y: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          title: 'start broker exceeded max retry count',
+          data: brokerEntity,
+          meta: undefined,
+          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },

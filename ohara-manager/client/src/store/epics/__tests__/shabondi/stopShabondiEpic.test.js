@@ -102,7 +102,7 @@ it('stop shabondi failed after reach retry limit', () => {
       of({
         status: 200,
         title: 'retry mock get data',
-        data: { state: SERVICE_STATE.RUNNING },
+        data: { ...shabondiEntity, state: SERVICE_STATE.RUNNING },
       }),
     );
   }
@@ -145,14 +145,18 @@ it('stop shabondi failed after reach retry limit', () => {
         type: actions.stopShabondi.FAILURE,
         payload: {
           shabondiId,
-          title: 'stop shabondi exceeded max retry count',
+          data: { ...shabondiEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop shabondi: "${shabondiEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
         },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           shabondiId,
-          title: 'stop shabondi exceeded max retry count',
+          data: { ...shabondiEntity, state: SERVICE_STATE.RUNNING },
+          meta: undefined,
+          title: `Try to stop shabondi: "${shabondiEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },
