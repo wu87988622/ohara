@@ -26,6 +26,7 @@ import { MODE } from 'const';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
 import { NodeSelectorDialog } from 'components/Node';
+import { NODE_STATE } from 'api/apiInterface/nodeInterface';
 
 const renderFromHelper = ({ touched, error }) => {
   if (!(touched && error)) {
@@ -119,6 +120,10 @@ const NodesField = props => {
             mode,
             onRefreshIconClick: fetchNodes,
             selectedNodes,
+            disabledNodes: filter(
+              allNodes,
+              node => node.state === NODE_STATE.UNAVAILABLE,
+            ),
             showCreateIcon: mode !== MODE.K8S,
             showRefreshIcon: mode === MODE.K8S,
           },

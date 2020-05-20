@@ -70,6 +70,7 @@ const defaultOptions = {
   onRemoveIconClick: null,
   selection: false,
   selectedNodes: [],
+  disabledNodes: [],
   showAddIcon: false,
   showCreateIcon: true,
   showDeleteIcon: true,
@@ -414,6 +415,7 @@ function NodeTable(props) {
           rowStyle: node => getRowStyle(node),
           selection: options?.selection,
           selectedData: options?.selectedNodes,
+          disabledData: options?.disabledNodes,
           showTitle: options?.showTitle,
         }}
         title={title}
@@ -506,6 +508,7 @@ NodeTable.propTypes = {
     prompt: PropTypes.string,
     selection: PropTypes.bool,
     selectedNodes: PropTypes.array,
+    disabledNodes: PropTypes.array,
     showAddIcon: PropTypes.bool,
     showCreateIcon: PropTypes.bool,
     showDeleteIcon: PropTypes.bool,

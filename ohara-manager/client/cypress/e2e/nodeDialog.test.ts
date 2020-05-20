@@ -267,35 +267,18 @@ describe('NodeDialog of workspaceQuick', () => {
       .filter(':visible')
       .click();
 
-    // Step2: select nodes
+    // Since Unavailable node could not be selected
+    // We check the existence only
     cy.findByText('Click here to select nodes').click();
-    cy.findByText(hostname1)
-      .should('exist')
-      .siblings('td')
-      .find('input[type="checkbox"]')
-      .click();
+    cy.findByText(hostname1).should('exist');
     cy.findByText(hostname2).should('exist');
-    cy.findByText(hostname3)
-      .should('exist')
-      .siblings('td')
-      .find('input[type="checkbox"]')
-      .click();
+    cy.findByText(hostname3).should('exist');
 
-    // filter by non-selected hostname
+    // filter by hostname
     cy.findAllByPlaceholderText('Search')
       .filter(':visible')
       .type(hostname2);
     cy.findByText(hostname1).should('not.exist');
     cy.findByText(hostname3).should('not.exist');
-    cy.get('input[type=checkbox]:visible').should('not.be.checked');
-
-    // filter by selected hostname
-    cy.findAllByPlaceholderText('Search')
-      .filter(':visible')
-      .clear()
-      .type(hostname1);
-    cy.findByText(hostname1).should('exist');
-    cy.findByText(hostname3).should('exist');
-    cy.get('input[type=checkbox]:visible').should('be.checked');
   });
 });

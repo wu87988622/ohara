@@ -17,7 +17,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styled, { css } from 'styled-components';
-import { assign, get, isString, isFunction, reject, size, some } from 'lodash';
+import {
+  assign,
+  get,
+  isString,
+  isFunction,
+  reject,
+  size,
+  some,
+  differenceWith,
+} from 'lodash';
 import Table from 'material-table';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
@@ -40,19 +49,20 @@ const defaultProps = {
     search: true,
     selection: false,
     selectedData: [],
+    disabledData: [],
   },
 };
 
 const MuiTable = props => {
   const { columns, data, onSelectionChange, options, ...restProps } = props;
-  const { predicate, selection, selectedData, ...restOptions } = assign(
-    defaultProps.options,
-    options,
-  );
+  const {
+    predicate,
+    selection,
+    selectedData,
+    disabledData,
+    ...restOptions
+  } = assign(defaultProps.options, options);
   const [selectedRows, setSelectedRows] = useState(selectedData || []);
-
-  const dataCount = size(data);
-  const selectedCount = size(selectedRows);
 
   const finalPredicate = isFunction(predicate)
     ? predicate
@@ -63,6 +73,9 @@ const MuiTable = props => {
     const otherValue = finalPredicate(otherObject);
     return isString(value) && isString(otherValue) && value === otherValue;
   };
+
+  const dataCount = size(differenceWith(data, disabledData, isEqual));
+  const selectedCount = size(selectedRows);
 
   const handleRowSelected = (event, rowData) => {
     if (rowData) {
@@ -83,8 +96,10 @@ const MuiTable = props => {
   };
 
   const handleAllSelected = (_, checked) => {
-    setSelectedRows(checked ? data : []);
-    onSelectionChange(checked ? data : []);
+    setSelectedRows(checked ? differenceWith(data, disabledData, isEqual) : []);
+    onSelectionChange(
+      checked ? differenceWith(data, disabledData, isEqual) : [],
+    );
   };
 
   const renderSelectionColumn = () => {
@@ -97,6 +112,9 @@ const MuiTable = props => {
         <Checkbox
           checked={some(selectedRows, selectedRowData =>
             isEqual(selectedRowData, rowData),
+          )}
+          disabled={some(disabledData, disabledRow =>
+            isEqual(disabledRow, rowData),
           )}
           color="primary"
           onChange={event => handleRowSelected(event, rowData)}
@@ -149,6 +167,7 @@ MuiTable.propTypes = {
     search: PropTypes.bool,
     selection: PropTypes.bool,
     selectedData: PropTypes.array,
+    disabledData: PropTypes.array,
   }),
 };
 
