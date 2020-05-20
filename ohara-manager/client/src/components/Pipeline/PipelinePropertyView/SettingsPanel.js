@@ -30,21 +30,23 @@ import * as hooks from 'hooks';
 
 const SettingsPanel = props => {
   const { settings, setTags, setFullTagViewDialogOpen } = props;
-  const topics = hooks.useTopicsInPipeline();
   const [isSettingsExpanded, setIsSettingsExpanded] = React.useState(true);
+  const topics = hooks.useTopicsInPipeline();
 
-  const ignoreList = settings.settingDefinitions
-    .filter(def => def.internal)
-    .map(def => def.key)
-    .concat([
-      'brokerClusterKey',
-      'workerClusterKey',
-      'settings',
-      'stagingSettings',
-      'settingDefinitions',
-      'metrics',
-      'tasksStatus',
-    ]);
+  const getIgnoreDefs = settings => {
+    return settings.settingDefinitions
+      .filter(def => def.internal)
+      .map(def => def.key)
+      .concat([
+        'brokerClusterKey',
+        'workerClusterKey',
+        'settings',
+        'stagingSettings',
+        'settingDefinitions',
+        'metrics',
+        'tasksStatus',
+      ]);
+  };
 
   const renderSettings = (settings, key) => {
     const { settingDefinitions: defs } = settings;
@@ -108,11 +110,7 @@ const SettingsPanel = props => {
   };
 
   const handleFullButtonClick = (value, name) => {
-    setTags({
-      name,
-      json: value,
-    });
-
+    setTags({ name, json: value });
     setFullTagViewDialogOpen(true);
   };
 
@@ -129,7 +127,7 @@ const SettingsPanel = props => {
       </ExpansionPanelSummary>
       <ExpansionPanelDetails>
         {Object.keys(settings)
-          .filter(key => !ignoreList.includes(key))
+          .filter(key => !getIgnoreDefs(settings).includes(key))
           .filter(key => {
             // We're not displaying empty array or object
             const item = settings[key];

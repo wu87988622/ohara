@@ -38,16 +38,20 @@ export default action$ =>
           status: CELL_STATUS.pending,
         });
       }
-      return of(createTopic$(params), startTopic$(params)).pipe(
+      return of(
+        createTopic$(params),
+        startTopic$(params).pipe(
+          tap(action => {
+            if (action.type === actions.startTopic.SUCCESS && paperApi) {
+              paperApi.updateElement(params.id, {
+                status: CELL_STATUS.running,
+              });
+            }
+            if (options?.onSuccess) options.onSuccess();
+          }),
+        ),
+      ).pipe(
         concatAll(),
-        tap(() => {
-          if (paperApi) {
-            paperApi.updateElement(params.id, {
-              status: CELL_STATUS.running,
-            });
-          }
-          if (options?.onSuccess) options.onSuccess();
-        }),
         catchError(err => {
           if (paperApi) {
             paperApi.updateElement(params.id, {

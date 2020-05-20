@@ -91,15 +91,15 @@ const createConnectorCell = options => {
           <div class="menu">
             <div class="menu-inner">
               ${
-                // Sink cannot create connection form itself to others
+                // Sink connector cannot link to other connectors
                 kind !== KIND.sink
-                  ? `<Button class="link">${linkIcon}</Button>`
+                  ? `<button class="link">${linkIcon}</button>`
                   : ''
               }
-              <Button class="start">${startIcon}</Button>
-              <Button class="stop">${stopIcon}</Button>
-              <Button class="config">${configIcon}</Button>
-              <Button class="remove">${removeIcon}</Button>
+              <button class="start">${startIcon}</button>
+              <button class="stop">${stopIcon}</button>
+              <button class="config">${configIcon}</button>
+              <button class="remove">${removeIcon}</button>
             <div>
           </div>
         </div>
@@ -205,17 +205,32 @@ const createConnectorCell = options => {
     toggleMetrics(isOpen) {
       const { $box, model } = this;
       const status = model.get('status').toLowerCase();
-      // Only display metrics info when the component is not stopped
-      if (
-        isOpen &&
-        (status === CELL_STATUS.running || status === CELL_STATUS.pending)
-      ) {
+      const shouldDisplay =
+        status === CELL_STATUS.running || status === CELL_STATUS.pending;
+
+      // Only display metrics info in certain state
+      if (isOpen && shouldDisplay) {
         $box.find('.metrics').show();
         $box.find('.status').hide();
         model.set('showMetrics', true, { skipGraphEvents: true });
       } else {
         $box.find('.metrics').hide();
-        $box.find('.status').show();
+
+        // Check if users is hovering on the element and decide if we should
+        // show or hide status element. We're doing this because only an element
+        // can be displayed.
+
+        // Available elements for displaying on an element:
+        // 1. Status bar (default),
+        // 2. Menu (displayed when hovering)
+        // 3. Metrics (displayed when metrics switch is on and the element is running),
+
+        if ($box.hasClass('is-hover')) {
+          $box.find('.status').hide();
+        } else {
+          $box.find('.status').show();
+        }
+
         model.set('showMetrics', false, { skipGraphEvents: true });
       }
 

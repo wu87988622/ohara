@@ -60,7 +60,7 @@ const PipelinePropertyView = props => {
       break;
   }
 
-  if (!settings) return null;
+  if (!settings.settingDefinitions) return null;
 
   return (
     <Wrapper variant="outlined" square>

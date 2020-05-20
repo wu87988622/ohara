@@ -76,8 +76,8 @@ const createTopicCell = options => {
         <div class="display-name">${displayName}</div>
         <div class="menu">
           <div class="menu-inner">
-            <Button class="link">${linkIcon}</Button>
-            <Button class="remove">${removeIcon}</Button> 
+            <button class="link">${linkIcon}</button>
+            <button class="remove">${removeIcon}</button> 
           </div>
         </div>
       </div>`,
@@ -139,6 +139,9 @@ const createTopicCell = options => {
       if (items.length === 0) {
         return $buttons.addClass(cls);
       }
+
+      // Reset before adding new class name
+      $buttons.removeClass(cls);
 
       $buttons.each((index, button) => {
         if (items.includes(button.className)) {

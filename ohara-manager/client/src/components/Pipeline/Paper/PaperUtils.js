@@ -16,7 +16,7 @@
 
 import _ from 'lodash';
 
-import { KIND, CELL_PROPS } from 'const';
+import { KIND, CELL_PROPS, CELL_STATUS } from 'const';
 import { createLink } from './cell';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
@@ -50,6 +50,43 @@ export const getCellData = cellOrView => {
   };
 };
 
+export const showMenu = elementView => {
+  elementView.showElement('menu').hover();
+
+  if (elementView.model.get('showMetrics')) {
+    return elementView.hideElement('metrics');
+  }
+  elementView.hideElement('status');
+};
+
+export const hideMenu = elementView => {
+  elementView.unHover().hideElement('menu');
+
+  if (elementView.model.get('showMetrics')) {
+    return elementView.showElement('metrics');
+  }
+  elementView.showElement('status');
+};
+
+export const updateStatus = (cell, paperApi) => {
+  if (cell.isLink()) {
+    const link = cell;
+    const sourceId = link.source().id;
+    const targetId = link.target().id;
+
+    const source = paperApi.getCell(sourceId);
+    const target = paperApi.getCell(targetId);
+
+    if (source) {
+      paperApi.updateElement(sourceId, source);
+    }
+
+    if (target) {
+      paperApi.updateElement(targetId, target);
+    }
+  }
+};
+
 export const createConnection = params => {
   const {
     sourceLink,
@@ -67,24 +104,25 @@ export const createConnection = params => {
   const targetId = targetElement.get(CELL_PROPS.id);
   const targetType = targetElement.get(CELL_PROPS.kind);
   const targetDisplayName = targetElement.get(CELL_PROPS.displayName);
-
-  const handleError = message => {
-    showMessage(message);
-  };
+  const targetStatus = targetElement.get(CELL_PROPS.status);
 
   // Cell connection logic
   if (targetId === sourceId) {
     // A cell cannot connect to itself, not throwing a
     // message out here since the behavior is not obvious
   } else if (targetType === KIND.source) {
-    handleError(`Target ${targetDisplayName} is a source!`);
+    showMessage(`Target ${targetDisplayName} is a source!`);
   } else if (
     sourceType === targetType &&
     sourceType !== KIND.stream &&
     targetType !== KIND.stream
   ) {
-    handleError(
+    showMessage(
       `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
+    );
+  } else if (targetStatus === CELL_STATUS.pending) {
+    showMessage(
+      `The target ${targetDisplayName} is in pending state. Try to create the connection when the current action is completed`,
     );
   } else {
     const predecessors = graph.getPredecessors(targetElement);
@@ -97,7 +135,7 @@ export const createConnection = params => {
     // another cell
     if (sourceType === KIND.source && targetType === KIND.sink) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -105,7 +143,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.source && targetType === KIND.stream) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -113,7 +151,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.topic && targetType === KIND.sink) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -121,7 +159,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.topic && targetType === KIND.stream) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -129,7 +167,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.stream && targetType === KIND.sink) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -137,7 +175,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.stream && targetType === KIND.stream) {
       if (targetHasSource) {
-        return handleError(
+        return showMessage(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -183,7 +221,7 @@ export const createConnection = params => {
 
       sourceLink.target({ id: topicId });
 
-      // Restore pinter event so the link can be clicked by mouse again
+      // Restore pointer event so the link can be clicked by mouse again
       sourceLink.attr('root/style', 'pointer-events: auto');
 
       const targetLink = createLink({
@@ -206,7 +244,7 @@ export const createConnection = params => {
 
     // Link to the target cell
     sourceLink.target({ id: targetId });
-    // Restore pinter event so the link can be clicked by mouse again
+    // Restore pointer event so the link can be clicked by mouse again
     sourceLink.attr('root/style', 'pointer-events: auto');
 
     return {

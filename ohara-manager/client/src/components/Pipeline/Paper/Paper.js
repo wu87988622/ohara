@@ -152,7 +152,7 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     paper.on('blank:mouseover', () => {
-      findElementViews().forEach(hideMenu);
+      findElementViews().forEach(paperUtils.hideMenu);
     });
 
     paper.on('link:mouseenter', linkView => {
@@ -239,7 +239,7 @@ const Paper = React.forwardRef((props, ref) => {
     paper.on('element:mouseenter', elementView => {
       // Make sure all menus are hidden, this prevents a bug where two connectors
       // are hovered
-      findElementViews().forEach(hideMenu);
+      findElementViews().forEach(paperUtils.hideMenu);
 
       const hasHalfWayLink = graph
         .getLinks()
@@ -247,7 +247,7 @@ const Paper = React.forwardRef((props, ref) => {
 
       // Don't display the menu if the element is being connected
       if (!hasHalfWayLink) {
-        return showMenu(elementView);
+        return paperUtils.showMenu(elementView);
       }
 
       elementView.hover();
@@ -270,7 +270,7 @@ const Paper = React.forwardRef((props, ref) => {
         clientX < left ||
         clientY < top;
 
-      if (isOutSideOfTheElement) hideMenu(elementView);
+      if (isOutSideOfTheElement) paperUtils.hideMenu(elementView);
     });
 
     // Create a link that moves along with mouse cursor
@@ -315,7 +315,7 @@ const Paper = React.forwardRef((props, ref) => {
         onCellEventRef.current.onChange(paperApi);
       }
 
-      updateStatus(cell);
+      paperUtils.updateStatus(cell, paperApi);
       cellAddRef.current = cell;
     });
 
@@ -325,7 +325,7 @@ const Paper = React.forwardRef((props, ref) => {
       if (cell.isLink() && !cell.target().id) return;
       const { skipGraphEvents = false } = options;
 
-      updateStatus(cell);
+      paperUtils.updateStatus(cell, paperApi);
       if (!skipGraphEvents) {
         onCellEventRef.current.onChange(paperApi);
       }
@@ -338,7 +338,7 @@ const Paper = React.forwardRef((props, ref) => {
       if (_.isEqual(cellRemoveRef.current, cell)) return;
       if (cell.isLink() && !cell.target().id) return;
       const { skipGraphEvents = false } = options;
-      updateStatus(cell);
+      paperUtils.updateStatus(cell, paperApi);
 
       if (!skipGraphEvents) {
         onCellEventRef.current.onChange(paperApi);
@@ -400,7 +400,7 @@ const Paper = React.forwardRef((props, ref) => {
 
     paper.on('element:config:button:pointerclick', elementView => {
       onCellConfig(paperUtils.getCellData(elementView), paperApi);
-      hideMenu(elementView);
+      paperUtils.hideMenu(elementView);
     });
 
     paper.on('element:remove:button:pointerclick', elementView => {
@@ -412,24 +412,6 @@ const Paper = React.forwardRef((props, ref) => {
       resetLinks();
       onCellDeselect(paperApi);
     });
-
-    function showMenu(elementView) {
-      elementView.showElement('menu').hover();
-
-      if (elementView.model.get('showMetrics')) {
-        return elementView.hideElement('metrics');
-      }
-      elementView.hideElement('status');
-    }
-
-    function hideMenu(elementView) {
-      elementView.unHover().hideElement('menu');
-
-      if (elementView.model.get('showMetrics')) {
-        return elementView.showElement('metrics');
-      }
-      elementView.showElement('status');
-    }
 
     function resetElements() {
       findElementViews().forEach(elementView => {
@@ -452,25 +434,6 @@ const Paper = React.forwardRef((props, ref) => {
         // There should only be one
         const unConnectedLink = links.find(link => !link.get('target').id);
         if (unConnectedLink) unConnectedLink.remove();
-      }
-    }
-
-    function updateStatus(cell) {
-      if (cell.isLink()) {
-        const link = cell;
-        const sourceId = link.source().id;
-        const targetId = link.target().id;
-
-        const source = paperApi.getCell(sourceId);
-        const target = paperApi.getCell(targetId);
-
-        if (source) {
-          paperApi.updateElement(sourceId, source);
-        }
-
-        if (target) {
-          paperApi.updateElement(targetId, target);
-        }
       }
     }
 
@@ -595,21 +558,30 @@ const Paper = React.forwardRef((props, ref) => {
             options,
           );
 
-          // Topic shouldn't be updated
-          if (elementView.model.get('kind') === KIND.topic) {
-            return;
-          }
-
-          // Update element status
+          // Update element status, topic has a slightly different logic, so we
+          // handle it differently in each switch case
           const status = elementView.model.get('status').toLowerCase();
+          const isTopic = elementView.model.get('kind') === KIND.topic;
 
-          switch (status) {
+          switch (status.toLowerCase()) {
             case CELL_STATUS.running:
-              elementView.disableMenu(['link', 'start', 'config', 'remove']);
+              if (isTopic) {
+                // Topic starts with pending state, and after it's successfully
+                // created and started, we need to update its status again and so
+                // we need to enable its menu here
+                elementView.enableMenu();
+              } else {
+                elementView.disableMenu(['link', 'start', 'config', 'remove']);
+              }
               break;
             case CELL_STATUS.failed:
-              elementView.disableMenu(['link', 'config', 'remove']);
-              elementView.toggleMetrics(false); // Stop displaying metrics once an error occurs
+              if (isTopic) {
+                elementView.disableMenu(['link']);
+              } else {
+                elementView.disableMenu(['link', 'config', 'remove']);
+                elementView.toggleMetrics(false); // Stop displaying metrics once an error occurs
+              }
+
               break;
             case CELL_STATUS.stopped:
               elementView.enableMenu();
