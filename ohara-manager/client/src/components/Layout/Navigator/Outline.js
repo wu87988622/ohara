@@ -16,18 +16,22 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import Scrollbar from 'react-scrollbars-custom';
+import cx from 'classnames';
+
 import FlightTakeoffIcon from '@material-ui/icons/FlightTakeoff';
 import FlightLandIcon from '@material-ui/icons/FlightLand';
 import WavesIcon from '@material-ui/icons/Waves';
 import StorageIcon from '@material-ui/icons/Storage';
-import cx from 'classnames';
-import Scrollbar from 'react-scrollbars-custom';
+import ExtensionIcon from '@material-ui/icons/Extension';
+import Typography from '@material-ui/core/Typography';
 
 import * as hooks from 'hooks';
 import { KIND } from 'const';
+import { Wrapper } from './OutlineStyles';
 import { AddSharedTopicIcon } from 'components/common/Icon';
 
-const Outline = ({ pipelineApi }) => {
+const Outline = ({ pipelineApi, isExpanded }) => {
   const selectedCell = hooks.useCurrentPipelineCell();
   const currentPipeline = hooks.usePipeline();
   const elements = currentPipeline?.tags?.cells || [];
@@ -50,33 +54,41 @@ const Outline = ({ pipelineApi }) => {
   if (!pipelineApi) return null;
 
   return (
-    <Scrollbar>
-      <ul className="list">
-        {elements.map(element => {
-          const { id, name, kind, isShared, displayName } = element;
+    <Wrapper isExpanded={isExpanded}>
+      <Typography variant="h5">
+        <ExtensionIcon />
+        Outline
+      </Typography>
+      <div className="scrollbar-wrapper">
+        <Scrollbar>
+          <ul className="list">
+            {elements.map(element => {
+              const { id, name, kind, isShared, displayName } = element;
 
-          const isTopic = kind === KIND.topic;
+              const isTopic = kind === KIND.topic;
 
-          const className = cx({
-            'is-selected': selectedCell?.name === element.name,
-            'is-shared': isTopic && isShared,
-            'pipeline-only': isTopic && !isShared,
-            [kind]: kind,
-          });
+              const className = cx({
+                'is-selected': selectedCell?.name === element.name,
+                'is-shared': isTopic && isShared,
+                'pipeline-only': isTopic && !isShared,
+                [kind]: kind,
+              });
 
-          return (
-            <li
-              className={className}
-              onClick={() => pipelineApi.highlight(id)}
-              key={id}
-            >
-              {getIcon(kind, isShared)}
-              {isTopic && !isShared ? displayName : name}
-            </li>
-          );
-        })}
-      </ul>
-    </Scrollbar>
+              return (
+                <li
+                  className={className}
+                  onClick={() => pipelineApi.highlight(id)}
+                  key={id}
+                >
+                  {getIcon(kind, isShared)}
+                  {isTopic && !isShared ? displayName : name}
+                </li>
+              );
+            })}
+          </ul>
+        </Scrollbar>
+      </div>
+    </Wrapper>
   );
 };
 
@@ -84,6 +96,7 @@ Outline.propTypes = {
   pipelineApi: PropTypes.shape({
     highlight: PropTypes.func.isRequired,
   }),
+  isExpanded: PropTypes.bool.isRequired,
 };
 
 export default Outline;
