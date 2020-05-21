@@ -23,8 +23,6 @@ import { Dialog } from 'components/common/Dialog';
 import { InputField } from 'components/common/Form';
 import {
   required,
-  minNumber,
-  maxNumber,
   validServiceName,
   composeValidators,
   checkDuplicate,
@@ -38,6 +36,22 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
     size(get(broker, 'aliveNodes')),
   ]);
 
+  const validate = values => {
+    const { numberOfPartitions, numberOfReplications } = values;
+
+    const errors = {};
+    if (numberOfPartitions < minNumberOfPartitions) {
+      errors.numberOfPartitions = `Partitions must be greater than or equal to ${minNumberOfPartitions}`;
+    }
+    if (numberOfReplications < minNumberOfReplications) {
+      errors.numberOfReplications = `Replication factor must be greater than or equal to ${minNumberOfReplications}`;
+    }
+    if (numberOfReplications > maxNumberOfReplications) {
+      errors.numberOfReplications = `Replication factor should be less than or equal to ${maxNumberOfReplications} broker as there is only ${maxNumberOfReplications} available in the current workspace`;
+    }
+    return errors;
+  };
+
   return (
     <Form
       onSubmit={(values, form) => {
@@ -47,6 +61,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
         });
       }}
       initialValues={{}}
+      validate={validate}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
@@ -87,7 +102,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
                   min: `${minNumberOfPartitions}`,
                   step: '1',
                 }}
-                validate={minNumber(minNumberOfPartitions)}
+                validate={required}
               />
               <Field
                 type="number"
@@ -100,10 +115,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
                   min: `${minNumberOfReplications}`,
                   step: '1',
                 }}
-                validate={composeValidators(
-                  minNumber(minNumberOfReplications),
-                  maxNumber(maxNumberOfReplications),
-                )}
+                validate={required}
               />
             </form>
           </Dialog>
