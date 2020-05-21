@@ -532,17 +532,16 @@ const Pipeline = React.forwardRef((props, ref) => {
                     pipelineDispatch({ type: 'openToolbox' })
                   }
                   handleToolbarClick={panel => {
-                    const activePanel = pipelineState.toolboxExpanded[panel];
+                    const isExpanded = pipelineState.toolboxExpanded[panel];
+                    pipelineDispatch({ type: 'resetToolboxExpanded' });
 
                     // Toggle the panel if it's already open
-                    if (!activePanel) {
-                      pipelineDispatch({ type: 'resetToolboxExpanded' });
+                    if (!isExpanded) {
+                      pipelineDispatch({
+                        type: 'setToolbox',
+                        payload: panel,
+                      });
                     }
-
-                    pipelineDispatch({
-                      type: 'setToolbox',
-                      payload: panel,
-                    });
                   }}
                 />
               )}
