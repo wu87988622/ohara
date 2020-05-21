@@ -17,16 +17,16 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { every, filter, find, map, some, reject } from 'lodash';
 
-import { FileSelectorDialog, FileTable } from 'components/File';
+import { FileTable } from 'components/File';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
+import WorkspaceFileSelectorDialog from '../../common/WorkspaceFileSelectorDialog';
 
 function PluginTable() {
-  const files = hooks.useFiles();
+  const workspaceFiles = hooks.useFiles();
   const worker = hooks.useWorker();
   const workspace = hooks.useWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
-  const createFile = hooks.useCreateFileAction();
 
   const documentation = useMemo(
     () =>
@@ -43,20 +43,20 @@ function PluginTable() {
   const workerPlugins = useMemo(() => {
     return filter(
       map(worker?.pluginKeys, pluginKey =>
-        find(files, file => file.name === pluginKey.name),
+        find(workspaceFiles, file => file.name === pluginKey.name),
       ),
     );
-  }, [worker, files]);
+  }, [worker, workspaceFiles]);
 
   const workspacePlugins = useMemo(() => {
     return workspace?.worker?.pluginKeys
       ? filter(
           map(workspace.worker.pluginKeys, pluginKey =>
-            find(files, file => file.name === pluginKey.name),
+            find(workspaceFiles, file => file.name === pluginKey.name),
           ),
         )
       : workerPlugins;
-  }, [workspace, workerPlugins, files]);
+  }, [workspace, workerPlugins, workspaceFiles]);
 
   const updatePluginKeysToWorkspace = newPluginKeys => {
     updateWorkspace({
@@ -69,7 +69,7 @@ function PluginTable() {
 
     const newSelectedFiles = filter(
       map(newPluginKeys, pluginKey =>
-        find(files, file => file.name === pluginKey.name),
+        find(workspaceFiles, file => file.name === pluginKey.name),
       ),
     );
 
@@ -101,11 +101,6 @@ function PluginTable() {
     const newPluginKeys = map(selectedFiles, file => getKey(file));
     updatePluginKeysToWorkspace(newPluginKeys);
     setIsSelectorDialogOpen(false);
-  };
-
-  const handleUpload = event => {
-    const file = event?.target?.files?.[0];
-    if (file) createFile(file);
   };
 
   const handleUndoIconClick = fileClicked => {
@@ -147,14 +142,12 @@ function PluginTable() {
         title="Plugins"
       />
 
-      <FileSelectorDialog
+      <WorkspaceFileSelectorDialog
         isOpen={isSelectorDialogOpen}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
-        onUpload={handleUpload}
         ref={selectorDialogRef}
         tableProps={{
-          files,
           options: {
             selectedFiles: workspacePlugins,
           },

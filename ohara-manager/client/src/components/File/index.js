@@ -17,7 +17,6 @@
 import FileDeleteDialog from './FileDeleteDialog';
 import FileDownload from './FileDownload';
 import FileRemoveDialog from './FileRemoveDialog';
-import FileSelectorDialog from './FileSelectorDialog';
 import FileTable from './FileTable';
 import FileUpload from './FileUpload';
 
@@ -25,7 +24,6 @@ export {
   FileDeleteDialog,
   FileDownload,
   FileRemoveDialog,
-  FileSelectorDialog,
   FileTable,
   FileUpload,
 };

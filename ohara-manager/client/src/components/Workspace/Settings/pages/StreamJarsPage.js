@@ -17,15 +17,15 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { every, filter, find, map, some, reject } from 'lodash';
 
-import { FileSelectorDialog, FileTable } from 'components/File';
+import { FileTable } from 'components/File';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
+import WorkspaceFileSelectorDialog from '../common/WorkspaceFileSelectorDialog';
 
 function StreamJarsPage() {
-  const files = hooks.useFiles();
+  const workspaceFiles = hooks.useFiles();
   const workspace = hooks.useWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
-  const createFile = hooks.useCreateFileAction();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -33,10 +33,10 @@ function StreamJarsPage() {
   const streamJars = useMemo(() => {
     return filter(
       map(workspace?.stream?.jarKeys, jarKey =>
-        find(files, file => file.name === jarKey.name),
+        find(workspaceFiles, file => file.name === jarKey.name),
       ),
     );
-  }, [workspace, files]);
+  }, [workspace, workspaceFiles]);
 
   const updateStreamJarKeysToWorkspace = newJarKeys => {
     updateWorkspace({
@@ -48,7 +48,9 @@ function StreamJarsPage() {
     });
 
     const newSelectedFiles = filter(
-      map(newJarKeys, jarKey => find(files, file => file.name === jarKey.name)),
+      map(newJarKeys, jarKey =>
+        find(workspaceFiles, file => file.name === jarKey.name),
+      ),
     );
 
     selectorDialogRef.current.setSelectedFiles(newSelectedFiles);
@@ -79,11 +81,6 @@ function StreamJarsPage() {
     const newJarKeys = map(selectedFiles, file => getKey(file));
     updateStreamJarKeysToWorkspace(newJarKeys);
     setIsSelectorDialogOpen(false);
-  };
-
-  const handleUpload = event => {
-    const file = event?.target?.files?.[0];
-    if (file) createFile(file);
   };
 
   const handleUndoIconClick = fileClicked => {
@@ -119,16 +116,15 @@ function StreamJarsPage() {
         title="Stream jars"
       />
 
-      <FileSelectorDialog
+      <WorkspaceFileSelectorDialog
         isOpen={isSelectorDialogOpen}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
-        onUpload={handleUpload}
         ref={selectorDialogRef}
         tableProps={{
-          files,
           options: {
             selectedFiles: streamJars,
+            showDeleteIcon: true,
           },
           title: 'Files',
         }}

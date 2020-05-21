@@ -18,7 +18,7 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
-    width: 680px;
+    width: 800px;
     margin: auto;
 
     section > h2 {

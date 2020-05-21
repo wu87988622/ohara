@@ -14,85 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useCallback } from 'react';
-import { capitalize, join, includes, some, toUpper } from 'lodash';
+import React from 'react';
+import WorkspaceFileTable from '../common/WorkspaceFileTable';
 
-import { FileTable } from 'components/File';
-import * as hooks from 'hooks';
-
-const WORKER = 'worker';
-const STREAM = 'stream';
-
-function WorkspaceFilesPage() {
-  const files = hooks.useFiles();
-  const createFile = hooks.useCreateFileAction();
-  const deleteFile = hooks.useDeleteFileAction();
-
-  const worker = hooks.useWorker();
-  const workspace = hooks.useWorkspace();
-
-  const handleDelete = file => {
-    deleteFile(file?.name);
-  };
-
-  const handleUpload = event => {
-    const file = event?.target?.files?.[0];
-    if (file) createFile(file);
-  };
-
-  const isUsedByWorker = useCallback(
-    file =>
-      some(worker?.pluginKeys, key => key.name === file?.name) ||
-      some(worker?.sharedJarKeys, key => key.name === file?.name) ||
-      some(workspace?.worker?.pluginKeys, key => key.name === file?.name) ||
-      some(workspace?.worker?.sharedJarKeys, key => key.name === file?.name),
-    [worker, workspace],
-  );
-
-  const isUsedByStream = useCallback(
-    file => some(workspace?.stream?.jarKeys, key => key.name === file?.name),
-    [workspace],
-  );
-
-  const isDeleteDisabled = file => isUsedByWorker(file) || isUsedByStream(file);
-
-  return (
-    <>
-      <FileTable
-        files={files}
-        onDelete={handleDelete}
-        onUpload={handleUpload}
-        options={{
-          customColumns: [
-            {
-              title: 'Used',
-              customFilterAndSearch: (filterValue, file) => {
-                const value = [];
-                if (isUsedByWorker(file)) value.push(WORKER);
-                if (isUsedByStream(file)) value.push(STREAM);
-                return includes(toUpper(join(value)), toUpper(filterValue));
-              },
-              render: file => {
-                return (
-                  <>
-                    {isUsedByWorker(file) && <div>{capitalize(WORKER)}</div>}
-                    {isUsedByStream(file) && <div>{capitalize(STREAM)}</div>}
-                  </>
-                );
-              },
-            },
-          ],
-          disabledDeleteIcon: file => isDeleteDisabled(file),
-          deleteTooltip: file => {
-            return isDeleteDisabled(file)
-              ? 'Cannot delete files that are in use'
-              : null;
-          },
-        }}
-        title="Workspace files"
-      />
-    </>
-  );
+export default function() {
+  return <WorkspaceFileTable />;
 }
-
-export default WorkspaceFilesPage;

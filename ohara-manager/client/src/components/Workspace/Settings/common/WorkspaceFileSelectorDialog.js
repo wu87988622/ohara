@@ -19,10 +19,10 @@ import PropTypes from 'prop-types';
 import { isEqual, sortedUniq } from 'lodash';
 
 import { Dialog } from 'components/common/Dialog';
-import FileTable from './FileTable';
+import WorkspaceFileTable from './WorkspaceFileTable';
 
-const FileSelectorDialog = React.forwardRef((props, ref) => {
-  const { isOpen, onClose, onConfirm, onUpload, tableProps, title } = props;
+const WorkspaceFileSelectorDialog = React.forwardRef((props, ref) => {
+  const { isOpen, onClose, onConfirm, tableProps, title } = props;
   const [selectedFiles, setSelectedFiles] = useState(
     tableProps?.options?.selectedFiles,
   );
@@ -59,25 +59,21 @@ const FileSelectorDialog = React.forwardRef((props, ref) => {
       confirmText="Save"
       maxWidth="md"
     >
-      <FileTable
-        {...tableProps}
+      <WorkspaceFileTable
         onSelectionChange={handleSelectionChange}
-        onUpload={onUpload}
         options={{
           selection: true,
-          showDeleteIcon: false,
-          ...tableProps?.options,
+          selectedFiles: tableProps?.options?.selectedFiles,
         }}
       />
     </Dialog>
   );
 });
 
-FileSelectorDialog.propTypes = {
+WorkspaceFileSelectorDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func,
-  onUpload: PropTypes.func,
   tableProps: PropTypes.shape({
     options: PropTypes.shape({
       selectedFiles: PropTypes.array,
@@ -86,12 +82,11 @@ FileSelectorDialog.propTypes = {
   title: PropTypes.string,
 };
 
-FileSelectorDialog.defaultProps = {
+WorkspaceFileSelectorDialog.defaultProps = {
   onClose: () => {},
   onConfirm: () => {},
-  onUpload: () => {},
   tableProps: {},
   title: 'Select file',
 };
 
-export default FileSelectorDialog;
+export default WorkspaceFileSelectorDialog;

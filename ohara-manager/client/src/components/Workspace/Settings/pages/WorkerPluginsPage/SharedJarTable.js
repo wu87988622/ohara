@@ -17,16 +17,16 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { every, filter, find, map, some, reject } from 'lodash';
 
-import { FileSelectorDialog, FileTable } from 'components/File';
+import { FileTable } from 'components/File';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
+import WorkspaceFileSelectorDialog from '../../common/WorkspaceFileSelectorDialog';
 
 function SharedJarTable() {
-  const files = hooks.useFiles();
+  const workspaceFiles = hooks.useFiles();
   const worker = hooks.useWorker();
   const workspace = hooks.useWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
-  const createFile = hooks.useCreateFileAction();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -41,20 +41,20 @@ function SharedJarTable() {
   const workerSharedJars = useMemo(() => {
     return filter(
       map(worker?.sharedJarKeys, sharedJarKey =>
-        find(files, file => file.name === sharedJarKey.name),
+        find(workspaceFiles, file => file.name === sharedJarKey.name),
       ),
     );
-  }, [worker, files]);
+  }, [worker, workspaceFiles]);
 
   const workspaceSharedJars = useMemo(() => {
     return workspace?.worker?.sharedJarKeys
       ? filter(
           map(workspace.worker.sharedJarKeys, sharedJarKey =>
-            find(files, file => file.name === sharedJarKey.name),
+            find(workspaceFiles, file => file.name === sharedJarKey.name),
           ),
         )
       : workerSharedJars;
-  }, [workspace, workerSharedJars, files]);
+  }, [workspace, workerSharedJars, workspaceFiles]);
 
   const updateSharedJarKeysToWorkspace = newSharedJarKeys => {
     updateWorkspace({
@@ -67,7 +67,7 @@ function SharedJarTable() {
 
     const newSelectedFiles = filter(
       map(newSharedJarKeys, sharedJarKey =>
-        find(files, file => file.name === sharedJarKey.name),
+        find(workspaceFiles, file => file.name === sharedJarKey.name),
       ),
     );
 
@@ -99,11 +99,6 @@ function SharedJarTable() {
     const newSharedJarKeys = map(selectedFiles, file => getKey(file));
     updateSharedJarKeysToWorkspace(newSharedJarKeys);
     setIsSelectorDialogOpen(false);
-  };
-
-  const handleUpload = event => {
-    const file = event?.target?.files?.[0];
-    if (file) createFile(file);
   };
 
   const handleUndoIconClick = fileClicked => {
@@ -145,14 +140,12 @@ function SharedJarTable() {
         title="Shared jars"
       />
 
-      <FileSelectorDialog
+      <WorkspaceFileSelectorDialog
         isOpen={isSelectorDialogOpen}
         onClose={() => setIsSelectorDialogOpen(false)}
         onConfirm={handleSelectorDialogConfirm}
-        onUpload={handleUpload}
         ref={selectorDialogRef}
         tableProps={{
-          files,
           options: {
             selectedFiles: workspaceSharedJars,
           },

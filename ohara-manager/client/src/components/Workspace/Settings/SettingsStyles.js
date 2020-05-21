@@ -34,7 +34,7 @@ export const StyledFullScreenDialog = styled(props => (
         background-color: ${isPageComponent
           ? theme.palette.background.paper
           : 'none'};
-        width: 680px;
+        width: 800px;
         margin: auto;
         padding: ${theme.spacing(9, 3)};
         height: 100%;
