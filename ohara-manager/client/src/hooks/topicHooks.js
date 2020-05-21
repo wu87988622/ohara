@@ -16,13 +16,12 @@
 
 import { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { get, merge, reject, filter } from 'lodash';
+import { get, merge, reject } from 'lodash';
 
-import * as _ from 'lodash';
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
-import { getId } from 'utils/object';
+import { getId, isEqualByKey } from 'utils/object';
 import { hashByGroupAndName } from 'utils/sha';
 import { KIND } from 'const';
 
@@ -147,10 +146,12 @@ export const useAllTopics = () => {
     const topics = selectors.getAllTopics(state);
     const results = topics.map(topic => {
       const info = selectors.getInfoById(state, { id: brokerId });
+
       const settingDefinitions =
         info?.classInfos.find(def => def.classType === KIND.topic)
-          .settingDefinitions || [];
-      return _.merge(topic, { settingDefinitions });
+          ?.settingDefinitions || [];
+
+      return merge(topic, { settingDefinitions });
     });
     return results;
   });
@@ -204,24 +205,32 @@ export const useTopicsInToolbox = () => {
 export const useTopicsInPipeline = () => {
   const currentPipeline = hooks.usePipeline();
   const group = useTopicGroup();
+  const endpoints = get(currentPipeline, 'endpoints', []);
+  const brokerData = hooks.useBroker();
+  // broker only has "one" classInfo (i.e., topic definition)
+  const info = get(brokerData, 'classInfos[0]', {});
+
   return useSelector(
     useCallback(
       state => {
-        const topicKeys = filter(
-          get(currentPipeline, 'endpoints', []),
+        const topicEndpoints = endpoints.filter(
           endpoint => endpoint.kind === KIND.topic,
-        ).map(endpoint => ({ name: endpoint.name, group: endpoint.group }));
-        return filter(selectors.getTopicsByGroup(state, { group }), topic => {
-          return topicKeys.some(
-            ({ name, group }) => name === topic.name && group === topic.group,
-          );
-        }).sort((current, next) => {
-          const currentName = current.displayName;
-          const nextName = next.displayName;
-          return currentName.localeCompare(nextName);
-        });
+        );
+        const topics = selectors.getTopicsByGroup(state, { group });
+
+        const getTopicByKey = topic =>
+          topicEndpoints.some(endpoint => isEqualByKey(topic, endpoint));
+
+        return topics
+          .filter(getTopicByKey)
+          .map(topic => merge(topic, info))
+          .sort((current, next) => {
+            const currentName = current.displayName;
+            const nextName = next.displayName;
+            return currentName.localeCompare(nextName);
+          });
       },
-      [currentPipeline, group],
+      [endpoints, group, info],
     ),
   );
 };
