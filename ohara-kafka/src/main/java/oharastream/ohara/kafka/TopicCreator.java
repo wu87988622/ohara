@@ -35,7 +35,7 @@ public abstract class TopicCreator
   protected int numberOfPartitions = 1;
   protected short numberOfReplications = 1;
   protected Map<String, String> options = Collections.emptyMap();
-  protected String name = null;
+  protected TopicKey topicKey = null;
 
   @Optional("default value is 1")
   public TopicCreator numberOfPartitions(int numberOfPartitions) {
@@ -103,13 +103,9 @@ public abstract class TopicCreator
     return this;
   }
 
-  public TopicCreator topicName(String name) {
-    this.name = CommonUtils.requireNonEmpty(name);
+  public TopicCreator topicKey(TopicKey topicKey) {
+    this.topicKey = Objects.requireNonNull(topicKey);
     return this;
-  }
-
-  public TopicCreator topicKey(TopicKey key) {
-    return topicName(key.topicNameOnKafka());
   }
 
   @Override
@@ -118,9 +114,12 @@ public abstract class TopicCreator
         CommonUtils.requirePositiveInt(numberOfPartitions),
         CommonUtils.requirePositiveShort(numberOfReplications),
         Objects.requireNonNull(options),
-        CommonUtils.requireNonEmpty(name));
+        Objects.requireNonNull(topicKey));
   }
 
   protected abstract CompletionStage<Void> doCreate(
-      int numberOfPartitions, short numberOfReplications, Map<String, String> options, String name);
+      int numberOfPartitions,
+      short numberOfReplications,
+      Map<String, String> options,
+      TopicKey topicKey);
 }

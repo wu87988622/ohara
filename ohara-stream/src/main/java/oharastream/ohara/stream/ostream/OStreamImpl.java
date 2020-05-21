@@ -23,6 +23,7 @@ import java.util.Properties;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.TopicAdmin;
 import oharastream.ohara.metrics.basic.Counter;
@@ -71,13 +72,14 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
   }
 
   @Override
-  public OStream<Row> through(String topicName, int partitions) {
+  public OStream<Row> through(TopicKey topicKey, int partitions) {
     TopicAdmin client = TopicAdmin.of(builder.getBootstrapServers());
-    client.topicCreator().topicName(topicName).numberOfPartitions(partitions).create();
+    client.topicCreator().topicKey(topicKey).numberOfPartitions(partitions).create();
     return new OStreamImpl(
         builder,
         kstreams.through(
-            topicName, org.apache.kafka.streams.kstream.Produced.with(Serdes.ROW, Serdes.ROW)),
+            topicKey.topicNameOnKafka(),
+            org.apache.kafka.streams.kstream.Produced.with(Serdes.ROW, Serdes.ROW)),
         innerBuilder);
   }
 

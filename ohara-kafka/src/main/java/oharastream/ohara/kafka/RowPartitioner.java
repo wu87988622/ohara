@@ -61,7 +61,7 @@ public abstract class RowPartitioner implements Partitioner, WithDefinitions {
       byte[] valueBytes,
       org.apache.kafka.common.Cluster cluster) {
     // if the input data is NOT ohara's data, we don't pass it to following partitioner.
-    return TopicKey.of(topic)
+    return TopicKey.ofPlain(topic)
         .flatMap(
             topicKey ->
                 key instanceof Row ? Optional.of(Pair.of(topicKey, (Row) key)) : Optional.empty())

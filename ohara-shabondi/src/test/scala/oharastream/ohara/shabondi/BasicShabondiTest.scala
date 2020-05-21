@@ -63,13 +63,10 @@ private[shabondi] abstract class BasicShabondiTest extends WithBroker {
   protected def createTopicKey = TopicKey.of("default", CommonUtils.randomString(5))
 
   protected def createTestTopic(topicKey: TopicKey): Unit =
-    createTestTopic(topicKey.name)
-
-  protected def createTestTopic(name: String): Unit =
     topicAdmin.topicCreator
       .numberOfPartitions(1)
       .numberOfReplications(1.toShort)
-      .topicName(name)
+      .topicKey(topicKey)
       .create
 
   protected def defaultSourceConfig(

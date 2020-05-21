@@ -37,13 +37,24 @@ public interface TopicKey extends ObjectKey {
   }
 
   /**
-   * @param encodedName encodedName
+   * parse plain string to topic key
+   *
+   * @param string plain string
    * @return topic key
    */
-  static Optional<TopicKey> of(String encodedName) {
-    String[] splits = encodedName.split("-");
-    if (splits.length == 2) return Optional.of(of(splits[0], splits[1]));
-    else return Optional.empty();
+  static Optional<TopicKey> ofPlain(String string) {
+    return ObjectKey.ofPlain(string).map(key -> TopicKey.of(key.group(), key.name()));
+  }
+
+  /**
+   * parse plain string to topic key. Otherwise, it throws IllegalArgumentException.
+   *
+   * @param string plain string
+   * @return topic key
+   */
+  static TopicKey requirePlain(String string) {
+    ObjectKey key = ObjectKey.requirePlain(string);
+    return TopicKey.of(key.group(), key.name());
   }
 
   static String toJsonString(TopicKey key) {

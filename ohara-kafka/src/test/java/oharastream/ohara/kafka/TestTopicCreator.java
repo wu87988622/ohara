@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import org.junit.Test;
 
 public class TestTopicCreator extends OharaTest {
@@ -30,7 +31,7 @@ public class TestTopicCreator extends OharaTest {
         int numberOfPartitions,
         short numberOfReplications,
         Map<String, String> options,
-        String name) {
+        TopicKey topicKey) {
       return null;
     }
   }

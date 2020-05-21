@@ -19,7 +19,6 @@ package oharastream.ohara.configurator.route
 import oharastream.ohara.agent.{ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, OBJECT_KEY_FORMAT}
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -29,13 +28,13 @@ import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.v0.{ClusterInfo, OBJECT_KEY_FORMAT}
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.configurator.route.ObjectChecker.CheckList
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.store.DataStore
 import spray.json.{JsArray, JsObject, JsString, JsValue}
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -563,16 +562,8 @@ object ObjectChecker {
                     case RUNNING =>
                       topicAdmin(brokerClusterInfo)(serviceCollie.brokerCollie, adminCleaner, executionContext)
                       // make sure the topic admin is closed!!!
-                        .flatMap(
-                          admin =>
-                            admin
-                              .topicDescriptions()
-                              .toScala
-                              .map(_.asScala)
-                        )
-                        .map(_.exists(_.name == key.topicNameOnKafka()))
-                        .map(if (_) RUNNING else STOPPED)
-                        .map(condition => Some(topicInfo -> condition))
+                        .flatMap(_.exist(topicInfo.key).toScala)
+                        .map(existent => if (existent) Some(topicInfo -> RUNNING) else Some(topicInfo -> STOPPED))
                   }
               }
           }

@@ -46,7 +46,7 @@ public class TestPageViewRegionExample extends WithBroker {
           .build();
   private final TopicKey fromTopic = TopicKey.of("default", "page-views");
   private final TopicKey toTopic = TopicKey.of("default", "view-by-region");
-  private final String joinTableTopic = "user-profiles";
+  private final TopicKey joinTableTopic = TopicKey.of("g", "user-profiles");
 
   // prepare data
   private final List<Row> views =
@@ -116,16 +116,16 @@ public class TestPageViewRegionExample extends WithBroker {
               Pair.of(
                   StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
                   "[" + TopicKey.toJsonString(toTopic) + "]"),
-              Pair.of(PageViewRegionExample.joinTopicKey, joinTableTopic))
+              Pair.of(PageViewRegionExample.joinTopicKey, joinTableTopic.topicNameOnKafka()))
           .collect(Collectors.toMap(Pair::left, Pair::right));
 
   @Before
   public void setup() {
     final int partitions = 1;
     final short replications = 1;
-    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
     StreamTestUtils.createTopic(client, joinTableTopic, partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
   }
 
   @Test
@@ -137,7 +137,7 @@ public class TestPageViewRegionExample extends WithBroker {
     StreamTestUtils.produceData(producer, profiles, joinTableTopic);
     // the default commit.interval.ms=30 seconds, which should make sure join table ready
     TimeUnit.SECONDS.sleep(30);
-    StreamTestUtils.produceData(producer, views, fromTopic.topicNameOnKafka());
+    StreamTestUtils.produceData(producer, views, fromTopic);
 
     // Assert the result
     List<Row> expected =
@@ -147,7 +147,7 @@ public class TestPageViewRegionExample extends WithBroker {
                 Row.of(Cell.of("region", "Jordan"), Cell.of("count", 5L)),
                 Row.of(Cell.of("region", "Cuba"), Cell.of("count", 3L)))
             .collect(Collectors.toList());
-    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, 20);
+    StreamTestUtils.assertResult(client, toTopic, expected, 20);
   }
 
   @After

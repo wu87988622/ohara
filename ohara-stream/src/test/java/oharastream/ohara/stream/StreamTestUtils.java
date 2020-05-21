@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.Consumer;
 import oharastream.ohara.kafka.Producer;
@@ -35,20 +36,27 @@ public class StreamTestUtils {
   private static final Logger log = Logger.getLogger(StreamTestUtils.class);
 
   public static void createTopic(
-      TopicAdmin client, String topic, int partitions, short replications) {
+      TopicAdmin client, TopicKey topicKey, int partitions, short replications) {
     client
         .topicCreator()
         .numberOfPartitions(partitions)
         .numberOfReplications(replications)
-        .topicName(topic)
+        .topicKey(topicKey)
         .create();
   }
 
-  public static void produceData(Producer<Row, byte[]> producer, List<Row> rows, String topic) {
+  public static void produceData(
+      Producer<Row, byte[]> producer, List<Row> rows, TopicKey topicKey) {
     rows.forEach(
         row -> {
           try {
-            producer.sender().key(row).value(new byte[0]).topicName(topic).send().get();
+            producer
+                .sender()
+                .key(row)
+                .value(new byte[0])
+                .topicName(topicKey.topicNameOnKafka())
+                .send()
+                .get();
           } catch (InterruptedException | ExecutionException e) {
             Assert.fail(e.getMessage());
           }
@@ -56,10 +64,10 @@ public class StreamTestUtils {
   }
 
   public static void assertResult(
-      TopicAdmin client, String toTopic, List<Row> expectedContainedRows, int expectedSize) {
+      TopicAdmin client, TopicKey topicKey, List<Row> expectedContainedRows, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.builder()
-            .topicName(toTopic)
+            .topicName(topicKey.topicNameOnKafka())
             .connectionProps(client.connectionProps())
             .groupId("group-" + CommonUtils.randomString(5))
             .offsetFromBegin()

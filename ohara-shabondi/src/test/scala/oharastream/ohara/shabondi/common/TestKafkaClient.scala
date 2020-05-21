@@ -18,6 +18,7 @@ package oharastream.ohara.shabondi.common
 
 import akka.actor.ActorSystem
 import oharastream.ohara.common.data.{Cell, Row}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Before, Test}
@@ -32,17 +33,14 @@ final class TestKafkaClient extends BasicShabondiTest {
 
   implicit lazy val system: ActorSystem = ActorSystem("shabondi-test")
 
-  private var TOPIC_1: String = _
+  private[this] val topicKey = TopicKey.of("group", CommonUtils.randomString(5))
 
   @Before
-  def before(): Unit = {
-    TOPIC_1 = CommonUtils.randomString(5)
-    createTestTopic(TOPIC_1)
-  }
+  def before(): Unit = createTestTopic(topicKey)
 
   @After
   override def tearDown(): Unit =
-    topicAdmin.deleteTopic(TOPIC_1)
+    topicAdmin.deleteTopic(topicKey)
 
   @Test
   def testSingleProducer(): Unit = {
@@ -53,13 +51,13 @@ final class TestKafkaClient extends BasicShabondiTest {
         .sender()
         .key(row)
         .value(Array[Byte]())
-        .topicName(TOPIC_1)
+        .topicName(topicKey.topicNameOnKafka())
 
       val future = sender.send.toScala
 
       val metadata = Await.result(future, 3 seconds)
 
-      metadata.topicName should ===(TOPIC_1)
+      metadata.topicName should ===(topicKey.topicNameOnKafka())
       metadata.offset should ===(0)
       metadata.partition should ===(0)
     } finally {
@@ -74,20 +72,20 @@ final class TestKafkaClient extends BasicShabondiTest {
       Future.sequence {
         (1 to 9)
           .map(i => Row.of(Cell.of(s"col-$i", i * 10)))
-          .map(row => producer.sender().key(row).value(Array[Byte]()).topicName(TOPIC_1))
+          .map(row => producer.sender().key(row).value(Array[Byte]()).topicName(topicKey.topicNameOnKafka()))
           .map { sender =>
             sender.send.toScala
           }
       }
 
-      val records = KafkaSupport.pollTopicOnce(brokerProps, TOPIC_1, 10, 10)
+      val records = KafkaSupport.pollTopicOnce(brokerProps, topicKey.topicNameOnKafka(), 10, 10)
 
       records.size should ===(9)
-      records(0).topicName == (TOPIC_1)
+      records(0).topicName == (topicKey.topicNameOnKafka())
       records(0).key.isPresent === (true)
       records(0).key.get == (Row.of(Cell.of("col-1", 10)))
 
-      records(8).topicName == (TOPIC_1)
+      records(8).topicName == (topicKey.topicNameOnKafka())
       records(8).key.isPresent === (true)
       records(8).key.get == (Row.of(Cell.of("col-9", 90)))
     } finally {

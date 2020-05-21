@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import oharastream.ohara.common.setting.TopicKey;
 
 /**
  * get TopicDescription from kafka client
@@ -27,19 +28,19 @@ import java.util.stream.Collectors;
  * @see TopicAdmin ;
  */
 public class TopicDescription {
-  private final String name;
+  private final TopicKey topicKey;
   private final List<PartitionInfo> partitionInfos;
   private final List<TopicOption> options;
 
   public TopicDescription(
-      String name, List<PartitionInfo> partitionInfos, List<TopicOption> options) {
-    this.name = name;
+      TopicKey topicKey, List<PartitionInfo> partitionInfos, List<TopicOption> options) {
+    this.topicKey = Objects.requireNonNull(topicKey);
     this.partitionInfos = Collections.unmodifiableList(partitionInfos);
     this.options = Collections.unmodifiableList(options);
   }
 
-  public String name() {
-    return name;
+  public TopicKey topicKey() {
+    return topicKey;
   }
 
   public List<PartitionInfo> partitionInfos() {
@@ -64,14 +65,14 @@ public class TopicDescription {
     if (o == null || getClass() != o.getClass()) return false;
     TopicDescription that = (TopicDescription) o;
     return partitionInfos.equals(that.partitionInfos)
-        && Objects.equals(name, that.name)
+        && Objects.equals(topicKey, that.topicKey)
         && Objects.equals(options, that.options);
   }
 
   @Override
   public String toString() {
-    return "name="
-        + name
+    return "topicKey="
+        + topicKey
         + ", partitionInfos="
         + partitionInfos.stream().map(PartitionInfo::toString).collect(Collectors.joining(","))
         + ", options="
@@ -80,6 +81,6 @@ public class TopicDescription {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, partitionInfos, options);
+    return Objects.hash(topicKey, partitionInfos, options);
   }
 }

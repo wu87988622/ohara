@@ -58,14 +58,14 @@ public class TestSumExample extends WithBroker {
         "[" + TopicKey.toJsonString(fromTopic) + "]");
     settings.putIfAbsent(
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
-    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
     // prepare data
     List<Row> rows =
         java.util.stream.Stream.of(1, 2, 14, 17, 36, 99)
             .map(v -> Row.of(Cell.of("number", v)))
             .collect(Collectors.toList());
-    StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
+    StreamTestUtils.produceData(producer, rows, fromTopic);
 
     // run example
     SumExample app = new SumExample();
@@ -78,6 +78,6 @@ public class TestSumExample extends WithBroker {
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 18)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 117)))
             .collect(Collectors.toList());
-    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, 3);
+    StreamTestUtils.assertResult(client, toTopic, expected, 3);
   }
 }

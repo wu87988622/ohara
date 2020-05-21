@@ -16,13 +16,7 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,18 +53,10 @@ public interface TopicAdmin extends Releasable {
   TopicCreator topicCreator();
 
   /**
-   * @param name topic name
-   * @return true if topic exists. Otherwise, false
-   */
-  CompletionStage<Boolean> exist(String name);
-
-  /**
    * @param key topic key
    * @return true if topic exists. Otherwise, false
    */
-  default CompletionStage<Boolean> exist(TopicKey key) {
-    return exist(key.topicNameOnKafka());
-  }
+  CompletionStage<Boolean> exist(TopicKey key);
 
   /**
    * describe the topic existing in kafka. If the topic doesn't exist, exception will be thrown
@@ -79,25 +65,12 @@ public interface TopicAdmin extends Releasable {
    * @return TopicDescription
    */
   default CompletionStage<TopicDescription> topicDescription(TopicKey key) {
-    return topicDescription(key.topicNameOnKafka());
-  }
-
-  default CompletionStage<TopicDescription> topicDescription(String name) {
-    return topicDescriptions(Collections.singleton(name))
-        .thenApply(
-            tds -> {
-              if (tds.isEmpty()) throw new NoSuchElementException(name + " does not exist");
-              else return tds.get(0);
-            });
-  }
-
-  default CompletionStage<List<TopicDescription>> topicDescriptions(Set<String> topicNames) {
     return topicDescriptions()
         .thenApply(
-            tds ->
-                tds.stream()
-                    .filter(td -> topicNames.stream().anyMatch(n -> n.equals(td.name())))
-                    .collect(Collectors.toList()));
+            tds -> {
+              if (tds.isEmpty()) throw new NoSuchElementException(key + " does not exist");
+              else return tds.get(0);
+            });
   }
 
   /**
@@ -110,22 +83,11 @@ public interface TopicAdmin extends Releasable {
   /**
    * create new partitions for specified topic
    *
-   * @param name topic name
-   * @param numberOfPartitions number of new partitions
-   * @return a async callback is tracing the result
-   */
-  CompletionStage<Void> createPartitions(String name, int numberOfPartitions);
-
-  /**
-   * create new partitions for specified topic
-   *
    * @param key topic key
    * @param numberOfPartitions number of new partitions
    * @return a async callback is tracing the result
    */
-  default CompletionStage<Void> createPartitions(TopicKey key, int numberOfPartitions) {
-    return createPartitions(key.topicNameOnKafka(), numberOfPartitions);
-  }
+  CompletionStage<Void> createPartitions(TopicKey key, int numberOfPartitions);
 
   /**
    * remove topic.
@@ -134,18 +96,7 @@ public interface TopicAdmin extends Releasable {
    * @return a async callback is tracing the result. It carries the "true" if it does remove a
    *     topic. otherwise, false
    */
-  default CompletionStage<Boolean> deleteTopic(TopicKey key) {
-    return deleteTopic(key.topicNameOnKafka());
-  }
-
-  /**
-   * remove topic.
-   *
-   * @param name topic encoded name
-   * @return a async callback is tracing the result. It carries the "true" if it does remove a
-   *     topic. otherwise, false
-   */
-  CompletionStage<Boolean> deleteTopic(String name);
+  CompletionStage<Boolean> deleteTopic(TopicKey key);
 
   /** @return Connection information. form: host:port,host:port */
   String connectionProps();
@@ -168,7 +119,7 @@ public interface TopicAdmin extends Releasable {
 
       private final AtomicBoolean closed = new AtomicBoolean(false);
 
-      private Map<String, List<PartitionInfo>> partitionInfos() {
+      private Map<TopicKey, List<PartitionInfo>> partitionInfos(Set<TopicKey> topicKeys) {
         Properties properties = new Properties();
         properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, connectionProps);
         properties.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, CommonUtils.randomString());
@@ -176,6 +127,8 @@ public interface TopicAdmin extends Releasable {
             new KafkaConsumer<>(
                 properties, new ByteArrayDeserializer(), new ByteArrayDeserializer())) {
           return consumer.listTopics().entrySet().stream()
+              .filter(
+                  entry -> TopicKey.ofPlain(entry.getKey()).map(topicKeys::contains).isPresent())
               .map(
                   entry -> {
                     List<TopicPartition> tps =
@@ -206,7 +159,7 @@ public interface TopicAdmin extends Releasable {
                                       endOffsets.getOrDefault(tp, -1L));
                                 })
                             .collect(Collectors.toList());
-                    return Pair.of(entry.getKey(), ps);
+                    return Pair.of(TopicKey.requirePlain(entry.getKey()), ps);
                   })
               .collect(Collectors.toMap(Pair::left, Pair::right));
         }
@@ -220,15 +173,18 @@ public interface TopicAdmin extends Releasable {
               int numberOfPartitions,
               short numberOfReplications,
               Map<String, String> options,
-              String name) {
+              TopicKey topicKey) {
             CompletableFuture<Void> f = new CompletableFuture<>();
             admin
                 .createTopics(
                     Collections.singletonList(
-                        new NewTopic(name, numberOfPartitions, numberOfReplications)
+                        new NewTopic(
+                                topicKey.topicNameOnKafka(),
+                                numberOfPartitions,
+                                numberOfReplications)
                             .configs(options)))
                 .values()
-                .get(name)
+                .get(topicKey.topicNameOnKafka())
                 .whenComplete(
                     (v, exception) -> {
                       if (exception != null) f.completeExceptionally(exception);
@@ -240,33 +196,43 @@ public interface TopicAdmin extends Releasable {
       }
 
       @Override
-      public CompletionStage<Boolean> exist(String name) {
-        return topicNames().thenApply(tps -> tps.contains(name));
+      public CompletionStage<Boolean> exist(TopicKey key) {
+        return topicKeys().thenApply(keys -> keys.contains(key));
       }
 
-      private CompletionStage<Set<String>> topicNames() {
-        CompletableFuture<Set<String>> f = new CompletableFuture<>();
+      private CompletionStage<Set<TopicKey>> topicKeys() {
+        CompletableFuture<Set<TopicKey>> f = new CompletableFuture<>();
         admin
             .listTopics()
             .names()
             .whenComplete(
                 (tps, exception) -> {
                   if (exception != null) f.completeExceptionally(exception);
-                  else f.complete(tps);
+                  else
+                    f.complete(
+                        tps.stream()
+                            .map(TopicKey::ofPlain)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .collect(Collectors.toSet()));
                 });
         return f;
       }
 
-      private CompletionStage<Map<String, List<TopicOption>>> options(Set<String> topicNames) {
-        return topicNames()
+      private CompletionStage<Map<TopicKey, List<TopicOption>>> options(Set<TopicKey> topicKeys) {
+        return topicKeys()
             .thenApply(
-                names ->
-                    names.stream()
-                        .map(name -> new ConfigResource(ConfigResource.Type.TOPIC, name))
+                keys ->
+                    keys.stream()
+                        .filter(topicKeys::contains)
+                        .map(
+                            key ->
+                                new ConfigResource(
+                                    ConfigResource.Type.TOPIC, key.topicNameOnKafka()))
                         .collect(Collectors.toList()))
             .thenCompose(
                 rs -> {
-                  CompletableFuture<Map<String, List<TopicOption>>> f = new CompletableFuture<>();
+                  CompletableFuture<Map<TopicKey, List<TopicOption>>> f = new CompletableFuture<>();
                   admin
                       .describeConfigs(rs)
                       .all()
@@ -279,7 +245,7 @@ public interface TopicAdmin extends Releasable {
                                       .map(
                                           entry ->
                                               Pair.of(
-                                                  entry.getKey().name(),
+                                                  TopicKey.requirePlain(entry.getKey().name()),
                                                   entry.getValue().entries().stream()
                                                       .map(
                                                           o ->
@@ -297,12 +263,21 @@ public interface TopicAdmin extends Releasable {
       }
 
       @Override
+      public CompletionStage<TopicDescription> topicDescription(TopicKey key) {
+        return topicDescriptions(Collections.singleton(key))
+            .thenApply(keys -> keys.iterator().next());
+      }
+
+      @Override
       public CompletionStage<List<TopicDescription>> topicDescriptions() {
-        return topicNames()
-            .thenCompose(this::options)
+        return topicKeys().thenCompose(this::topicDescriptions);
+      }
+
+      private CompletionStage<List<TopicDescription>> topicDescriptions(Set<TopicKey> topicKeys) {
+        return options(topicKeys)
             .thenApply(
                 nameAndOpts -> {
-                  Map<String, List<PartitionInfo>> partitionInfos = partitionInfos();
+                  Map<TopicKey, List<PartitionInfo>> partitionInfos = partitionInfos(topicKeys);
                   return nameAndOpts.entrySet().stream()
                       .map(
                           entry -> {
@@ -316,8 +291,8 @@ public interface TopicAdmin extends Releasable {
       }
 
       @Override
-      public CompletionStage<Void> createPartitions(String name, int numberOfPartitions) {
-        return topicDescription(name)
+      public CompletionStage<Void> createPartitions(TopicKey key, int numberOfPartitions) {
+        return topicDescription(key)
             .thenCompose(
                 current -> {
                   if (current.numberOfPartitions() > numberOfPartitions)
@@ -333,9 +308,10 @@ public interface TopicAdmin extends Releasable {
                     admin
                         .createPartitions(
                             Collections.singletonMap(
-                                name, NewPartitions.increaseTo(numberOfPartitions)))
+                                key.topicNameOnKafka(),
+                                NewPartitions.increaseTo(numberOfPartitions)))
                         .values()
-                        .get(name)
+                        .get(key.topicNameOnKafka())
                         .whenComplete(
                             (v, exception) -> {
                               if (exception != null) f.completeExceptionally(exception);
@@ -347,31 +323,24 @@ public interface TopicAdmin extends Releasable {
       }
 
       @Override
-      public CompletionStage<Boolean> deleteTopic(String topicName) {
-        CompletableFuture<Boolean> f = new CompletableFuture<>();
-        topicNames()
-            .thenApply(names -> names.stream().anyMatch(name -> name.equals(topicName)))
-            .whenComplete(
-                (existent, exception) -> {
-                  if (exception != null) f.completeExceptionally(exception);
-                  else f.complete(existent);
+      public CompletionStage<Boolean> deleteTopic(TopicKey key) {
+        return exist(key)
+            .thenCompose(
+                existent -> {
+                  if (existent) {
+                    CompletableFuture<Boolean> f2 = new CompletableFuture<>();
+                    admin
+                        .deleteTopics(Collections.singletonList(key.topicNameOnKafka()))
+                        .values()
+                        .get(key.topicNameOnKafka())
+                        .whenComplete(
+                            (v, exception) -> {
+                              if (exception != null) f2.completeExceptionally(exception);
+                              else f2.complete(true);
+                            });
+                    return f2;
+                  } else return CompletableFuture.completedFuture(false);
                 });
-        return f.thenCompose(
-            existent -> {
-              if (existent) {
-                CompletableFuture<Boolean> f2 = new CompletableFuture<>();
-                admin
-                    .deleteTopics(Collections.singletonList(topicName))
-                    .values()
-                    .get(topicName)
-                    .whenComplete(
-                        (v, exception) -> {
-                          if (exception != null) f2.completeExceptionally(exception);
-                          else f2.complete(true);
-                        });
-                return f2;
-              } else return CompletableFuture.completedFuture(false);
-            });
       }
 
       @Override

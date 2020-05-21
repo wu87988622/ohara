@@ -44,7 +44,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .compacted()
         .numberOfPartitions(1)
         .numberOfReplications(1)
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .create()
     else
       topicAdmin
@@ -52,7 +52,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .deleted()
         .numberOfPartitions(1)
         .numberOfReplications(1)
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .create()
   }
 

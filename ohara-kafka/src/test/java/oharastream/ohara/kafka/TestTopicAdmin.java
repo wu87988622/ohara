@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.testing.With3Brokers;
@@ -35,13 +36,14 @@ import org.junit.Test;
 
 public class TestTopicAdmin extends With3Brokers {
   private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
+  private final TopicKey topicKey = TopicKey.of("TestTopicAdmin", CommonUtils.randomString(5));
 
-  private void waitPartitions(String topicName, int numberOfPartitions) {
+  private void waitPartitions(TopicKey topicKey, int numberOfPartitions) {
     CommonUtils.await(
         () -> {
           try {
             return client
-                    .topicDescription(topicName)
+                    .topicDescription(topicKey)
                     .toCompletableFuture()
                     .get()
                     .numberOfPartitions()
@@ -55,55 +57,57 @@ public class TestTopicAdmin extends With3Brokers {
 
   @Test
   public void testAddPartitions() throws ExecutionException, InterruptedException {
-    String topicName = CommonUtils.randomString(10);
     int numberOfPartitions = 1;
     short numberOfReplications = 1;
     client
         .topicCreator()
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .topicName(topicName)
+        .topicKey(topicKey)
         .create()
         .toCompletableFuture()
         .get();
-    waitPartitions(topicName, numberOfPartitions);
+    waitPartitions(topicKey, numberOfPartitions);
     assertEquals(
         numberOfPartitions,
-        client.topicDescription(topicName).toCompletableFuture().get().numberOfPartitions());
+        client.topicDescription(topicKey).toCompletableFuture().get().numberOfPartitions());
 
     numberOfPartitions = 2;
-    client.createPartitions(topicName, numberOfPartitions).toCompletableFuture().get();
-    waitPartitions(topicName, numberOfPartitions);
+    client.createPartitions(topicKey, numberOfPartitions).toCompletableFuture().get();
+    waitPartitions(topicKey, numberOfPartitions);
     assertEquals(
         numberOfPartitions,
-        client.topicDescription(topicName).toCompletableFuture().get().numberOfPartitions());
+        client.topicDescription(topicKey).toCompletableFuture().get().numberOfPartitions());
     // decrease the number
     assertException(
-        Exception.class, () -> client.createPartitions(topicName, 1).toCompletableFuture().get());
+        Exception.class, () -> client.createPartitions(topicKey, 1).toCompletableFuture().get());
     // alter an nonexistent topic
     assertException(
         NoSuchElementException.class,
-        () -> client.createPartitions("Xxx", 2).toCompletableFuture().get(),
+        () ->
+            client
+                .createPartitions(TopicKey.of("a", CommonUtils.randomString(5)), 2)
+                .toCompletableFuture()
+                .get(),
         true);
   }
 
   @Test
   public void testCreate() throws ExecutionException, InterruptedException {
-    String topicName = CommonUtils.randomString(10);
     int numberOfPartitions = 2;
     short numberOfReplications = (short) 2;
     client
         .topicCreator()
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
-        .topicName(topicName)
+        .topicKey(topicKey)
         .create()
         .toCompletableFuture()
         .get();
-    waitPartitions(topicName, numberOfPartitions);
-    TopicDescription topicInfo = client.topicDescription(topicName).toCompletableFuture().get();
+    waitPartitions(topicKey, numberOfPartitions);
+    TopicDescription topicInfo = client.topicDescription(topicKey).toCompletableFuture().get();
 
-    assertEquals(topicName, topicInfo.name());
+    assertEquals(topicKey, topicInfo.topicKey());
 
     assertEquals(numberOfPartitions, topicInfo.numberOfPartitions());
     assertEquals(numberOfReplications, topicInfo.numberOfReplications());
@@ -111,17 +115,16 @@ public class TestTopicAdmin extends With3Brokers {
     assertEquals(
         topicInfo,
         client.topicDescriptions().toCompletableFuture().get().stream()
-            .filter(t -> t.name().equals(topicName))
+            .filter(t -> t.topicKey().equals(topicKey))
             .findFirst()
             .get());
 
-    client.deleteTopic(topicName).toCompletableFuture().get();
-    assertFalse(client.exist(topicName).toCompletableFuture().get());
+    client.deleteTopic(topicKey).toCompletableFuture().get();
+    assertFalse(client.exist(topicKey).toCompletableFuture().get());
   }
 
   @Test
   public void testTopicOptions() throws ExecutionException, InterruptedException {
-    String topicName = CommonUtils.randomString(10);
     int numberOfPartitions = 2;
     short numberOfReplications = (short) 2;
     Map<String, String> options =
@@ -132,15 +135,15 @@ public class TestTopicAdmin extends With3Brokers {
         .numberOfPartitions(numberOfPartitions)
         .numberOfReplications(numberOfReplications)
         .options(options)
-        .topicName(topicName)
+        .topicKey(topicKey)
         .create()
         .toCompletableFuture()
         .get();
-    waitPartitions(topicName, numberOfPartitions);
+    waitPartitions(topicKey, numberOfPartitions);
 
-    TopicDescription topicInfo = client.topicDescription(topicName).toCompletableFuture().get();
+    TopicDescription topicInfo = client.topicDescription(topicKey).toCompletableFuture().get();
 
-    assertEquals(topicName, topicInfo.name());
+    assertEquals(topicKey, topicInfo.topicKey());
 
     assertEquals(numberOfPartitions, topicInfo.numberOfPartitions());
     assertEquals(numberOfReplications, topicInfo.numberOfReplications());
@@ -163,7 +166,7 @@ public class TestTopicAdmin extends With3Brokers {
         .forEach(
             t -> {
               try {
-                client.deleteTopic(t.name()).toCompletableFuture().get();
+                client.deleteTopic(t.topicKey()).toCompletableFuture().get();
               } catch (Exception e) {
                 throw new RuntimeException(e);
               }

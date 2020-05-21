@@ -18,6 +18,7 @@ package oharastream.ohara.stream;
 
 import java.util.List;
 import oharastream.ohara.common.data.Row;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.stream.data.Poneglyph;
 import oharastream.ohara.stream.ostream.*;
 import org.apache.kafka.streams.kstream.Grouped;
@@ -60,13 +61,13 @@ public interface OStream<T extends Row> {
    * Transfer this {@code OStream} to specify topic and use the required partition number. This
    * operation will do the repartition work.
    *
-   * @param topicName the transfer topic name
+   * @param topicKey the transfer topic key
    * @param partitions the partition size of topic
    * @return {@code OStream}
    * @see org.apache.kafka.streams.kstream.KStream#through(String,
    *     org.apache.kafka.streams.kstream.Produced)
    */
-  OStream<T> through(String topicName, int partitions);
+  OStream<T> through(TopicKey topicKey, int partitions);
 
   /**
    * Join this stream with required topic using non-windowed left join. The join operation will use

@@ -27,6 +27,7 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, Contain
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.exception.{ExecutionException, TimeoutException}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.category.CollieGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
@@ -268,9 +269,9 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
   }
 
   private[this] def testTopic(cluster: BrokerClusterInfo): Unit = {
-    val topicName = CommonUtils.randomString()
-    val brokers   = cluster.nodeNames.map(_ + s":${cluster.clientPort}").mkString(",")
-    log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers")
+    val topicKey = TopicKey.of("g", CommonUtils.randomString())
+    val brokers  = cluster.nodeNames.map(_ + s":${cluster.clientPort}").mkString(",")
+    log.info(s"[BROKER] start to create topic:$topicKey on broker cluster:$brokers")
     val topicAdmin = TopicAdmin.of(brokers)
     try {
       log.info(s"[BROKER] start to check the sync information. active broker nodes:${cluster.nodeNames}")
@@ -281,7 +282,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       await(
         () =>
           try {
-            topicAdmin.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicName(topicName).create()
+            topicAdmin.topicCreator().numberOfPartitions(1).numberOfReplications(1).topicKey(topicKey).create()
             true
           } catch {
             case e: ExecutionException =>
@@ -295,7 +296,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
               false
           }
       )
-      log.info(s"[BROKER] start to create topic:$topicName on broker cluster:$brokers ... done")
+      log.info(s"[BROKER] start to create topic:$topicKey on broker cluster:$brokers ... done")
       val producer = Producer
         .builder()
         .connectionProps(brokers)
@@ -306,7 +307,8 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       val numberOfRecords = 5
       log.info(s"[BROKER] start to send $numberOfRecords data")
       (0 until numberOfRecords).foreach(
-        index => producer.sender().key(index.toString).value(index.toString).topicName(topicName).send()
+        index =>
+          producer.sender().key(index.toString).value(index.toString).topicName(topicKey.topicNameOnKafka()).send()
       )
       producer.flush()
       producer.close()
@@ -316,7 +318,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         .builder()
         .connectionProps(brokers)
         .offsetFromBegin()
-        .topicName(topicName)
+        .topicName(topicKey.topicNameOnKafka())
         .keySerializer(Serializer.STRING)
         .valueSerializer(Serializer.STRING)
         .build()
@@ -326,7 +328,6 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         records.stream().forEach(record => record.key().get() shouldBe record.value().get())
         log.info(s"[BROKER] start to receive data ... done")
       } finally consumer.close()
-      topicAdmin.deleteTopic(topicName)
     } finally topicAdmin.close()
   }
 

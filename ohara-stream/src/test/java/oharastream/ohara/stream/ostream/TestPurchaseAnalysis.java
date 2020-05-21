@@ -76,25 +76,25 @@ public class TestPurchaseAnalysis extends With3Brokers {
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(orderTopic.topicNameOnKafka())
+          .topicKey(orderTopic)
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(itemTopic.topicNameOnKafka())
+          .topicKey(itemTopic)
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(userTopic.topicNameOnKafka())
+          .topicKey(userTopic)
           .create();
       client
           .topicCreator()
           .numberOfPartitions(partitions)
           .numberOfReplications(replications)
-          .topicName(resultTopic.topicNameOnKafka())
+          .topicKey(resultTopic)
           .create();
     } catch (Exception e) {
       LOG.error(e.getMessage());

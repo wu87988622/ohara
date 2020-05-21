@@ -73,10 +73,8 @@ private[configurator] object TopicRoute {
                   .flatMap { existent =>
                     if (existent)
                       topicAdmin
-                        .topicDescriptions()
+                        .topicDescription(topicInfo.key)
                         .toScala
-                        .map(_.asScala)
-                        .map(_.find(_.name == topicInfo.key.topicNameOnKafka()).get)
                         .map(_.partitionInfos.asScala -> Some(TopicState.RUNNING))
                     else Future.successful(Seq.empty  -> None)
                   }

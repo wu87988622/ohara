@@ -58,14 +58,14 @@ public class TestWordCountExample extends WithBroker {
         "[" + TopicKey.toJsonString(fromTopic) + "]");
     settings.putIfAbsent(
         StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
-    StreamTestUtils.createTopic(client, fromTopic.topicNameOnKafka(), partitions, replications);
-    StreamTestUtils.createTopic(client, toTopic.topicNameOnKafka(), partitions, replications);
+    StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
+    StreamTestUtils.createTopic(client, toTopic, partitions, replications);
     // prepare data
     List<Row> rows =
         java.util.stream.Stream.of("hello", "ohara", "stream", "world", "of", "stream")
             .map(str -> Row.of(Cell.of("word", str)))
             .collect(Collectors.toList());
-    StreamTestUtils.produceData(producer, rows, fromTopic.topicNameOnKafka());
+    StreamTestUtils.produceData(producer, rows, fromTopic);
 
     // run example
     WordCountExample app = new WordCountExample();
@@ -78,6 +78,6 @@ public class TestWordCountExample extends WithBroker {
                 Row.of(Cell.of("word", "world"), Cell.of("count", 1L)))
             .collect(Collectors.toList());
     // Since the result of "count" is "accumulate", we will get the same size as input count
-    StreamTestUtils.assertResult(client, toTopic.topicNameOnKafka(), expected, rows.size());
+    StreamTestUtils.assertResult(client, toTopic, expected, rows.size());
   }
 }

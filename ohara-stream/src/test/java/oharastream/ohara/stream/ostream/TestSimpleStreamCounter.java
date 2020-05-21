@@ -72,7 +72,7 @@ public class TestSimpleStreamCounter extends WithBroker {
         .topicCreator()
         .numberOfPartitions(partitions)
         .numberOfReplications(replications)
-        .topicName(fromKey.topicNameOnKafka())
+        .topicKey(fromKey)
         .create();
 
     try {

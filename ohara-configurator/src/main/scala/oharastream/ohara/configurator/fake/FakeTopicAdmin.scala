@@ -20,6 +20,7 @@ import java.util.Collections
 import java.util.concurrent.{CompletableFuture, CompletionStage, ConcurrentHashMap}
 import java.{lang, util}
 
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.kafka.{TopicAdmin, TopicCreator, TopicDescription, TopicOption}
 
 private[configurator] class FakeTopicAdmin extends TopicAdmin {
@@ -27,22 +28,22 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
 
   override val connectionProps: String = "Unknown"
 
-  private[this] val cachedTopics = new ConcurrentHashMap[String, TopicDescription]()
+  private[this] val cachedTopics = new ConcurrentHashMap[TopicKey, TopicDescription]()
 
-  override def createPartitions(name: String, numberOfPartitions: Int): CompletionStage[Void] = {
-    val previous = cachedTopics.get(name)
+  override def createPartitions(topicKey: TopicKey, numberOfPartitions: Int): CompletionStage[Void] = {
+    val previous = cachedTopics.get(topicKey)
     val f        = new CompletableFuture[Void]()
     if (previous == null)
       f.completeExceptionally(
         new NoSuchElementException(
-          s"the topic:$name doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"
+          s"the topic:$topicKey doesn't exist. actual:${cachedTopics.keys().asScala.mkString(",")}"
         )
       )
     else {
       cachedTopics.put(
-        name,
+        topicKey,
         new TopicDescription(
-          previous.name,
+          previous.topicKey,
           previous.partitionInfos(),
           previous.options
         )
@@ -55,13 +56,13 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     CompletableFuture.completedFuture(new util.ArrayList[TopicDescription](cachedTopics.values()))
 
   override def topicCreator(): TopicCreator =
-    (_: Int, _: Short, options: util.Map[String, String], name: String) => {
+    (_: Int, _: Short, options: util.Map[String, String], topicKey: TopicKey) => {
       val f = new CompletableFuture[Void]()
-      if (cachedTopics.contains(name))
-        f.completeExceptionally(new IllegalArgumentException(s"$name already exists!"))
+      if (cachedTopics.contains(topicKey))
+        f.completeExceptionally(new IllegalArgumentException(s"$topicKey already exists!"))
       else {
         val topicInfo = new TopicDescription(
-          name,
+          topicKey,
           Collections.emptyList(),
           options.asScala
             .map {
@@ -77,8 +78,8 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
             .toSeq
             .asJava
         )
-        if (cachedTopics.putIfAbsent(name, topicInfo) != null)
-          throw new RuntimeException(s"the $name already exists in kafka")
+        if (cachedTopics.putIfAbsent(topicKey, topicInfo) != null)
+          throw new RuntimeException(s"the $topicKey already exists in kafka")
         f.complete(null)
       }
       f
@@ -93,12 +94,12 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   override def brokerPorts(): CompletionStage[util.Map[String, Integer]] =
     CompletableFuture.completedFuture(Collections.emptyMap())
 
-  override def exist(name: String): CompletionStage[lang.Boolean] =
-    CompletableFuture.completedFuture(cachedTopics.containsKey(name))
+  override def exist(topicKey: TopicKey): CompletionStage[lang.Boolean] =
+    CompletableFuture.completedFuture(cachedTopics.containsKey(topicKey))
 
-  override def deleteTopic(name: String): CompletionStage[lang.Boolean] = {
+  override def deleteTopic(topicKey: TopicKey): CompletionStage[lang.Boolean] = {
     val f       = new CompletableFuture[lang.Boolean]()
-    val removed = cachedTopics.remove(name)
+    val removed = cachedTopics.remove(topicKey)
     if (removed == null) f.complete(false)
     else f.complete(true)
     f
