@@ -27,9 +27,10 @@ import {
   maxNumber,
   validServiceName,
   composeValidators,
+  checkDuplicate,
 } from 'utils/validate';
 
-const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm }) => {
+const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
   const minNumberOfPartitions = 1;
   const minNumberOfReplications = 1;
   const maxNumberOfReplications = max([
@@ -67,7 +68,11 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm }) => {
                 component={InputField}
                 placeholder="topic"
                 margin="normal"
-                validate={composeValidators(required, validServiceName)}
+                validate={composeValidators(
+                  required,
+                  validServiceName,
+                  checkDuplicate(topics.map(topic => topic.name)),
+                )}
                 autoFocus
                 required
               />
@@ -115,6 +120,11 @@ TopicCreateDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func.isRequired,
+  topics: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+    }),
+  ).isRequired,
 };
 
 TopicCreateDialog.defaultProps = {

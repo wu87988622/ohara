@@ -209,6 +209,7 @@ function TopicTable(props) {
         }}
       />
       <TopicCreateDialog
+        topics={data}
         broker={broker}
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
