@@ -46,9 +46,6 @@ export const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-// Only runs the effect on mount without eslint warning from "react-hooks/exhaustive-deps" rule
-export const useMountEffect = callback => useEffect(callback, []);
-
 export const useLocalStorage = (key, initialValue) => {
   // State to store our value
   // Pass initial state function to useState so logic is only executed once

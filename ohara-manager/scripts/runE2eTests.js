@@ -17,10 +17,10 @@
 const execa = require('execa');
 const yargs = require('yargs');
 const chalk = require('chalk');
+const fs = require('fs');
 
 const mergeReports = require('./mergeReports');
 const copyJars = require('./copyJars');
-const services = require('./handleE2eServices');
 const utils = require('./scriptsUtils');
 const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
@@ -35,6 +35,15 @@ const {
   servicePrefix,
 } = yargs.argv;
 
+const getDefaultEnv = () => {
+  const filePath = './client/cypress.env.json';
+  if (fs.existsSync(filePath)) {
+    return JSON.parse(fs.readFileSync(filePath));
+  }
+
+  return {};
+};
+
 /* eslint-disable no-process-exit, no-console */
 const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
@@ -42,7 +51,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let cypress;
   serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
-  const defaultEnv = services.getDefaultEnv();
+  const defaultEnv = getDefaultEnv();
   const prefix = servicePrefix ? servicePrefix : defaultEnv.servicePrefix;
 
   // Start ohara manager server
