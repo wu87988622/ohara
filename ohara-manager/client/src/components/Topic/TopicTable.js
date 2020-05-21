@@ -133,6 +133,15 @@ function TopicTable(props) {
     };
   };
 
+  const sort = (a, b) => {
+    if (a !== b) {
+      // to find nulls
+      if (!a) return -1;
+      if (!b) return 1;
+    }
+    return a < b ? -1 : a > b ? 1 : 0;
+  };
+
   return (
     <>
       <Table
@@ -152,6 +161,9 @@ function TopicTable(props) {
             title: 'Name',
             customFilterAndSearch: (filterValue, topic) => {
               return includes(toUpper(topic.displayName), toUpper(filterValue));
+            },
+            customSort: (topic, anotherTopic) => {
+              return sort(topic?.displayName, anotherTopic?.displayName);
             },
             render: topic => {
               return topic.displayName;
@@ -194,6 +206,7 @@ function TopicTable(props) {
                 </>
               );
             },
+            sorting: false,
           },
           {
             title: 'State',
