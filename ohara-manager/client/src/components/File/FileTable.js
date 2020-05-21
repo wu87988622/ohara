@@ -27,6 +27,7 @@ import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 
 import Table from 'components/common/Table/MuiTable';
+import FileClassInfoDialog from './FileClassInfoDialog';
 import FileDeleteDialog from './FileDeleteDialog';
 import FileRemoveDialog from './FileRemoveDialog';
 import FileDownload from './FileDownload';
@@ -72,6 +73,7 @@ function FileTable(props) {
   const fileDownloadRef = useRef(null);
 
   const [activeFile, setActiveFile] = useState();
+  const [isClassInfoDialogOpen, setIsClassInfoDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
 
@@ -131,6 +133,11 @@ function FileTable(props) {
     }
   };
 
+  const handleViewIconClick = file => {
+    setIsClassInfoDialogOpen(true);
+    setActiveFile(file);
+  };
+
   const handleDeleteDialogConfirm = fileToDelete => {
     onDelete(fileToDelete);
     setIsDeleteDialogOpen(false);
@@ -182,6 +189,11 @@ function FileTable(props) {
       return (
         <Actions
           actions={[
+            {
+              name: 'view',
+              onClick: handleViewIconClick,
+              tooltip: 'View file',
+            },
             {
               hidden: !options?.showDownloadIcon,
               name: 'download',
@@ -303,15 +315,20 @@ function FileTable(props) {
         }}
         title={title}
       />
-      <FileDeleteDialog
-        isOpen={isDeleteDialogOpen}
+      <FileClassInfoDialog
         file={activeFile}
+        isOpen={isClassInfoDialogOpen}
+        onClose={() => setIsClassInfoDialogOpen(false)}
+      />
+      <FileDeleteDialog
+        file={activeFile}
+        isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteDialogConfirm}
       />
       <FileRemoveDialog
-        isOpen={isRemoveDialogOpen}
         file={activeFile}
+        isOpen={isRemoveDialogOpen}
         onClose={() => setIsRemoveDialogOpen(false)}
         onConfirm={handleRemoveDialogConfirm}
       />
