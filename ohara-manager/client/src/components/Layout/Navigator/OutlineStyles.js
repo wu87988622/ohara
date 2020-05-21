@@ -18,11 +18,18 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme, isExpanded }) => css`
-    /* 58px -> outline heading height */
-    height: ${isExpanded ? 'calc(50% - 58px)' : 'calc(100% - 58px)'};
+    /* 
+       Since pipeline list is affecting outline height, we have to calculate
+       this when it's expanded or collapsed
+
+       58px -> outline heading height
+       108px -> pipeline heading (48px) + workspace name (60px)
+     */
+
+    height: ${isExpanded ? 'calc(50% - 58px)' : 'calc(100% - 108px)'};
 
     .scrollbar-wrapper {
-      height: 100%;
+      height: ${isExpanded ? '100%' : 'calc(100% - 58px)'};
 
       /* 
         TODO: Override react-scrollbars-custom's default styles with props or custom styles
