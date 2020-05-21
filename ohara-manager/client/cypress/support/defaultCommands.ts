@@ -129,7 +129,7 @@ Cypress.Commands.add(
               cy.get('input[name=port]').type(nodePort);
               cy.get('input[name=user]').type(nodeUser);
               cy.get('input[name=password]').type(nodePass);
-              cy.findByText(/^add$/i).click();
+              cy.findByText(/^create$/i).click();
             }
             cy.findByText(nodeHost)
               .siblings('td')

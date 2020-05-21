@@ -42,7 +42,7 @@ it('should fetch a worker', () => {
 
     const input = '   ^-a 10s     ';
     const expected = '--a 2999ms u';
-    const subs = '    ^-----------';
+    const subs = ['^-----------', '--^ 2999ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -89,7 +89,7 @@ it('fetch worker multiple times within period should get first result', () => {
     const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
     const expected = '--a 2999ms u-';
-    const subs = '    ^------------';
+    const subs = ['^------------', '--^ 2999ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -140,7 +140,7 @@ it('fetch worker multiple times without period should get latest result', () => 
     const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
     const input = '   ^-a 2s b         ';
     const expected = '--a 2s b 2999ms u';
-    const subs = '    ^----------------';
+    const subs = ['^----------------', '--^ 2s !', '--- 2s ^ 2999ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -205,7 +205,7 @@ it('throw exception of fetch worker should also trigger event log action', () =>
 
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const subs = ['^-------!', '--(^!)'];
 
     const action$ = hot(input, {
       a: {

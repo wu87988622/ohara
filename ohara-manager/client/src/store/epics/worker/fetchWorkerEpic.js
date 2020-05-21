@@ -27,6 +27,7 @@ import {
   retryWhen,
   concatMap,
   delay,
+  takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
@@ -107,5 +108,10 @@ export default action$ =>
     ofType(actions.fetchWorker.TRIGGER),
     map(action => action.payload),
     throttleTime(1000),
-    switchMap(params => fetchWorker$(params)),
+    switchMap(params =>
+      fetchWorker$(params).pipe(
+        // Stop fetching worker info once the delete workspace action is triggered
+        takeUntil(action$.pipe(ofType(actions.deleteWorkspace.TRIGGER))),
+      ),
+    ),
   );

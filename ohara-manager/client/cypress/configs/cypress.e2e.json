@@ -4,7 +4,8 @@
   "reporterOptions": {
     "mochaFile": "../test-reports/e2eReport-[hash].xml",
     "toConsole": true,
-    "jenkinsMode": true
+    "jenkinsMode": true,
+    "rootSuiteTitle": "E2E Tests"
   },
   "screenshotsFolder": "cypress/screenshots/e2e",
   "video": true,
