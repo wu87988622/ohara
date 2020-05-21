@@ -176,7 +176,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
   @Test
   def testColumnsDefinition(): Unit =
     result(connectorAdmin.connectorDefinitions())
-      .map(_.settingDefinitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
+      .map(_._2.settingDefinitions.filter(_.key() == ConnectorDefUtils.COLUMNS_DEFINITION.key()).head)
       .foreach { definition =>
         definition.tableKeys().size() should not be 0
       }
@@ -185,12 +185,12 @@ class TestConnectorAdmin extends With3Brokers3Workers {
   def testAllPluginDefinitions(): Unit = {
     val plugins = result(connectorAdmin.connectorDefinitions())
     plugins.size should not be 0
-    plugins.foreach(plugin => check(plugin.settingDefinitions))
+    plugins.foreach(plugin => check(plugin._2.settingDefinitions))
   }
 
   @Test
   def testListDefinitions(): Unit = {
-    check(result(connectorAdmin.definitions(classOf[MyConnector].getName)))
+    check(result(connectorAdmin.connectorDefinition(classOf[MyConnector].getName)).settingDefinitions)
   }
 
   private[this] def check(settingDefinitionS: Seq[SettingDef]): Unit = {

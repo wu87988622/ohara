@@ -114,11 +114,14 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
     // make sure all workers have loaded the test-purposed connector.
     result(wkApi.list()).find(_.name == wkCluster.name).get.nodeNames.foreach { _ =>
       val connectorAdmin = ConnectorAdmin(wkCluster)
+
       await(
         () =>
-          try result(connectorAdmin.plugins()).exists(_.className == classOf[IncludeAllTypesSinkConnector].getName)
-            && result(connectorAdmin.plugins()).exists(_.className == classOf[IncludeAllTypesSourceConnector].getName)
-          catch {
+          try {
+            result(connectorAdmin.connectorDefinition(classOf[IncludeAllTypesSinkConnector].getName))
+            result(connectorAdmin.connectorDefinition(classOf[IncludeAllTypesSourceConnector].getName))
+            true
+          } catch {
             case _: Throwable => false
           }
       )

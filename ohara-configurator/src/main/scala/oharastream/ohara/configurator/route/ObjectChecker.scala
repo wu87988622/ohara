@@ -612,7 +612,7 @@ object ObjectChecker {
                       serviceCollie.workerCollie
                         .connectorAdmin(workerClusterInfo)
                         .flatMap(_.activeConnectors())
-                        .map(_.contains(key.connectorNameOnKafka()))
+                        .map(_.contains(key))
                         .map(if (_) RUNNING else STOPPED)
                         .map(condition => Some(connectorInfo -> condition))
                   }

@@ -24,11 +24,10 @@ import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.client.kafka.ConnectorAdmin.{Creator, Validator}
 import oharastream.ohara.client.kafka.WorkerJson.{
-  KafkaConnectorConfig,
   ConnectorCreationResponse,
+  KafkaConnectorConfig,
   KafkaConnectorInfo,
   KafkaConnectorStatus,
-  KafkaPlugin,
   KafkaTaskStatus
 }
 import oharastream.ohara.common.setting.ConnectorKey
@@ -40,49 +39,48 @@ import org.apache.kafka.connect.source.SourceConnector
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
-  private[this] val cachedConnectors      = new ConcurrentHashMap[String, Map[String, String]]()
-  private[this] val cachedConnectorsState = new ConcurrentHashMap[String, State]()
+  private[this] val cachedConnectors      = new ConcurrentHashMap[ConnectorKey, Map[String, String]]()
+  private[this] val cachedConnectorsState = new ConcurrentHashMap[ConnectorKey, State]()
 
   override def connectorCreator(): Creator = new Creator(ConnectorFormatter.of()) {
     override protected def doCreate(
       executionContext: ExecutionContext,
       creation: Creation
     ): Future[ConnectorCreationResponse] =
-      if (cachedConnectors.contains(creation.name()))
+      if (cachedConnectors.contains(ConnectorKey.requirePlain(creation.name())))
         Future.failed(new IllegalStateException(s"the connector:${creation.name()} exists!"))
       else {
         import scala.jdk.CollectionConverters._
-        cachedConnectors.put(creation.name(), creation.configs().asScala.toMap)
-        cachedConnectorsState.put(creation.name(), State.RUNNING)
+        cachedConnectors.put(ConnectorKey.requirePlain(creation.name()), creation.configs().asScala.toMap)
+        cachedConnectorsState.put(ConnectorKey.requirePlain(creation.name()), State.RUNNING)
         Future.successful(ConnectorCreationResponse(creation.name(), creation.configs().asScala.toMap, Seq.empty))
       }
   }
 
-  override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
-    try if (cachedConnectors.remove(connectorName) == null)
-      Future.failed(new IllegalStateException(s"Connector:$connectorName doesn't exist!"))
+  override def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
+    try if (cachedConnectors.remove(connectorKey) == null)
+      Future.failed(new IllegalStateException(s"Connector:$connectorKey doesn't exist!"))
     else Future.successful(())
-    finally cachedConnectorsState.remove(connectorName)
-  // TODO; does this work? by chia
-  override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] =
-    Future.successful(cachedConnectors.keys.asScala.map(KafkaPlugin(_, "unknown", "unknown")).toSeq)
-  override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+    finally cachedConnectorsState.remove(connectorKey)
+
+  override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorKey]] =
     Future.successful(cachedConnectors.keys.asScala.toSeq)
+
   override def connectionProps: String = "Unknown"
+
   override def status(
     connectorKey: ConnectorKey
   )(implicit executionContext: ExecutionContext): Future[KafkaConnectorInfo] =
-    if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
-      Future.failed(new IllegalArgumentException(s"Connector:${connectorKey.connectorNameOnKafka()} doesn't exist"))
+    if (!cachedConnectors.containsKey(connectorKey))
+      Future.failed(new IllegalArgumentException(s"Connector:$connectorKey doesn't exist"))
     else
       Future.successful(
         KafkaConnectorInfo(
-          connectorKey.connectorNameOnKafka(),
-          KafkaConnectorStatus(cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "fake id", None),
+          KafkaConnectorStatus(cachedConnectorsState.get(connectorKey).name, "fake id", None),
           Seq.empty
         )
       )
@@ -90,31 +88,31 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
   override def config(
     connectorKey: ConnectorKey
   )(implicit executionContext: ExecutionContext): Future[KafkaConnectorConfig] = {
-    val map = cachedConnectors.get(connectorKey.connectorNameOnKafka())
+    val map = cachedConnectors.get(connectorKey)
     if (map == null)
-      Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
+      Future.failed(new IllegalArgumentException(s"$connectorKey doesn't exist"))
     else Future.successful(map.toJson.convertTo[KafkaConnectorConfig])
   }
 
   override def taskStatus(connectorKey: ConnectorKey, id: Int)(
     implicit executionContext: ExecutionContext
   ): Future[KafkaTaskStatus] =
-    if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
-      Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
+    if (!cachedConnectors.containsKey(connectorKey))
+      Future.failed(new IllegalArgumentException(s"$connectorKey doesn't exist"))
     else
       Future.successful(
-        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey.connectorNameOnKafka()).name, "worker_id", None)
+        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey).name, "worker_id", None)
       )
 
   override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
-      Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
-    else Future.successful(cachedConnectorsState.put(connectorKey.connectorNameOnKafka(), State.PAUSED))
+    if (!cachedConnectors.containsKey(connectorKey))
+      Future.failed(new IllegalArgumentException(s"$connectorKey doesn't exist"))
+    else Future.successful(cachedConnectorsState.put(connectorKey, State.PAUSED))
 
   override def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    if (!cachedConnectors.containsKey(connectorKey.connectorNameOnKafka()))
-      Future.failed(new IllegalArgumentException(s"${connectorKey.connectorNameOnKafka()} doesn't exist"))
-    else Future.successful(cachedConnectorsState.put(connectorKey.connectorNameOnKafka(), State.RUNNING))
+    if (!cachedConnectors.containsKey(connectorKey))
+      Future.failed(new IllegalArgumentException(s"$connectorKey doesn't exist"))
+    else Future.successful(cachedConnectorsState.put(connectorKey, State.RUNNING))
 
   override def connectorValidator(): Validator = new Validator(ConnectorFormatter.of()) {
     override protected def doValidate(
@@ -136,8 +134,12 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
     }
   }
 
-  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]] =
-    Future.successful(ReflectionUtils.localConnectorDefinitions)
+  override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Map[String, ClassInfo]] =
+    Future.successful(
+      ReflectionUtils.localConnectorDefinitions
+        .map(d => d.className -> d)
+        .toMap
+    )
 }
 
 object FakeConnectorAdmin {

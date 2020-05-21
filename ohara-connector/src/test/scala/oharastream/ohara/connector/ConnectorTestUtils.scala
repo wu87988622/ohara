@@ -57,7 +57,7 @@ object ConnectorTestUtils {
       () => {
         val connectorAdmin = ConnectorAdmin(workersConnProps)
         try {
-          Await.result(connectorAdmin.activeConnectors(), 10 seconds).contains(connectorKey.connectorNameOnKafka())
+          Await.result(connectorAdmin.activeConnectors(), 10 seconds).contains(connectorKey)
           val status = Await.result(connectorAdmin.status(connectorKey), 10 seconds)
           status.connector.state == State.RUNNING.name && status.tasks.nonEmpty && status.tasks
             .forall(_.state == State.RUNNING.name)

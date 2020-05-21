@@ -16,6 +16,8 @@
 
 package oharastream.ohara.common.setting;
 
+import java.util.Optional;
+
 /**
  * the key of connector object. It is almost same with {@link ObjectKey} excepting for the method
  * "connectorNameOnKafka". the method is a helper method used to generate the connector name on
@@ -30,6 +32,27 @@ public interface ConnectorKey extends ObjectKey {
    */
   static ConnectorKey of(String group, String name) {
     return new KeyImpl(group, name);
+  }
+
+  /**
+   * parse plain string to connector key
+   *
+   * @param string plain string
+   * @return connector key
+   */
+  static Optional<ConnectorKey> ofPlain(String string) {
+    return ObjectKey.ofPlain(string).map(key -> ConnectorKey.of(key.group(), key.name()));
+  }
+
+  /**
+   * parse plain string to connector key. Otherwise, it throws IllegalArgumentException.
+   *
+   * @param string plain string
+   * @return connector key
+   */
+  static ConnectorKey requirePlain(String string) {
+    ObjectKey key = ObjectKey.requirePlain(string);
+    return ConnectorKey.of(key.group(), key.name());
   }
 
   static String toJsonString(ConnectorKey key) {

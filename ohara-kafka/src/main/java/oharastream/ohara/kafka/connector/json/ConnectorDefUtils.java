@@ -292,6 +292,13 @@ public final class ConnectorDefUtils {
     }
   }
 
+  /**
+   * parse ohara definition from kafak config. It throws exception if the input connector is NOT
+   * ohara connector
+   *
+   * @param configKeyInfo kafka config
+   * @return ohara definition
+   */
   public static SettingDef of(ConfigKeyInfo configKeyInfo) {
     return SettingDef.ofJson(configKeyInfo.displayName());
   }

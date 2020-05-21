@@ -21,6 +21,7 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.WorkerCollie
 import oharastream.ohara.client.configurator.v0.ConnectorApi
 import oharastream.ohara.client.configurator.v0.ConnectorApi._
+import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
@@ -59,12 +60,12 @@ private[configurator] object ConnectorRoute {
               catch {
                 case e: Throwable =>
                   LOG.error(s"failed to get definitions from worker cluster:${workerClusterInfo.key}", e)
-                  Future.successful(Seq.empty)
+                  Future.successful(Map.empty[String, ClassInfo])
               }
-            case STOPPED => Future.successful(Seq.empty)
+            case STOPPED => Future.successful(Map.empty[String, ClassInfo])
           }
       }
-      .map(_.find(_.className == creation.className).map(_.settingDefinitions).getOrElse(Seq.empty))
+      .map(_.get(creation.className).map(_.settingDefinitions).getOrElse(Seq.empty))
       .map { definitions =>
         ConnectorInfo(
           settings = CREATION_FORMAT

@@ -252,13 +252,13 @@ private[configurator] object InspectRoute {
               .flatMap(workerCollie.connectorAdmin)
               .flatMap(_.connectorDefinitions())
               .recover {
-                case _: Throwable => Seq.empty
+                case _: Throwable => Map.empty
               }
-              .map { classInfos =>
+              .map { classDefinitions =>
                 ServiceDefinition(
                   imageName = WorkerApi.IMAGE_NAME_DEFAULT,
                   settingDefinitions = WorkerApi.DEFINITIONS,
-                  classInfos = classInfos
+                  classInfos = classDefinitions.values.toSeq
                 )
               }
           )

@@ -78,8 +78,8 @@ object WorkerJson {
   private[kafka] implicit val KAFKA_TASK_STATUS_JSON_FORMAT: RootJsonFormat[KafkaTaskStatus] = jsonFormat4(
     KafkaTaskStatus
   )
-  final case class KafkaConnectorInfo(name: String, connector: KafkaConnectorStatus, tasks: Seq[KafkaTaskStatus])
-  private[kafka] implicit val KAFKA_CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[KafkaConnectorInfo] = jsonFormat3(
+  final case class KafkaConnectorInfo(connector: KafkaConnectorStatus, tasks: Seq[KafkaTaskStatus])
+  private[kafka] implicit val KAFKA_CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[KafkaConnectorInfo] = jsonFormat2(
     KafkaConnectorInfo
   )
 

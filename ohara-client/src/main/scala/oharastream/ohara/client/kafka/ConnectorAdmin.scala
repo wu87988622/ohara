@@ -39,6 +39,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
+import scala.compat.java8.OptionConverters._
 
 /**
   * a helper class used to send the rest request to kafka worker.
@@ -66,15 +67,7 @@ trait ConnectorAdmin {
     * @param connectorKey connector's key
     * @return async future containing nothing
     */
-  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
-    delete(connectorKey.connectorNameOnKafka())
-
-  /**
-    * delete a connector from worker cluster. Make sure you do know the real name!
-    * @param connectorName connector's name
-    * @return async future containing nothing
-    */
-  def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit]
+  def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
     * pause a running connector
@@ -91,20 +84,11 @@ trait ConnectorAdmin {
   def resume(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit]
 
   /**
-    * list available plugins.
-    * This main difference between plugins() and connectors() is that plugins() spend only one request
-    * to remote server. In contrast, connectors() needs multi-requests to fetch all details from
-    * remote server. Furthermore, connectors list only sub class from ohara's connectors
-    * @return async future containing connector details
-    */
-  def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]]
-
-  /**
     * list ohara's connector.
     * NOTED: the plugins which are not sub class of ohara connector are not included.
     * @return async future containing connector details
     */
-  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]]
+  def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Map[String, ClassInfo]]
 
   /**
     * get the definitions for specific connector
@@ -113,15 +97,13 @@ trait ConnectorAdmin {
     * @return definition
     */
   def connectorDefinition(className: String)(implicit executionContext: ExecutionContext): Future[ClassInfo] =
-    connectorDefinitions().map(
-      _.find(_.className == className).getOrElse(throw new NoSuchElementException(s"$className does not exist"))
-    )
+    connectorDefinitions().map(_.getOrElse(className, throw new NoSuchElementException(s"$className does not exist")))
 
   /**
     * list available plugin's names
     * @return async future containing connector's names
     */
-  def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]]
+  def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorKey]]
 
   /**
     * @return worker's connection props
@@ -156,25 +138,10 @@ trait ConnectorAdmin {
     * @return true if connector exists
     */
   def exist(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
-    activeConnectors().map(_.contains(connectorKey.connectorNameOnKafka()))
+    activeConnectors().map(_.contains(connectorKey))
 
   def nonExist(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     exist(connectorKey).map(!_)
-
-  /**
-    * list all definitions for connector.
-    * This is a helper method which passing "nothing" to validate the connector and then fetch only the definitions from report
-    * @param connectorClassName class name
-    * @param executionContext thread pool
-    * @return definition list
-    */
-  def definitions(connectorClassName: String)(implicit executionContext: ExecutionContext): Future[Seq[SettingDef]] =
-    connectorValidator()
-      .className(connectorClassName)
-      // kafka 2.x requires topic names for all sink connectors so we add a random topic for this request.
-      .topicKey(TopicKey.of("fake_group", "fake_name"))
-      .run()
-      .map(_.settings().asScala.map(_.definition()).toSeq)
 }
 
 object ConnectorAdmin {
@@ -293,43 +260,83 @@ object ConnectorAdmin {
         }
       }
 
-      override def delete(connectorName: String)(implicit executionContext: ExecutionContext): Future[Unit] =
+      override def delete(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =
         retry(
-          () => HttpExecutor.SINGLETON.delete[KafkaError](s"http://$workerAddress/connectors/$connectorName"),
-          s"delete $connectorName"
+          () =>
+            HttpExecutor.SINGLETON
+              .delete[KafkaError](s"http://$workerAddress/connectors/${connectorKey.connectorNameOnKafka()}"),
+          s"delete $connectorKey"
         )
 
-      override def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] =
+      /**
+        * list available plugins.
+        * This main difference between plugins() and connectors() is that plugins() spend only one request
+        * to remote server. In contrast, connectors() needs multi-requests to fetch all details from
+        * remote server. Furthermore, connectors list only sub class from ohara's connectors
+        * @return async future containing connector details
+        */
+      private[this] def plugins()(implicit executionContext: ExecutionContext): Future[Seq[KafkaPlugin]] =
         retry(
           () => HttpExecutor.SINGLETON.get[Seq[KafkaPlugin], KafkaError](s"http://$workerAddress/connector-plugins"),
           s"fetch plugins $workerAddress"
         )
 
-      override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Seq[ClassInfo]] =
-        plugins()
-          .flatMap(Future.traverse(_) { p =>
-            definitions(p.className)
-              .map(
-                definitions =>
-                  Some(
-                    ClassInfo(
-                      className = p.className,
-                      settingDefinitions = definitions
-                    )
-                  )
-              )
-              .recover {
-                // It should fail if we try to parse non-ohara connectors
-                case _: IllegalArgumentException => None
-              }
-          })
-          .map(_.flatten)
+      /**
+        * list all definitions for connector.
+        * This is a helper method which passing "nothing" to validate the connector and then fetch only the definitions from report
+        * @param connectorClassName class name
+        * @param executionContext thread pool
+        * @return definition list
+        */
+      private[this] def definitions(
+        connectorClassName: String
+      )(implicit executionContext: ExecutionContext): Future[Seq[SettingDef]] =
+        connectorValidator()
+          .className(connectorClassName)
+          // kafka 2.x requires topic names for all sink connectors so we add a random topic for this request.
+          .topicKey(TopicKey.of("fake_group", "fake_name"))
+          .run()
+          .map(_.settings().asScala.map(_.definition()).toSeq)
 
-      override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[String]] =
+      private[this] def connectorDefinitions(
+        classNames: Set[String]
+      )(implicit executionContext: ExecutionContext): Future[Map[String, ClassInfo]] =
+        Future
+          .traverse(classNames)(
+            className =>
+              definitions(className)
+                .map(
+                  definitions =>
+                    Some(
+                      ClassInfo(
+                        className = className,
+                        settingDefinitions = definitions
+                      )
+                    )
+                )
+                .recover {
+                  // It should fail if we try to parse non-ohara connectors
+                  case _: IllegalArgumentException => None
+                }
+          )
+          .map(_.flatten.map(s => s.className -> s).toMap)
+
+      override def connectorDefinition(
+        className: String
+      )(implicit executionContext: ExecutionContext): Future[ClassInfo] =
+        connectorDefinitions(Set(className))
+          .map(_.getOrElse(className, throw new NoSuchElementException(s"$className is not ohara connector")))
+
+      override def connectorDefinitions()(implicit executionContext: ExecutionContext): Future[Map[String, ClassInfo]] =
+        plugins()
+          .map(_.map(_.className).toSet)
+          .flatMap(connectorDefinitions)
+
+      override def activeConnectors()(implicit executionContext: ExecutionContext): Future[Seq[ConnectorKey]] =
         retry(
           () => HttpExecutor.SINGLETON.get[Seq[String], KafkaError](s"http://$workerAddress/connectors"),
           "fetch active connectors"
-        )
+        ).map(_.flatMap(s => ConnectorKey.ofPlain(s).asScala))
 
       override def status(connectorKey: ConnectorKey)(
         implicit executionContext: ExecutionContext
@@ -493,7 +500,7 @@ object ConnectorAdmin {
       this
     }
 
-    def topicKey(topicKey: TopicKey): Creator = topicKeys((Set(topicKey)))
+    def topicKey(topicKey: TopicKey): Creator = topicKeys(Set(topicKey))
 
     def topicKeys(topicKeys: Set[TopicKey]): Creator = {
       format.topicKeys(topicKeys.asJava)

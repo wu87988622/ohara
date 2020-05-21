@@ -82,7 +82,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
   }
 
   private[this] def checkConnector(connectorKey: ConnectorKey): Unit = {
-    await(() => result(connectorAdmin.activeConnectors()).contains(connectorKey.connectorNameOnKafka()))
+    await(() => result(connectorAdmin.activeConnectors()).contains(connectorKey))
     await(() => result(connectorAdmin.config(connectorKey)).topicNames.nonEmpty)
     await(
       () =>
@@ -276,7 +276,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
     )
 
     val activeConnectors = result(connectorAdmin.activeConnectors())
-    activeConnectors.contains(connectorKey.connectorNameOnKafka()) shouldBe true
+    activeConnectors.contains(connectorKey) shouldBe true
 
     val config = result(connectorAdmin.config(connectorKey))
     config.topicNames shouldBe topicKeys.map(_.topicNameOnKafka)
@@ -297,6 +297,6 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
     task.worker_id.isEmpty shouldBe false
 
     result(connectorAdmin.delete(connectorKey))
-    result(connectorAdmin.activeConnectors()).contains(connectorKey.connectorNameOnKafka()) shouldBe false
+    result(connectorAdmin.activeConnectors()).contains(connectorKey) shouldBe false
   }
 }
