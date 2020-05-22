@@ -150,8 +150,7 @@ export const useConnectors = () => {
   const isConnectorLoading = useIsConnectorLoading();
 
   useEffect(() => {
-    if (isConnectorLoaded || !isAppReady || isConnectorLoading) return;
-
+    if (isConnectorLoaded || isConnectorLoading || !isAppReady) return;
     fetchConnectors();
   }, [fetchConnectors, isAppReady, isConnectorLoaded, isConnectorLoading]);
 

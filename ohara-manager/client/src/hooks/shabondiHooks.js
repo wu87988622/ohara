@@ -15,7 +15,7 @@
  */
 
 import { merge } from 'lodash';
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
@@ -142,20 +142,20 @@ export const useShabondiGroup = () => {
 };
 
 export const useShabondis = () => {
-  const getShabondiByGroup = useMemo(selectors.makeGetAllShabondisByGroup, []);
+  const isAppReady = hooks.useIsAppReady();
+  const workerId = hooks.useWorkerId();
   const group = useShabondiGroup();
   const isShabondiLoaded = useIsShabondiLoaded();
   const isShabondiLoading = useIsShabondiLoading();
   const fetchShabondis = useFetchShabondisAction();
-  const workerId = hooks.useWorkerId();
 
   useEffect(() => {
-    if (isShabondiLoaded || isShabondiLoading) return;
+    if (isShabondiLoaded || isShabondiLoading || !isAppReady) return;
     fetchShabondis();
-  }, [fetchShabondis, isShabondiLoaded, isShabondiLoading]);
+  }, [fetchShabondis, isAppReady, isShabondiLoaded, isShabondiLoading]);
 
   return useSelector(state => {
-    const shabondis = getShabondiByGroup(state, { group });
+    const shabondis = selectors.getShabondisByGroup(state, { group });
     const results = shabondis.map(shabondi => {
       const info = selectors.getInfoById(state, { id: workerId });
       const settingDefinitions =

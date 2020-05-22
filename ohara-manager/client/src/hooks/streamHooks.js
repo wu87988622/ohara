@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import { merge, isEmpty } from 'lodash';
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -118,12 +118,12 @@ export const useStreams = () => {
   const fetchStreams = useFetchStreamsAction();
   const isStreamLoaded = useIsStreamLoaded();
   const isStreamLoading = useIsStreamLoading();
+  const isAppReady = hooks.useIsAppReady();
 
   useEffect(() => {
-    if (isStreamLoaded || isStreamLoading) return;
-
+    if (isStreamLoaded || isStreamLoading || !isAppReady) return;
     fetchStreams();
-  }, [fetchStreams, isStreamLoading, isStreamLoaded]);
+  }, [fetchStreams, isAppReady, isStreamLoaded, isStreamLoading]);
 
   return useSelector(state => {
     const streams = selectors.getStreamByGroup(state, { group });
@@ -131,7 +131,7 @@ export const useStreams = () => {
       const { stream__class: className, jarKey } = stream;
       const info = selectors.getStreamInfo(state, { jarKey, className });
       const settingDefinitions = info?.settingDefinitions || [];
-      return _.merge(stream, { settingDefinitions });
+      return merge(stream, { settingDefinitions });
     });
     return results;
   });
@@ -173,13 +173,13 @@ export const useUpdateStreamLinkAction = () => {
   return useCallback(
     (values, options) => {
       let newValues = {};
-      if (!_.isEmpty(values.from)) {
+      if (!isEmpty(values.from)) {
         newValues = {
           ...values,
           from: values.from.map(t => ({ ...t, group: topicGroup })),
           group: streamGroup,
         };
-      } else if (!_.isEmpty(values.to)) {
+      } else if (!isEmpty(values.to)) {
         newValues = {
           ...values,
           to: values.to.map(t => ({ ...t, group: topicGroup })),

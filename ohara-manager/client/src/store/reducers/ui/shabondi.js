@@ -24,7 +24,11 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
+    // Ensure the loading flag is set to true when both REQUEST and TRIGGER
+    // actions are fired. This prevents the fetch action from making multiple
+    // requests at the same time
     case actions.fetchShabondis.REQUEST:
+    case actions.fetchConnectors.TRIGGER:
       return {
         ...state,
         loading: true,

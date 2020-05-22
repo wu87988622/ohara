@@ -18,13 +18,11 @@ import _ from 'lodash';
 import { createSelector } from 'reselect';
 
 const getEntities = state => state?.entities?.shabondis;
-const getIdFromProps = (_, props) => props?.id;
+
 const getGroupFromProps = (_, props) => props?.group;
 
-export const makeGetShabondiById = () =>
-  createSelector([getEntities, getIdFromProps], (entities, id) => entities[id]);
-
-export const makeGetAllShabondisByGroup = () =>
-  createSelector([getEntities, getGroupFromProps], (entities, group) =>
+export const getShabondisByGroup = createSelector(
+  [getEntities, getGroupFromProps],
+  (entities, group) =>
     _.values(entities).filter(shabondi => shabondi.group === group),
-  );
+);
