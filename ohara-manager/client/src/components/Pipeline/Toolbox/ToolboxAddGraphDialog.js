@@ -27,10 +27,11 @@ import {
   validServiceName,
   composeValidators,
   maxLength,
+  checkDuplicate,
 } from 'utils/validate';
 
 const ToolboxAddGraphDialog = props => {
-  const { isOpen, onClose, onConfirm, kind } = props;
+  const { isOpen, onClose, onConfirm, kind, paperElementNames } = props;
 
   const onSubmit = async (values, form) => {
     await onConfirm(values.newGraph);
@@ -72,6 +73,7 @@ const ToolboxAddGraphDialog = props => {
                   required,
                   validServiceName,
                   maxLength(25),
+                  checkDuplicate(paperElementNames),
                 )}
                 disabled={submitting}
                 autoFocus
@@ -90,6 +92,7 @@ ToolboxAddGraphDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   kind: PropTypes.string.isRequired,
+  paperElementNames: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default ToolboxAddGraphDialog;

@@ -41,8 +41,6 @@ const Toolbox = props => {
   } = props;
 
   const currentWorker = hooks.useWorker();
-  const showMessage = hooks.useShowMessage();
-
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState(null);
   const [cellInfo, setCellInfo] = React.useState({
@@ -81,14 +79,6 @@ const Toolbox = props => {
   });
 
   const handleAddGraph = newName => {
-    if (!utils.checkUniqueName(newName, paperApi)) {
-      setIsOpen(false);
-      utils.removeTemporaryCell(paperApi);
-      return showMessage(
-        `The name "${newName}" is already taken in this pipeline, please use a different name!`,
-      );
-    }
-
     const params = {
       ...cellInfo,
       displayName: newName,
@@ -182,12 +172,11 @@ const Toolbox = props => {
         setCellInfo,
         setIsOpen,
         paperApi,
-        showMessage,
       });
     };
 
     renderToolbox();
-  }, [connectors, paperApi, searchResults, showMessage]);
+  }, [connectors, paperApi, searchResults]);
 
   const handleScroll = () => {
     const scrollTop = toolboxBodyRef.current.scrollTop;
@@ -245,6 +234,10 @@ const Toolbox = props => {
           isOpen={isOpen}
           kind={cellInfo.kind}
           onConfirm={handleAddGraph}
+          paperElementNames={paperApi
+            .getCells()
+            .filter(cell => cell.cellType !== 'standard.Link')
+            .map(element => element.name)}
           onClose={() => {
             setIsOpen(false);
             utils.removeTemporaryCell(paperApi);

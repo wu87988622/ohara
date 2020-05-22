@@ -37,15 +37,6 @@ export const removeTemporaryCell = paperApi => {
     .forEach(cell => paperApi.removeElement(cell.id));
 };
 
-export const checkUniqueName = (name, paperApi) => {
-  const isUnique = paperApi
-    .getCells()
-    .filter(cell => cell.cellType === 'html.Element')
-    .every(element => element.name !== name);
-
-  return Boolean(isUnique);
-};
-
 export const createToolboxList = params => {
   const {
     connectors,
@@ -144,10 +135,14 @@ export const createToolboxList = params => {
   const displayTopics = isNull(searchResults) ? topics : searchResults.topics;
 
   displayTopics.forEach((topic, index) => {
-    // Shared topic can only be added into the Paper once
+    // TODO: It's a bad UI practice to disable an element without any hints
+
+    // 1. Shared topic can only be added into the Paper once
+    // 2. Disable the topic If the name is already taken by other elements
     const isDisabled = paperApi
-      .getCells('topic')
-      .some(t => t.name === topic.name);
+      .getCells()
+      .filter(cell => cell.cellType !== 'standard.Link')
+      .some(element => element.name === topic.name);
 
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
@@ -203,7 +198,6 @@ export const enableDragAndDrop = params => {
     setCellInfo,
     setIsOpen: openAddConnectorDialog,
     paperApi,
-    showMessage,
   } = params;
 
   toolPapers.forEach(toolPaper => {
@@ -316,16 +310,10 @@ export const enableDragAndDrop = params => {
 
           if (isTopic) {
             if (isShared) {
-              if (!checkUniqueName(name, paperApi)) {
-                showMessage(
-                  `The name "${name}" is already taken in this pipeline, please use a different name!`,
-                );
-              } else {
-                paperApi.addElement({
-                  ...params,
-                  displayName: name,
-                });
-              }
+              paperApi.addElement({
+                ...params,
+                displayName: name,
+              });
             } else {
               paperApi.addElement({
                 ...params,
