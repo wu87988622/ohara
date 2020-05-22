@@ -32,7 +32,6 @@ const SettingsMain = ({
   handleChange,
   selectedComponent,
   handleClose,
-  openRestartProgressDialog,
 }) => {
   const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
@@ -40,6 +39,10 @@ const SettingsMain = ({
   });
 
   const discardWorkspace = hooks.useDiscardWorkspaceChangedSettingsAction();
+  const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
+  const restartWorkspace = hooks.useRestartWorkspaceAction();
+  const restartConfirmMessage = hooks.useRestartConfirmMessage();
+  const hasRunningServices = hooks.useHasRunningServices();
   const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
 
   return (
@@ -48,7 +51,12 @@ const SettingsMain = ({
         <RestartIndicator
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
-          onRestart={openRestartProgressDialog}
+          onRestart={() => {
+            openRestartWorkspace();
+            restartWorkspace();
+          }}
+          restartConfirmMessage={restartConfirmMessage}
+          hasRunningServices={hasRunningServices}
         />
         {sections.map(section => {
           const { heading, components, ref } = section;
@@ -103,7 +111,6 @@ SettingsMain.propTypes = {
     name: PropTypes.string,
     type: PropTypes.string,
   }),
-  openRestartProgressDialog: PropTypes.func,
 };
 
 SettingsMain.defaultProps = {

@@ -292,7 +292,7 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-    case actions.updateWorkspace.SUCCESS:
+    case actions.restartWorkspace.SUCCESS:
       return {
         ...state,
         closeDisable: false,

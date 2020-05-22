@@ -174,38 +174,40 @@ const LogProgress = props => {
           variant="determinate"
           isHide={isHide}
         />
-
-        <div className={'RightFlexDiv'} isHide={isHide}>
-          {isPause ? (
-            <Button
-              className={'SuspendButton'}
-              color="primary"
-              onClick={() => setIsRollbackConfirmDialogOpen(true)}
-              isHide={isHide}
-            >
-              ROLLBACK
-            </Button>
-          ) : (
-            <Button
-              className={'SuspendButton'}
-              color="primary"
-              onClick={onPause}
-              isHide={isHide}
-            >
-              SUSPEND
-            </Button>
-          )}
-          {isPause && (
-            <Button
-              className={'SuspendButton'}
-              color="primary"
-              onClick={onResume}
-              isHide={isHide}
-            >
-              RESUME
-            </Button>
-          )}
-        </div>
+        {false && (
+          //Hidden first will be restored at 0.11
+          <div className={'RightFlexDiv'} isHide={isHide}>
+            {isPause ? (
+              <Button
+                className={'SuspendButton'}
+                color="primary"
+                onClick={() => setIsRollbackConfirmDialogOpen(true)}
+                isHide={isHide}
+              >
+                ROLLBACK
+              </Button>
+            ) : (
+              <Button
+                className={'SuspendButton'}
+                color="primary"
+                onClick={onPause}
+                isHide={isHide}
+              >
+                SUSPEND
+              </Button>
+            )}
+            {isPause && (
+              <Button
+                className={'SuspendButton'}
+                color="primary"
+                onClick={onResume}
+                isHide={isHide}
+              >
+                RESUME
+              </Button>
+            )}
+          </div>
+        )}
       </div>
       <div className={'FlexIconButtonDiv'}>
         {isHide && (
