@@ -21,6 +21,11 @@ dependencies {
   implementation project(':ohara-common')
   implementation project(':ohara-kafka')
   implementation project(':ohara-metrics')
+  // ohara-stream is a pure java module but we still integrate scala libraries for user.
+  implementation libs.scalaJava8Compat
+  implementation libs.scalaLibrary
+  implementation libs.scalaReflect
+  implementation libs.scalaLogging
   implementation libs.commonsLang
   implementation libs.slf4jApi
   implementation libs.slf4jLog4j

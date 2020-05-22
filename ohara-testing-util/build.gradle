@@ -26,15 +26,12 @@ dependencies {
     exclude group: 'org.apache.sshd', module: 'sshd-netty'
     exclude group: 'org.slf4j', module: 'slf4j-jdk14'
   }
-  implementation libs.scalaLibrary
-  implementation libs.scalaReflect
   implementation libs.kafkaCore
   implementation libs.kafkaConnectJson
   implementation libs.kafkaConnectRuntime
   implementation libs.mysql
   implementation libs.embeddedsql
   implementation libs.ftpServer
-  implementation libs.scalaLogging
   implementation libs.slf4jApi
   implementation libs.slf4jLog4j
 

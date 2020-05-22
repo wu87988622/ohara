@@ -21,11 +21,12 @@ dependencies {
   implementation project(':ohara-kafka')
   implementation project(':ohara-stream')
   implementation project(':ohara-shabondi')
-  implementation libs.commonsNet
-  implementation libs.commonsLang
+  implementation libs.scalaJava8Compat
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging
+  implementation libs.commonsNet
+  implementation libs.commonsLang
   implementation libs.slf4jApi
   implementation libs.slf4jLog4j
   implementation libs.akkaStream

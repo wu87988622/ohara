@@ -20,11 +20,6 @@ apply from: "$rootDir/gradle/dependencies.gradle"
  * Noted: this module should NOT have any production code!!! by chia
  */
 dependencies {
-  /**
-   * scala plugin complains that we don't put scala library in production scope... by chia
-   */
-  implementation libs.scalaLibrary
-  implementation libs.scalaReflect
   implementation project(':ohara-common')
   implementation project(':ohara-client')
   implementation project(':ohara-kafka')
@@ -35,6 +30,10 @@ dependencies {
   implementation project(':ohara-metrics')
   implementation project(':ohara-stream')
   implementation project(':ohara-shabondi')
+  implementation libs.scalaJava8Compat
+  implementation libs.scalaLibrary
+  implementation libs.scalaReflect
+  implementation libs.scalaLogging
   implementation libs.kafkaConnectRuntime
   testImplementation libs.scalaLogging
   testImplementation libs.akkaHttpSprayJson

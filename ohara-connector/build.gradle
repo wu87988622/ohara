@@ -25,6 +25,7 @@ dependencies {
   implementation project(':ohara-client')
   implementation project(':ohara-kafka')
   implementation project(':ohara-metrics')
+  implementation libs.scalaJava8Compat
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging

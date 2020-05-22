@@ -24,6 +24,7 @@ dependencies {
   implementation libs.kafkaConnectRuntime
   implementation project(":ohara-stream")
   implementation project(":ohara-shabondi")
+  implementation libs.scalaJava8Compat
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging

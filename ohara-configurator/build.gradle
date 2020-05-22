@@ -30,12 +30,12 @@ dependencies {
   implementation project(":ohara-shabondi")
   implementation project(":ohara-metrics")
   implementation libs.scalaJava8Compat
-  implementation libs.kafkaClient
-  implementation libs.kafkaConnectFile
-  implementation libs.kafkaConnectRuntime
   implementation libs.scalaLibrary
   implementation libs.scalaReflect
   implementation libs.scalaLogging
+  implementation libs.kafkaClient
+  implementation libs.kafkaConnectFile
+  implementation libs.kafkaConnectRuntime
   implementation libs.slf4jApi
   implementation libs.slf4jLog4j
   implementation libs.akkaStream
