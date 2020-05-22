@@ -684,6 +684,21 @@ Http Restful
 
 Http Response
 ^^^^^^^^^^^^^
+  .. code-block:: text
+
+    .. code-block:: http
+
+      POST /blog/post.cgi HTTP/1.1
+      Host: www.example.com:443
+      Date: Mon, 23 May 2005 22:38:34 GMT
+      Content-Type: application/json; charset=UTF-8
+
+      {
+       "id": 1,
+       "title": "Example post",
+       "body": "= Document Title"
+      }
+
   .. code-block:: http
 
     POST /blog/post.cgi HTTP/1.1
@@ -691,10 +706,12 @@ Http Response
     Date: Mon, 23 May 2005 22:38:34 GMT
     Content-Type: application/json; charset=UTF-8
 
-    {"id": 1,
+    {
+     "id": 1,
      "title": "Example post",
      "body": "= Document Title"
     }
+
 
 Include file
 ^^^^^^^^^^^^
