@@ -33,20 +33,14 @@ import {
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
-import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import AddIcon from '@material-ui/icons/Add';
-import ClearIcon from '@material-ui/icons/Clear';
 import CreateIcon from '@material-ui/icons/Create';
-import DeleteIcon from '@material-ui/icons/Delete';
-import EditIcon from '@material-ui/icons/Edit';
 import RefreshOutlinedIcon from '@material-ui/icons/RefreshOutlined';
-import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
-import VisibilityIcon from '@material-ui/icons/Visibility';
 
-import Table from 'components/common/Table/MuiTable';
+import { Actions, MuiTable as Table } from 'components/common/Table';
 import { KIND, MODE } from 'const';
 import NodeCreateDialog from './NodeCreateDialog';
 import NodeDeleteDialog from './NodeDeleteDialog';
@@ -279,70 +273,53 @@ function NodeTable(props) {
         ? options?.disabledRemoveIcon(node)
         : options?.disabledRemoveIcon;
 
+      const deleteTooltip = isFunction(options?.deleteTooltip)
+        ? options?.deleteTooltip(node)
+        : options?.deleteTooltip;
+
+      const removeTooltip = isFunction(options?.removeTooltip)
+        ? options?.removeTooltip(node)
+        : options?.removeTooltip;
+
       return (
-        <>
-          {options?.showDetailIcon && (
-            <Tooltip title="View node">
-              <IconButton
-                data-testid={`view-node-${node.hostname}`}
-                onClick={() => {
-                  handleDetailIconClick(node);
-                }}
-              >
-                <VisibilityIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showEditorIcon && (
-            <Tooltip title="Edit node">
-              <IconButton
-                onClick={() => {
-                  handleEditorIconClick(node);
-                }}
-              >
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showDeleteIcon && (
-            <Tooltip title="Delete node">
-              <IconButton
-                component="div"
-                data-testid={`delete-node-${node.hostname}`}
-                disabled={disabledDeleteIcon}
-                onClick={() => {
-                  handleDeleteIconClick(node);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {showRemoveIcon(node) && (
-            <Tooltip title="Remove node">
-              <IconButton
-                component="div"
-                disabled={disabledRemoveIcon}
-                onClick={() => {
-                  handleRemoveIconClick(node);
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {showUndoIcon(node) && (
-            <Tooltip title={getUndoTooltipTitle(node)}>
-              <IconButton
-                onClick={() => {
-                  handleUndoIconClick(node);
-                }}
-              >
-                <SettingsBackupRestoreIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </>
+        <Actions
+          actions={[
+            {
+              name: 'view',
+              onClick: handleDetailIconClick,
+              tooltip: 'View node',
+              testid: `view-node-${node.hostname}`,
+            },
+            {
+              hidden: !options?.showEditorIcon,
+              name: 'edit',
+              onClick: handleEditorIconClick,
+              tooltip: 'Edit node',
+            },
+            {
+              disabled: disabledDeleteIcon,
+              hidden: !options?.showDeleteIcon,
+              name: 'delete',
+              onClick: handleDeleteIconClick,
+              tooltip: deleteTooltip || 'Delete node',
+              testid: `delete-node-${node.hostname}`,
+            },
+            {
+              disabled: disabledRemoveIcon,
+              hidden: !showRemoveIcon(node),
+              name: 'remove',
+              onClick: handleRemoveIconClick,
+              tooltip: removeTooltip || 'Remove node',
+            },
+            {
+              hidden: !showUndoIcon(node),
+              name: 'undo',
+              onClick: handleUndoIconClick,
+              tooltip: getUndoTooltipTitle(node),
+            },
+          ]}
+          data={node}
+        />
       );
     };
 
@@ -519,6 +496,8 @@ NodeTable.propTypes = {
     showRemoveIcon: PropTypes.bool,
     showTitle: PropTypes.bool,
     showServicesColumn: PropTypes.bool,
+    deleteTooltip: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    removeTooltip: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   }),
   title: PropTypes.string,
 };

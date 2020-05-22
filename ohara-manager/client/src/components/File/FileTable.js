@@ -26,13 +26,12 @@ import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 
-import Table from 'components/common/Table/MuiTable';
+import { Actions, MuiTable as Table } from 'components/common/Table';
 import FileClassInfoDialog from './FileClassInfoDialog';
 import FileDeleteDialog from './FileDeleteDialog';
 import FileRemoveDialog from './FileRemoveDialog';
 import FileDownload from './FileDownload';
 import FileUpload from './FileUpload';
-import Actions from './Actions';
 
 const defaultOptions = {
   comparison: false,

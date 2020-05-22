@@ -19,15 +19,10 @@ import PropTypes from 'prop-types';
 import { join, map, includes, isEmpty, isFunction, toUpper } from 'lodash';
 
 import Link from '@material-ui/core/Link';
-import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
-
 import CreateIcon from '@material-ui/icons/Create';
-import DeleteIcon from '@material-ui/icons/Delete';
 
-import VisibilityIcon from '@material-ui/icons/Visibility';
-
-import Table from 'components/common/Table/MuiTable';
+import { Actions, MuiTable as Table } from 'components/common/Table';
 import TopicCreateDialog from './TopicCreateDialog';
 import TopicDeleteDialog from './TopicDeleteDialog';
 import TopicDetailDialog from './TopicDetailDialog';
@@ -93,41 +88,32 @@ function TopicTable(props) {
   const renderActionColumn = () => {
     const isShow = options?.showDeleteIcon || options?.showDetailIcon;
 
-    const render = topic => {
-      return (
-        <>
-          {options?.showDetailIcon && (
-            <Tooltip title="View topic">
-              <IconButton
-                onClick={() => {
-                  handleDetailIconClick(topic);
-                }}
-              >
-                <VisibilityIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {options?.showDeleteIcon && (
-            <Tooltip title="Delete topic">
-              <IconButton
-                disabled={!isEmpty(topic.pipelines)}
-                onClick={() => {
-                  handleDeleteIconClick(topic);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </>
-      );
-    };
-
     return {
       cellStyle: { textAlign: 'right' },
       headerStyle: { textAlign: 'right' },
       hidden: !isShow,
-      render,
+      render: rowData => (
+        <Actions
+          actions={[
+            {
+              hidden: !options?.showDetailIcon,
+              name: 'view',
+              onClick: handleDetailIconClick,
+              tooltip: 'View topic',
+            },
+            {
+              disabled: !isEmpty(rowData.pipelines),
+              hidden: !options?.showDeleteIcon,
+              name: 'delete',
+              onClick: handleDeleteIconClick,
+              tooltip: !isEmpty(rowData.pipelines)
+                ? 'Cannot delete topics that are in use'
+                : 'Delete topic',
+            },
+          ]}
+          data={rowData}
+        />
+      ),
       sorting: false,
       title: 'Actions',
     };

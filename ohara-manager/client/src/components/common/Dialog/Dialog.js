@@ -25,6 +25,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import IconButton from '@material-ui/core/IconButton';
 import MuiDialog from '@material-ui/core/Dialog';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import CloseIcon from '@material-ui/icons/Close';
@@ -63,6 +64,7 @@ const Progress = styled(CircularProgress)`
 const Dialog = ({
   children,
   confirmDisabled,
+  confirmTooltip,
   confirmText,
   cancelText,
   loading,
@@ -94,14 +96,24 @@ const Dialog = ({
         <StyledDialogActions>
           <Button onClick={onClose}>{cancelText}</Button>
           <ConfirmButtonWrapper>
-            <Button
-              onClick={onConfirm}
-              disabled={confirmDisabled}
-              color="primary"
-              variant="contained"
-            >
-              {confirmText}
-            </Button>
+            {confirmDisabled ? (
+              <Tooltip title={confirmTooltip}>
+                <span>
+                  <Button
+                    disabled={confirmDisabled}
+                    color="primary"
+                    variant="contained"
+                  >
+                    {confirmText}
+                  </Button>
+                </span>
+              </Tooltip>
+            ) : (
+              <Button onClick={onConfirm} color="primary" variant="contained">
+                {confirmText}
+              </Button>
+            )}
+
             {loading && <Progress size={14} />}
           </ConfirmButtonWrapper>
         </StyledDialogActions>
@@ -114,6 +126,7 @@ Dialog.propTypes = {
   children: PropTypes.node.isRequired,
   confirmDisabled: PropTypes.bool,
   confirmText: PropTypes.string,
+  confirmTooltip: PropTypes.string,
   cancelText: PropTypes.string,
   loading: PropTypes.bool,
   maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
@@ -127,6 +140,7 @@ Dialog.propTypes = {
 
 Dialog.defaultProps = {
   confirmDisabled: false,
+  confirmTooltip: null,
   confirmText: 'ADD',
   cancelText: 'CANCEL',
   loading: false,

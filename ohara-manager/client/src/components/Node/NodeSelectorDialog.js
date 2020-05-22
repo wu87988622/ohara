@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useState, useImperativeHandle } from 'react';
+import React, { useMemo, useState, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
-import { isEqual, sortedUniq } from 'lodash';
+import { isEmpty, xorBy } from 'lodash';
 
 import { Dialog } from 'components/common/Dialog';
 import NodeTable from './NodeTable';
@@ -24,31 +24,50 @@ import NodeTable from './NodeTable';
 const NodeSelectorDialog = React.forwardRef((props, ref) => {
   const { isOpen, onClose, onConfirm, tableProps, title } = props;
 
-  const [selectedNodes, setSelectedNodes] = useState(
-    tableProps?.options?.selectedNodes,
-  );
+  const initialSelectedNodes = tableProps?.options?.selectedNodes || [];
 
-  const saveable = isEqual(
-    sortedUniq(selectedNodes),
-    sortedUniq(tableProps?.options?.selectedNodes),
-  );
+  const [selectedNodes, setSelectedNodes] = useState(initialSelectedNodes);
 
   const handleSelectionChange = selectNodes => {
     setSelectedNodes(selectNodes);
   };
 
   const handleCancel = () => {
-    setSelectedNodes(tableProps?.options?.selectedNodes);
+    setSelectedNodes(initialSelectedNodes);
     onClose();
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedNodes);
+    if (typeof onConfirm === 'function') {
+      onConfirm(selectedNodes);
+    }
   };
 
   useImperativeHandle(ref, () => ({
     setSelectedNodes,
   }));
+
+  const confirmDisabled = useMemo(() => {
+    let disabled = false;
+    if (isEmpty(selectedNodes)) {
+      disabled = true;
+    }
+    if (xorBy(selectedNodes, initialSelectedNodes, 'hostname').length === 0) {
+      disabled = true;
+    }
+    return disabled;
+  }, [selectedNodes, initialSelectedNodes]);
+
+  const confirmTooltip = useMemo(() => {
+    let tooltip = null;
+    if (isEmpty(selectedNodes)) {
+      tooltip = 'Must select more than one node';
+    }
+    if (xorBy(selectedNodes, initialSelectedNodes, 'hostname').length === 0) {
+      tooltip = 'No change';
+    }
+    return tooltip;
+  }, [selectedNodes, initialSelectedNodes]);
 
   return (
     <Dialog
@@ -56,7 +75,8 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
       open={isOpen}
       onClose={handleCancel}
       onConfirm={handleConfirm}
-      confirmDisabled={saveable}
+      confirmDisabled={confirmDisabled}
+      confirmTooltip={confirmTooltip}
       confirmText="Save"
       maxWidth="md"
     >

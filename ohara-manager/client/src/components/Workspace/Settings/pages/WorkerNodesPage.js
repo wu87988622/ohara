@@ -15,7 +15,7 @@
  */
 
 import React, { useMemo, useState, useRef } from 'react';
-import { filter, find, map, some, reject } from 'lodash';
+import { filter, find, map, size, some, reject } from 'lodash';
 
 import { NodeSelectorDialog, NodeTable } from 'components/Node';
 import * as context from 'context';
@@ -118,10 +118,15 @@ function WorkerNodesPage() {
         options={{
           comparison: true,
           comparedNodes: nodesInWorker,
+          disabledRemoveIcon: size(workerNodesInWorkspace) <= 1,
           mode: configuratorInfo?.mode,
           onAddIconClick: handleAddIconClick,
           onUndoIconClick: handleUndoIconClick,
           prompt: documentation,
+          removeTooltip:
+            size(workerNodesInWorkspace) <= 1
+              ? 'Cannot remove node, because there must be at least one'
+              : 'Remove node',
           showAddIcon: true,
           showCreateIcon: false,
           showDeleteIcon: false,

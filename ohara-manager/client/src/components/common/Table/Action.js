@@ -67,7 +67,12 @@ function Action(props) {
   const icon = defaultIcons[action.name];
 
   const button = (
-    <IconButton component="div" disabled={disabled} onClick={handleClick}>
+    <IconButton
+      component="div"
+      disabled={disabled}
+      onClick={handleClick}
+      data-testid={action.testid}
+    >
       {icon}
     </IconButton>
   );
@@ -92,6 +97,7 @@ Action.propTypes = {
     name: PropTypes.oneOf(defaultNames).isRequired,
     onClick: PropTypes.func,
     tooltip: PropTypes.string,
+    testid: PropTypes.string,
   }),
   data: PropTypes.object,
   disabled: PropTypes.bool,
