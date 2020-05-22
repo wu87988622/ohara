@@ -17,6 +17,7 @@
 package oharastream.ohara.client.configurator.v0
 
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.JsonRefinerBuilder.ArrayRestriction
 import oharastream.ohara.common.setting.SettingDef.{Necessary, Permission, Type}
@@ -148,7 +149,12 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
           )
         }
       case Type.DURATION =>
-        if (definition.hasDefault) nullToString(definition.key(), definition.defaultDuration.toString)
+        if (definition.hasDefault)
+          // we convert the time based on milliseconds
+          nullToString(
+            definition.key(),
+            Duration(definition.defaultDuration.toMillis, TimeUnit.MILLISECONDS).toString()
+          )
         if (!definition.internal()) requireType[Duration](definition.key())
       case Type.REMOTE_PORT =>
         if (definition.hasDefault)

@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator.route
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.data.{Column, DataType}
@@ -714,6 +716,22 @@ class TestConnectorRoute extends OharaTest {
         .workerClusterKey(workerClusterInfo.key)
         .create()
     ).settings(WithDefinitions.REVISION_KEY).asInstanceOf[JsString].value shouldBe VersionUtils.REVISION
+  }
+
+  @Test
+  def testDurationString(): Unit = {
+    val topic = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(
+      connectorApi.request
+        .topicKey(topic.key)
+        .className("oharastream.ohara.connector.perf.PerfSource")
+        .workerClusterKey(workerClusterInfo.key)
+        .create()
+    ).settings(oharastream.ohara.connector.perf.PERF_FREQUENCY_KEY)
+      .asInstanceOf[JsString]
+      // the time conversion is based on milliseconds
+      .value shouldBe Duration(oharastream.ohara.connector.perf.PERF_FREQUENCY_DEFAULT.toMillis, TimeUnit.MILLISECONDS)
+      .toString()
   }
 
   @After
