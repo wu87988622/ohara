@@ -25,9 +25,6 @@ import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
 import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
 
-import { convertIdToKey } from 'utils/object';
-import { CLUSTER_STATE } from 'const';
-
 const Settings = () => {
   const { isOpen, close, data: pageName } = useEditWorkspaceDialog();
   const [selectedMenu, setSelectedMenu] = React.useState('');
@@ -38,71 +35,29 @@ const Settings = () => {
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
   const restartWorkspace = hooks.useRestartWorkspaceAction();
+  const restartConfirmMessage = hooks.useRestartConfirmMessage();
+  const hasRunningServices = hooks.useHasRunningServices();
   const workspace = hooks.useWorkspace();
-  const workspaceId = hooks.useWorkspaceId();
-  const zookeeperId = hooks.useZookeeperId();
-  const brokerId = hooks.useBrokerId();
-  const workerId = hooks.useWorkerId();
-  const tmpWorker = hooks.useWorker();
-  const tmpBroker = hooks.useBroker();
-  const tmpZookeeper = hooks.useZookeeper();
-  const connectors = hooks.useConnectors();
-  const topics = hooks.useTopicsInWorkspace();
-  const streams = hooks.useStreams();
-  const shabondis = hooks.useShabondis();
 
-  const hasRunningConnectors = connectors.find(
-    connector => connector.state === CLUSTER_STATE.RUNNING,
-  );
-  const hasRunningStreams = streams.find(
-    stream => stream.state === CLUSTER_STATE.RUNNING,
-  );
-  const hasRunningShabondis = shabondis.find(
-    shabondi => shabondi.state === CLUSTER_STATE.RUNNING,
-  );
-  let hasRunningServices = false;
-  let restartConfirmMessage =
-    'This will restart the zookeeper, broker and worker.';
-
-  if (hasRunningConnectors || hasRunningStreams || hasRunningShabondis) {
-    restartConfirmMessage = `Oops, there are still some running services in ${workspace.name}. You should stop them first and then you will be able to restart this workspace.`;
-    hasRunningServices = true;
-  }
   const resetSelectedItem = () => {
     setSelectedComponent(null);
   };
 
-  const openDeleteProgressDialog = () => {
-    resetSelectedItem(null);
-    openDeleteWorkspace();
-    deleteWorkspace({
-      // after delete workspace
-      // this Settings Dialog should be closed
-      onSuccess: () => close(),
-    });
-  };
-
-  const openRestartProgressDialog = () => {
-    resetSelectedItem(null);
-    openRestartWorkspace();
-    restartWorkspace({
-      workspace: convertIdToKey(workspaceId),
-      zookeeper: convertIdToKey(zookeeperId),
-      broker: convertIdToKey(brokerId),
-      worker: convertIdToKey(workerId),
-      workerSettings: workspace.worker,
-      brokerSettings: workspace.broker,
-      zookeeperSettings: workspace.zookeeper,
-      tmpWorker,
-      tmpBroker,
-      tmpZookeeper,
-      topics,
-    });
-  };
-
   const { menu, sections } = useConfig({
-    openDeleteProgressDialog,
-    openRestartProgressDialog,
+    openDeleteProgressDialog: () => {
+      resetSelectedItem(null);
+      openDeleteWorkspace();
+      deleteWorkspace({
+        // after delete workspace
+        // this Settings Dialog should be closed
+        onSuccess: () => close(),
+      });
+    },
+    openRestartProgressDialog: () => {
+      resetSelectedItem(null);
+      openRestartWorkspace();
+      restartWorkspace();
+    },
     restartConfirmMessage,
     hasRunningServices,
     workspace,
@@ -172,7 +127,6 @@ const Settings = () => {
           handleChange={handleComponentChange}
           handleClose={resetSelectedItem}
           selectedComponent={selectedComponent}
-          openRestartProgressDialog={openRestartProgressDialog}
         />
         <RestartWorkspace />
         <DeleteWorkspace />

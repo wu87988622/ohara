@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of } from 'rxjs';
+import { defer, of, from } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -29,6 +31,7 @@ import {
   takeUntil,
   takeWhile,
   mergeMap,
+  switchMap,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -39,32 +42,12 @@ import * as zookeeperApi from 'api/zookeeperApi';
 import * as topicApi from 'api/topicApi';
 import { ACTIONS } from 'const';
 import { LOG_LEVEL } from 'const';
+import * as schema from 'store/schema';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
 const duration = 1000;
 const retry = 10;
-
-const updateWorkspace$ = (values, isRollback) =>
-  of(
-    defer(() =>
-      workspaceApi.update({
-        name: values.name,
-        group: values.group,
-        worker: null,
-        broker: null,
-        zookeeper: null,
-      }),
-    ).pipe(
-      delay(duration),
-      map(res => res.data),
-      map(() => actions.updateWorkspace.success(getId(values))),
-      startWith(actions.updateWorkspace.request()),
-    ),
-  ).pipe(
-    takeWhile(() => !isRollback),
-    concatAll(),
-  );
 
 const updateZookeeper$ = (values, isRollback) =>
   of(
@@ -78,7 +61,11 @@ const updateZookeeper$ = (values, isRollback) =>
     ).pipe(
       delay(duration),
       map(res => res.data),
-      map(data => actions.updateZookeeper.success(data)),
+      map(data => normalize(data, schema.zookeeper)),
+      map(normalizedData =>
+        merge(normalizedData, { zookeeperId: getId(values.objectKey) }),
+      ),
+      map(normalizedData => actions.updateZookeeper.success(normalizedData)),
       startWith(actions.updateZookeeper.request()),
     ),
   ).pipe(
@@ -98,7 +85,11 @@ const updateBroker$ = (values, isRollback) =>
     ).pipe(
       delay(duration),
       map(res => res.data),
-      map(data => actions.updateBroker.success(data)),
+      map(data => normalize(data, schema.broker)),
+      map(normalizedData =>
+        merge(normalizedData, { brokerId: getId(values.objectKey) }),
+      ),
+      map(normalizedData => actions.updateBroker.success(normalizedData)),
       startWith(actions.updateBroker.request()),
     ),
   ).pipe(
@@ -118,68 +109,15 @@ const updateWorker$ = (values, isRollback) =>
     ).pipe(
       delay(duration),
       map(res => res.data),
-      map(data => actions.updateWorker.success(data)),
+      map(data => normalize(data, schema.worker)),
+      map(normalizedData =>
+        merge(normalizedData, { workerId: getId(values.objectKey) }),
+      ),
+      map(normalizedData => actions.updateWorker.success(normalizedData)),
       startWith(actions.updateWorker.request()),
     ),
   ).pipe(
     takeWhile(() => !isRollback),
-    concatAll(),
-  );
-
-const updateOldZookeeper$ = (values, isRollback) =>
-  of(
-    defer(() =>
-      zookeeperApi.update({
-        ...values.values.tmp,
-        name: values.objectKey.name,
-        group: values.objectKey.group,
-      }),
-    ).pipe(
-      delay(duration),
-      map(res => res.data),
-      map(data => actions.updateZookeeper.success(data)),
-      startWith(actions.updateZookeeper.request()),
-    ),
-  ).pipe(
-    takeWhile(() => isRollback),
-    concatAll(),
-  );
-
-const updateOldBroker$ = (values, isRollback) =>
-  of(
-    defer(() =>
-      brokerApi.update({
-        ...values.values.tmp,
-        name: values.objectKey.name,
-        group: values.objectKey.group,
-      }),
-    ).pipe(
-      delay(duration),
-      map(res => res.data),
-      map(data => actions.updateBroker.success(data)),
-      startWith(actions.updateBroker.request()),
-    ),
-  ).pipe(
-    takeWhile(() => isRollback),
-    concatAll(),
-  );
-
-const updateOldWorker$ = (values, isRollback) =>
-  of(
-    defer(() =>
-      workerApi.update({
-        ...values.values.tmp,
-        name: values.objectKey.name,
-        group: values.objectKey.group,
-      }),
-    ).pipe(
-      delay(duration),
-      map(res => res.data),
-      map(data => actions.updateWorker.success(data)),
-      startWith(actions.updateWorker.request()),
-    ),
-  ).pipe(
-    takeWhile(() => isRollback),
     concatAll(),
   );
 
@@ -272,13 +210,19 @@ const startTopics$ = topics =>
 
 const waitStartZookeeper$ = params =>
   of(
-    defer(() => zookeeperApi.get(params)).pipe(
+    defer(() => zookeeperApi.get(params.zookeeperKey)).pipe(
       map(res => res.data),
-      map(data => {
+      switchMap(data => {
         if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
           throw data;
         }
-        return actions.startZookeeper.success(data);
+        return from([
+          actions.updateWorkspace.trigger({
+            zookeeper: data,
+            ...params.workspaceKey,
+          }),
+          actions.startZookeeper.success(data),
+        ]);
       }),
       retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
       catchError(error => of(actions.startZookeeper.failure(error))),
@@ -287,13 +231,19 @@ const waitStartZookeeper$ = params =>
 
 const waitStartBroker$ = params =>
   of(
-    defer(() => brokerApi.get(params)).pipe(
+    defer(() => brokerApi.get(params.brokerKey)).pipe(
       map(res => res.data),
-      map(data => {
+      switchMap(data => {
         if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
           throw data;
         }
-        return actions.startBroker.success(data);
+        return from([
+          actions.updateWorkspace.trigger({
+            broker: data,
+            ...params.workspaceKey,
+          }),
+          actions.startBroker.success(data),
+        ]);
       }),
       retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
       catchError(error => of(actions.startBroker.failure(error))),
@@ -302,13 +252,19 @@ const waitStartBroker$ = params =>
 
 const waitStartWorker$ = params =>
   of(
-    defer(() => workerApi.get(params)).pipe(
+    defer(() => workerApi.get(params.workerKey)).pipe(
       map(res => res.data),
-      map(data => {
+      switchMap(data => {
         if (!data?.state || data.state !== SERVICE_STATE.RUNNING) {
           throw data;
         }
-        return actions.startWorker.success(data);
+        return from([
+          actions.updateWorkspace.trigger({
+            worker: data,
+            ...params.workspaceKey,
+          }),
+          actions.startWorker.success(data),
+        ]);
       }),
       retryWhen(error => error.pipe(delay(duration * 2), take(retry))),
       catchError(error => of(actions.startWorker.failure(error))),
@@ -401,6 +357,7 @@ const waitStopTopics$ = topics =>
 
 const finalize$ = params =>
   of(
+    of(actions.restartWorkspace.success()),
     of(
       actions.createEventLog.trigger({
         title: `Successfully Restart workspace ${params.name}.`,
@@ -430,16 +387,16 @@ export default (action$, state$) =>
         tmpBroker = {},
         tmpZookeeper = {},
         topics = [],
-      } = action.payload;
+      } = action.payload.values;
 
       const workspaceKey = workspace;
       const zookeeperKey = zookeeper;
       const brokerKey = broker;
       const workerKey = worker;
+
       return of(
         stopWorker$(workerKey, skipList),
         waitStopWorker$({ ...workerKey, workspaceKey }),
-        updateOldWorker$({ objectKey: workerKey, tmp: tmpWorker }, isRollback),
         updateWorker$(
           { objectKey: workerKey, tmp: tmpWorker, settings: workerSettings },
           isRollback,
@@ -454,10 +411,6 @@ export default (action$, state$) =>
           workspaceKey,
           settings: brokerSettings,
         }),
-        updateOldBroker$(
-          { objectKey: brokerKey, tmp: tmpZookeeper },
-          isRollback,
-        ),
         updateBroker$({ objectKey: brokerKey, tmp: tmpBroker }, isRollback),
 
         stopZookeeper$(zookeeperKey, skipList),
@@ -466,28 +419,22 @@ export default (action$, state$) =>
           workspaceKey,
           settings: zookeeperSettings,
         }),
-        updateOldZookeeper$(
-          { objectKey: zookeeperKey, tmp: tmpZookeeper },
-          isRollback,
-        ),
         updateZookeeper$(
           { objectKey: zookeeperKey, tmp: tmpZookeeper },
           isRollback,
         ),
 
         startZookeeper$(zookeeperKey, skipList),
-        waitStartZookeeper$(zookeeperKey),
+        waitStartZookeeper$({ zookeeperKey, workspaceKey }),
 
         startBroker$(brokerKey, skipList),
-        waitStartBroker$(brokerKey),
+        waitStartBroker$({ brokerKey, workspaceKey }),
 
         startTopics$(topics),
         waitStartTopics$(topics),
 
         startWorker$(workerKey, skipList),
-        waitStartWorker$(workerKey),
-
-        updateWorkspace$(workspaceKey, isRollback),
+        waitStartWorker$({ workerKey, workspaceKey }),
 
         finalize$(workspaceKey),
       ).pipe(

@@ -47,7 +47,13 @@ export const StyledSnackbarContent = styled(SnackbarContent)(
   `,
 );
 
-function RestartIndicator({ isOpen, onDiscard, onRestart }) {
+function RestartIndicator({
+  isOpen,
+  onDiscard,
+  onRestart,
+  restartConfirmMessage,
+  hasRunningServices,
+}) {
   const [isDiscardConfirmDialogOpen, setIsDiscardConfirmDialogOpen] = useState(
     false,
   );
@@ -96,12 +102,13 @@ function RestartIndicator({ isOpen, onDiscard, onRestart }) {
         title="Are you absolutely sure?"
       />
       <DeleteDialog
-        content="This action cannot be undone. This will permanently restart the workspace.name zookeeper, broker, and worker."
+        content={restartConfirmMessage}
         confirmText="RESTART"
         onConfirm={() => {
           onRestart();
           setIsRestartConfirmDialogOpen(false);
         }}
+        confirmDisabled={hasRunningServices}
         onClose={() => setIsRestartConfirmDialogOpen(false)}
         open={isRestartConfirmDialogOpen}
         title="Are you absolutely sure?"
@@ -114,6 +121,8 @@ RestartIndicator.propTypes = {
   isOpen: PropTypes.bool,
   onDiscard: PropTypes.func,
   onRestart: PropTypes.func,
+  restartConfirmMessage: PropTypes.string,
+  hasRunningServices: PropTypes.bool,
 };
 
 RestartIndicator.defaultProps = {
