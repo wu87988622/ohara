@@ -32,6 +32,7 @@ const SettingsMain = ({
   handleChange,
   selectedComponent,
   handleClose,
+  openRestartProgressDialog,
 }) => {
   const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
@@ -47,6 +48,7 @@ const SettingsMain = ({
         <RestartIndicator
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
+          onRestart={openRestartProgressDialog}
         />
         {sections.map(section => {
           const { heading, components, ref } = section;
@@ -101,6 +103,11 @@ SettingsMain.propTypes = {
     name: PropTypes.string,
     type: PropTypes.string,
   }),
+  openRestartProgressDialog: PropTypes.func,
+};
+
+SettingsMain.defaultProps = {
+  openRestartProgressDialog: () => {},
 };
 
 export default React.memo(SettingsMain);

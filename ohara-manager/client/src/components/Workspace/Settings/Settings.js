@@ -72,33 +72,37 @@ const Settings = () => {
     setSelectedComponent(null);
   };
 
+  const openDeleteProgressDialog = () => {
+    resetSelectedItem(null);
+    openDeleteWorkspace();
+    deleteWorkspace({
+      // after delete workspace
+      // this Settings Dialog should be closed
+      onSuccess: () => close(),
+    });
+  };
+
+  const openRestartProgressDialog = () => {
+    resetSelectedItem(null);
+    openRestartWorkspace();
+    restartWorkspace({
+      workspace: convertIdToKey(workspaceId),
+      zookeeper: convertIdToKey(zookeeperId),
+      broker: convertIdToKey(brokerId),
+      worker: convertIdToKey(workerId),
+      workerSettings: workspace.worker,
+      brokerSettings: workspace.broker,
+      zookeeperSettings: workspace.zookeeper,
+      tmpWorker,
+      tmpBroker,
+      tmpZookeeper,
+      topics,
+    });
+  };
+
   const { menu, sections } = useConfig({
-    openDeleteProgressDialog: () => {
-      resetSelectedItem(null);
-      openDeleteWorkspace();
-      deleteWorkspace({
-        // after delete workspace
-        // this Settings Dialog should be closed
-        onSuccess: () => close(),
-      });
-    },
-    openRestartProgressDialog: () => {
-      resetSelectedItem(null);
-      openRestartWorkspace();
-      restartWorkspace({
-        workspace: convertIdToKey(workspaceId),
-        zookeeper: convertIdToKey(zookeeperId),
-        broker: convertIdToKey(brokerId),
-        worker: convertIdToKey(workerId),
-        workerSettings: workspace.worker,
-        brokerSettings: workspace.broker,
-        zookeeperSettings: workspace.zookeeper,
-        tmpWorker,
-        tmpBroker,
-        tmpZookeeper,
-        topics,
-      });
-    },
+    openDeleteProgressDialog,
+    openRestartProgressDialog,
     restartConfirmMessage,
     hasRunningServices,
     workspace,
@@ -168,6 +172,7 @@ const Settings = () => {
           handleChange={handleComponentChange}
           handleClose={resetSelectedItem}
           selectedComponent={selectedComponent}
+          openRestartProgressDialog={openRestartProgressDialog}
         />
         <RestartWorkspace />
         <DeleteWorkspace />
