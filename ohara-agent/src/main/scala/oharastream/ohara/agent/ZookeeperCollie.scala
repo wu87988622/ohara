@@ -29,7 +29,8 @@ import oharastream.ohara.client.configurator.v0.ZookeeperApi.{
   DATA_DIR_DEFINITION,
   INIT_LIMIT_DEFINITION,
   SYNC_LIMIT_DEFINITION,
-  TICK_TIME_DEFINITION
+  TICK_TIME_DEFINITION,
+  CONNECTION_TIMEOUT_DEFINITION
 }
 import oharastream.ohara.common.util.CommonUtils
 
@@ -172,6 +173,7 @@ trait ZookeeperCollie extends Collie {
                     .append(INIT_LIMIT_DEFINITION.key(), creation.initLimit)
                     .append(SYNC_LIMIT_DEFINITION.key(), creation.syncLimit)
                     .append(DATA_DIR_DEFINITION.key(), creation.dataFolder)
+                    .append(CONNECTION_TIMEOUT_DEFINITION.key(), creation.connectionTimeout.toMillis.toString)
                     .append(zkServers)
                     .done
                     .file(creation.idFile)

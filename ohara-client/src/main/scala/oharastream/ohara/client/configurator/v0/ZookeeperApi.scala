@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.configurator.v0
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.v0.ClusterAccess.Query
 import oharastream.ohara.common.annotations.Optional
@@ -25,12 +27,11 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
 import scala.collection.mutable
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperApi {
   val KIND: String                  = "zookeeper"
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
-
-  val ZOOKEEPER_SERVICE_NAME: String = "zk"
 
   /**
     * the default docker image used to run containers of worker cluster
@@ -99,6 +100,14 @@ object ZookeeperApi {
       .build()
   )
 
+  private[this] val CONNECTION_TIMEOUT_KEY = "zookeeper.connection.timeout.ms"
+  val CONNECTION_TIMEOUT_DEFINITION: SettingDef = createDef(
+    _.key(CONNECTION_TIMEOUT_KEY)
+      .documentation("zookeeper connection timeout")
+      .optional(java.time.Duration.ofMillis(10 * 1000))
+      .build()
+  )
+
   /**
     * all public configs
     */
@@ -118,6 +127,7 @@ object ZookeeperApi {
     def tickTime: Int                                                           = settings.tickTime.get
     def initLimit: Int                                                          = settings.initLimit.get
     def syncLimit: Int                                                          = settings.syncLimit.get
+    def connectionTimeout: Duration                                             = settings.connectionTimeout.get
     def dataFolder: String                                                      = "/tmp/zk_data"
 
     /**
@@ -161,6 +171,12 @@ object ZookeeperApi {
       noJsNull(settings).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
     def syncLimit: Option[Int] =
       noJsNull(settings).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
+    def connectionTimeout: Option[Duration] =
+      noJsNull(settings)
+        .get(CONNECTION_TIMEOUT_KEY)
+        .map(_.convertTo[String])
+        .map(CommonUtils.toDuration)
+        .map(d => Duration(d.toMillis, TimeUnit.MILLISECONDS))
   }
 
   implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =

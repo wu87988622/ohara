@@ -30,9 +30,7 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
-  val KIND: String                = "worker"
-  val WORKER_SERVICE_NAME: String = "wk"
-
+  val KIND: String               = "worker"
   val WORKER_PREFIX_PATH: String = "workers"
 
   /**

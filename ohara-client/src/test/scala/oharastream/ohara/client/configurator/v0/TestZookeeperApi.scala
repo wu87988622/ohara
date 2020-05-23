@@ -510,7 +510,7 @@ class TestZookeeperApi extends OharaTest {
       error = None,
       lastModified = CommonUtils.current()
     )
-    ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain ("settings")
+    ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(cluster).asJsObject.fields.keySet should not contain "settings"
   }
 
   @Test
@@ -540,5 +540,20 @@ class TestZookeeperApi extends OharaTest {
     creation.volumeMaps.size shouldBe 1
     creation.volumeMaps.head._1 shouldBe ObjectKey.of("g", "n")
     creation.volumeMaps.head._2 shouldBe creation.dataFolder
+  }
+
+  @Test
+  def testConnectionTimeout(): Unit = {
+    ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+                                              |  {
+                                              |    "nodeNames": ["node00"],
+                                              |    "${ZookeeperApi.DATA_DIR_DEFINITION.key()}": {
+                                              |      "group": "g",
+                                              |      "name": "n"
+                                              |    }
+                                              |  }
+      """.stripMargin.parseJson).connectionTimeout.toMillis shouldBe ZookeeperApi.CONNECTION_TIMEOUT_DEFINITION
+      .defaultDuration()
+      .toMillis
   }
 }

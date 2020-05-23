@@ -33,8 +33,6 @@ object BrokerApi {
   val KIND: String               = "broker"
   val BROKER_PREFIX_PATH: String = "brokers"
 
-  val BROKER_SERVICE_NAME: String = "bk"
-
   /**
     * the default docker image used to run containers of broker cluster
     */
