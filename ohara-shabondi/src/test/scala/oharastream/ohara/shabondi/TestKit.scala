@@ -20,6 +20,7 @@ import java.time.Duration
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import oharastream.ohara.common.data.{Cell, Row, Serializer}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.{Consumer, Producer}
 import org.scalatest.Suite
@@ -44,19 +45,19 @@ private[shabondi] object KafkaSupport {
       .valueSerializer(Serializer.BYTES)
       .build()
 
-  def newConsumer(brokers: String, topicName: String): Consumer[Row, Array[Byte]] =
+  def newConsumer(brokers: String, topicKey: TopicKey): Consumer[Row, Array[Byte]] =
     Consumer
       .builder()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .offsetFromBegin()
-      .topicName(topicName)
+      .topicKey(topicKey)
       .connectionProps(brokers)
       .build()
 
   def sendRows(
     producer: Producer[Row, Array[Byte]],
-    topicName: String,
+    topicKey: TopicKey,
     delayMillis: Long,
     f: () => Iterator[Row]
   )(implicit ec: ExecutionContext): (Promise[Boolean], Future[Unit]) = {
@@ -69,7 +70,7 @@ private[shabondi] object KafkaSupport {
         producer
           .sender()
           .key(rowIterator.next)
-          .topicName(topicName)
+          .topicKey(topicKey)
           .send
           .toScala
         Thread.sleep(2)
@@ -78,23 +79,23 @@ private[shabondi] object KafkaSupport {
     (cancelled, future)
   }
 
-  def cycleSendRows(producer: Producer[Row, Array[Byte]], topicName: String, f: () => Iterator[Row])(
+  def cycleSendRows(producer: Producer[Row, Array[Byte]], topicKey: TopicKey, f: () => Iterator[Row])(
     implicit ec: ExecutionContext
   ): (Promise[Boolean], Future[Unit]) = {
     val iterator = Iterator.continually {
       val it = f()
       if (it.isEmpty) throw new IllegalArgumentException("empty iterator") else it
     }.flatten
-    sendRows(producer, topicName, 0, () => iterator)
+    sendRows(producer, topicKey, 0, () => iterator)
   }
 
   def pollTopicOnce(
     brokers: String,
-    topicName: String,
+    topicKey: TopicKey,
     timeoutSecond: Long,
     expectedSize: Int
   ): Seq[Consumer.Record[Row, Array[Byte]]] = {
-    val consumer = KafkaSupport.newConsumer(brokers, topicName)
+    val consumer = KafkaSupport.newConsumer(brokers, topicKey)
     try {
       consumer.poll(Duration.ofSeconds(timeoutSecond), expectedSize).asScala.toSeq
     } finally {
@@ -124,14 +125,14 @@ private[shabondi] object KafkaSupport {
 
   def prepareBulkOfRow(
     brokerProps: String,
-    topicName: String,
+    topicKey: TopicKey,
     rowCount: Int,
     duration: FiniteDuration = FiniteDuration(10, SECONDS)
   )(implicit ec: ExecutionContext): Unit = {
     val producer = KafkaSupport.newProducer(brokerProps)
     try {
       var rowId = -1
-      val (_, sendRowsFuture) = KafkaSupport.sendRows(producer, topicName, 0, () => {
+      val (_, sendRowsFuture) = KafkaSupport.sendRows(producer, topicKey, 0, () => {
         rowInerator(rowCount) {
           rowId = rowId + 1;
           singleRow(3, rowId)

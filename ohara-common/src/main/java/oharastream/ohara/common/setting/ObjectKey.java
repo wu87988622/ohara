@@ -54,15 +54,17 @@ public interface ObjectKey extends Comparable<ObjectKey> {
    */
   static Optional<ObjectKey> ofPlain(String string) {
     String[] splits = string.split("-");
-    if (splits.length != 2) return Optional.empty();
-    else return Optional.of(new KeyImpl(splits[0], splits[1]));
+    if (splits.length < 2) return Optional.empty();
+    // reject "aaa-"
+    else if (splits[0].length() == string.length() - 1) return Optional.empty();
+    else return Optional.of(new KeyImpl(splits[0], string.substring(splits[0].length() + 1)));
   }
 
   static ObjectKey requirePlain(String string) {
     return ofPlain(string)
         .orElseGet(
             () -> {
-              throw new IllegalArgumentException(string + " is incorrect plain key");
+              throw new IllegalArgumentException(string + " is an incorrect plain key");
             });
   }
 

@@ -29,20 +29,20 @@ class TestPostgresqlJDBCSourceConnector(platform: ContainerPlatform)
   private[this] val DB_USER_NAME_KEY: String = "ohara.it.postgresql.db.username"
   private[this] val DB_PASSWORD_KEY: String  = "ohara.it.postgresql.db.password"
 
-  override protected def dbUrl(): String =
+  override protected def dbUrl: String =
     sys.env.getOrElse(DB_URL_KEY, throw new AssumptionViolatedException(s"$DB_URL_KEY does not exists!!!"))
 
-  override protected def dbUserName(): String =
+  override protected def dbUserName: String =
     sys.env.getOrElse(DB_USER_NAME_KEY, throw new AssumptionViolatedException(s"$DB_USER_NAME_KEY does not exists!!!"))
 
-  override protected def dbPassword(): String =
+  override protected def dbPassword: String =
     sys.env.getOrElse(DB_PASSWORD_KEY, throw new AssumptionViolatedException(s"$DB_PASSWORD_KEY does not exists!!!"))
 
-  override protected def dbName(): String = "postgresql"
+  override protected def dbName: String = "postgresql"
 
   override protected val tableName: String = s"table${CommonUtils.randomString(5)}"
 
-  override protected def jdbcDriverJarFileName(): String = "postgresql-42.2.6.jar"
+  override protected def jdbcDriverJarFileName: String = "postgresql-42.2.6.jar"
 
   override protected val columnPrefixName: String = "column"
 

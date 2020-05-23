@@ -167,7 +167,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
   ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
       .builder()
-      .topicName(topicKey.topicNameOnKafka)
+      .topicKey(topicKey)
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
       .keySerializer(Serializer.ROW)

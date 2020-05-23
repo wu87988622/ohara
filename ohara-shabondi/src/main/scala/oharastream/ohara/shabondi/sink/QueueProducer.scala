@@ -25,6 +25,7 @@ import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Consumer
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.metrics.basic.Counter
 
 import scala.jdk.CollectionConverters._
@@ -33,7 +34,7 @@ private[sink] class QueueProducer(
   val groupName: String,
   val queue: JQueue[Row],
   val brokerProps: String,
-  val topicNames: Set[String],
+  val topicKeys: Set[TopicKey],
   val pollTimeout: JDuration,
   val rowCounter: Counter
 ) extends Runnable
@@ -47,7 +48,7 @@ private[sink] class QueueProducer(
     .keySerializer(Serializer.ROW)
     .valueSerializer(Serializer.BYTES)
     .offsetFromBegin()
-    .topicNames(topicNames.asJava)
+    .topicKeys(topicKeys.asJava)
     .connectionProps(brokerProps)
     .build()
 
@@ -56,7 +57,7 @@ private[sink] class QueueProducer(
       "{} group `{}` start.(topics={}, brokerProps={})",
       this.getClass.getSimpleName,
       groupName,
-      topicNames.mkString(","),
+      topicKeys.mkString(","),
       brokerProps
     )
     try {

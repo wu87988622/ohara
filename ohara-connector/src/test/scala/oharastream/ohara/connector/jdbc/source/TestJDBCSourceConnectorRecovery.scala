@@ -78,7 +78,7 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
     try {
       val consumer = Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)

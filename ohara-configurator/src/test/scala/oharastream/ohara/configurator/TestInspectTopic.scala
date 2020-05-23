@@ -64,7 +64,7 @@ class TestInspectTopic extends WithBrokerWorker {
         val row = Row.of(Cell.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
         producer
           .sender()
-          .topicName(topicInfo.key.topicNameOnKafka())
+          .topicKey(topicInfo.key)
           .key(row)
           .send()
           .get()
@@ -108,7 +108,7 @@ class TestInspectTopic extends WithBrokerWorker {
       val producer =
         Producer.builder().connectionProps(brokerClusterInfo.connectionProps).keySerializer(Serializer.STRING).build()
       try while (!closed.get()) {
-        producer.sender().topicName(topicInfo.key.topicNameOnKafka()).key(CommonUtils.randomString(5)).send().get()
+        producer.sender().topicKey(topicInfo.key).key(CommonUtils.randomString(5)).send().get()
         TimeUnit.MILLISECONDS.sleep(300)
       } finally {
         Releasable.close(producer)
@@ -166,13 +166,13 @@ class TestInspectTopic extends WithBrokerWorker {
     try {
       producer
         .sender()
-        .topicName(topicInfo.key.topicNameOnKafka())
+        .topicKey(topicInfo.key)
         .key(Row.of(Cell.of("k0", "v0")))
         .send()
         .get()
       producer
         .sender()
-        .topicName(topicInfo.key.topicNameOnKafka())
+        .topicKey(topicInfo.key)
         .key(Row.of(Cell.of("k1", "v1")))
         .send()
         .get()

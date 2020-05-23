@@ -35,7 +35,7 @@ private[shabondi] class SinkConfig(raw: Map[String, String]) {
 
   def brokers: String = raw(BROKERS_DEFINITION.key)
 
-  def sinkFromTopics: Seq[TopicKey] = TopicKey.toTopicKeys(raw(SINK_FROM_TOPICS_DEFINITION.key)).asScala.toSeq
+  def sinkFromTopics: Set[TopicKey] = TopicKey.toTopicKeys(raw(SINK_FROM_TOPICS_DEFINITION.key)).asScala.toSet
 
   def sinkPollTimeout: JDuration = durationValue(SINK_POLL_TIMEOUT_DEFINITION)
 

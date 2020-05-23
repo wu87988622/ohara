@@ -104,18 +104,18 @@ public class TestPurchaseAnalysis extends With3Brokers {
   @Test
   public void testStream() throws InterruptedException {
     // write items.csv to kafka broker
-    produceData("items.csv", itemTopic.topicNameOnKafka());
+    produceData("items.csv", itemTopic);
 
     // write users.csv to kafka broker
-    produceData("users.csv", userTopic.topicNameOnKafka());
+    produceData("users.csv", userTopic);
 
     // we make sure the join topic has data already
-    assertResult(client, itemTopic.topicNameOnKafka(), 4);
-    assertResult(client, userTopic.topicNameOnKafka(), 4);
+    assertResult(client, itemTopic, 4);
+    assertResult(client, userTopic, 4);
     TimeUnit.SECONDS.sleep(1);
     // write orders.csv to kafka broker
-    produceData("orders.csv", orderTopic.topicNameOnKafka());
-    assertResult(client, orderTopic.topicNameOnKafka(), 16);
+    produceData("orders.csv", orderTopic);
+    assertResult(client, orderTopic, 16);
 
     RunStream app = new RunStream();
     Stream.execute(
@@ -211,7 +211,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
 
       Consumer<Row, byte[]> consumer =
           Consumer.builder()
-              .topicName(resultTopic.topicNameOnKafka())
+              .topicKey(resultTopic)
               .connectionProps(streamSetting.brokerConnectionProps())
               .groupId("group-" + resultTopic.topicNameOnKafka())
               .offsetFromBegin()
@@ -286,7 +286,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
     }
   }
 
-  private void produceData(String filename, String topicName) {
+  private void produceData(String filename, TopicKey topicKey) {
     try {
       List<?> dataList = DataUtils.readData(filename);
       dataList.stream()
@@ -314,17 +314,17 @@ public class TestPurchaseAnalysis extends With3Brokers {
                       .sender()
                       .key(entry.getKey())
                       .value(entry.getValue())
-                      .topicName(topicName)
+                      .topicKey(topicKey)
                       .send());
     } catch (Exception e) {
       LOG.debug(e.getMessage());
     }
   }
 
-  private void assertResult(TopicAdmin client, String topic, int expectedSize) {
+  private void assertResult(TopicAdmin client, TopicKey topicKey, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.builder()
-            .topicName(topic)
+            .topicKey(topicKey)
             .connectionProps(client.connectionProps())
             .groupId("group-" + CommonUtils.randomString(5))
             .offsetFromBegin()

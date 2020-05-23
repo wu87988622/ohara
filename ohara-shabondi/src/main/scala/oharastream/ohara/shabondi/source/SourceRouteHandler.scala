@@ -26,12 +26,12 @@ import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import oharastream.ohara.common.data.Serializer
-import oharastream.ohara.common.util.{Releasable}
+import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.basic.Counter
 import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHandler, ShabondiUtils}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 
 private[shabondi] object SourceRouteHandler {
   def apply(config: SourceConfig)(implicit actorSystem: ActorSystem) =
@@ -44,8 +44,8 @@ private[shabondi] class SourceRouteHandler(
   import oharastream.ohara.shabondi.common.JsonSupport._
   private val log = Logging(actorSystem, classOf[SourceRouteHandler])
 
-  private val threadPool: ExecutorService = Executors.newFixedThreadPool(4)
-  implicit private val ec                 = ExecutionContext.fromExecutorService(threadPool)
+  private val threadPool: ExecutorService                  = Executors.newFixedThreadPool(4)
+  implicit private val ec: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(threadPool)
 
   private val totalRowsCounter =
     Counter.builder
@@ -76,7 +76,7 @@ private[shabondi] class SourceRouteHandler(
     import ConvertSupport._
     val row = JsonSupport.toRow(rowData)
     Future.sequence(topicKeys.map { topicKey =>
-      val sender = producer.sender().key(row).topicName(topicKey.topicNameOnKafka)
+      val sender = producer.sender().key(row).topicKey(topicKey)
       sender.send.toScala
     })
   }

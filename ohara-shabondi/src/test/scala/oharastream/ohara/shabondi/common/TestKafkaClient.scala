@@ -51,13 +51,13 @@ final class TestKafkaClient extends BasicShabondiTest {
         .sender()
         .key(row)
         .value(Array[Byte]())
-        .topicName(topicKey.topicNameOnKafka())
+        .topicKey(topicKey)
 
       val future = sender.send.toScala
 
       val metadata = Await.result(future, 3 seconds)
 
-      metadata.topicName should ===(topicKey.topicNameOnKafka())
+      metadata.topicKey should ===(topicKey)
       metadata.offset should ===(0)
       metadata.partition should ===(0)
     } finally {
@@ -72,22 +72,22 @@ final class TestKafkaClient extends BasicShabondiTest {
       Future.sequence {
         (1 to 9)
           .map(i => Row.of(Cell.of(s"col-$i", i * 10)))
-          .map(row => producer.sender().key(row).value(Array[Byte]()).topicName(topicKey.topicNameOnKafka()))
+          .map(row => producer.sender().key(row).value(Array[Byte]()).topicKey(topicKey))
           .map { sender =>
             sender.send.toScala
           }
       }
 
-      val records = KafkaSupport.pollTopicOnce(brokerProps, topicKey.topicNameOnKafka(), 10, 10)
+      val records = KafkaSupport.pollTopicOnce(brokerProps, topicKey, 10, 10)
 
       records.size should ===(9)
-      records(0).topicName == (topicKey.topicNameOnKafka())
-      records(0).key.isPresent === (true)
-      records(0).key.get == (Row.of(Cell.of("col-1", 10)))
+      records(0).topicKey shouldBe topicKey
+      records(0).key.isPresent shouldBe true
+      records(0).key.get shouldBe Row.of(Cell.of("col-1", 10))
 
-      records(8).topicName == (topicKey.topicNameOnKafka())
-      records(8).key.isPresent === (true)
-      records(8).key.get == (Row.of(Cell.of("col-9", 90)))
+      records(8).topicKey shouldBe topicKey
+      records(8).key.isPresent shouldBe true
+      records(8).key.get shouldBe Row.of(Cell.of("col-9", 90))
     } finally {
       Releasable.close(producer)
     }

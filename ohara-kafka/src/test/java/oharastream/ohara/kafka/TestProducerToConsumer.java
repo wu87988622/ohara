@@ -65,20 +65,14 @@ public class TestProducerToConsumer extends WithBroker {
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
-      producer
-          .sender()
-          .key("a")
-          .value("b")
-          .topicName(topicKey.topicNameOnKafka())
-          .timestamp(timestamp)
-          .send();
+      producer.sender().key("a").value("b").topicKey(topicKey).timestamp(timestamp).send();
     }
     try (Consumer<String, String> consumer =
         Consumer.builder()
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
-            .topicName(topicKey.topicNameOnKafka())
+            .topicKey(topicKey)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
@@ -97,12 +91,7 @@ public class TestProducerToConsumer extends WithBroker {
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       for (int i = 0; i < 100; i++)
-        producer
-            .sender()
-            .key("key" + i)
-            .value("value" + i)
-            .topicName(topicKey.topicNameOnKafka())
-            .send();
+        producer.sender().key("key" + i).value("value" + i).topicKey(topicKey).send();
     }
 
     try (Consumer<String, String> consumer =
@@ -110,7 +99,7 @@ public class TestProducerToConsumer extends WithBroker {
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
-            .topicName(topicKey.topicNameOnKafka())
+            .topicKey(topicKey)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       List<Consumer.Record<String, String>> record1s = consumer.poll(Duration.ofSeconds(30), 100);
@@ -132,12 +121,7 @@ public class TestProducerToConsumer extends WithBroker {
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       for (int i = 0; i < 100; i++)
-        producer
-            .sender()
-            .key("key" + i)
-            .value("value" + i)
-            .topicName(topicKey.topicNameOnKafka())
-            .send();
+        producer.sender().key("key" + i).value("value" + i).topicKey(topicKey).send();
     }
 
     try (Consumer<String, String> consumer =
@@ -145,7 +129,7 @@ public class TestProducerToConsumer extends WithBroker {
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
-            .topicName(topicKey.topicNameOnKafka())
+            .topicKey(topicKey)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       List<Consumer.Record<String, String>> record1s = consumer.poll(Duration.ofSeconds(30), 200);
@@ -169,12 +153,7 @@ public class TestProducerToConsumer extends WithBroker {
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       for (int i = 0; i < 100; i++)
-        producer
-            .sender()
-            .key("key" + i)
-            .value("value" + i)
-            .topicName(topicKey.topicNameOnKafka())
-            .send();
+        producer.sender().key("key" + i).value("value" + i).topicKey(topicKey).send();
     }
 
     try (Consumer<String, String> consumer =
@@ -182,7 +161,7 @@ public class TestProducerToConsumer extends WithBroker {
             .keySerializer(Serializer.STRING)
             .valueSerializer(Serializer.STRING)
             .offsetFromBegin()
-            .topicName(topicKey.topicNameOnKafka())
+            .topicKey(topicKey)
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 100);
@@ -211,14 +190,14 @@ public class TestProducerToConsumer extends WithBroker {
             .connectionProps(testUtil().brokersConnProps())
             .build()) {
       RecordMetadata metadata =
-          producer.sender().key("a").value("b").topicName(topicKey.topicNameOnKafka()).send().get();
-      Assert.assertEquals(metadata.topicName(), topicKey.topicNameOnKafka());
+          producer.sender().key("a").value("b").topicKey(topicKey).send().get();
+      Assert.assertEquals(metadata.topicKey(), topicKey);
       try (Consumer<String, String> consumer =
           Consumer.builder()
               .keySerializer(Serializer.STRING)
               .valueSerializer(Serializer.STRING)
               .offsetFromBegin()
-              .topicName(topicKey.topicNameOnKafka())
+              .topicKey(topicKey)
               .connectionProps(testUtil().brokersConnProps())
               .build()) {
         List<Consumer.Record<String, String>> records = consumer.poll(Duration.ofSeconds(30), 1);
@@ -243,21 +222,14 @@ public class TestProducerToConsumer extends WithBroker {
                     CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout)))
             .build()) {
       Assert.assertEquals(
-          producer
-              .sender()
-              .key("a")
-              .value("b")
-              .topicName(topicKey.topicNameOnKafka())
-              .send()
-              .get()
-              .topicName(),
-          topicKey.topicNameOnKafka());
+          producer.sender().key("a").value("b").topicKey(topicKey).send().get().topicKey(),
+          topicKey);
       try (Consumer<String, String> consumer =
           Consumer.builder()
               .keySerializer(Serializer.STRING)
               .valueSerializer(Serializer.STRING)
               .offsetFromBegin()
-              .topicName(topicKey.topicNameOnKafka())
+              .topicKey(topicKey)
               .connectionProps(testUtil().brokersConnProps())
               .option(CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout))
               .build()) {
@@ -268,15 +240,8 @@ public class TestProducerToConsumer extends WithBroker {
 
         TimeUnit.MILLISECONDS.sleep(timeout * 2);
         Assert.assertEquals(
-            producer
-                .sender()
-                .key("c")
-                .value("d")
-                .topicName(topicKey.topicNameOnKafka())
-                .send()
-                .get()
-                .topicName(),
-            topicKey.topicNameOnKafka());
+            producer.sender().key("c").value("d").topicKey(topicKey).send().get().topicKey(),
+            topicKey);
         List<Consumer.Record<String, String>> records2 = consumer.poll(Duration.ofSeconds(30), 1);
         Assert.assertEquals(1, records2.size());
         Assert.assertEquals("c", records2.get(0).key().get());
@@ -302,7 +267,7 @@ public class TestProducerToConsumer extends WithBroker {
                       .sender()
                       .key(String.valueOf(index))
                       .value("b")
-                      .topicName(topicKey.topicNameOnKafka())
+                      .topicKey(topicKey)
                       .send()
                       .get();
                 } catch (Throwable e) {
@@ -313,7 +278,7 @@ public class TestProducerToConsumer extends WithBroker {
           Consumer.builder()
               .keySerializer(Serializer.STRING)
               .valueSerializer(Serializer.STRING)
-              .topicName(topicKey.topicNameOnKafka())
+              .topicKey(topicKey)
               .connectionProps(testUtil().brokersConnProps())
               .offsetFromBegin()
               .build()) {

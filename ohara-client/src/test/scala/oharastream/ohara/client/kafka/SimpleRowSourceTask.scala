@@ -39,7 +39,7 @@ class SimpleRowSourceTask extends RowSourceTask {
       .builder()
       .connectionProps(settings.stringValue(BROKER))
       .groupId(settings.name)
-      .topicName(settings.stringValue(INPUT))
+      .topicKey(settings.topicKey(INPUT))
       .offsetFromBegin()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)

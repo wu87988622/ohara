@@ -22,7 +22,7 @@ import java.util.concurrent._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import oharastream.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 
 import scala.jdk.CollectionConverters._
 
@@ -31,10 +31,14 @@ private[sink] object SinkDataGroups {
     new SinkDataGroups(config)
 }
 
-private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNames: Set[String], pollTimeout: JDuration)
-    extends Releasable {
+private class SinkDataGroups(
+  objectKey: ObjectKey,
+  brokerProps: String,
+  topicKeys: Set[TopicKey],
+  pollTimeout: JDuration
+) extends Releasable {
   def this(config: SinkConfig) = {
-    this(config.objectKey, config.brokers, config.sinkFromTopics.map(_.topicNameOnKafka).toSet, config.sinkPollTimeout)
+    this(config.objectKey, config.brokers, config.sinkFromTopics, config.sinkPollTimeout)
   }
 
   private val threadPool: ExecutorService =
@@ -59,7 +63,7 @@ private class SinkDataGroups(objectKey: ObjectKey, brokerProps: String, topicNam
     dataGroups.computeIfAbsent(
       name, { n =>
         log.info("create data group: {}", n)
-        val dataGroup = new DataGroup(n, objectKey, brokerProps, topicNames, pollTimeout)
+        val dataGroup = new DataGroup(n, objectKey, brokerProps, topicKeys, pollTimeout)
         threadPool.submit(dataGroup.queueProducer)
         dataGroup
       }

@@ -102,7 +102,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)
@@ -146,7 +146,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)
@@ -196,7 +196,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)
@@ -246,7 +246,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka)
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(testUtil.brokersConnProps)
         .keySerializer(Serializer.ROW)

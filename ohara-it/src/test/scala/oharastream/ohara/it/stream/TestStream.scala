@@ -168,10 +168,10 @@ class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
             .sender()
             .key(Row.EMPTY)
             .value(Array.emptyByteArray)
-            .topicName(topic1.topicNameOnKafka)
+            .topicKey(topic1.key)
             .send()
             .get()
-            .topicName() == topic1.topicNameOnKafka
+            .topicKey() == topic1.key
           catch {
             case e: ExecutionException =>
               e.getCause match {

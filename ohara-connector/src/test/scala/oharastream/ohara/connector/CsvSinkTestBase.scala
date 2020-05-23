@@ -73,7 +73,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      data.foreach(d => producer.sender().topicName(topicKey.topicNameOnKafka()).key(d).send().get())
+      data.foreach(d => producer.sender().topicKey(topicKey).key(d).send().get())
     } finally producer.close()
   }
 

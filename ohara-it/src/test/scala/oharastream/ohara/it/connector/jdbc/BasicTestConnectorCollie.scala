@@ -50,8 +50,8 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
   private[this] val jarFolderPath =
     sys.env.getOrElse(JAR_FOLDER_KEY, throw new AssumptionViolatedException(s"$JAR_FOLDER_KEY does not exists!!!"))
 
-  protected def tableName(): String
-  protected def columnPrefixName(): String
+  protected def tableName: String
+  protected def columnPrefixName: String
   private[this] var timestampColumn: String = _
   private[this] var queryColumn: String     = _
 
@@ -59,10 +59,10 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
 
   private[this] var jdbcJarFileInfo: FileInfo = _
 
-  protected def dbUrl(): String
-  protected def dbUserName(): String
-  protected def dbPassword(): String
-  protected def dbName(): String
+  protected def dbUrl: String
+  protected def dbUserName: String
+  protected def dbPassword: String
+  protected def dbName: String
   protected def BINARY_TYPE_NAME: String
 
   /**
@@ -70,7 +70,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     * from local upload to configurator server for connector worker container to download use.
     * @return JDBC driver file name
     */
-  protected def jdbcDriverJarFileName(): String
+  protected def jdbcDriverJarFileName: String
 
   private[this] def zkApi = ZookeeperApi.access.hostname(configuratorHostname).port(configuratorPort)
 
@@ -87,17 +87,17 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     uploadJDBCJarToConfigurator() //For upload JDBC jar
 
     // Create database client
-    client = DatabaseClient.builder.url(dbUrl()).user(dbUserName()).password(dbPassword()).build
+    client = DatabaseClient.builder.url(dbUrl).user(dbUserName).password(dbPassword).build
 
     // Create table
-    val columns = (1 to 4).map(x => s"${columnPrefixName()}$x")
+    val columns = (1 to 4).map(x => s"$columnPrefixName$x")
     timestampColumn = columns(0)
     queryColumn = columns(1)
     val column1 = RdbColumn(columns(0), "TIMESTAMP", false)
     val column2 = RdbColumn(columns(1), "varchar(45)", true)
     val column3 = RdbColumn(columns(2), "integer", false)
     val column4 = RdbColumn(columns(3), BINARY_TYPE_NAME, false)
-    client.createTable(tableName(), Seq(column1, column2, column3, column4))
+    client.createTable(tableName, Seq(column1, column2, column3, column4))
     tableTotalCount = new LongAdder()
 
     inputDataThread = {
@@ -141,7 +141,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka())
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(bkCluster.connectionProps)
         .keySerializer(Serializer.ROW)
@@ -186,7 +186,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka())
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(bkCluster.connectionProps)
         .keySerializer(Serializer.ROW)
@@ -245,7 +245,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     val consumer =
       Consumer
         .builder()
-        .topicName(topicKey.topicNameOnKafka())
+        .topicKey(topicKey)
         .offsetFromBegin()
         .connectionProps(bkCluster.connectionProps)
         .keySerializer(Serializer.ROW)
@@ -383,7 +383,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
 
   private[this] def uploadJDBCJarToConfigurator(): Unit = {
     val jarApi: FileInfoApi.Access = FileInfoApi.access.hostname(configuratorHostname).port(configuratorPort)
-    val jar                        = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName()))
+    val jar                        = new File(CommonUtils.path(jarFolderPath, jdbcDriverJarFileName))
     jdbcJarFileInfo = result(jarApi.request.file(jar).upload())
   }
 
@@ -479,9 +479,9 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     JDBCSourceConnectorConfig(
       TaskSetting.of(
         Map(
-          "source.db.url"                -> dbUrl(),
-          "source.db.username"           -> dbUserName(),
-          "source.db.password"           -> dbPassword(),
+          "source.db.url"                -> dbUrl,
+          "source.db.username"           -> dbUserName,
+          "source.db.password"           -> dbPassword,
           "source.table.name"            -> tableName,
           "source.timestamp.column.name" -> timestampColumn,
           "source.schema.pattern"        -> "TUSER"
@@ -491,9 +491,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
 
   private[this] def checkData(tableData: Seq[String], topicData: Seq[String]): Unit = {
     tableData.zipWithIndex.foreach {
-      case (record, index) => {
-        record shouldBe topicData(index)
-      }
+      case (record, index) => record shouldBe topicData(index)
     }
   }
 
@@ -502,7 +500,7 @@ abstract class BasicTestConnectorCollie(platform: ContainerPlatform)
     Releasable.close(inputDataThread)
     if (client != null) {
       val statement: Statement = client.connection.createStatement()
-      statement.execute(s"drop table ${tableName()}")
+      statement.execute(s"drop table $tableName")
     }
     Releasable.close(client)
   }

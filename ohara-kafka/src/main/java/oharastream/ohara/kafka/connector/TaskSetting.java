@@ -30,9 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
-import oharastream.ohara.common.setting.ConnectorKey;
-import oharastream.ohara.common.setting.PropGroup;
-import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.*;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils;
 import oharastream.ohara.kafka.connector.json.StringList;
@@ -60,6 +58,30 @@ public class TaskSetting {
           CommonUtils.requireNonEmpty(k, () -> "k:" + k + ", v:" + v);
           CommonUtils.requireNonEmpty(v, () -> "k:" + k + ", v:" + v);
         });
+  }
+
+  /**
+   * take object key value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @return value
+   */
+  public ObjectKey objectKey(String key) {
+    if (raw.containsKey(key)) return ObjectKey.toObjectKey(raw.get(key));
+    else throw new NoSuchElementException(key + " doesn't exist");
+  }
+
+  /**
+   * take topic key value according to mapped key.
+   *
+   * @param key key
+   * @throws NoSuchElementException if no existent value for input key
+   * @return value
+   */
+  public TopicKey topicKey(String key) {
+    if (raw.containsKey(key)) return TopicKey.toTopicKey(raw.get(key));
+    else throw new NoSuchElementException(key + " doesn't exist");
   }
 
   /**

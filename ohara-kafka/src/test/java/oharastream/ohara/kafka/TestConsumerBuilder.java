@@ -18,6 +18,7 @@ package oharastream.ohara.kafka;
 
 import java.util.Collections;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.connector.TopicPartition;
 import org.junit.Test;
 
@@ -29,18 +30,18 @@ public class TestConsumerBuilder extends OharaTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullTopicName() {
-    Consumer.builder().topicName(null);
+  public void nullTopicKey() {
+    Consumer.builder().topicKey(null);
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullTopicNames() {
-    Consumer.builder().topicNames(null);
+  public void nullTopicKeys() {
+    Consumer.builder().topicKeys(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void emptyTopicNames() {
-    Consumer.builder().topicNames(Collections.emptySet());
+  public void emptyTopicKeys() {
+    Consumer.builder().topicKeys(Collections.emptySet());
   }
 
   @Test(expected = NullPointerException.class)
@@ -77,6 +78,6 @@ public class TestConsumerBuilder extends OharaTest {
   public void assignBothTopicAndAssignments() {
     Consumer.builder()
         .assignments(Collections.singleton(new TopicPartition("a", 1)))
-        .topicName("aa");
+        .topicKey(TopicKey.of("a", "b"));
   }
 }

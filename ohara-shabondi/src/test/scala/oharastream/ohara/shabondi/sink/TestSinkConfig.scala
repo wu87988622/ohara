@@ -45,8 +45,8 @@ final class TestSinkConfig extends OharaTest {
     val topicKeys = Seq(TopicKey.of("default", "topic1"), TopicKey.of("default", "topic2"))
 
     config.sinkFromTopics.size should ===(2)
-    config.sinkFromTopics(0) should ===(topicKeys(0))
-    config.sinkFromTopics(1) should ===(topicKeys(1))
+    config.sinkFromTopics should contain(topicKeys(0))
+    config.sinkFromTopics should contain(topicKeys(1))
     config.sinkPollTimeout should ===(JDuration.ofMillis(1500))
     config.sinkGroupIdleTime should ===(JDuration.ofSeconds(180))
   }

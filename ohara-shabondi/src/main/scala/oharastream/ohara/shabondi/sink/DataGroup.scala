@@ -22,14 +22,14 @@ import java.util.function.Consumer
 
 import oharastream.ohara.common.util.Releasable
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.metrics.basic.Counter
 
 private[sink] class DataGroup(
   val name: String,
   objectKey: ObjectKey,
   brokerProps: String,
-  topicNames: Set[String],
+  topicKeys: Set[TopicKey],
   pollTimeout: JDuration
 ) extends Releasable {
   private val log = Logger(classOf[RowQueue])
@@ -44,7 +44,7 @@ private[sink] class DataGroup(
       .register()
 
   val queue                = new RowQueue
-  val queueProducer        = new QueueProducer(name, queue, brokerProps, topicNames, pollTimeout, rowCounter)
+  val queueProducer        = new QueueProducer(name, queue, brokerProps, topicKeys, pollTimeout, rowCounter)
   private[this] val closed = new AtomicBoolean(false)
 
   def resume(): Unit =

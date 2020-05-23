@@ -60,12 +60,7 @@ public class TestProducerSender extends OharaTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullTopicName() {
-    fake().topicName(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void emptyTopicName() {
-    fake().topicName("");
+  public void nullTopicKey() {
+    fake().topicKey(null);
   }
 }

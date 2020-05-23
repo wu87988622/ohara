@@ -168,7 +168,7 @@ public interface Consumer<K, V> extends Releasable {
       implements oharastream.ohara.common.pattern.Builder<Consumer<Key, Value>> {
     private Map<String, String> options = Collections.emptyMap();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
-    private Set<String> topicNames;
+    private Set<TopicKey> topicKeys;
     private Set<TopicPartition> assignments;
     private String groupId = String.format("ohara-consumer-%s", CommonUtils.randomString());
     private String connectionProps;
@@ -214,24 +214,24 @@ public interface Consumer<K, V> extends Releasable {
     }
 
     /**
-     * @param topicName the topic you want to subscribe
+     * @param topicKey the topic you want to subscribe
      * @return this builder
      */
-    public Builder<Key, Value> topicName(String topicName) {
-      return topicNames(Collections.singleton(Objects.requireNonNull(topicName)));
+    public Builder<Key, Value> topicKey(TopicKey topicKey) {
+      return topicKeys(Collections.singleton(Objects.requireNonNull(topicKey)));
     }
 
     /**
      * assign the specify topics to this consumer. You have to define either topicNames or
      * assignments.
      *
-     * @param topicNames the topics you want to subscribe
+     * @param topicKeys the topics you want to subscribe
      * @return this builder
      */
-    public Builder<Key, Value> topicNames(Set<String> topicNames) {
+    public Builder<Key, Value> topicKeys(Set<TopicKey> topicKeys) {
       if (assignments != null)
         throw new IllegalArgumentException("assignments is defined so you can't subscribe topics");
-      this.topicNames = CommonUtils.requireNonEmpty(topicNames);
+      this.topicKeys = CommonUtils.requireNonEmpty(topicKeys);
       return this;
     }
 
@@ -243,7 +243,7 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder<Key, Value> assignments(Set<TopicPartition> assignments) {
-      if (topicNames != null)
+      if (topicKeys != null)
         throw new IllegalArgumentException("assignments is defined so you can't subscribe topics");
       this.assignments = CommonUtils.requireNonEmpty(assignments);
       return this;
@@ -326,7 +326,9 @@ public interface Consumer<K, V> extends Releasable {
               wrap((Serializer<Key>) keySerializer),
               wrap((Serializer<Value>) valueSerializer));
 
-      if (!CommonUtils.isEmpty(topicNames)) kafkaConsumer.subscribe(topicNames);
+      if (!CommonUtils.isEmpty(topicKeys))
+        kafkaConsumer.subscribe(
+            topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
       if (!CommonUtils.isEmpty(assignments))
         kafkaConsumer.assign(
             assignments.stream()
@@ -360,7 +362,7 @@ public interface Consumer<K, V> extends Releasable {
                 .map(
                     cr ->
                         new Record<>(
-                            cr.topic(),
+                            TopicKey.requirePlain(cr.topic()),
                             cr.partition(),
                             cr.timestamp(),
                             TimestampType.of(cr.timestampType()),
@@ -459,7 +461,7 @@ public interface Consumer<K, V> extends Releasable {
    * @param <V> V value type
    */
   class Record<K, V> {
-    private final String topicName;
+    private final TopicKey topicKey;
     private final int partition;
     private final long timestamp;
     private final TimestampType timestampType;
@@ -469,13 +471,13 @@ public interface Consumer<K, V> extends Releasable {
     private final V value;
 
     /**
-     * @param topicName topic name
+     * @param topicKey topic name
      * @param timestamp time to create this record or time to append this record.
      * @param key key (nullable)
      * @param value value
      */
     private Record(
-        String topicName,
+        TopicKey topicKey,
         int partition,
         long timestamp,
         TimestampType timestampType,
@@ -483,7 +485,7 @@ public interface Consumer<K, V> extends Releasable {
         List<Header> headers,
         K key,
         V value) {
-      this.topicName = topicName;
+      this.topicKey = Objects.requireNonNull(topicKey);
       this.partition = partition;
       this.timestamp = timestamp;
       this.timestampType = timestampType;
@@ -498,8 +500,8 @@ public interface Consumer<K, V> extends Releasable {
      *
      * @return a topic name
      */
-    public String topicName() {
-      return topicName;
+    public TopicKey topicKey() {
+      return topicKey;
     }
 
     public int partition() {
@@ -564,7 +566,7 @@ public interface Consumer<K, V> extends Releasable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       Record<?, ?> that = (Record<?, ?>) o;
-      return Objects.equals(topicName, that.topicName)
+      return Objects.equals(topicKey, that.topicKey)
           && Objects.equals(timestamp, that.timestamp)
           && Objects.equals(timestampType, that.timestampType)
           && Objects.equals(offset, that.offset)
@@ -575,13 +577,13 @@ public interface Consumer<K, V> extends Releasable {
 
     @Override
     public int hashCode() {
-      return Objects.hash(topicName, headers, key, value);
+      return Objects.hash(topicKey, headers, key, value);
     }
 
     @Override
     public String toString() {
       return new ToStringBuilder(this)
-          .append("topicName", topicName)
+          .append("topicKey", topicKey)
           .append("timestamp", timestamp)
           .append("offset", offset)
           .append("headers", headers)

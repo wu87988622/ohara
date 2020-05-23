@@ -29,6 +29,7 @@ import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.ConnectorKey;
 import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.json.ConnectorFormatter;
 import org.junit.Assert;
@@ -149,7 +150,13 @@ public class TestRowSourceRecord extends OharaTest {
     Assert.assertEquals(1, task.cachedRecords.size());
     org.apache.kafka.clients.producer.RecordMetadata meta =
         new org.apache.kafka.clients.producer.RecordMetadata(
-            new org.apache.kafka.common.TopicPartition("A", 1), 1, 2, 3, 4L, 5, 6);
+            new org.apache.kafka.common.TopicPartition(TopicKey.of("g", "n").topicNameOnKafka(), 1),
+            1,
+            2,
+            3,
+            4L,
+            5,
+            6);
     // this loop will remove the elements in the cache so we have to clone another list to prevent
     // ConcurrentModificationException
     new ArrayList<>(task.cachedRecords.keySet()).forEach(r -> task.commitRecord(r, meta));

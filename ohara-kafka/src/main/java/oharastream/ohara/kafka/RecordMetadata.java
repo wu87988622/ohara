@@ -16,6 +16,9 @@
 
 package oharastream.ohara.kafka;
 
+import java.util.Objects;
+import oharastream.ohara.common.setting.TopicKey;
+
 public class RecordMetadata {
   /**
    * convert kafka.RecordMetadata to ohara.RecordMetadata
@@ -25,7 +28,7 @@ public class RecordMetadata {
    */
   public static RecordMetadata of(org.apache.kafka.clients.producer.RecordMetadata metadata) {
     return new RecordMetadata(
-        metadata.topic(),
+        TopicKey.requirePlain(metadata.topic()),
         metadata.partition(),
         metadata.offset(),
         metadata.timestamp(),
@@ -33,7 +36,7 @@ public class RecordMetadata {
         metadata.serializedValueSize());
   }
 
-  private final String topicName;
+  private final TopicKey topicKey;
   private final int partition;
   private final long offset;
   private final long timestamp;
@@ -41,13 +44,13 @@ public class RecordMetadata {
   private final int serializedValueSize;
 
   private RecordMetadata(
-      String topicName,
+      TopicKey topicKey,
       int partition,
       long offset,
       long timestamp,
       int serializedKeySize,
       int serializedValueSize) {
-    this.topicName = topicName;
+    this.topicKey = Objects.requireNonNull(topicKey);
     this.partition = partition;
     this.offset = offset;
     this.timestamp = timestamp;
@@ -55,8 +58,8 @@ public class RecordMetadata {
     this.serializedValueSize = serializedValueSize;
   }
 
-  public String topicName() {
-    return topicName;
+  public TopicKey topicKey() {
+    return topicKey;
   }
 
   public int partition() {

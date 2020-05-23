@@ -94,4 +94,11 @@ public class TestObjectKey extends OharaTest {
     Assert.assertEquals(TopicKey.of(group, name), ObjectKey.of(group, name));
     Assert.assertEquals(ConnectorKey.of(group, name), ObjectKey.of(group, name));
   }
+
+  @Test
+  public void testPlainStringToObjectKey() {
+    Assert.assertThrows(IllegalArgumentException.class, () -> ObjectKey.requirePlain("asd"));
+    Assert.assertThrows(IllegalArgumentException.class, () -> ObjectKey.requirePlain("asd-"));
+    Assert.assertEquals(ObjectKey.of("a", "b-c"), ObjectKey.requirePlain("a-b-c"));
+  }
 }

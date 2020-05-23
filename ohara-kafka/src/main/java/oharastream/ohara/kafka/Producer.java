@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.Optional;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Serializer;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -175,7 +176,7 @@ public interface Producer<Key, Value> extends Releasable {
               CompletableFuture<RecordMetadata> completableFuture = new CompletableFuture<>();
               ProducerRecord<Key, Value> record =
                   new ProducerRecord<>(
-                      topicName,
+                      topicKey.topicNameOnKafka(),
                       partition,
                       timestamp,
                       key,
@@ -241,7 +242,7 @@ public interface Producer<Key, Value> extends Releasable {
     protected Key key = null;
     protected Value value = null;
     protected Long timestamp = null;
-    protected String topicName = null;
+    protected TopicKey topicKey = null;
 
     @VisibleForTesting
     Sender() {
@@ -283,19 +284,14 @@ public interface Producer<Key, Value> extends Releasable {
       return this;
     }
 
-    public Sender<Key, Value> topicName(String topicName) {
-      this.topicName = CommonUtils.requireNonEmpty(topicName);
-      return this;
-    }
-
-    public Sender<Key, Value> handler(String topicName) {
-      this.topicName = CommonUtils.requireNonEmpty(topicName);
+    public Sender<Key, Value> topicKey(TopicKey topicKey) {
+      this.topicKey = Objects.requireNonNull(topicKey);
       return this;
     }
 
     private void checkArguments() {
       Objects.requireNonNull(headers);
-      Objects.requireNonNull(topicName);
+      Objects.requireNonNull(topicKey);
     }
 
     /**

@@ -50,13 +50,7 @@ public class StreamTestUtils {
     rows.forEach(
         row -> {
           try {
-            producer
-                .sender()
-                .key(row)
-                .value(new byte[0])
-                .topicName(topicKey.topicNameOnKafka())
-                .send()
-                .get();
+            producer.sender().key(row).value(new byte[0]).topicKey(topicKey).send().get();
           } catch (InterruptedException | ExecutionException e) {
             Assert.fail(e.getMessage());
           }
@@ -67,7 +61,7 @@ public class StreamTestUtils {
       TopicAdmin client, TopicKey topicKey, List<Row> expectedContainedRows, int expectedSize) {
     Consumer<Row, byte[]> consumer =
         Consumer.builder()
-            .topicName(topicKey.topicNameOnKafka())
+            .topicKey(topicKey)
             .connectionProps(client.connectionProps())
             .groupId("group-" + CommonUtils.randomString(5))
             .offsetFromBegin()

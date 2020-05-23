@@ -80,12 +80,12 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
   private[this] val numberOfRowsToFlushKey          = PerformanceTestingUtils.ROW_FLUSH_NUMBER_KEY
   private[this] val numberOfRowsToFlushDefault: Int = 2000
   protected val numberOfRowsToFlush: Int =
-    value(numberOfRowsToFlushKey).map(_.toInt).getOrElse(numberOfRowsToFlushDefault).toInt
+    value(numberOfRowsToFlushKey).map(_.toInt).getOrElse(numberOfRowsToFlushDefault)
 
   private[this] val numberOfCsvFileToFlushKey          = PerformanceTestingUtils.CSV_FILE_FLUSH_SIZE_KEY
   private[this] val numberOfCsvFileToFlushDefault: Int = 10000
   protected val numberOfCsvFileToFlush: Int =
-    value(numberOfCsvFileToFlushKey).map(_.toInt).getOrElse(numberOfCsvFileToFlushDefault).toInt
+    value(numberOfCsvFileToFlushKey).map(_.toInt).getOrElse(numberOfCsvFileToFlushDefault)
 
   private[this] val wholeTimeout = (durationOfPerformance.toSeconds + timeoutOfInputData.toSeconds) * 2
 
@@ -130,14 +130,13 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
     inputDataThread = {
       val pool = Executors.newSingleThreadExecutor()
       pool.execute(() => {
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted) {
           try {
             input(timeoutOfInputData)
           } catch {
-            case interrupException: InterruptedException => {
-              log.error("interrup exception", interrupException)
+            case interruptedException: InterruptedException =>
+              log.error("interrupted exception", interruptedException)
               break
-            }
             case e: Throwable => throw e
           }
         }
@@ -276,7 +275,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
           rows.foreach(row => {
             producer
               .sender()
-              .topicName(topicKey.topicNameOnKafka())
+              .topicKey(topicKey)
               .key(row)
               .send()
               .whenComplete {
@@ -298,7 +297,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
   final protected[this] def generateData(
     numberOfRowsToFlush: Int,
     timeout: Duration,
-    callback: (Seq[Row]) => (Long, Long)
+    callback: Seq[Row] => (Long, Long)
   ): (Long, Long) = {
     val start    = CommonUtils.current()
     var previous = CommonUtils.current()

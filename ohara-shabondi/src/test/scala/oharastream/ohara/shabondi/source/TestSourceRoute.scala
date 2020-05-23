@@ -91,7 +91,7 @@ final class TestSourceRoute extends BasicShabondiTest {
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =
-        KafkaSupport.pollTopicOnce(brokerProps, topicKey1.topicNameOnKafka, 60, requestCount)
+        KafkaSupport.pollTopicOnce(brokerProps, topicKey1, 60, requestCount)
       rowsTopic1.size should ===(requestCount)
       rowsTopic1(0).key.get.cells.size should ===(columnCount)
 

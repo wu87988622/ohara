@@ -104,7 +104,7 @@ class TestMetrics extends WithBrokerWorker {
     try {
       producer
         .sender()
-        .topicName(topic.key.topicNameOnKafka)
+        .topicKey(topic.key)
         .key(CommonUtils.randomString())
         .value(CommonUtils.randomString())
         .send()

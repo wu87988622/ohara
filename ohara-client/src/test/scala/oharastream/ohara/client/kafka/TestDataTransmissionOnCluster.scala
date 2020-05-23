@@ -20,13 +20,13 @@ import oharastream.ohara.client.configurator.v0.ConnectorApi.State
 import oharastream.ohara.common.data._
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
-import oharastream.ohara.kafka.{TopicAdmin, Consumer, Producer}
+import oharastream.ohara.kafka.{Consumer, Producer, TopicAdmin}
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.CollectionConverters._
 class TestDataTransmissionOnCluster extends WithBrokerWorker {
   private[this] val topicAdmin     = TopicAdmin.of(testUtil().brokersConnProps)
   private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
@@ -62,7 +62,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
-    try 0 until numberOfRows foreach (_ => producer.sender().key(row).topicName(topicKey.topicNameOnKafka).send())
+    try 0 until numberOfRows foreach (_ => producer.sender().key(row).topicKey(topicKey).send())
     finally producer.close()
     checkData(topicKey)
   }
@@ -72,7 +72,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
       .builder()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .topicName(topicKey.topicNameOnKafka)
+      .topicKey(topicKey)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
@@ -115,7 +115,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
       .builder()
       .offsetFromBegin()
       .connectionProps(testUtil.brokersConnProps)
-      .topicName(topicKey.topicNameOnKafka)
+      .topicKey(topicKey)
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
@@ -156,7 +156,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKey(srcKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> targetKey.topicNameOnKafka))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> TopicKey.toJsonString(targetKey)))
         .create()
     )
 
@@ -197,7 +197,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKey(targetKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> srcKey.topicNameOnKafka))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> TopicKey.toJsonString(srcKey)))
         .create()
     )
 
@@ -213,11 +213,11 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
     */
   @Test
   def shouldKeepColumnOrderAfterSendToKafka(): Unit = {
-    val topicName  = CommonUtils.randomString(10)
+    val topicKey   = TopicKey.of("g", CommonUtils.randomString(10))
     val topicAdmin = TopicAdmin.of(testUtil().brokersConnProps())
     try topicAdmin
       .topicCreator()
-      .topicKey(TopicKey.of("fake", topicName))
+      .topicKey(topicKey)
       .numberOfPartitions(1)
       .numberOfReplications(1)
       .create()
@@ -230,7 +230,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
       .valueSerializer(Serializer.BYTES)
       .build()
     try {
-      producer.sender().key(row).topicName(topicName).send()
+      producer.sender().key(row).topicKey(topicKey).send()
       producer.flush()
     } finally producer.close()
 
@@ -239,7 +239,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .builder()
         .connectionProps(testUtil.brokersConnProps)
         .offsetFromBegin()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .keySerializer(Serializer.ROW)
         .valueSerializer(Serializer.BYTES)
         .build()
@@ -262,7 +262,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
   def testConnectorAdmin(): Unit = {
     val connectorKey = ConnectorKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     val topicKeys    = Set(TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10)))
-    val outputTopic  = CommonUtils.randomString(10)
+    val outputTopic  = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
     result(
       connectorAdmin
         .connectorCreator()
@@ -271,7 +271,7 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKeys(topicKeys)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> outputTopic))
+        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> TopicKey.toJsonString(outputTopic)))
         .create()
     )
 

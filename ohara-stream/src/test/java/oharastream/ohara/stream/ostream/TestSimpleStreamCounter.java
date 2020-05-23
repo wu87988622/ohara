@@ -45,9 +45,9 @@ import org.junit.Test;
 // non-completed settings to stream works well in this test ... by chia
 public class TestSimpleStreamCounter extends WithBroker {
 
-  private static Duration timeout = Duration.ofSeconds(10);
-  private static TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), "metric-from");
-  private static TopicKey toKey = TopicKey.of(CommonUtils.randomString(), "metric-to");
+  private static final Duration timeout = Duration.ofSeconds(10);
+  private static final TopicKey fromKey = TopicKey.of(CommonUtils.randomString(), "metric-from");
+  private static final TopicKey toKey = TopicKey.of(CommonUtils.randomString(), "metric-to");
 
   private final TopicAdmin client = TopicAdmin.of(testUtil().brokersConnProps());
   private final Producer<Row, byte[]> producer =
@@ -58,7 +58,7 @@ public class TestSimpleStreamCounter extends WithBroker {
           .build();
   private final Consumer<Row, byte[]> consumer =
       Consumer.builder()
-          .topicName(toKey.topicNameOnKafka())
+          .topicKey(toKey)
           .connectionProps(client.connectionProps())
           .keySerializer(Serializer.ROW)
           .valueSerializer(Serializer.BYTES)
@@ -80,14 +80,14 @@ public class TestSimpleStreamCounter extends WithBroker {
           .sender()
           .key(Row.of(Cell.of("bar", "foo")))
           .value(new byte[0])
-          .topicName(fromKey.topicNameOnKafka())
+          .topicKey(fromKey)
           .send()
           .get();
       producer
           .sender()
           .key(Row.of(Cell.of("hello", "world")))
           .value(new byte[0])
-          .topicName(fromKey.topicNameOnKafka())
+          .topicKey(fromKey)
           .send()
           .get();
     } catch (Exception e) {

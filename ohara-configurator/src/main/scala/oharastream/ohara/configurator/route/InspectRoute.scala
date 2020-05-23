@@ -378,7 +378,7 @@ private[configurator] object InspectRoute {
           .builder()
           .connectionProps(topicAdmin.connectionProps)
           .offsetFromBegin()
-          .topicName(InspectApi.INTERNAL_TOPIC_KEY.topicNameOnKafka)
+          .topicKey(InspectApi.INTERNAL_TOPIC_KEY)
           .keySerializer(Serializer.STRING)
           .valueSerializer(Serializer.OBJECT)
           .build()

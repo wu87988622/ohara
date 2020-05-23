@@ -307,8 +307,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       val numberOfRecords = 5
       log.info(s"[BROKER] start to send $numberOfRecords data")
       (0 until numberOfRecords).foreach(
-        index =>
-          producer.sender().key(index.toString).value(index.toString).topicName(topicKey.topicNameOnKafka()).send()
+        index => producer.sender().key(index.toString).value(index.toString).topicKey(topicKey).send()
       )
       producer.flush()
       producer.close()
@@ -318,7 +317,7 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
         .builder()
         .connectionProps(brokers)
         .offsetFromBegin()
-        .topicName(topicKey.topicNameOnKafka())
+        .topicKey(topicKey)
         .keySerializer(Serializer.STRING)
         .valueSerializer(Serializer.STRING)
         .build()
