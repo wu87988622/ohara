@@ -21,6 +21,7 @@ import java.lang.reflect.Modifier
 import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
 import oharastream.ohara.common.setting.WithDefinitions
 import com.typesafe.scalalogging.Logger
+import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import org.reflections.Reflections
 
 import scala.jdk.CollectionConverters._
@@ -36,13 +37,16 @@ object ReflectionUtils {
       .getSubTypesOf(classOf[WithDefinitions])
       .asScala
       .toSeq
+      .filter(
+        clz => classOf[RowSourceConnector].isAssignableFrom(clz) || classOf[RowSinkConnector].isAssignableFrom(clz)
+      )
       // the abstract class is not instantiable.
       .filterNot(clz => Modifier.isAbstract(clz.getModifiers))
       .flatMap { clz =>
         try Some((clz.getName, clz.newInstance().settingDefinitions().values().asScala.toSeq))
         catch {
           case e: Throwable =>
-            LOG.error(s"failed to instantiate ${clz.getName} for RowSourceConnector", e)
+            LOG.error(s"failed to instantiate ${clz.getName}", e)
             None
         }
       }

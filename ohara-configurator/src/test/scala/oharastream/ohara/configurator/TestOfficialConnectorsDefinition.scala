@@ -18,12 +18,36 @@ package oharastream.ohara.configurator
 
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.WithDefinitions
+import oharastream.ohara.shabondi.{ShabondiSink, ShabondiSource}
 import org.junit.Test
+import org.scalatest.matchers.should.Matchers._
 
 /**
   * the definitions of official connectors should define the "orderInGroup"
   */
 class TestOfficialConnectorsDefinition extends OharaTest {
+  @Test
+  def testLocalConnectors(): Unit = {
+    ReflectionUtils.localConnectorDefinitions.size should not be 0
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should contain(
+      classOf[oharastream.ohara.connector.ftp.FtpSource].getName
+    )
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should contain(
+      classOf[oharastream.ohara.connector.smb.SmbSource].getName
+    )
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should contain(
+      classOf[oharastream.ohara.connector.perf.PerfSource].getName
+    )
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should contain(
+      classOf[oharastream.ohara.connector.jdbc.source.JDBCSourceConnector].getName
+    )
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should contain(
+      classOf[oharastream.ohara.connector.hdfs.sink.HDFSSink].getName
+    )
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should not contain classOf[ShabondiSink].getName
+    ReflectionUtils.localConnectorDefinitions.map(_.className) should not contain classOf[ShabondiSource].getName
+  }
+
   @Test
   def testOrderInGroup(): Unit = {
     val illegalConnectors =

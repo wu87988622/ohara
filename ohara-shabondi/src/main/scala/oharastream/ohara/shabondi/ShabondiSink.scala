@@ -20,18 +20,21 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.setting.WithDefinitions
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.shabondi.common.ShabondiUtils
+import oharastream.ohara.shabondi.sink.WebServer
 
 /**
   * the main class of shabondi sink. Don't remove this class as we need to get canonical class name.
-  * @param args to start sink
   */
-class ShabondiSink(args: Map[String, String]) extends WithDefinitions with Releasable {
-  private[this] val config    = new sink.SinkConfig(args)
-  private[this] val webServer = new sink.WebServer(config)
+class ShabondiSink extends WithDefinitions with Releasable {
+  private[this] var webServer: WebServer = _
 
-  def start(): Unit = webServer.start(CommonUtils.anyLocalAddress(), config.port)
+  def start(args: Map[String, String]): Unit = {
+    val config = new sink.SinkConfig(args)
+    webServer = new sink.WebServer(config)
+    webServer.start(CommonUtils.anyLocalAddress(), config.port)
+  }
 
-  override def close(): Unit = webServer.close()
+  override def close(): Unit = Releasable.close(webServer)
 }
 
 object ShabondiSink {
@@ -42,8 +45,8 @@ object ShabondiSink {
     log.info("Arguments:")
     newArgs.foreach { case (k, v) => log.info(s"    $k=$v") }
 
-    val sink = new ShabondiSink(newArgs)
-    try sink.start()
+    val sink = new ShabondiSink()
+    try sink.start(newArgs)
     finally sink.close()
   }
 }

@@ -20,18 +20,21 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.setting.WithDefinitions
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.shabondi.common.ShabondiUtils
+import oharastream.ohara.shabondi.source.WebServer
 
 /**
   * the main class of shabondi source. Don't remove this class as we need to get canonical class name.
-  * @param args to start source
   */
-class ShabondiSource(args: Map[String, String]) extends WithDefinitions with Releasable {
-  private[this] val config    = new source.SourceConfig(args)
-  private[this] val webServer = new source.WebServer(config)
+class ShabondiSource extends WithDefinitions with Releasable {
+  private[this] var webServer: WebServer = _
 
-  def start(): Unit = webServer.start(CommonUtils.anyLocalAddress(), config.port)
+  def start(args: Map[String, String]): Unit = {
+    val config = new source.SourceConfig(args)
+    webServer = new source.WebServer(config)
+    webServer.start(CommonUtils.anyLocalAddress(), config.port)
+  }
 
-  override def close(): Unit = webServer.close()
+  override def close(): Unit = Releasable.close(webServer)
 }
 
 object ShabondiSource {
@@ -42,8 +45,8 @@ object ShabondiSource {
     log.info("Shabondi arguments({}):", newArgs.size)
     newArgs.foreach { case (k, v) => log.info(s"  $k=$v") }
 
-    val source = new ShabondiSource(newArgs)
-    try source.start()
+    val source = new ShabondiSource()
+    try source.start(newArgs)
     finally source.close()
   }
 }
