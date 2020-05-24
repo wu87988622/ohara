@@ -29,6 +29,7 @@ import org.scalatest.matchers.should.Matchers._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.jdk.CollectionConverters._
 
 class TestDeleteTopicsConcurrently extends WithBrokerWorker {
   private[this] val configurator =
@@ -44,8 +45,8 @@ class TestDeleteTopicsConcurrently extends WithBrokerWorker {
 
   @Test
   def test(): Unit = {
-    val loopMax       = 30
-    val count         = 5
+    val loopMax       = 10
+    val count         = 3
     val topicKeyQueue = new ArrayBlockingQueue[TopicKey](count)
     (0 until count).foreach(i => topicKeyQueue.put(TopicKey.of("test", i.toString)))
     val executors      = Executors.newFixedThreadPool(count)
@@ -84,7 +85,9 @@ class TestDeleteTopicsConcurrently extends WithBrokerWorker {
         }
     )
     executors.shutdown()
-    executors.awaitTermination(30, TimeUnit.SECONDS) shouldBe true
+    withClue(s"${exceptionQueue.asScala.map(_.getMessage).mkString(",")}") {
+      executors.awaitTermination(60, TimeUnit.SECONDS) shouldBe true
+    }
     exceptionQueue.size() shouldBe 0
   }
   @After
