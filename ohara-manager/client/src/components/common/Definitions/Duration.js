@@ -72,8 +72,10 @@ const Duration = props => {
       error={hasError}
       type="number"
       InputProps={{
-        endAdornment: <InputAdornment position="end">Seconds</InputAdornment>,
         ...restInput,
+        endAdornment: <InputAdornment position="end">Seconds</InputAdornment>,
+        // Props for native input element
+        inputProps: { min: 0 },
       }}
     />
   );
