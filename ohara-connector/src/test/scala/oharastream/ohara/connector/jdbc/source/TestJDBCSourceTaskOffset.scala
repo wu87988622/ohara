@@ -22,6 +22,7 @@ import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.testing.service.Database
 import org.junit.{Before, Test}
@@ -87,7 +88,7 @@ class TestJDBCSourceTaskOffset extends OharaTest {
       )
 
       when(taskSetting.columns).thenReturn(columns.asJava)
-      when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
+      when(taskSetting.topicKeys()).thenReturn(Set(TopicKey.of("g", "topic1")).asJava)
     } finally Releasable.close(statement)
   }
 

@@ -56,7 +56,7 @@ public class CsvDataReader implements DataReader {
       CsvRecordConverter converter =
           CsvRecordConverter.builder()
               .path(path)
-              .topicNames(config.topicNames())
+              .topicKeys(config.topicKeys())
               .offsetCache(offsetCache)
               .schema(config.columns())
               .maximumNumberOfLines(config.maximumNumberOfLines())

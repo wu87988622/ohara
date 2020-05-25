@@ -33,7 +33,7 @@ class PerfSource extends RowSourceConnector {
     * this method is exposed to test scope
     */
   override protected def run(settings: TaskSetting): Unit = {
-    if (settings.topicNames().isEmpty) throw new IllegalArgumentException("topics can't be empty")
+    if (settings.topicKeys().isEmpty) throw new IllegalArgumentException("topics can't be empty")
     val props = PerfSourceProps(settings)
     if (props.batch < 0) throw new IllegalArgumentException(s"batch:${props.batch} can't be negative")
     this.settings = settings

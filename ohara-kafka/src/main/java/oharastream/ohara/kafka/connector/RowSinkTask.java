@@ -27,6 +27,7 @@ import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.common.util.VersionUtils;
 import oharastream.ohara.kafka.TimestampType;
@@ -123,7 +124,7 @@ public abstract class RowSinkTask extends SinkTask {
    */
   private static RowSinkRecord toOhara(SinkRecord record) {
     return RowSinkRecord.builder()
-        .topicName(record.topic())
+        .topicKey(TopicKey.requirePlain(record.topic()))
         // add a room to accept the row in kafka
         .row(
             (record.key() instanceof Row)
@@ -211,19 +212,12 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void open(Collection<org.apache.kafka.common.TopicPartition> partitions) {
-
-    openPartitions(
-        partitions.stream()
-            .map(p -> new TopicPartition(p.topic(), (p.partition())))
-            .collect(Collectors.toList()));
+    openPartitions(partitions.stream().map(TopicPartition::of).collect(Collectors.toList()));
   }
 
   @Override
   public final void close(Collection<org.apache.kafka.common.TopicPartition> partitions) {
-    closePartitions(
-        partitions.stream()
-            .map(p -> new TopicPartition(p.topic(), (p.partition())))
-            .collect(Collectors.toList()));
+    closePartitions(partitions.stream().map(TopicPartition::of).collect(Collectors.toList()));
   }
 
   @Override
@@ -234,14 +228,14 @@ public abstract class RowSinkTask extends SinkTask {
             currentOffsets.entrySet().stream()
                 .collect(
                     Collectors.toMap(
-                        x -> new TopicPartition(x.getKey().topic(), x.getKey().partition()),
+                        x -> TopicPartition.of(x.getKey()),
                         x -> new TopicOffset(x.getValue().metadata(), x.getValue().offset()))))
         .entrySet().stream()
         .collect(
             Collectors.toMap(
                 x ->
                     new org.apache.kafka.common.TopicPartition(
-                        x.getKey().topicName(), x.getKey().partition()),
+                        x.getKey().topicKey().topicNameOnKafka(), x.getKey().partition()),
                 x -> new OffsetAndMetadata(x.getValue().offset(), x.getValue().metadata())));
   }
   // -------------------------------------------------[UN-OVERRIDE]-------------------------------------------------//

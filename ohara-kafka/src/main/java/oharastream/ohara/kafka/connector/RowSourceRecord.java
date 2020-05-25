@@ -22,13 +22,13 @@ import java.util.Objects;
 import java.util.Optional;
 import oharastream.ohara.common.annotations.Nullable;
 import oharastream.ohara.common.data.Row;
-import oharastream.ohara.common.util.CommonUtils;
+import oharastream.ohara.common.setting.TopicKey;
 
 /** A wrap to SourceRecord. Currently, only value columns and value are changed. */
 public class RowSourceRecord {
   private final Map<String, ?> sourcePartition;
   private final Map<String, ?> sourceOffset;
-  private final String topicName;
+  private final TopicKey topicKey;
 
   @Nullable("thanks to kafka")
   private final Integer partition;
@@ -41,13 +41,13 @@ public class RowSourceRecord {
   private RowSourceRecord(
       Map<String, ?> sourcePartition,
       Map<String, ?> sourceOffset,
-      String topicName,
+      TopicKey topicKey,
       Integer partition,
       Row row,
       Long timestamp) {
     this.sourcePartition = Collections.unmodifiableMap(Objects.requireNonNull(sourcePartition));
     this.sourceOffset = Collections.unmodifiableMap(Objects.requireNonNull(sourceOffset));
-    this.topicName = topicName;
+    this.topicKey = topicKey;
     this.partition = partition;
     this.row = row;
     this.timestamp = timestamp;
@@ -61,8 +61,8 @@ public class RowSourceRecord {
     return sourceOffset;
   }
 
-  public String topicName() {
-    return topicName;
+  public TopicKey topicKey() {
+    return topicKey;
   }
 
   public Optional<Integer> partition() {
@@ -75,17 +75,6 @@ public class RowSourceRecord {
 
   public Optional<Long> timestamp() {
     return Optional.ofNullable(timestamp);
-  }
-
-  /**
-   * a helper method to create a record with topic and row
-   *
-   * @param topic topic name
-   * @param row row
-   * @return connect record
-   */
-  public static RowSourceRecord of(String topic, Row row) {
-    return builder().row(row).topicName(topic).build();
   }
 
   public static Builder builder() {
@@ -102,7 +91,7 @@ public class RowSourceRecord {
     private Integer partition = null;
     private Row row = null;
     private Long timestamp = null;
-    private String topicName = null;
+    private TopicKey topicKey = null;
 
     @oharastream.ohara.common.annotations.Optional("default is empty")
     public Builder sourcePartition(Map<String, ?> sourcePartition) {
@@ -134,8 +123,8 @@ public class RowSourceRecord {
       return this;
     }
 
-    public Builder topicName(String topicName) {
-      this.topicName = CommonUtils.requireNonEmpty(topicName);
+    public Builder topicKey(TopicKey topicKey) {
+      this.topicKey = Objects.requireNonNull(topicKey);
       return this;
     }
 
@@ -144,7 +133,7 @@ public class RowSourceRecord {
       return new RowSourceRecord(
           Objects.requireNonNull(sourcePartition),
           Objects.requireNonNull(sourceOffset),
-          Objects.requireNonNull(topicName),
+          Objects.requireNonNull(topicKey),
           partition,
           Objects.requireNonNull(row),
           timestamp);

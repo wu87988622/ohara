@@ -173,6 +173,6 @@ public class TestCsvDataWriter extends WithMockStorage {
 
   private String getDirectory(TopicPartition tp) {
     String encodedPartition = "partition" + tp.partition();
-    return FileUtils.generatePartitionedPath(tp.topicName(), encodedPartition);
+    return FileUtils.generatePartitionedPath(tp.topicKey(), encodedPartition);
   }
 }

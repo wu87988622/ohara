@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.ConnectorKey
+import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import org.apache.kafka.connect.sink.SinkRecord
@@ -97,7 +97,7 @@ class TestConsoleSinkTask extends OharaTest {
     task.put(
       java.util.Collections.singletonList(
         new SinkRecord(
-          CommonUtils.randomString(),
+          TopicKey.of("g", "n").topicNameOnKafka(),
           1,
           null,
           Row.EMPTY,

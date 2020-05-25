@@ -27,6 +27,7 @@ import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.ConnectorKey;
 import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.json.ConnectorFormatter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -98,7 +99,7 @@ public class TestConnectorProps extends OharaTest {
       task.put(
           Collections.singletonList(
               new SinkRecord(
-                  "topic",
+                  TopicKey.of("g", "n").topicNameOnKafka(),
                   0,
                   null,
                   Serializer.ROW.to(Row.of(Cell.of(column.name(), CommonUtils.randomString()))),
@@ -114,7 +115,7 @@ public class TestConnectorProps extends OharaTest {
       task.put(
           Collections.singletonList(
               new SinkRecord(
-                  "topic",
+                  TopicKey.of("g", "n").topicNameOnKafka(),
                   0,
                   null,
                   Serializer.ROW.to(Row.of(Cell.of(column.name(), 12313))),
@@ -181,7 +182,7 @@ public class TestConnectorProps extends OharaTest {
               return Collections.singletonList(
                   RowSourceRecord.builder()
                       .row(good ? goodRow : badRow)
-                      .topicName(CommonUtils.randomString(10))
+                      .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))
                       .build());
             } finally {
               good = false;
@@ -240,7 +241,7 @@ public class TestConnectorProps extends OharaTest {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)
-                    .topicName(CommonUtils.randomString(10))
+                    .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))
                     .build());
           }
         };
@@ -266,7 +267,7 @@ public class TestConnectorProps extends OharaTest {
             return Collections.singletonList(
                 RowSourceRecord.builder()
                     .row(badRow)
-                    .topicName(CommonUtils.randomString(10))
+                    .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))
                     .build());
           }
         };

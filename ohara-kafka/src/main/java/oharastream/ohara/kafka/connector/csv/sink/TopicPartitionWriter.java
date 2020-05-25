@@ -168,7 +168,7 @@ public class TopicPartitionWriter implements Releasable {
   }
 
   private String getDirectory(String encodedPartition) {
-    return FileUtils.generatePartitionedPath(tp.topicName(), encodedPartition);
+    return FileUtils.generatePartitionedPath(tp.topicKey(), encodedPartition);
   }
 
   private boolean rotateOnTime(long now) {

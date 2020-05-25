@@ -18,6 +18,7 @@ package oharastream.ohara.kafka.connector;
 
 import java.util.Objects;
 import oharastream.ohara.common.data.Row;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.TimestampType;
 
@@ -27,7 +28,7 @@ import oharastream.ohara.kafka.TimestampType;
  */
 public class RowSinkRecord {
 
-  private final String topicName;
+  private final TopicKey topicKey;
   private final Row row;
   private final int partition;
   private final long offset;
@@ -35,13 +36,13 @@ public class RowSinkRecord {
   private final TimestampType timestampType;
 
   private RowSinkRecord(
-      String topicName,
+      TopicKey topicKey,
       Row row,
       int partition,
       long offset,
       long timestamp,
       TimestampType timestampType) {
-    this.topicName = CommonUtils.requireNonEmpty(topicName);
+    this.topicKey = Objects.requireNonNull(topicKey);
     this.row = Objects.requireNonNull(row);
     this.partition = partition;
     this.offset = offset;
@@ -49,8 +50,12 @@ public class RowSinkRecord {
     this.timestampType = Objects.requireNonNull(timestampType);
   }
 
-  public String topicName() {
-    return topicName;
+  public TopicKey topicKey() {
+    return topicKey;
+  }
+
+  public TopicPartition topicPartition() {
+    return new TopicPartition(topicKey, partition);
   }
 
   public Row row() {
@@ -82,15 +87,15 @@ public class RowSinkRecord {
       // do nothing
     }
 
-    private String topicName;
+    private TopicKey topicKey;
     private Row row;
     private Integer partition;
     private Long offset;
     private Long timestamp;
     private TimestampType timestampType;
 
-    public Builder topicName(String topicName) {
-      this.topicName = CommonUtils.requireNonEmpty(topicName);
+    public Builder topicKey(TopicKey topicKey) {
+      this.topicKey = Objects.requireNonNull(topicKey);
       return this;
     }
 
@@ -122,7 +127,7 @@ public class RowSinkRecord {
     @Override
     public RowSinkRecord build() {
       return new RowSinkRecord(
-          CommonUtils.requireNonEmpty(topicName),
+          Objects.requireNonNull(topicKey),
           Objects.requireNonNull(row),
           Objects.requireNonNull(partition),
           Objects.requireNonNull(offset),

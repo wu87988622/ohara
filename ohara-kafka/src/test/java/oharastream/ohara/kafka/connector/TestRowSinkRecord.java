@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.TimestampType;
 import org.junit.Test;
@@ -29,12 +30,7 @@ public class TestRowSinkRecord extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullTopic() {
-    RowSinkRecord.builder().topicName(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void emptyTopic() {
-    RowSinkRecord.builder().topicName("");
+    RowSinkRecord.builder().topicKey(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -56,7 +52,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void requireRow() {
     RowSinkRecord.builder()
-        .topicName("asdasd")
+        .topicKey(TopicKey.of("g", "n"))
         .timestamp(CommonUtils.current())
         .partition(123)
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
@@ -67,7 +63,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void requireTimestamp() {
     RowSinkRecord.builder()
-        .topicName("asdasd")
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .partition(123)
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
@@ -78,7 +74,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void requirePartition() {
     RowSinkRecord.builder()
-        .topicName("asdasd")
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .timestampType(TimestampType.NO_TIMESTAMP_TYPE)
@@ -89,7 +85,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void requireTimestampType() {
     RowSinkRecord.builder()
-        .topicName("asdasd")
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
@@ -100,7 +96,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void requireOffset() {
     RowSinkRecord.builder()
-        .topicName("asdasd")
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .timestamp(CommonUtils.current())
         .partition(123)
@@ -111,7 +107,7 @@ public class TestRowSinkRecord extends OharaTest {
   @Test
   public void testBuilder() {
     Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
-    String topic = CommonUtils.randomString(10);
+    TopicKey topic = TopicKey.of("g", "n");
     long ts = CommonUtils.current();
     int partition = 123;
     long offset = 12345;
@@ -119,14 +115,14 @@ public class TestRowSinkRecord extends OharaTest {
 
     RowSinkRecord r =
         RowSinkRecord.builder()
-            .topicName(topic)
+            .topicKey(topic)
             .row(row)
             .timestamp(ts)
             .partition(partition)
             .timestampType(tsType)
             .offset(offset)
             .build();
-    assertEquals(topic, r.topicName());
+    assertEquals(topic, r.topicKey());
     assertEquals(row, r.row());
     assertEquals(ts, r.timestamp());
     assertEquals(partition, r.partition());

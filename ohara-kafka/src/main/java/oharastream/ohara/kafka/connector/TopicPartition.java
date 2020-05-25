@@ -17,7 +17,7 @@
 package oharastream.ohara.kafka.connector;
 
 import java.util.Objects;
-import oharastream.ohara.common.util.CommonUtils;
+import oharastream.ohara.common.setting.TopicKey;
 
 /**
  * TopicPartition replaces kafka TopicPartition
@@ -25,16 +25,21 @@ import oharastream.ohara.common.util.CommonUtils;
  * @see org.apache.kafka.common.TopicPartition
  */
 public final class TopicPartition {
-  private final String topicName;
+
+  public static TopicPartition of(org.apache.kafka.common.TopicPartition tp) {
+    return new TopicPartition(TopicKey.requirePlain(tp.topic()), tp.partition());
+  }
+
+  private final TopicKey topicKey;
   private final int partition;
 
-  public TopicPartition(String topicName, int partition) {
-    this.topicName = CommonUtils.requireNonEmpty(topicName);
+  public TopicPartition(TopicKey topicKey, int partition) {
+    this.topicKey = Objects.requireNonNull(topicKey);
     this.partition = partition;
   }
 
-  public String topicName() {
-    return topicName;
+  public TopicKey topicKey() {
+    return topicKey;
   }
 
   public int partition() {
@@ -46,16 +51,16 @@ public final class TopicPartition {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     TopicPartition that = (TopicPartition) o;
-    return partition == that.partition && Objects.equals(topicName, that.topicName);
+    return partition == that.partition && Objects.equals(topicKey, that.topicKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(topicName, partition);
+    return Objects.hash(topicKey, partition);
   }
 
   @Override
   public String toString() {
-    return "topic=" + topicName + ", partition=" + partition;
+    return "topic=" + topicKey + ", partition=" + partition;
   }
 }

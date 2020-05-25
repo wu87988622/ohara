@@ -31,10 +31,10 @@ public class CsvDataWriter implements DataWriter {
 
   private final Set<TopicPartition> assignment;
   private final Map<TopicPartition, TopicPartitionWriter> topicPartitionWriters;
-  private RowSinkContext context;
-  private CsvSinkConfig config;
-  private FileSystem fileSystem;
-  private CsvRecordWriterProvider writerProvider;
+  private final RowSinkContext context;
+  private final CsvSinkConfig config;
+  private final FileSystem fileSystem;
+  private final CsvRecordWriterProvider writerProvider;
 
   public CsvDataWriter(CsvSinkConfig config, RowSinkContext context, FileSystem fileSystem) {
     assignment = new HashSet<>();
@@ -60,22 +60,17 @@ public class CsvDataWriter implements DataWriter {
 
   @Override
   public void write(Collection<RowSinkRecord> records) {
-    records.forEach(
-        record -> {
-          TopicPartition tp = new TopicPartition(record.topicName(), record.partition());
-          topicPartitionWriters.get(tp).buffer(record);
-        });
+    records.forEach(record -> topicPartitionWriters.get(record.topicPartition()).buffer(record));
     assignment.forEach(tp -> topicPartitionWriters.get(tp).write());
   }
 
   @Override
   public void detach(Collection<TopicPartition> partitions) {
-    partitions.stream()
-        .forEach(
-            tp -> {
-              Releasable.close(topicPartitionWriters.get(tp));
-              topicPartitionWriters.remove(tp);
-            });
+    partitions.forEach(
+        tp -> {
+          Releasable.close(topicPartitionWriters.get(tp));
+          topicPartitionWriters.remove(tp);
+        });
   }
 
   @Override

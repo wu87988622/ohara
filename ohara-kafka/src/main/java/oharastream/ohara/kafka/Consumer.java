@@ -130,7 +130,7 @@ public interface Consumer<K, V> extends Releasable {
 
   /**
    * @return all partitions and offsets even if those partitions are not subscribed by this
-   *     consumer.
+   *     consumer. Noted that only ohara topics are listed
    */
   Map<TopicPartition, Long> endOffsets();
 
@@ -308,6 +308,11 @@ public interface Consumer<K, V> extends Releasable {
       Objects.requireNonNull(valueSerializer);
     }
 
+    private static org.apache.kafka.common.TopicPartition toKafka(TopicPartition tp) {
+      return new org.apache.kafka.common.TopicPartition(
+          tp.topicKey().topicNameOnKafka(), tp.partition());
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Consumer<Key, Value> build() {
@@ -331,21 +336,9 @@ public interface Consumer<K, V> extends Releasable {
             topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
       if (!CommonUtils.isEmpty(assignments))
         kafkaConsumer.assign(
-            assignments.stream()
-                .map(
-                    tp ->
-                        new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition()))
-                .collect(Collectors.toList()));
+            assignments.stream().map(Builder::toKafka).collect(Collectors.toList()));
 
       return new Consumer<Key, Value>() {
-        private TopicPartition toTopicPartition(org.apache.kafka.common.TopicPartition tp) {
-          return new TopicPartition(tp.topic(), tp.partition());
-        }
-
-        private org.apache.kafka.common.TopicPartition toTopicPartition(TopicPartition tp) {
-          return new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition());
-        }
-
         @Override
         public void close() {
           kafkaConsumer.close();
@@ -387,19 +380,21 @@ public interface Consumer<K, V> extends Releasable {
         @Override
         public Set<TopicPartition> assignment() {
           return kafkaConsumer.assignment().stream()
-              .map(this::toTopicPartition)
+              // remove non-ohara topics
+              .filter(p -> TopicKey.ofPlain(p.topic()).isPresent())
+              .map(TopicPartition::of)
               .collect(Collectors.toSet());
         }
 
         @Override
         public void seekToBeginning(Collection<TopicPartition> partitions) {
           kafkaConsumer.seekToBeginning(
-              partitions.stream().map(this::toTopicPartition).collect(Collectors.toList()));
+              partitions.stream().map(Builder::toKafka).collect(Collectors.toList()));
         }
 
         @Override
         public void seek(TopicPartition partition, long offset) {
-          kafkaConsumer.seek(toTopicPartition(partition), Math.max(0, offset));
+          kafkaConsumer.seek(Builder.toKafka(partition), Math.max(0, offset));
         }
 
         @Override
@@ -407,6 +402,8 @@ public interface Consumer<K, V> extends Releasable {
           return kafkaConsumer
               .endOffsets(
                   kafkaConsumer.listTopics().entrySet().stream()
+                      // remove non-ohara topics
+                      .filter(e -> TopicKey.ofPlain(e.getKey()).isPresent())
                       .flatMap(
                           e ->
                               e.getValue().stream()
@@ -416,7 +413,7 @@ public interface Consumer<K, V> extends Releasable {
                                               p.topic(), p.partition())))
                       .collect(Collectors.toList()))
               .entrySet().stream()
-              .collect(Collectors.toMap(e -> toTopicPartition(e.getKey()), Map.Entry::getValue));
+              .collect(Collectors.toMap(e -> TopicPartition.of(e.getKey()), Map.Entry::getValue));
         }
 
         @Override
@@ -433,22 +430,14 @@ public interface Consumer<K, V> extends Releasable {
         @Override
         public void assignments(Set<TopicPartition> assignments) {
           kafkaConsumer.assign(
-              assignments.stream()
-                  .map(
-                      tp ->
-                          new org.apache.kafka.common.TopicPartition(
-                              tp.topicName(), tp.partition()))
-                  .collect(Collectors.toList()));
+              assignments.stream().map(Builder::toKafka).collect(Collectors.toList()));
         }
 
         @Override
         public void assignments(Map<TopicPartition, Long> assignments) {
           assignments(assignments.keySet());
           assignments.forEach(
-              (tp, offset) ->
-                  kafkaConsumer.seek(
-                      new org.apache.kafka.common.TopicPartition(tp.topicName(), tp.partition()),
-                      Math.max(0, offset)));
+              (tp, offset) -> kafkaConsumer.seek(Builder.toKafka(tp), Math.max(0, offset)));
         }
       };
     }

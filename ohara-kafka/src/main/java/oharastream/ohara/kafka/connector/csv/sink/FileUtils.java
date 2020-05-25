@@ -19,6 +19,7 @@ package oharastream.ohara.kafka.connector.csv.sink;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.connector.TopicPartition;
 
 public class FileUtils {
@@ -26,8 +27,8 @@ public class FileUtils {
   private static final String FILE_DELIM = "-";
   private static final String ZERO_PAD_OFFSET_FORMAT = "%09d";
 
-  public static String generatePartitionedPath(String topic, String encodedPartition) {
-    return topic + DIR_DELIM + encodedPartition;
+  public static String generatePartitionedPath(TopicKey topic, String encodedPartition) {
+    return topic.topicNameOnKafka() + DIR_DELIM + encodedPartition;
   }
 
   public static String fileName(String topicsDir, String directory, String name) {
@@ -36,16 +37,15 @@ public class FileUtils {
 
   public static String committedFileName(
       String topicsDir, String directory, TopicPartition tp, long startOffset, String extension) {
-    String topic = tp.topicName();
-    int partition = tp.partition();
-    StringBuffer name = new StringBuffer();
-    name.append(topic);
-    name.append(FILE_DELIM);
-    name.append(partition);
-    name.append(FILE_DELIM);
-    name.append(String.format(ZERO_PAD_OFFSET_FORMAT, startOffset));
-    name.append(extension);
-    return fileName(topicsDir, directory, name.toString());
+    return fileName(
+        topicsDir,
+        directory,
+        tp.topicKey().topicNameOnKafka()
+            + FILE_DELIM
+            + tp.partition()
+            + FILE_DELIM
+            + String.format(ZERO_PAD_OFFSET_FORMAT, startOffset)
+            + extension);
   }
 
   public static Path temporaryFile(Path file) {

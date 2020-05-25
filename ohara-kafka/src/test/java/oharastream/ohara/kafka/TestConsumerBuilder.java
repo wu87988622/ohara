@@ -77,7 +77,7 @@ public class TestConsumerBuilder extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void assignBothTopicAndAssignments() {
     Consumer.builder()
-        .assignments(Collections.singleton(new TopicPartition("a", 1)))
+        .assignments(Collections.singleton(new TopicPartition(TopicKey.of("g", "n"), 1)))
         .topicKey(TopicKey.of("a", "b"));
   }
 }

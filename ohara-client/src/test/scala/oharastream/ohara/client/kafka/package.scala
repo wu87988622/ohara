@@ -19,12 +19,13 @@ package oharastream.ohara.client
 import java.time.Duration
 
 import oharastream.ohara.common.data.{Cell, Row}
-import oharastream.ohara.common.setting.ConnectorKey
+import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.kafka.connector.TaskSetting
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 package object kafka {
   val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 
@@ -38,4 +39,6 @@ package object kafka {
   val OUTPUT = "simple.row.connector.output"
   val BROKER = "simple.row.connector.broker"
   val INPUT  = "simple.row.connector.input"
+
+  def topicKey(settings: TaskSetting, key: String): TopicKey = TopicKey.toTopicKey(settings.stringValue(key))
 }

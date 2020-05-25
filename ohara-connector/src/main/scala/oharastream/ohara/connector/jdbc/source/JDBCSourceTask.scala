@@ -19,6 +19,7 @@ import java.sql.Timestamp
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.common.data.{Cell, Column, DataType, Row}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.jdbc.util.ColumnInfo
 import oharastream.ohara.kafka.connector._
@@ -31,7 +32,7 @@ class JDBCSourceTask extends RowSourceTask {
   private[this] var jdbcSourceConnectorConfig: JDBCSourceConnectorConfig = _
   private[this] var dbTableDataProvider: DBTableDataProvider             = _
   private[this] var schema: Seq[Column]                                  = _
-  private[this] var topics: Seq[String]                                  = _
+  private[this] var topics: Seq[TopicKey]                                = _
   private[this] var inMemoryOffsets: Offsets                             = _
   private[this] var topicOffsets: Offsets                                = _
   private[this] var lastPoll: Long                                       = -1
@@ -49,7 +50,7 @@ class JDBCSourceTask extends RowSourceTask {
     dbTableDataProvider = new DBTableDataProvider(jdbcSourceConnectorConfig)
 
     schema = settings.columns.asScala.toSeq
-    topics = settings.topicNames().asScala.toSeq
+    topics = settings.topicKeys().asScala.toSeq
     val tableName = jdbcSourceConnectorConfig.dbTableName
     inMemoryOffsets = new Offsets(rowContext, tableName)
     topicOffsets = new Offsets(rowContext, tableName)
@@ -115,7 +116,7 @@ class JDBCSourceTask extends RowSourceTask {
               .sourceOffset(JDBCSourceTask.offset(topicOffset).asJava)
               //Create Ohara Row
               .row(row(newSchema, columns))
-              .topicName(_)
+              .topicKey(_)
               .build()
           )
         }).map { rowSourceRecords =>

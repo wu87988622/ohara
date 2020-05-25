@@ -38,6 +38,7 @@ import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.connector.RowSourceContext;
 import oharastream.ohara.kafka.connector.RowSourceRecord;
 import org.apache.commons.lang.StringUtils;
@@ -46,7 +47,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestCsvRecordConverter extends OharaTest {
-  private final Set<String> topicNames = new HashSet<>(Arrays.asList("T1", "T2"));
+  private final Set<TopicKey> topicKeys =
+      new HashSet<>(Arrays.asList(TopicKey.of("g", "t0"), TopicKey.of("g", "t1")));
   private final List<Column> schema =
       Arrays.asList(
           Column.builder().name("cf1").dataType(DataType.STRING).order(0).build(),
@@ -67,7 +69,7 @@ public class TestCsvRecordConverter extends OharaTest {
   private CsvRecordConverter createConverter() {
     return CsvRecordConverter.builder()
         .path(path)
-        .topicNames(topicNames)
+        .topicKeys(topicKeys)
         .offsetCache(new FakeOffsetCache())
         .build();
   }
@@ -75,7 +77,7 @@ public class TestCsvRecordConverter extends OharaTest {
   private CsvRecordConverter createConverter(List<Column> schema) {
     return CsvRecordConverter.builder()
         .path(path)
-        .topicNames(topicNames)
+        .topicKeys(topicKeys)
         .offsetCache(new FakeOffsetCache())
         .schema(schema)
         .build();
@@ -210,9 +212,9 @@ public class TestCsvRecordConverter extends OharaTest {
     int index = 1;
     Row row = rows.get(index);
     List<RowSourceRecord> records = converter.toRecords(row, index);
-    Assert.assertEquals(records.size(), topicNames.size());
+    Assert.assertEquals(records.size(), topicKeys.size());
     for (RowSourceRecord record : records) {
-      Assert.assertTrue(topicNames.contains(record.topicName()));
+      Assert.assertTrue(topicKeys.contains(record.topicKey()));
       Assert.assertEquals(
           Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path),
           record.sourcePartition());
@@ -230,7 +232,7 @@ public class TestCsvRecordConverter extends OharaTest {
     Map<Integer, Row> rows = mapToRow(data);
 
     List<RowSourceRecord> records = converter.toRecords(rows);
-    Assert.assertEquals(topicNames.size() * rows.size(), records.size());
+    Assert.assertEquals(topicKeys.size() * rows.size(), records.size());
   }
 
   @Test
@@ -273,7 +275,7 @@ public class TestCsvRecordConverter extends OharaTest {
     try (BufferedReader reader = createReader()) {
       Stream<String> lines = reader.lines();
       List<RowSourceRecord> records = converter.convert(lines);
-      Assert.assertEquals(topicNames.size() * data.size(), records.size());
+      Assert.assertEquals(topicKeys.size() * data.size(), records.size());
     }
   }
 
@@ -282,7 +284,7 @@ public class TestCsvRecordConverter extends OharaTest {
     converter =
         CsvRecordConverter.builder()
             .path(path)
-            .topicNames(topicNames)
+            .topicKeys(topicKeys)
             .offsetCache(
                 new OffsetCache() {
                   @Override

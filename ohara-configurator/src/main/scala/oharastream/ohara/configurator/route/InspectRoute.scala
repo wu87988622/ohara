@@ -205,7 +205,7 @@ private[configurator] object InspectRoute {
                       .asScala
                       .filter {
                         case (tp, _) =>
-                          tp.topicName() == topicKey.topicNameOnKafka()
+                          tp.topicKey() == topicKey
                       }
                       .map {
                         case (tp, offset) =>

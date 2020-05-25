@@ -28,6 +28,7 @@ import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.common.util.VersionUtils;
@@ -125,7 +126,7 @@ public abstract class RowSourceTask extends SourceTask {
     return new SourceRecord(
         record.sourcePartition(),
         record.sourceOffset(),
-        record.topicName(),
+        record.topicKey().topicNameOnKafka(),
         record.partition().orElse(null),
         Schema.BYTES_SCHEMA,
         Serializer.ROW.to(record.row()),
@@ -226,7 +227,7 @@ public abstract class RowSourceTask extends SourceTask {
     // However, we all hate the null so the workaround is to create a new record :(
     if (r == null) {
       RowSourceRecord.Builder builder = RowSourceRecord.builder();
-      builder.topicName(record.topic());
+      builder.topicKey(TopicKey.requirePlain(record.topic()));
       if (record.sourceOffset() != null) builder.sourceOffset(record.sourceOffset());
       if (record.sourcePartition() != null) builder.sourcePartition(record.sourcePartition());
       if (record.kafkaPartition() != null) builder.partition(record.kafkaPartition());

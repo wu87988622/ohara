@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.connector.TaskSetting;
 
 public interface CsvSourceConfig {
@@ -63,7 +64,7 @@ public interface CsvSourceConfig {
   String encode();
 
   /** @return target topics */
-  Set<String> topicNames();
+  Set<TopicKey> topicKeys();
 
   /** @return the rules to control the output records */
   List<Column> columns();
@@ -128,8 +129,8 @@ public interface CsvSourceConfig {
       }
 
       @Override
-      public Set<String> topicNames() {
-        return setting.topicNames();
+      public Set<TopicKey> topicKeys() {
+        return setting.topicKeys();
       }
 
       @Override

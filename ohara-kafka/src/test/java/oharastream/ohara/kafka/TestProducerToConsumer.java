@@ -291,7 +291,7 @@ public class TestProducerToConsumer extends WithBroker {
             .endOffsets()
             .forEach(
                 (tp, offset) -> {
-                  if (tp.topicName().equals(topicKey.topicNameOnKafka()))
+                  if (tp.topicKey().equals(topicKey))
                     Assert.assertEquals(offset.longValue(), count);
                 });
       }
@@ -309,7 +309,7 @@ public class TestProducerToConsumer extends WithBroker {
             .build()) {
       Set<TopicPartition> tps =
           consumer.endOffsets().keySet().stream()
-              .filter(tp -> tp.topicName().equals(topicKey.topicNameOnKafka()))
+              .filter(tp -> tp.topicKey().equals(topicKey))
               .collect(Collectors.toSet());
       consumer.assignments(tps);
       Assert.assertEquals(tps, consumer.assignment());

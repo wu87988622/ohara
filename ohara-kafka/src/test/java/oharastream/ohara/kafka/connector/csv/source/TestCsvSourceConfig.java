@@ -23,8 +23,7 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPU
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_HASH_KEY;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_TOTAL_KEY;
-import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.COLUMNS_DEFINITION;
-import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.TOPIC_NAMES_DEFINITION;
+import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.*;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -32,6 +31,7 @@ import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.PropGroup;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.TaskSetting;
 import org.junit.Assert;
@@ -94,8 +94,10 @@ public class TestCsvSourceConfig extends OharaTest {
 
   @Test
   public void testTopicNames() {
-    CsvSourceConfig config = config(TOPIC_NAMES_DEFINITION.key(), "10");
-    Assert.assertEquals(config.topicNames(), Collections.singleton("10"));
+    TopicKey key = TopicKey.of("g", "n");
+    CsvSourceConfig config =
+        config(TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(Collections.singleton(key)));
+    Assert.assertEquals(config.topicKeys(), Collections.singleton(key));
   }
 
   @Test

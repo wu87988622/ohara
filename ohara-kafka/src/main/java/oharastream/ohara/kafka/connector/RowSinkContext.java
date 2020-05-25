@@ -70,15 +70,14 @@ public interface RowSinkContext {
                     Collectors.toMap(
                         entry ->
                             new org.apache.kafka.common.TopicPartition(
-                                entry.getKey().topicName(), entry.getKey().partition()),
+                                entry.getKey().topicKey().topicNameOnKafka(),
+                                entry.getKey().partition()),
                         Map.Entry::getValue)));
       }
 
       @Override
       public Set<TopicPartition> assignment() {
-        return context.assignment().stream()
-            .map(tp -> new TopicPartition(tp.topic(), tp.partition()))
-            .collect(Collectors.toSet());
+        return context.assignment().stream().map(TopicPartition::of).collect(Collectors.toSet());
       }
     };
   }

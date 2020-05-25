@@ -44,7 +44,7 @@ public class TestRowSourceRecord extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void requireRow() {
-    RowSourceRecord.builder().topicName("Adasd").build();
+    RowSourceRecord.builder().topicKey(TopicKey.of("g", "n")).build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -54,7 +54,7 @@ public class TestRowSourceRecord extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullTopicName() {
-    RowSourceRecord.builder().topicName(null);
+    RowSourceRecord.builder().topicKey(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -70,10 +70,10 @@ public class TestRowSourceRecord extends OharaTest {
   @Test
   public void testBuilderWithDefaultValue() {
     Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
-    String topic = CommonUtils.randomString(10);
+    TopicKey topic = TopicKey.of("g", "n");
 
-    RowSourceRecord r = RowSourceRecord.builder().topicName(topic).row(row).build();
-    assertEquals(topic, r.topicName());
+    RowSourceRecord r = RowSourceRecord.builder().topicKey(topic).row(row).build();
+    assertEquals(topic, r.topicKey());
     assertEquals(row, r.row());
     assertFalse(r.partition().isPresent());
     assertFalse(r.timestamp().isPresent());
@@ -84,7 +84,7 @@ public class TestRowSourceRecord extends OharaTest {
   @Test
   public void testBuilder() {
     Row row = Row.of(Cell.of(CommonUtils.randomString(10), 123));
-    String topic = CommonUtils.randomString(10);
+    TopicKey topic = TopicKey.of("g", "n");
     long ts = CommonUtils.current();
     int partition = 123;
     Map<String, String> sourceOffset = Collections.singletonMap("abc", "ddd");
@@ -92,14 +92,14 @@ public class TestRowSourceRecord extends OharaTest {
 
     RowSourceRecord r =
         RowSourceRecord.builder()
-            .topicName(topic)
+            .topicKey(topic)
             .row(row)
             .timestamp(ts)
             .partition(partition)
             .sourceOffset(sourceOffset)
             .sourcePartition(sourcePartition)
             .build();
-    assertEquals(topic, r.topicName());
+    assertEquals(topic, r.topicKey());
     assertEquals(row, r.row());
     assertEquals(ts, (long) r.timestamp().get());
     assertEquals(partition, (int) r.partition().get());
@@ -110,7 +110,7 @@ public class TestRowSourceRecord extends OharaTest {
   @Test(expected = UnsupportedOperationException.class)
   public void failedToModifySourcePartition() {
     RowSourceRecord.builder()
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .build()
         .sourceOffset()
@@ -120,7 +120,7 @@ public class TestRowSourceRecord extends OharaTest {
   @Test(expected = UnsupportedOperationException.class)
   public void failedToModifySourceOffset() {
     RowSourceRecord.builder()
-        .topicName(CommonUtils.randomString(10))
+        .topicKey(TopicKey.of("g", "n"))
         .row(Row.of(Cell.of(CommonUtils.randomString(10), 123)))
         .build()
         .sourceOffset()
@@ -132,7 +132,7 @@ public class TestRowSourceRecord extends OharaTest {
     RowSourceRecord record =
         RowSourceRecord.builder()
             .row(Row.of(Cell.of(CommonUtils.randomString(), CommonUtils.randomString())))
-            .topicName(CommonUtils.randomString(10))
+            .topicKey(TopicKey.of("g", "n"))
             .build();
     RowSourceTask task =
         new DumbSourceTask() {

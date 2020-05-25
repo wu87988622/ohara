@@ -26,7 +26,7 @@ class SimpleRowSinkConnector extends RowSinkConnector {
   override protected def run(settings: TaskSetting): Unit = {
     this.settings = settings
     // check the option
-    settings.topicKey(OUTPUT)
+    topicKey(settings, OUTPUT)
     settings.stringValue(BROKER)
   }
 

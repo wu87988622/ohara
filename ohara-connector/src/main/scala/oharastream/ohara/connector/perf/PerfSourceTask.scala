@@ -19,6 +19,7 @@ import java.util.Collections
 
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.data.{Cell, Column, DataType, Row}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{ByteUtils, CommonUtils}
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
@@ -26,7 +27,7 @@ import scala.jdk.CollectionConverters._
 
 class PerfSourceTask extends RowSourceTask {
   private[this] var props: PerfSourceProps = _
-  private[this] var topics: Seq[String]    = _
+  private[this] var topics: Set[TopicKey]  = _
   @VisibleForTesting
   private[perf] var schema: Seq[Column] = _
   private[this] var lastPoll: Long      = -1
@@ -38,7 +39,7 @@ class PerfSourceTask extends RowSourceTask {
 
   override protected def run(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
-    this.topics = settings.topicNames().asScala.toSeq
+    this.topics = settings.topicKeys().asScala.toSet
     this.schema = settings.columns.asScala.toSeq
     if (schema.isEmpty) schema = DEFAULT_SCHEMA
     val row = Row.of(
@@ -61,7 +62,7 @@ class PerfSourceTask extends RowSourceTask {
       }: _*
     )
     records = Collections.unmodifiableList(
-      (0 until props.batch).flatMap(_ => topics.map(RowSourceRecord.builder().row(row).topicName(_).build())).asJava
+      (0 until props.batch).flatMap(_ => topics.map(RowSourceRecord.builder().row(row).topicKey(_).build())).asJava
     )
   }
 

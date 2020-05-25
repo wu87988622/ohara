@@ -24,6 +24,7 @@ import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.RowSourceContext;
 import oharastream.ohara.kafka.connector.RowSourceRecord;
@@ -31,7 +32,7 @@ import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions;
 import org.junit.Assert;
 
 public abstract class CsvSourceTestBase extends OharaTest {
-  protected static final String TOPIC = "test-topic";
+  protected static final TopicKey TOPIC = TopicKey.of("test", "topic");
   protected static final int TASK_TOTAL = 1;
   protected static final int TASK_HASH = 0;
 
@@ -51,7 +52,8 @@ public abstract class CsvSourceTestBase extends OharaTest {
     Map<String, String> props = new HashMap<>();
     props.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(TASK_TOTAL));
     props.put(CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(TASK_HASH));
-    props.put("topics", TOPIC);
+    props.put("topics", TOPIC.topicNameOnKafka());
+    props.put("topicKeys", TopicKey.toJsonString(Collections.singleton(TOPIC)));
     return props;
   }
 
@@ -86,7 +88,7 @@ public abstract class CsvSourceTestBase extends OharaTest {
   protected void verifyRecords(List<RowSourceRecord> records) {
     Assert.assertEquals(VERIFICATION_DATA.size(), records.size());
     for (RowSourceRecord record : records) {
-      Assert.assertEquals(TOPIC, record.topicName());
+      Assert.assertEquals(TOPIC, record.topicKey());
     }
     verifyRows(VERIFICATION_DATA, extractRow(records));
   }

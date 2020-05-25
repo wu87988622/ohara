@@ -21,13 +21,13 @@ import static oharastream.ohara.common.util.CommonUtils.toDuration;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.setting.*;
@@ -69,18 +69,6 @@ public class TaskSetting {
    */
   public ObjectKey objectKey(String key) {
     if (raw.containsKey(key)) return ObjectKey.toObjectKey(raw.get(key));
-    else throw new NoSuchElementException(key + " doesn't exist");
-  }
-
-  /**
-   * take topic key value according to mapped key.
-   *
-   * @param key key
-   * @throws NoSuchElementException if no existent value for input key
-   * @return value
-   */
-  public TopicKey topicKey(String key) {
-    if (raw.containsKey(key)) return TopicKey.toTopicKey(raw.get(key));
     else throw new NoSuchElementException(key + " doesn't exist");
   }
 
@@ -304,8 +292,11 @@ public class TaskSetting {
     return stringValue(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key());
   }
 
-  public Set<String> topicNames() {
-    return new HashSet<>(stringList(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key()));
+  public Set<TopicKey> topicKeys() {
+    return ObjectKey.toObjectKeys(stringValue(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
+        .stream()
+        .map(key -> TopicKey.of(key.group(), key.name()))
+        .collect(Collectors.toSet());
   }
 
   public List<Column> columns() {

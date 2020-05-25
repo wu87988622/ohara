@@ -20,6 +20,7 @@ import java.util.*;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.TimestampType;
 import oharastream.ohara.kafka.connector.RowSinkContext;
 import oharastream.ohara.kafka.connector.RowSinkRecord;
@@ -28,7 +29,7 @@ import oharastream.ohara.kafka.connector.TopicPartition;
 import oharastream.ohara.kafka.connector.csv.sink.CsvSinkConfig;
 
 public abstract class CsvSinkTestBase extends OharaTest {
-  protected static final String TOPIC = "test-topic";
+  protected static final TopicKey TOPIC = TopicKey.of("test", "topic");
   protected static final int PARTITION = 12;
   protected static final int PARTITION2 = 13;
   protected static final int PARTITION3 = 14;
@@ -69,9 +70,9 @@ public abstract class CsvSinkTestBase extends OharaTest {
     return createRecord(TOPIC, PARTITION, row, offset);
   }
 
-  protected RowSinkRecord createRecord(String topicName, int partition, Row row, long offset) {
+  protected RowSinkRecord createRecord(TopicKey topicKey, int partition, Row row, long offset) {
     return RowSinkRecord.builder()
-        .topicName(topicName)
+        .topicKey(topicKey)
         .partition(partition)
         .row(row)
         .offset(offset)
@@ -94,7 +95,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
     List<RowSinkRecord> records = new ArrayList<>();
     for (TopicPartition tp : partitions) {
       for (long offset = startOffset; offset < startOffset + size; ++offset) {
-        records.add(createRecord(tp.topicName(), tp.partition(), createRow("#" + offset), offset));
+        records.add(createRecord(tp.topicKey(), tp.partition(), createRow("#" + offset), offset));
       }
     }
     return records;
@@ -102,7 +103,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
 
   protected static class MockSinkContext implements RowSinkContext {
     private final Map<TopicPartition, Long> offsets = new HashMap<>();
-    private Set<TopicPartition> assignment;
+    private final Set<TopicPartition> assignment;
 
     public MockSinkContext(Set<TopicPartition> assignment) {
       this.assignment = assignment;

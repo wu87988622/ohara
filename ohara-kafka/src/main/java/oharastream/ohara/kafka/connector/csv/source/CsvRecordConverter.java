@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.*;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.StreamUtils;
 import oharastream.ohara.kafka.connector.RowSourceRecord;
@@ -40,7 +41,7 @@ public class CsvRecordConverter implements RecordConverter {
   }
 
   private final String path;
-  private final Set<String> topicNames;
+  private final Set<TopicKey> topicKeys;
   private final List<Column> schema;
 
   private final Map<String, String> partition;
@@ -174,14 +175,14 @@ public class CsvRecordConverter implements RecordConverter {
 
   @VisibleForTesting
   List<RowSourceRecord> toRecords(Row row, int index) {
-    return this.topicNames.stream()
+    return this.topicKeys.stream()
         .map(
             t ->
                 RowSourceRecord.builder()
                     .sourcePartition(partition)
                     .sourceOffset(Collections.singletonMap(CSV_OFFSET_KEY, index))
                     .row(row)
-                    .topicName(t)
+                    .topicKey(t)
                     .build())
         .collect(Collectors.toList());
   }
@@ -190,7 +191,7 @@ public class CsvRecordConverter implements RecordConverter {
       implements oharastream.ohara.common.pattern.Builder<CsvRecordConverter> {
     // Required parameters
     private String path;
-    private Set<String> topicNames;
+    private Set<TopicKey> topicKeys;
     private OffsetCache offsetCache;
     private int maximumNumberOfLines = Integer.MAX_VALUE;
 
@@ -204,8 +205,8 @@ public class CsvRecordConverter implements RecordConverter {
       return this;
     }
 
-    public Builder topicNames(Set<String> val) {
-      topicNames = new HashSet<>(Objects.requireNonNull(val));
+    public Builder topicKeys(Set<TopicKey> topicKeys) {
+      this.topicKeys = new HashSet<>(Objects.requireNonNull(topicKeys));
       return this;
     }
 
@@ -229,7 +230,7 @@ public class CsvRecordConverter implements RecordConverter {
     @Override
     public CsvRecordConverter build() {
       CommonUtils.requireNonEmpty(path);
-      CommonUtils.requireNonEmpty(topicNames);
+      CommonUtils.requireNonEmpty(topicKeys);
       Objects.requireNonNull(offsetCache);
       return new CsvRecordConverter(this);
     }
@@ -237,7 +238,7 @@ public class CsvRecordConverter implements RecordConverter {
 
   private CsvRecordConverter(Builder builder) {
     path = builder.path;
-    topicNames = builder.topicNames;
+    topicKeys = builder.topicKeys;
     schema = builder.schema;
     cache = builder.offsetCache;
     maximumNumberOfLines = builder.maximumNumberOfLines;

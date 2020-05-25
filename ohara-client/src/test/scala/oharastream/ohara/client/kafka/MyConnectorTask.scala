@@ -18,13 +18,14 @@ package oharastream.ohara.client.kafka
 
 import java.util
 
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 class MyConnectorTask extends RowSourceTask {
-  private[this] var lastSent: Long    = 0
-  private[this] var topicName: String = _
+  private[this] var lastSent: Long     = 0
+  private[this] var topicKey: TopicKey = _
 
-  override protected def run(settings: TaskSetting): Unit = this.topicName = settings.topicNames().iterator().next
+  override protected def run(settings: TaskSetting): Unit = this.topicKey = settings.topicKeys().iterator().next
 
   override protected def terminate(): Unit = {
     // do nothing
@@ -34,7 +35,7 @@ class MyConnectorTask extends RowSourceTask {
     val current = System.currentTimeMillis()
     if (current - lastSent >= 1000) {
       lastSent = current
-      java.util.Collections.singletonList(RowSourceRecord.builder().topicName(topicName).row(ROW).build())
+      java.util.Collections.singletonList(RowSourceRecord.builder().topicKey(topicKey).row(ROW).build())
     } else java.util.Collections.emptyList()
   }
 }

@@ -17,6 +17,7 @@
 package oharastream.ohara.kafka.connector;
 
 import oharastream.ohara.common.rule.OharaTest;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,36 +29,31 @@ public class TestTopicPartition extends OharaTest {
     new TopicPartition(null, 1);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void emptyTopic() {
-    new TopicPartition("", 1);
-  }
-
   @Test
   public void testGetter() {
-    String topicName = CommonUtils.randomString();
+    TopicKey topicKey = TopicKey.of("g", "n");
     int partition = (int) CommonUtils.current();
-    TopicPartition topicPartition = new TopicPartition(topicName, partition);
-    Assert.assertEquals(topicName, topicPartition.topicName());
+    TopicPartition topicPartition = new TopicPartition(topicKey, partition);
+    Assert.assertEquals(topicKey, topicPartition.topicKey());
     Assert.assertEquals(partition, topicPartition.partition());
   }
 
   @Test
   public void testEquals() {
     TopicPartition topicPartition =
-        new TopicPartition(CommonUtils.randomString(), (int) CommonUtils.current());
+        new TopicPartition(TopicKey.of("g", "n"), (int) CommonUtils.current());
     Assert.assertEquals(topicPartition, topicPartition);
     Assert.assertEquals(
-        topicPartition, new TopicPartition(topicPartition.topicName(), topicPartition.partition()));
+        topicPartition, new TopicPartition(topicPartition.topicKey(), topicPartition.partition()));
   }
 
   @Test
   public void testHashCode() {
     TopicPartition topicPartition =
-        new TopicPartition(CommonUtils.randomString(), (int) CommonUtils.current());
+        new TopicPartition(TopicKey.of("g", "n"), (int) CommonUtils.current());
     Assert.assertEquals(topicPartition.hashCode(), topicPartition.hashCode());
     Assert.assertEquals(
         topicPartition.hashCode(),
-        new TopicPartition(topicPartition.topicName(), topicPartition.partition()).hashCode());
+        new TopicPartition(topicPartition.topicKey(), topicPartition.partition()).hashCode());
   }
 }

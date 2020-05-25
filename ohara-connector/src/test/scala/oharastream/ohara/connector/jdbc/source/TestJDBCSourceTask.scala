@@ -22,6 +22,7 @@ import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.data.{Column, DataType, Row}
 import oharastream.ohara.common.rule.OharaTest
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.connector.jdbc.util.ColumnInfo
 import oharastream.ohara.kafka.connector.{RowSourceRecord, TaskSetting}
@@ -104,7 +105,7 @@ class TestJDBCSourceTask extends OharaTest {
     )
 
     when(taskSetting.columns).thenReturn(columns.asJava)
-    when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
+    when(taskSetting.topicKeys()).thenReturn(Set(TopicKey.of("g", "topic1")).asJava)
     jdbcSourceTask.run(taskSetting)
 
     val rows1: Seq[RowSourceRecord] = jdbcSourceTask.pollRecords().asScala.toSeq
@@ -223,7 +224,7 @@ class TestJDBCSourceTask extends OharaTest {
     )
 
     when(taskSetting.columns).thenReturn(columns.asJava)
-    when(taskSetting.topicNames()).thenReturn(Set("topic1").asJava)
+    when(taskSetting.topicKeys()).thenReturn(Set(TopicKey.of("g", "topic1")).asJava)
     when(taskSetting.durationOption(JDBC_FREQUENCE_TIME))
       .thenReturn(java.util.Optional.of(java.time.Duration.ofMillis(0)))
     jdbcSourceTask.run(taskSetting)

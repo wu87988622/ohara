@@ -39,7 +39,7 @@ class SimpleRowSourceTask extends RowSourceTask {
       .builder()
       .connectionProps(settings.stringValue(BROKER))
       .groupId(settings.name)
-      .topicKey(settings.topicKey(INPUT))
+      .topicKey(topicKey(settings, INPUT))
       .offsetFromBegin()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
@@ -52,8 +52,7 @@ class SimpleRowSourceTask extends RowSourceTask {
           .filter(_.key.isPresent)
           .map(_.key.get)
           .flatMap(
-            row =>
-              settings.topicNames().asScala.map(topic => RowSourceRecord.builder().row(row).topicName(topic).build())
+            row => settings.topicKeys().asScala.map(topic => RowSourceRecord.builder().row(row).topicKey(topic).build())
           )
           .foreach(r => queue.put(r))
       } finally Releasable.close(consumer)

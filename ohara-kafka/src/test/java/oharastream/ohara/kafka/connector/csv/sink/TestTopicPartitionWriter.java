@@ -136,7 +136,8 @@ public class TestTopicPartitionWriter extends WithMockStorage {
 
   protected void verifyFilenames(String... filenames) {
     String encodedPartition = "partition" + TOPIC_PARTITION.partition();
-    String dir = topicsDir + "/" + TOPIC_PARTITION.topicName() + "/" + encodedPartition;
+    String dir =
+        topicsDir + "/" + TOPIC_PARTITION.topicKey().topicNameOnKafka() + "/" + encodedPartition;
 
     List<String> actualFilenames =
         StreamUtils.iterate(fs.listFileNames(dir)).collect(Collectors.toList());
