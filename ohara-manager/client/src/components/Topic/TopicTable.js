@@ -80,11 +80,6 @@ function TopicTable(props) {
     }
   };
 
-  const handleDeleteDialogConfirm = topicToDelete => {
-    onDelete(topicToDelete);
-    setIsDeleteDialogOpen(false);
-  };
-
   const renderActionColumn = () => {
     const isShow = options?.showDeleteIcon || options?.showDetailIcon;
 
@@ -218,7 +213,7 @@ function TopicTable(props) {
         isOpen={isDeleteDialogOpen}
         topic={activeTopic}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDeleteDialogConfirm}
+        onConfirm={onDelete}
       />
       <TopicDetailDialog
         isOpen={isDetailDialogOpen}

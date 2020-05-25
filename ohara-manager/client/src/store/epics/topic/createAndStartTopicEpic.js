@@ -31,7 +31,7 @@ export default action$ =>
     ofType(actions.createAndStartTopic.TRIGGER),
     map(action => action.payload),
     mergeMap(values => {
-      const { params, options } = values;
+      const { params, options, promise } = values;
       const paperApi = get(options, 'paperApi');
       if (paperApi) {
         paperApi.updateElement(params.id, {
@@ -39,7 +39,15 @@ export default action$ =>
         });
       }
       return of(
-        createTopic$(params),
+        createTopic$(params).pipe(
+          tap(action => {
+            if (action.type === actions.createTopic.SUCCESS) {
+              if (typeof promise?.resolve === 'function') {
+                promise.resolve();
+              }
+            }
+          }),
+        ),
         startTopic$(params).pipe(
           tap(action => {
             if (action.type === actions.startTopic.SUCCESS && paperApi) {
@@ -47,7 +55,6 @@ export default action$ =>
                 status: CELL_STATUS.running,
               });
             }
-            if (options?.onSuccess) options.onSuccess();
           }),
         ),
       ).pipe(
@@ -58,7 +65,9 @@ export default action$ =>
               status: CELL_STATUS.failed,
             });
           }
-          if (options?.onError) options.onError(err);
+          if (typeof promise?.reject === 'function') {
+            promise.reject(err);
+          }
           return from([
             actions.createAndStartTopic.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

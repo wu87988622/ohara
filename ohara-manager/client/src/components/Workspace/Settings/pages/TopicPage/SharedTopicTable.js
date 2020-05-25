@@ -29,25 +29,17 @@ function SharedTopicTable() {
   const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
 
   const handleCreate = topicToCreate => {
-    return new Promise((resolve, reject) => {
-      createAndStartTopic(
-        {
-          ...topicToCreate,
-          displayName: topicToCreate.name,
-          isShared: true,
-          numberOfPartitions: Number(topicToCreate?.numberOfPartitions),
-          numberOfReplications: Number(topicToCreate?.numberOfReplications),
-        },
-        {
-          onSuccess: () => resolve(),
-          onError: error => reject(error),
-        },
-      );
+    return createAndStartTopic({
+      ...topicToCreate,
+      displayName: topicToCreate.name,
+      isShared: true,
+      numberOfPartitions: Number(topicToCreate?.numberOfPartitions),
+      numberOfReplications: Number(topicToCreate?.numberOfReplications),
     });
   };
 
   const handleDelete = topicToDelete => {
-    stopAndDeleteTopic(topicToDelete);
+    return stopAndDeleteTopic(topicToDelete);
   };
 
   const handleLinkClick = pipelineClicked => {

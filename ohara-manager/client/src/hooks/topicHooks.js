@@ -107,13 +107,17 @@ export const useCreateAndStartTopicAction = () => {
     name: hooks.useWorkspaceName(),
   };
   return useCallback(
-    (values, options) =>
-      dispatch(
-        actions.createAndStartTopic.trigger({
-          params: { ...values, group, brokerClusterKey },
-          options,
-        }),
-      ),
+    (values, options) => {
+      return new Promise((resolve, reject) => {
+        dispatch(
+          actions.createAndStartTopic.trigger({
+            params: { ...values, group, brokerClusterKey },
+            options,
+            promise: { resolve, reject },
+          }),
+        );
+      });
+    },
     [brokerClusterKey, dispatch, group],
   );
 };
@@ -122,13 +126,17 @@ export const useStopAndDeleteTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
   return useCallback(
-    (values, options) =>
-      dispatch(
-        actions.stopAndDeleteTopic.trigger({
-          params: { ...values, group },
-          options,
-        }),
-      ),
+    (values, options) => {
+      return new Promise((resolve, reject) => {
+        dispatch(
+          actions.stopAndDeleteTopic.trigger({
+            params: { ...values, group },
+            options,
+            promise: { resolve, reject },
+          }),
+        );
+      });
+    },
     [dispatch, group],
   );
 };

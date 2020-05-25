@@ -75,52 +75,58 @@ const Dialog = ({
   showActions,
   testId,
   title,
-}) => (
-  <MuiDialog
-    data-testid="dialog-container"
-    fullWidth
-    maxWidth={maxWidth}
-    onClose={onClose}
-    open={open}
-    PaperComponent={DrabblePaper}
-  >
-    <div data-testid={testId}>
-      <StyledDialogTitle disableTypography>
-        <Typography variant="h3">{title}</Typography>
-        <IconButton className="close-button" onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      </StyledDialogTitle>
-      <DialogContent>{children}</DialogContent>
-      {showActions && (
-        <StyledDialogActions>
-          <Button onClick={onClose}>{cancelText}</Button>
-          <ConfirmButtonWrapper>
-            {confirmDisabled ? (
-              <Tooltip title={confirmTooltip}>
-                <span>
-                  <Button
-                    disabled={confirmDisabled}
-                    color="primary"
-                    variant="contained"
-                  >
-                    {confirmText}
-                  </Button>
-                </span>
-              </Tooltip>
-            ) : (
-              <Button onClick={onConfirm} color="primary" variant="contained">
-                {confirmText}
-              </Button>
-            )}
+}) => {
+  const confirmButton = (
+    <Button
+      color="primary"
+      disabled={confirmDisabled}
+      onClick={onConfirm}
+      variant="contained"
+    >
+      {confirmText}
+    </Button>
+  );
 
-            {loading && <Progress size={14} />}
-          </ConfirmButtonWrapper>
-        </StyledDialogActions>
-      )}
-    </div>
-  </MuiDialog>
-);
+  return (
+    <MuiDialog
+      data-testid="dialog-container"
+      fullWidth
+      maxWidth={maxWidth}
+      onClose={onClose}
+      open={open}
+      PaperComponent={DrabblePaper}
+    >
+      <div data-testid={testId}>
+        <StyledDialogTitle disableTypography>
+          <Typography variant="h3">{title}</Typography>
+          <IconButton className="close-button" onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </StyledDialogTitle>
+        <DialogContent>{children}</DialogContent>
+        {showActions && (
+          <StyledDialogActions>
+            <Button onClick={onClose}>{cancelText}</Button>
+            <ConfirmButtonWrapper>
+              {confirmTooltip ? (
+                confirmDisabled ? (
+                  <Tooltip title={confirmTooltip}>
+                    <span>{confirmButton}</span>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title={confirmTooltip}>{confirmButton}</Tooltip>
+                )
+              ) : (
+                confirmButton
+              )}
+              {loading && <Progress size={14} />}
+            </ConfirmButtonWrapper>
+          </StyledDialogActions>
+        )}
+      </div>
+    </MuiDialog>
+  );
+};
 
 Dialog.propTypes = {
   children: PropTypes.node.isRequired,

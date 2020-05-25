@@ -31,7 +31,7 @@ export default action$ =>
     ofType(actions.stopAndDeleteTopic.TRIGGER),
     map(action => action.payload),
     mergeMap(values => {
-      const { params, options } = values;
+      const { params, options, promise } = values;
       const paperApi = get(options, 'paperApi');
       if (paperApi) {
         paperApi.updateElement(params.id, {
@@ -42,8 +42,13 @@ export default action$ =>
         stopTopic$(params),
         deleteTopic$(params).pipe(
           tap(action => {
-            if (action.type === actions.deleteTopic.SUCCESS && paperApi) {
-              paperApi.removeElement(params.id);
+            if (action.type === actions.deleteTopic.SUCCESS) {
+              if (typeof promise?.resolve === 'function') {
+                promise.resolve();
+              }
+              if (paperApi) {
+                paperApi.removeElement(params.id);
+              }
             }
           }),
         ),
@@ -54,6 +59,9 @@ export default action$ =>
             paperApi.updateElement(params.id, {
               status: CELL_STATUS.failed,
             });
+          }
+          if (typeof promise?.reject === 'function') {
+            promise.reject(err);
           }
           return from([
             actions.stopAndDeleteTopic.failure(err),
