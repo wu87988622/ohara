@@ -108,6 +108,7 @@ function NodeServiceTable({ node }) {
         paging: false,
         rowStyle: null,
         search: flatClusters.length > 5,
+        selection: false,
       }}
     />
   );
