@@ -95,7 +95,6 @@ const MuiDialog = ({ quickModeText }) => {
       PaperComponent={DrabblePaper}
       TransitionComponent={Transition}
       fullWidth
-      data-testid="dialog-container"
     >
       <StyledDialogTitle disableTypography>
         <div className="brand">
