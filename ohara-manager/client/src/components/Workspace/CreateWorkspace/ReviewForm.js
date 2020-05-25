@@ -43,8 +43,36 @@ const ReviewForm = props => {
               <TableCell>{values?.workspace?.name}</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Node Names</TableCell>
+              <TableCell>Workspace Nodes</TableCell>
               <TableCell>
+                {replace(values?.workspace?.nodeNames, /,/g, ', ')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Zookeeper Nodes</TableCell>
+              <TableCell>
+                {(values?.workspace?.nodeNames?.length > 1 && (
+                  <div>
+                    {/* In quick mode, the zookeeper's nodes is randomly pick */}
+                    {`Randomly pick ${
+                      values?.workspace?.nodeNames?.length > 3 ? 'three' : 'one'
+                    } from `}
+                    <b>Workspace Nodes</b>
+                  </div>
+                )) || <div>{values?.workspace?.nodeNames?.[0]}</div>}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Broker Nodes</TableCell>
+              <TableCell>
+                {/* In quick mode, the broker's nodes is the same as the workspace */}
+                {replace(values?.workspace?.nodeNames, /,/g, ', ')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Worker Nodes</TableCell>
+              <TableCell>
+                {/* In quick mode, the worker's nodes is the same as the workspace */}
                 {replace(values?.workspace?.nodeNames, /,/g, ', ')}
               </TableCell>
             </TableRow>
