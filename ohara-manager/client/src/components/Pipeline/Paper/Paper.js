@@ -289,8 +289,9 @@ const Paper = React.forwardRef((props, ref) => {
           });
 
           link.attr({
-            // prevent the link from clicking by users, the `root` here is the
-            // SVG container element of the link
+            // prevent the link from accidentally clicking by users while the link is still
+            // a half way link. The `root` here is the SVG container element of
+            // the link
             root: { style: 'pointer-events: none' },
             line: { stroke: palette.grey[500] },
           });
@@ -634,9 +635,10 @@ const Paper = React.forwardRef((props, ref) => {
           // moves their cursor and start using the mouse position as link's
           // position
           newLink.attr({
-            line: { stroke: 'translate' },
+            line: {
+              stroke: 'transparent',
+            },
           });
-
           return graph.addCell(newLink, options);
         }
 
