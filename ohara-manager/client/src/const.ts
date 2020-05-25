@@ -60,6 +60,11 @@ export enum CELL_PROPS {
   target = 'target',
 }
 
+export enum CELL_TYPES {
+  LINK = 'standard.Link',
+  ELEMENT = 'html.Element',
+}
+
 export enum CREATE_WORKSPACE_MODE {
   QUICK = 'quick',
   EXPERT = 'expert',

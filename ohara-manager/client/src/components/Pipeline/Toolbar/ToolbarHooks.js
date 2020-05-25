@@ -19,14 +19,15 @@ import React from 'react';
 import * as hooks from 'hooks';
 import * as pipelineApiHelper from '../PipelineApiHelper';
 import { PaperContext } from '../Pipeline';
-import { KIND, CELL_STATUS } from 'const';
+import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
+import { usePrevious } from 'utils/hooks';
 
 export const useRunningServices = () => {
   const paperApi = React.useContext(PaperContext);
   return paperApi
     .getCells()
     .filter(cell => cell.kind !== KIND.topic)
-    .filter(cell => cell.cellType === 'html.Element')
+    .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
     .filter(cell => cell.status?.toLowerCase() !== CELL_STATUS.stopped);
 };
 
@@ -47,8 +48,15 @@ export const useRenderDeleteContent = () => {
 };
 
 export const useZoom = () => {
-  const [paperScale, setPaperScale] = React.useState(1); // defaults to `1` -> 100%
   const paperApi = React.useContext(PaperContext);
+  const [paperScale, setPaperScale] = React.useState(
+    () => paperApi.getScale().sx,
+  );
+
+  const currentPaperApi = usePrevious(paperApi);
+  React.useEffect(() => {
+    if (paperApi) setPaperScale(paperApi.getScale().sx);
+  }, [currentPaperApi, paperApi]);
 
   const setZoom = (scale, instruction) => {
     const fixedScale = Number((Math.floor(scale * 100) / 100).toFixed(2));

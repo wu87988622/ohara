@@ -24,7 +24,7 @@ import WavesIcon from '@material-ui/icons/Waves';
 import * as joint from 'jointjs';
 import $ from 'jquery';
 
-import { KIND } from 'const';
+import { KIND, CELL_TYPES } from 'const';
 import { AddSharedTopicIcon } from 'components/common/Icon';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
@@ -55,7 +55,7 @@ export const createToolboxList = params => {
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
     defaults: joint.util.deepSupplement(
       {
-        type: 'html.Element',
+        type: CELL_TYPES.ELEMENT,
         attrs: {
           rect: { stroke: 'none', fill: 'transparent' },
         },
@@ -140,8 +140,7 @@ export const createToolboxList = params => {
     // 1. Shared topic can only be added into the Paper once
     // 2. Disable the topic If the name is already taken by other elements
     const isDisabled = paperApi
-      .getCells()
-      .filter(cell => cell.cellType !== 'standard.Link')
+      .getCells(KIND.topic)
       .some(element => element.name === topic.name);
 
     topicGraph.current.addCell(

@@ -28,7 +28,7 @@ import $ from 'jquery';
 import _ from 'lodash';
 import * as joint from 'jointjs';
 
-import { KIND, CELL_STATUS } from 'const';
+import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
 
 const createConnectorCell = options => {
   const {
@@ -53,7 +53,7 @@ const createConnectorCell = options => {
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
     defaults: joint.util.deepSupplement(
       {
-        type: 'html.Element',
+        type: CELL_TYPES.ELEMENT,
         attrs: {
           rect: { stroke: 'none', 'fill-opacity': 0 },
         },

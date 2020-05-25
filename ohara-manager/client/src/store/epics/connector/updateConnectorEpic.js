@@ -23,8 +23,7 @@ import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { KIND } from 'const';
-import { LOG_LEVEL } from 'const';
+import { KIND, CELL_TYPES, LOG_LEVEL } from 'const';
 
 export default action$ => {
   return action$.pipe(
@@ -73,14 +72,14 @@ function handleSuccess(values, options) {
     switch (cell.kind) {
       case KIND.source:
         linkId = cells
-          .filter(cell => cell.cellType === 'standard.Link')
+          .filter(cell => cell.cellType === CELL_TYPES.LINK)
           .find(
             cell => cell.sourceId === connectorId && cell.targetId === topicId,
           ).id;
         break;
       case KIND.sink:
         linkId = cells
-          .filter(cell => cell.cellType === 'standard.Link')
+          .filter(cell => cell.cellType === CELL_TYPES.LINK)
           .find(
             cell => cell.sourceId === topicId && cell.targetId === connectorId,
           ).id;

@@ -166,6 +166,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!currentPipeline) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
+    paperApiRef.current.setScale(1);
 
     // Fire this epic only once and it will keep fetching and updating metrics
     // before users leave our App by closing the Tab or browser
@@ -519,102 +520,100 @@ const Pipeline = React.forwardRef((props, ref) => {
     };
   });
 
+  if (!currentWorkspace) return null;
+
   return (
-    <>
-      {currentWorkspace && (
-        <PipelineDispatchContext.Provider value={pipelineDispatch}>
-          <PipelineStateContext.Provider value={pipelineState}>
-            <PaperContext.Provider value={{ ...paperApiRef.current }}>
-              {paperApiRef.current && currentPipeline && (
-                <Toolbar
-                  isToolboxOpen={pipelineState.isToolboxOpen}
-                  handleToolboxOpen={() =>
-                    pipelineDispatch({ type: 'openToolbox' })
-                  }
-                  handleToolbarClick={panel => {
-                    const isExpanded = pipelineState.toolboxExpanded[panel];
-                    pipelineDispatch({ type: 'resetToolboxExpanded' });
+    <PipelineDispatchContext.Provider value={pipelineDispatch}>
+      <PipelineStateContext.Provider value={pipelineState}>
+        <PaperContext.Provider value={{ ...paperApiRef.current }}>
+          {paperApiRef.current && currentPipeline && (
+            <Toolbar
+              isToolboxOpen={pipelineState.isToolboxOpen}
+              handleToolboxOpen={() =>
+                pipelineDispatch({ type: 'openToolbox' })
+              }
+              handleToolbarClick={panel => {
+                const isExpanded = pipelineState.toolboxExpanded[panel];
+                pipelineDispatch({ type: 'resetToolboxExpanded' });
 
-                    // Toggle the panel if it's already open
-                    if (!isExpanded) {
-                      pipelineDispatch({
-                        type: 'setToolbox',
-                        payload: panel,
-                      });
-                    }
-                  }}
-                />
-              )}
+                // Toggle the panel if it's already open
+                if (!isExpanded) {
+                  pipelineDispatch({
+                    type: 'setToolbox',
+                    payload: panel,
+                  });
+                }
+              }}
+            />
+          )}
 
-              <PaperWrapper>
-                {selectedCell && (
-                  <>
-                    <StyledSplitPane
-                      split="vertical"
-                      minSize={300}
-                      maxSize={500}
-                      defaultSize={320}
-                      primary="second"
-                    >
-                      <div></div>
+          <PaperWrapper>
+            {selectedCell && (
+              <>
+                <StyledSplitPane
+                  split="vertical"
+                  minSize={300}
+                  maxSize={500}
+                  defaultSize={320}
+                  primary="second"
+                >
+                  <div></div>
 
-                      <PipelinePropertyView
-                        handleClose={() => setSelectedCell(null)}
-                        element={selectedCell}
-                        isMetricsOn={pipelineState.isMetricsOn}
-                        pipelineObjects={pipelineObjectsRef.current}
-                      />
-                    </StyledSplitPane>
-                  </>
-                )}
-                <Paper
-                  ref={paperApiRef}
-                  onCellSelect={handleCellSelect}
-                  onCellDeselect={handleCellDeselect}
-                  onChange={handleChange}
-                  onElementAdd={handleElementAdd}
-                  onConnect={handleConnect}
-                  onDisconnect={handleDisConnect}
-                  onCellStart={handleCellStartClick}
-                  onCellStop={handleCellStopClick}
-                  onCellConfig={handleCellConfigClick}
-                  onCellRemove={handleCellRemove}
-                />
-                {paperApiRef.current && currentPipeline && (
-                  <Toolbox
-                    isOpen={pipelineState.isToolboxOpen}
-                    expanded={pipelineState.toolboxExpanded}
-                    pipelineDispatch={pipelineDispatch}
-                    toolboxKey={pipelineState.toolboxKey}
+                  <PipelinePropertyView
+                    handleClose={() => setSelectedCell(null)}
+                    element={selectedCell}
+                    isMetricsOn={pipelineState.isMetricsOn}
+                    pipelineObjects={pipelineObjectsRef.current}
                   />
-                )}
-              </PaperWrapper>
-              {paperApiRef.current && currentPipeline && (
-                <>
-                  <PipelinePropertyDialog
-                    isOpen={isPropertyDialogOpen}
-                    onClose={closePropertyDialog}
-                    data={propertyDialogData}
-                    onSubmit={handleSubmit}
-                  />
+                </StyledSplitPane>
+              </>
+            )}
+            <Paper
+              ref={paperApiRef}
+              onCellSelect={handleCellSelect}
+              onCellDeselect={handleCellDeselect}
+              onChange={handleChange}
+              onElementAdd={handleElementAdd}
+              onConnect={handleConnect}
+              onDisconnect={handleDisConnect}
+              onCellStart={handleCellStartClick}
+              onCellStop={handleCellStopClick}
+              onCellConfig={handleCellConfigClick}
+              onCellRemove={handleCellRemove}
+            />
+            {paperApiRef.current && currentPipeline && (
+              <Toolbox
+                isOpen={pipelineState.isToolboxOpen}
+                expanded={pipelineState.toolboxExpanded}
+                pipelineDispatch={pipelineDispatch}
+                toolboxKey={pipelineState.toolboxKey}
+              />
+            )}
+          </PaperWrapper>
+          {paperApiRef.current && currentPipeline && (
+            <>
+              <PipelinePropertyDialog
+                isOpen={isPropertyDialogOpen}
+                onClose={closePropertyDialog}
+                data={propertyDialogData}
+                onSubmit={handleSubmit}
+              />
 
-                  <DeleteDialog
-                    open={isOpen}
-                    title="Delete the element"
-                    content={`Are you sure you want to delete the element: ${getCurrentCellName(
-                      currentCellData,
-                    )} ? This action cannot be undone!`}
-                    onClose={handleDialogClose}
-                    onConfirm={handleElementDelete}
-                    maxWidth="xs"
-                  />
-                </>
-              )}
-            </PaperContext.Provider>
-          </PipelineStateContext.Provider>
-        </PipelineDispatchContext.Provider>
-      )}
-    </>
+              <DeleteDialog
+                open={isOpen}
+                title="Delete the element"
+                content={`Are you sure you want to delete the element: ${getCurrentCellName(
+                  currentCellData,
+                )} ? This action cannot be undone!`}
+                onClose={handleDialogClose}
+                onConfirm={handleElementDelete}
+                maxWidth="xs"
+              />
+            </>
+          )}
+        </PaperContext.Provider>
+      </PipelineStateContext.Provider>
+    </PipelineDispatchContext.Provider>
   );
 });
 

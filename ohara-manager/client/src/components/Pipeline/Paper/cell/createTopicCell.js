@@ -22,7 +22,7 @@ import * as joint from 'jointjs';
 import $ from 'jquery';
 
 import { SharedTopicIcon, PipelineOnlyTopicIcon } from 'components/common/Icon';
-import { CELL_STATUS } from 'const';
+import { CELL_STATUS, CELL_TYPES } from 'const';
 
 const createTopicCell = options => {
   const {
@@ -43,7 +43,7 @@ const createTopicCell = options => {
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
     defaults: joint.util.deepSupplement(
       {
-        type: 'html.Element',
+        type: CELL_TYPES.ELEMENT,
         attrs: {
           rect: { stroke: 'none', 'fill-opacity': 0 },
         },

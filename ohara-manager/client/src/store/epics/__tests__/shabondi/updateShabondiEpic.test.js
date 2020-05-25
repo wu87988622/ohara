@@ -17,7 +17,7 @@
 import { noop, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_TYPES } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import updateShabondiEpic from '../../shabondi/updateShabondiEpic';
 import * as actions from 'store/actions';
@@ -31,7 +31,7 @@ const mockedPaperApi = jest.fn(() => {
   return {
     getCells: () => [
       {
-        cellType: 'standard.Link',
+        cellType: CELL_TYPES.LINK,
         sourceId: shabondiId,
         targetId: shabondiId,
       },

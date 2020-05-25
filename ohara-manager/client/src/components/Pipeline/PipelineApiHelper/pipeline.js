@@ -15,6 +15,7 @@
  */
 
 import * as hooks from 'hooks';
+import { CELL_TYPES } from 'const';
 
 const pipeline = () => {
   const currentPipelineName = hooks.usePipelineName();
@@ -26,7 +27,7 @@ const pipeline = () => {
     };
 
     const endpoints = cellsJson.cells
-      .filter(cell => cell.type === 'html.Element')
+      .filter(cell => cell.type === CELL_TYPES.ELEMENT)
       .map(cell => {
         return { name: cell.name, kind: cell.kind };
       });

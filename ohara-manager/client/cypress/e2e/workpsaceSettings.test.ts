@@ -17,7 +17,7 @@
 import { capitalize } from 'lodash';
 
 import { deleteAllServices } from '../utils';
-import { KIND } from '../../src/const';
+import { KIND, CELL_TYPES } from '../../src/const';
 import * as generate from '../../src/utils/generate';
 import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
 
@@ -62,7 +62,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
           : sinks.indexOf(className);
 
       cy.findByTestId('toolbox-draggable')
-        .find('g[data-type="html.Element"]:visible')
+        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
         // the element index to be added
         .eq(elementIndex)
         .dragAndDrop(x, y);
@@ -103,7 +103,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.wait(3000);
 
         cy.findByTestId('toolbox-draggable')
-          .find('g[data-type="html.Element"]:visible')
+          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
           // the element index to be added
           // the pipeline-only element is always first, we shift one element
           .eq(topics.sort().indexOf(name) + 1)
@@ -111,14 +111,14 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       } else {
         // create a pipeline-only topic
         cy.findByTestId('toolbox-draggable')
-          .find('g[data-type="html.Element"]:visible')
+          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
           // the only "draggable" cell is pipeline-only topic
           .first()
           .dragAndDrop(x, y);
       }
     } else if (kind === KIND.stream) {
       cy.findByTestId('toolbox-draggable')
-        .find('g[data-type="html.Element"]:visible')
+        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
         // we only got 1 class for the uploaded stream jar
         // it's ok to assert the first element is the "stream class"
         .eq(0)

@@ -24,7 +24,7 @@ import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_TYPES } from 'const';
 
 export default action$ =>
   action$.pipe(
@@ -67,7 +67,7 @@ function handleSuccess(values, options) {
     const streamId = paperApi.getCell(values.name).id;
     const topicId = paperApi.getCell(currentStream.to[0].name).id;
     const linkId = cells
-      .filter(cell => cell.cellType === 'standard.Link')
+      .filter(cell => cell.cellType === CELL_TYPES.LINK)
       .find(cell => cell.sourceId === streamId && cell.targetId === topicId).id;
     paperApi.removeLink(linkId);
   }
@@ -76,7 +76,7 @@ function handleSuccess(values, options) {
     const streamId = paperApi.getCell(values.name).id;
     const topicId = paperApi.getCell(currentStream.from[0].name).id;
     const linkId = cells
-      .filter(cell => cell.cellType === 'standard.Link')
+      .filter(cell => cell.cellType === CELL_TYPES.LINK)
       .find(cell => cell.sourceId === topicId && cell.targetId === streamId).id;
 
     paperApi.removeLink(linkId);

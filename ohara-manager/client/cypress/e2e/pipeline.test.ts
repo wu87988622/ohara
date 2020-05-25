@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { KIND } from '../../src/const';
+import { KIND, CELL_TYPES } from '../../src/const';
 import { capitalize } from 'lodash';
 import * as generate from '../../src/utils/generate';
 import { deleteAllServices } from '../utils';
@@ -66,7 +66,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
           : sinks.indexOf(className);
 
       cy.findByTestId('toolbox-draggable')
-        .find('g[data-type="html.Element"]:visible')
+        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
         // the element index to be added
         .eq(elementIndex)
         .dragAndDrop(x, y);
@@ -107,7 +107,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.wait(3000);
 
         cy.findByTestId('toolbox-draggable')
-          .find('g[data-type="html.Element"]:visible')
+          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
           // the element index to be added
           // the pipeline-only element is always first, we shift one element
           .eq(topics.sort().indexOf(name) + 1)
@@ -115,14 +115,14 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       } else {
         // create a pipeline-only topic
         cy.findByTestId('toolbox-draggable')
-          .find('g[data-type="html.Element"]:visible')
+          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
           // the only "draggable" cell is pipeline-only topic
           .first()
           .dragAndDrop(x, y);
       }
     } else if (kind === KIND.stream) {
       cy.findByTestId('toolbox-draggable')
-        .find('g[data-type="html.Element"]:visible')
+        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
         // we only got 1 class for the uploaded stream jar
         // it's ok to assert the first element is the "stream class"
         .eq(0)
@@ -365,7 +365,7 @@ describe.skip('Element Links of Pipeline', () => {
     cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
     // will create two links
-    cy.get('g[data-type="standard.Link"]').should('have.length', 2);
+    cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 2);
 
     // 4. ftp source -> hdfs sink
     cy.log(`cannot create a link from ftp source to hdfs sink`);
@@ -476,7 +476,7 @@ describe.skip('Element Links of Pipeline', () => {
     cy.cellAction(elements.topicName2, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
     // will create four lines
-    cy.get('g[data-type="standard.Link"]').should('have.length', 4);
+    cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 4);
 
     // ftp source -> stream
     cy.log(`cannot create a link from ftp source to stream`);
@@ -563,7 +563,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // generate "T1" pipeline-only topic
     cy.findAllByText('T1').should('exist');
     // will create two lines
-    cy.get('g[data-type="standard.Link"]').should('have.length', 2);
+    cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 2);
 
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);
@@ -576,7 +576,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // generate "T2" pipeline-only topic
     cy.findAllByText('T2').should('exist');
     // will create two lines (total four lines)
-    cy.get('g[data-type="standard.Link"]').should('have.length', 4);
+    cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 4);
 
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);
@@ -589,7 +589,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // generate "T3" pipeline-only topic
     cy.findAllByText('T3').should('exist');
     // will create two lines (total six lines)
-    cy.get('g[data-type="standard.Link"]').should('have.length', 6);
+    cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 6);
 
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);

@@ -34,7 +34,7 @@ import Switch from '@material-ui/core/Switch';
 
 import * as pipelineContext from '../Pipeline';
 import * as hooks from 'hooks';
-import { KIND } from 'const';
+import { KIND, CELL_TYPES } from 'const';
 import { StyledToolbar } from './ToolbarStyles';
 import { Button } from 'components/common/Form';
 import { Tooltip } from 'components/common/Tooltip';
@@ -110,7 +110,7 @@ const Toolbar = props => {
 
     const cells = paperApi
       .getCells()
-      .filter(cell => cell.cellType === 'html.Element')
+      .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
       .filter(
         cell =>
           (cell.kind === KIND.topic && !cell.isShared) ||
@@ -144,7 +144,7 @@ const Toolbar = props => {
   const hasElements =
     paperApi
       .getCells()
-      .filter(cell => cell.cellType === 'html.Element')
+      .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
       .filter(element => element.kind !== KIND.topic).length > 0;
 
   return (
