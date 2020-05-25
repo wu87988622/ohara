@@ -15,7 +15,6 @@
  */
 
 import React from 'react';
-import { isArray } from 'lodash';
 import PropTypes from 'prop-types';
 import MaterialTable from 'material-table';
 import { forwardRef } from 'react';
@@ -34,6 +33,7 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import FormHelperText from '@material-ui/core/FormHelperText';
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -63,6 +63,8 @@ const typeConverter = key => {
   switch (key) {
     case 'number':
       return 'numeric';
+    case 'boolean':
+      return 'boolean';
 
     default:
       return 'string';
@@ -72,14 +74,14 @@ const typeConverter = key => {
 const Table = props => {
   const {
     input: { name, onChange, value = [] },
-    displayName,
+    helperText,
+    label,
     tableKeys,
     refs,
   } = props;
 
   const stateRef = React.useRef({});
 
-  if (!isArray(value)) return null;
   stateRef.current = {
     columns: tableKeys.map(tableKey => {
       return {
@@ -103,7 +105,7 @@ const Table = props => {
         }}
         name={name}
         icons={tableIcons}
-        title={displayName}
+        title={label}
         columns={stateRef.current.columns}
         data={stateRef.current.data}
         editable={{
@@ -150,6 +152,7 @@ const Table = props => {
             }),
         }}
       />
+      <FormHelperText children={helperText} />
     </div>
   );
 };
@@ -165,9 +168,13 @@ Table.propTypes = {
       PropTypes.array,
     ]).isRequired,
   }).isRequired,
-  displayName: PropTypes.string,
+  helperText: PropTypes.string,
+  label: PropTypes.string,
   tableKeys: PropTypes.array,
   refs: PropTypes.object,
+};
+Table.defaultProps = {
+  helperText: '',
 };
 
 export default Table;

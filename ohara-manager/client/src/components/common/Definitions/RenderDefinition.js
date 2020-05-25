@@ -57,7 +57,6 @@ const RenderDefinition = props => {
     nodes = [],
     defType,
     ref,
-    fieldProps = {},
     freePorts,
   } = props;
 
@@ -66,7 +65,7 @@ const RenderDefinition = props => {
     return isNumberType(type) ? toNumber(value) : value;
   };
 
-  const getFieldProps = def => {
+  const getFieldProps = definition => {
     const {
       key,
       displayName,
@@ -74,7 +73,7 @@ const RenderDefinition = props => {
       necessary,
       permission,
       valueType,
-    } = def;
+    } = definition;
 
     let disabled = false;
     switch (permission) {
@@ -95,14 +94,13 @@ const RenderDefinition = props => {
     }
 
     const ensuredFieldProps = {
-      ...fieldProps,
       key,
       name: key,
       label: displayName,
       helperText: documentation,
       disabled,
       required: necessary === 'REQUIRED',
-      validate: validWithDef(def),
+      validate: validWithDef(definition),
       parse: parseValueByType(valueType),
     };
 
@@ -114,8 +112,8 @@ const RenderDefinition = props => {
   };
 
   const renderDefinitionField = () => {
-    const { valueType, reference } = def;
-    const fieldProps = getFieldProps(def);
+    const { valueType, reference, tableKeys } = def;
+    const ensuredFieldProps = getFieldProps(def);
 
     // Only the following types have support reference:
     // 1. ARRAY
@@ -136,13 +134,17 @@ const RenderDefinition = props => {
         valueType === Type.ARRAY || valueType === Type.OBJECT_KEYS;
       switch (reference) {
         case ReferenceEnum.TOPIC:
-          return <Field {...fieldProps} component={Reference} list={topics} />;
+          return (
+            <Field {...ensuredFieldProps} component={Reference} list={topics} />
+          );
         case ReferenceEnum.FILE:
-          return <Field {...fieldProps} component={Reference} list={files} />;
+          return (
+            <Field {...ensuredFieldProps} component={Reference} list={files} />
+          );
         case ReferenceEnum.NODE:
           return (
             <Field
-              {...fieldProps}
+              {...ensuredFieldProps}
               component={Chooser}
               multipleChoice={multiple}
               options={nodes.map(node => node.hostname)}
@@ -154,82 +156,92 @@ const RenderDefinition = props => {
     } else {
       switch (valueType) {
         case Type.STRING:
-          return <Field {...fieldProps} component={StringDef} />;
+          return <Field {...ensuredFieldProps} component={StringDef} />;
 
         case Type.REMOTE_PORT:
-          return <Field {...fieldProps} component={RemotePort} />;
+          return <Field {...ensuredFieldProps} component={RemotePort} />;
 
         case Type.INT:
-          return <Field {...fieldProps} component={IntDef} />;
+          return <Field {...ensuredFieldProps} component={IntDef} />;
 
         case Type.CLASS:
-          return <Field {...fieldProps} component={ClassDef} />;
+          return <Field {...ensuredFieldProps} component={ClassDef} />;
 
         case Type.PASSWORD:
-          return <Field {...fieldProps} component={Password} />;
+          return <Field {...ensuredFieldProps} component={Password} />;
 
         case Type.POSITIVE_INT:
-          return <Field {...fieldProps} component={PositiveInt} />;
+          return <Field {...ensuredFieldProps} component={PositiveInt} />;
 
         case Type.DURATION:
-          return <Field {...fieldProps} component={Duration} />;
+          return <Field {...ensuredFieldProps} component={Duration} />;
 
         case Type.BINDING_PORT:
           if (isEmpty(freePorts)) {
-            return <Field {...fieldProps} component={RemotePort} />;
+            return <Field {...ensuredFieldProps} component={RemotePort} />;
           } else {
             return (
-              <Field {...fieldProps} component={BindingPort} list={freePorts} />
+              <Field
+                {...ensuredFieldProps}
+                component={BindingPort}
+                list={freePorts}
+              />
             );
           }
 
         case Type.TAGS:
-          return <Field {...fieldProps} component={Tags} />;
+          return <Field {...ensuredFieldProps} component={Tags} />;
 
         case Type.JDBC_TABLE:
-          return <Field {...fieldProps} component={JdbcTable} />;
+          return <Field {...ensuredFieldProps} component={JdbcTable} />;
 
         case Type.TABLE:
-          return <Field {...fieldProps} component={Table} tableKeys={[]} />;
+          return (
+            <Field
+              {...ensuredFieldProps}
+              children={Table}
+              tableKeys={tableKeys}
+            />
+          );
 
         case Type.BOOLEAN:
           return (
             <Field
-              {...fieldProps}
+              {...ensuredFieldProps}
               component={BooleanDef}
               type={valueType === Type.BOOLEAN ? 'checkbox' : null}
             />
           );
 
         case Type.LONG:
-          return <Field {...fieldProps} component={Long} />;
+          return <Field {...ensuredFieldProps} component={Long} />;
 
         case Type.SHORT:
-          return <Field {...fieldProps} component={Short} />;
+          return <Field {...ensuredFieldProps} component={Short} />;
 
         case Type.DOUBLE:
-          return <Field {...fieldProps} component={Double} />;
+          return <Field {...ensuredFieldProps} component={Double} />;
 
         case Type.ARRAY:
-          return <Field {...fieldProps} component={ArrayDef} />;
+          return <Field {...ensuredFieldProps} component={ArrayDef} />;
 
         case Type.POSITIVE_SHORT:
-          return <Field {...fieldProps} component={PositiveShort} />;
+          return <Field {...ensuredFieldProps} component={PositiveShort} />;
 
         case Type.POSITIVE_LONG:
-          return <Field {...fieldProps} component={PositiveLong} />;
+          return <Field {...ensuredFieldProps} component={PositiveLong} />;
 
         case Type.POSITIVE_DOUBLE:
-          return <Field {...fieldProps} component={PositiveDouble} />;
+          return <Field {...ensuredFieldProps} component={PositiveDouble} />;
 
         case Type.OBJECT_KEYS:
-          return <Field {...fieldProps} component={ObjectKeys} />;
+          return <Field {...ensuredFieldProps} component={ObjectKeys} />;
 
         case Type.OBJECT_KEY:
-          return <Field {...fieldProps} component={ObjectKey} />;
+          return <Field {...ensuredFieldProps} component={ObjectKey} />;
 
         default:
-          return <Field {...fieldProps} component={StringDef} />;
+          return <Field {...ensuredFieldProps} component={StringDef} />;
       }
     }
   };

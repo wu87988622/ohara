@@ -33,6 +33,7 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import FormHelperText from '@material-ui/core/FormHelperText';
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -61,7 +62,8 @@ const tableIcons = {
 const ObjectKeys = props => {
   const {
     input: { name, onChange, value = [] },
-    displayName,
+    helperText,
+    label,
     refs,
   } = props;
   const [state, setState] = React.useState({
@@ -91,7 +93,7 @@ const ObjectKeys = props => {
         }}
         name={name}
         icons={tableIcons}
-        title={displayName}
+        title={label}
         columns={state.columns}
         data={state.data}
         editable={{
@@ -135,6 +137,7 @@ const ObjectKeys = props => {
             }),
         }}
       />
+      <FormHelperText children={helperText} />
     </div>
   );
 };
@@ -150,8 +153,12 @@ ObjectKeys.propTypes = {
       PropTypes.array,
     ]).isRequired,
   }).isRequired,
-  displayName: PropTypes.string,
+  helperText: PropTypes.string,
+  label: PropTypes.string,
   refs: PropTypes.object,
+};
+ObjectKeys.defaultProps = {
+  helperText: '',
 };
 
 export default ObjectKeys;
