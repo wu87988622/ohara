@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react';
-import { get, map, reject } from 'lodash';
+import { get, map, reject, sortBy } from 'lodash';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -83,32 +83,28 @@ const AutofillList = () => {
     setIsEditorOpen(false);
   };
 
+  const list = sortBy(workspace?.settingFillings, 'displayName');
+
   return (
     <Wrapper>
       <List>
-        {map(workspace?.settingFillings, settingFilling => {
+        {map(list, item => {
           return (
-            <ListItem key={settingFilling.name} divider alignItems="flex-start">
-              <ListItemText primary={settingFilling.displayName} />
+            <ListItem key={item.name} divider alignItems="flex-start">
+              <ListItemText primary={item.displayName} />
               <ListItemSecondaryAction>
                 <Tooltip title="Edit the autofill">
-                  <IconButton
-                    onClick={() => handleEditButtonClick(settingFilling)}
-                  >
+                  <IconButton onClick={() => handleEditButtonClick(item)}>
                     <EditIcon />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Copy the autofill">
-                  <IconButton
-                    onClick={() => handleCopyButtonClick(settingFilling)}
-                  >
+                  <IconButton onClick={() => handleCopyButtonClick(item)}>
                     <FileCopyIcon />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete the autofill">
-                  <IconButton
-                    onClick={() => handleDeleteButtonClick(settingFilling)}
-                  >
+                  <IconButton onClick={() => handleDeleteButtonClick(item)}>
                     <ClearIcon />
                   </IconButton>
                 </Tooltip>
