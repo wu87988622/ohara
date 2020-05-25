@@ -60,8 +60,8 @@ private[configurator] object ShabondiRoute {
         val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
           .more(
             (creation.shabondiClass match {
-              case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.sourceOnlyDefinitions
-              case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => ShabondiDefinitions.sinkOnlyDefinitions
+              case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.sourceDefinitions
+              case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => ShabondiDefinitions.sinkDefinitions
             })
             // we should add definition having default value to complete Creation request but
             // TODO: we should check all definitions in Creation phase

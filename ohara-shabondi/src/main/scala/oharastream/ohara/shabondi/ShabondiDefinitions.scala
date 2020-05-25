@@ -27,19 +27,15 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 object ShabondiDefinitions {
-  private val basicDefinitionMap  = mutable.Map.empty[String, SettingDef]
-  private val sourceDefinitionMap = mutable.Map.empty[String, SettingDef]
-  private val sinkDefinitionMap   = mutable.Map.empty[String, SettingDef]
-  private val orderCounter        = new AtomicInteger(0)
-  private def orderInGroup(): Int = orderCounter.getAndIncrement
+  private[this] val basicDefinitionMap  = mutable.Map.empty[String, SettingDef]
+  private[this] val sourceDefinitionMap = mutable.Map.empty[String, SettingDef]
+  private[this] val sinkDefinitionMap   = mutable.Map.empty[String, SettingDef]
+  private[this] val orderCounter        = new AtomicInteger(0)
+  private[this] def orderInGroup(): Int = orderCounter.getAndIncrement
 
-  val CORE_GROUP                 = "core"
-  val IMAGE_NAME_DEFAULT: String = s"oharastream/shabondi:${VersionUtils.VERSION}"
-
-  def basicDefinitions: Seq[SettingDef]      = basicDefinitionMap.values.toList
-  def sourceOnlyDefinitions: Seq[SettingDef] = sourceDefinitionMap.values.toList
-  def sinkOnlyDefinitions: Seq[SettingDef]   = sinkDefinitionMap.values.toList
-
+  val CORE_GROUP                        = "core"
+  val IMAGE_NAME_DEFAULT: String        = s"oharastream/shabondi:${VersionUtils.VERSION}"
+  def basicDefinitions: Seq[SettingDef] = basicDefinitionMap.values.toList
   def sourceDefinitions: Seq[SettingDef] =
     WithDefinitions
       .merge(classOf[ShabondiSource], basicDefinitionMap.asJava, sourceDefinitionMap.asJava)

@@ -21,7 +21,7 @@ import java.time.{Duration => JDuration}
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, ShabondiApi, TopicApi}
 import oharastream.ohara.common.rule.OharaTest
-import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
+import oharastream.ohara.common.setting.{ClassType, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.shabondi.ShabondiDefinitions._
@@ -372,7 +372,7 @@ class TestShabondiRoute extends OharaTest {
       ShabondiApi.SHABONDI_SOURCE_CLASS,
       objectKey,
       clientPort,
-      Set(availableNodeNames(0)),
+      Set(availableNodeNames.head),
       Set(notStartedTopic)
     )
 
@@ -389,7 +389,7 @@ class TestShabondiRoute extends OharaTest {
       ShabondiApi.SHABONDI_SINK_CLASS,
       objectKey,
       clientPort,
-      Set(availableNodeNames(0)),
+      Set(availableNodeNames.head),
       Set(notStartedTopic)
     )
 
@@ -405,7 +405,7 @@ class TestShabondiRoute extends OharaTest {
       ShabondiApi.SHABONDI_SOURCE_CLASS,
       objectKey,
       CommonUtils.availablePort(),
-      Set(availableNodeNames(0)),
+      Set(availableNodeNames.head),
       Set(notStartedTopic)
     )
 
@@ -421,11 +421,37 @@ class TestShabondiRoute extends OharaTest {
       ShabondiApi.SHABONDI_SINK_CLASS,
       objectKey,
       CommonUtils.availablePort(),
-      Set(availableNodeNames(0)),
+      Set(availableNodeNames.head),
       Set(notStartedTopic)
     )
 
     an[IllegalArgumentException] should be thrownBy await(shabondiApi.start(objectKey))
+  }
+
+  @Test
+  def testSourceKind(): Unit = {
+    val notStartedTopic = TopicKey.of("g1", "t1")
+    await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
+    createShabondiService(
+      ShabondiApi.SHABONDI_SOURCE_CLASS,
+      objectKey,
+      CommonUtils.availablePort(),
+      Set(availableNodeNames.head),
+      Set(notStartedTopic)
+    ).settings("kind").asInstanceOf[JsString].value shouldBe ClassType.SOURCE.key()
+  }
+
+  @Test
+  def testSinkKind(): Unit = {
+    val notStartedTopic = TopicKey.of("g1", "t1")
+    await(topicApi.request.brokerClusterKey(brokerClusterInfo.key).key(notStartedTopic).create())
+    createShabondiService(
+      ShabondiApi.SHABONDI_SINK_CLASS,
+      objectKey,
+      CommonUtils.availablePort(),
+      Set(availableNodeNames.head),
+      Set(notStartedTopic)
+    ).settings("kind").asInstanceOf[JsString].value shouldBe ClassType.SINK.key()
   }
 
   private def createShabondiService(
