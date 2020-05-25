@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
+import { omit } from 'lodash';
+import React from 'react';
 import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 
-const StyledDialog = styled(Dialog)(
-  ({ isHide, isDeleteDialog }) => css`
+const StyledDialog = styled(props => (
+  // Don't pass down props that are meant only used by styled-component.
+  // React also complains about this if these props are not omitted
+  <Dialog {...omit(props, ['isHidden', 'isDeleteDialog'])} />
+))(
+  ({ isHidden, isDeleteDialog }) => css`
     .MuiDialog-paperFullWidth {
-      height: ${isHide ? '' : '600px'};
+      height: ${isHidden ? '' : '600px'};
     }
 
     .FlexDiv {
       display: flex;
-      flex-wrap: ${isHide ? 'nowrap' : 'wrap'};
+      flex-wrap: ${isHidden ? 'nowrap' : 'wrap'};
     }
     .FlexIconButtonDiv {
       display: flex;
@@ -35,7 +41,7 @@ const StyledDialog = styled(Dialog)(
       display: ${isDeleteDialog ? 'none' : 'flex'};
     }
     .StyledProgress {
-      flex: ${isHide ? 1 : '100%'};
+      flex: ${isHidden ? 1 : '100%'};
       &.MuiLinearProgress-root {
         height: 12px;
         margin-left: 12px;
@@ -44,31 +50,31 @@ const StyledDialog = styled(Dialog)(
     }
     .RightFlexDiv {
       display: flex;
-      flex:${isHide ? 0 : 1}
-      justify-content: ${isHide ? 'flex-end' : 'center'};
-      margin-right: ${isHide ? '12px' : '0px'};
+      flex: ${isHidden ? 0 : 1};
+      justify-content: ${isHidden ? 'flex-end' : 'center'};
+      margin-right: ${isHidden ? '12px' : '0px'};
     }
-    .SuspendButton{
-      top: ${isHide ? '-12px' : '0px'};
+    .SuspendButton {
+      top: ${isHidden ? '-12px' : '0px'};
     }
-    .StyledIconButton{
+    .StyledIconButton {
       margin-right: 12px;
     }
-    .StyledCard{
+    .StyledCard {
       margin-left: 12px;
       margin-right: 12px;
       min-height: 345px;
     }
-    .StyledFormControl{
+    .StyledFormControl {
       margin-left: 12px;
       justify-content: flex-start;
       flex: 1;
     }
-    .StyledCloseButton{
+    .StyledCloseButton {
       justify-content: flex-end;
       margin-right: 12px;
     }
-    .StyledTypography{
+    .StyledTypography {
       justify-content: flex-start;
       flex: 1;
       margin-left: 12px;

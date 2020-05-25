@@ -64,7 +64,7 @@ const LogProgress = props => {
   const [color, setColor] = useState();
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isHide, setIsHide] = useState(true);
+  const [isHidden, setIsHidden] = useState(true);
   const [
     isRollbackConfirmDialogOpen,
     setIsRollbackConfirmDialogOpen,
@@ -73,10 +73,10 @@ const LogProgress = props => {
   const progress = useRef(() => {});
 
   const handelHideButton = () => {
-    if (isHide) {
-      setIsHide(false);
+    if (isHidden) {
+      setIsHidden(false);
     } else {
-      setIsHide(true);
+      setIsHidden(true);
     }
   };
 
@@ -146,11 +146,11 @@ const LogProgress = props => {
       open={isLoading}
       maxWidth={'md'}
       fullWidth
-      isHide={isHide}
+      isHidden={isHidden}
       isDeleteDialog={createTitle === 'Delete Workspace'}
     >
       <DialogTitle>{title}</DialogTitle>
-      {!isHide && (
+      {!isHidden && (
         <Stepper activeStep={activeStep}>
           {steps.map(step => {
             let type = {};
@@ -165,24 +165,21 @@ const LogProgress = props => {
           })}
         </Stepper>
       )}
-      <div className={'FlexDiv'} isHide={isHide}>
+      <div className={'FlexDiv'}>
         <LinearProgress
           className={'StyledProgress'}
           color={color}
           valueBuffer={buffer}
           value={completed}
           variant="determinate"
-          isHide={isHide}
         />
         {false && (
-          //Hidden first will be restored at 0.11
-          <div className={'RightFlexDiv'} isHide={isHide}>
+          <div className={'RightFlexDiv'}>
             {isPause ? (
               <Button
                 className={'SuspendButton'}
                 color="primary"
                 onClick={() => setIsRollbackConfirmDialogOpen(true)}
-                isHide={isHide}
               >
                 ROLLBACK
               </Button>
@@ -191,7 +188,6 @@ const LogProgress = props => {
                 className={'SuspendButton'}
                 color="primary"
                 onClick={onPause}
-                isHide={isHide}
               >
                 SUSPEND
               </Button>
@@ -201,7 +197,6 @@ const LogProgress = props => {
                 className={'SuspendButton'}
                 color="primary"
                 onClick={onResume}
-                isHide={isHide}
               >
                 RESUME
               </Button>
@@ -210,7 +205,7 @@ const LogProgress = props => {
         )}
       </div>
       <div className={'FlexIconButtonDiv'}>
-        {isHide && (
+        {isHidden && (
           <Typography className={'StyledTypography'}>{message}</Typography>
         )}
         <IconButton
@@ -218,10 +213,10 @@ const LogProgress = props => {
           onClick={handelHideButton}
           size="small"
         >
-          {!isHide ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
+          {!isHidden ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
         </IconButton>
       </div>
-      {!isHide && (
+      {!isHidden && (
         <Card className={'StyledCard'}>
           <VirtualizedList
             autoScrollToBottom

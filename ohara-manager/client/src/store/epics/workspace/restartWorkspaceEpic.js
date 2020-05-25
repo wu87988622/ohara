@@ -355,17 +355,19 @@ const waitStopTopic$ = params =>
 const waitStopTopics$ = topics =>
   of(...topics).pipe(mergeMap(topics => waitStopTopic$(topics)));
 
-const finalize$ = params =>
+const finalize$ = ({ workerKey, workspaceKey }) =>
   of(
     of(actions.restartWorkspace.success()),
     of(
       actions.createEventLog.trigger({
-        title: `Successfully Restart workspace ${params.name}.`,
+        title: `Successfully Restart workspace ${workspaceKey.name}.`,
         type: LOG_LEVEL.info,
       }),
     ),
     // Refetch node list after creation successfully in order to get the runtime data
     of(actions.fetchNodes.trigger()),
+    // Refetch connector list (inspect worker and shabondi) for those new added plugins
+    of(actions.fetchWorker.trigger(workerKey)),
   ).pipe(concatAll());
 
 export default (action$, state$) =>
@@ -436,7 +438,7 @@ export default (action$, state$) =>
         startWorker$(workerKey, skipList),
         waitStartWorker$({ workerKey, workspaceKey }),
 
-        finalize$(workspaceKey),
+        finalize$({ workerKey, workspaceKey }),
       ).pipe(
         concatAll(),
         catchError(error => of(actions.restartWorkspace.failure(error))),
