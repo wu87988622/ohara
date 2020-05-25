@@ -146,7 +146,7 @@ Dialog.propTypes = {
 
 Dialog.defaultProps = {
   confirmDisabled: false,
-  confirmTooltip: null,
+  confirmTooltip: '',
   confirmText: 'ADD',
   cancelText: 'CANCEL',
   loading: false,

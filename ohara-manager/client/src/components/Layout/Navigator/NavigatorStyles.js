@@ -54,6 +54,25 @@ export const StyledNavigator = styled.nav(
         margin: 4px 0 0 ${theme.spacing(1)}px;
       }
     }
+
+    /* 
+      TODO: Override react-scrollbars-custom's default styles with props or 
+      custom styles
+    */
+
+    .scrollbar-wrapper {
+      .trackYVisible {
+        .ScrollbarsCustom-Wrapper {
+          right: 5px !important;
+        }
+      }
+
+      .ScrollbarsCustom-TrackY {
+        top: 0 !important;
+        height: 100% !important;
+        width: 5px !important;
+      }
+    }
   `,
 );
 
@@ -69,7 +88,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
     }
 
     /* 
-      Ensure these elements are taking up full with and height and thus the 
+      Ensure these elements are taking up full width and height and thus the 
       child element can have the full width/height
     */
     .MuiCollapse-wrapper,
@@ -79,19 +98,6 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
     div[role='region'] {
       height: 100%;
       width: 100%;
-    }
-
-    /* 
-      TODO: Override react-scrollbars-custom's default styles with props or 
-      custom styles
-    */
-
-    .scrollbar-wrapper {
-      .ScrollbarsCustom-TrackY {
-        top: 0 !important;
-        height: 100% !important;
-        width: 5px !important;
-      }
     }
 
     .Mui-expanded {
