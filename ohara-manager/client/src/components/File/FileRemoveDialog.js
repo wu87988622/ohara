@@ -20,8 +20,10 @@ import { isFunction } from 'lodash';
 import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
+  confirmDisabled: false,
   content: file => `Are you sure you want to remove the file ${file?.name}?`,
   title: 'Remove file?',
+  showForceCheckbox: false,
 };
 
 function FileRemoveDialog(props) {
@@ -30,6 +32,11 @@ function FileRemoveDialog(props) {
 
   return (
     <DeleteDialog
+      confirmDisabled={
+        isFunction(options?.confirmDisabled)
+          ? options?.confirmDisabled(file)
+          : options?.confirmDisabled
+      }
       confirmText="REMOVE"
       content={
         isFunction(options?.content) ? options.content(file) : options?.content
@@ -37,21 +44,28 @@ function FileRemoveDialog(props) {
       onClose={onClose}
       onConfirm={() => onConfirm(file)}
       open={isOpen}
+      showForceCheckbox={
+        isFunction(options?.showForceCheckbox)
+          ? options?.showForceCheckbox(file)
+          : options?.showForceCheckbox
+      }
       title={isFunction(options?.title) ? options.title(file) : options?.title}
     />
   );
 }
 
 FileRemoveDialog.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
   file: PropTypes.shape({
     name: PropTypes.string,
   }),
+  isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func.isRequired,
   options: PropTypes.shape({
+    confirmDisabled: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
     title: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     content: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    showForceCheckbox: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
   }),
 };
 

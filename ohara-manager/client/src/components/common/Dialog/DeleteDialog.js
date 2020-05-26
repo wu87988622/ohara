@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { toLower } from 'lodash';
 import styled, { css } from 'styled-components';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -72,9 +74,12 @@ const DeleteDialog = ({
   onClose,
   onConfirm,
   isWorking,
+  showForceCheckbox,
   testId,
   title,
 }) => {
+  const [isForceChecked, setIsForceChecked] = useState(false);
+
   return (
     <Dialog
       maxWidth={maxWidth}
@@ -91,6 +96,16 @@ const DeleteDialog = ({
         </StyledDialogTitle>
         <DialogContent>
           <DialogContentText>{content}</DialogContentText>
+          {showForceCheckbox && (
+            <div>
+              <Checkbox
+                checked={isForceChecked}
+                onChange={event => setIsForceChecked(event.target.checked)}
+                color="primary"
+              />{' '}
+              {`Force ${toLower(confirmText)}`}
+            </div>
+          )}
         </DialogContent>
         <DialogActions>
           <Button disabled={isWorking} onClick={onClose}>
@@ -98,7 +113,7 @@ const DeleteDialog = ({
           </Button>
           <ConfirmButtonWrapper>
             <ConfirmButton
-              disabled={isWorking || confirmDisabled}
+              disabled={isWorking || (confirmDisabled && !isForceChecked)}
               onClick={onConfirm}
               color="primary"
               autoFocus
@@ -124,6 +139,7 @@ DeleteDialog.propTypes = {
   onClose: PropTypes.func,
   onConfirm: PropTypes.func,
   isWorking: PropTypes.bool,
+  showForceCheckbox: PropTypes.bool,
   testId: PropTypes.string,
   title: PropTypes.string.isRequired,
 };
@@ -136,6 +152,7 @@ DeleteDialog.defaultProps = {
   onClose: () => {},
   onConfirm: () => {},
   isWorking: false,
+  showForceCheckbox: false,
   testId: 'delete-dialog',
 };
 
