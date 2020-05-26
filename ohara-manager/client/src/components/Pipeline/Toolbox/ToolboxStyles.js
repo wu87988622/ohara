@@ -115,6 +115,14 @@ export const StyledToolbox = styled.div(
 
     /* Toolbox list */
     .toolbox-list {
+      /*
+        Ensure these skeletons are centered in the list section, these only appear
+        when the inspect worker API is still in the air
+      */
+      .MuiSkeleton-root {
+        margin: 0 auto;
+      }
+
       .item {
         display: flex;
         align-items: center;

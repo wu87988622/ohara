@@ -199,7 +199,9 @@ export const enableDragAndDrop = params => {
     paperApi,
   } = params;
 
-  toolPapers.forEach(toolPaper => {
+  // Falsy values are graphs that are not ready to render: source and sink as the
+  // API could be still in the air while this component is already to render
+  toolPapers.filter(Boolean).forEach(toolPaper => {
     // Add "hover" state in items, I cannot figure out how to do
     // this when initializing the HTML elements...
     toolPaper.on('cell:mouseenter', cellView => {

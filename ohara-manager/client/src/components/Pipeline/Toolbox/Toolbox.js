@@ -132,11 +132,16 @@ const Toolbox = props => {
       streamGraph.current = new joint.dia.Graph();
       sinkGraph.current = new joint.dia.Graph();
 
-      const sourcePaper = new joint.dia.Paper({
-        el: document.getElementById('source-list'),
-        model: sourceGraph.current,
-        ...sharedProps,
-      });
+      const hasSource = connectors.sources.length > 0;
+      const hasSink = connectors.sources.length > 0;
+
+      const sourcePaper =
+        hasSource &&
+        new joint.dia.Paper({
+          el: document.getElementById('source-list'),
+          model: sourceGraph.current,
+          ...sharedProps,
+        });
 
       const topicPaper = new joint.dia.Paper({
         el: document.getElementById('topic-list'),
@@ -150,11 +155,13 @@ const Toolbox = props => {
         ...sharedProps,
       });
 
-      const sinkPaper = new joint.dia.Paper({
-        el: document.getElementById('sink-list'),
-        model: sinkGraph.current,
-        ...sharedProps,
-      });
+      const sinkPaper =
+        hasSink &&
+        new joint.dia.Paper({
+          el: document.getElementById('sink-list'),
+          model: sinkGraph.current,
+          ...sharedProps,
+        });
 
       utils.createToolboxList({
         connectors,

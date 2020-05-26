@@ -24,6 +24,8 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
+import Skeleton from '@material-ui/lab/Skeleton';
+import { times } from 'lodash';
 
 import * as context from 'context';
 import ToolboxRedirectButton from './ToolboxRedirectButton';
@@ -64,7 +66,16 @@ const ToolboxList = props => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="source-list" className="toolbox-list"></div>
+            <div id="source-list" className="toolbox-list">
+              {times(5, index => (
+                <Skeleton
+                  key={index}
+                  animation="wave"
+                  width={260}
+                  height={40}
+                />
+              ))}
+            </div>
           </List>
 
           <ToolboxRedirectButton
@@ -138,7 +149,16 @@ const ToolboxList = props => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="sink-list" className="toolbox-list"></div>
+            <div id="sink-list" className="toolbox-list">
+              {times(5, index => (
+                <Skeleton
+                  key={index}
+                  animation="wave"
+                  width={260}
+                  height={40}
+                />
+              ))}
+            </div>
           </List>
 
           <ToolboxRedirectButton
