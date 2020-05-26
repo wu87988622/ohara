@@ -24,11 +24,17 @@ import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
 import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
+import { Dialog } from 'components/common/Dialog';
 
 const Settings = () => {
-  const { isOpen, close, data: pageName } = useEditWorkspaceDialog();
+  const {
+    isOpen: isEditWorkspaceDialogOpen,
+    close: closeEditWorkspaceDialog,
+    data: pageName,
+  } = useEditWorkspaceDialog();
   const [selectedMenu, setSelectedMenu] = React.useState('');
   const [selectedComponent, setSelectedComponent] = React.useState(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false);
   const scrollRef = React.useRef(null);
 
   const openDeleteWorkspace = hooks.useOpenDeleteWorkspaceDialogAction();
@@ -38,6 +44,7 @@ const Settings = () => {
   const restartConfirmMessage = hooks.useRestartConfirmMessage();
   const hasRunningServices = hooks.useHasRunningServices();
   const workspace = hooks.useWorkspace();
+  const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
 
   const resetSelectedItem = () => {
     setSelectedComponent(null);
@@ -45,16 +52,16 @@ const Settings = () => {
 
   const { menu, sections } = useConfig({
     openDeleteProgressDialog: () => {
-      resetSelectedItem(null);
+      resetSelectedItem();
       openDeleteWorkspace();
       deleteWorkspace({
         // after delete workspace
         // this Settings Dialog should be closed
-        onSuccess: () => close(),
+        onSuccess: () => closeEditWorkspaceDialog(),
       });
     },
     openRestartProgressDialog: () => {
-      resetSelectedItem(null);
+      resetSelectedItem();
       openRestartWorkspace();
       restartWorkspace();
     },
@@ -77,7 +84,11 @@ const Settings = () => {
   };
 
   const handleClose = () => {
-    close();
+    if (shouldBeRestartWorkspace && selectedComponent?.name) {
+      return setIsConfirmDialogOpen(true);
+    }
+
+    closeEditWorkspaceDialog();
     resetSelectedItem();
   };
 
@@ -104,7 +115,7 @@ const Settings = () => {
   return (
     <StyledFullScreenDialog
       title="Settings"
-      open={isOpen}
+      open={isEditWorkspaceDialogOpen}
       onClose={handleClose}
       testId="edit-workspace-dialog"
       isPageComponent={isPageComponent}
@@ -130,6 +141,21 @@ const Settings = () => {
         />
         <RestartWorkspace />
         <DeleteWorkspace />
+
+        <Dialog
+          open={isConfirmDialogOpen}
+          onClose={() => setIsConfirmDialogOpen(false)}
+          onConfirm={() => {
+            closeEditWorkspaceDialog();
+            setIsConfirmDialogOpen(false);
+          }}
+          confirmText="OK"
+          title="Leaving without restart"
+          maxWidth="xs"
+        >
+          The changes you made won't take effect unless you restart this
+          workspace
+        </Dialog>
       </Wrapper>
     </StyledFullScreenDialog>
   );
