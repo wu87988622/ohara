@@ -15,7 +15,7 @@
  */
 
 import moment from 'moment';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from, queueScheduler } from 'rxjs';
 import { catchError, concatMap, exhaustMap } from 'rxjs/operators';

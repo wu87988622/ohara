@@ -53,6 +53,7 @@ const SettingsPanel = props => {
     const currentSetting = settings[key];
     const defValueType = defUtils.Type;
     const valueType = defs.find(def => def.key === key).valueType;
+
     switch (valueType) {
       case defValueType.TAGS:
         return propertyUtils.tags({
@@ -95,6 +96,16 @@ const SettingsPanel = props => {
         // Don't display the real password
         return propertyUtils.defaultField({
           currentSetting: '*'.repeat(9),
+          settings,
+          key,
+          defs,
+        });
+      case defValueType.DURATION:
+        // Convert milliseconds to seconds. Backend will always guarantee format
+        // so we can safely do the conversion here
+        const duration = currentSetting?.split(' ').shift() / 1000;
+        return propertyUtils.defaultField({
+          currentSetting: `${duration} seconds`,
           settings,
           key,
           defs,

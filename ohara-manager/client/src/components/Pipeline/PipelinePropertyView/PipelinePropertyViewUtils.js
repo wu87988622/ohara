@@ -147,10 +147,10 @@ export const objectKeys = (key, defs, currentSetting) => {
 
 export const defaultField = params => {
   const { currentSetting, settings, key, defs, isPort = false } = params;
-  // Rendering common field
+
   // need to do a conversion here, the value could be number
   const value = String(currentSetting);
-  const { documentation } = settings.settingDefinitions.find(
+  const { documentation = '' } = settings.settingDefinitions.find(
     def => def.key === key,
   );
   const displayValue = value ? value : '';

@@ -17,7 +17,7 @@
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import * as _ from 'lodash';
+import _ from 'lodash';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import * as hooks from 'hooks';
