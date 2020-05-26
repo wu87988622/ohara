@@ -39,8 +39,6 @@ const ArrayDef = props => {
     ...rest
   } = omit(props, ['tableKeys']);
 
-  if (!options) return null;
-
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
     <StyledAutocomplete

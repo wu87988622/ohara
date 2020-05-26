@@ -194,7 +194,7 @@ const RenderDefinition = props => {
           return <Field {...ensuredFieldProps} component={Duration} />;
 
         case Type.BINDING_PORT:
-          if (isEmpty(freePorts)) {
+          if (isEmpty(freePorts) || reference === ReferenceEnum.NONE) {
             return <Field {...ensuredFieldProps} component={RemotePort} />;
           } else {
             return (

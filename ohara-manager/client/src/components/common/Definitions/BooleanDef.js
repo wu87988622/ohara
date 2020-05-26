@@ -19,33 +19,42 @@ import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
+import FormHelperText from '@material-ui/core/FormHelperText';
 
 const BooleanDef = props => {
-  const { input, label, testId, refs, ...rest } = omit(props, [
-    'tableKeys',
-    'helperText',
-  ]);
+  const {
+    input,
+    meta = {},
+    label,
+    testId,
+    helperText,
+    refs,
+    ...rest
+  } = omit(props, ['tableKeys']);
 
   const { name, onChange, checked = false, ...restInput } = omit(input, [
     'type',
   ]);
 
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
-    <FormControlLabel
-      ref={refs}
-      control={
-        <Checkbox
-          data-testid={testId}
-          {...rest}
-          onChange={onChange}
-          name={name}
-          inputProps={{ type: 'checkbox', ...restInput }}
-          checked={checked}
-          color="primary"
-        />
-      }
-      label={label}
-    />
+    <div ref={refs}>
+      <FormControlLabel
+        control={
+          <Checkbox
+            data-testid={testId}
+            {...rest}
+            onChange={onChange}
+            name={name}
+            inputProps={{ type: 'checkbox', ...restInput }}
+            checked={checked}
+            color="primary"
+          />
+        }
+        label={label}
+      />
+      <FormHelperText children={hasError ? meta.error : helperText} />
+    </div>
   );
 };
 
@@ -68,6 +77,9 @@ BooleanDef.propTypes = {
   helperText: PropTypes.string,
   testId: PropTypes.string,
   refs: PropTypes.object,
+};
+BooleanDef.defaultProps = {
+  helperText: '',
 };
 
 export default BooleanDef;

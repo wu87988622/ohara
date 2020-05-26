@@ -74,6 +74,7 @@ const typeConverter = key => {
 const Table = props => {
   const {
     input: { name, onChange, value = [] },
+    meta = {},
     helperText,
     label,
     tableKeys,
@@ -96,6 +97,7 @@ const Table = props => {
     data: [...value],
   };
 
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
     <div ref={refs}>
       <MaterialTable
@@ -152,7 +154,7 @@ const Table = props => {
             }),
         }}
       />
-      <FormHelperText children={helperText} />
+      <FormHelperText children={hasError ? meta.error : helperText} />
     </div>
   );
 };
@@ -168,6 +170,11 @@ Table.propTypes = {
       PropTypes.array,
     ]).isRequired,
   }).isRequired,
+  meta: PropTypes.shape({
+    dirty: PropTypes.bool,
+    touched: PropTypes.bool,
+    error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  }),
   helperText: PropTypes.string,
   label: PropTypes.string,
   tableKeys: PropTypes.array,

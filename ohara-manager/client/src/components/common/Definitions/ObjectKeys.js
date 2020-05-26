@@ -62,6 +62,7 @@ const tableIcons = {
 const ObjectKeys = props => {
   const {
     input: { name, onChange, value = [] },
+    meta = {},
     helperText,
     label,
     refs,
@@ -84,6 +85,7 @@ const ObjectKeys = props => {
 
   // This currently throws some warnings in browser's console.
   // We need to wait for the update: https://github.com/mbrn/material-table/issues/1293
+  const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
     <div ref={refs}>
       <MaterialTable
@@ -137,7 +139,7 @@ const ObjectKeys = props => {
             }),
         }}
       />
-      <FormHelperText children={helperText} />
+      <FormHelperText children={hasError ? meta.error : helperText} />
     </div>
   );
 };
@@ -153,6 +155,11 @@ ObjectKeys.propTypes = {
       PropTypes.array,
     ]).isRequired,
   }).isRequired,
+  meta: PropTypes.shape({
+    dirty: PropTypes.bool,
+    touched: PropTypes.bool,
+    error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  }),
   helperText: PropTypes.string,
   label: PropTypes.string,
   refs: PropTypes.object,

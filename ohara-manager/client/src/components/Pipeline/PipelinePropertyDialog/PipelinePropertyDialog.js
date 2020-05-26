@@ -16,7 +16,7 @@
 
 import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { find, capitalize, pick, isArray, get } from 'lodash';
+import _ from 'lodash';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
@@ -80,33 +80,29 @@ const PipelinePropertyDialog = props => {
       break;
   }
 
-  const groupBy = array => {
-    if (!array) return [];
-    let groups = {};
-    const getGroup = item => {
-      return [item.group];
-    };
-    array.forEach(obj => {
-      let group = JSON.stringify(getGroup(obj));
-      groups[group] = groups[group] || [];
-      groups[group].push(obj);
-    });
-
-    return Object.keys(groups).map(group => {
-      return groups[group];
-    });
-  };
-
-  const groups = groupBy(classInfo.settingDefinitions);
+  const definitionsByGroup = _(classInfo.settingDefinitions)
+    // sort each definition by its orderInGroup property
+    .sortBy(value => value.orderInGroup)
+    // we need to group the definitions by their group
+    .groupBy(value => value.group)
+    // this is the tricky part...
+    // we need to sort the object by keys
+    // see https://github.com/lodash/lodash/issues/1459#issuecomment-253969771
+    .toPairs()
+    .sortBy(0)
+    .fromPairs()
+    .values()
+    // finally, we only need the value of each variable in object
+    .value();
 
   const getTopicWithKey = (values, key) => {
-    if (isArray(values[key])) return;
+    if (_.isArray(values[key])) return;
     if (!values[key] || values[key] === 'Please select...') {
       values[key] = [];
       return;
     }
 
-    const matchedTopic = find(
+    const matchedTopic = _.find(
       currentTopics,
       topic => topic.displayName === values[key],
     );
@@ -149,7 +145,9 @@ const PipelinePropertyDialog = props => {
           values[def.key].length > 0
         ) {
           const pickList = def.tableKeys.map(tableKey => tableKey.name);
-          values[def.key] = values[def.key].map(value => pick(value, pickList));
+          values[def.key] = values[def.key].map(value =>
+            _.pick(value, pickList),
+          );
         }
       }
       if (def.valueType === Type.TAGS && isJsonString(values[def.key])) {
@@ -219,7 +217,7 @@ const PipelinePropertyDialog = props => {
             />
           )}
           <div>
-            {groups.sort().map((group, index) => {
+            {definitionsByGroup.map((group, index) => {
               const title = group[0].group;
               const defs = group.filter(def => !def.internal);
 
@@ -233,7 +231,7 @@ const PipelinePropertyDialog = props => {
                     key={title}
                   >
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>{capitalize(title)}</Typography>
+                      <Typography>{_.capitalize(title)}</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                       <div>
@@ -265,13 +263,13 @@ const PipelinePropertyDialog = props => {
         </LeftBody>
         <RightBody>
           <PipelinePropertyForm
-            definitions={groups.sort()}
+            definitions={definitionsByGroup}
             freePorts={
               // only the connectors of worker need freePorts
               // we assign an empty array for RenderDefinition uses
-              get(cellData, 'className', '').includes(KIND.shabondi)
+              _.get(cellData, 'className', '').includes(KIND.shabondi)
                 ? []
-                : get(currentWorker, 'freePorts', [])
+                : _.get(currentWorker, 'freePorts', [])
             }
             initialValues={targetCell}
             onSubmit={handleSubmit}
