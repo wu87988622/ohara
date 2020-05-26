@@ -39,20 +39,16 @@ object WorkerRoute {
       .files(creation.sharedJarKeys)
       .references(creation.settings, DEFINITIONS)
       .check()
-      .map(_.fileInfos)
-      .map { fileInfos =>
-        WorkerClusterInfo(
-          settings = WorkerApi.access.request
-            .settings(creation.settings)
-            .pluginKeys(fileInfos.map(_.key).toSet)
-            .creation
-            .settings,
-          aliveNodes = Set.empty,
-          state = None,
-          error = None,
-          lastModified = CommonUtils.current()
-        )
-      }
+      .map(
+        _ =>
+          WorkerClusterInfo(
+            settings = creation.settings,
+            aliveNodes = Set.empty,
+            state = None,
+            error = None,
+            lastModified = CommonUtils.current()
+          )
+      )
 
   private[this] def hookOfCreation(
     implicit objectChecker: ObjectChecker,

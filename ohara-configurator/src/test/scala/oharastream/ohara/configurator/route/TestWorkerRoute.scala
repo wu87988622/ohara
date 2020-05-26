@@ -16,7 +16,15 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, ConnectorApi, NodeApi, TopicApi, WorkerApi}
+import oharastream.ohara.client.configurator.v0.{
+  BrokerApi,
+  ClusterState,
+  ConnectorApi,
+  FileInfoApi,
+  NodeApi,
+  TopicApi,
+  WorkerApi
+}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -43,6 +51,9 @@ class TestWorkerRoute extends OharaTest {
     Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds).head.key
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
+
+  private[this] val fileApi: FileInfoApi.Access =
+    FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
 
@@ -578,6 +589,36 @@ class TestWorkerRoute extends OharaTest {
   @Test
   def testMaxHeap(): Unit =
     result(workerApi.request.brokerClusterKey(brokerClusterKey).nodeNames(nodeNames).maxHeap(12345).create()).maxHeap shouldBe 12345
+
+  @Test
+  def testPluginJars(): Unit = {
+    val fileInfo = result(fileApi.request.file(RouteUtils.connectorFile).upload())
+    val worker = result(
+      workerApi.request
+        .nodeNames(nodeNames)
+        .pluginKeys(Set(fileInfo.key))
+        .brokerClusterKey(brokerClusterKey)
+        .create()
+    )
+    worker.pluginKeys.size shouldBe 1
+    worker.pluginKeys.head shouldBe fileInfo.key
+    worker.sharedJarKeys.size shouldBe 0
+  }
+
+  @Test
+  def testSharedJars(): Unit = {
+    val fileInfo = result(fileApi.request.file(RouteUtils.connectorFile).upload())
+    val worker = result(
+      workerApi.request
+        .nodeNames(nodeNames)
+        .sharedJarKeys(Set(fileInfo.key))
+        .brokerClusterKey(brokerClusterKey)
+        .create()
+    )
+    worker.sharedJarKeys.size shouldBe 1
+    worker.sharedJarKeys.head shouldBe fileInfo.key
+    worker.pluginKeys.size shouldBe 0
+  }
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)
