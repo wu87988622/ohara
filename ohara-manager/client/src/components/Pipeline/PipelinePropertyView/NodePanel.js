@@ -22,14 +22,24 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import PropertyField from './PipelinePropertyViewField';
+import { partition } from 'lodash';
+
+import NodeList from './NodeList';
+import NodeErrorDialog from './NodeErrorDialog';
 
 const NodePanel = props => {
   const { tasksStatus = [] } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [currentError, setCurrentError] = React.useState(null);
+  const [masterNodes, slaveNodes] = partition(tasksStatus, node => node.master);
+
+  const handleOpenErrorDialog = error => () => {
+    setIsOpen(true);
+    setCurrentError(error);
+  };
 
   if (tasksStatus.length === 0) return null;
-
   return (
     <>
       <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
@@ -43,36 +53,34 @@ const NodePanel = props => {
           </Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          {tasksStatus
-            // UI currently doesn't support displaying master node.
-            .filter(node => !node.master)
-            .map(node => {
-              const { nodeName, state } = node;
-              return (
-                <PropertyField
-                  key={nodeName}
-                  label="Name"
-                  value={nodeName}
-                  slot={
-                    <Typography
-                      variant="body2"
-                      className="node-status"
-                      component="span"
-                    >
-                      {state}
-                    </Typography>
-                  }
-                />
-              );
-            })}
+          <NodeList
+            heading={`Masters (${masterNodes.length})`}
+            list={masterNodes}
+            onErrorTextClick={handleOpenErrorDialog}
+          />
+          <NodeList
+            heading={`Slaves (${slaveNodes.length})`}
+            list={slaveNodes}
+            onErrorTextClick={handleOpenErrorDialog}
+          />
         </ExpansionPanelDetails>
       </ExpansionPanel>
+
+      <NodeErrorDialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        error={currentError}
+      />
     </>
   );
 };
 
 NodePanel.propTypes = {
-  tasksStatus: PropTypes.array,
+  tasksStatus: PropTypes.arrayOf(
+    PropTypes.shape({
+      master: PropTypes.bool.isRequired,
+    }),
+  ),
 };
 
 export default NodePanel;

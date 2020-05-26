@@ -51,32 +51,34 @@ const MetricsPanel = props => {
           </Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          {Object.keys(metrics).map(key => {
-            return (
-              <React.Fragment key={key}>
-                <Typography variant="h6">{key}</Typography>
-                {metrics[key].meters.map((meter, index) => {
-                  const { document, value, unit } = meter;
-                  return (
-                    <PropertyField
-                      key={index}
-                      label={document}
-                      value={value}
-                      slot={
-                        <Typography
-                          variant="body2"
-                          className="metrics-unit"
-                          component="span"
-                        >
-                          {unit}
-                        </Typography>
-                      }
-                    />
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
+          {Object.keys(metrics)
+            .sort()
+            .map(key => {
+              return (
+                <React.Fragment key={key}>
+                  <Typography variant="h6">{key}</Typography>
+                  {metrics[key].meters.map((meter, index) => {
+                    const { document, value, unit } = meter;
+                    return (
+                      <PropertyField
+                        key={index}
+                        label={document}
+                        value={value}
+                        slot={
+                          <Typography
+                            variant="body2"
+                            className="metrics-unit"
+                            component="span"
+                          >
+                            {unit}
+                          </Typography>
+                        }
+                      />
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
         </ExpansionPanelDetails>
       </ExpansionPanel>
     </Wrapper>
