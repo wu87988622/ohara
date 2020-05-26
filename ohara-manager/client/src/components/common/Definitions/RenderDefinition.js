@@ -112,7 +112,7 @@ const RenderDefinition = props => {
   };
 
   const renderDefinitionField = () => {
-    const { valueType, reference, tableKeys } = def;
+    const { valueType, reference, tableKeys, recommendedValues } = def;
     const ensuredFieldProps = getFieldProps(def);
 
     // Only the following types have support reference:
@@ -153,6 +153,23 @@ const RenderDefinition = props => {
         default:
           throw new Error(`Unsupported reference: ${reference}`);
       }
+    } else if (
+      !isEmpty(recommendedValues) &&
+      includes(valueTypesForSupport, valueType)
+    ) {
+      // although we only support Type.STRING now
+      // (see https://github.com/oharastream/ohara/issues/5035#issuecomment-633454808)
+      // it is OK to allow the same types as reference now (it won't break our UI)
+      const multiple =
+        valueType === Type.ARRAY || valueType === Type.OBJECT_KEYS;
+      return (
+        <Field
+          {...ensuredFieldProps}
+          component={Chooser}
+          multipleChoice={multiple}
+          options={recommendedValues}
+        />
+      );
     } else {
       switch (valueType) {
         case Type.STRING:
