@@ -50,10 +50,10 @@ trait ArgumentsBuilder extends oharastream.ohara.common.pattern.Builder[Seq[Stri
 
 object ArgumentsBuilder {
   trait FileAppender {
-    private[this] val props                = new mutable.HashSet[String]()
+    private[this] val props                = mutable.Buffer[String]()
     def append(prop: Int): FileAppender    = append(prop.toString)
-    def append(prop: String): FileAppender = append(Set(prop))
-    def append(props: Set[String]): FileAppender = {
+    def append(prop: String): FileAppender = append(Seq(prop))
+    def append(props: Seq[String]): FileAppender = {
       this.props ++= props
       this
     }
@@ -71,12 +71,12 @@ object ArgumentsBuilder {
       }
     )
 
-    def done: ArgumentsBuilder = done(props.toSet)
+    def done: ArgumentsBuilder = done(props.toSeq)
 
-    protected def done(props: Set[String]): ArgumentsBuilder
+    protected def done(props: Seq[String]): ArgumentsBuilder
   }
   def apply(): ArgumentsBuilder = new ArgumentsBuilder {
-    private[this] val files                  = mutable.Map[String, Set[String]]()
+    private[this] val files                  = mutable.Map[String, Seq[String]]()
     private[this] var mainConfigFile: String = _
 
     override def build: Seq[String] =
@@ -90,7 +90,7 @@ object ArgumentsBuilder {
           case (path, props) => Seq("--file", s"$path=${props.mkString(",")}")
         }.toSeq ++ Seq("--config", mainConfigFile)
 
-    override def file(path: String): FileAppender = (props: Set[String]) => {
+    override def file(path: String): FileAppender = (props: Seq[String]) => {
       this.files += (path -> props)
       this
     }

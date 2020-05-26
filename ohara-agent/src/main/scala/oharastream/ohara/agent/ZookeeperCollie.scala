@@ -119,7 +119,6 @@ trait ZookeeperCollie extends Collie {
                         val serverName = if (serverIndex == nodeIndex) hostname else nodeName
                         s"server.$serverIndex=$serverName:${creation.peerPort}:${creation.electionPort}"
                     }
-                    .toSet
 
                   val containerInfo = ContainerInfo(
                     nodeName = newNode.hostname,
