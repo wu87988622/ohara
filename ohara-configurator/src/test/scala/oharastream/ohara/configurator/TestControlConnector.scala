@@ -101,7 +101,7 @@ class TestControlConnector extends WithBrokerWorker {
     result(topicApi.start(topic.key))
     (0 until 3).foreach(_ => result(connectorApi.start(sink.key)))
 
-    result(connectorApi.get(sink.key)).state.get shouldBe State.RUNNING
+    await(() => result(connectorApi.get(sink.key)).state.contains(State.RUNNING))
     result(connectorApi.get(sink.key)).aliveNodes should contain(CommonUtils.hostname())
     result(connectorApi.get(sink.key)).error shouldBe None
 
@@ -365,7 +365,7 @@ class TestControlConnector extends WithBrokerWorker {
 
     CommonUtils.await(() => result(connectorApi.get(connector.key)).state.isDefined, java.time.Duration.ofSeconds(10))
 
-    result(connectorApi.get(connector.key)).state.get shouldBe State.RUNNING
+    await(() => result(connectorApi.get(connector.key)).state.contains(State.RUNNING))
     result(connectorApi.get(connector.key)).error shouldBe None
 
     // test state in pipeline
@@ -428,6 +428,7 @@ class TestControlConnector extends WithBrokerWorker {
     await(() => result(connectorApi.get(source.key)).error.nonEmpty)
     result(connectorApi.get(source.key)).tasksStatus.isEmpty
   }
+
   @Test
   def testOnlyTaskFails(): Unit = {
     val topic = result(
@@ -451,7 +452,7 @@ class TestControlConnector extends WithBrokerWorker {
     )
 
     result(connectorApi.start(source.key))
-    await(() => result(connectorApi.get(source.key)).state.contains(State.RUNNING))
+    await(() => result(connectorApi.get(source.key)).state.contains(State.FAILED))
     await(() => result(connectorApi.get(source.key)).error.nonEmpty)
     await(() => result(connectorApi.get(source.key)).tasksStatus.nonEmpty)
     result(connectorApi.get(source.key)).tasksStatus.filter(_.master).foreach(_.state shouldBe State.RUNNING)

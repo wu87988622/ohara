@@ -31,6 +31,7 @@ import oharastream.ohara.client.kafka.WorkerJson.{
   KafkaTaskStatus
 }
 import oharastream.ohara.common.setting.ConnectorKey
+import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.ReflectionUtils
 import oharastream.ohara.kafka.connector.json._
 import org.apache.kafka.connect.runtime.AbstractHerder
@@ -80,8 +81,15 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
     else
       Future.successful(
         KafkaConnectorInfo(
-          KafkaConnectorStatus(cachedConnectorsState.get(connectorKey).name, "fake id", None),
-          Seq.empty
+          connector = KafkaConnectorStatus(cachedConnectorsState.get(connectorKey).name, "fake id", None),
+          tasks = Seq(
+            KafkaTaskStatus(
+              id = 1,
+              state = cachedConnectorsState.get(connectorKey).name,
+              worker_id = CommonUtils.hostname(),
+              trace = None
+            )
+          )
         )
       )
 
@@ -101,7 +109,12 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
       Future.failed(new IllegalArgumentException(s"$connectorKey doesn't exist"))
     else
       Future.successful(
-        KafkaTaskStatus(0, cachedConnectorsState.get(connectorKey).name, "worker_id", None)
+        KafkaTaskStatus(
+          id = 1,
+          state = cachedConnectorsState.get(connectorKey).name,
+          worker_id = CommonUtils.hostname(),
+          trace = None
+        )
       )
 
   override def pause(connectorKey: ConnectorKey)(implicit executionContext: ExecutionContext): Future[Unit] =

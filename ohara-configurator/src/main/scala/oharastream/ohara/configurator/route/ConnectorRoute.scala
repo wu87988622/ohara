@@ -130,11 +130,20 @@ private[configurator] object ConnectorRoute {
                       master = true
                     )
 
+                    println(s"[CHIA] ${allStatus.map(_.state).mkString(",")}")
                     connectorInfo.copy(
                       // this is the "summary" of this connector
                       state =
-                        if (allStatus.exists(_.state == State.RUNNING)) Some(State.RUNNING)
-                        else allStatus.map(_.state).headOption,
+                        // this connector is running only if there is a running master and a running slave as least.
+                        if (allStatus.count(_.state == State.RUNNING) >= 2) Some(State.RUNNING)
+                        // this connector is in pending
+                        else if (allStatus.isEmpty) None
+                        else
+                          allStatus
+                            .filterNot(_.state == State.RUNNING)
+                            .map(_.state)
+                            .headOption
+                            .orElse(Some(State.FAILED)),
                       error = allStatus.flatMap(_.error).headOption,
                       aliveNodes = allStatus.filter(_.state == State.RUNNING).map(_.nodeName).toSet,
                       tasksStatus = allStatus,
