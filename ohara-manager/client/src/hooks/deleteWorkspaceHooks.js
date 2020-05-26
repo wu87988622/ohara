@@ -67,12 +67,14 @@ export const useDeleteWorkspaceAction = () => {
   const brokerKey = getKey(hooks.useBroker());
   const workerKey = getKey(hooks.useWorker());
   const workspaceKey = getKey(hooks.useWorkspace());
+  const files = hooks.useFiles();
 
   const values = {
     zookeeperKey,
     brokerKey,
     workerKey,
     workspaceKey,
+    files,
   };
   return useCallback(
     options =>
