@@ -412,7 +412,7 @@ public class SettingDef implements JsonObject, Serializable {
           break;
         case OBJECT_KEYS:
           try {
-            if (TopicKey.toTopicKeys(String.valueOf(trueValue)).isEmpty())
+            if (ObjectKey.toObjectKeys(String.valueOf(trueValue)).isEmpty())
               throw new ConfigException("OBJECT_KEYS can't be empty!!!");
           } catch (Exception e) {
             throw new ConfigException(this.key, trueValue, e.getMessage());
@@ -706,7 +706,7 @@ public class SettingDef implements JsonObject, Serializable {
      */
     public Builder key(String key) {
       this.key = CommonUtils.requireNonEmpty(key);
-      if (!key.matches("[a-zA-Z0-9\\._\\-]+"))
+      if (!key.matches("[a-zA-Z0-9._\\-]+"))
         throw new IllegalArgumentException("the legal char is [a-zA-Z0-9\\._\\-]+");
       return this;
     }
@@ -922,16 +922,18 @@ public class SettingDef implements JsonObject, Serializable {
     }
 
     /**
-     * set the type to string and add the recommended values
+     * this is a composed operation. 1) set the type to string 2) set the default value to first
+     * element 3) set the recommended values
      *
-     * @param defaultValue the default string value
      * @param recommendedValues recommended string value
      * @return builder
      */
-    public Builder optional(String defaultValue, Set<String> recommendedValues) {
-      this.recommendedValues = Objects.requireNonNull(recommendedValues);
+    public Builder optional(Set<String> recommendedValues) {
+      this.recommendedValues = CommonUtils.requireNonEmpty(recommendedValues);
       return checkAndSet(
-          Type.STRING, Necessary.OPTIONAL, CommonUtils.requireNonEmpty(defaultValue));
+          Type.STRING,
+          Necessary.OPTIONAL,
+          CommonUtils.requireNonEmpty(recommendedValues.iterator().next()));
     }
 
     /**
@@ -940,8 +942,8 @@ public class SettingDef implements JsonObject, Serializable {
      * @param defaultValue the default CLASS value
      * @return builder
      */
-    public Builder optionalClassValue(String defaultValue) {
-      return checkAndSet(Type.CLASS, Necessary.OPTIONAL, CommonUtils.requireNonEmpty(defaultValue));
+    public Builder optional(Class<?> defaultValue) {
+      return checkAndSet(Type.CLASS, Necessary.OPTIONAL, defaultValue.getName());
     }
 
     /**

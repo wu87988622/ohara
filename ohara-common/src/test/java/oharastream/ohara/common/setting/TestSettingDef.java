@@ -515,7 +515,7 @@ public class TestSettingDef extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullRecommendedValues() {
-    SettingDef.builder().optional("aa", null);
+    SettingDef.builder().optional((Set<String>) null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -593,6 +593,11 @@ public class TestSettingDef extends OharaTest {
     Assert.assertEquals(copy.defaultBoolean(), defaultValue);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyRecommendedValuesTest() {
+    SettingDef.builder().key(CommonUtils.randomString()).optional(Collections.emptySet()).build();
+  }
+
   @Test
   public void testRecommendedValues() {
     Set<String> recommendedValues =
@@ -602,11 +607,9 @@ public class TestSettingDef extends OharaTest {
                 CommonUtils.randomString(),
                 CommonUtils.randomString()));
     SettingDef settingDef =
-        SettingDef.builder()
-            .key(CommonUtils.randomString())
-            .optional(CommonUtils.randomString(), recommendedValues)
-            .build();
+        SettingDef.builder().key(CommonUtils.randomString()).optional(recommendedValues).build();
     Assert.assertEquals(settingDef.recommendedValues(), recommendedValues);
+    Assert.assertEquals(settingDef.defaultString(), recommendedValues.iterator().next());
   }
 
   @Test(expected = IllegalArgumentException.class)

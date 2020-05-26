@@ -184,7 +184,6 @@ public final class ConnectorDefUtils {
                   .documentation(
                       "the strategy for unmatched data. It includes enforcing, permissive and none")
                   .optional(
-                      SettingDef.CheckRule.NONE.name(),
                       Stream.of(SettingDef.CheckRule.values())
                           .map(SettingDef.CheckRule::name)
                           .collect(Collectors.toSet()))
@@ -208,7 +207,7 @@ public final class ConnectorDefUtils {
                   .displayName("key converter")
                   .key("key.converter")
                   .documentation("key converter")
-                  .optionalClassValue(ConverterType.NONE.className())
+                  .optional(ConverterType.NONE.clz)
                   .internal()
                   .build());
 
@@ -219,7 +218,7 @@ public final class ConnectorDefUtils {
                   .displayName("value converter")
                   .key("value.converter")
                   .documentation("value converter")
-                  .optionalClassValue(ConverterType.NONE.className())
+                  .optional(ConverterType.NONE.clz)
                   .internal()
                   .build());
 
@@ -234,8 +233,8 @@ public final class ConnectorDefUtils {
               builder
                   .displayName("header converter")
                   .key("header.converter")
-                  .documentation("header converter")
-                  .optionalClassValue(ConverterType.NONE.className())
+                  .documentation("header converter" + ConverterType.NONE.clz.getName())
+                  .optional(ConverterType.NONE.clz)
                   .internal()
                   .build());
 
@@ -246,7 +245,7 @@ public final class ConnectorDefUtils {
                   .displayName("partitioner class")
                   .key("producer.override.partitioner.class")
                   .documentation("partitioner decides the partition to send the message")
-                  .optionalClassValue(RowDefaultPartitioner.class.getName())
+                  .optional(RowDefaultPartitioner.class)
                   .build());
 
   public static final SettingDef TAGS_DEFINITION =

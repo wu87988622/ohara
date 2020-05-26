@@ -118,7 +118,7 @@ public class TestConnectorDefUtils extends OharaTest {
   @Test
   public void testDefaultKeyConverter() {
     Assert.assertEquals(
-        ConverterType.NONE.className(),
+        ConverterType.NONE.clz.getName(),
         ConnectorDefUtils.DEFAULT
             .get(ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
             .defaultString());
@@ -127,7 +127,7 @@ public class TestConnectorDefUtils extends OharaTest {
   @Test
   public void testDefaultValueConverter() {
     Assert.assertEquals(
-        ConverterType.NONE.className(),
+        ConverterType.NONE.clz.getName(),
         ConnectorDefUtils.DEFAULT
             .get(ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
             .defaultString());
@@ -136,7 +136,7 @@ public class TestConnectorDefUtils extends OharaTest {
   @Test
   public void testDefaultHeaderConverter() {
     Assert.assertEquals(
-        ConverterType.NONE.className(),
+        ConverterType.NONE.clz.getName(),
         ConnectorDefUtils.DEFAULT
             .get(ConnectorDefUtils.HEADER_CONVERTER_DEFINITION.key())
             .defaultString());

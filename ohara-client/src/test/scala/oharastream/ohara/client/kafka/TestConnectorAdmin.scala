@@ -325,7 +325,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
-      .defaultString shouldBe ConverterType.NONE.className()
+      .defaultString shouldBe ConverterType.NONE.clz.getName()
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -340,7 +340,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head
-      .defaultString shouldBe ConverterType.NONE.className()
+      .defaultString shouldBe ConverterType.NONE.clz.getName()
   }
 
   @Test

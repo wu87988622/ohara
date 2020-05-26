@@ -24,15 +24,11 @@ package oharastream.ohara.kafka.connector.json;
  * to topic by connector.
  */
 public enum ConverterType {
-  NONE("org.apache.kafka.connect.converters.ByteArrayConverter"),
-  JSON("org.apache.kafka.connect.json.JsonConverter");
-  private final String className;
+  NONE(org.apache.kafka.connect.converters.ByteArrayConverter.class),
+  JSON(org.apache.kafka.connect.json.JsonConverter.class);
+  public final Class<?> clz;
 
-  ConverterType(String className) {
-    this.className = className;
-  }
-
-  public String className() {
-    return className;
+  ConverterType(Class<?> clz) {
+    this.clz = clz;
   }
 }
