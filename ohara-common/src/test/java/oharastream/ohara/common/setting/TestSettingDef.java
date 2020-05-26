@@ -179,7 +179,7 @@ public class TestSettingDef extends OharaTest {
                 Arrays.asList(
                     TableColumn.builder()
                         .name("a")
-                        .recommendedItems(new HashSet<>(Arrays.asList("a0", "a1")))
+                        .recommendedValues(new HashSet<>(Arrays.asList("a0", "a1")))
                         .build(),
                     TableColumn.builder().name("b").build()))
             .build();

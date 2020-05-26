@@ -231,6 +231,44 @@ public class TestConnectorDefUtils extends OharaTest {
         ConnectorDefUtils.DEFAULT.values().stream()
             .filter(d -> d.equals(ConnectorDefUtils.COLUMNS_DEFINITION))
             .count());
+
+    SettingDef def =
+        ConnectorDefUtils.DEFAULT.values().stream()
+            .filter(d -> d.equals(ConnectorDefUtils.COLUMNS_DEFINITION))
+            .findFirst()
+            .get();
+    Assert.assertEquals(4, def.tableKeys().size());
+    Assert.assertEquals(
+        Collections.emptySet(),
+        def.tableKeys().stream()
+            .filter(d -> d.name().equals(SettingDef.COLUMN_NEW_NAME_KEY))
+            .findFirst()
+            .get()
+            .recommendedValues());
+
+    Assert.assertEquals(
+        Collections.emptySet(),
+        def.tableKeys().stream()
+            .filter(d -> d.name().equals(SettingDef.COLUMN_NAME_KEY))
+            .findFirst()
+            .get()
+            .recommendedValues());
+
+    Assert.assertEquals(
+        Collections.emptySet(),
+        def.tableKeys().stream()
+            .filter(d -> d.name().equals(SettingDef.COLUMN_ORDER_KEY))
+            .findFirst()
+            .get()
+            .recommendedValues());
+
+    Assert.assertEquals(
+        Stream.of(DataType.values()).map(DataType::name).collect(Collectors.toSet()),
+        def.tableKeys().stream()
+            .filter(d -> d.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY))
+            .findFirst()
+            .get()
+            .recommendedValues());
   }
 
   @Test
@@ -287,7 +325,7 @@ public class TestConnectorDefUtils extends OharaTest {
               if (definition.valueType().equals(SettingDef.Type.TABLE)) {
                 Assert.assertTrue(
                     definition.tableKeys().stream()
-                        .anyMatch(k -> k.name().equals(SettingDef.ORDER_KEY)));
+                        .anyMatch(k -> k.name().equals(SettingDef.COLUMN_ORDER_KEY)));
                 Assert.assertTrue(
                     definition.tableKeys().stream()
                         .anyMatch(k -> k.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY)));

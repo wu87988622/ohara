@@ -19,7 +19,7 @@ package oharastream.ohara.kafka.connector.json;
 import static oharastream.ohara.common.setting.SettingDef.COLUMN_DATA_TYPE_KEY;
 import static oharastream.ohara.common.setting.SettingDef.COLUMN_NAME_KEY;
 import static oharastream.ohara.common.setting.SettingDef.COLUMN_NEW_NAME_KEY;
-import static oharastream.ohara.common.setting.SettingDef.ORDER_KEY;
+import static oharastream.ohara.common.setting.SettingDef.COLUMN_ORDER_KEY;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import oharastream.ohara.common.annotations.VisibleForTesting;
+import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.exception.ConfigException;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.SettingDef.Reference;
@@ -153,12 +154,16 @@ public final class ConnectorDefUtils {
                   .optional(
                       Arrays.asList(
                           TableColumn.builder()
-                              .name(ORDER_KEY)
+                              .name(COLUMN_ORDER_KEY)
                               .type(TableColumn.Type.NUMBER)
                               .build(),
                           TableColumn.builder()
                               .name(COLUMN_DATA_TYPE_KEY)
                               .type(TableColumn.Type.STRING)
+                              .recommendedValues(
+                                  Stream.of(DataType.values())
+                                      .map(DataType::name)
+                                      .collect(Collectors.toSet()))
                               .build(),
                           TableColumn.builder()
                               .name(COLUMN_NAME_KEY)

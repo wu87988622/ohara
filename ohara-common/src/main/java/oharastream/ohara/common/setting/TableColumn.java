@@ -60,7 +60,7 @@ public class TableColumn implements JsonObject, Serializable {
       return this;
     }
 
-    public Builder recommendedItems(Set<String> recommendedValues) {
+    public Builder recommendedValues(Set<String> recommendedValues) {
       this.recommendedValues = Objects.requireNonNull(recommendedValues);
       return this;
     }
