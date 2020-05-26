@@ -23,8 +23,8 @@ dependencies {
   implementation libs.slf4jLog4j
   implementation libs.commonsIo
   implementation libs.guava
-  implementation libs.jacksonDatabind
-  implementation libs.jacksonJDK8Datatypes
+  // we import the jackson from kafka
+  implementation libs.kafkaConnectJson
   testImplementation libs.mockitoAll
   testImplementation libs.junit
 }

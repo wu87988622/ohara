@@ -36,11 +36,11 @@ dependencies {
   implementation libs.kafkaClient
   implementation libs.kafkaConnectFile
   implementation libs.kafkaConnectRuntime
+  implementation libs.kafkaStreams
   implementation libs.slf4jApi
   implementation libs.slf4jLog4j
   implementation libs.akkaStream
   implementation libs.akkaHttpSprayJson
-  implementation libs.rocksdb
   // some tests demand the connector implementation
   // DON'T import ohara-connecor into implementation scope!
   testImplementation project(':ohara-connector')
