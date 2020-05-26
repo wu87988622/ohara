@@ -70,9 +70,13 @@ const EventLog = () => {
     const limit = settings?.limit;
     const unlimited = settings?.unlimited;
     if (unlimited) {
-      return `There are ${count} currently`;
+      return count > 1
+        ? `There are ${count} currently`
+        : `There is only ${count} currently`;
     } else {
-      return `There are ${count} currently (up to ${limit})`;
+      return count > 1
+        ? `There are ${count} currently (up to ${limit})`
+        : `There is only ${count} currently (up to ${limit})`;
     }
   };
 

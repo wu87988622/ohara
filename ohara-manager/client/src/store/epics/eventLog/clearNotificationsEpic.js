@@ -19,13 +19,13 @@ import { of, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { infoKey, errorKey } from './const';
+import { errorKey, warningKey } from './const';
 
 export default action$ =>
   action$.pipe(
     ofType(actions.clearNotifications.TRIGGER),
     switchMap(() => {
-      localStorage.removeItem(infoKey);
+      localStorage.removeItem(warningKey);
       localStorage.removeItem(errorKey);
       return from([
         actions.clearNotifications.success(),

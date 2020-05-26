@@ -18,7 +18,7 @@ import { TestScheduler } from 'rxjs/testing';
 import { StateObservable } from 'redux-observable';
 
 import updateNotificationsEpic from '../../eventLog/updateNotificationsEpic';
-import { infoKey, errorKey } from '../../eventLog/const';
+import { errorKey, warningKey } from '../../eventLog/const';
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
 
@@ -37,7 +37,7 @@ it('update notification should be executed correctly', () => {
       eventLogs: {
         notifications: {
           data: {
-            info: 10,
+            warning: 10,
             error: 6,
           },
         },
@@ -52,7 +52,7 @@ it('update notification should be executed correctly', () => {
   };
 
   makeTestScheduler().run(helpers => {
-    localStorage.setItem(infoKey, 10);
+    localStorage.setItem(warningKey, 21);
     localStorage.setItem(errorKey, 6);
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -65,7 +65,7 @@ it('update notification should be executed correctly', () => {
       a: {
         type: actions.createEventLog.SUCCESS,
         payload: {
-          type: LOG_LEVEL.info,
+          type: LOG_LEVEL.warning,
         },
       },
       b: {
@@ -77,22 +77,23 @@ it('update notification should be executed correctly', () => {
     });
     const output$ = updateNotificationsEpic(action$, state$);
 
-    const infoValues = Object.assign(
+    const warningValues = Object.assign(
       {},
       stateValues.entities.eventLogs.notifications.data,
     );
-    // although the "info" count should be increment
-    // but the "limit" will restrict the result
-    infoValues.info = stateValues.entities.eventLogs.settings.data.limit;
 
-    const errValues = Object.assign({}, infoValues);
+    // although the "warning" count should be increment
+    // but the "limit" will restrict the result
+    warningValues.warning = stateValues.entities.eventLogs.settings.data.limit;
+
+    const errValues = Object.assign({}, warningValues);
     // "error" count was small than "limit" will be incremented
     errValues.error++;
 
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.updateNotifications.SUCCESS,
-        payload: infoValues,
+        payload: warningValues,
       },
       b: {
         type: actions.updateNotifications.SUCCESS,
@@ -112,7 +113,7 @@ it('empty payload for update notification should be executed correctly', () => {
       eventLogs: {
         notifications: {
           data: {
-            info: 10,
+            warning: 21,
             error: 6,
           },
         },
@@ -127,7 +128,7 @@ it('empty payload for update notification should be executed correctly', () => {
   };
 
   makeTestScheduler().run(helpers => {
-    localStorage.setItem(infoKey, 10);
+    localStorage.setItem(warningKey, 21);
     localStorage.setItem(errorKey, 6);
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

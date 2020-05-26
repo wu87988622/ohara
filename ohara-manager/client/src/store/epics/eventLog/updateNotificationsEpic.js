@@ -21,25 +21,29 @@ import { map, catchError, concatMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
-import { infoKey, errorKey } from './const';
+import { errorKey, warningKey } from './const';
 
 const increaseNotification$ = (entity, state$) => {
-  const info = parseInt(localStorage.getItem(infoKey)) || 0;
   const error = parseInt(localStorage.getItem(errorKey)) || 0;
+  const warning = parseInt(localStorage.getItem(warningKey)) || 0;
   const { limit, unlimited } = state$.value.entities.eventLogs.settings.data;
 
   // update the state by local storage only
-  if (isEmpty(entity)) return of({ error, info });
-
-  const nextCount = entity.type === LOG_LEVEL.info ? info + 1 : error + 1;
-  const countToUpdate = unlimited ? nextCount : min([nextCount, limit]);
-  if (entity.type === LOG_LEVEL.info) {
-    localStorage.setItem(infoKey, countToUpdate);
-    return of({ error, info: countToUpdate });
-  } else {
-    localStorage.setItem(errorKey, countToUpdate);
-    return of({ error: countToUpdate, info });
+  if (isEmpty(entity) || entity?.type === LOG_LEVEL.info) {
+    return of({ error, warning });
   }
+
+  const isWarning = entity.type === LOG_LEVEL.warning;
+  const nextCount = isWarning ? warning + 1 : error + 1;
+  const countToUpdate = unlimited ? nextCount : min([nextCount, limit]);
+
+  if (isWarning) {
+    localStorage.setItem(warningKey, countToUpdate);
+    return of({ warning: countToUpdate, error });
+  }
+
+  localStorage.setItem(errorKey, countToUpdate);
+  return of({ error: countToUpdate, warning });
 };
 
 export default (action$, state$) =>

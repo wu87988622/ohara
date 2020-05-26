@@ -160,7 +160,7 @@ export const StyledPaper = styled.div(
       }
 
       .icon {
-        width: 40px;
+        min-width: 40px;
         height: 40px;
         border-radius: 100%;
         display: flex;

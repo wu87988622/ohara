@@ -88,13 +88,7 @@ export const updateStatus = (cell, paperApi) => {
 };
 
 export const createConnection = params => {
-  const {
-    sourceLink,
-    showMessage,
-    targetElementView,
-    paperApi,
-    graph,
-  } = params;
+  const { sourceLink, eventLog, targetElementView, paperApi, graph } = params;
 
   const sourceId = sourceLink.get(CELL_PROPS.source).id;
   const sourceType = graph.getCell(sourceId).attributes.kind;
@@ -111,17 +105,17 @@ export const createConnection = params => {
     // A cell cannot connect to itself, not throwing a
     // message out here since the behavior is not obvious
   } else if (targetType === KIND.source) {
-    showMessage(`Target ${targetDisplayName} is a source!`);
+    eventLog.warning(`Target ${targetDisplayName} is a source!`);
   } else if (
     sourceType === targetType &&
     sourceType !== KIND.stream &&
     targetType !== KIND.stream
   ) {
-    showMessage(
+    eventLog.warning(
       `Cannot connect a ${sourceType} to another ${targetType}, they both have the same type`,
     );
   } else if (targetStatus === CELL_STATUS.pending) {
-    showMessage(
+    eventLog.warning(
       `The target ${targetDisplayName} is in pending state. Try to create the connection when the current action is completed`,
     );
   } else {
@@ -135,7 +129,7 @@ export const createConnection = params => {
     // another cell
     if (sourceType === KIND.source && targetType === KIND.sink) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -143,7 +137,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.source && targetType === KIND.stream) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -151,7 +145,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.topic && targetType === KIND.sink) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -159,7 +153,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.topic && targetType === KIND.stream) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -167,7 +161,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.stream && targetType === KIND.sink) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }
@@ -175,7 +169,7 @@ export const createConnection = params => {
 
     if (sourceType === KIND.stream && targetType === KIND.stream) {
       if (targetHasSource) {
-        return showMessage(
+        return eventLog.warning(
           `The target ${targetDisplayName} is already connected to a source`,
         );
       }

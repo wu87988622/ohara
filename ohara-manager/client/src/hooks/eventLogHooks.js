@@ -100,6 +100,10 @@ export const useEventLog = () => {
         createEventLog({ title, type: LOG_LEVEL.info });
         if (showSnackbar) showMessage(title);
       },
+      warning: (title, showSnackbar = true) => {
+        createEventLog({ title, type: LOG_LEVEL.warning });
+        if (showSnackbar) showMessage(title);
+      },
       /**
        * @param {String|Object} message The message of error.
        * @example

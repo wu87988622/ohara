@@ -29,7 +29,7 @@ const initialState = {
   },
   notifications: {
     data: {
-      info: 0,
+      warning: 0,
       error: 0,
     },
   },

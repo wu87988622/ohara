@@ -24,9 +24,9 @@ import { useTheme } from '@material-ui/core/styles';
 import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
-import { useShowMessage } from 'hooks';
 import { PipelineStateContext } from '../Pipeline';
 import * as paperUtils from './PaperUtils';
+import * as hooks from 'hooks';
 
 const Paper = React.forwardRef((props, ref) => {
   const {
@@ -44,7 +44,8 @@ const Paper = React.forwardRef((props, ref) => {
     onCellConfig = _.noop,
   } = props;
 
-  const showMessage = useShowMessage();
+  const eventLog = hooks.useEventLog();
+
   const { palette } = useTheme();
   const { isMetricsOn } = React.useContext(PipelineStateContext);
 
@@ -364,7 +365,7 @@ const Paper = React.forwardRef((props, ref) => {
         const result = paperUtils.createConnection({
           sourceLink,
           targetElementView: elementView,
-          showMessage,
+          eventLog,
           paperApi,
 
           // Since createConnection is using quite some JointJS APIs
@@ -471,6 +472,7 @@ const Paper = React.forwardRef((props, ref) => {
     };
   }, [
     dragStartPosition,
+    eventLog,
     isMetricsOn,
     onCellConfig,
     onCellDeselect,
@@ -484,7 +486,6 @@ const Paper = React.forwardRef((props, ref) => {
     palette.common.white,
     palette.grey,
     paperApi,
-    showMessage,
   ]);
 
   React.useImperativeHandle(ref, () => {

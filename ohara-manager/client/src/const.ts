@@ -84,6 +84,7 @@ export enum FORM {
 
 export enum LOG_LEVEL {
   info = 'info',
+  warning = 'warning',
   error = 'error',
 }
 

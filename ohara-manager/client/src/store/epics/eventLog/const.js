@@ -15,4 +15,4 @@
  */
 
 export const errorKey = 'event_log_notification_error';
-export const infoKey = 'event_log_notification_info';
+export const warningKey = 'event_log_notification_warning';
