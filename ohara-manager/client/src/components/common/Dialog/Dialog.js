@@ -35,6 +35,11 @@ import DrabblePaper from './DrabblePaper';
 const StyledDialogTitle = styled(DialogTitle)(
   props => css`
     cursor: move;
+
+    h3 {
+      width: 95%;
+    }
+
     .close-button {
       position: absolute;
       right: ${props.theme.spacing(1)}px;
