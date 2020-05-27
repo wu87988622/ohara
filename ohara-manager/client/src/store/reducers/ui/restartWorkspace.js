@@ -152,7 +152,6 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 6,
           message: 'Start worker success... (87% complete)',
           log: [
             ...state.progress.log,
@@ -207,7 +206,7 @@ export default function reducer(state = initialState, action) {
         closeDisable: false,
         progress: {
           ...state.progress,
-          activeStep: 7,
+          activeStep: 6,
           message: 'Restart workspace success... (100% complete)',
           isPause: false,
         },
