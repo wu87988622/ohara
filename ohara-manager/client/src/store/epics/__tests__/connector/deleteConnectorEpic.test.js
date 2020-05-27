@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { noop, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import deleteConnectorEpic from '../../connector/deleteConnectorEpic';
@@ -25,20 +25,15 @@ import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 
 jest.mock('api/connectorApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
 
 const connectorId = getId(connectorEntity);
 
-beforeEach(() => {
-  // ensure the mock data is as expected before each test
-  jest.restoreAllMocks();
-});
+beforeEach(jest.resetAllMocks);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -52,12 +47,15 @@ it('should delete a connector', () => {
     const input = '   ^-a           ';
     const expected = '--a 999ms (uv)';
     const subs = '    ^-------------';
-
+    const id = '1234';
     const action$ = hot(input, {
       a: {
         type: actions.deleteConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: {
+            ...connectorEntity,
+            id,
+          },
           options: { paperApi },
         },
       },
@@ -86,6 +84,13 @@ it('should delete a connector', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
@@ -100,19 +105,21 @@ it('should delete multiple connectors', () => {
       ...connectorEntity,
       name: 'anotherconnector',
     };
+    const id1 = '1234';
+    const id2 = '5678';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id: id1 },
           options: { paperApi },
         },
       },
       b: {
         type: actions.deleteConnector.TRIGGER,
         payload: {
-          params: anotherConnectorEntity,
+          params: { ...anotherConnectorEntity, id: id2 },
           options: { paperApi },
         },
       },
@@ -157,6 +164,63 @@ it('should delete multiple connectors', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id2, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id1);
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id2);
+  });
+});
+
+it(`should not call paperApi when the options params are not supplied`, () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteConnector.TRIGGER,
+        payload: {
+          params: connectorEntity,
+        },
+      },
+    });
+    const output$ = deleteConnectorEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteConnector.REQUEST,
+        payload: {
+          connectorId,
+        },
+      },
+      u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
+        type: actions.deleteConnector.SUCCESS,
+        payload: {
+          connectorId,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(paperApi.updateElement).not.toHaveBeenCalled();
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });
 
@@ -167,12 +231,13 @@ it('delete same connector within period should be created once only', () => {
     const input = '   ^-aa 10s a----';
     const expected = '--a 999ms (uv)';
     const subs = '    ^-------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -201,10 +266,17 @@ it('delete same connector within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
-it('throw exception of delete connector should also trigger event log action', () => {
+it('should handle error properly', () => {
   const error = {
     status: -1,
     data: {},
@@ -220,12 +292,13 @@ it('throw exception of delete connector should also trigger event log action', (
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
     const subs = '    ^-------!';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -256,5 +329,13 @@ it('throw exception of delete connector should also trigger event log action', (
     flush();
 
     expect(spyCreate).toHaveBeenCalled();
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.failed,
+    });
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });

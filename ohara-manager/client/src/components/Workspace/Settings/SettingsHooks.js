@@ -333,6 +333,7 @@ export const useConfig = ({
             title: 'Are you absolutely sure?',
             confirmDisabled: !isDeleteEnabled,
             confirmText: 'Delete',
+            maxWidth: 'sm',
             onConfirm: openDeleteProgressDialog,
           },
         },

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { noop, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import deleteShabondiEpic from '../../shabondi/deleteShabondiEpic';
 import * as actions from 'store/actions';
@@ -25,20 +25,15 @@ import { getId } from 'utils/object';
 import { entity as shabondiEntity } from 'api/__mocks__/shabondiApi';
 
 jest.mock('api/shabondiApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
 
 const shabondiId = getId(shabondiEntity);
 
-beforeEach(() => {
-  // ensure the mock data is as expected before each test
-  jest.restoreAllMocks();
-});
+beforeEach(jest.resetAllMocks);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -52,12 +47,13 @@ it('should delete a shabondi', () => {
     const input = '   ^-a           ';
     const expected = '--a 999ms (uv)';
     const subs = '    ^-------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          params: { ...shabondiEntity, id },
           options: { paperApi },
         },
       },
@@ -86,6 +82,13 @@ it('should delete a shabondi', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
@@ -100,19 +103,21 @@ it('should delete multiple shabondis', () => {
       ...shabondiEntity,
       name: 'anothershabondi',
     };
+    const id1 = '1234';
+    const id2 = '5678';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          params: { ...shabondiEntity, id: id1 },
           options: { paperApi },
         },
       },
       b: {
         type: actions.deleteShabondi.TRIGGER,
         payload: {
-          params: anotherShabondiEntity,
+          params: { ...anotherShabondiEntity, id: id2 },
           options: { paperApi },
         },
       },
@@ -157,6 +162,63 @@ it('should delete multiple shabondis', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id2, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id1);
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id2);
+  });
+});
+
+it(`should not call paperApi when the options params are not supplied`, () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteShabondi.TRIGGER,
+        payload: {
+          params: shabondiEntity,
+        },
+      },
+    });
+    const output$ = deleteShabondiEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteShabondi.REQUEST,
+        payload: {
+          shabondiId,
+        },
+      },
+      u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
+        type: actions.deleteShabondi.SUCCESS,
+        payload: {
+          shabondiId,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(paperApi.updateElement).not.toHaveBeenCalled();
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });
 
@@ -167,12 +229,13 @@ it('delete same shabondi within period should be created once only', () => {
     const input = '   ^-aa 10s a----';
     const expected = '--a 999ms (uv)';
     const subs = '    ^-------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          params: { ...shabondiEntity, id },
           options: { paperApi },
         },
       },
@@ -201,10 +264,17 @@ it('delete same shabondi within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
-it('throw exception of delete shabondi should also trigger event log action', () => {
+it('should handle error properly', () => {
   const error = {
     status: -1,
     data: {},
@@ -220,12 +290,13 @@ it('throw exception of delete shabondi should also trigger event log action', ()
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
     const subs = '    ^-------!';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteShabondi.TRIGGER,
         payload: {
-          params: shabondiEntity,
+          params: { ...shabondiEntity, id },
           options: { paperApi },
         },
       },
@@ -256,5 +327,13 @@ it('throw exception of delete shabondi should also trigger event log action', ()
     flush();
 
     expect(spyCreate).toHaveBeenCalled();
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.failed,
+    });
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });

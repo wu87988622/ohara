@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
+import Typography from '@material-ui/core/Typography';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
 import * as hooks from 'hooks';
 import { convertIdToKey } from 'utils/object';
-import { CLUSTER_STATE } from 'const';
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 export const useOpenRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
@@ -105,23 +106,27 @@ export const useHasRunningServices = () => {
   const connectors = hooks.useConnectors();
   const streams = hooks.useStreams();
   const shabondis = hooks.useShabondis();
-  const hasRunningConnectors = connectors.find(
-    connector => connector.state === CLUSTER_STATE.RUNNING,
+  const hasRunning = service => service.state === SERVICE_STATE.RUNNING;
+  return (
+    connectors.some(hasRunning) ||
+    streams.some(hasRunning) ||
+    shabondis.some(hasRunning)
   );
-  const hasRunningStreams = streams.find(
-    stream => stream.state === CLUSTER_STATE.RUNNING,
-  );
-  const hasRunningShabondis = shabondis.find(
-    shabondi => shabondi.state === CLUSTER_STATE.RUNNING,
-  );
-  return hasRunningConnectors || hasRunningStreams || hasRunningShabondis;
 };
 
 export const useRestartConfirmMessage = () => {
   const workspaceName = hooks.useWorkerName();
-  return useHasRunningServices()
-    ? `Oops, there are still some running services in ${workspaceName}. You should stop them first and then you will be able to restart this workspace.`
-    : `This action cannot be undone. This will permanently restart the ${workspaceName} zookeeper, broker, and worker.`;
+  const hasRunningServices = hooks.useHasRunningServices();
+
+  return hasRunningServices ? (
+    <Typography paragraph>
+      Oops, there are still some services running in your workspace. You should
+      stop all pipelines under this workspace first and then you will be able to
+      delete this workspace.
+    </Typography>
+  ) : (
+    `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: zookeepers, brokers, workers and pipelines`
+  );
 };
 
 export const useRefreshWorkspaceAction = params => {

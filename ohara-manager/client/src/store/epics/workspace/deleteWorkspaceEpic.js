@@ -46,6 +46,10 @@ import { deleteZookeeper$ } from '../zookeeper/deleteZookeeperEpic';
 import { stopTopic$ } from '../topic/stopTopicEpic';
 import { deleteTopic$ } from '../topic/deleteTopicEpic';
 import { deleteFile$ } from '../file/deleteFileEpic';
+import { deletePipeline$ } from '../pipeline/deletePipelineEpic';
+import { deleteConnector$ } from '../connector/deleteConnectorEpic';
+import { deleteStream$ } from '../stream/deleteStreamEpic';
+import { deleteShabondi$ } from '../shabondi/deleteShabondiEpic';
 
 const deleteWorkspace$ = params => {
   const workspaceId = getId(params);
@@ -90,6 +94,10 @@ export default (action$, state$) =>
         zookeeperKey,
         brokerKey,
         workerKey,
+        pipelineKeys,
+        connectorKeys,
+        shabondiKeys,
+        streamKeys,
         files,
       } = action.payload.values;
       const options = action.payload.options;
@@ -97,7 +105,25 @@ export default (action$, state$) =>
       const isServiceRunning = isRunning(state$);
       const isServiceOrphan = isOrphanObject(state$);
       const isServiceNonExisted = isNonExistedObject(state$);
+
       return of(
+        of(
+          of(...connectorKeys).pipe(
+            mergeMap(connectorKey =>
+              deleteConnector$({ params: connectorKey }),
+            ),
+          ),
+          of(...streamKeys).pipe(
+            mergeMap(streamKey => deleteStream$({ params: streamKey })),
+          ),
+          of(...shabondiKeys).pipe(
+            mergeMap(shabondiKey => deleteShabondi$({ params: shabondiKey })),
+          ),
+          of(...pipelineKeys).pipe(
+            mergeMap(pipelineKey => deletePipeline$(pipelineKey)),
+          ),
+        ).pipe(concatAll()),
+
         stopWorker$(workerKey).pipe(
           takeWhile(() => isServiceRunning(workerKey, schema.worker)),
         ),
@@ -166,7 +192,7 @@ export default (action$, state$) =>
           ),
           of(
             actions.createEventLog.trigger({
-              title: `Successfully Delete workspace ${workspaceKey.name}.`,
+              title: `Successfully deleted workspace ${workspaceKey.name}.`,
               type: LOG_LEVEL.info,
             }),
           ),
@@ -187,6 +213,7 @@ export default (action$, state$) =>
           if (options?.onError) {
             options.onError(err);
           }
+
           return from([
             actions.deleteWorkspace.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

@@ -33,13 +33,17 @@ import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-const deleteConnector$ = values => {
-  const { params, options } = values;
+export const deleteConnector$ = values => {
+  const { params, options = {} } = values;
   const { paperApi } = options;
   const connectorId = getId(params);
-  paperApi.updateElement(params.id, {
-    status: CELL_STATUS.pending,
-  });
+
+  if (paperApi) {
+    paperApi.updateElement(params.id, {
+      status: CELL_STATUS.pending,
+    });
+  }
+
   return zip(
     defer(() => connectorApi.remove(params)),
     defer(() => connectorApi.getAll({ group: params.group })).pipe(
@@ -66,7 +70,10 @@ const deleteConnector$ = values => {
     ),
   ).pipe(
     mergeMap(() => {
-      paperApi.removeElement(params.id);
+      if (paperApi) {
+        paperApi.removeElement(params.id);
+      }
+
       return from([
         actions.setSelectedCell.trigger(null),
         actions.deleteConnector.success({ connectorId }),
@@ -74,9 +81,12 @@ const deleteConnector$ = values => {
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
     catchError(err => {
-      paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
-      });
+      if (paperApi) {
+        paperApi.updateElement(params.id, {
+          status: CELL_STATUS.failed,
+        });
+      }
+
       return from([
         actions.deleteConnector.failure(merge(err, { connectorId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

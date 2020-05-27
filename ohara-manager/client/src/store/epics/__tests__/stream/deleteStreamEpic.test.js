@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { noop, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 import * as streamApi from 'api/streamApi';
 import deleteStreamEpic from '../../stream/deleteStreamEpic';
 import * as actions from 'store/actions';
@@ -25,20 +25,15 @@ import { getId } from 'utils/object';
 import { entity as streamEntity } from 'api/__mocks__/streamApi';
 
 jest.mock('api/streamApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
 
 const streamId = getId(streamEntity);
 
-beforeEach(() => {
-  // ensure the mock data is as expected before each test
-  jest.restoreAllMocks();
-});
+beforeEach(jest.resetAllMocks);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -52,12 +47,12 @@ it('should delete a stream', () => {
     const input = '   ^-a           ';
     const expected = '--a 999ms (uv)';
     const subs = '    ^-------------';
-
+    const id = '1234';
     const action$ = hot(input, {
       a: {
         type: actions.deleteStream.TRIGGER,
         payload: {
-          params: streamEntity,
+          params: { ...streamEntity, id },
           options: { paperApi },
         },
       },
@@ -86,6 +81,13 @@ it('should delete a stream', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
@@ -100,19 +102,21 @@ it('should delete multiple streams', () => {
       ...streamEntity,
       name: 'anotherstream',
     };
+    const id1 = '1234';
+    const id2 = '5678';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteStream.TRIGGER,
         payload: {
-          params: streamEntity,
+          params: { ...streamEntity, id: id1 },
           options: { paperApi },
         },
       },
       b: {
         type: actions.deleteStream.TRIGGER,
         payload: {
-          params: anotherStreamEntity,
+          params: { ...anotherStreamEntity, id: id2 },
           options: { paperApi },
         },
       },
@@ -157,6 +161,63 @@ it('should delete multiple streams', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id2, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id1);
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id2);
+  });
+});
+
+it(`should not call paperApi when the options params are not supplied`, () => {
+  makeTestScheduler().run(helpers => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a           ';
+    const expected = '--a 999ms (uv)';
+    const subs = '    ^-------------';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.deleteStream.TRIGGER,
+        payload: {
+          params: streamEntity,
+        },
+      },
+    });
+    const output$ = deleteStreamEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.deleteStream.REQUEST,
+        payload: {
+          streamId,
+        },
+      },
+      u: {
+        type: actions.setSelectedCell.TRIGGER,
+        payload: null,
+      },
+      v: {
+        type: actions.deleteStream.SUCCESS,
+        payload: {
+          streamId,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(paperApi.updateElement).not.toHaveBeenCalled();
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });
 
@@ -167,12 +228,13 @@ it('delete same stream within period should be created once only', () => {
     const input = '   ^-aa 10s a------';
     const expected = '--a 999ms (uv)--';
     const subs = '    ^---------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteStream.TRIGGER,
         payload: {
-          params: streamEntity,
+          params: { ...streamEntity, id },
           options: { paperApi },
         },
       },
@@ -201,10 +263,17 @@ it('delete same stream within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });
 
-it('throw exception of delete stream should also trigger event log action', () => {
+it('should handle error properly', () => {
   const error = {
     status: -1,
     data: {},
@@ -221,11 +290,12 @@ it('throw exception of delete stream should also trigger event log action', () =
     const expected = '--(aeu)-|';
     const subs = '    ^-------!';
 
+    const id = '1234';
     const action$ = hot(input, {
       a: {
         type: actions.deleteStream.TRIGGER,
         payload: {
-          params: streamEntity,
+          params: { ...streamEntity, id },
           options: { paperApi },
         },
       },
@@ -256,5 +326,13 @@ it('throw exception of delete stream should also trigger event log action', () =
     flush();
 
     expect(spyCreate).toHaveBeenCalled();
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.failed,
+    });
+    expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
 });

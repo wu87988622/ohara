@@ -33,13 +33,17 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-const deleteShabondi$ = value => {
-  const { params, options } = value;
+export const deleteShabondi$ = value => {
+  const { params, options = {} } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
-  paperApi.updateElement(params.id, {
-    status: CELL_STATUS.pending,
-  });
+
+  if (paperApi) {
+    paperApi.updateElement(params.id, {
+      status: CELL_STATUS.pending,
+    });
+  }
+
   return zip(
     defer(() => shabondiApi.remove(params)),
     defer(() => shabondiApi.getAll({ group: params.group })).pipe(
@@ -61,7 +65,10 @@ const deleteShabondi$ = value => {
     ),
   ).pipe(
     mergeMap(() => {
-      paperApi.removeElement(params.id);
+      if (paperApi) {
+        paperApi.removeElement(params.id);
+      }
+
       return from([
         actions.setSelectedCell.trigger(null),
         actions.deleteShabondi.success({ shabondiId }),
@@ -69,9 +76,12 @@ const deleteShabondi$ = value => {
     }),
     startWith(actions.deleteShabondi.request({ shabondiId })),
     catchError(err => {
-      paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
-      });
+      if (paperApi) {
+        paperApi.updateElement(params.id, {
+          status: CELL_STATUS.failed,
+        });
+      }
+
       return from([
         actions.deleteShabondi.failure(merge(err, { shabondiId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

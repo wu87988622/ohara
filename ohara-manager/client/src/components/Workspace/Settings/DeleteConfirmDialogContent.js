@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -24,7 +23,7 @@ import Typography from '@material-ui/core/Typography';
 import * as hooks from 'hooks';
 
 const DeleteConfirmDialogContent = ({ workspace, onValidate }) => {
-  const pipelines = hooks.usePipelines();
+  const hasRunningServices = hooks.useHasRunningServices();
 
   const handleChange = event => {
     if (event?.target?.value) {
@@ -34,11 +33,20 @@ const DeleteConfirmDialogContent = ({ workspace, onValidate }) => {
 
   return (
     <>
-      {isEmpty(pipelines) ? (
+      {hasRunningServices ? (
         <>
           <Typography paragraph>
-            This action cannot be undone. This will permanently delete the{' '}
-            {workspace.name} zookeeper, broker and worker.
+            Oops, there are still some services running in your workspace. You
+            should stop all pipelines under this workspace first and then you
+            will be able to delete this workspace.
+          </Typography>
+        </>
+      ) : (
+        <>
+          <Typography paragraph>
+            This action cannot be undone. This will permanently delete the
+            {workspace.name} and the services under it: zookeepers, brokers,
+            workers and pipelines
           </Typography>
           <Typography paragraph>
             Please type <b>{workspace.name}</b> to confirm.
@@ -51,20 +59,6 @@ const DeleteConfirmDialogContent = ({ workspace, onValidate }) => {
             type="input"
             variant="outlined"
           />
-        </>
-      ) : (
-        <>
-          <Typography paragraph>
-            Oops, there are still some pipelines exist in this workspace{' '}
-            {workspace.name}:
-          </Typography>
-          <Typography paragraph>
-            <b>{pipelines.map(pipeline => pipeline.name).join(',')}</b>
-          </Typography>
-          <Typography paragraph>
-            You should delete them first and then you will be able to delete
-            this workspace.
-          </Typography>
         </>
       )}
     </>

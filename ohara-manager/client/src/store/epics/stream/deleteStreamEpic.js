@@ -34,12 +34,16 @@ import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
 export const deleteStream$ = value => {
-  const { params, options } = value;
+  const { params, options = {} } = value;
   const { paperApi } = options;
   const streamId = getId(params);
-  paperApi.updateElement(params.id, {
-    status: CELL_STATUS.pending,
-  });
+
+  if (paperApi) {
+    paperApi.updateElement(params.id, {
+      status: CELL_STATUS.pending,
+    });
+  }
+
   return zip(
     defer(() => streamApi.remove(params)),
     defer(() => streamApi.getAll({ group: params.group })).pipe(
@@ -65,7 +69,10 @@ export const deleteStream$ = value => {
     ),
   ).pipe(
     mergeMap(() => {
-      paperApi.removeElement(params.id);
+      if (paperApi) {
+        paperApi.removeElement(params.id);
+      }
+
       return from([
         actions.setSelectedCell.trigger(null),
         actions.deleteStream.success({ streamId }),
@@ -73,9 +80,12 @@ export const deleteStream$ = value => {
     }),
     startWith(actions.deleteStream.request({ streamId })),
     catchError(error => {
-      paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
-      });
+      if (paperApi) {
+        paperApi.updateElement(params.id, {
+          status: CELL_STATUS.failed,
+        });
+      }
+
       return from([
         actions.deleteStream.failure(merge(error, { streamId })),
         actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),

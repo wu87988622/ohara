@@ -133,7 +133,7 @@ DeleteDialog.propTypes = {
   cancelText: PropTypes.string,
   confirmDisabled: PropTypes.bool,
   confirmText: PropTypes.string,
-  content: PropTypes.string.isRequired,
+  content: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,

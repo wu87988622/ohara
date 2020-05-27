@@ -158,7 +158,7 @@ const stopAndDeleteAllTopics$ = (topics, paperApi) => {
   );
 };
 
-const deletePipeline$ = params => {
+export const deletePipeline$ = params => {
   const pipelineId = getId(params);
   return defer(() => pipelineApi.remove(params)).pipe(
     mergeMap(() => {

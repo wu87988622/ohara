@@ -121,7 +121,10 @@ RestartIndicator.propTypes = {
   isOpen: PropTypes.bool,
   onDiscard: PropTypes.func,
   onRestart: PropTypes.func,
-  restartConfirmMessage: PropTypes.string,
+  restartConfirmMessage: PropTypes.oneOfType([
+    PropTypes.node,
+    PropTypes.string,
+  ]),
   hasRunningServices: PropTypes.bool,
 };
 
