@@ -82,7 +82,7 @@ const LogProgress = props => {
   useEffect(() => {
     progress.current = () => {
       if (buffer > completed + diff) {
-        setDiff(diff + Math.random() + 10);
+        setDiff(diff + 5);
       }
       if ((100 / steps.length) * activeStep + diff > 100) {
         setCompleted(100);
