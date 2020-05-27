@@ -18,13 +18,39 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  startWith,
+  mergeMap,
+  concatMap,
+} from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+
+// Note: The caller SHOULD handle the error of this action
+export const updateZookeeperAndWorkspace$ = values => {
+  const zookeeperId = getId(values);
+  return defer(() => zookeeperApi.update(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.zookeeper)),
+    map(normalizedData => merge(normalizedData, { zookeeperId })),
+    concatMap(normalizedData =>
+      from([
+        actions.updateWorkspace.trigger({
+          zookeeper: normalizedData,
+          ...values.workspaceKey,
+        }),
+        actions.updateZookeeper.success(normalizedData),
+      ]),
+    ),
+    startWith(actions.updateZookeeper.request({ zookeeperId })),
+  );
+};
 
 const updateZookeeper$ = values => {
   const zookeeperId = getId(values);
