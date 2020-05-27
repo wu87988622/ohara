@@ -69,7 +69,7 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
     val zkCluster = result(
       zkApi.request
         .key(serviceKeyHolder.generateClusterKey())
-        .nodeNames(platform.nodeNames)
+        .nodeName(platform.nodeNames.head)
         .create()
         .flatMap(info => zkApi.start(info.key).flatMap(_ => zkApi.get(info.key)))
     )
@@ -83,7 +83,7 @@ class TestLoadCustomJarToWorkerCluster(platform: ContainerPlatform)
       bkApi.request
         .key(serviceKeyHolder.generateClusterKey())
         .zookeeperClusterKey(zkCluster.key)
-        .nodeNames(platform.nodeNames)
+        .nodeName(platform.nodeNames.head)
         .create()
         .flatMap(info => bkApi.start(info.key).flatMap(_ => bkApi.get(info.key)))
     )
