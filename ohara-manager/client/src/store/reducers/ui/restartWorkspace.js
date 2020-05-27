@@ -53,15 +53,8 @@ export default function reducer(state = initialState, action) {
         isOpen: true,
       };
     case actions.closeRestartWorkspace.TRIGGER:
-      return {
-        ...state,
-        isOpen: false,
-        progress: {
-          ...state.progress,
-          message: '',
-          log: [],
-        },
-      };
+      return initialState;
+
     case actions.pauseRestartWorkspace.TRIGGER:
       return {
         ...state,
