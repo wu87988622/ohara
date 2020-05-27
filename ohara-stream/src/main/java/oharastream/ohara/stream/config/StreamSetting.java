@@ -120,6 +120,8 @@ public final class StreamSetting {
   /** this is a specific string used to replace the quota in the env. */
   @VisibleForTesting static String INTERNAL_STRING_FOR_ENV = "_____";
 
+  @VisibleForTesting static String INTERNAL_STRING2_FOR_ENV = "~~~~~";
+
   /**
    * remove the unsupported charset - quote - and replace it by slash
    *
@@ -129,11 +131,17 @@ public final class StreamSetting {
   public static String toEnvString(String string) {
     if (string.contains(INTERNAL_STRING_FOR_ENV))
       throw new IllegalArgumentException(
-          string
-              + " has internal string:"
-              + INTERNAL_STRING_FOR_ENV
-              + " so we can't convert it to env string");
-    return string.replaceAll("\"", INTERNAL_STRING_FOR_ENV);
+          String.format(
+              "%s has internale string: %s so we can't convert it to env string",
+              string, INTERNAL_STRING_FOR_ENV));
+    if (string.contains(INTERNAL_STRING2_FOR_ENV))
+      throw new IllegalArgumentException(
+          String.format(
+              "%s has internale string: %s so we can't convert it to env string",
+              string, INTERNAL_STRING_FOR_ENV));
+    return string
+        .replaceAll("\"", INTERNAL_STRING_FOR_ENV)
+        .replaceAll(" ", INTERNAL_STRING2_FOR_ENV);
   }
 
   /**
@@ -143,6 +151,8 @@ public final class StreamSetting {
    * @return a absolutely normal string
    */
   public static String fromEnvString(String string) {
-    return string.replaceAll(INTERNAL_STRING_FOR_ENV, "\"");
+    return string
+        .replaceAll(INTERNAL_STRING_FOR_ENV, "\"")
+        .replaceAll(INTERNAL_STRING2_FOR_ENV, " ");
   }
 }

@@ -23,16 +23,24 @@ import scala.jdk.CollectionConverters._
 object ShabondiUtils {
   private val log = Logger(ShabondiUtils.getClass)
 
-  private val ESCAPE_STRING = "_____"
+  private val ESCAPE_STRING1 = "_____"
+  private val ESCAPE_STRING2 = "~~~~~"
 
   def escape(value: String): String = {
-    if (value.contains(ESCAPE_STRING))
-      throw new IllegalArgumentException(s"Cannot escape the value `$value` by escape string $ESCAPE_STRING")
-    value.replaceAll("\"", ESCAPE_STRING)
+    if (value.contains(ESCAPE_STRING1))
+      throw new IllegalArgumentException(s"Cannot escape the value `$value` by escape string $ESCAPE_STRING1")
+    if (value.contains(ESCAPE_STRING2))
+      throw new IllegalArgumentException(s"Cannot escape the value `$value` by escape string $ESCAPE_STRING2")
+    value
+      .replaceAll("\"", ESCAPE_STRING1)
+      .replaceAll(" ", ESCAPE_STRING2)
   }
 
-  def unescape(value: String): String =
-    value.replaceAll(ESCAPE_STRING, "\"")
+  def unescape(value: String): String = {
+    value
+      .replaceAll(ESCAPE_STRING1, "\"")
+      .replaceAll(ESCAPE_STRING2, " ")
+  }
 
   def parseArgs(args: Array[String]): Map[String, String] =
     CommonUtils

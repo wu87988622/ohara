@@ -123,7 +123,7 @@ trait StreamCollie extends Collie {
                           k -> (v match {
                             // the string in json representation has quote in the beginning and end.
                             // we don't like the quotes since it obstruct us to cast value to pure string.
-                            case JsString(s) => s
+                            case JsString(s) => StreamSetting.toEnvString(s)
                             // save the json string for all settings
                             // StreamDefUtils offers the helper method to turn them back.
                             case _ => StreamSetting.toEnvString(v.toString)

@@ -87,7 +87,7 @@ trait ShabondiCollie extends Collie {
                 val arguments = creation.settings.map {
                   case (k, v) =>
                     val value = v match {
-                      case JsString(s) => s
+                      case JsString(s) => ShabondiUtils.escape(s)
                       case _           => ShabondiUtils.escape(v.toString)
                     }
                     k + "=" + value
