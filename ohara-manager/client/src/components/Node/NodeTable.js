@@ -21,12 +21,14 @@ import {
   flatMap,
   filter,
   find,
+  includes,
   isEmpty,
   isFunction,
   map,
   round,
   sortBy,
   size,
+  toUpper,
   unionBy,
   uniq,
 } from 'lodash';
@@ -192,6 +194,11 @@ function NodeTable(props) {
   const renderResourceColumns = () => {
     return map(resourceNames, resourceName => ({
       title: resourceName,
+      customFilterAndSearch: (filterValue, node) => {
+        const resource = find(node.resources, r => r.name === resourceName);
+        const value = `${round(resource?.value, 1)} ${resource?.unit}`;
+        return includes(toUpper(value), toUpper(filterValue));
+      },
       render: node => {
         const resource = find(node.resources, r => r.name === resourceName);
         if (!resource) return;
@@ -218,6 +225,15 @@ function NodeTable(props) {
     return {
       title: 'Services',
       hidden: !options?.showServicesColumn,
+      customFilterAndSearch: (filterValue, node) => {
+        const services = filter(
+          node.services,
+          service => service.name !== KIND.configurator,
+        );
+        const clusters = flatMap(services, service => service.clusterKeys);
+        const value = size(clusters);
+        return includes(toUpper(value), toUpper(filterValue));
+      },
       render: node => {
         const services = filter(
           node.services,
