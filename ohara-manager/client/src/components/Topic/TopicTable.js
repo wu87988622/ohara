@@ -199,6 +199,7 @@ function TopicTable(props) {
         options={{
           prompt: options?.prompt,
           rowStyle: null,
+          selection: false,
           showTitle: options?.showTitle,
         }}
       />
