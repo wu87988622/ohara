@@ -59,7 +59,6 @@ const LogProgress = props => {
   const [completed, setCompleted] = useState(0);
   const [buffer, setBuffer] = useState(0);
   const [diff, setDiff] = useState(0);
-  const [oldActiveStep, setOldActiveStep] = useState(0);
   const [stepType, setStepType] = useState();
   const [color, setColor] = useState();
   const [title, setTitle] = useState('');
@@ -82,20 +81,15 @@ const LogProgress = props => {
 
   useEffect(() => {
     progress.current = () => {
-      if (steps.length === activeStep) {
-        setCompleted(100);
-      }
       if (buffer > completed + diff) {
         setDiff(diff + Math.random() + 10);
       }
-      if (activeStep > oldActiveStep) {
-        setCompleted((100 / steps.length) * activeStep);
-        setDiff(0);
+      if ((100 / steps.length) * activeStep + diff > 100) {
+        setCompleted(100);
       } else {
         setCompleted((100 / steps.length) * activeStep + diff);
       }
       setBuffer((100 / steps.length) * (activeStep + 1));
-      setOldActiveStep(activeStep);
     };
   });
 
