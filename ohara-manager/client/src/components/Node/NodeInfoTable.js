@@ -21,52 +21,14 @@ import { map, round } from 'lodash';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
-import Chip from '@material-ui/core/Chip';
 import Divider from '@material-ui/core/Divider';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
-import CancelIcon from '@material-ui/icons/Cancel';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import HelpIcon from '@material-ui/icons/Help';
 
-import { NODE_STATE } from 'api/apiInterface/nodeInterface';
 import { MODE } from 'const';
-
-const getStateChip = state => {
-  switch (state) {
-    case NODE_STATE.AVAILABLE:
-      return (
-        <Chip
-          variant="outlined"
-          color="primary"
-          icon={<CheckCircleIcon />}
-          label="Alive"
-          size="small"
-        />
-      );
-    case NODE_STATE.UNAVAILABLE:
-      return (
-        <Chip
-          variant="outlined"
-          color="secondary"
-          icon={<CancelIcon />}
-          label="Dead"
-          size="small"
-        />
-      );
-    default:
-      return (
-        <Chip
-          variant="outlined"
-          icon={<HelpIcon />}
-          label="Unknown"
-          size="small"
-        />
-      );
-  }
-};
+import NodeStateChip from './NodeStateChip';
 
 function NodeInfoTable({ mode, node }) {
   if (!node) return null;
@@ -112,7 +74,9 @@ function NodeInfoTable({ mode, node }) {
             ))}
             <TableRow>
               <TableCell>State</TableCell>
-              <TableCell>{getStateChip(node?.state)}</TableCell>
+              <TableCell>
+                <NodeStateChip node={node} />
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>

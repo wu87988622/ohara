@@ -17,18 +17,15 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  capitalize,
   flatMap,
   filter,
   find,
-  includes,
   isEmpty,
   isFunction,
   map,
   round,
   sortBy,
   size,
-  toUpper,
   unionBy,
   uniq,
 } from 'lodash';
@@ -49,6 +46,7 @@ import NodeDeleteDialog from './NodeDeleteDialog';
 import NodeDetailDialog from './NodeDetailDialog';
 import NodeEditorDialog from './NodeEditorDialog';
 import NodeRemoveDialog from './NodeRemoveDialog';
+import NodeStateChip from './NodeStateChip';
 
 const defaultOptions = {
   comparison: false,
@@ -194,11 +192,6 @@ function NodeTable(props) {
   const renderResourceColumns = () => {
     return map(resourceNames, resourceName => ({
       title: resourceName,
-      customFilterAndSearch: (filterValue, node) => {
-        const resource = find(node.resources, r => r.name === resourceName);
-        const value = `${round(resource?.value, 1)} ${resource?.unit}`;
-        return includes(toUpper(value), toUpper(filterValue));
-      },
       render: node => {
         const resource = find(node.resources, r => r.name === resourceName);
         if (!resource) return;
@@ -225,35 +218,32 @@ function NodeTable(props) {
     return {
       title: 'Services',
       hidden: !options?.showServicesColumn,
-      customFilterAndSearch: (filterValue, node) => {
-        const services = filter(
-          node.services,
-          service => service.name !== KIND.configurator,
-        );
-        const clusters = flatMap(services, service => service.clusterKeys);
-        const value = size(clusters);
-        return includes(toUpper(value), toUpper(filterValue));
-      },
       render: node => {
         const services = filter(
           node.services,
           service => service.name !== KIND.configurator,
         );
         const clusters = flatMap(services, service => service.clusterKeys);
-        return (
-          <Typography>
-            <Link
-              component="button"
-              variant="h6"
-              onClick={event => {
-                handleDetailIconClick(node);
-                event.stopPropagation();
-              }}
-            >
-              {size(clusters)}
-            </Link>
-          </Typography>
-        );
+        const count = size(clusters);
+        if (count > 0) {
+          return (
+            <Typography>
+              {}
+              <Link
+                component="button"
+                variant="h6"
+                onClick={event => {
+                  handleDetailIconClick(node);
+                  event.stopPropagation();
+                }}
+              >
+                {count}
+              </Link>
+            </Typography>
+          );
+        } else {
+          return <Typography>{count}</Typography>;
+        }
       },
     };
   };
@@ -395,7 +385,7 @@ function NodeTable(props) {
           {
             title: 'State',
             field: 'state',
-            render: node => capitalize(node.state),
+            render: node => <NodeStateChip node={node} />,
           },
           ...options?.customColumns,
           renderRowActions(),

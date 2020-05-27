@@ -74,7 +74,7 @@ describe('NodeDialog of AppBar', () => {
     cy.findAllByText(/^state$/i)
       .filter(':visible')
       .siblings('td')
-      .contains('Dead')
+      .contains('Unavailable')
       .should('exist');
 
     // press "ESC" back to node list
@@ -171,7 +171,7 @@ describe('NodeDialog of AppBar', () => {
     // actual host should be alive
     cy.findAllByText(/^state$/i)
       .siblings('td')
-      .contains('Alive')
+      .contains('Available')
       .should('exist');
 
     // press "ESC" back to node list
@@ -194,17 +194,17 @@ describe('NodeDialog of AppBar', () => {
     cy.findByText(/^zookeeper$/i)
       .should('exist')
       .siblings('td')
-      .contains('Alive')
+      .contains('Running')
       .should('exist');
     cy.findByText(/^broker$/i)
       .should('exist')
       .siblings('td')
-      .contains('Alive')
+      .contains('Running')
       .should('exist');
     cy.findByText(/^connect-worker$/i)
       .should('exist')
       .siblings('td')
-      .contains('Alive')
+      .contains('Running')
       .should('exist');
   });
 });

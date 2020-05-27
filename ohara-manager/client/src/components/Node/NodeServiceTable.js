@@ -17,47 +17,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { merge, flatMap, find, map, sortBy } from 'lodash';
-import Chip from '@material-ui/core/Chip';
-import HelpIcon from '@material-ui/icons/Help';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import CancelIcon from '@material-ui/icons/Cancel';
 
 import { GROUP, SERVICE_NAME } from 'const';
 import Table from 'components/common/Table/MuiTable';
-
-const getStateChip = state => {
-  switch (state) {
-    case 'Alive':
-      return (
-        <Chip
-          variant="outlined"
-          color="primary"
-          icon={<CheckCircleIcon />}
-          label="Alive"
-          size="small"
-        />
-      );
-    case 'Dead':
-      return (
-        <Chip
-          variant="outlined"
-          color="secondary"
-          icon={<CancelIcon />}
-          label="Dead"
-          size="small"
-        />
-      );
-    default:
-      return (
-        <Chip
-          variant="outlined"
-          icon={<HelpIcon />}
-          label="Unknown"
-          size="small"
-        />
-      );
-  }
-};
+import ClusterStateChip from './ClusterStateChip';
 
 function NodeServiceTable({ node }) {
   if (!node) return null;
@@ -75,11 +38,7 @@ function NodeServiceTable({ node }) {
         serviceName: name,
         workspaceName:
           clusterKey.group === GROUP.DEFAULT ? GROUP.DEFAULT : clusterKey.name,
-        state: cluster?.state
-          ? cluster.state === 'RUNNING'
-            ? 'Alive'
-            : 'Dead'
-          : 'Unknown',
+        state: cluster?.state,
       });
     });
   });
@@ -100,7 +59,7 @@ function NodeServiceTable({ node }) {
         {
           title: 'State',
           field: 'state',
-          render: cluster => getStateChip(cluster?.state),
+          render: cluster => <ClusterStateChip cluster={cluster} />,
         },
       ]}
       data={sortBy(flatClusters, 'workspaceName')}
