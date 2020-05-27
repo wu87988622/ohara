@@ -351,6 +351,9 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Paper events
     paper.on('element:pointerclick', elementView => {
+      // Illegal elements cannot be interactive with
+      if (elementView.model.get('isIllegal')) return;
+
       resetElements();
 
       elementView
@@ -563,6 +566,7 @@ const Paper = React.forwardRef((props, ref) => {
           // Update element status, topic has a slightly different logic, so we
           // handle it differently in each switch case
           const status = elementView.model.get('status').toLowerCase();
+          const isIllegal = elementView.model.get('isIllegal');
           const isTopic = elementView.model.get('kind') === KIND.topic;
 
           switch (status.toLowerCase()) {
@@ -615,6 +619,12 @@ const Paper = React.forwardRef((props, ref) => {
               break;
             default:
               throw new Error(`Unknown cell status: ${status}`);
+          }
+
+          // Handle illegal connectors, the only operation for these connectors
+          // are -> remove 🗑
+          if (!isTopic && isIllegal) {
+            elementView.disableMenu(['link', 'start', 'stop', 'config']);
           }
         }
       },

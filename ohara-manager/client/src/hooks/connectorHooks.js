@@ -158,10 +158,11 @@ export const useConnectors = () => {
     const connectors = selectors.getConnectorByGroup(state, { group });
     const results = connectors.map(connector => {
       const info = selectors.getInfoById(state, { id: workerId });
+
       const settingDefinitions =
         info?.classInfos.find(
           def => def.className === connector.connector__class,
-        ).settingDefinitions || [];
+        )?.settingDefinitions || [];
 
       return _.merge(connector, { settingDefinitions });
     });

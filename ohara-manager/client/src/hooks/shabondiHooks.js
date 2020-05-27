@@ -160,7 +160,7 @@ export const useShabondis = () => {
       const info = selectors.getInfoById(state, { id: workerId });
       const settingDefinitions =
         info?.classInfos.find(def => def.className === shabondi.shabondi__class)
-          .settingDefinitions || [];
+          ?.settingDefinitions || [];
       return merge(shabondi, { settingDefinitions });
     });
     return results;
