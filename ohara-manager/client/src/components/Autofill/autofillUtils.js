@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
-import { get, includes, isBoolean, isNumber, isString, replace } from 'lodash';
+import {
+  get,
+  includes,
+  isBoolean,
+  isNumber,
+  isString,
+  replace,
+  toString,
+} from 'lodash';
+import { isNumberType, Type } from 'api/apiInterface/definitionInterface';
 
 const getAllowedKeys = definitions =>
   definitions
@@ -23,6 +32,17 @@ const getAllowedKeys = definitions =>
     .filter(def => def.permission === 'EDITABLE')
     .sort((def, other) => def.orderInGroup >= other.orderInGroup)
     .map(def => def.key);
+
+const parseByType = (value, type) => {
+  if (isNumberType(type)) {
+    return parseInt(value);
+  } else if (type === Type.BOOLEAN) {
+    return toString(value).toLowerCase() === 'true';
+  } else {
+    // do nothing for the rest types
+    return value;
+  }
+};
 
 export const toAutofillData = (formValues = {}, definitions) => {
   const keys = getAllowedKeys(definitions);
@@ -48,7 +68,9 @@ export const toFormValues = (autofillData, definitions) => {
     .filter(setting => includes(keys, setting.key))
     .reduce((acc, cur) => {
       const { key, value } = cur;
-      acc[key] = value;
+      // parse the value by valueType from setting to formData
+      const type = definitions.find(def => def.key === key)?.valueType;
+      acc[key] = parseByType(value, type);
       return acc;
     }, {});
 };

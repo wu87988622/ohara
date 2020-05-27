@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { get, find, map, noop } from 'lodash';
+import { get, find, map, noop, toString } from 'lodash';
 
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -101,7 +101,7 @@ const AutofillSelector = props => {
                     {map(settingFilling.settings, setting => (
                       <TableRow key={setting.key}>
                         <TableCell>{setting.key}</TableCell>
-                        <TableCell>{setting.value}</TableCell>
+                        <TableCell>{toString(setting.value)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
