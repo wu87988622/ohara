@@ -18,13 +18,38 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  startWith,
+  mergeMap,
+  concatMap,
+} from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+
+export const updateWorkerAndWorkspace$ = values => {
+  const workerId = getId(values);
+  return defer(() => workerApi.update(values)).pipe(
+    map(res => res.data),
+    map(data => normalize(data, schema.worker)),
+    map(normalizedData => merge(normalizedData, { workerId })),
+    concatMap(normalizedData =>
+      from([
+        actions.updateWorkspace.trigger({
+          worker: normalizedData,
+          ...values.workspaceKey,
+        }),
+        actions.updateWorker.success(normalizedData),
+      ]),
+    ),
+    startWith(actions.updateWorker.request({ workerId })),
+  );
+};
 
 const updateWorker$ = values => {
   const workerId = getId(values);

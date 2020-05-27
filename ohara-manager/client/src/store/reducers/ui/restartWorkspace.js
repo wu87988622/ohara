@@ -15,7 +15,6 @@
  */
 
 import * as actions from 'store/actions';
-import { ACTIONS } from 'const';
 
 const defaultSteps = [
   'Stop Worker',
@@ -39,7 +38,6 @@ const initialState = {
     message: 'Start RestartWorkspace... (0% complete)',
     isPause: false,
   },
-  skipList: [],
   lastUpdated: null,
   error: null,
 };
@@ -96,27 +94,13 @@ export default function reducer(state = initialState, action) {
         ...state,
         isAutoClose: isAuto,
       };
-    case actions.updateZookeeper.REQUEST:
+    case actions.updateZookeeper.SUCCESS:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_ZOOKEEPER],
         progress: {
           ...state.progress,
           message: 'Update zookeeper... (43% complete)',
           log: [...state.progress.log, { title: `${now} Update zookeeper...` }],
-        },
-      };
-    case actions.startZookeeper.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.START_ZOOKEEPER],
-        progress: {
-          ...state.progress,
-          message: 'Wait start zookeeper... (52% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Wait to start zookeeper...` },
-          ],
         },
       };
     case actions.startZookeeper.SUCCESS:
@@ -132,27 +116,13 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-    case actions.updateBroker.REQUEST:
+    case actions.updateBroker.SUCCESS:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_BROKER],
         progress: {
           ...state.progress,
           message: 'Update broker... (29% complete)',
           log: [...state.progress.log, { title: `${now} Update broker...` }],
-        },
-      };
-    case actions.startBroker.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.START_BROKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait start broker... (66% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Wait to start broker...` },
-          ],
         },
       };
     case actions.startBroker.SUCCESS:
@@ -168,28 +138,13 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-    case actions.updateWorker.REQUEST:
+    case actions.updateWorker.SUCCESS:
       return {
         ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_WORKER],
         progress: {
           ...state.progress,
           message: 'Update worker... (15% complete)',
           log: [...state.progress.log, { title: `${now} Update worker...` }],
-        },
-      };
-    case actions.startWorker.REQUEST:
-      return {
-        ...state,
-        activeStep: 6,
-        skipList: [...state.skipList, ACTIONS.START_WORKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait start worker... (80% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Wait to start worker...` },
-          ],
         },
       };
     case actions.startWorker.SUCCESS:
@@ -197,7 +152,6 @@ export default function reducer(state = initialState, action) {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 6,
           message: 'Start worker success... (87% complete)',
           log: [
             ...state.progress.log,
@@ -205,20 +159,6 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-    case actions.stopWorker.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_WORKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait stop worker... (7% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Start to stop worker...` },
-          ],
-        },
-      };
-
     case actions.stopWorker.SUCCESS:
       return {
         ...state,
@@ -232,21 +172,6 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-
-    case actions.stopBroker.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_BROKER],
-        progress: {
-          ...state.progress,
-          message: 'Wait stop broker... (21% complete)',
-          log: [
-            ...state.progress.log,
-            { title: `${now} Start to stop broker...` },
-          ],
-        },
-      };
-
     case actions.stopBroker.SUCCESS:
       return {
         ...state,
@@ -260,23 +185,6 @@ export default function reducer(state = initialState, action) {
           ],
         },
       };
-
-    case actions.stopZookeeper.REQUEST:
-      return {
-        ...state,
-        skipList: [...state.skipList, ACTIONS.STOP_ZOOKEEPER],
-        progress: {
-          ...state.progress,
-          message: 'Wait stop zookeeper... (35% complete)',
-          log: [
-            ...state.progress.log,
-            {
-              title: `${now} Start to stop zookeeper...`,
-            },
-          ],
-        },
-      };
-
     case actions.stopZookeeper.SUCCESS:
       return {
         ...state,
@@ -298,7 +206,7 @@ export default function reducer(state = initialState, action) {
         closeDisable: false,
         progress: {
           ...state.progress,
-          activeStep: 7,
+          activeStep: 6,
           message: 'Restart workspace success... (100% complete)',
           isPause: false,
         },

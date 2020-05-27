@@ -20,8 +20,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
 import * as hooks from 'hooks';
-import { convertIdToKey } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
+import { getKey } from 'utils/object';
 
 export const useOpenRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
@@ -73,20 +73,20 @@ export const useRollbackRestartWorkspaceAction = () => {
 export const useRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
   const workspace = hooks.useWorkspace();
-  const workspaceId = hooks.useWorkspaceId();
-  const zookeeperId = hooks.useZookeeperId();
-  const brokerId = hooks.useBrokerId();
-  const workerId = hooks.useWorkerId();
+  const zookeeperKey = getKey(hooks.useZookeeper());
+  const brokerKey = getKey(hooks.useBroker());
+  const workerKey = getKey(hooks.useWorker());
+  const workspaceKey = getKey(hooks.useWorkspace());
   const tmpWorker = hooks.useWorker();
   const tmpBroker = hooks.useBroker();
   const tmpZookeeper = hooks.useZookeeper();
   const topics = hooks.useTopicsInWorkspace();
 
   const values = {
-    workspace: convertIdToKey(workspaceId),
-    zookeeper: convertIdToKey(zookeeperId),
-    broker: convertIdToKey(brokerId),
-    worker: convertIdToKey(workerId),
+    workspaceKey,
+    zookeeperKey,
+    brokerKey,
+    workerKey,
     workerSettings: workspace.worker,
     brokerSettings: workspace.broker,
     zookeeperSettings: workspace.zookeeper,
