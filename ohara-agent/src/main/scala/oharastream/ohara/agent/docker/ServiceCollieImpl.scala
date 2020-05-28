@@ -76,7 +76,8 @@ private[ohara] class ServiceCollieImpl(cacheTimeout: Duration, dataCollie: DataC
         parse(ClusterKind.ZOOKEEPER, zookeeperCollie.toStatus) ++
           parse(ClusterKind.BROKER, brokerCollie.toStatus) ++
           parse(ClusterKind.WORKER, workerCollie.toStatus) ++
-          parse(ClusterKind.STREAM, streamCollie.toStatus)
+          parse(ClusterKind.STREAM, streamCollie.toStatus) ++
+          parse(ClusterKind.SHABONDI, shabondiCollie.toStatus)
       }
 
   override def close(): Unit = {
