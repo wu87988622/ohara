@@ -210,22 +210,20 @@ export const StyledPaper = styled.div(
       }
 
       .metrics {
-        .field {
-          display: flex;
-          border-bottom: 1px solid ${theme.palette.divider};
-        }
+        display: flex;
 
-        .field-name {
+        .metrics-name {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          margin-right: ${theme.spacing(2)}px;
+
           &:first-letter {
             text-transform: capitalize;
           }
         }
 
-        .field:last-child {
-          border-bottom: none;
-        }
-
-        .field-value {
+        .metrics-value {
           margin-left: auto;
         }
       }

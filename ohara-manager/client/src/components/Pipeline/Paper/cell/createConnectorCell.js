@@ -70,7 +70,7 @@ const createConnectorCell = options => {
   const removeIcon = renderToString(<CancelIcon viewBox="-4 -5 32 32" />);
 
   const displayClassName = className.split('.').pop();
-  const iconStatus = getIconStatus(status);
+  const iconStatus = CELL_STATUS[status.toLowerCase()] || CELL_STATUS.stopped;
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
@@ -265,7 +265,8 @@ const createConnectorCell = options => {
       $box.find('.display-name').text(displayName);
 
       // Icon status
-      const iconStatus = getIconStatus(status);
+      const iconStatus =
+        CELL_STATUS[status.toLowerCase()] || CELL_STATUS.stopped;
       $box
         .find('.icon')
         .removeClass()
@@ -357,32 +358,15 @@ function getMetrics(meters) {
   // The user will be able to choose a metrics item with our UI
   // in the future, but for now, we're displaying the first item
   // from the list
-  const firstFieldName = _.get(
-    results,
-    '[0].document',
-    'No metrics data available',
-  );
-  const defaultValue = firstFieldName === 'No metrics data available' ? '' : 0;
-  const firstFieldValue = _.get(results, '[0].value', defaultValue);
+  const defaultText = 'No metrics data available';
+  const metricsName = results?.[0]?.document || defaultText;
+  const defaultValue = metricsName === defaultText ? '' : 0;
+  const firstFieldValue = results?.[0]?.value || defaultValue;
 
   return `
-  <div class="field">
-    <span class="field-name">${firstFieldName}</span>
-    <span class="field-value">${firstFieldValue.toLocaleString()}</span>
-  </div>
+    <span class="metrics-name">${metricsName}</span>
+    <span class="metrics-value">${firstFieldValue.toLocaleString()}</span>
   `;
-}
-
-function getIconStatus(status) {
-  const { stopped, pending, running, failed } = CELL_STATUS;
-  const _status = status.toLowerCase();
-
-  if (_status === stopped) return stopped;
-  if (_status === pending) return pending;
-  if (_status === running) return running;
-  if (_status === failed) return failed;
-
-  return stopped;
 }
 
 export default createConnectorCell;
