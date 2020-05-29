@@ -56,6 +56,7 @@ const Chooser = props => {
 
   return (
     <Autocomplete
+      disabled={disabled}
       ref={refs}
       disableClearable={multipleChoice}
       disableCloseOnSelect={multipleChoice}
@@ -68,7 +69,6 @@ const Chooser = props => {
       renderInput={params => (
         <TextField
           {...params}
-          disabled={disabled}
           error={hasError}
           fullWidth
           helperText={hasError ? error : helperText}
