@@ -38,8 +38,8 @@ const ViewLog = () => {
     <StyledLogDiv data-testid="view-log-list">
       <VirtualizedList
         data={currentLog}
-        rowRenderer={rowRenderer}
         isLoading={isFetching}
+        rowRenderer={rowRenderer}
       />
     </StyledLogDiv>
   );

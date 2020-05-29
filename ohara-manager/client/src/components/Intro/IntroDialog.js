@@ -89,23 +89,23 @@ const MuiDialog = ({ quickModeText }) => {
 
   return (
     <Dialog
-      open={isIntroDialogOpen}
-      onClose={closeIntroDialog}
+      fullWidth
       maxWidth="sm"
+      onClose={closeIntroDialog}
+      open={isIntroDialogOpen}
       PaperComponent={DrabblePaper}
       TransitionComponent={Transition}
-      fullWidth
     >
       <StyledDialogTitle disableTypography>
         <div className="brand">
-          <Logo width="38" height="38" />
+          <Logo height="38" width="38" />
           <Typography variant="h3">
             <span className="name">Ohara Stream</span>
           </Typography>
         </div>
         <IconButton
-          data-testid="close-intro-button"
           className="close-button"
+          data-testid="close-intro-button"
           onClick={closeIntroDialog}
         >
           <CloseIcon />
@@ -120,7 +120,9 @@ const MuiDialog = ({ quickModeText }) => {
       </StyledDialogContent>
       <StyledDialogActions>
         <Button
+          autoFocus
           className="quick-mode-button"
+          color="primary"
           onClick={() => {
             openWorkspaceDialog();
             // We need to reset the form before each time create a new service
@@ -130,9 +132,7 @@ const MuiDialog = ({ quickModeText }) => {
             // 3. QUICK CREATE workspace, and the name will use "workspace2" by default
             resetForm(FORM.CREATE_WORKSPACE);
           }}
-          color="primary"
           variant="contained"
-          autoFocus
         >
           {quickModeText}
         </Button>

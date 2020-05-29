@@ -71,14 +71,14 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
 
   return (
     <Dialog
-      title={title}
-      open={isOpen}
+      confirmDisabled={confirmDisabled}
+      confirmText="Save"
+      confirmTooltip={confirmTooltip}
+      maxWidth="md"
       onClose={handleCancel}
       onConfirm={handleConfirm}
-      confirmDisabled={confirmDisabled}
-      confirmTooltip={confirmTooltip}
-      confirmText="Save"
-      maxWidth="md"
+      open={isOpen}
+      title={title}
     >
       <NodeTable
         {...tableProps}

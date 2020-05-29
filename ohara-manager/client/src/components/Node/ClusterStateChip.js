@@ -26,20 +26,20 @@ const ClusterStateChip = ({ cluster }) => {
   if (cluster?.state === 'RUNNING') {
     return (
       <Chip
-        variant="outlined"
         color="primary"
         icon={<CheckCircleIcon />}
         label={capitalize(cluster.state)}
         size="small"
+        variant="outlined"
       />
     );
   } else {
     return (
       <Chip
-        variant="outlined"
         icon={<HelpIcon />}
         label={cluster?.state ? capitalize(cluster.state) : 'Unknown'}
         size="small"
+        variant="outlined"
       />
     );
   }

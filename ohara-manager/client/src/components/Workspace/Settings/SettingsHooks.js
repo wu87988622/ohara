@@ -326,8 +326,8 @@ export const useConfig = ({
           componentProps: {
             children: (
               <DeleteConfirmDialogContent
-                workspace={workspace}
                 onValidate={setIsDeleteEnabled}
+                workspace={workspace}
               />
             ),
             title: 'Are you absolutely sure?',

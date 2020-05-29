@@ -22,8 +22,8 @@ import Draggable from 'react-draggable';
 const DrabblePaper = props => {
   return (
     <Draggable
-      handle=".MuiDialogTitle-root"
       cancel={'[class*="MuiDialogContent-root"]'}
+      handle=".MuiDialogTitle-root"
     >
       <Paper {...props} />
     </Draggable>

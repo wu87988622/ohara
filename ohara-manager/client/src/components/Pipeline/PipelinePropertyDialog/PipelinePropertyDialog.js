@@ -198,15 +198,13 @@ const PipelinePropertyDialog = props => {
   };
 
   return (
-    <Dialog onClose={onClose} open={isOpen} maxWidth={maxWidth} fullWidth>
+    <Dialog fullWidth maxWidth={maxWidth} onClose={onClose} open={isOpen}>
       <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
           {// Unimplemented feature
           false && (
             <StyleFilter
-              placeholder="Quick filter"
-              variant="outlined"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -214,6 +212,8 @@ const PipelinePropertyDialog = props => {
                   </InputAdornment>
                 ),
               }}
+              placeholder="Quick filter"
+              variant="outlined"
             />
           )}
           <div>
@@ -227,8 +227,8 @@ const PipelinePropertyDialog = props => {
                     expanded={
                       expanded === title || (index === 0 && expanded === null)
                     }
-                    onChange={handleExpansionPanelChange(title)}
                     key={title}
+                    onChange={handleExpansionPanelChange(title)}
                   >
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography>{_.capitalize(title)}</Typography>
@@ -238,14 +238,14 @@ const PipelinePropertyDialog = props => {
                         {defs.map((def, index) => {
                           return (
                             <ListItem
-                              className="nested"
                               button
+                              className="nested"
                               key={def.key}
+                              onClick={() => handleClick(def.key)}
                               selected={
                                 def.key === selected ||
                                 (selected === null && index === 0)
                               }
-                              onClick={() => handleClick(def.key)}
                             >
                               <ListItemText primary={def.displayName} />
                             </ListItem>
@@ -284,8 +284,8 @@ const PipelinePropertyDialog = props => {
       <StyleMuiDialogActions>
         <Button
           autoFocus
-          onClick={() => formRef.current.submit()}
           color="primary"
+          onClick={() => formRef.current.submit()}
         >
           Save changes
         </Button>

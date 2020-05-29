@@ -87,8 +87,8 @@ const DeleteDialog = ({
   return (
     <Dialog
       maxWidth={maxWidth}
-      open={open}
       onClose={onClose}
+      open={open}
       PaperComponent={DrabblePaper}
     >
       <div data-testid={testId}>
@@ -104,8 +104,8 @@ const DeleteDialog = ({
             <div>
               <Checkbox
                 checked={isForceChecked}
-                onChange={event => setIsForceChecked(event.target.checked)}
                 color="primary"
+                onChange={event => setIsForceChecked(event.target.checked)}
               />{' '}
               {`Force ${toLower(confirmText)}`}
             </div>
@@ -117,11 +117,11 @@ const DeleteDialog = ({
           </Button>
           <ConfirmButtonWrapper>
             <ConfirmButton
+              autoFocus
+              color="primary"
+              data-testid={'confirm-button-' + confirmText}
               disabled={isWorking || (confirmDisabled && !isForceChecked)}
               onClick={onConfirm}
-              color="primary"
-              autoFocus
-              data-testid={'confirm-button-' + confirmText}
             >
               {confirmText}
             </ConfirmButton>

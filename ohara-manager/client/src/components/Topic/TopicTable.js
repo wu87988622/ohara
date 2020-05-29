@@ -126,7 +126,6 @@ function TopicTable(props) {
   return (
     <>
       <Table
-        title={title}
         actions={[
           {
             disabled: broker?.state !== 'RUNNING',
@@ -176,8 +175,8 @@ function TopicTable(props) {
                       <Tooltip title="Click the link to switch to that pipeline">
                         <Link
                           component="button"
-                          variant="body2"
                           onClick={() => onLinkClick(pipeline)}
+                          variant="body2"
                         >
                           {pipeline.name}
                         </Link>
@@ -202,24 +201,25 @@ function TopicTable(props) {
           selection: false,
           showTitle: options?.showTitle,
         }}
+        title={title}
       />
       <TopicCreateDialog
-        topics={data}
         broker={broker}
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         onConfirm={onCreate}
+        topics={data}
       />
       <TopicDeleteDialog
         isOpen={isDeleteDialogOpen}
-        topic={activeTopic}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={onDelete}
+        topic={activeTopic}
       />
       <TopicDetailDialog
         isOpen={isDetailDialogOpen}
-        topic={activeTopic}
         onClose={() => setIsDetailDialogOpen(false)}
+        topic={activeTopic}
       />
     </>
   );

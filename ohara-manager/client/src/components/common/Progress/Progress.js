@@ -109,7 +109,7 @@ const Progress = props => {
   }, [activeStep, completed, createTitle, isLoading, open, steps.length]);
 
   return (
-    <Dialog open={isLoading} maxWidth={maxWidth} fullWidth>
+    <Dialog fullWidth maxWidth={maxWidth} open={isLoading}>
       <DialogTitle>{title}</DialogTitle>
       <Stepper activeStep={activeStep}>
         {steps.map(step => {
@@ -118,7 +118,7 @@ const Progress = props => {
             type.error = true;
           }
           return (
-            <Step key={step} data-testid={testId}>
+            <Step data-testid={testId} key={step}>
               <StepLabel {...type}>{step}</StepLabel>
             </Step>
           );
@@ -126,8 +126,8 @@ const Progress = props => {
       </Stepper>
       <LinearProgress
         color={color}
-        valueBuffer={buffer}
         value={completed}
+        valueBuffer={buffer}
         variant="buffer"
       />
       <StyledDiv />

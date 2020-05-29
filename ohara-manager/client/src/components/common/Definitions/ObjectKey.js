@@ -49,26 +49,26 @@ const ObjectKey = props => {
     <>
       <TextField
         {...rest}
-        ref={refs}
-        onChange={handleChange}
-        name={name + 'Name'}
-        InputProps={restInput}
-        value={objectKey.name}
-        fullWidth
-        label={label + ' (name)'}
-        helperText={hasError ? meta.error : helperText}
         error={hasError}
+        fullWidth
+        helperText={hasError ? meta.error : helperText}
+        InputProps={restInput}
+        label={label + ' (name)'}
+        name={name + 'Name'}
+        onChange={handleChange}
+        ref={refs}
+        value={objectKey.name}
       />
       <TextField
         {...rest}
-        onChange={handleChange}
-        name={name + 'Group'}
-        InputProps={restInput}
-        value={objectKey.group}
-        fullWidth
-        label={label + ' (group)'}
-        helperText={hasError ? meta.error : helperText}
         error={hasError}
+        fullWidth
+        helperText={hasError ? meta.error : helperText}
+        InputProps={restInput}
+        label={label + ' (group)'}
+        name={name + 'Group'}
+        onChange={handleChange}
+        value={objectKey.group}
       />
     </>
   );

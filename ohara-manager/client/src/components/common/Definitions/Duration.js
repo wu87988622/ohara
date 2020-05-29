@@ -63,20 +63,20 @@ const Duration = props => {
   return (
     <StyledTextField
       {...rest}
-      ref={refs}
-      fullWidth
-      onChange={handleChange}
-      name={name}
-      value={convertUnit(value)}
-      helperText={hasError ? meta.error : helperText}
       error={hasError}
-      type="number"
+      fullWidth
+      helperText={hasError ? meta.error : helperText}
       InputProps={{
         ...restInput,
         endAdornment: <InputAdornment position="end">Seconds</InputAdornment>,
         // Props for native input element
         inputProps: { min: 0 },
       }}
+      name={name}
+      onChange={handleChange}
+      ref={refs}
+      type="number"
+      value={convertUnit(value)}
     />
   );
 };

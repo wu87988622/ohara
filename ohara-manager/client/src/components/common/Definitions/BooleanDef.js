@@ -44,11 +44,11 @@ const BooleanDef = props => {
           <Checkbox
             data-testid={testId}
             {...rest}
-            onChange={onChange}
-            name={name}
-            inputProps={{ type: 'checkbox', ...restInput }}
             checked={checked}
             color="primary"
+            inputProps={{ type: 'checkbox', ...restInput }}
+            name={name}
+            onChange={onChange}
           />
         }
         label={label}

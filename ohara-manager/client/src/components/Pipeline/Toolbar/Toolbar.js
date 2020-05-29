@@ -178,24 +178,24 @@ const Toolbar = props => {
         <div className="zoom">
           <ButtonGroup size="small">
             <Button
-              onClick={() => handleZoom(scale, 'out')}
               disabled={scale <= 0.25}
+              onClick={() => handleZoom(scale, 'out')}
             >
               <Tooltip title="Zoom out">
                 <RemoveIcon color="action" />
               </Tooltip>
             </Button>
             <Button
-              onClick={handleZoomClick}
-              variant="outlined"
               color="default"
+              onClick={handleZoomClick}
               size="small"
+              variant="outlined"
             >
               {getZoomDisplayedValue(scale)}
             </Button>
             <Button
-              onClick={() => handleZoom(scale, 'in')}
               disabled={scale >= 1.5}
+              onClick={() => handleZoom(scale, 'in')}
             >
               <Tooltip title="Zoom in">
                 <AddIcon color="action" />
@@ -207,8 +207,8 @@ const Toolbar = props => {
           <Menu
             anchorEl={zoomAnchorEl}
             keepMounted
-            open={Boolean(zoomAnchorEl)}
             onClose={handleZoomClose}
+            open={Boolean(zoomAnchorEl)}
           >
             <MenuItem onClick={() => handleZoom(0.5, 'fromDropdown')}>
               50%
@@ -228,13 +228,13 @@ const Toolbar = props => {
         <div className="fit">
           <Tooltip title="Resize the paper to fit the content">
             <Button
+              color="default"
               onClick={() => {
                 const newScale = paperApi.fit();
                 setScale(newScale);
               }}
-              variant="outlined"
-              color="default"
               size="small"
+              variant="outlined"
             >
               <FullscreenIcon color="action" />
             </Button>
@@ -245,11 +245,11 @@ const Toolbar = props => {
         <div className="center">
           <Tooltip title="Move selected graph to the center">
             <Button
-              onClick={() => paperApi.center(selectedCell.id)}
-              variant="outlined"
               color="default"
-              size="small"
               disabled={!selectedCell}
+              onClick={() => paperApi.center(selectedCell.id)}
+              size="small"
+              variant="outlined"
             >
               <FullscreenExitIcon color="action" />
             </Button>
@@ -260,11 +260,11 @@ const Toolbar = props => {
 
       <div className="pipeline-controls">
         <Button
-          onClick={handlePipelineControlsClick}
-          variant="outlined"
           color="default"
-          size="small"
           endIcon={<ArrowDropDownIcon />}
+          onClick={handlePipelineControlsClick}
+          size="small"
+          variant="outlined"
         >
           PIPELINE
         </Button>
@@ -273,13 +273,13 @@ const Toolbar = props => {
         <Menu
           anchorEl={pipelineAnchorEl}
           keepMounted
-          open={Boolean(pipelineAnchorEl)}
           onClose={handlePipelineControlsClose}
+          open={Boolean(pipelineAnchorEl)}
         >
-          <MenuItem onClick={handlePipelineStart} disabled={!hasElements}>
+          <MenuItem disabled={!hasElements} onClick={handlePipelineStart}>
             Start all components
           </MenuItem>
-          <MenuItem onClick={handlePipelineStop} disabled={!hasElements}>
+          <MenuItem disabled={!hasElements} onClick={handlePipelineStop}>
             Stop all components
           </MenuItem>
           <MenuItem onClick={handlePipelineDelete}>
@@ -294,11 +294,11 @@ const Toolbar = props => {
             control={
               <Switch
                 checked={isMetricsOn}
+                color="primary"
                 onChange={() => {
                   pipelineDispatch({ type: 'toggleMetricsButton' });
                   paperApi.toggleMetrics(!isMetricsOn);
                 }}
-                color="primary"
               />
             }
           />
@@ -307,15 +307,15 @@ const Toolbar = props => {
       )}
 
       <DeleteDialog
-        open={isDeleteDialogOpen}
-        title="Delete pipeline"
-        isWorking={isDeleting}
         confirmDisabled={runningServices.length > 0}
         confirmText={pipelineError ? 'Retry' : 'Delete'}
         content={deleteDialogContent}
+        isWorking={isDeleting}
+        maxWidth="xs"
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
-        maxWidth="xs"
+        open={isDeleteDialogOpen}
+        title="Delete pipeline"
       />
     </StyledToolbar>
   );

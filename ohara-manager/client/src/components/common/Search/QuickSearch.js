@@ -77,10 +77,10 @@ const QuickSearch = ({
           <SearchIcon />
         </IconButton>
         <InputBase
-          type="search"
-          placeholder={placeholder}
           inputProps={{ 'aria-label': 'Search' }}
           onChange={event => handleChange(event.target.value)}
+          placeholder={placeholder}
+          type="search"
         />
       </Paper>
     </Wrapper>

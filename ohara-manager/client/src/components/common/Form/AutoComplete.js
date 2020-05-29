@@ -88,22 +88,22 @@ const AutoComplete = props => {
         multiple={multiple}
         onChange={handleChange}
         options={options}
-        value={defaultValue}
         renderInput={params => (
           <TextField
+            error={showError}
+            fullWidth={true}
+            helperText={showError ? meta.error || meta.submitError : helperText}
             label={label}
-            required={required}
             margin="normal"
             name={name}
-            fullWidth={true}
-            error={showError}
-            helperText={showError ? meta.error || meta.submitError : helperText}
+            required={required}
             variant={variant}
             {...params}
             {...restInput}
             {...restTextFieldProps}
           />
         )}
+        value={defaultValue}
         {...lessRest}
       />
     </Wrapper>

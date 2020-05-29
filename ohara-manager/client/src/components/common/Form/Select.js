@@ -45,14 +45,14 @@ const Select = props => {
   return (
     <StyledSelect
       {...rest}
-      name={name}
       error={error}
       helperText={error && meta.error}
       InputProps={restInput}
+      name={name}
       onChange={onChange}
+      select={true}
       value={_value}
       width={width}
-      select={true}
     >
       {_list.map(item => {
         const disabled = disables.includes(item);

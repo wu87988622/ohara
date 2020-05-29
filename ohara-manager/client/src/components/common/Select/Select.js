@@ -61,9 +61,6 @@ const Select = props => {
     <Typography component="div" data-testid={testId}>
       <FormControl disabled={disabled}>
         <MuiSelect
-          value={value}
-          onOpen={event => setAnchorEl(event.currentTarget)}
-          onChange={onChange}
           input={<StyledInputBase />}
           MenuProps={{
             getContentAnchorEl: null,
@@ -71,17 +68,20 @@ const Select = props => {
             anchorOrigin,
             transformOrigin,
           }}
+          onChange={onChange}
+          onOpen={event => setAnchorEl(event.currentTarget)}
+          value={value}
         >
           {map(list, item => {
             if (isString(item)) {
               return (
-                <MenuItem value={item} key={item}>
+                <MenuItem key={item} value={item}>
                   {item}
                 </MenuItem>
               );
             } else {
               return (
-                <MenuItem value={item.value} key={item.value}>
+                <MenuItem key={item.value} value={item.value}>
                   {getDisplayNameByValue(item)}
                 </MenuItem>
               );

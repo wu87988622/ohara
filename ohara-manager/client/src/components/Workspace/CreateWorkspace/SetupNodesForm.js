@@ -30,19 +30,19 @@ const SetupNodesForm = props => {
     <form onSubmit={handleSubmit}>
       <Paper className="fields">
         <Field
-          name="workspace.nodeNames"
-          label="Workspace nodes"
           component={NodesField}
+          label="Workspace nodes"
+          name="workspace.nodeNames"
           required
         />
       </Paper>
       <div className="buttons">
         <Button onClick={previousStep}>Back</Button>
         <Button
-          type="submit"
-          variant="contained"
           color="primary"
           disabled={invalid || pristine || submitting}
+          type="submit"
+          variant="contained"
         >
           Next
         </Button>

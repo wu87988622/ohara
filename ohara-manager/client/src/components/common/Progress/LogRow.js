@@ -27,7 +27,7 @@ const LogRow = ({ rowData: log, style }) => {
   const isError = _.get(log, 'type') === LOG_LEVEL.error;
 
   return (
-    <Row style={style} className={clx({ error: isError })}>
+    <Row className={clx({ error: isError })} style={style}>
       <div>{title}</div>
     </Row>
   );

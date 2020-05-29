@@ -31,16 +31,16 @@ export default () => {
 
   return (
     <FullScreenDialog
-      title={`Create workspace - ${capitalize(mode)}`}
-      open={isDialogOpen}
       onClose={closeDialog}
+      open={isDialogOpen}
+      title={`Create workspace - ${capitalize(mode)}`}
     >
       <CreateWorkspaceForm onCancel={closeDialog} onSubmit={createWorkspace} />
       <Progress
+        activeStep={progress.activeStep}
+        createTitle={'Create Workspace'}
         open={progress.open}
         steps={progress.steps}
-        createTitle={'Create Workspace'}
-        activeStep={progress.activeStep}
       />
     </FullScreenDialog>
   );

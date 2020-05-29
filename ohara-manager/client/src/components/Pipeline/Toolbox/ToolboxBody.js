@@ -50,29 +50,29 @@ const ToolboxList = props => {
   return (
     <div
       className="toolbox-body"
-      style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
-      ref={toolboxBodyRef}
       onScroll={handleScroll}
+      ref={toolboxBodyRef}
+      style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
     >
-      <ExpansionPanel square expanded={expanded.source}>
+      <ExpansionPanel expanded={expanded.source} square>
         <ExpansionPanelSummary
-          ref={panelSummaryRef}
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
             pipelineDispatch({ type: 'setToolbox', payload: 'source' })
           }
+          ref={panelSummaryRef}
         >
           <Typography variant="subtitle1">Source</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="source-list" className="toolbox-list">
+            <div className="toolbox-list" id="source-list">
               {times(5, index => (
                 <Skeleton
-                  key={index}
                   animation="wave"
-                  width={260}
                   height={40}
+                  key={index}
+                  width={260}
                 />
               ))}
             </div>
@@ -86,7 +86,7 @@ const ToolboxList = props => {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel square expanded={expanded.topic}>
+      <ExpansionPanel expanded={expanded.topic} square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
@@ -98,7 +98,7 @@ const ToolboxList = props => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="topic-list" className="toolbox-list"></div>
+            <div className="toolbox-list" id="topic-list"></div>
           </List>
 
           <div className="add-button">
@@ -114,7 +114,7 @@ const ToolboxList = props => {
 
       <AddTopicDialog uniqueId="toolbox" />
 
-      <ExpansionPanel square expanded={expanded.stream}>
+      <ExpansionPanel expanded={expanded.stream} square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
@@ -126,7 +126,7 @@ const ToolboxList = props => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="stream-list" className="toolbox-list"></div>
+            <div className="toolbox-list" id="stream-list"></div>
           </List>
 
           <ToolboxRedirectButton
@@ -137,7 +137,7 @@ const ToolboxList = props => {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel square expanded={expanded.sink}>
+      <ExpansionPanel expanded={expanded.sink} square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
@@ -149,13 +149,13 @@ const ToolboxList = props => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
-            <div id="sink-list" className="toolbox-list">
+            <div className="toolbox-list" id="sink-list">
               {times(5, index => (
                 <Skeleton
-                  key={index}
                   animation="wave"
-                  width={260}
                   height={40}
+                  key={index}
+                  width={260}
                 />
               ))}
             </div>

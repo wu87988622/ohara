@@ -59,14 +59,14 @@ const AppBar = () => {
     <StyledAppBar>
       <header>
         <div className="brand">
-          <Logo width="38" height="38" />
+          <Logo height="38" width="38" />
         </div>
         <div className="workspace-list">
           {workspaces.map(({ name }) => {
             const displayName = name.substring(0, 2).toUpperCase();
 
             return (
-              <Tooltip key={name} title={name} placement="right">
+              <Tooltip key={name} placement="right" title={name}>
                 <Link
                   className={clx('workspace-name', 'item', {
                     'active-link': name === workspace?.name,
@@ -81,7 +81,7 @@ const AppBar = () => {
             );
           })}
 
-          <Tooltip title="Create a new workspace" placement="right">
+          <Tooltip placement="right" title="Create a new workspace">
             <div className="add-workspace item" onClick={openIntro}>
               <AddIcon />
             </div>
@@ -89,19 +89,19 @@ const AppBar = () => {
         </div>
 
         <div className="tools">
-          <Tooltip title="Workspace list" placement="right">
+          <Tooltip placement="right" title="Workspace list">
             <IconButton
               className="workspace-list item"
+              disabled={createWorkspaceState?.loading}
               onClick={() =>
                 isEmpty(workspaces) ? openIntro() : toggleWorkspaceList()
               }
-              disabled={createWorkspaceState?.loading}
             >
               <AppsIcon />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Event logs" placement="right">
+          <Tooltip placement="right" title="Event logs">
             <IconButton
               className="event-logs item"
               onClick={() => {
@@ -118,7 +118,7 @@ const AppBar = () => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Developer Tools" placement="right">
+          <Tooltip placement="right" title="Developer Tools">
             <IconButton
               className="developer-tools item"
               onClick={() => {
@@ -130,7 +130,7 @@ const AppBar = () => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Node list" placement="right">
+          <Tooltip placement="right" title="Node list">
             <IconButton
               className="node-list item"
               onClick={() => setIsNodeListDialogOpen(true)}

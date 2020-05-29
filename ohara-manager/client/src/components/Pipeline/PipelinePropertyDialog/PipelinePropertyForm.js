@@ -56,8 +56,8 @@ const PipelinePropertyForm = React.forwardRef((props, ref) => {
 
   return (
     <Form
-      onSubmit={onSubmit}
       initialValues={initialValues}
+      onSubmit={onSubmit}
       render={({ handleSubmit, form }) => {
         formRef.current = form;
         return (

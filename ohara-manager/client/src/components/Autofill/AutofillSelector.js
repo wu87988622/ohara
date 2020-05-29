@@ -62,9 +62,9 @@ const AutofillSelector = props => {
     <Dialog
       confirmDisabled={!selected}
       confirmText="Autofill"
+      maxWidth="sm"
       onClose={handleClose}
       onConfirm={handleSubmit}
-      maxWidth="sm"
       open={isOpen}
       title="Select Autofill"
     >
@@ -77,8 +77,8 @@ const AutofillSelector = props => {
               onChange={handleChange(settingFilling.name)}
             >
               <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
                 aria-controls={`autofill-${settingFilling.name}-content`}
+                expandIcon={<ExpandMoreIcon />}
                 id={settingFilling.name}
               >
                 <FormControlLabel

@@ -106,10 +106,10 @@ const SortTable = props => {
     <Paper>
       {newCount > 0 || deleteCount > 0 ? (
         <TableToolbar
-          newCount={newCount}
           deleteCount={deleteCount}
           handleDiscard={handleDiscard}
           handleRestart={handleRestart}
+          newCount={newCount}
         />
       ) : (
         <></>
@@ -129,9 +129,9 @@ const SortTable = props => {
                     >
                       <TableSortLabel
                         active={orderBy === id}
+                        data-testid={buttonTestId}
                         direction={order}
                         onClick={createSortHandler(id)}
-                        data-testid={buttonTestId}
                       >
                         {label}
                       </TableSortLabel>
@@ -176,9 +176,9 @@ const SortTable = props => {
                   .map((key, i, arr) => {
                     return (
                       <TableCell
-                        key={`${key}:${row[key]}`}
                         align={arr.length - 1 === i ? 'right' : 'left'}
                         data-testid={`${tableName}-${key}`}
+                        key={`${key}:${row[key]}`}
                       >
                         {row[key]}
                       </TableCell>

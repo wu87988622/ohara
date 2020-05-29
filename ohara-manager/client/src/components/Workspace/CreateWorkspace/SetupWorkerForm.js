@@ -29,7 +29,7 @@ const SetupWorkerForm = props => {
       <Paper className="fields"></Paper>
       <div className="buttons">
         <Button onClick={previousStep}>Back</Button>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
+        <Button color="primary" onClick={handleSubmit} variant="contained">
           Next
         </Button>
       </div>

@@ -54,14 +54,13 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
 
   return (
     <Form
+      initialValues={{}}
       onSubmit={(values, form) => {
         onConfirm(values, form).then(() => {
           form.reset();
           onClose();
         });
       }}
-      initialValues={{}}
-      validate={validate}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
@@ -77,53 +76,53 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
           >
             <form onSubmit={handleSubmit}>
               <Field
-                type="text"
-                label="Topic name"
-                id="Topic name"
-                name="name"
+                autoFocus
                 component={InputField}
+                id="Topic name"
+                label="Topic name"
+                name="name"
                 placeholder="topic"
-                margin="normal"
+                required
+                type="text"
                 validate={composeValidators(
                   required,
                   validServiceName,
                   checkDuplicate(topics.map(topic => topic.name)),
                 )}
-                autoFocus
-                required
               />
               <Field
-                type="number"
-                label="Partitions"
-                id="Partitions"
-                name="numberOfPartitions"
-                margin="normal"
                 component={InputField}
-                placeholder={`${minNumberOfPartitions}`}
+                id="Partitions"
                 inputProps={{
                   min: `${minNumberOfPartitions}`,
                   step: '1',
                 }}
+                label="Partitions"
+                margin="normal"
+                name="numberOfPartitions"
+                placeholder={`${minNumberOfPartitions}`}
+                type="number"
                 validate={required}
               />
               <Field
-                type="number"
-                label="Replication factor"
-                id="Replication factor"
-                name="numberOfReplications"
-                margin="normal"
                 component={InputField}
-                placeholder={`${minNumberOfReplications}`}
+                id="Replication factor"
                 inputProps={{
                   min: `${minNumberOfReplications}`,
                   step: '1',
                 }}
+                label="Replication factor"
+                margin="normal"
+                name="numberOfReplications"
+                placeholder={`${minNumberOfReplications}`}
+                type="number"
                 validate={required}
               />
             </form>
           </Dialog>
         );
       }}
+      validate={validate}
     />
   );
 };

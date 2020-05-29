@@ -28,18 +28,18 @@ const NodeErrorDialog = props => {
   return (
     <>
       <Dialog
-        onClose={onClose}
         maxWidth="md"
+        onClose={onClose}
         open={isOpen}
         showActions={false}
         title={error.title}
       >
         <ReactJson
-          src={error.message}
-          enableClipboard={false}
-          iconStyle="square"
           displayDataTypes={false}
           displayObjectSize={false}
+          enableClipboard={false}
+          iconStyle="square"
+          src={error.message}
         />
       </Dialog>
     </>

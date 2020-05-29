@@ -42,31 +42,31 @@ const ArrayDef = props => {
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
     <StyledAutocomplete
-      ref={refs}
-      multiple
-      freeSolo
       defaultValue={options}
+      freeSolo
+      multiple
       onChange={(event, values) => {
         onChange(values);
       }}
-      renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-        ))
-      }
+      ref={refs}
       renderInput={params => {
         return (
           <TextField
             {...params}
             {...rest}
-            placeholder={'Please press enter to add'}
-            fullWidth
-            name={name}
-            helperText={hasError ? meta.error : helperText}
             error={hasError}
+            fullWidth
+            helperText={hasError ? meta.error : helperText}
+            name={name}
+            placeholder={'Please press enter to add'}
           />
         );
       }}
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip label={option} variant="outlined" {...getTagProps({ index })} />
+        ))
+      }
     />
   );
 };

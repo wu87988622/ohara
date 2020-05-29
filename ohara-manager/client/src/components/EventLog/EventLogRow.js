@@ -40,7 +40,7 @@ const EventLogRow = ({ onClick, rowData: log, style }) => {
   });
 
   return (
-    <Row style={style} className={classNames}>
+    <Row className={classNames} style={style}>
       {isError ? (
         <Link onClick={onClick}>
           <CancelIcon className="log-icon" />

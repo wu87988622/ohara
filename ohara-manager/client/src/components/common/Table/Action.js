@@ -69,9 +69,9 @@ function Action(props) {
   const button = (
     <IconButton
       component="div"
+      data-testid={action.testid}
       disabled={disabled}
       onClick={handleClick}
-      data-testid={action.testid}
     >
       {icon}
     </IconButton>

@@ -82,14 +82,14 @@ const MuiTable = props => {
   return (
     <Wrapper className={`${titleClass}`}>
       {hasTitle && <Typography variant="h6">{title}</Typography>}
-      <Table stickyHeader={fixedHeader} size="small" data-testid={testId}>
+      <Table data-testid={testId} size="small" stickyHeader={fixedHeader}>
         <StyledTableHead>
           <TableRow>
             {headers.map((header, idx) => {
               // The last table cell should be aligned to right
               const align = idx === lastIdx ? 'right' : 'left';
               return isEmpty(header) ? (
-                <TableCell className="empty-cell" align={align} key={header} />
+                <TableCell align={align} className="empty-cell" key={header} />
               ) : (
                 <TableCell align={align} key={header}>
                   {header}

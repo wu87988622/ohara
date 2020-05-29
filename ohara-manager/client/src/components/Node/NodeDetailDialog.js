@@ -25,17 +25,17 @@ import NodeServiceTable from './NodeServiceTable';
 function NodeDetailDialog({ mode, node, isOpen, onClose }) {
   return (
     <Dialog
-      open={isOpen}
-      onClose={onClose}
-      title="View node detail"
       maxWidth="md"
+      onClose={onClose}
+      open={isOpen}
       showActions={false}
+      title="View node detail"
     >
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid item md={4} xs={12}>
           {node && <NodeInfoTable mode={mode} node={node} />}
         </Grid>
-        <Grid item xs={12} md={8}>
+        <Grid item md={8} xs={12}>
           {node && <NodeServiceTable node={node} />}
         </Grid>
       </Grid>

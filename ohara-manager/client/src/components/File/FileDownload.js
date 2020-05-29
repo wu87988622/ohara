@@ -26,7 +26,7 @@ const Wrapper = styled.div`
 
 const FileDownload = React.forwardRef(({ file }, ref) => (
   <Wrapper>
-    <a ref={ref} href={file?.url} download={file?.name}>
+    <a download={file?.name} href={file?.url} ref={ref}>
       Click to download
     </a>
   </Wrapper>

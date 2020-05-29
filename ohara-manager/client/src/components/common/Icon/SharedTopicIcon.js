@@ -31,39 +31,39 @@ export const SharedTopicIcon = ({
   return (
     <svg
       {...otherProps}
-      width={width}
-      height={height}
-      viewBox="0 0 58 58"
       fill={fillColor}
+      height={height}
       version="1.1"
+      viewBox="0 0 58 58"
+      width={width}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
     >
-      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+      <g fill="none" fillRule="evenodd" stroke="none" strokeWidth="1">
         <g transform="translate(-304.000000, -2906.000000)">
           <g transform="translate(305.000000, 2907.000000)">
             <g>
               <g>
                 <path
-                  strokeOpacity="0.54"
-                  stroke="#000000"
-                  transform="translate(28.000000, 28.000000) scale(-1, 1) translate(-28.000000, -28.000000) "
                   d="M28,56 C43.463973,56 56,43.463973 56,28 C56,12.536027 43.463973,0 28,0 C12.536027,0 0,12.536027 0,28"
+                  stroke="#000000"
+                  strokeOpacity="0.54"
+                  transform="translate(28.000000, 28.000000) scale(-1, 1) translate(-28.000000, -28.000000) "
                 ></path>
               </g>
               <g transform="translate(19.000000, 21.000000)"></g>
               <g transform="translate(32.000000, 32.000000)">
-                <mask id={maskId} fill="white">
+                <mask fill="white" id={maskId}>
                   <path d="M18,16.08 C17.24,16.08 16.56,16.38 16.04,16.85 L8.91,12.7 C8.96,12.47 9,12.24 9,12 C9,11.76 8.96,11.53 8.91,11.3 L15.96,7.19 C16.5,7.69 17.21,8 18,8 C19.66,8 21,6.66 21,5 C21,3.34 19.66,2 18,2 C16.34,2 15,3.34 15,5 C15,5.24 15.04,5.47 15.09,5.7 L8.04,9.81 C7.5,9.31 6.79,9 6,9 C4.34,9 3,10.34 3,12 C3,13.66 4.34,15 6,15 C6.79,15 7.5,14.69 8.04,14.19 L15.16,18.35 C15.11,18.56 15.08,18.78 15.08,19 C15.08,20.61 16.39,21.92 18,21.92 C19.61,21.92 20.92,20.61 20.92,19 C20.92,17.39 19.61,16.08 18,16.08 Z"></path>
                 </mask>
                 <g fillRule="nonzero"></g>
                 <g
-                  mask={`url(#${maskId})`}
                   fill="#000000"
                   fillOpacity="0.54"
                   fillRule="evenodd"
+                  mask={`url(#${maskId})`}
                 >
-                  <rect x="0" y="0" width="24" height="24"></rect>
+                  <rect height="24" width="24" x="0" y="0"></rect>
                 </g>
               </g>
             </g>

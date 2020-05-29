@@ -118,7 +118,7 @@ const SelectCard = props => {
         {
           <StyledToolbar>
             <StyledNodeCardTitle variant="h5">{rows.name}</StyledNodeCardTitle>
-            <IconButton size="small" onClick={() => handleClose(rows)}>
+            <IconButton onClick={() => handleClose(rows)} size="small">
               <CloseIcon />
             </IconButton>
           </StyledToolbar>

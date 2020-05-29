@@ -58,10 +58,10 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
       return (
         <div className="section-page">
           <div className="section-page-header">
-            <IconButton edge="start" color="inherit" onClick={handleClose}>
+            <IconButton color="inherit" edge="start" onClick={handleClose}>
               <KeyboardBackspaceIcon />
             </IconButton>
-            <Typography variant="h4" component="h2">
+            <Typography component="h2" variant="h4">
               {title}
             </Typography>
           </div>
@@ -73,8 +73,8 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
     case SETTINGS_COMPONENT_TYPES.DIALOG:
       return (
         <Dialog
-          open={title === selectedComponent.name}
           onClose={handleClose}
+          open={title === selectedComponent.name}
           {...componentProps}
         />
       );

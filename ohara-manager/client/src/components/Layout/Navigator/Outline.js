@@ -44,7 +44,7 @@ const Outline = ({ pipelineApi, isExpanded }) => {
     if (kind === stream) return <WavesIcon />;
     if (kind === topic) {
       return isShared ? (
-        <AddSharedTopicIcon width={20} height={22} />
+        <AddSharedTopicIcon height={22} width={20} />
       ) : (
         <StorageIcon />
       );
@@ -77,8 +77,8 @@ const Outline = ({ pipelineApi, isExpanded }) => {
               return (
                 <li
                   className={className}
-                  onClick={() => pipelineApi.highlight(id)}
                   key={id}
+                  onClick={() => pipelineApi.highlight(id)}
                 >
                   {getIcon(kind, isShared)}
                   {isTopic && !isShared ? displayName : name}

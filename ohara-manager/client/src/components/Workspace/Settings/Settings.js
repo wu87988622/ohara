@@ -114,44 +114,44 @@ const Settings = () => {
 
   return (
     <StyledFullScreenDialog
-      title="Settings"
-      open={isEditWorkspaceDialogOpen}
-      onClose={handleClose}
-      testId="edit-workspace-dialog"
       isPageComponent={isPageComponent}
+      onClose={handleClose}
+      open={isEditWorkspaceDialogOpen}
+      testId="edit-workspace-dialog"
+      title="Settings"
     >
       <Wrapper>
         {// This feature is disabled, see #4659
         false && (
           <SettingsMenu
-            menu={menu}
-            selected={selectedMenu}
-            handleClick={handleMenuClick}
             closePageComponent={resetSelectedItem}
+            handleClick={handleMenuClick}
             isPageComponent={isPageComponent}
+            menu={menu}
             scrollRef={scrollRef}
+            selected={selectedMenu}
           />
         )}
 
         <SettingsMain
-          sections={sections}
           handleChange={handleComponentChange}
           handleClose={resetSelectedItem}
+          sections={sections}
           selectedComponent={selectedComponent}
         />
         <RestartWorkspace />
         <DeleteWorkspace />
 
         <Dialog
-          open={isConfirmDialogOpen}
+          confirmText="OK"
+          maxWidth="xs"
           onClose={() => setIsConfirmDialogOpen(false)}
           onConfirm={() => {
             closeEditWorkspaceDialog();
             setIsConfirmDialogOpen(false);
           }}
-          confirmText="OK"
+          open={isConfirmDialogOpen}
           title="Leaving without restart"
-          maxWidth="xs"
         >
           The changes you made won't take effect unless you restart this
           workspace

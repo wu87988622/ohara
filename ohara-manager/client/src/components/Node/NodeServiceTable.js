@@ -45,7 +45,6 @@ function NodeServiceTable({ node }) {
 
   return (
     <Table
-      title="Services"
       columns={[
         { title: 'Name', field: 'name' },
         {
@@ -69,6 +68,7 @@ function NodeServiceTable({ node }) {
         search: flatClusters.length > 5,
         selection: false,
       }}
+      title="Services"
     />
   );
 }

@@ -34,6 +34,7 @@ import {
 const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
   return (
     <Form
+      initialValues={{}}
       onSubmit={async (values, form) => {
         try {
           await onConfirm({ ...values, port: Number(values.port) });
@@ -43,74 +44,73 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
           return { [FORM_ERROR]: error?.title };
         }
       }}
-      initialValues={{}}
       render={({ handleSubmit, form, submitting, pristine, submitError }) => {
         return (
           <Dialog
-            open={isOpen}
+            confirmDisabled={submitting || pristine}
+            confirmText="CREATE"
             onClose={() => {
               onClose();
               form.reset();
             }}
             onConfirm={handleSubmit}
+            open={isOpen}
             title="Create node"
-            confirmText="CREATE"
-            confirmDisabled={submitting || pristine}
           >
             <form onSubmit={handleSubmit}>
               <Field
-                type="text"
-                name="hostname"
-                label="Hostname"
-                placeholder="node-01"
-                margin="normal"
-                helperText="hostname of the node"
-                component={InputField}
                 autoFocus
+                component={InputField}
+                helperText="hostname of the node"
+                label="Hostname"
+                margin="normal"
+                name="hostname"
+                placeholder="node-01"
                 required
+                type="text"
                 validate={composeValidators(required, maxLength(63))}
               />
 
               {mode === MODE.DOCKER && (
                 <>
                   <Field
-                    name="port"
+                    component={InputField}
+                    helperText="SSH port of the node"
+                    inputProps={{
+                      min: 1,
+                      max: 65535,
+                    }}
                     label="Port"
+                    margin="normal"
+                    name="port"
                     placeholder="22"
                     type="number"
-                    margin="normal"
-                    helperText="SSH port of the node"
-                    component={InputField}
                     validate={composeValidators(
                       required,
                       minNumber(1),
                       maxNumber(65535),
                     )}
-                    inputProps={{
-                      min: 1,
-                      max: 65535,
-                    }}
                   />
                   <Field
-                    name="user"
-                    label="User"
-                    placeholder="admin"
-                    margin="normal"
+                    component={InputField}
+                    fullWidth
                     helperText="SSH username"
+                    label="User"
+                    margin="normal"
+                    name="user"
+                    placeholder="admin"
                     validate={required}
-                    component={InputField}
-                    fullWidth
                   />
                   <Field
-                    name="password"
-                    label="Password"
-                    type="password"
-                    margin="normal"
-                    placeholder="password"
-                    helperText="SSH password"
-                    validate={required}
                     component={InputField}
                     fullWidth
+                    helperText="SSH password"
+                    label="Password"
+                    margin="normal"
+                    name="password"
+                    placeholder="password"
+                    type="password"
+                    validate={required}
                   />
                 </>
               )}

@@ -56,60 +56,60 @@ const AddTopicDialog = props => {
 
   return (
     <Form
-      onSubmit={onSubmit}
       initialValues={{}}
+      onSubmit={onSubmit}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
-            open={isDialogOpen}
-            title="Add a new topic"
+            confirmBText="ADD"
+            confirmDisabled={submitting || pristine || invalid}
             onClose={() => {
               form.reset();
               closeDialog();
             }}
             onConfirm={handleSubmit}
-            confirmBText="ADD"
-            confirmDisabled={submitting || pristine || invalid}
+            open={isDialogOpen}
+            title="Add a new topic"
           >
             <form onSubmit={handleSubmit}>
               <Field
-                id={`add-topic-name-${uniqueId}`}
-                type="text"
-                label="Topic name"
-                name="name"
-                component={InputField}
-                placeholder="mytopic"
-                margin="normal"
-                validate={composeValidators(required, validServiceName)}
                 autoFocus
+                component={InputField}
+                id={`add-topic-name-${uniqueId}`}
+                label="Topic name"
+                margin="normal"
+                name="name"
+                placeholder="mytopic"
                 required
+                type="text"
+                validate={composeValidators(required, validServiceName)}
               />
               <Field
-                id={`add-topic-partitions-${uniqueId}`}
-                type="number"
-                label="Partitions"
-                name="numberOfPartitions"
-                margin="normal"
                 component={InputField}
-                placeholder="1"
+                id={`add-topic-partitions-${uniqueId}`}
                 inputProps={{
                   min: '1',
                   step: '1',
                 }}
+                label="Partitions"
+                margin="normal"
+                name="numberOfPartitions"
+                placeholder="1"
+                type="number"
                 validate={minNumber(1)}
               />
               <Field
-                id={`add-topic-replication-factor-${uniqueId}`}
-                type="number"
-                label="Replication factor"
-                name="numberOfReplications"
-                margin="normal"
                 component={InputField}
-                placeholder="1"
+                id={`add-topic-replication-factor-${uniqueId}`}
                 inputProps={{
                   min: '1',
                   step: '1',
                 }}
+                label="Replication factor"
+                margin="normal"
+                name="numberOfReplications"
+                placeholder="1"
+                type="number"
                 validate={composeValidators(
                   minNumber(1),
                   maxNumber(replicationFactor.length),

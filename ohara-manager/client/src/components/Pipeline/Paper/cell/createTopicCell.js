@@ -54,16 +54,16 @@ const createTopicCell = options => {
 
   const pipelineOnlyIcon = renderToString(
     <PipelineOnlyTopicIcon
+      height={56}
       statusColor={statusColors[getIconStatus(status)]}
       width={56}
-      height={56}
     />,
   );
   const sharedIcon = renderToString(
     <SharedTopicIcon
+      height={56}
       statusColor={statusColors[getIconStatus(status)]}
       width={56}
-      height={56}
     />,
   );
   const linkIcon = renderToString(<TrendingUpIcon />);

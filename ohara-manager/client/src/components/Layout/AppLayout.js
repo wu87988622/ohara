@@ -46,20 +46,20 @@ const AppLayout = () => {
 
   return (
     <Wrapper>
-      <SplitPane split="vertical" defaultSize={64} allowResize={false}>
+      <SplitPane allowResize={false} defaultSize={64} split="vertical">
         <AppBar className="app-bar" />
         <SplitPane
-          split="horizontal"
-          primary="second"
           defaultSize={isDevToolOpen || isEventLogOpen ? 240 : 0}
-          minSize={isDevToolOpen || isEventLogOpen ? 80 : 0}
           maxSize={isDevToolOpen || isEventLogOpen ? 480 : 0}
+          minSize={isDevToolOpen || isEventLogOpen ? 80 : 0}
+          primary="second"
+          split="horizontal"
         >
           <SplitPane
-            split="vertical"
             defaultSize={240}
-            minSize={160}
             maxSize={320}
+            minSize={160}
+            split="vertical"
           >
             <Navigator pipelineApi={pipelineApiRef.current} />
             <Pipeline ref={pipelineApiRef} />

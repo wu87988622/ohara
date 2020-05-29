@@ -58,22 +58,22 @@ const FilesField = props => {
 
   return (
     <Grid
+      alignItems="flex-start"
       container
       direction="row"
       justify="flex-start"
-      alignItems="flex-start"
     >
       {map(files, file => (
-        <Grid item xs={4} key={file.name}>
-          <SelectCard rows={file} handleClose={handleDelete(file)} />
+        <Grid item key={file.name} xs={4}>
+          <SelectCard handleClose={handleDelete(file)} rows={file} />
         </Grid>
       ))}
       <Grid item xs={files.length > 0 ? 4 : 12}>
         <FileCard
-          handelDrop={handleUpload}
-          title="Add worker plugins"
           content="Drop files here or click to select files to upload"
+          handelDrop={handleUpload}
           sm={files.length > 0}
+          title="Add worker plugins"
         />
       </Grid>
     </Grid>

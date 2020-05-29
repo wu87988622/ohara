@@ -35,14 +35,14 @@ const Button = props => {
   return (
     <MuiButton
       {...rest}
-      component={component}
       className={className}
       color={color}
-      variant={variant}
-      onClick={onClick}
-      size={size}
+      component={component}
       data-testid={testId}
       disabled={disabled}
+      onClick={onClick}
+      size={size}
+      variant={variant}
     >
       {children}
     </MuiButton>

@@ -121,6 +121,13 @@
           "ignoreDestructuring": true
         }
       ],
+      "react/jsx-sort-props": [
+        "warn",
+        {
+          "ignoreCase": false,
+          "callbacksLast": false
+        }
+      ],
       "eqeqeq": "warn"
     }
   },

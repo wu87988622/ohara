@@ -94,10 +94,10 @@ const VirtualizedList = props => {
         <StyledList
           deferredMeasurementCache={cache}
           height={height}
+          overscanRowCount={0}
           rowCount={data.length}
           rowHeight={cache.rowHeight}
           rowRenderer={RowRendererWrapper}
-          overscanRowCount={0}
           scrollToIndex={autoScrollToBottom ? data.length : undefined}
           width={width}
         />

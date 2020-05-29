@@ -59,16 +59,16 @@ const ControllerTopic = () => {
     <>
       <Tooltip title="Select topic">
         <Select
-          value={name || ''}
-          onChange={event =>
-            prevName !== event.target.value &&
-            setTopicQueryParams({ name: event.target.value })
-          }
+          disabled={isFetching || isEmpty(topics)}
           list={topics.map(topic => ({
             displayName: topic.displayName,
             value: topic.name,
           }))}
-          disabled={isFetching || isEmpty(topics)}
+          onChange={event =>
+            prevName !== event.target.value &&
+            setTopicQueryParams({ name: event.target.value })
+          }
+          value={name || ''}
         />
       </Tooltip>
       <Tooltip title="Fetch the data again">
@@ -86,8 +86,8 @@ const ControllerTopic = () => {
         tooltipTitle="Query with different parameters"
         trigger={
           <IconButton
-            disabled={getDisableState()}
             className="item"
+            disabled={getDisableState()}
             size="small"
           >
             <SearchIcon />
@@ -97,17 +97,17 @@ const ControllerTopic = () => {
         <StyledSearchBody tab={TAB.topic}>
           <label>Rows per query</label>
           <TextField
-            type="number"
             defaultValue={limit}
+            disabled={isEmpty(name)}
             onChange={event =>
               setTopicQueryParams({ limit: Number(event.target.value) })
             }
-            disabled={isEmpty(name)}
+            type="number"
           />
           <Button
-            variant="contained"
-            onClick={refetchTopic}
             disabled={isEmpty(name)}
+            onClick={refetchTopic}
+            variant="contained"
           >
             QUERY
           </Button>
@@ -116,9 +116,9 @@ const ControllerTopic = () => {
       <Tooltip title="Open in a new window">
         <IconButton
           className="item"
+          disabled={getDisableState()}
           onClick={handleOpenNewWindow}
           size="small"
-          disabled={getDisableState()}
         >
           <OpenInNewIcon />
         </IconButton>

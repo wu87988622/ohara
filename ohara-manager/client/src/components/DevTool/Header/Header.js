@@ -103,24 +103,24 @@ const Header = () => {
 
   return (
     <StyledHeader
+      alignItems="center"
       container
       direction="row"
       justify="space-between"
-      alignItems="center"
     >
-      <Grid item xs={4} lg={4}>
+      <Grid item lg={4} xs={4}>
         <Tabs
-          value={tabName}
           indicatorColor="primary"
-          textColor="primary"
           onChange={handleTabChange}
+          textColor="primary"
+          value={tabName}
         >
-          <Tab value={TAB.topic} label={TAB.topic} disabled={isFetchingTopic} />
-          <Tab value={TAB.log} label={TAB.log} disabled={isFetchingLog} />
+          <Tab disabled={isFetchingTopic} label={TAB.topic} value={TAB.topic} />
+          <Tab disabled={isFetchingLog} label={TAB.log} value={TAB.log} />
         </Tabs>
       </Grid>
 
-      <Grid item xs={8} lg={7}>
+      <Grid item lg={7} xs={8}>
         <div className="items">
           {tabName === TAB.topic && <ControllerTopic />}
           {tabName === TAB.log && <ControllerLog />}

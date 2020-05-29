@@ -37,12 +37,12 @@ const PipelinePropertyViewField = props => {
 
   return (
     <FieldWrapper {...rest}>
-      <Field label={label} value={value} isPort={isPort} />
+      <Field isPort={isPort} label={label} value={value} />
       {slot}
 
       {hasDocs && (
         <div className="docs-tooltip">
-          <Tooltip title={documentation} placement="left" interactive>
+          <Tooltip interactive placement="left" title={documentation}>
             <InfoIcon className="docs-icon" />
           </Tooltip>
         </div>
@@ -66,17 +66,17 @@ PipelinePropertyViewField.propTypes = {
 function Field({ label, value, isPort }) {
   return (
     <div className="field">
-      <Typography variant="body2" className="field-label" component="span">
+      <Typography className="field-label" component="span" variant="body2">
         {label}
       </Typography>
-      <Typography variant="body2" className="field-value" component="span">
+      <Typography className="field-value" component="span" variant="body2">
         {isPort || isNaN(Number(value)) ? (
           value
         ) : (
           <NumberFormat
-            value={Number(value)}
             displayType="text"
             thousandSeparator
+            value={Number(value)}
           />
         )}
       </Typography>

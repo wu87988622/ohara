@@ -527,10 +527,6 @@ const Pipeline = React.forwardRef((props, ref) => {
         <PaperContext.Provider value={{ ...paperApiRef.current }}>
           {paperApiRef.current && currentPipeline && (
             <Toolbar
-              isToolboxOpen={pipelineState.isToolboxOpen}
-              handleToolboxOpen={() =>
-                pipelineDispatch({ type: 'openToolbox' })
-              }
               handleToolbarClick={panel => {
                 const isExpanded = pipelineState.toolboxExpanded[panel];
                 pipelineDispatch({ type: 'resetToolboxExpanded' });
@@ -543,6 +539,10 @@ const Pipeline = React.forwardRef((props, ref) => {
                   });
                 }
               }}
+              handleToolboxOpen={() =>
+                pipelineDispatch({ type: 'openToolbox' })
+              }
+              isToolboxOpen={pipelineState.isToolboxOpen}
             />
           )}
 
@@ -550,17 +550,17 @@ const Pipeline = React.forwardRef((props, ref) => {
             {selectedCell && (
               <>
                 <StyledSplitPane
-                  split="vertical"
-                  minSize={300}
-                  maxSize={500}
                   defaultSize={320}
+                  maxSize={500}
+                  minSize={300}
                   primary="second"
+                  split="vertical"
                 >
                   <div></div>
 
                   <PipelinePropertyView
-                    handleClose={() => setSelectedCell(null)}
                     element={selectedCell}
+                    handleClose={() => setSelectedCell(null)}
                     isMetricsOn={pipelineState.isMetricsOn}
                     pipelineObjects={pipelineObjectsRef.current}
                   />
@@ -568,22 +568,22 @@ const Pipeline = React.forwardRef((props, ref) => {
               </>
             )}
             <Paper
-              ref={paperApiRef}
-              onCellSelect={handleCellSelect}
+              onCellConfig={handleCellConfigClick}
               onCellDeselect={handleCellDeselect}
-              onChange={handleChange}
-              onElementAdd={handleElementAdd}
-              onConnect={handleConnect}
-              onDisconnect={handleDisConnect}
+              onCellRemove={handleCellRemove}
+              onCellSelect={handleCellSelect}
               onCellStart={handleCellStartClick}
               onCellStop={handleCellStopClick}
-              onCellConfig={handleCellConfigClick}
-              onCellRemove={handleCellRemove}
+              onChange={handleChange}
+              onConnect={handleConnect}
+              onDisconnect={handleDisConnect}
+              onElementAdd={handleElementAdd}
+              ref={paperApiRef}
             />
             {paperApiRef.current && currentPipeline && (
               <Toolbox
-                isOpen={pipelineState.isToolboxOpen}
                 expanded={pipelineState.toolboxExpanded}
+                isOpen={pipelineState.isToolboxOpen}
                 pipelineDispatch={pipelineDispatch}
                 toolboxKey={pipelineState.toolboxKey}
               />
@@ -592,21 +592,21 @@ const Pipeline = React.forwardRef((props, ref) => {
           {paperApiRef.current && currentPipeline && (
             <>
               <PipelinePropertyDialog
+                data={propertyDialogData}
                 isOpen={isPropertyDialogOpen}
                 onClose={closePropertyDialog}
-                data={propertyDialogData}
                 onSubmit={handleSubmit}
               />
 
               <DeleteDialog
-                open={isOpen}
-                title="Delete the element"
                 content={`Are you sure you want to delete the element: ${getCurrentCellName(
                   currentCellData,
                 )} ? This action cannot be undone!`}
+                maxWidth="xs"
                 onClose={handleDialogClose}
                 onConfirm={handleElementDelete}
-                maxWidth="xs"
+                open={isOpen}
+                title="Delete the element"
               />
             </>
           )}

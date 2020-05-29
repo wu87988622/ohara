@@ -33,15 +33,15 @@ const JdbcTable = props => {
   return (
     <TextField
       {...rest}
-      InputProps={restInput}
-      ref={refs}
-      fullWidth
-      onChange={onChange}
-      name={name}
-      value={value}
-      helperText={hasError ? meta.error : helperText}
       error={hasError}
+      fullWidth
+      helperText={hasError ? meta.error : helperText}
+      InputProps={restInput}
+      name={name}
+      onChange={onChange}
+      ref={refs}
       type="text"
+      value={value}
     />
   );
 };

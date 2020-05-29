@@ -101,13 +101,6 @@ const Table = props => {
   return (
     <div ref={refs}>
       <MaterialTable
-        options={{
-          paging: false,
-          draggable: false,
-        }}
-        name={name}
-        icons={tableIcons}
-        title={label}
         columns={stateRef.current.columns}
         data={stateRef.current.data}
         editable={{
@@ -153,6 +146,13 @@ const Table = props => {
               });
             }),
         }}
+        icons={tableIcons}
+        name={name}
+        options={{
+          paging: false,
+          draggable: false,
+        }}
+        title={label}
       />
       <FormHelperText children={hasError ? meta.error : helperText} />
     </div>

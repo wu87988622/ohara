@@ -43,9 +43,9 @@ const EventLogHeader = ({ onFilter }) => {
 
   return (
     <Wrapper>
-      <AppBar position="static" color="default">
+      <AppBar color="default" position="static">
         <Toolbar variant="dense">
-          <Typography variant="h6" noWrap className="title">
+          <Typography className="title" noWrap variant="h6">
             Event Logs
           </Typography>
           <QuickSearch
@@ -58,8 +58,8 @@ const EventLogHeader = ({ onFilter }) => {
           <Tooltip title="Clear event logs">
             <IconButton
               color="default"
-              onClick={clearEventLogs}
               disabled={!logs || logs.length === 0}
+              onClick={clearEventLogs}
             >
               <DeleteSweepIcon />
             </IconButton>

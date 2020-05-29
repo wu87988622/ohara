@@ -50,9 +50,9 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
 
   return (
     <Dialog
-      open={isOpen}
-      onClose={onClose}
       maxWidth="md"
+      onClose={onClose}
+      open={isOpen}
       showActions={false}
       testId="view-topic-detail-dialog"
       title="View topic"
@@ -121,14 +121,14 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
                           <TableCell>{document}</TableCell>
                           <TableCell align="right">
                             <NumberFormat
-                              value={value}
                               displayType="text"
-                              thousandSeparator
                               renderText={value => (
                                 <div>
                                   {value} {unit}
                                 </div>
                               )}
+                              thousandSeparator
+                              value={value}
                             />
                           </TableCell>
                         </TableRow>

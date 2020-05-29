@@ -35,10 +35,10 @@ const Body = () => {
 
   return (
     <>
-      <TabPanel value={tabName} index={TAB.topic}>
+      <TabPanel index={TAB.topic} value={tabName}>
         <ViewTopic />
       </TabPanel>
-      <TabPanel value={tabName} index={TAB.log}>
+      <TabPanel index={TAB.log} value={tabName}>
         <ViewLog />
       </TabPanel>
     </>

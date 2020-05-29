@@ -37,14 +37,13 @@ const DeleteWorkspace = () => {
 
   return (
     <LogProgress
-      createTitle={'Delete Workspace'}
-      isOpen={isOpen}
-      steps={steps}
       activeStep={activeStep}
+      createTitle={'Delete Workspace'}
+      data={log}
+      isOpen={isOpen}
+      isPause={isPause}
       message={message}
       onPause={pause}
-      isPause={isPause}
-      data={log}
       onResume={() => {
         resume();
         deleteWorkspace();
@@ -53,6 +52,7 @@ const DeleteWorkspace = () => {
         rollback();
         deleteWorkspace();
       }}
+      steps={steps}
     />
   );
 };

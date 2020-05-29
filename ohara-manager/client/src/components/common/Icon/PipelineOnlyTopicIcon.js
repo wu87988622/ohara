@@ -27,23 +27,23 @@ export const PipelineOnlyTopicIcon = ({
   return (
     <svg
       {...otherProps}
-      width={width}
-      height={height}
-      viewBox="0 0 58 58"
       fill={fillColor}
+      height={height}
       version="1.1"
+      viewBox="0 0 58 58"
+      width={width}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
     >
-      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+      <g fill="none" fillRule="evenodd" stroke="none" strokeWidth="1">
         <g transform="translate(-389.000000, -2906.000000)">
           <g transform="translate(390.000000, 2907.000000)">
             <circle
-              strokeOpacity="0.54"
-              stroke="#000000"
               cx="28"
               cy="28"
               r="28"
+              stroke="#000000"
+              strokeOpacity="0.54"
             ></circle>
           </g>
         </g>

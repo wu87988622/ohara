@@ -172,8 +172,8 @@ function StreamJarsPage() {
                         <Tooltip title="Click the link to switch to that pipeline">
                           <Link
                             component="button"
-                            variant="body2"
                             onClick={() => handleLinkClick(pipeline)}
+                            variant="body2"
                           >
                             {pipeline.name}
                           </Link>

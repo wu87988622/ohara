@@ -275,9 +275,9 @@ function FileTable(props) {
             field: 'size',
             render: file => (
               <NumberFormat
-                value={file.size}
                 displayType="text"
                 thousandSeparator
+                value={file.size}
               />
             ),
           },
@@ -331,7 +331,7 @@ function FileTable(props) {
         onClose={() => setIsRemoveDialogOpen(false)}
         onConfirm={handleRemoveDialogConfirm}
       />
-      <FileUpload ref={fileUploadRef} onUpload={onUpload} />
+      <FileUpload onUpload={onUpload} ref={fileUploadRef} />
       <FileDownload file={activeFile} ref={fileDownloadRef} />
     </>
   );

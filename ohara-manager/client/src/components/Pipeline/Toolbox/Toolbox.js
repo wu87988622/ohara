@@ -200,8 +200,8 @@ const Toolbox = props => {
     <Draggable
       bounds="parent"
       handle=".toolbox-title"
-      ref={toolboxRef}
       key={toolboxKey}
+      ref={toolboxRef}
     >
       <StyledToolbox
         className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}
@@ -218,37 +218,37 @@ const Toolbox = props => {
           </div>
 
           <ToolboxSearch
+            pipelineDispatch={pipelineDispatch}
             searchData={Object.values(connectors).reduce(
               (acc, cur) => acc.concat(cur),
               [],
             )}
             setSearchResults={setSearchResults}
-            pipelineDispatch={pipelineDispatch}
           />
         </div>
 
         <ToolboxBody
-          toolboxHeight={toolboxHeight}
-          toolboxBodyRef={toolboxBodyRef}
+          expanded={expanded}
+          handleScroll={handleScroll}
           panelAddButtonRef={panelAddButtonRef}
           panelSummaryRef={panelSummaryRef}
-          handleScroll={handleScroll}
           pipelineDispatch={pipelineDispatch}
-          expanded={expanded}
+          toolboxBodyRef={toolboxBodyRef}
+          toolboxHeight={toolboxHeight}
         />
 
         <ToolboxAddGraphDialog
           isOpen={isOpen}
           kind={cellInfo.kind}
+          onClose={() => {
+            setIsOpen(false);
+            utils.removeTemporaryCell(paperApi);
+          }}
           onConfirm={handleAddGraph}
           paperElementNames={paperApi
             .getCells()
             .filter(cell => cell.cellType !== CELL_TYPES.LINK)
             .map(element => element.name)}
-          onClose={() => {
-            setIsOpen(false);
-            utils.removeTemporaryCell(paperApi);
-          }}
         />
       </StyledToolbox>
     </Draggable>

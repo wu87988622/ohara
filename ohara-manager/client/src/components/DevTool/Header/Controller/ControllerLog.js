@@ -101,38 +101,38 @@ const ControllerLog = () => {
   return (
     <>
       <Select
-        value={logType}
-        onChange={event => setLogQueryParams({ logType: event.target.value })}
-        list={Object.keys(LOG_SERVICES)}
         disabled={isFetching}
+        list={Object.keys(LOG_SERVICES)}
+        onChange={event => setLogQueryParams({ logType: event.target.value })}
         testId="log-type-select"
+        value={logType}
       />
       {logType === KIND.shabondi && (
         <Select
-          value={shabondiName}
+          disabled={isFetching || isEmpty(shabondis)}
+          list={shabondis.map(shabondi => shabondi.name)}
           onChange={event =>
             setLogQueryParams({ shabondiName: event.target.value })
           }
-          list={shabondis.map(shabondi => shabondi.name)}
-          disabled={isFetching || isEmpty(shabondis)}
+          value={shabondiName}
         />
       )}
       {logType === KIND.stream && (
         <Select
-          value={streamName}
+          disabled={isFetching || isEmpty(streams)}
+          list={streams.map(stream => stream.name)}
           onChange={event =>
             setLogQueryParams({ streamName: event.target.value })
           }
-          list={streams.map(stream => stream.name)}
-          disabled={isFetching || isEmpty(streams)}
+          value={streamName}
         />
       )}
 
       <Select
         disabled={getDisableState()}
-        value={hostName}
-        onChange={event => setLogQueryParams({ hostName: event.target.value })}
         list={hosts}
+        onChange={event => setLogQueryParams({ hostName: event.target.value })}
+        value={hostName}
       />
       <Tooltip title="Fetch the data again">
         <IconButton
@@ -149,79 +149,79 @@ const ControllerLog = () => {
         tooltipTitle="Query with different parameters"
         trigger={
           <IconButton
-            disabled={getDisableState()}
             className="item"
+            disabled={getDisableState()}
             size="small"
           >
             <SearchIcon />
           </IconButton>
         }
       >
-        <StyledSearchBody tab={TAB.log} data-testid="log-query-popover">
-          <RadioGroup value={timeGroup} onChange={handleRadioChange}>
+        <StyledSearchBody data-testid="log-query-popover" tab={TAB.log}>
+          <RadioGroup onChange={handleRadioChange} value={timeGroup}>
             <FormControlLabel
-              value={LOG_TIME_GROUP.latest}
               control={<Radio color="primary" />}
-              label="Latest"
               disabled={isEmpty(logType)}
+              label="Latest"
+              value={LOG_TIME_GROUP.latest}
             />
             <label>Minutes per query</label>
             <TextField
-              disabled={isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.latest}
-              type="number"
               defaultValue={timeRange}
+              disabled={isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.latest}
               onChange={event =>
                 setLogQueryParams({ timeRange: Number(event.target.value) })
               }
+              type="number"
             />
           </RadioGroup>
           <RadioGroup
             disabled={isEmpty(logType)}
-            value={timeGroup}
             onChange={handleRadioChange}
+            value={timeGroup}
           >
             <FormControlLabel
-              value={LOG_TIME_GROUP.customize}
               control={<Radio color="primary" />}
-              label="Customize"
               disabled={isEmpty(logType)}
+              label="Customize"
+              value={LOG_TIME_GROUP.customize}
             />
             <StyledTextField
-              disabled={
-                isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.customize
-              }
-              label="Start date"
-              type="datetime-local"
               defaultValue={
                 startTime ||
                 moment()
                   .subtract(10, 'minutes')
                   .format('YYYY-MM-DD[T]hh:mm')
               }
+              disabled={
+                isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.customize
+              }
+              InputLabelProps={{
+                shrink: true,
+              }}
               inputProps={{
                 max: endTime,
               }}
-              InputLabelProps={{
-                shrink: true,
-              }}
+              label="Start date"
               onChange={event =>
                 setLogQueryParams({ startTime: event.target.value })
               }
+              type="datetime-local"
             />
             <StyledTextField
-              disabled
-              label="End date"
-              type="datetime-local"
               defaultValue={endTime || moment().format('YYYY-MM-DD[T]hh:mm')}
+              disabled
               InputLabelProps={{
                 shrink: true,
               }}
+              label="End date"
               onChange={event =>
                 setLogQueryParams({ endTime: event.target.value })
               }
+              type="datetime-local"
             />
           </RadioGroup>
-          <Button onClick={refetchLog} disabled={isEmpty(logType)}>
+          <Button disabled={isEmpty(logType)} onClick={refetchLog}>
             QUERY
           </Button>
         </StyledSearchBody>
@@ -229,9 +229,9 @@ const ControllerLog = () => {
       <Tooltip title="Open in a new window">
         <IconButton
           className="item"
+          disabled={getDisableState()}
           onClick={handleOpenNewWindow}
           size="small"
-          disabled={getDisableState()}
         >
           <OpenInNewIcon />
         </IconButton>

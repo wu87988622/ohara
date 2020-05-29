@@ -40,8 +40,8 @@ const EventLogSettings = props => {
 
   return (
     <Form
-      onSubmit={onSubmit}
       initialValues={eventSettings}
+      onSubmit={onSubmit}
       render={({ handleSubmit, submitting, pristine, invalid, values }) => {
         return (
           <Wrapper>
@@ -69,12 +69,12 @@ const EventLogSettings = props => {
                     type="checkbox"
                   />
                 </Grid>
-                <Grid item className="align-right">
+                <Grid className="align-right" item>
                   <Button
                     color="primary"
-                    variant="contained"
-                    onClick={handleSubmit}
                     disabled={submitting || pristine || invalid}
+                    onClick={handleSubmit}
+                    variant="contained"
                   >
                     Save
                   </Button>

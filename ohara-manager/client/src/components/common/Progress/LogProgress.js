@@ -137,11 +137,11 @@ const LogProgress = props => {
 
   return (
     <s.StyledDialog
-      open={isLoading}
-      maxWidth={'md'}
       fullWidth
-      isHidden={isHidden}
       isDeleteDialog={createTitle === 'Delete Workspace'}
+      isHidden={isHidden}
+      maxWidth={'md'}
+      open={isLoading}
     >
       <DialogTitle>{title}</DialogTitle>
       {!isHidden && (
@@ -152,7 +152,7 @@ const LogProgress = props => {
               type.error = true;
             }
             return (
-              <Step key={step} data-testid={testId}>
+              <Step data-testid={testId} key={step}>
                 <StepLabel {...type}>{step}</StepLabel>
               </Step>
             );
@@ -163,8 +163,8 @@ const LogProgress = props => {
         <LinearProgress
           className={'StyledProgress'}
           color={color}
-          valueBuffer={buffer}
           value={completed}
+          valueBuffer={buffer}
           variant="determinate"
         />
         {false && (
@@ -228,20 +228,20 @@ const LogProgress = props => {
         </FormControl>
         <Button
           className={'StyledCloseButton'}
-          onClick={onClose}
           disabled={closeDisable}
+          onClick={onClose}
         >
           CLOSE
         </Button>
       </div>
       <DeleteDialog
-        content="We will use the original settings before restarting to restore your workspace."
         confirmText="Rollback"
+        content="We will use the original settings before restarting to restore your workspace."
+        onClose={() => setIsRollbackConfirmDialogOpen(false)}
         onConfirm={() => {
           setIsRollbackConfirmDialogOpen(false);
           onRollback();
         }}
-        onClose={() => setIsRollbackConfirmDialogOpen(false)}
         open={isRollbackConfirmDialogOpen}
         title="Are you absolutely sure?"
       />

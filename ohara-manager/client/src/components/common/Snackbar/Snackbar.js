@@ -41,23 +41,23 @@ const SnackBar = props => {
         vertical: 'top',
         horizontal: 'right',
       }}
-      open={props.isOpen}
       autoHideDuration={5000}
       onClose={handleClose}
+      open={props.isOpen}
       TransitionComponent={Fade}
     >
       <SnackbarContent
-        message={props.message}
         action={[
           <IconButton
-            size="small"
-            key="close"
             color="inherit"
+            key="close"
             onClick={handleClose}
+            size="small"
           >
             <CloseIcon fontSize="small" />
           </IconButton>,
         ]}
+        message={props.message}
       />
     </Snackbar>
   );

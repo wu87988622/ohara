@@ -67,7 +67,7 @@ const SectionList = props => {
 
         return (
           <ListItem key={title} onClick={event => onClick(event, title)}>
-            <Badge component="div" badgeContent={badge?.count}>
+            <Badge badgeContent={badge?.count} component="div">
               {icon && <ListItemIcon>{icon}</ListItemIcon>}
               <ListItemText primary={title} secondary={subTitle} />
 
@@ -75,8 +75,8 @@ const SectionList = props => {
                 <ListItemSecondaryAction>
                   <IconButton
                     edge="end"
-                    size="small"
                     onClick={event => onClick(event, title)}
+                    size="small"
                   >
                     <ArrowRightIcon fontSize="small" />
                   </IconButton>

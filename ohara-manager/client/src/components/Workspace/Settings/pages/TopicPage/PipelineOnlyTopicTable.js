@@ -37,13 +37,13 @@ function PipelineOnlyTopicTable() {
     <>
       <TopicTable
         broker={broker}
-        topics={topics}
         onLinkClick={handleLinkClick}
         options={{
           showCreateIcon: false,
           showDeleteIcon: false,
         }}
         title="Pipeline only topics"
+        topics={topics}
       />
     </>
   );

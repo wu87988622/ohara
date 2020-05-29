@@ -50,15 +50,15 @@ const FullScreenDialog = props => {
   } = props;
   return (
     <Dialog
+      data-testid={testId}
       fullScreen
-      open={open}
       onClose={onClose}
+      open={open}
       PaperProps={{
         style: {
           backgroundColor: '#f5f6fa',
         },
       }}
-      data-testid={testId}
       {...other}
     >
       <AppBar>

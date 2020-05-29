@@ -41,7 +41,7 @@ export const renderIcon = ({ kind, isShared }) => {
       return <WavesIcon color="action" />;
     case KIND.topic:
       if (isShared) {
-        return <AddSharedTopicIcon width={20} height={20} />;
+        return <AddSharedTopicIcon height={20} width={20} />;
       } else {
         return <StorageIcon color="action" />;
       }
@@ -76,19 +76,19 @@ export const tags = params => {
     <PropertyField
       key={key}
       label={propertyUtils.getDisplayName(key, defs)}
-      value={displayValue}
       slot={
         isTruncated && (
           <Tooltip className="settings-full-button" title="Full content">
             <IconButton
-              size="small"
               onClick={() => handleFullButtonClick(value, name)}
+              size="small"
             >
               <CodeIcon fontSize="inherit" />
             </IconButton>
           </Tooltip>
         )
       }
+      value={displayValue}
     />
   );
 };
@@ -100,13 +100,13 @@ export const objectField = (key, settings, currentSetting, defs) => {
         defaultCollapseIcon={<ArrowRightIcon />}
         defaultExpandIcon={<ArrowDropUpIcon />}
       >
-        <TreeItem nodeId={key} label={getDisplayName(key, defs)}>
+        <TreeItem label={getDisplayName(key, defs)} nodeId={key}>
           {Object.keys(currentSetting).map(objectKey => {
             return (
               <TreeItem
                 key={objectKey}
-                nodeId={objectKey}
                 label={`${objectKey} : ${settings[objectKey]}`}
+                nodeId={objectKey}
               />
             );
           })}
@@ -123,16 +123,16 @@ export const objectKeys = (key, defs, currentSetting) => {
         defaultCollapseIcon={<ArrowRightIcon />}
         defaultExpandIcon={<ArrowDropUpIcon />}
       >
-        <TreeItem nodeId={key} label={`${getDisplayName(key, defs)}`}>
+        <TreeItem label={`${getDisplayName(key, defs)}`} nodeId={key}>
           {currentSetting.map((item, index) => {
             return (
-              <TreeItem key={index} nodeId={String(index)} label="column">
+              <TreeItem key={index} label="column" nodeId={String(index)}>
                 {Object.keys(item).map(objectKey => {
                   return (
                     <TreeItem
-                      nodeId={item[objectKey]}
                       key={objectKey}
                       label={`${objectKey} : ${item[objectKey]}`}
+                      nodeId={item[objectKey]}
                     />
                   );
                 })}
@@ -159,11 +159,11 @@ export const defaultField = params => {
   // therefore, we're using a tooltip here to display the full value
   return (
     <PropertyField
+      documentation={documentation}
+      isPort={isPort}
       key={key}
       label={getDisplayName(key, defs)}
       value={displayValue}
-      documentation={documentation}
-      isPort={isPort}
     />
   );
 };

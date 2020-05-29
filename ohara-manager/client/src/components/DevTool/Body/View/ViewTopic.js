@@ -108,31 +108,31 @@ const ViewTopic = () => {
   return (
     <>
       <Table
+        children={renderDataBody(data)}
         fixedHeader
         headers={getHeaders(data).map(header => capitalize(header))}
         isLoading={isFetching}
-        children={renderDataBody(data)}
         testId="view-topic-table"
       />
       <Dialog
-        title="View topic source"
-        open={!isEmpty(viewTopicMessage)}
-        onClose={() => setViewTopicMessage({})}
         children={
           <ReactJson
+            displayDataTypes={false}
+            displayObjectSize={false}
+            enableClipboard={false}
+            iconStyle="square"
             src={get(
               viewTopicMessage,
               'value',
               get(viewTopicMessage, 'error', {}),
             )}
-            enableClipboard={false}
-            iconStyle="square"
-            displayDataTypes={false}
-            displayObjectSize={false}
           />
         }
+        onClose={() => setViewTopicMessage({})}
+        open={!isEmpty(viewTopicMessage)}
         showActions={false}
         testId="topic-detail-view"
+        title="View topic source"
       />
     </>
   );

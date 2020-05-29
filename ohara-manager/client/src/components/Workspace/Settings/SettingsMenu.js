@@ -36,10 +36,10 @@ const SettingsMenu = ({
 
         return (
           <List
-            key={index}
             component="ul"
+            key={index}
             subheader={
-              <ListSubheader disableSticky component="div">
+              <ListSubheader component="div" disableSticky>
                 {subHeader}
               </ListSubheader>
             }
@@ -60,8 +60,8 @@ const SettingsMenu = ({
                 <ListItem
                   button
                   key={text}
-                  selected={selected === text}
                   onClick={event => onClick(event, text)}
+                  selected={selected === text}
                 >
                   <ListItemIcon>{icon}</ListItemIcon>
                   <ListItemText primary={text} />

@@ -34,21 +34,21 @@ const App = () => {
       <Router>
         <Switch>
           <Route
+            component={NotImplementedPage}
             exact
             path="/501-page-not-implemented"
-            component={NotImplementedPage}
           />
           <Route
+            component={DataWindow}
             exact
             path="/:workspaceName?/:pipelineName?/view"
-            component={DataWindow}
           />
           <Route
+            component={AppLayout}
             exact
             path="/:workspaceName?/:pipelineName?"
-            component={AppLayout}
           />
-          <Route path="*" component={NotFoundPage} />
+          <Route component={NotFoundPage} path="*" />
         </Switch>
       </Router>
     </>

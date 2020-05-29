@@ -53,11 +53,11 @@ const Popover = React.forwardRef((props, ref) => {
       )) ||
         Trigger}
       <MuiPopover
-        id={id}
-        open={open}
         anchorEl={anchorEl}
-        onClose={handleClose}
         anchorOrigin={props.anchorOrigin}
+        id={id}
+        onClose={handleClose}
+        open={open}
         transformOrigin={props.transformOrigin}
       >
         {props.children}

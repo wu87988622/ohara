@@ -39,7 +39,7 @@ const Percentage = (values, key) => {
     <>
       <Typography variant="subtitle2">{value}</Typography>
       <Tooltip title={`${used} %`}>
-        <LinearProgress value={used} variant="determinate" color={color} />
+        <LinearProgress color={color} value={used} variant="determinate" />
       </Tooltip>
     </>
   );

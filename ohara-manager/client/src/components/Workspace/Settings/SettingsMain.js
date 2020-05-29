@@ -49,6 +49,7 @@ const SettingsMain = ({
     <Wrapper>
       <div className={sectionWrapperCls}>
         <RestartIndicator
+          hasRunningServices={hasRunningServices}
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
           onRestart={() => {
@@ -56,7 +57,6 @@ const SettingsMain = ({
             restartWorkspace();
           }}
           restartConfirmMessage={restartConfirmMessage}
-          hasRunningServices={hasRunningServices}
         />
         {sections.map(section => {
           const { heading, components, ref } = section;
@@ -67,13 +67,13 @@ const SettingsMain = ({
           return (
             <section key={heading}>
               <div className="anchor-element" ref={ref} />
-              <Typography variant="h5" component="h2">
+              <Typography component="h2" variant="h5">
                 {heading}
               </Typography>
               <div className={listWrapperCls}>
                 <SectionList
-                  list={components}
                   handleChange={handleChange}
+                  list={components}
                   sectionHeading={heading}
                   sectionRef={ref}
                   selectedComponent={selectedComponent}
@@ -84,9 +84,9 @@ const SettingsMain = ({
         })}
       </div>
       <SectionComponent
+        handleClose={handleClose}
         sections={sections}
         selectedComponent={selectedComponent}
-        handleClose={handleClose}
       />
     </Wrapper>
   );

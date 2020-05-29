@@ -45,9 +45,9 @@ const AppProviders = ({ children }) => {
   return (
     <ContextProviderComposer
       contextProviders={[
-        <StylesProvider injectFirst children={children} />,
-        <MuiThemeProvider theme={MuiTheme} children={children} />,
-        <ThemeProvider theme={MuiTheme} children={children} />,
+        <StylesProvider children={children} injectFirst />,
+        <MuiThemeProvider children={children} theme={MuiTheme} />,
+        <ThemeProvider children={children} theme={MuiTheme} />,
         <ErrorBoundary children={children} />,
         <StoreProvider children={children} />,
         <DialogProvider children={children} />,

@@ -45,18 +45,18 @@ const Tags = props => {
   return (
     <TextField
       {...rest}
-      InputProps={restInput}
-      ref={refs}
-      fullWidth
-      variant="outlined"
-      onChange={onChange}
-      name={name}
-      value={jsonValue}
-      helperText={hasError ? meta.error : helperText}
       error={hasError}
+      fullWidth
+      helperText={hasError ? meta.error : helperText}
+      InputProps={restInput}
       multiline
+      name={name}
+      onChange={onChange}
+      ref={refs}
       rows="10"
       type="text"
+      value={jsonValue}
+      variant="outlined"
     />
   );
 };

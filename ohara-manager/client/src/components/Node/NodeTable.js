@@ -203,9 +203,9 @@ function NodeTable(props) {
             </Typography>
             <Tooltip title={`${round(used * 100, 1)} %`}>
               <LinearProgress
+                color={used > 0.8 ? 'secondary' : 'primary'}
                 value={used * 100}
                 variant="determinate"
-                color={used > 0.8 ? 'secondary' : 'primary'}
               />
             </Tooltip>
           </>
@@ -231,11 +231,11 @@ function NodeTable(props) {
               {}
               <Link
                 component="button"
-                variant="h6"
                 onClick={event => {
                   handleDetailIconClick(node);
                   event.stopPropagation();
                 }}
+                variant="h6"
               >
                 {count}
               </Link>

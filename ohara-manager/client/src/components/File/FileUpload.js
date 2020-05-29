@@ -53,15 +53,15 @@ const FileUpload = React.forwardRef(({ accept, children, onUpload }, ref) => {
   return (
     <Wrapper>
       <input
-        type="file"
-        ref={inputEl}
-        className="input"
         accept={accept}
+        className="input"
         onChange={handleFileSelect}
         onClick={event => {
           /* Allow file to be added multiple times */
           event.target.value = null;
         }}
+        ref={inputEl}
+        type="file"
       />
       <Trigger />
     </Wrapper>

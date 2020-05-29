@@ -40,22 +40,22 @@ const ToolboxAddGraphDialog = props => {
 
   return (
     <Form
-      onSubmit={onSubmit}
       initialValues={{}}
+      onSubmit={onSubmit}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
-            open={isOpen}
+            confirmDisabled={submitting || pristine || invalid}
+            confirmText="ADD"
+            loading={submitting}
+            maxWidth="xs"
             onClose={() => {
               onClose();
               form.reset();
             }}
             onConfirm={handleSubmit}
+            open={isOpen}
             title={`Add a new ${kind}`}
-            confirmText="ADD"
-            confirmDisabled={submitting || pristine || invalid}
-            loading={submitting}
-            maxWidth="xs"
           >
             <DialogContentText>
               Please note that once the name is added, it will become
@@ -64,20 +64,20 @@ const ToolboxAddGraphDialog = props => {
 
             <form onSubmit={handleSubmit}>
               <Field
-                id={`add-${kind}-name`}
-                type="text"
-                name="newGraph"
-                label={`${capitalize(kind)} Name`}
+                autoFocus
                 component={InputField}
+                disabled={submitting}
+                id={`add-${kind}-name`}
+                label={`${capitalize(kind)} Name`}
+                name="newGraph"
+                required
+                type="text"
                 validate={composeValidators(
                   required,
                   validServiceName,
                   maxLength(25),
                   checkDuplicate(paperElementNames),
                 )}
-                disabled={submitting}
-                autoFocus
-                required
               />
             </form>
           </Dialog>

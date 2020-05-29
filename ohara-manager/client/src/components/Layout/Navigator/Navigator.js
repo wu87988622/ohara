@@ -94,8 +94,8 @@ const Navigator = ({ pipelineApi }) => {
       <Menu
         anchorEl={anchorEl}
         keepMounted
-        open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        open={Boolean(anchorEl)}
       >
         <MenuItem
           className="settings"
@@ -110,8 +110,8 @@ const Navigator = ({ pipelineApi }) => {
       <StyledExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
           disableRipple
-          onClick={handlePanelClick}
           expandIcon={<ExpandMoreIcon />}
+          onClick={handlePanelClick}
         >
           <Typography variant="h5">Pipelines</Typography>
           <AddIcon
@@ -125,7 +125,7 @@ const Navigator = ({ pipelineApi }) => {
           </div>
         </ExpansionPanelDetails>
       </StyledExpansionPanel>
-      <Outline pipelineApi={pipelineApi} isExpanded={isExpanded} />
+      <Outline isExpanded={isExpanded} pipelineApi={pipelineApi} />
       <WorkspaceSettings />
     </StyledNavigator>
   );

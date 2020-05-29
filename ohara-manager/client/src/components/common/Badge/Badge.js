@@ -61,12 +61,12 @@ function Badge(props) {
     <Wrapper>
       <MuiBadge
         {...props}
-        color={includes(ENHANCE_COLORS, color) ? 'default' : color}
         className={clsx({
           'badge-color-success': color === 'success',
           'badge-color-info': color === 'info',
           'badge-color-warning': color === 'warning',
         })}
+        color={includes(ENHANCE_COLORS, color) ? 'default' : color}
       />
     </Wrapper>
   );

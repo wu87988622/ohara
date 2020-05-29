@@ -83,13 +83,13 @@ const Dialog = ({
   scroll,
 }) => (
   <MuiDialog
+    data-testid={testId}
     fullWidth
     maxWidth={maxWidth}
     onClose={onClose}
     open={open}
     PaperComponent={DrabblePaper}
     scroll={scroll}
-    data-testid={testId}
   >
     <StyledDialogTitle disableTypography>
       <Typography variant="h3">{title}</Typography>
@@ -106,8 +106,8 @@ const Dialog = ({
             <Tooltip title={confirmTooltip}>
               <span>
                 <Button
-                  disabled={confirmDisabled}
                   color="primary"
+                  disabled={confirmDisabled}
                   variant="contained"
                 >
                   {confirmText}
@@ -115,7 +115,7 @@ const Dialog = ({
               </span>
             </Tooltip>
           ) : (
-            <Button onClick={onConfirm} color="primary" variant="contained">
+            <Button color="primary" onClick={onConfirm} variant="contained">
               {confirmText}
             </Button>
           )}

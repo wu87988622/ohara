@@ -30,32 +30,32 @@ const NodeStateChip = ({ node }) => {
   if (node?.state === NODE_STATE.AVAILABLE) {
     return (
       <Chip
-        variant="outlined"
         color="primary"
         icon={<CheckCircleIcon />}
         label={capitalize(node.state)}
         size="small"
+        variant="outlined"
       />
     );
   } else if (node?.state === NODE_STATE.UNAVAILABLE) {
     return (
       <Tooltip title={node?.error}>
         <Chip
-          variant="outlined"
           color="secondary"
           icon={<CancelIcon />}
           label={capitalize(node.state)}
           size="small"
+          variant="outlined"
         />
       </Tooltip>
     );
   } else {
     return (
       <Chip
-        variant="outlined"
         icon={<HelpIcon />}
         label="Unknown"
         size="small"
+        variant="outlined"
       />
     );
   }

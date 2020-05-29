@@ -43,13 +43,13 @@ const InputField = props => {
     <InputWrap>
       <StyledTextField
         {...rest}
-        onChange={onChange}
-        name={name}
+        error={hasError}
+        helperText={hasError ? meta.error : helperText}
         InputProps={restInput}
+        name={name}
+        onChange={onChange}
         value={value}
         width={width}
-        helperText={hasError ? meta.error : helperText}
-        error={hasError}
       />
     </InputWrap>
   );

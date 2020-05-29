@@ -44,10 +44,10 @@ const SelectTableHead = props => {
         {hasSelect && (
           <TableCell padding="checkbox">
             <Checkbox
-              indeterminate={numSelected > 0 && numSelected < rowCount}
               checked={rowCount > 0 && numSelected === rowCount}
-              onChange={onSelectAllClick}
               color="primary"
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              onChange={onSelectAllClick}
             />
           </TableCell>
         )}
@@ -55,8 +55,8 @@ const SelectTableHead = props => {
           const align = arr.length - 1 === i ? 'right' : 'left';
           return (
             <TableCell
-              key={headCell.id}
               align={align}
+              key={headCell.id}
               padding={headCell.disablePadding ? 'none' : 'default'}
             >
               {headCell.label}
@@ -152,18 +152,18 @@ const SelectTable = props => {
     <div>
       <Paper>
         <SelectTableToolbar
+          hasSelect={hasSelect}
           numSelected={selected.length}
           title={title}
-          hasSelect={hasSelect}
         />
         <div>
           <Table size="medium">
             <SelectTableHead
+              hasSelect={hasSelect}
+              headCells={headCells}
               numSelected={selected.length}
               onSelectAllClick={handleSelectAllClick}
               rowCount={rows.length}
-              headCells={headCells}
-              hasSelect={hasSelect}
             />
             <TableBody>
               {rows.map(row => {
@@ -172,17 +172,17 @@ const SelectTable = props => {
 
                 return (
                   <TableRow
+                    aria-checked={isItemSelected}
                     hover
+                    key={row[keys[0]]}
                     onClick={() => handleClick(row)}
                     role="checkbox"
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    key={row[keys[0]]}
                     selected={
                       isItemSelected ||
                       isItemDisabled(row) ||
                       isItemIndeterminate(row)
                     }
+                    tabIndex={-1}
                   >
                     {hasSelect && (
                       <TableCell padding="checkbox">
@@ -201,8 +201,8 @@ const SelectTable = props => {
                       .map((key, i, arr) => {
                         return (
                           <TableCell
-                            key={`${key}:${row[key]}`}
                             align={arr.length - 1 === i ? 'right' : 'left'}
+                            key={`${key}:${row[key]}`}
                           >
                             {Percentage(row[key], '|')}
                           </TableCell>

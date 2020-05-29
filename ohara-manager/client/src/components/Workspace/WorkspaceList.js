@@ -37,15 +37,15 @@ import { Wrapper } from './WorkspaceListStyles';
 
 const Statistic = ({ value, label }) => (
   <>
-    <Typography variant="h4" component="h2" align="center">
+    <Typography align="center" component="h2" variant="h4">
       {value}
     </Typography>
     <Typography
-      variant="caption"
-      component="h6"
-      color="textSecondary"
-      gutterBottom
       align="center"
+      color="textSecondary"
+      component="h6"
+      gutterBottom
+      variant="caption"
     >
       {label}
     </Typography>
@@ -81,13 +81,13 @@ function WorkspaceList() {
   return (
     <>
       <Dialog
-        open={isOpen}
+        maxWidth="md"
         onClose={close}
+        open={isOpen}
+        showActions={false}
         title={`Showing ${workspaceCount} ${
           workspaceCount > 1 ? 'workspaces' : 'workspace'
         }`}
-        showActions={false}
-        maxWidth="md"
       >
         <Wrapper>
           <Grid container spacing={2}>
@@ -112,51 +112,51 @@ function WorkspaceList() {
               };
 
               return (
-                <Grid item xs={4} key={name}>
+                <Grid item key={name} xs={4}>
                   <Card className={isActive ? 'active-workspace' : ''}>
                     <CardHeader
                       avatar={
                         <Avatar className="workspace-icon">{avatarText}</Avatar>
                       }
-                      title={name}
                       subheader={`Updated: ${updatedText}`}
+                      title={name}
                     />
                     <CardContent>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
-                          <Statistic value={count.nodes} label="Nodes" />
+                          <Statistic label="Nodes" value={count.nodes} />
                         </Grid>
 
                         {/* Feature is disabled because it's not implemented in 0.9 */
                         false && (
                           <Grid item xs={4}>
                             <Statistic
-                              value={count.pipelines}
                               label="Pipelines"
+                              value={count.pipelines}
                             />
                           </Grid>
                         )}
                         <Grid item xs={6}>
-                          <Statistic value={count.topics} label="Topics" />
+                          <Statistic label="Topics" value={count.topics} />
                         </Grid>
                       </Grid>
                     </CardContent>
                     <CardActions>
                       <Tooltip
+                        className="call-to-action"
+                        enterDelay={isActive ? 250 : 1000}
+                        placement="top"
                         title={
                           isActive
                             ? "This is the workspace that you're at now"
                             : ''
                         }
-                        placement="top"
-                        enterDelay={isActive ? 250 : 1000}
-                        className="call-to-action"
                       >
                         <Button
+                          disabled={isActive}
+                          onClick={handleClick(name)}
                           size="large"
                           startIcon={<InputIcon />}
-                          onClick={handleClick(name)}
-                          disabled={isActive}
                         >
                           Into Workspace
                         </Button>

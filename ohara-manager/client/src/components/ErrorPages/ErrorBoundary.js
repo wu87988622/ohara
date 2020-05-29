@@ -44,7 +44,7 @@ class ErrorBoundary extends React.Component {
             <Typography variant="h1">
               500: Oops, something went terribly wrong!
             </Typography>
-            <Typography variant="body1" color="textSecondary">
+            <Typography color="textSecondary" variant="body1">
               You either tried some shady route or you came here by mistake.
               Whichever it is, try using the navigation
             </Typography>
@@ -52,9 +52,9 @@ class ErrorBoundary extends React.Component {
             <ErrorBoundarySvg width="680" />
 
             <Button
-              variant="outlined"
               color="primary"
               onClick={() => (window.location.href = '/')}
+              variant="outlined"
             >
               BACK TO HOME
             </Button>

@@ -113,10 +113,10 @@ const MuiTable = props => {
           checked={some(selectedRows, selectedRowData =>
             isEqual(selectedRowData, rowData),
           )}
+          color="primary"
           disabled={some(disabledData, disabledRow =>
             isEqual(disabledRow, rowData),
           )}
-          color="primary"
           onChange={event => handleRowSelected(event, rowData)}
         />
       ),
@@ -138,13 +138,13 @@ const MuiTable = props => {
         {...restProps}
         columns={[renderSelectionColumn(), ...columns]}
         data={data}
-        options={{ ...restOptions, paging: dataCount > 5 }}
         icons={MuiTableIcons}
+        options={{ ...restOptions, paging: dataCount > 5 }}
       />
       {options?.prompt && (
         <Typography
-          color="textSecondary"
           className="prompt"
+          color="textSecondary"
           display="block"
           gutterBottom
           variant="caption"

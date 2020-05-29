@@ -35,30 +35,30 @@ const AddPipelineDialog = ({ isOpen, setIsOpen }) => {
 
   return (
     <Form
-      onSubmit={onSubmit}
       initialValues={{}}
+      onSubmit={onSubmit}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => (
         <Dialog
-          open={isOpen}
-          title="Add a new pipeline"
+          confirmDisabled={submitting || pristine || invalid}
+          maxWidth="xs"
           onClose={() => {
             setIsOpen(false);
             form.reset();
           }}
           onConfirm={handleSubmit}
-          confirmDisabled={submitting || pristine || invalid}
-          maxWidth="xs"
+          open={isOpen}
           testId="new-pipeline-dialog"
+          title="Add a new pipeline"
         >
           <form onSubmit={handleSubmit}>
             <Field
-              type="text"
-              name="pipelineName"
-              label="Pipeline name"
-              placeholder="pipeline1"
-              component={InputField}
               autoFocus
+              component={InputField}
+              label="Pipeline name"
+              name="pipelineName"
+              placeholder="pipeline1"
               required
+              type="text"
               validate={validate.composeValidators(
                 validate.required,
                 validate.minLength(2),

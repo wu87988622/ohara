@@ -56,16 +56,16 @@ const Chooser = props => {
 
   return (
     <Autocomplete
-      disabled={disabled}
-      ref={refs}
       disableClearable={multipleChoice}
       disableCloseOnSelect={multipleChoice}
-      multiple={multipleChoice}
+      disabled={disabled}
       getOptionLabel={getOptionLabel}
+      multiple={multipleChoice}
       onChange={(event, values) => {
         onChange(values);
       }}
       options={options}
+      ref={refs}
       renderInput={params => (
         <TextField
           {...params}

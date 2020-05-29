@@ -38,8 +38,8 @@ const RenderDefinitions = props => {
 
   const RenderForm = (
     <Form
-      onSubmit={onSubmit}
       initialValues={initialValues}
+      onSubmit={onSubmit}
       render={({ handleSubmit }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>

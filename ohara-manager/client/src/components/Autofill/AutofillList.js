@@ -90,7 +90,7 @@ const AutofillList = () => {
       <List>
         {map(list, item => {
           return (
-            <ListItem key={item.name} divider alignItems="flex-start">
+            <ListItem alignItems="flex-start" divider key={item.name}>
               <ListItemText primary={item.displayName} />
               <ListItemSecondaryAction>
                 <Tooltip title="Edit the autofill">
@@ -113,7 +113,7 @@ const AutofillList = () => {
           );
         })}
       </List>
-      <Tooltip title="Add an autofill" placement="right">
+      <Tooltip placement="right" title="Add an autofill">
         <Button
           className="add-button"
           color="primary"
@@ -125,20 +125,20 @@ const AutofillList = () => {
         </Button>
       </Tooltip>
       <AutofillEditor
+        data={selectedData}
         isOpen={isEditorOpen}
         mode={editorMode}
         onClose={handleEditorClose}
-        data={selectedData}
       />
       <DeleteDialog
-        title="Delete Autofill?"
         content={`Are you sure you want to delete the autofill: ${get(
           selectedData,
           'displayName',
         )} ? This action cannot be undone!`}
-        open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleDelete}
+        open={isDeleteConfirmOpen}
+        title="Delete Autofill?"
       />
     </Wrapper>
   );

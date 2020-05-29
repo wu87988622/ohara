@@ -26,18 +26,18 @@ const EventLogContentDialog = () => {
   return (
     <>
       <Dialog
-        onClose={close}
         maxWidth="md"
+        onClose={close}
         open={isOpen}
         showActions={false}
         title={get(log, 'title', '')}
       >
         <ReactJson
-          src={get(log, 'payload', {})}
-          enableClipboard={false}
-          iconStyle="square"
           displayDataTypes={false}
           displayObjectSize={false}
+          enableClipboard={false}
+          iconStyle="square"
+          src={get(log, 'payload', {})}
         />
       </Dialog>
     </>

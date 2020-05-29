@@ -55,24 +55,24 @@ const SetupWorkspaceForm = props => {
     <form onSubmit={handleSubmit}>
       <Paper className="fields">
         <Field
-          type="text"
-          name="workspace.name"
+          autoFocus
+          component={InputField}
           label="Workspace name"
           margin="normal"
+          name="workspace.name"
           placeholder="workspace1"
-          component={InputField}
-          autoFocus
           required
+          type="text"
           validate={checkDuplicate(map(workspaces, 'name'))}
         />
       </Paper>
       <div className="buttons">
         <Button onClick={previousStep}>Back</Button>
         <Button
-          type="submit"
-          variant="contained"
           color="primary"
           disabled={invalid || pristine || submitting}
+          type="submit"
+          variant="contained"
         >
           Next
         </Button>

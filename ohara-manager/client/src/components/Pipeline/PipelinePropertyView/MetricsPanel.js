@@ -42,8 +42,8 @@ const MetricsPanel = props => {
     <Wrapper>
       <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
-          onClick={() => setIsExpanded(prevState => !prevState)}
           expandIcon={<ExpandMoreIcon />}
+          onClick={() => setIsExpanded(prevState => !prevState)}
         >
           <SignalCellularAltIcon fontSize="small" />
           <Typography className="section-title" variant="h5">
@@ -63,16 +63,16 @@ const MetricsPanel = props => {
                       <PropertyField
                         key={index}
                         label={document}
-                        value={value}
                         slot={
                           <Typography
-                            variant="body2"
                             className="metrics-unit"
                             component="span"
+                            variant="body2"
                           >
                             {unit}
                           </Typography>
                         }
+                        value={value}
                       />
                     );
                   })}

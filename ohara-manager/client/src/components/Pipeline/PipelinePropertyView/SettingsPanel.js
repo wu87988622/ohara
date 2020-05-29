@@ -126,10 +126,10 @@ const SettingsPanel = props => {
   };
 
   return (
-    <ExpansionPanel square defaultExpanded={true} expanded={isSettingsExpanded}>
+    <ExpansionPanel defaultExpanded={true} expanded={isSettingsExpanded} square>
       <ExpansionPanelSummary
-        onClick={() => setIsSettingsExpanded(prevState => !prevState)}
         expandIcon={<ExpandMoreIcon />}
+        onClick={() => setIsSettingsExpanded(prevState => !prevState)}
       >
         <TuneIcon fontSize="small" />
         <Typography className="section-title" variant="h5">

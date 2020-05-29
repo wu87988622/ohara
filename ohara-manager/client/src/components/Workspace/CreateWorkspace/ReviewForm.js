@@ -81,7 +81,7 @@ const ReviewForm = props => {
       </Paper>
       <div className="buttons">
         <Button onClick={previousStep}>Back</Button>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
+        <Button color="primary" onClick={handleSubmit} variant="contained">
           Submit
         </Button>
       </div>

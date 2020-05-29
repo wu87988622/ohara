@@ -75,16 +75,16 @@ const PipelinePropertySpeedDial = ({ formRef }) => {
         open={isSeepDialOpen}
       >
         <SpeedDialAction
-          key="autofill"
           icon={<EditIcon />}
-          tooltipTitle="Autofill"
+          key="autofill"
           onClick={handleAutofillButtonClick}
+          tooltipTitle="Autofill"
         />
         <SpeedDialAction
-          key="copy"
           icon={<FileCopyIcon />}
-          tooltipTitle="Copy"
+          key="copy"
           onClick={handleCopyButtonClick}
+          tooltipTitle="Copy"
         />
       </SpeedDial>
       <AutofillEditor

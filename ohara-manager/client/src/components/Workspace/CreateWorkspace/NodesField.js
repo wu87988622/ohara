@@ -79,27 +79,27 @@ const NodesField = props => {
   return (
     <>
       <Grid
+        alignItems="flex-start"
         container
         direction="row"
         justify="flex-start"
-        alignItems="flex-start"
       >
         {map(selectedNodes, node => {
           return (
-            <Grid item xs={4} key={node?.hostname}>
-              <SelectCard rows={node} handleClose={deleteNode(node)} />
+            <Grid item key={node?.hostname} xs={4}>
+              <SelectCard handleClose={deleteNode(node)} rows={node} />
             </Grid>
           );
         })}
-        <Grid item xs={selectedNodes?.length > 0 ? 4 : 12} key="select_nodes">
+        <Grid item key="select_nodes" xs={selectedNodes?.length > 0 ? 4 : 12}>
           <Card
+            content="Click here to select nodes"
             onClick={() => {
               onFocus();
               openSelectorDialog();
             }}
-            title="Select nodes"
-            content="Click here to select nodes"
             sm={selectedNodes?.length > 0}
+            title="Select nodes"
           />
         </Grid>
       </Grid>

@@ -58,14 +58,18 @@ const RestartWorkspace = () => {
 
   return (
     <LogProgress
-      createTitle={'Restart Workspace'}
-      isOpen={isOpen}
-      steps={steps}
       activeStep={activeStep}
-      message={message}
-      onPause={pause}
-      isPause={isPause}
+      closeDisable={closeDisable}
+      createTitle={'Restart Workspace'}
       data={log}
+      isAutoClose={isAutoClose}
+      isOpen={isOpen}
+      isPause={isPause}
+      message={message}
+      onAutoClose={() => autoClose()}
+      onClose={() => close()}
+      onPause={pause}
+      onResetClusters={() => resetClusters()}
       onResume={() => {
         resume();
         startWorkspace({
@@ -90,11 +94,7 @@ const RestartWorkspace = () => {
           tmpZookeeper: workspace.Zookeeper,
         });
       }}
-      onClose={() => close()}
-      onAutoClose={() => autoClose()}
-      onResetClusters={() => resetClusters()}
-      isAutoClose={isAutoClose}
-      closeDisable={closeDisable}
+      steps={steps}
     />
   );
 };

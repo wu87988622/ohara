@@ -44,8 +44,8 @@ const NodePanel = props => {
     <>
       <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
-          onClick={() => setIsExpanded(prevState => !prevState)}
           expandIcon={<ExpandMoreIcon />}
+          onClick={() => setIsExpanded(prevState => !prevState)}
         >
           <StorageIcon fontSize="small" />
           <Typography className="section-title" variant="h5">
@@ -67,9 +67,9 @@ const NodePanel = props => {
       </ExpansionPanel>
 
       <NodeErrorDialog
+        error={currentError}
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        error={currentError}
       />
     </>
   );

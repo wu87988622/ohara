@@ -40,16 +40,16 @@ const BindingPort = props => {
   return (
     <TextField
       {...rest}
-      ref={refs}
-      InputProps={restInput}
-      fullWidth
-      onChange={onChange}
-      name={name}
-      value={_value}
-      helperText={hasError ? meta.error : helperText}
       error={hasError}
-      type="text"
+      fullWidth
+      helperText={hasError ? meta.error : helperText}
+      InputProps={restInput}
+      name={name}
+      onChange={onChange}
+      ref={refs}
       select
+      type="text"
+      value={_value}
     >
       {_list.map(item => {
         const disabled = disables.includes(item);

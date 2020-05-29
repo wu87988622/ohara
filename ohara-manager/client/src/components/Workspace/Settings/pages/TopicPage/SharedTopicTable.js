@@ -53,11 +53,11 @@ function SharedTopicTable() {
     <>
       <TopicTable
         broker={broker}
-        topics={topics}
         onCreate={handleCreate}
         onDelete={handleDelete}
         onLinkClick={handleLinkClick}
         title="Shared topics"
+        topics={topics}
       />
     </>
   );

@@ -71,9 +71,9 @@ const FileCard = props => {
               <input {...getInputProps()} />
               <StyledPluginsCard>
                 <CardContent>
-                  <PowerIcon color="action" className="action-icon" />
+                  <PowerIcon className="action-icon" color="action" />
                   <div className="action-description">
-                    <Typography variant="h5" className="title">
+                    <Typography className="title" variant="h5">
                       {title}
                     </Typography>
                     <Typography variant="body2">{content}</Typography>

@@ -63,17 +63,17 @@ const NodeList = ({ heading, list, onErrorTextClick }) => {
             <PropertyField
               key={nodeName}
               label={''}
-              value={nodeName}
               slot={
                 <Typography
-                  variant="body2"
                   className={className}
                   component="span"
                   onClick={onClick}
+                  variant="body2"
                 >
                   {state}
                 </Typography>
               }
+              value={nodeName}
             />
           );
         })}

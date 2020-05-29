@@ -63,7 +63,7 @@ const PipelinePropertyView = props => {
   if (!settings?.settingDefinitions) return null;
 
   return (
-    <Wrapper variant="outlined" square>
+    <Wrapper square variant="outlined">
       <div className="title-wrapper">
         <div className="title-info">
           <div
@@ -80,16 +80,16 @@ const PipelinePropertyView = props => {
             <div className="status">
               <Typography
                 className="status-key"
-                variant="body2"
-                component="span"
                 color="textSecondary"
+                component="span"
+                variant="body2"
               >
                 Status:
               </Typography>
               <Typography
                 className="status-value"
-                variant="body2"
                 component="span"
+                variant="body2"
               >
                 {_.get(settings, 'state', CELL_STATUS.stopped)}
               </Typography>
@@ -102,9 +102,9 @@ const PipelinePropertyView = props => {
       </div>
 
       <SettingsPanel
-        settings={settings}
-        setTags={setTags}
         setFullTagViewDialogOpen={setIsOpen}
+        setTags={setTags}
+        settings={settings}
       />
       {// For topic component, we should display its "partitionInfos" instead.
       // Please see #4677 for more info about this
@@ -112,16 +112,16 @@ const PipelinePropertyView = props => {
         <NodePanel tasksStatus={settings.tasksStatus} />
       )}
       <MetricsPanel
-        pipelineObjects={pipelineObjects}
-        isMetricsOn={isMetricsOn}
         currentCellName={cellName}
+        isMetricsOn={isMetricsOn}
+        pipelineObjects={pipelineObjects}
       />
 
       <Dialog
         onClose={() => setIsOpen(false)}
         open={isOpen}
-        title={`Full tags content of ${tags.name}`}
         showActions={false}
+        title={`Full tags content of ${tags.name}`}
       >
         {tags.json ? (
           <pre>{JSON.stringify(JSON.parse(tags.json), null, 4)}</pre>

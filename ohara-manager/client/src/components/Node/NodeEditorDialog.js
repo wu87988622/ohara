@@ -33,77 +33,77 @@ const parsePort = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
 const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
   return (
     <Form
-      onSubmit={onConfirm}
       initialValues={{}}
+      onSubmit={onConfirm}
       render={({ handleSubmit, form, submitting, pristine, invalid }) => {
         return (
           <Dialog
-            open={isOpen}
+            confirmDisabled={submitting || pristine || invalid}
+            confirmText="SAVE"
             onClose={() => {
               onClose();
               form.reset();
             }}
             onConfirm={handleSubmit}
+            open={isOpen}
             title="Edit node"
-            confirmText="SAVE"
-            confirmDisabled={submitting || pristine || invalid}
           >
             <form onSubmit={handleSubmit}>
               <Field
-                type="text"
-                name="hostname"
-                label="Hostname"
-                placeholder="node-01"
-                margin="normal"
-                helperText="hostname of the node"
                 component={InputField}
-                disabled
                 defaultValue={node?.hostname}
+                disabled
+                helperText="hostname of the node"
+                label="Hostname"
+                margin="normal"
+                name="hostname"
+                placeholder="node-01"
+                type="text"
               />
               {mode === MODE.DOCKER && (
                 <>
                   <Field
-                    name="port"
+                    component={InputField}
+                    defaultValue={node?.port}
+                    helperText="SSH port of the node"
+                    inputProps={{
+                      min: 1,
+                      max: 65535,
+                    }}
                     label="Port"
+                    margin="normal"
+                    name="port"
+                    parse={parsePort}
                     placeholder="22"
                     type="number"
-                    margin="normal"
-                    helperText="SSH port of the node"
-                    component={InputField}
-                    parse={parsePort}
-                    defaultValue={node?.port}
                     validate={composeValidators(
                       required,
                       minNumber(1),
                       maxNumber(65535),
                     )}
-                    inputProps={{
-                      min: 1,
-                      max: 65535,
-                    }}
                   />
                   <Field
-                    name="user"
-                    label="User"
-                    placeholder="admin"
-                    margin="normal"
-                    helperText="SSH username"
-                    validate={required}
                     component={InputField}
                     defaultValue={node?.user}
                     fullWidth
+                    helperText="SSH username"
+                    label="User"
+                    margin="normal"
+                    name="user"
+                    placeholder="admin"
+                    validate={required}
                   />
                   <Field
-                    name="password"
-                    label="Password"
-                    type="password"
-                    margin="normal"
-                    placeholder="password"
-                    helperText="SSH password"
-                    validate={required}
                     component={InputField}
                     defaultValue={node?.password}
                     fullWidth
+                    helperText="SSH password"
+                    label="Password"
+                    margin="normal"
+                    name="password"
+                    placeholder="password"
+                    type="password"
+                    validate={required}
                   />
                 </>
               )}

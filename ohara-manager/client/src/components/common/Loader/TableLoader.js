@@ -28,20 +28,20 @@ const Loader = props => {
   return (
     <ContentLoader
       height={40}
-      width={1060}
-      speed={2}
       primaryColor="#d9d9d9"
       secondaryColor="#ecebeb"
+      speed={2}
+      width={1060}
       {...props}
     >
-      <rect x="0" y="15" rx="4" ry="4" width="6" height="6.4" />
-      <rect x="34" y="13" rx="6" ry="6" width={200 * random} height="12" />
-      <rect x="633" y="13" rx="6" ry="6" width={23 * random} height="12" />
-      <rect x="653" y="13" rx="6" ry="6" width={78 * random} height="12" />
-      <rect x="755" y="13" rx="6" ry="6" width={117 * random} height="12" />
-      <rect x="938" y="13" rx="6" ry="6" width={83 * random} height="12" />
+      <rect height="6.4" rx="4" ry="4" width="6" x="0" y="15" />
+      <rect height="12" rx="6" ry="6" width={200 * random} x="34" y="13" />
+      <rect height="12" rx="6" ry="6" width={23 * random} x="633" y="13" />
+      <rect height="12" rx="6" ry="6" width={78 * random} x="653" y="13" />
+      <rect height="12" rx="6" ry="6" width={117 * random} x="755" y="13" />
+      <rect height="12" rx="6" ry="6" width={83 * random} x="938" y="13" />
 
-      <rect x="0" y="39" rx="6" ry="6" width="1060" height=".3" />
+      <rect height=".3" rx="6" ry="6" width="1060" x="0" y="39" />
     </ContentLoader>
   );
 };

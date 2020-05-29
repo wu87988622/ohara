@@ -90,13 +90,13 @@ const CreateWorkspaceForm = props => {
         <Step>
           <StepLabel>About this workspace</StepLabel>
           <StepContent>
-            <SetupWorkspaceForm previousStep={onCancel} onSubmit={nextStep} />
+            <SetupWorkspaceForm onSubmit={nextStep} previousStep={onCancel} />
           </StepContent>
         </Step>
         <Step>
           <StepLabel>Select nodes</StepLabel>
           <StepContent>
-            <SetupNodesForm previousStep={previousStep} onSubmit={nextStep} />
+            <SetupNodesForm onSubmit={nextStep} previousStep={previousStep} />
           </StepContent>
         </Step>
         {mode === EXPERT && (
@@ -104,8 +104,8 @@ const CreateWorkspaceForm = props => {
             <StepLabel>Setup zookeeper</StepLabel>
             <StepContent>
               <SetupZookeeperForm
-                previousStep={previousStep}
                 onSubmit={nextStep}
+                previousStep={previousStep}
               />
             </StepContent>
           </Step>
@@ -115,8 +115,8 @@ const CreateWorkspaceForm = props => {
             <StepLabel>Setup broker</StepLabel>
             <StepContent>
               <SetupBrokerForm
-                previousStep={previousStep}
                 onSubmit={nextStep}
+                previousStep={previousStep}
               />
             </StepContent>
           </Step>
@@ -126,8 +126,8 @@ const CreateWorkspaceForm = props => {
             <StepLabel>Setup worker</StepLabel>
             <StepContent>
               <SetupWorkerForm
-                previousStep={previousStep}
                 onSubmit={nextStep}
+                previousStep={previousStep}
               />
             </StepContent>
           </Step>
@@ -135,7 +135,7 @@ const CreateWorkspaceForm = props => {
         <Step>
           <StepLabel>Create this workspace</StepLabel>
           <StepContent>
-            <ReviewForm previousStep={previousStep} onSubmit={handleSubmit} />
+            <ReviewForm onSubmit={handleSubmit} previousStep={previousStep} />
           </StepContent>
         </Step>
       </Stepper>

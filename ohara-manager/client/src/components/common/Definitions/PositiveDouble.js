@@ -31,15 +31,15 @@ const PositiveDouble = props => {
   return (
     <TextField
       {...rest}
-      ref={refs}
-      fullWidth
-      onChange={onChange}
-      name={name}
-      InputProps={{ inputProps: { min: 0 }, ...restInput }}
-      value={value}
-      helperText={hasError ? meta.error : helperText}
       error={hasError}
+      fullWidth
+      helperText={hasError ? meta.error : helperText}
+      InputProps={{ inputProps: { min: 0 }, ...restInput }}
+      name={name}
+      onChange={onChange}
+      ref={refs}
       type="number"
+      value={value}
     />
   );
 };

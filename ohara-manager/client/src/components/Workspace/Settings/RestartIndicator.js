@@ -65,13 +65,6 @@ function RestartIndicator({
     <div>
       {isOpen && (
         <StyledSnackbarContent
-          message={
-            <Typography className="alert" component="span">
-              <WarningIcon className="alert-icon" fontSize="small" />
-              You’ve made some changes to the workspace. Please restart for
-              these settings to take effect!!
-            </Typography>
-          }
           action={
             <>
               <Button
@@ -88,28 +81,35 @@ function RestartIndicator({
               </Button>
             </>
           }
+          message={
+            <Typography className="alert" component="span">
+              <WarningIcon className="alert-icon" fontSize="small" />
+              You’ve made some changes to the workspace. Please restart for
+              these settings to take effect!!
+            </Typography>
+          }
         />
       )}
       <DeleteDialog
-        content="Are you sure you want to discard the workspace settings?"
         confirmText="DISCARD"
+        content="Are you sure you want to discard the workspace settings?"
+        onClose={() => setIsDiscardConfirmDialogOpen(false)}
         onConfirm={() => {
           onDiscard();
           setIsDiscardConfirmDialogOpen(false);
         }}
-        onClose={() => setIsDiscardConfirmDialogOpen(false)}
         open={isDiscardConfirmDialogOpen}
         title="Are you absolutely sure?"
       />
       <DeleteDialog
-        content={restartConfirmMessage}
+        confirmDisabled={hasRunningServices}
         confirmText="RESTART"
+        content={restartConfirmMessage}
+        onClose={() => setIsRestartConfirmDialogOpen(false)}
         onConfirm={() => {
           onRestart();
           setIsRestartConfirmDialogOpen(false);
         }}
-        confirmDisabled={hasRunningServices}
-        onClose={() => setIsRestartConfirmDialogOpen(false)}
         open={isRestartConfirmDialogOpen}
         title="Are you absolutely sure?"
       />

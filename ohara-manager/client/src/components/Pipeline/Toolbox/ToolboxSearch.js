@@ -90,10 +90,10 @@ const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
         <SearchIcon />
       </IconButton>
       <InputBase
-        type="search"
         onChange={event => setSearchTerm(event.target.value)}
-        value={searchTerm}
         placeholder="Search topic & connector..."
+        type="search"
+        value={searchTerm}
       />
     </StyledToolboxSearch>
   );

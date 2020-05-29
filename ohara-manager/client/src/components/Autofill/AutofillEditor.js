@@ -118,12 +118,12 @@ const AutofillEditor = props => {
           <Dialog
             confirmDisabled={submitting || pristine || invalid}
             confirmText="Save"
+            maxWidth="sm"
             onClose={() => {
               onClose();
               form.reset();
             }}
             onConfirm={handleSubmit}
-            maxWidth="sm"
             open={isOpen}
             title={`${mode} Autofill`}
           >
@@ -144,15 +144,15 @@ const AutofillEditor = props => {
                     <div className="setting" key={name}>
                       <Field
                         className="input"
+                        closeIcon={<></>}
                         component={AutoComplete}
                         label="key"
                         margin="normal"
                         name={`${name}.key`}
+                        options={suggestiveKeys}
                         required
                         type="text"
                         validate={composeValidators(required, duplicateKey)}
-                        options={suggestiveKeys}
-                        closeIcon={<></>}
                       />
                       <Field
                         className="input"
@@ -171,14 +171,14 @@ const AutofillEditor = props => {
                   ))
                 }
               </FieldArray>
-              <Tooltip title="Add a set of key, value" placement="right">
+              <Tooltip placement="right" title="Add a set of key, value">
                 <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={() => push('settings', undefined)}
                   className="add-button"
+                  color="primary"
                   disabled={submitting || invalid}
+                  onClick={() => push('settings', undefined)}
+                  startIcon={<AddIcon />}
+                  variant="outlined"
                 >
                   Add Key
                 </Button>

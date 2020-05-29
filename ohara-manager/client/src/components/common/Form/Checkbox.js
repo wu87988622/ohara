@@ -38,11 +38,11 @@ const MuiCheckbox = ({
           <Checkbox
             data-testid={testId}
             {...rest}
-            onChange={onChange}
-            name={name}
-            inputProps={restInput}
             checked={checked}
             color="primary"
+            inputProps={restInput}
+            name={name}
+            onChange={onChange}
           />
         }
         label={label}

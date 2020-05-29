@@ -30,16 +30,16 @@ const NotFoundPage = () => {
       <Typography variant="h1">
         404: The page you are looking for isn't here
       </Typography>
-      <Typography variant="body1" color="textSecondary">
+      <Typography color="textSecondary" variant="body1">
         You either tried some shady route or you came here by mistake. Whichever
         it is, try using the navigation
       </Typography>
 
       <NotFoundSvg width="680" />
       <Button
-        variant="outlined"
         color="primary"
         onClick={() => history.push('/')}
+        variant="outlined"
       >
         BACK TO HOME
       </Button>

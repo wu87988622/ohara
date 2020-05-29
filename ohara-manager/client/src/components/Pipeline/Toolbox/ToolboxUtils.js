@@ -111,7 +111,7 @@ export const createToolboxList = params => {
 
   // Custom icon, so we need to pass some props...
   const AddSharedTopic = renderToString(
-    <AddSharedTopicIcon className="shared-topic" width={23} height={22} />,
+    <AddSharedTopicIcon className="shared-topic" height={22} width={23} />,
   );
 
   const displaySources = isNull(searchResults)

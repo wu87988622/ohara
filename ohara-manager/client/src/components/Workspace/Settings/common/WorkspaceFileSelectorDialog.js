@@ -51,13 +51,13 @@ const WorkspaceFileSelectorDialog = React.forwardRef((props, ref) => {
 
   return (
     <Dialog
-      title={title}
-      open={isOpen}
-      onClose={handleCancel}
-      onConfirm={handleConfirm}
       confirmDisabled={saveable}
       confirmText="Save"
       maxWidth="md"
+      onClose={handleCancel}
+      onConfirm={handleConfirm}
+      open={isOpen}
+      title={title}
     >
       <WorkspaceFileTable
         onSelectionChange={handleSelectionChange}

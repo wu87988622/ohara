@@ -49,7 +49,7 @@ const NotFoundPage = () => {
       <Typography variant="h1">
         501: The version of the Ohara API is not compatible!
       </Typography>
-      <Typography variant="body1" color="textSecondary">
+      <Typography color="textSecondary" variant="body1">
         The version of the Ohara API is not compatible, please update as soon as
         possible.
       </Typography>
@@ -66,39 +66,39 @@ const NotFoundPage = () => {
               <ul>
                 <li>
                   <Typography
-                    variant="body1"
                     color="textSecondary"
+                    variant="body1"
                   >{`oharastream-configurator-${managerVersion}`}</Typography>
                 </li>
                 <li>
                   <Typography
-                    variant="body1"
                     color="textSecondary"
+                    variant="body1"
                   >{`oharastream-manager-${configuratorVersion}`}</Typography>
                 </li>
               </ul>
             </div>
 
             <div className="suggestion-section">
-              <Typography variant="h5" color="textSecondary">
+              <Typography color="textSecondary" variant="h5">
                 Looks like you're using different versions in your services.
                 Please use the same version across all services.
               </Typography>
             </div>
 
             <Button
-              variant="outlined"
               color="primary"
               onClick={() =>
                 window.open('https://github.com/oharastream/ohara/releases')
               }
+              variant="outlined"
             >
               See available releases
             </Button>
           </>
         ) : (
           <>
-            <Typography variant="body1" color="textSecondary">
+            <Typography color="textSecondary" variant="body1">
               Loading version information from your system...
             </Typography>
             <CircularProgress />
