@@ -166,7 +166,6 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!currentPipeline) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
-    paperApiRef.current.setScale(1);
 
     // Fire this epic only once and it will keep fetching and updating metrics
     // before users leave our App by closing the Tab or browser

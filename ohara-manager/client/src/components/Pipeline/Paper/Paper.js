@@ -699,6 +699,12 @@ const Paper = React.forwardRef((props, ref) => {
         // Clear the graph before loading
         graph.clear({ skipGraphEvents: true });
 
+        // We currently are not saving these meta, and so when switching
+        // pipeline these should be reset. In the future, we can load these
+        // along with cell data from API
+        paper.translate(0, 0);
+        this.setScale(1);
+
         cells
           // Elements should be render first, and then the links
           .sort((a, b) => a.type.localeCompare(b.type))
