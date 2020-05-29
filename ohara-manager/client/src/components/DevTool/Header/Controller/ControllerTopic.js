@@ -59,16 +59,15 @@ const ControllerTopic = () => {
     <>
       <Tooltip title="Select topic">
         <Select
-          value={topics.find(topic => topic.name === name)?.displayName || ''}
+          value={name || ''}
           onChange={event =>
             prevName !== event.target.value &&
-            setTopicQueryParams({
-              name: topics.find(
-                topic => topic.displayName === event.target.value,
-              ).name,
-            })
+            setTopicQueryParams({ name: event.target.value })
           }
-          list={topics.map(topic => topic.displayName)}
+          list={topics.map(topic => ({
+            displayName: topic.displayName,
+            value: topic.name,
+          }))}
           disabled={isFetching || isEmpty(topics)}
         />
       </Tooltip>

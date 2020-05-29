@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import { map, isString } from 'lodash';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
@@ -48,6 +49,14 @@ const Select = props => {
     testId,
   } = props;
 
+  const getDisplayNameByValue = item => {
+    if (props?.getDisplayNameByValue) {
+      return props.getDisplayNameByValue(item.value);
+    }
+    // if neither dispalyName nor func defined, we use value as displayName by default
+    return item?.displayName ? item.displayName : item.value;
+  };
+
   return (
     <Typography component="div" data-testid={testId}>
       <FormControl disabled={disabled}>
@@ -63,12 +72,20 @@ const Select = props => {
             transformOrigin,
           }}
         >
-          {list.map(item => {
-            return (
-              <MenuItem value={item} key={item}>
-                {item}
-              </MenuItem>
-            );
+          {map(list, item => {
+            if (isString(item)) {
+              return (
+                <MenuItem value={item} key={item}>
+                  {item}
+                </MenuItem>
+              );
+            } else {
+              return (
+                <MenuItem value={item.value} key={item.value}>
+                  {getDisplayNameByValue(item)}
+                </MenuItem>
+              );
+            }
           })}
         </MuiSelect>
       </FormControl>
@@ -78,8 +95,16 @@ const Select = props => {
 
 Select.propTypes = {
   value: PropTypes.string.isRequired,
-  list: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
+  list: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.shape({
+        value: PropTypes.string.isRequired,
+        displayName: PropTypes.string,
+      }),
+      PropTypes.string,
+    ]),
+  ).isRequired,
   disabled: PropTypes.bool,
   anchorOrigin: PropTypes.shape({
     vertical: PropTypes.string,
@@ -89,10 +114,12 @@ Select.propTypes = {
     vertical: PropTypes.string,
     horizontal: PropTypes.string,
   }),
+  getDisplayNameByValue: PropTypes.func,
   testId: PropTypes.string,
 };
 
 Select.defaultProps = {
+  disabled: false,
   anchorOrigin: {
     vertical: 'bottom',
     horizontal: 'center',
@@ -101,7 +128,8 @@ Select.defaultProps = {
     vertical: 'top',
     horizontal: 'center',
   },
-  disabled: false,
+  getDisplayNameByValue: null,
+  testId: 'select-component',
 };
 
 export default Select;
