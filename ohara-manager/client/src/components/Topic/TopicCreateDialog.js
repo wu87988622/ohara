@@ -79,6 +79,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
               <Field
                 type="text"
                 label="Topic name"
+                id="Topic name"
                 name="name"
                 component={InputField}
                 placeholder="topic"
@@ -94,6 +95,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
               <Field
                 type="number"
                 label="Partitions"
+                id="Partitions"
                 name="numberOfPartitions"
                 margin="normal"
                 component={InputField}
@@ -107,6 +109,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
               <Field
                 type="number"
                 label="Replication factor"
+                id="Replication factor"
                 name="numberOfReplications"
                 margin="normal"
                 component={InputField}

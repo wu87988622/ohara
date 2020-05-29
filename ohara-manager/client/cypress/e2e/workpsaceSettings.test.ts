@@ -14,241 +14,131 @@
  * limitations under the License.
  */
 
-import { capitalize } from 'lodash';
-
 import { deleteAllServices } from '../utils';
-import { KIND, CELL_TYPES } from '../../src/const';
 import * as generate from '../../src/utils/generate';
-import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
 
-const sources = Object.values(SOURCES).sort();
-const sinks = Object.values(SINKS).sort();
-let topics: string[] = [];
+const nodeHost = Cypress.env('nodeHost');
 
-Cypress.Commands.add('addElement', (name, kind, className) => {
-  cy.log(`add element: ${name} of ${kind} with className ${className}`);
-  // toolbox: 272 width + navigator: 240 width + appBar: 64 width, we need to avoid covering it
-  const initialX = 600;
-  // the controllers tab has approximate 72 height, we need to avoid covering it
-  const initialY = 100;
-  const shiftWidth = 350;
-  const shiftHeight = 110;
+describe('Workspace Settings', () => {
+  before(() => deleteAllServices());
 
-  cy.get('body').then($body => {
-    let size = topics.length;
-    cy.log(
-      'calculate the size of elements(source, sink, stream, topic) in pipeline',
-    );
-    if ($body.find('div.connector').length > 0)
-      size = size + $body.find('div.connector').length;
-
-    cy.findByText(capitalize(kind))
-      .should('exist')
-      .click();
-
-    // re-render the cell position to maximize the available space
-    // the view of cells will be a [n, 2] matrix
-    const x = size % 2 === 0 ? initialX : initialX + shiftWidth;
-    const y = initialY + ~~(size / 2) * shiftHeight;
-    cy.log(`element position: ${x}, ${y}`);
-
-    // wait a little time for the toolbox list rendered
-    cy.wait(2000);
-
-    if (kind === KIND.source || kind === KIND.sink) {
-      const elementIndex =
-        kind === KIND.source
-          ? sources.indexOf(className)
-          : sinks.indexOf(className);
-
-      cy.findByTestId('toolbox-draggable')
-        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-        // the element index to be added
-        .eq(elementIndex)
-        .dragAndDrop(x, y);
-
-      // type the name and add
-      cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
-        name,
-      );
-      cy.findAllByText(/^add$/i)
-        .filter(':visible')
-        .click();
-    } else if (kind === KIND.topic) {
-      topics.push(name);
-      cy.log(`Available topics in this pipeline: ${topics.join(',')}`);
-      if (!name.startsWith('T')) {
-        // create a shared topic
-        cy.findByText('Add topics')
-          .siblings('button')
-          .first()
-          .click();
-
-        cy.findAllByLabelText('topic name', { exact: false })
-          .filter(':visible')
-          .type(name);
-        cy.findAllByLabelText('partitions', { exact: false })
-          .filter(':visible')
-          .type('1');
-        cy.findAllByLabelText('replication factor', { exact: false })
-          .filter(':visible')
-          .type('1');
-        cy.findAllByText(/^add$/i)
-          .filter(':visible')
-          .click();
-
-        cy.findByText(name).should('exist');
-
-        // wait a little time for the topic show in toolbox
-        cy.wait(3000);
-
-        cy.findByTestId('toolbox-draggable')
-          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-          // the element index to be added
-          // the pipeline-only element is always first, we shift one element
-          .eq(topics.sort().indexOf(name) + 1)
-          .dragAndDrop(x, y);
-      } else {
-        // create a pipeline-only topic
-        cy.findByTestId('toolbox-draggable')
-          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-          // the only "draggable" cell is pipeline-only topic
-          .first()
-          .dragAndDrop(x, y);
-      }
-    } else if (kind === KIND.stream) {
-      cy.findByTestId('toolbox-draggable')
-        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-        // we only got 1 class for the uploaded stream jar
-        // it's ok to assert the first element is the "stream class"
-        .eq(0)
-        .dragAndDrop(x, y);
-
-      // type the name and add
-      cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
-        name,
-      );
-      cy.findAllByText(/^add$/i)
-        .filter(':visible')
-        .click();
-    }
-
-    // wait a little time for the cell added
-    cy.wait(3000);
-
-    // close this panel
-    cy.findByText(capitalize(kind)).click();
-  });
-});
-
-Cypress.Commands.add('getCell', name => {
-  // open the cell menu
-  cy.findAllByText(name)
-    .filter(':visible')
-    .should('exist')
-    .parents(
-      name.startsWith('topic') || name.startsWith('T')
-        ? 'div.topic'
-        : 'div.connector',
-    )
-    .first()
-    .then(el => {
-      const testId = el[0].getAttribute('data-testid');
-      return cy.get(`g[model-id="${testId}"]`);
-    });
-});
-
-Cypress.Commands.add('cellAction', (name, action) => {
-  // open the cell menu
-  cy.findAllByText(name)
-    .filter(':visible')
-    .should('exist')
-    .parents(
-      name.startsWith('topic') || name.startsWith('T')
-        ? 'div.topic'
-        : 'div.connector',
-    )
-    .first()
-    .within(() => {
-      cy.get(`button.${action}:visible`);
-    });
-});
-
-function openDetailDialog(topicName: string) {
-  // Navigate to workspace topics page
-  cy.findByText(/^workspace1/i)
-    .click()
-    .findByText(/^topics$/i)
-    .click();
-
-  // Grab the right topic by its name
-  cy.findByTestId('workspace-settings-topics-table').within(() => {
-    cy.findByText(topicName)
-      .parent()
-      .within(() => {
-        cy.findByText(/^view$/i).click();
-      });
-  });
-}
-
-// TODO: will be enabled in https://github.com/oharastream/ohara/issues/4131
-describe.skip('WorkspaceSettings', () => {
-  before(async () => await deleteAllServices());
-
-  it('disables the delete button if a topic is already use by a pipeline', () => {
+  it('topics operations of Settings', () => {
     cy.createWorkspace({});
 
-    // Add new pipeline
-    cy.findByText(/^pipelines$/i)
-      .siblings('svg')
-      .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
-
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
-
-    cy.findByText(/^add$/i).click();
-
-    // force to reload the page in order to load the correct data for Toolbox
-    cy.reload();
-
     const sharedTopicName = generate.serviceName({ prefix: 'topic' });
-    cy.addElement(sharedTopicName, KIND.topic);
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the topics button
+    cy.findAllByText(/^topics in this workspace$/i).click({ force: true });
+    // create topic
+    cy.findByTitle('Create Topic')
+      .should('be.enabled')
+      .click();
+    cy.findAllByLabelText('Topic name', { exact: false })
+      .filter(':visible')
+      .type(sharedTopicName);
+    cy.findAllByLabelText('Partitions', { exact: false })
+      .filter(':visible')
+      .type('1');
+    cy.findAllByLabelText('Replication factor', { exact: false })
+      .filter(':visible')
+      .type('1');
+    cy.findAllByText(/^create$/i)
+      .filter(':visible')
+      .click();
+    // the new added topic should exist
+    cy.findByText(sharedTopicName).should('exist');
+    cy.contains('td', 'RUNNING').should('exist');
 
-    openDetailDialog(sharedTopicName);
+    // assert the topic view
+    cy.findAllByTitle('View topic')
+      .filter(':visible')
+      .first()
+      .click();
+    cy.contains('td', /^state$/i)
+      .siblings('td')
+      .contains('RUNNING')
+      .should('exist')
+      // press "ESC" again back to topic list
+      .trigger('keydown', { keyCode: 27, which: 27 });
 
-    // Assertion
-    cy.findByTestId('view-topic-detail-dialog').within(() => {
-      cy.findByText(/^delete/i)
-        .parent('Button')
-        .should('be.disabled');
-    });
+    // the shared topic should be OK to be removed
+    cy.findAllByTitle('Delete topic')
+      .filter(':visible')
+      .first()
+      .should('not.be.disabled')
+      .click();
+    cy.findAllByTestId('confirm-button-DELETE')
+      .filter(':visible')
+      .first()
+      .click();
 
-    // Remove the topic
+    // after remove, the topic should not exist
+    cy.findAllByText(sharedTopicName).should('not.exist');
+  });
+
+  it('zookeeper operations of Settings', () => {
     cy.visit('/');
-    cy.getCell(sharedTopicName).trigger('mouseover');
-    cy.cellAction(sharedTopicName, 'remove').click();
-    cy.findByText(/^delete$/i).click();
 
-    openDetailDialog(sharedTopicName);
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the zookeeper button
+    cy.findAllByText(/^zookeeper nodes$/i).click({ force: true });
 
-    // Assertion
-    cy.findByTestId('view-topic-detail-dialog').within(() => {
-      cy.findByText(/^delete/i)
-        .parent('Button')
-        .should('not.be.disabled')
-        .click();
-    });
+    cy.findAllByText(nodeHost)
+      .should('exist')
+      .siblings('td')
+      .contains('Available')
+      .should('exist');
+  });
 
-    // Delete the topic
-    cy.findByTestId('view-topic-detail-delete-dialog').within(() => {
-      cy.findByText(/^delete$/i).click();
-    });
+  it('broker operations of Settings', () => {
+    cy.visit('/');
 
-    // Assertion
-    cy.findAllByText(sharedTopicName).should('have.length', 0);
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the zookeeper button
+    cy.findAllByText(/^broker nodes$/i).click({ force: true });
+
+    cy.findAllByText(nodeHost)
+      .should('exist')
+      .siblings('td')
+      .contains('Available')
+      .should('exist');
+  });
+
+  it('worker operations of Settings', () => {
+    cy.visit('/');
+
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the zookeeper button
+    cy.findAllByText(/^worker nodes$/i).click({ force: true });
+
+    cy.findAllByText(nodeHost)
+      .should('exist')
+      .siblings('td')
+      .contains('Available')
+      .should('exist');
+  });
+
+  it('nodes operations of Settings', () => {
+    cy.visit('/');
+
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the zookeeper button
+    cy.findAllByText(/^workspace nodes$/i).click({ force: true });
+
+    cy.findAllByText(nodeHost)
+      .should('exist')
+      .siblings('td')
+      .contains('Available')
+      .should('exist');
   });
 });
