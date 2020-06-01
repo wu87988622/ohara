@@ -215,7 +215,7 @@ export const enableDragAndDrop = params => {
     });
 
     // Create "flying papers", which enable drag and drop feature
-    toolPaper.on('cell:pointerdown', (cellView, event, x, y) => {
+    toolPaper.on('cell:pointerdown', (cellView, event) => {
       if (cellView.model.get('isDisabled')) return;
 
       const cellKind = cellView.model.get('kind');
@@ -234,18 +234,13 @@ export const enableDragAndDrop = params => {
       });
 
       const flyingShape = cellView.model.clone();
-      const position = cellView.model.position();
-      const offset = {
-        x: x - position.x,
-        y: y - position.y,
-      };
 
       flyingShape.position(0, 0);
       flyingGraph.addCell(flyingShape);
 
       $('.flying-paper').offset({
-        left: event.pageX - offset.x,
-        top: event.pageY - offset.y,
+        left: event.pageX,
+        top: event.pageY,
       });
 
       $('#paper').on('mousemove.fly', event => {
@@ -254,8 +249,8 @@ export const enableDragAndDrop = params => {
         $('.toolbox').css('pointer-events', 'none');
 
         $('.flying-paper').offset({
-          left: event.pageX - offset.x,
-          top: event.pageY - offset.y,
+          left: event.pageX,
+          top: event.pageY,
         });
       });
 
@@ -281,10 +276,8 @@ export const enableDragAndDrop = params => {
         if (isInsidePaper && !isInsideToolbox) {
           const localPoint = paperApi.getLocalPoint();
           const scale = paperApi.getScale();
-          const newX =
-            (x - paperBbox.offsetLeft - offset.x) / scale.sx + localPoint.x;
-          const newY =
-            (y - paperBbox.offsetTop - offset.y) / scale.sy + localPoint.y;
+          const newX = (x - paperBbox.offsetLeft) / scale.sx + localPoint.x;
+          const newY = (y - paperBbox.offsetTop) / scale.sy + localPoint.y;
           const {
             kind,
             className,
