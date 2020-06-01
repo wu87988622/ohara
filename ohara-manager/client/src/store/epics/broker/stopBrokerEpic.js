@@ -29,7 +29,7 @@ import {
   concatMap,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
+import * as brokerApi from './apiEpic';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -39,8 +39,8 @@ import { LOG_LEVEL } from 'const';
 export const stopBroker$ = params => {
   const brokerId = getId(params);
   return zip(
-    defer(() => brokerApi.stop(params)),
-    defer(() => brokerApi.get(params)).pipe(
+    brokerApi.stop$(params),
+    brokerApi.get$(params).pipe(
       map(res => {
         if (res.data?.state) throw res;
         else return res.data;

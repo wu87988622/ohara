@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -27,20 +27,14 @@ import {
   switchMap,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
+import * as brokerApi from './apiEpic';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
-import { getId } from 'utils/object';
 import { LOG_LEVEL, GROUP } from 'const';
 
-export const createBroker$ = values => {
-  const brokerId = getId(values);
-  return defer(() => brokerApi.create(values)).pipe(
+export const createBroker$ = values =>
+  brokerApi.create$(values).pipe(
     map(res => res.data),
     switchMap(data => {
-      const normalizedData = merge(normalize(data, schema.broker), {
-        brokerId,
-      });
       return from([
         actions.updateWorkspace.trigger({
           broker: data,
@@ -48,18 +42,17 @@ export const createBroker$ = values => {
           name: values.name,
           group: GROUP.WORKSPACE,
         }),
-        actions.createBroker.success(normalizedData),
+        actions.createBroker.success(data),
       ]);
     }),
-    startWith(actions.createBroker.request({ brokerId })),
+    startWith(actions.createBroker.request(values)),
     catchError(err =>
       from([
-        actions.createBroker.failure(merge(err, { brokerId })),
+        actions.createBroker.failure(err),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
       ]),
     ),
   );
-};
 
 export default action$ =>
   action$.pipe(

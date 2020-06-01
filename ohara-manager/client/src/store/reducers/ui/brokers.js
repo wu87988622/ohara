@@ -15,6 +15,9 @@
  */
 
 import * as actions from 'store/actions';
+import { normalize } from 'normalizr';
+import * as schema from 'store/schema';
+import { getId } from 'utils/object';
 
 const initialState = {
   loading: false,
@@ -41,6 +44,20 @@ function broker(state = initialState, action) {
         ...state,
         loading: false,
         error: action.payload,
+      };
+    case actions.createBroker.SUCCESS:
+      return {
+        ...normalize(action.payload, schema.broker),
+        brokerId: getId(action.payload),
+      };
+    case actions.createBroker.REQUEST:
+      return {
+        brokerId: getId(action.payload),
+      };
+    case actions.createBroker.FAILURE:
+      return {
+        ...action.payload,
+        brokerId: getId(action.payload),
       };
     default:
       return state;

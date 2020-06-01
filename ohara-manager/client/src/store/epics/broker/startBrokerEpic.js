@@ -30,7 +30,7 @@ import {
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import * as brokerApi from 'api/brokerApi';
+import * as brokerApi from './apiEpic';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -40,8 +40,8 @@ import { LOG_LEVEL } from 'const';
 export const startBroker$ = params => {
   const brokerId = getId(params);
   return zip(
-    defer(() => brokerApi.start(params)),
-    defer(() => brokerApi.get(params)).pipe(
+    brokerApi.start$(params),
+    brokerApi.get$(params).pipe(
       map(res => {
         if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;

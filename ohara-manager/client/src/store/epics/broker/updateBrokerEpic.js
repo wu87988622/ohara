@@ -26,7 +26,7 @@ import {
   concatMap,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
+import * as brokerApi from './apiEpic';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -35,7 +35,7 @@ import { LOG_LEVEL } from 'const';
 // Note: The caller SHOULD handle the error of this action
 export const updateBrokerAndWorkspace$ = values => {
   const brokerId = getId(values);
-  return defer(() => brokerApi.update(values)).pipe(
+  return brokerApi.update$(values).pipe(
     map(res => res.data),
     map(data => normalize(data, schema.broker)),
     map(normalizedData => merge(normalizedData, { brokerId })),
@@ -54,7 +54,7 @@ export const updateBrokerAndWorkspace$ = values => {
 
 const updateBroker$ = values => {
   const brokerId = getId(values);
-  return defer(() => brokerApi.update(values)).pipe(
+  return brokerApi.update$(values).pipe(
     map(res => res.data),
     map(data => normalize(data, schema.broker)),
     map(normalizedData => merge(normalizedData, { brokerId })),

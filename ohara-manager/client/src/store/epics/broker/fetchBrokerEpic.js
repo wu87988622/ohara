@@ -27,8 +27,7 @@ import {
 } from 'rxjs/operators';
 
 import { UISettingDef, Type } from 'api/apiInterface/definitionInterface';
-import * as brokerApi from 'api/brokerApi';
-import * as inspectApi from 'api/inspectApi';
+import * as brokerApi from './apiEpic';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -39,11 +38,11 @@ const addSettingDefByKeyAndType = (...args) => new UISettingDef(...args);
 const fetchBroker$ = params => {
   const brokerId = getId(params);
   return forkJoin(
-    defer(() => brokerApi.get(params)).pipe(
+    brokerApi.get$(params).pipe(
       map(res => res.data),
       map(data => normalize(data, schema.broker)),
     ),
-    defer(() => inspectApi.getBrokerInfo(params)).pipe(
+    brokerApi.getBrokerInfo$(params).pipe(
       // add UI SettingDef to the broker info
       // Note: it is a workaround solution!
       map(res => {
