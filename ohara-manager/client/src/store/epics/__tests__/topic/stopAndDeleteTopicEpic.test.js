@@ -20,18 +20,23 @@ import stopAndDeleteTopicEpic from '../../topic/stopAndDeleteTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { noop } from 'rxjs';
+import { CELL_STATUS } from 'const';
 
 jest.mock('api/topicApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
+
+const promise = { resolve: jest.fn(), reject: jest.fn() };
 
 const topicId = getId(topicEntity);
+
+beforeEach(() => {
+  jest.restoreAllMocks();
+  jest.resetAllMocks();
+});
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -45,13 +50,15 @@ it('should stop and then delete the topic', () => {
     const input = '   ^-a                      ';
     const expected = '--a 499ms (mn) 996ms (vz)';
     const subs = '    ^------------------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopAndDeleteTopic.TRIGGER,
         payload: {
-          params: topicEntity,
+          params: { ...topicEntity, id },
           options: { paperApi },
+          promise,
         },
       },
     });
@@ -72,6 +79,7 @@ it('should stop and then delete the topic', () => {
             topics: {
               [topicId]: {
                 ...topicEntity,
+                id,
               },
             },
           },
@@ -99,5 +107,12 @@ it('should stop and then delete the topic', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(promise.resolve).toHaveBeenCalledTimes(1);
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
   });
 });

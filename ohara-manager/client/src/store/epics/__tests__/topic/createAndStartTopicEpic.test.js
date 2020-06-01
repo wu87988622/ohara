@@ -20,18 +20,24 @@ import createAndStartTopicEpic from '../../topic/createAndStartTopicEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as topicEntity } from 'api/__mocks__/topicApi';
-import { noop } from 'rxjs';
+import { CELL_STATUS } from 'const';
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 jest.mock('api/topicApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
+
+const promise = { resolve: jest.fn(), reject: jest.fn() };
 
 const topicId = getId(topicEntity);
+
+beforeEach(() => {
+  jest.restoreAllMocks();
+  jest.resetAllMocks();
+});
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -45,13 +51,15 @@ it('create and start topic should be worked correctly', () => {
     const input = '   ^-a                     ';
     const expected = '--a 1999ms (mn) 496ms v';
     const subs = '    ^-----------------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.createAndStartTopic.TRIGGER,
         payload: {
-          params: topicEntity,
+          params: { ...topicEntity, id },
           options: { paperApi },
+          promise,
         },
       },
     });
@@ -70,7 +78,7 @@ it('create and start topic should be worked correctly', () => {
           topicId,
           entities: {
             topics: {
-              [topicId]: topicEntity,
+              [topicId]: { ...topicEntity, id },
             },
           },
           result: topicId,
@@ -90,7 +98,8 @@ it('create and start topic should be worked correctly', () => {
             topics: {
               [topicId]: {
                 ...topicEntity,
-                state: 'RUNNING',
+                id,
+                state: SERVICE_STATE.RUNNING,
               },
             },
           },
@@ -102,5 +111,11 @@ it('create and start topic should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(promise.resolve).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.running,
+    });
   });
 });

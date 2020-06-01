@@ -79,7 +79,7 @@ const stopConnector$ = values => {
     startWith(actions.stopConnector.request({ connectorId })),
     catchError(err => {
       options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
+        status: CELL_STATUS.running,
       });
       return from([
         actions.stopConnector.failure(merge(err, { connectorId })),

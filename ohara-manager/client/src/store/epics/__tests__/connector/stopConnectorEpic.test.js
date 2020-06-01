@@ -15,7 +15,7 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
-import { of, noop } from 'rxjs';
+import { of } from 'rxjs';
 
 import stopConnectorEpic from '../../connector/stopConnectorEpic';
 import * as connectorApi from 'api/connectorApi';
@@ -23,16 +23,14 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as connectorEntity } from 'api/__mocks__/connectorApi';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 jest.mock('api/connectorApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
-});
-const paperApi = new mockedPaperApi();
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
 
 const connectorId = getId(connectorEntity);
 
@@ -42,23 +40,24 @@ const makeTestScheduler = () =>
   });
 
 beforeEach(() => {
-  // ensure the mock data is as expected before each test
   jest.restoreAllMocks();
+  jest.resetAllMocks();
 });
 
-it('stop connector should be worked correctly', () => {
+it('should stop the connector', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
     const expected = '--a 499ms v';
     const subs = '    ^----------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -80,6 +79,7 @@ it('stop connector should be worked correctly', () => {
             connectors: {
               [connectorId]: {
                 ...connectorEntity,
+                id,
               },
             },
           },
@@ -91,10 +91,18 @@ it('stop connector should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.stopped,
+    });
   });
 });
 
-it('stop connector failed after reach retry limit', () => {
+it('should fail after reaching the retry limit', () => {
   // mock a 20 times "failed stoped" result
   const spyGet = jest.spyOn(connectorApi, 'get');
   for (let i = 0; i < 20; i++) {
@@ -122,12 +130,13 @@ it('stop connector failed after reach retry limit', () => {
     // we failed after retry 5 times (5 * 2000ms = 10s)
     const expected = '--a 9999ms (vu)';
     const subs = '    ^--------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -165,6 +174,14 @@ it('stop connector failed after reach retry limit', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.running,
+    });
   });
 });
 
@@ -175,12 +192,13 @@ it('stop connector multiple times should be worked once', () => {
     const input = '   ^-a---a 1s a 10s ';
     const expected = '--a       499ms v';
     const subs = '    ^----------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -200,6 +218,7 @@ it('stop connector multiple times should be worked once', () => {
             connectors: {
               [connectorId]: {
                 ...connectorEntity,
+                id,
               },
             },
           },
@@ -211,6 +230,14 @@ it('stop connector multiple times should be worked once', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.stopped,
+    });
   });
 });
 
@@ -229,19 +256,21 @@ it('stop different connector should be worked correctly', () => {
     const input = '   ^-a--b           ';
     const expected = '--a--b 496ms y--z';
     const subs = '    ^----------------';
+    const id1 = '1234';
+    const id2 = '5678';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopConnector.TRIGGER,
         payload: {
-          params: connectorEntity,
+          params: { ...connectorEntity, id: id1 },
           options: { paperApi },
         },
       },
       b: {
         type: actions.stopConnector.TRIGGER,
         payload: {
-          params: anotherConnectorEntity,
+          params: { ...anotherConnectorEntity, id: id2 },
           options: { paperApi },
         },
       },
@@ -269,6 +298,7 @@ it('stop different connector should be worked correctly', () => {
             connectors: {
               [connectorId]: {
                 ...connectorEntity,
+                id: id1,
               },
             },
           },
@@ -283,6 +313,7 @@ it('stop different connector should be worked correctly', () => {
             connectors: {
               [getId(anotherConnectorEntity)]: {
                 ...anotherConnectorEntity,
+                id: id2,
               },
             },
           },
@@ -294,5 +325,13 @@ it('stop different connector should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(4);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
+      status: CELL_STATUS.stopped,
+    });
   });
 });

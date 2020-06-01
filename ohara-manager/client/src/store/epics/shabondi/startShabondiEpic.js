@@ -81,7 +81,7 @@ const startShabondi$ = value => {
     startWith(actions.startShabondi.request({ shabondiId })),
     catchError(err => {
       options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
+        status: CELL_STATUS.stopped,
       });
       return from([
         actions.startShabondi.failure(merge(err, { shabondiId })),

@@ -62,7 +62,7 @@ export default action$ =>
         catchError(err => {
           if (paperApi) {
             paperApi.updateElement(params.id, {
-              status: CELL_STATUS.failed,
+              status: CELL_STATUS.stopped,
             });
           }
           if (typeof promise?.reject === 'function') {

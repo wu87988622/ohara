@@ -81,7 +81,7 @@ const startConnector$ = values => {
     startWith(actions.startConnector.request({ connectorId })),
     catchError(err => {
       options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
+        status: CELL_STATUS.stopped,
       });
       return from([
         actions.startConnector.failure(merge(err, { connectorId })),

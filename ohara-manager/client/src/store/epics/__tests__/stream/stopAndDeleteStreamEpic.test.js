@@ -20,16 +20,19 @@ import stopAndDeleteStreamEpic from '../../stream/stopAndDeleteStreamEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as streamEntity } from 'api/__mocks__/streamApi';
-import { noop } from 'rxjs';
+import { CELL_STATUS } from 'const';
 
 jest.mock('api/streamApi');
-const mockedPaperApi = jest.fn(() => {
-  return {
-    updateElement: () => noop(),
-    removeElement: () => noop(),
-  };
+
+const paperApi = {
+  updateElement: jest.fn(),
+  removeElement: jest.fn(),
+};
+
+beforeEach(() => {
+  jest.restoreAllMocks();
+  jest.resetAllMocks();
 });
-const paperApi = new mockedPaperApi();
 
 const streamId = getId(streamEntity);
 
@@ -38,19 +41,20 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('stop and delete stream should be worked correctly', () => {
+it('should stop and then delete the stream', () => {
   makeTestScheduler().run(helpers => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                     ';
     const expected = '--a 499ms (mn) 996ms (uv)';
     const subs = '    ^-----------------------';
+    const id = '1234';
 
     const action$ = hot(input, {
       a: {
         type: actions.stopAndDeleteStream.TRIGGER,
         payload: {
-          params: streamEntity,
+          params: { ...streamEntity, id },
           options: { paperApi },
         },
       },
@@ -72,6 +76,7 @@ it('stop and delete stream should be worked correctly', () => {
             streams: {
               [streamId]: {
                 ...streamEntity,
+                id,
               },
             },
           },
@@ -99,5 +104,15 @@ it('stop and delete stream should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(3);
+    expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.stopped,
+    });
+    expect(paperApi.removeElement).toHaveBeenCalledWith(id);
   });
 });

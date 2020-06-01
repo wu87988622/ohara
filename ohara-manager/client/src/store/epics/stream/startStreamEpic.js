@@ -81,7 +81,7 @@ const startStream$ = value => {
     startWith(actions.startStream.request({ streamId })),
     catchError(error => {
       options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.failed,
+        status: CELL_STATUS.stopped,
       });
       return from([
         actions.startStream.failure(merge(error, { streamId })),
