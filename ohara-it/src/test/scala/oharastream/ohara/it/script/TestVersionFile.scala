@@ -87,7 +87,7 @@ class TestVersionFile extends IntegrationTest {
           .name(containerName)
           .nodeName(hostname)
           .create()
-          .flatMap(_ => containerClient.logs(containerName).map(_.head._2))
+          .flatMap(_ => containerClient.log(containerName).map(_.head._2))
       )
       expectedStrings.foreach(s => versionString should include(s))
   }

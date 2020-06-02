@@ -37,9 +37,8 @@ RUN rm -f hadoop-${HADOOP_VERSION}.tar.gz
 
 FROM centos:7.7.1908
 
-# install openjdk-1.8
 RUN yum install -y \
-  java-1.8.0-openjdk \
+  java-11-openjdk \
   which
 
 ENV JAVA_HOME=/usr/lib/jvm/jre

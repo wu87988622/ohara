@@ -24,7 +24,7 @@ How to build
 Prerequisites
 -------------
 
--  OpenJDK 1.8
+-  OpenJDK 11
 -  Scala 2.13.2
 -  Gradle 6.4.1
 -  Node.js 8.12.0

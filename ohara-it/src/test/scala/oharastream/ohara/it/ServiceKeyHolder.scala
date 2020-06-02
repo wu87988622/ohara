@@ -32,8 +32,6 @@ import scala.concurrent.{Await, Future}
   *
   */
 trait ServiceKeyHolder extends Releasable {
-  private[this] val log = Logger(classOf[ServiceKeyHolder])
-
   /**
     * store the name used to create cluster. We can remove all created cluster in the "after" phase.
     */
@@ -54,7 +52,6 @@ trait ServiceKeyHolder extends Releasable {
     */
   def generateClusterKey(): ObjectKey = {
     val key = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, prefix + CommonUtils.randomString(7))
-    log.info(s"cluster key is $key")
     usedClusterKeys += key
     key
   }

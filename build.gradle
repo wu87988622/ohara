@@ -130,8 +130,8 @@ subprojects {
     if (isJavaModule(it.name)) {
       apply plugin: 'java'
       java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
       }
     }
     else {
@@ -327,7 +327,7 @@ subprojects {
       "-language:postfixOps",
       "-language:implicitConversions",
       "-language:existentials",
-      "-target:jvm-1.8",
+      "-target:11",
       "-explaintypes",
       "-feature",
       "-unchecked",

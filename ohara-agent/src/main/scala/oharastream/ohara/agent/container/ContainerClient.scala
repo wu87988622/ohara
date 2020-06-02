@@ -101,7 +101,7 @@ trait ContainerClient extends Releasable {
     * @param executionContext thread pool
     * @return container log
     */
-  def logs(name: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
+  def log(name: String)(implicit executionContext: ExecutionContext): Future[Map[ContainerName, String]] =
     log(name, None)
 
   /**

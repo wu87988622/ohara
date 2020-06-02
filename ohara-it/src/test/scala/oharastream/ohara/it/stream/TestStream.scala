@@ -20,19 +20,21 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.ClusterState
-import oharastream.ohara.client.configurator.v0.{ZookeeperApi, _}
+import oharastream.ohara.client.configurator.v0.{ClusterState, ZookeeperApi, _}
 import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
+import oharastream.ohara.it.category.StreamGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.kafka.Producer
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException
+import org.junit.experimental.categories.Category
 import org.junit.{Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@Category(Array(classOf[StreamGroup]))
 class TestStream(platform: ContainerPlatform) extends WithRemoteConfigurator(platform: ContainerPlatform) {
   private[this] val log = Logger(classOf[TestStream])
 

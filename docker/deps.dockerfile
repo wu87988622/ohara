@@ -19,7 +19,7 @@ FROM centos:7.7.1908
 # install tools
 RUN yum install -y \
   git \
-  java-1.8.0-openjdk-devel \
+  java-11-openjdk-devel \
   wget \
   unzip
 

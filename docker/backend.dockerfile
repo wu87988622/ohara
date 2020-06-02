@@ -36,7 +36,7 @@ FROM centos:7.7.1908
 
 # install tools
 RUN yum install -y \
-  java-1.8.0-openjdk
+  java-11-openjdk
 
 # export JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/jre

@@ -49,9 +49,8 @@ RUN git rev-parse HEAD > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_
 
 FROM centos:7.7.1908
 
-# install openjdk-1.8
 RUN yum install -y \
-  java-1.8.0-openjdk
+  java-11-openjdk
 
 ENV JAVA_HOME=/usr/lib/jvm/jre
 

@@ -55,7 +55,7 @@ FROM centos:7.7.1908
 
 # install tools
 RUN yum install -y \
-  java-1.8.0-openjdk \
+  java-11-openjdk \
   wget # we use wget to download custom plugin from configurator
 
 ENV JAVA_HOME=/usr/lib/jvm/jre

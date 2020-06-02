@@ -340,6 +340,9 @@ object ContainerPlatform {
             override def configuratorHostname: String = hostname
             override def configuratorPort: Int        = port
             override def close(): Unit = {
+              println(s"[----------------------------configurator:$configuratorName----------------------------]")
+              Releasable.close(() => println(result(containerClient.log(configuratorName))))
+              println("[------------------------------------------------------------------------------------]")
               Releasable.close(() => result(containerClient.forceRemove(configuratorName)))
               Releasable.close(containerClient)
             }

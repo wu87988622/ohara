@@ -21,11 +21,11 @@ Integration Test
 
 **Node 裡需要安裝以下的工具:**
 
--  安裝 JDK 1.8, 需要設定以下的 link
+-  安裝 JDK 11, 需要設定以下的 link
 
 ::
 
-   $ sudo yum install -y java-1.8.0-openjdk-devel
+   $ sudo yum install -y java-11-openjdk-devel
 
 -  在 CentOS 的 Node 需要安裝 jq
 
