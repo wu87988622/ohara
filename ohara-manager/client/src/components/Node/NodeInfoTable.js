@@ -60,7 +60,7 @@ function NodeInfoTable({ mode, node }) {
                 </TableRow>
               </>
             )}
-            {map(node?.resources, resource => (
+            {map(node?.resources, (resource) => (
               <TableRow key={resource.name}>
                 <TableCell>{resource.name}</TableCell>
                 <TableCell>

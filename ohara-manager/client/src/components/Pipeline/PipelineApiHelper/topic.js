@@ -26,7 +26,7 @@ const topic = () => {
     const { id, name, displayName, isShared } = params;
 
     if (isShared) {
-      const target = toolBoxTopics.find(topic => topic.name === name);
+      const target = toolBoxTopics.find((topic) => topic.name === name);
       return paperApi.updateElement(id, {
         status: target.state.toLowerCase(),
       });

@@ -77,7 +77,7 @@ const makeTestScheduler = () =>
   });
 
 it('should delete a pipeline', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     // prettier-ignore

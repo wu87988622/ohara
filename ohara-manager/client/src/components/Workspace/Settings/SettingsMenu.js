@@ -60,7 +60,7 @@ const SettingsMenu = ({
                 <ListItem
                   button
                   key={text}
-                  onClick={event => onClick(event, text)}
+                  onClick={(event) => onClick(event, text)}
                   selected={selected === text}
                 >
                   <ListItemIcon>{icon}</ListItemIcon>

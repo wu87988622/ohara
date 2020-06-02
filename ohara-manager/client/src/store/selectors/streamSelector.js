@@ -17,12 +17,12 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.streams;
+const getEntities = (state) => state?.entities?.streams;
 
 const getGroupFromProps = (_, props) => props?.group;
 
 export const getStreamByGroup = createSelector(
   [getEntities, getGroupFromProps],
   (entities, group) =>
-    _.values(entities).filter(stream => stream?.group === group),
+    _.values(entities).filter((stream) => stream?.group === group),
 );

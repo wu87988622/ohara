@@ -33,7 +33,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import DrabblePaper from './DrabblePaper';
 
 const StyledDialogTitle = styled(DialogTitle)(
-  props => css`
+  (props) => css`
     cursor: move;
 
     h3 {
@@ -50,7 +50,7 @@ const StyledDialogTitle = styled(DialogTitle)(
 );
 
 const StyledDialogActions = styled(DialogActions)`
-  padding: ${props => props.theme.spacing(1, 3, 3, 3)};
+  padding: ${(props) => props.theme.spacing(1, 3, 3, 3)};
 `;
 
 const ConfirmButtonWrapper = styled.div`

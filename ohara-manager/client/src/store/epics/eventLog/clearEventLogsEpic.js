@@ -28,7 +28,7 @@ localForage.config({
 
 const clearLocalForge$ = () => defer(() => localForage.clear());
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.clearEventLogs.TRIGGER),
     switchMap(() =>
@@ -40,7 +40,7 @@ export default action$ =>
             actions.fetchEventLogs.trigger(),
           ]),
         ),
-        catchError(res => of(actions.clearEventLogs.failure(res))),
+        catchError((res) => of(actions.clearEventLogs.failure(res))),
       ),
     ),
   );

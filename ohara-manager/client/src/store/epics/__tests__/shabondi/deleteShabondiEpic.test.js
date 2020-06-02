@@ -41,7 +41,7 @@ const makeTestScheduler = () =>
   });
 
 it('should delete a shabondi', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
@@ -93,7 +93,7 @@ it('should delete a shabondi', () => {
 });
 
 it('should delete multiple shabondis', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
@@ -177,7 +177,7 @@ it('should delete multiple shabondis', () => {
 });
 
 it(`should not call paperApi when the options params are not supplied`, () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
@@ -223,7 +223,7 @@ it(`should not call paperApi when the options params are not supplied`, () => {
 });
 
 it('delete same shabondi within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a----';
@@ -284,7 +284,7 @@ it('should handle error properly', () => {
     .spyOn(shabondiApi, 'remove')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

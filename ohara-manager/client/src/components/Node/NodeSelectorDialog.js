@@ -28,7 +28,7 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
 
   const [selectedNodes, setSelectedNodes] = useState(initialSelectedNodes);
 
-  const handleSelectionChange = selectNodes => {
+  const handleSelectionChange = (selectNodes) => {
     setSelectedNodes(selectNodes);
   };
 

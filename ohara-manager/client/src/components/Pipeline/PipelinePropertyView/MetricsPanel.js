@@ -26,14 +26,14 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import PropertyField from './PipelinePropertyViewField';
 import { Wrapper } from './MetricsPanelStyles';
 
-const MetricsPanel = props => {
+const MetricsPanel = (props) => {
   const { pipelineObjects: objects, isMetricsOn, currentCellName } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   const findByCellName = ({ name }) => name === currentCellName;
   const metrics = objects.find(findByCellName)?.nodeMetrics || {};
   const hasMetrics = Object.keys(metrics).some(
-    key => metrics[key].meters.length > 0,
+    (key) => metrics[key].meters.length > 0,
   );
 
   if (!hasMetrics || !isMetricsOn) return null;
@@ -43,7 +43,7 @@ const MetricsPanel = props => {
       <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
           expandIcon={<ExpandMoreIcon />}
-          onClick={() => setIsExpanded(prevState => !prevState)}
+          onClick={() => setIsExpanded((prevState) => !prevState)}
         >
           <SignalCellularAltIcon fontSize="small" />
           <Typography className="section-title" variant="h5">
@@ -53,7 +53,7 @@ const MetricsPanel = props => {
         <ExpansionPanelDetails>
           {Object.keys(metrics)
             .sort()
-            .map(key => {
+            .map((key) => {
               return (
                 <React.Fragment key={key}>
                   <Typography variant="h6">{key}</Typography>

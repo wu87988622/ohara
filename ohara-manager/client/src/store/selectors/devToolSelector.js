@@ -17,10 +17,10 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getDevToolUI = state => state?.ui?.devTool;
+const getDevToolUI = (state) => state?.ui?.devTool;
 
 export const makeGetDevToolTopicData = () =>
-  createSelector([getDevToolUI], ui => _.get(ui, 'topicData'));
+  createSelector([getDevToolUI], (ui) => _.get(ui, 'topicData'));
 
 export const makeGetDevToolLog = () =>
-  createSelector([getDevToolUI], ui => _.get(ui, 'log'));
+  createSelector([getDevToolUI], (ui) => _.get(ui, 'log'));

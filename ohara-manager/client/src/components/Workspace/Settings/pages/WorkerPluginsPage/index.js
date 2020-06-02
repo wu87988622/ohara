@@ -29,7 +29,7 @@ const Wrapper = styled.div(
   `,
 );
 
-export default function() {
+export default function () {
   return (
     <Wrapper>
       <Box className="plugins">

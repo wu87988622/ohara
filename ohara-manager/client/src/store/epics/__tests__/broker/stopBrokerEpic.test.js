@@ -40,7 +40,7 @@ beforeEach(() => {
 });
 
 it('stop broker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -103,7 +103,7 @@ it('stop broker failed after reach retry limit', () => {
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a             ';
@@ -154,7 +154,7 @@ it('stop broker failed after reach retry limit', () => {
 });
 
 it('stop broker multiple times should be executed once', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
@@ -197,7 +197,7 @@ it('stop broker multiple times should be executed once', () => {
 });
 
 it('stop different broker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherBrokerEntity = {

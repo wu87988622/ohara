@@ -59,7 +59,7 @@ const tableIcons = {
   ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
 };
 
-const ObjectKeys = props => {
+const ObjectKeys = (props) => {
   const {
     input: { name, onChange, value = [] },
     meta = {},
@@ -92,11 +92,11 @@ const ObjectKeys = props => {
         columns={state.columns}
         data={state.data}
         editable={{
-          onRowAdd: newData =>
-            new Promise(resolve => {
+          onRowAdd: (newData) =>
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
-                setState(prevState => {
+                setState((prevState) => {
                   const data = [...prevState.data];
                   data.push(newData);
                   onChange(data);
@@ -105,11 +105,11 @@ const ObjectKeys = props => {
               }, 600);
             }),
           onRowUpdate: (newData, oldData) =>
-            new Promise(resolve => {
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
                 if (oldData) {
-                  setState(prevState => {
+                  setState((prevState) => {
                     const data = [...prevState.data];
                     data[data.indexOf(oldData)] = newData;
                     onChange(data);
@@ -118,11 +118,11 @@ const ObjectKeys = props => {
                 }
               }, 600);
             }),
-          onRowDelete: oldData =>
-            new Promise(resolve => {
+          onRowDelete: (oldData) =>
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
-                setState(prevState => {
+                setState((prevState) => {
                   const data = [...prevState.data];
                   data.splice(data.indexOf(oldData), 1);
                   onChange(data);

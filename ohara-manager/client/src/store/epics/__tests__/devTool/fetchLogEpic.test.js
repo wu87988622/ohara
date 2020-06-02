@@ -59,7 +59,7 @@ const stateValues = {
 };
 
 it('fetch configurator log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -110,7 +110,7 @@ it('fetch configurator log should be executed correctly', () => {
 });
 
 it('fetch configurator log multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
     const spyGetLog = jest.spyOn(logApi, 'getConfiguratorLog');
 
@@ -164,7 +164,7 @@ it('fetch configurator log multiple times should be executed the first one until
 });
 
 it('fetch zookeeper log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -218,7 +218,7 @@ it('fetch zookeeper log should be executed correctly', () => {
 });
 
 it('fetch zookeeper log multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -272,7 +272,7 @@ it('fetch zookeeper log multiple times should be executed the first one until fi
 });
 
 it('fetch broker log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -326,7 +326,7 @@ it('fetch broker log should be executed correctly', () => {
 });
 
 it('fetch broker log multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -380,7 +380,7 @@ it('fetch broker log multiple times should be executed the first one until finis
 });
 
 it('fetch worker log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -434,7 +434,7 @@ it('fetch worker log should be executed correctly', () => {
 });
 
 it('fetch worker log multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -488,7 +488,7 @@ it('fetch worker log multiple times should be executed the first one until finis
 });
 
 it('fetch shabondi log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -541,7 +541,7 @@ it('fetch shabondi log should be executed correctly', () => {
 });
 
 it('fetch stream log should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -594,7 +594,7 @@ it('fetch stream log should be executed correctly', () => {
 });
 
 it('fetch stream log multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(
@@ -656,7 +656,7 @@ it('throw exception of fetch log should also trigger event log action', () => {
     .spyOn(logApi, 'getConfiguratorLog')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

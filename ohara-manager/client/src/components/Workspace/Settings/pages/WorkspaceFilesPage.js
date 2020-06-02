@@ -17,6 +17,6 @@
 import React from 'react';
 import WorkspaceFileTable from '../common/WorkspaceFileTable';
 
-export default function() {
+export default function () {
   return <WorkspaceFileTable />;
 }

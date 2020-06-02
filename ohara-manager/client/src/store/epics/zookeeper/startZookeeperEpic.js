@@ -37,17 +37,17 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const startZookeeper$ = params => {
+export const startZookeeper$ = (params) => {
   const zookeeperId = getId(params);
   return zip(
     defer(() => zookeeperApi.start(params)),
     defer(() => zookeeperApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -67,20 +67,20 @@ export const startZookeeper$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.zookeeper)),
-    map(normalizedData => merge(normalizedData, { zookeeperId })),
-    map(normalizedData => actions.startZookeeper.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { zookeeperId })),
+    map((normalizedData) => actions.startZookeeper.success(normalizedData)),
     startWith(actions.startZookeeper.request({ zookeeperId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startZookeeper.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       startZookeeper$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.startZookeeper.failure(
               merge(err, { zookeeperId: getId(params) }),

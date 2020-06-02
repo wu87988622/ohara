@@ -34,15 +34,15 @@ function WorkerNodesPage() {
   const documentation = useMemo(() => {
     return find(
       worker?.settingDefinitions,
-      definition => definition.key === 'nodeNames',
+      (definition) => definition.key === 'nodeNames',
     )?.documentation;
   }, [worker]);
 
   const workerNodesInWorkspace = useMemo(() => {
     return workspace?.worker?.nodeNames
       ? filter(
-          map(workspace.worker.nodeNames, nodeName =>
-            find(nodesInWorkspace, node => node.hostname === nodeName),
+          map(workspace.worker.nodeNames, (nodeName) =>
+            find(nodesInWorkspace, (node) => node.hostname === nodeName),
           ),
         )
       : nodesInWorker;
@@ -52,7 +52,7 @@ function WorkerNodesPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleUndoIconClick = nodeClicked => {
+  const handleUndoIconClick = (nodeClicked) => {
     const currentIndex = workspace?.worker?.nodeNames?.indexOf(
       nodeClicked?.hostname,
     );
@@ -71,40 +71,40 @@ function WorkerNodesPage() {
       },
     });
     selectorDialogRef.current.setSelectedNodes(
-      map(newNodeNames, nodeName =>
-        find(nodesInWorkspace, n => n.hostname === nodeName),
+      map(newNodeNames, (nodeName) =>
+        find(nodesInWorkspace, (n) => n.hostname === nodeName),
       ),
     );
   };
 
-  const handleRemove = nodeToRemove => {
+  const handleRemove = (nodeToRemove) => {
     const shouldBeRemoved = some(
       workerNodesInWorkspace,
-      n => n.hostname === nodeToRemove?.hostname,
+      (n) => n.hostname === nodeToRemove?.hostname,
     );
 
     if (shouldBeRemoved) {
       const newNodes = reject(
         workerNodesInWorkspace,
-        n => n.hostname === nodeToRemove.hostname,
+        (n) => n.hostname === nodeToRemove.hostname,
       );
       updateWorkspace({
         ...workspace,
         worker: {
           ...workspace?.worker,
-          nodeNames: map(newNodes, n => n.hostname),
+          nodeNames: map(newNodes, (n) => n.hostname),
         },
       });
       selectorDialogRef.current.setSelectedNodes(newNodes);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedNodes => {
+  const handleSelectorDialogConfirm = (selectedNodes) => {
     updateWorkspace({
       ...workspace,
       worker: {
         ...workspace?.worker,
-        nodeNames: map(selectedNodes, n => n.hostname),
+        nodeNames: map(selectedNodes, (n) => n.hostname),
       },
     });
     setIsSelectorDialogOpen(false);

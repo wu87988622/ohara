@@ -28,7 +28,7 @@ const StyledDiv = styled.div`
   margin-bottom: 15px;
 `;
 
-const Progress = props => {
+const Progress = (props) => {
   const {
     steps = [],
     open,
@@ -112,7 +112,7 @@ const Progress = props => {
     <Dialog fullWidth maxWidth={maxWidth} open={isLoading}>
       <DialogTitle>{title}</DialogTitle>
       <Stepper activeStep={activeStep}>
-        {steps.map(step => {
+        {steps.map((step) => {
           let type = {};
           if (stepType === 'error') {
             type.error = true;

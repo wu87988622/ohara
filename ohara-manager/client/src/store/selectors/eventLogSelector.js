@@ -17,16 +17,16 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.eventLogs;
+const getEntities = (state) => state?.entities?.eventLogs;
 
 export const makeGetEventLogs = () =>
-  createSelector([getEntities], entities => entities);
+  createSelector([getEntities], (entities) => entities);
 
 export const makeGetNotifications = () =>
-  createSelector([getEntities], entities => _.get(entities, 'notifications'));
+  createSelector([getEntities], (entities) => _.get(entities, 'notifications'));
 
 export const makeGetSettings = () =>
-  createSelector([getEntities], entities => _.get(entities, 'settings'));
+  createSelector([getEntities], (entities) => _.get(entities, 'settings'));
 
-export const isEventLogFetching = state =>
+export const isEventLogFetching = (state) =>
   !!_.get(state, ['ui', 'eventLog', 'isFetching']);

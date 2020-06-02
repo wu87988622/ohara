@@ -24,18 +24,18 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.updateConnectorLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     mergeMap(({ params, options }) =>
       from(connectorApi.update(params)).pipe(
-        map(res => normalize(res.data, schema.connector)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.connector)),
+        map((normalizedData) =>
           actions.updateConnectorLink.success(normalizedData),
         ),
         startWith(actions.updateConnectorLink.request()),
-        catchError(err => {
+        catchError((err) => {
           options.paperApi.removeElement(options.link.id);
           return from([
             actions.updateConnectorLink.failure(err),

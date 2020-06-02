@@ -65,7 +65,7 @@ const AddPipelineDialog = ({ isOpen, setIsOpen }) => {
                 validate.maxLength(20),
                 validate.validServiceName,
                 validate.checkDuplicate(
-                  pipelines.map(pipeline => pipeline.name),
+                  pipelines.map((pipeline) => pipeline.name),
                 ),
               )}
             />

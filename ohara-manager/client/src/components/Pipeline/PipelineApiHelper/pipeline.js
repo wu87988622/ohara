@@ -21,14 +21,14 @@ const pipeline = () => {
   const currentPipelineName = hooks.usePipelineName();
   const updatePipeline = hooks.useUpdatePipelineAction();
 
-  const updateCells = paperApi => {
+  const updateCells = (paperApi) => {
     const cellsJson = {
-      cells: paperApi.toJson().cells.filter(cell => !cell.isTemporary),
+      cells: paperApi.toJson().cells.filter((cell) => !cell.isTemporary),
     };
 
     const endpoints = cellsJson.cells
-      .filter(cell => cell.type === CELL_TYPES.ELEMENT)
-      .map(cell => {
+      .filter((cell) => cell.type === CELL_TYPES.ELEMENT)
+      .map((cell) => {
         return { name: cell.name, kind: cell.kind };
       });
 
@@ -41,14 +41,14 @@ const pipeline = () => {
     });
   };
 
-  const getUpdatedCells = pipeline => {
+  const getUpdatedCells = (pipeline) => {
     const {
       tags: { cells = [] },
       objects,
     } = pipeline;
 
-    const updatedCells = cells.map(cell => {
-      const currentObject = objects.find(object => object.name === cell.name);
+    const updatedCells = cells.map((cell) => {
+      const currentObject = objects.find((object) => object.name === cell.name);
 
       // Ensure we're getting the latest status from the backend APIs
       if (currentObject) {

@@ -18,10 +18,7 @@ const cp = require('child_process');
 
 /* eslint-disable no-console */
 try {
-  const yarnVersion = cp
-    .execSync('yarn -v')
-    .toString()
-    .trim();
+  const yarnVersion = cp.execSync('yarn -v').toString().trim();
   const minor = parseFloat(yarnVersion.slice(2));
 
   // Since we're using yarn audit in our npm scripts. We need to

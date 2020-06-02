@@ -20,7 +20,7 @@ import { isFunction, noop } from 'lodash';
 import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
-  content: topic =>
+  content: (topic) =>
     `Are you sure you want to delete the topic ${topic?.name} ? This action cannot be undone!`,
   title: 'Delete topic?',
 };

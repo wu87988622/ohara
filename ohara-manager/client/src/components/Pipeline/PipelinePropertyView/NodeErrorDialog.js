@@ -20,7 +20,7 @@ import ReactJson from 'react-json-view';
 
 import { Dialog } from 'components/common/Dialog';
 
-const NodeErrorDialog = props => {
+const NodeErrorDialog = (props) => {
   const { onClose, isOpen, error } = props;
 
   if (!error) return null;

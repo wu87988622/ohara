@@ -39,7 +39,7 @@ const FileUpload = React.forwardRef(({ accept, children, onUpload }, ref) => {
     return null;
   };
 
-  const handleFileSelect = event => {
+  const handleFileSelect = (event) => {
     const file = event.target.files?.[0];
     if (isFunction(onUpload)) {
       onUpload(event, file);
@@ -56,7 +56,7 @@ const FileUpload = React.forwardRef(({ accept, children, onUpload }, ref) => {
         accept={accept}
         className="input"
         onChange={handleFileSelect}
-        onClick={event => {
+        onClick={(event) => {
           /* Allow file to be added multiple times */
           event.target.value = null;
         }}

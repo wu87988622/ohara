@@ -33,13 +33,13 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
-export const updateZookeeperAndWorkspace$ = values => {
+export const updateZookeeperAndWorkspace$ = (values) => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.zookeeper)),
-    map(normalizedData => merge(normalizedData, { zookeeperId })),
-    concatMap(normalizedData =>
+    map((res) => res.data),
+    map((data) => normalize(data, schema.zookeeper)),
+    map((normalizedData) => merge(normalizedData, { zookeeperId })),
+    concatMap((normalizedData) =>
       from([
         actions.updateWorkspace.trigger({
           zookeeper: normalizedData,
@@ -52,15 +52,15 @@ export const updateZookeeperAndWorkspace$ = values => {
   );
 };
 
-const updateZookeeper$ = values => {
+const updateZookeeper$ = (values) => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.zookeeper)),
-    map(normalizedData => merge(normalizedData, { zookeeperId })),
-    map(normalizedData => actions.updateZookeeper.success(normalizedData)),
+    map((res) => res.data),
+    map((data) => normalize(data, schema.zookeeper)),
+    map((normalizedData) => merge(normalizedData, { zookeeperId })),
+    map((normalizedData) => actions.updateZookeeper.success(normalizedData)),
     startWith(actions.updateZookeeper.request({ zookeeperId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.updateZookeeper.failure(merge(err, { zookeeperId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -69,9 +69,9 @@ const updateZookeeper$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateZookeeper.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => updateZookeeper$(values)),
+    map((action) => action.payload),
+    mergeMap((values) => updateZookeeper$(values)),
   );

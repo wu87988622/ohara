@@ -31,7 +31,7 @@ import * as context from 'context';
 import ToolboxRedirectButton from './ToolboxRedirectButton';
 import { AddTopicDialog } from 'components/Topic';
 
-const ToolboxList = props => {
+const ToolboxList = (props) => {
   const {
     toolboxHeight,
     toolboxBodyRef,
@@ -43,7 +43,7 @@ const ToolboxList = props => {
   } = props;
   const { open } = context.useWorkspaceSettingsDialog();
 
-  const handleRedirect = pageName => {
+  const handleRedirect = (pageName) => {
     open(pageName);
   };
 
@@ -67,7 +67,7 @@ const ToolboxList = props => {
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="source-list">
-              {times(5, index => (
+              {times(5, (index) => (
                 <Skeleton
                   animation="wave"
                   height={40}
@@ -150,7 +150,7 @@ const ToolboxList = props => {
         <ExpansionPanelDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="sink-list">
-              {times(5, index => (
+              {times(5, (index) => (
                 <Skeleton
                   animation="wave"
                   height={40}

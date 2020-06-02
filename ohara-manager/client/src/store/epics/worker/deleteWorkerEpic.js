@@ -34,21 +34,21 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
-export const deleteWorker$ = params => {
+export const deleteWorker$ = (params) => {
   const workerId = getId(params);
   return zip(
     defer(() => workerApi.remove(params)),
     defer(() => workerApi.getAll({ group: params.group })).pipe(
-      map(res => {
+      map((res) => {
         if (
           res.data.length > 0 &&
-          res.data.map(value => value.name).includes(params.name)
+          res.data.map((value) => value.name).includes(params.name)
         )
           throw res;
         else return res.data;
       }),
 
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -66,14 +66,14 @@ export const deleteWorker$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.deleteWorker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       deleteWorker$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.deleteWorker.failure(
               merge(err, { workerId: getId(params) }),

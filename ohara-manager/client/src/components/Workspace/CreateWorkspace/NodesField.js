@@ -36,7 +36,7 @@ const renderFromHelper = ({ touched, error }) => {
   }
 };
 
-const NodesField = props => {
+const NodesField = (props) => {
   const {
     input: { onBlur, onFocus, onChange, value },
     meta: { touched, error },
@@ -50,7 +50,7 @@ const NodesField = props => {
 
   const [selectedNodes, setSelectedNodes] = useState(() => {
     // value is an array of hostname, like ['dev01', 'dev02'].
-    return filter(allNodes, node => includes(value, node.hostname));
+    return filter(allNodes, (node) => includes(value, node.hostname));
   });
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
   const selectorDialogRef = useRef(null);
@@ -58,21 +58,21 @@ const NodesField = props => {
   const openSelectorDialog = () => setIsSelectorDialogOpen(true);
   const closeSelectorDialog = () => setIsSelectorDialogOpen(false);
 
-  const deleteNode = nodeToDelete => () => {
+  const deleteNode = (nodeToDelete) => () => {
     const remaining = reject(
       selectedNodes,
-      selectedNode => selectedNode.hostname === nodeToDelete?.hostname,
+      (selectedNode) => selectedNode.hostname === nodeToDelete?.hostname,
     );
     const newSelectedNodes = [...remaining];
     setSelectedNodes(newSelectedNodes);
     selectorDialogRef.current.setSelectedNodes(newSelectedNodes);
-    onChange(newSelectedNodes.map(node => node.hostname));
+    onChange(newSelectedNodes.map((node) => node.hostname));
   };
 
   const handleSelectorConfirm = (selectedNodes = []) => {
     onBlur();
     setSelectedNodes(selectedNodes);
-    onChange(selectedNodes.map(node => node.hostname));
+    onChange(selectedNodes.map((node) => node.hostname));
     closeSelectorDialog();
   };
 
@@ -84,7 +84,7 @@ const NodesField = props => {
         direction="row"
         justify="flex-start"
       >
-        {map(selectedNodes, node => {
+        {map(selectedNodes, (node) => {
           return (
             <Grid item key={node?.hostname} xs={4}>
               <SelectCard handleClose={deleteNode(node)} rows={node} />
@@ -122,7 +122,7 @@ const NodesField = props => {
             selectedNodes,
             disabledNodes: filter(
               allNodes,
-              node => node.state === NODE_STATE.UNAVAILABLE,
+              (node) => node.state === NODE_STATE.UNAVAILABLE,
             ),
             showCreateIcon: mode !== MODE.K8S,
             showRefreshIcon: mode === MODE.K8S,

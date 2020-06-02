@@ -32,30 +32,32 @@ function WorkspaceFileTable(props) {
   const worker = hooks.useWorker();
   const workspace = hooks.useWorkspace();
 
-  const handleDelete = file => {
+  const handleDelete = (file) => {
     deleteFile(file?.name);
   };
 
-  const handleUpload = event => {
+  const handleUpload = (event) => {
     const file = event?.target?.files?.[0];
     if (file) createFile(file);
   };
 
   const isUsedByWorker = useCallback(
-    file =>
-      some(worker?.pluginKeys, key => key.name === file?.name) ||
-      some(worker?.sharedJarKeys, key => key.name === file?.name) ||
-      some(workspace?.worker?.pluginKeys, key => key.name === file?.name) ||
-      some(workspace?.worker?.sharedJarKeys, key => key.name === file?.name),
+    (file) =>
+      some(worker?.pluginKeys, (key) => key.name === file?.name) ||
+      some(worker?.sharedJarKeys, (key) => key.name === file?.name) ||
+      some(workspace?.worker?.pluginKeys, (key) => key.name === file?.name) ||
+      some(workspace?.worker?.sharedJarKeys, (key) => key.name === file?.name),
     [worker, workspace],
   );
 
   const isUsedByStream = useCallback(
-    file => some(workspace?.stream?.jarKeys, key => key.name === file?.name),
+    (file) =>
+      some(workspace?.stream?.jarKeys, (key) => key.name === file?.name),
     [workspace],
   );
 
-  const isDeleteDisabled = file => isUsedByWorker(file) || isUsedByStream(file);
+  const isDeleteDisabled = (file) =>
+    isUsedByWorker(file) || isUsedByStream(file);
 
   return (
     <>
@@ -74,7 +76,7 @@ function WorkspaceFileTable(props) {
                 if (isUsedByStream(file)) value.push(STREAM);
                 return includes(toUpper(join(value)), toUpper(filterValue));
               },
-              render: file => {
+              render: (file) => {
                 return (
                   <>
                     {isUsedByWorker(file) && <div>{capitalize(WORKER)}</div>}
@@ -84,8 +86,8 @@ function WorkspaceFileTable(props) {
               },
             },
           ],
-          disabledDeleteIcon: file => isDeleteDisabled(file),
-          deleteTooltip: file => {
+          disabledDeleteIcon: (file) => isDeleteDisabled(file),
+          deleteTooltip: (file) => {
             return isDeleteDisabled(file)
               ? 'Cannot delete files that are in use'
               : null;

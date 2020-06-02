@@ -125,12 +125,12 @@ export const useFetchShabondisAction = () => {
 };
 
 export const useIsShabondiLoaded = () => {
-  const mapState = useCallback(state => !!state.ui.shabondi?.lastUpdated, []);
+  const mapState = useCallback((state) => !!state.ui.shabondi?.lastUpdated, []);
   return useSelector(mapState);
 };
 
 export const useIsShabondiLoading = () => {
-  const mapState = useCallback(state => !!state.ui.shabondi?.loading, []);
+  const mapState = useCallback((state) => !!state.ui.shabondi?.loading, []);
   return useSelector(mapState);
 };
 
@@ -154,13 +154,14 @@ export const useShabondis = () => {
     fetchShabondis();
   }, [fetchShabondis, isAppReady, isShabondiLoaded, isShabondiLoading]);
 
-  return useSelector(state => {
+  return useSelector((state) => {
     const shabondis = selectors.getShabondisByGroup(state, { group });
-    const results = shabondis.map(shabondi => {
+    const results = shabondis.map((shabondi) => {
       const info = selectors.getInfoById(state, { id: workerId });
       const settingDefinitions =
-        info?.classInfos.find(def => def.className === shabondi.shabondi__class)
-          ?.settingDefinitions || [];
+        info?.classInfos.find(
+          (def) => def.className === shabondi.shabondi__class,
+        )?.settingDefinitions || [];
       return merge(shabondi, { settingDefinitions });
     });
     return results;

@@ -42,7 +42,7 @@ it('switch workspace should be worked correctly', () => {
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';
@@ -88,7 +88,7 @@ it('switch to empty workspace should be redirected to the first workspace', () =
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';
@@ -126,7 +126,7 @@ it('switch to nonexistent workspace should be redirected to the first workspace'
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';
@@ -168,7 +168,7 @@ it('redirect to root path if there were no workspace existed', () => {
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';

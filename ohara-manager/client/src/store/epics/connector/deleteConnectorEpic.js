@@ -33,7 +33,7 @@ import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-export const deleteConnector$ = values => {
+export const deleteConnector$ = (values) => {
   const { params, options = {} } = values;
   const { paperApi } = options;
   const connectorId = getId(params);
@@ -47,12 +47,12 @@ export const deleteConnector$ = values => {
   return zip(
     defer(() => connectorApi.remove(params)),
     defer(() => connectorApi.getAll({ group: params.group })).pipe(
-      map(res => {
-        if (res.data.find(connector => connector.name === params.name))
+      map((res) => {
+        if (res.data.find((connector) => connector.name === params.name))
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -80,7 +80,7 @@ export const deleteConnector$ = values => {
       ]);
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
-    catchError(err => {
+    catchError((err) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
@@ -95,11 +95,11 @@ export const deleteConnector$ = values => {
   );
 };
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.deleteConnector.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => deleteConnector$(values)),
+    mergeMap((values) => deleteConnector$(values)),
   );
 };

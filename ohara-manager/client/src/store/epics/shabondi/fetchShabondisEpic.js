@@ -24,15 +24,15 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.fetchShabondis.TRIGGER),
     switchMap(() =>
       defer(() => shabondiApi.getAll()).pipe(
-        map(res => normalize(res.data, [schema.shabondi])),
-        map(normalizedData => actions.fetchShabondis.success(normalizedData)),
+        map((res) => normalize(res.data, [schema.shabondi])),
+        map((normalizedData) => actions.fetchShabondis.success(normalizedData)),
         startWith(actions.fetchShabondis.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.fetchShabondis.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

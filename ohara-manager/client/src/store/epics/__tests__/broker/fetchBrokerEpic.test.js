@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 
 it('fetch broker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
@@ -87,7 +87,7 @@ it('fetch broker should be worked correctly', () => {
 });
 
 it('fetch broker multiple times within period should get first result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
@@ -138,7 +138,7 @@ it('fetch broker multiple times within period should get first result', () => {
 });
 
 it('fetch broker multiple times without period should get latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
@@ -204,7 +204,7 @@ it('throw exception of fetch broker should also trigger event log action', () =>
     .spyOn(brokerApi, 'get')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

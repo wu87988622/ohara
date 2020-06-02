@@ -17,12 +17,12 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.connectors;
+const getEntities = (state) => state?.entities?.connectors;
 
 const getGroupFromProps = (_, props) => props?.group;
 
 export const getConnectorByGroup = createSelector(
   [getEntities, getGroupFromProps],
   (entities, group) =>
-    _.values(entities).filter(connector => connector?.group === group),
+    _.values(entities).filter((connector) => connector?.group === group),
 );

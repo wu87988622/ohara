@@ -37,17 +37,17 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const startWorker$ = params => {
+export const startWorker$ = (params) => {
   const workerId = getId(params);
   return zip(
     defer(() => workerApi.start(params)),
     defer(() => workerApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -67,20 +67,20 @@ export const startWorker$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.worker)),
-    map(normalizedData => merge(normalizedData, { workerId })),
-    map(normalizedData => actions.startWorker.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { workerId })),
+    map((normalizedData) => actions.startWorker.success(normalizedData)),
     startWith(actions.startWorker.request({ workerId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startWorker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       startWorker$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.startWorker.failure(
               merge(err, { workerId: getId(params) }),

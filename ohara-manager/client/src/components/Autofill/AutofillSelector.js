@@ -34,7 +34,7 @@ import { Dialog } from 'components/common/Dialog';
 import * as hooks from 'hooks';
 import Wrapper from './AutofillSelectorStyles';
 
-const AutofillSelector = props => {
+const AutofillSelector = (props) => {
   const { isOpen, onClose, onSubmit } = props;
   const [expanded, setExpanded] = React.useState(false);
   const [selected, setSelected] = React.useState(null);
@@ -42,7 +42,7 @@ const AutofillSelector = props => {
   const currentWorkspace = hooks.useWorkspace();
   const settingFillings = get(currentWorkspace, 'settingFillings', []);
 
-  const handleChange = name => (_, isExpanded) => {
+  const handleChange = (name) => (_, isExpanded) => {
     setExpanded(isExpanded ? name : false);
     setSelected(isExpanded ? name : null);
   };
@@ -69,7 +69,7 @@ const AutofillSelector = props => {
       title="Select Autofill"
     >
       <Wrapper>
-        {settingFillings.map(settingFilling => {
+        {settingFillings.map((settingFilling) => {
           return (
             <ExpansionPanel
               expanded={expanded === settingFilling.name}
@@ -98,7 +98,7 @@ const AutofillSelector = props => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {map(settingFilling.settings, setting => (
+                    {map(settingFilling.settings, (setting) => (
                       <TableRow key={setting.key}>
                         <TableCell>{setting.key}</TableCell>
                         <TableCell>{toString(setting.value)}</TableCell>

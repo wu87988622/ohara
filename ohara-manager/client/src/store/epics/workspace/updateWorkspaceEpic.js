@@ -26,15 +26,15 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const updateWorkspace$ = values => {
+const updateWorkspace$ = (values) => {
   const workspaceId = getId(values);
   return defer(() => workspaceApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.workspace)),
-    map(normalizedData => merge(normalizedData, { workspaceId })),
-    map(normalizedData => actions.updateWorkspace.success(normalizedData)),
+    map((res) => res.data),
+    map((data) => normalize(data, schema.workspace)),
+    map((normalizedData) => merge(normalizedData, { workspaceId })),
+    map((normalizedData) => actions.updateWorkspace.success(normalizedData)),
     startWith(actions.updateWorkspace.request({ workspaceId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.updateWorkspace.failure(merge(err, { workspaceId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -43,9 +43,9 @@ const updateWorkspace$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorkspace.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => updateWorkspace$(values)),
+    map((action) => action.payload),
+    mergeMap((values) => updateWorkspace$(values)),
   );

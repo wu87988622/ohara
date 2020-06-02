@@ -17,13 +17,13 @@
 import { head, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.pipelines;
+const getEntities = (state) => state?.entities?.pipelines;
 
 const getGroupFromProps = (_, props) => props?.group;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const getAllPipelines = createSelector([getEntities], entities =>
+export const getAllPipelines = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 
@@ -34,10 +34,10 @@ export const getPipelineById = createSelector(
 
 export const findPipelinesByGroup = createSelector(
   [getAllPipelines, getGroupFromProps],
-  (pipelines, group) => pipelines.filter(p => p?.group === group),
+  (pipelines, group) => pipelines.filter((p) => p?.group === group),
 );
 
 export const getHeadPipelineByGroup = createSelector(
   [findPipelinesByGroup],
-  pipelines => head(pipelines),
+  (pipelines) => head(pipelines),
 );

@@ -50,11 +50,11 @@ export default (action$, state$) =>
   action$.pipe(
     // we listen the create event epic
     ofType(actions.createEventLog.SUCCESS, actions.updateNotifications.TRIGGER),
-    map(action => action.payload),
-    concatMap(entity =>
+    map((action) => action.payload),
+    concatMap((entity) =>
       increaseNotification$(entity, state$).pipe(
-        map(data => actions.updateNotifications.success(data)),
-        catchError(res => of(actions.updateNotifications.failure(res))),
+        map((data) => actions.updateNotifications.success(data)),
+        catchError((res) => of(actions.updateNotifications.failure(res))),
       ),
     ),
   );

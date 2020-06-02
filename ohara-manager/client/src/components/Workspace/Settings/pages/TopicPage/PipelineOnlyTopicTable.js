@@ -26,7 +26,7 @@ function PipelineOnlyTopicTable() {
   const switchPipeline = hooks.useSwitchPipelineAction();
   const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
 
-  const handleLinkClick = pipelineClicked => {
+  const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
       closeSettingsDialog();
       switchPipeline(pipelineClicked.name);

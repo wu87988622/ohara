@@ -37,7 +37,7 @@ it('create event log should be executed correctly', () => {
   jest.spyOn(global, 'Date').mockImplementation(() => now);
   spySetItem.mockImplementation((key, value) => of(value));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
@@ -87,7 +87,7 @@ it('create multiple event logs should be executed correctly', () => {
   jest.spyOn(global, 'Date').mockImplementation(() => now);
   spySetItem.mockImplementation((key, value) => of(value));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----a    2s     b---|';

@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getDeleteWorkspace = state => state?.ui?.deleteWorkspace;
+const getDeleteWorkspace = (state) => state?.ui?.deleteWorkspace;
 
 export const makeGetDeleteWorkspaceProgress = () =>
-  createSelector([getDeleteWorkspace], ui => _.get(ui, 'progress'));
+  createSelector([getDeleteWorkspace], (ui) => _.get(ui, 'progress'));

@@ -47,7 +47,9 @@ const EventLog = () => {
     if (unlimited || isEmpty(logs)) return;
 
     if (logs.length > limit) {
-      const keysToDelete = take(logs, logs.length - limit).map(log => log.key);
+      const keysToDelete = take(logs, logs.length - limit).map(
+        (log) => log.key,
+      );
       deleteEventLogs(keysToDelete);
     }
   }, [deleteEventLogs, logs, settings]);
@@ -60,7 +62,7 @@ const EventLog = () => {
     }
   }, [cleared, clearNotifications, notifications.error, setCleared]);
 
-  const handleFilter = filteredLogs => setLogs(filteredLogs);
+  const handleFilter = (filteredLogs) => setLogs(filteredLogs);
 
   const getStatusText = () => {
     if (isFetching) return 'Loading...';

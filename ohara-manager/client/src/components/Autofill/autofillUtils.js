@@ -25,13 +25,13 @@ import {
 } from 'lodash';
 import { isNumberType, Type } from 'api/apiInterface/definitionInterface';
 
-const getAllowedKeys = definitions =>
+const getAllowedKeys = (definitions) =>
   definitions
-    .filter(def => def.group !== 'core')
-    .filter(def => !def.internal)
-    .filter(def => def.permission === 'EDITABLE')
+    .filter((def) => def.group !== 'core')
+    .filter((def) => !def.internal)
+    .filter((def) => def.permission === 'EDITABLE')
     .sort((def, other) => def.orderInGroup >= other.orderInGroup)
-    .map(def => def.key);
+    .map((def) => def.key);
 
 const parseByType = (value, type) => {
   if (isNumberType(type)) {
@@ -48,7 +48,7 @@ export const toAutofillData = (formValues = {}, definitions) => {
   const keys = getAllowedKeys(definitions);
   return {
     settings: keys
-      .map(key => ({
+      .map((key) => ({
         key: replace(key, /__/g, '.'), // Like "ftp__hostname" becomes "ftp.hostname"
         value: formValues[key],
       }))
@@ -61,15 +61,15 @@ export const toAutofillData = (formValues = {}, definitions) => {
 export const toFormValues = (autofillData, definitions) => {
   const keys = getAllowedKeys(definitions);
   return get(autofillData, 'settings', [])
-    .map(setting => ({
+    .map((setting) => ({
       key: replace(setting.key, /\./g, '__'), // Like "ftp.hostname" becomes "ftp__hostname"
       value: setting.value,
     }))
-    .filter(setting => includes(keys, setting.key))
+    .filter((setting) => includes(keys, setting.key))
     .reduce((acc, cur) => {
       const { key, value } = cur;
       // parse the value by valueType from setting to formData
-      const type = definitions.find(def => def.key === key)?.valueType;
+      const type = definitions.find((def) => def.key === key)?.valueType;
       acc[key] = parseByType(value, type);
       return acc;
     }, {});

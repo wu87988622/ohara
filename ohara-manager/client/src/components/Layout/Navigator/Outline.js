@@ -62,7 +62,7 @@ const Outline = ({ pipelineApi, isExpanded }) => {
       <div className="scrollbar-wrapper">
         <Scrollbar>
           <ul className="list">
-            {elements.map(element => {
+            {elements.map((element) => {
               const { id, name, kind, isShared, displayName } = element;
 
               const isTopic = kind === KIND.topic;

@@ -48,19 +48,19 @@ const AutofillList = () => {
     setIsEditorOpen(true);
   };
 
-  const handleEditButtonClick = data => {
+  const handleEditButtonClick = (data) => {
     setEditorMode(MODE.EDIT);
     setSelectedData(data);
     setIsEditorOpen(true);
   };
 
-  const handleCopyButtonClick = data => {
+  const handleCopyButtonClick = (data) => {
     setEditorMode(MODE.COPY);
     setSelectedData(data);
     setIsEditorOpen(true);
   };
 
-  const handleDeleteButtonClick = data => {
+  const handleDeleteButtonClick = (data) => {
     setSelectedData(data);
     setIsDeleteConfirmOpen(true);
   };
@@ -71,7 +71,7 @@ const AutofillList = () => {
       name: workspace.name,
       settingFillings: reject(
         workspace?.settingFillings,
-        settingFilling => settingFilling.name === name,
+        (settingFilling) => settingFilling.name === name,
       ),
     });
     setIsDeleteConfirmOpen(false);
@@ -88,7 +88,7 @@ const AutofillList = () => {
   return (
     <Wrapper>
       <List>
-        {map(list, item => {
+        {map(list, (item) => {
           return (
             <ListItem alignItems="flex-start" divider key={item.name}>
               <ListItemText primary={item.displayName} />

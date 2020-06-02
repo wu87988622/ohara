@@ -50,18 +50,18 @@ function StreamJarsPage() {
 
   const streamJars = useMemo(() => {
     return filter(
-      map(workspace?.stream?.jarKeys, jarKey =>
-        find(workspaceFiles, file => file.name === jarKey.name),
+      map(workspace?.stream?.jarKeys, (jarKey) =>
+        find(workspaceFiles, (file) => file.name === jarKey.name),
       ),
-    ).map(file => {
+    ).map((file) => {
       const classNames = file?.classInfos
-        ?.filter(classInfo => classInfo?.classType === 'stream')
-        ?.map(classInfo => classInfo?.className);
+        ?.filter((classInfo) => classInfo?.classType === 'stream')
+        ?.map((classInfo) => classInfo?.className);
 
       return {
         ...file,
-        pipelines: filter(pipelines, pipeline => {
-          return some(pipeline?.objects, object =>
+        pipelines: filter(pipelines, (pipeline) => {
+          return some(pipeline?.objects, (object) =>
             includes(classNames, object?.className),
           );
         }),
@@ -69,7 +69,7 @@ function StreamJarsPage() {
     });
   }, [workspace, workspaceFiles, pipelines]);
 
-  const updateStreamJarKeysToWorkspace = newJarKeys => {
+  const updateStreamJarKeysToWorkspace = (newJarKeys) => {
     updateWorkspace({
       ...workspace,
       stream: {
@@ -79,8 +79,8 @@ function StreamJarsPage() {
     });
 
     const newSelectedFiles = filter(
-      map(newJarKeys, jarKey =>
-        find(workspaceFiles, file => file.name === jarKey.name),
+      map(newJarKeys, (jarKey) =>
+        find(workspaceFiles, (file) => file.name === jarKey.name),
       ),
     );
 
@@ -91,40 +91,40 @@ function StreamJarsPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleRemove = fileToRemove => {
+  const handleRemove = (fileToRemove) => {
     if (!fileToRemove?.group || !fileToRemove?.name) return;
 
     const shouldBeRemoved = some(
       workspace?.stream?.jarKeys,
-      jarKey => jarKey.name === fileToRemove.name,
+      (jarKey) => jarKey.name === fileToRemove.name,
     );
 
     if (shouldBeRemoved) {
       const newJarKeys = reject(
         workspace?.stream?.jarKeys,
-        jarKey => jarKey.name === fileToRemove.name,
+        (jarKey) => jarKey.name === fileToRemove.name,
       );
       updateStreamJarKeysToWorkspace(newJarKeys);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedFiles => {
-    const newJarKeys = map(selectedFiles, file => getKey(file));
+  const handleSelectorDialogConfirm = (selectedFiles) => {
+    const newJarKeys = map(selectedFiles, (file) => getKey(file));
     updateStreamJarKeysToWorkspace(newJarKeys);
     setIsSelectorDialogOpen(false);
   };
 
-  const handleRemoveIconClick = fileClicked => {
+  const handleRemoveIconClick = (fileClicked) => {
     setActiveFile(fileClicked);
     setIsRemoveDialogOpen(true);
   };
 
-  const handleUndoIconClick = fileClicked => {
+  const handleUndoIconClick = (fileClicked) => {
     if (!fileClicked?.group || !fileClicked?.name) return;
 
     const shouldBeAdded = every(
       workspace?.stream?.jarKeys,
-      jarKey => jarKey.name !== fileClicked.name,
+      (jarKey) => jarKey.name !== fileClicked.name,
     );
 
     if (shouldBeAdded) {
@@ -135,7 +135,7 @@ function StreamJarsPage() {
     }
   };
 
-  const handleLinkClick = pipelineClicked => {
+  const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
       closeSettingsDialog();
       switchPipeline(pipelineClicked.name);
@@ -160,14 +160,14 @@ function StreamJarsPage() {
               title: 'Pipelines',
               customFilterAndSearch: (filterValue, file) => {
                 const value = file?.pipelines
-                  ?.map(pipeline => pipeline?.name)
+                  ?.map((pipeline) => pipeline?.name)
                   .join();
                 return includes(toUpper(value), toUpper(filterValue));
               },
-              render: file => {
+              render: (file) => {
                 return (
                   <>
-                    {map(file?.pipelines, pipeline => (
+                    {map(file?.pipelines, (pipeline) => (
                       <div key={pipeline.name}>
                         <Tooltip title="Click the link to switch to that pipeline">
                           <Link
@@ -207,20 +207,20 @@ function StreamJarsPage() {
         file={activeFile}
         isOpen={isRemoveDialogOpen}
         onClose={() => setIsRemoveDialogOpen(false)}
-        onConfirm={file => {
+        onConfirm={(file) => {
           handleRemove(file);
           setIsRemoveDialogOpen(false);
         }}
         options={{
-          content: file => {
+          content: (file) => {
             if (!isEmpty(file?.pipelines)) {
               return `The file ${file?.name} is already used by pipeline ${file?.pipelines?.[0]?.name}. It is not recommended that you remove this file because it will cause the pipeline to fail to start properly.`;
             } else {
               return `Are you sure you want to remove the file ${file?.name}?`;
             }
           },
-          confirmDisabled: file => !isEmpty(file?.pipelines),
-          showForceCheckbox: file => !isEmpty(file?.pipelines),
+          confirmDisabled: (file) => !isEmpty(file?.pipelines),
+          showForceCheckbox: (file) => !isEmpty(file?.pipelines),
         }}
       />
     </>

@@ -75,7 +75,7 @@ const Settings = () => {
     setSelectedMenu(selectedItem);
   };
 
-  const handleComponentChange = newPage => {
+  const handleComponentChange = (newPage) => {
     const { ref, heading: currentSection, type, name } = newPage;
 
     scrollRef.current = ref?.current;
@@ -121,17 +121,19 @@ const Settings = () => {
       title="Settings"
     >
       <Wrapper>
-        {// This feature is disabled, see #4659
-        false && (
-          <SettingsMenu
-            closePageComponent={resetSelectedItem}
-            handleClick={handleMenuClick}
-            isPageComponent={isPageComponent}
-            menu={menu}
-            scrollRef={scrollRef}
-            selected={selectedMenu}
-          />
-        )}
+        {
+          // This feature is disabled, see #4659
+          false && (
+            <SettingsMenu
+              closePageComponent={resetSelectedItem}
+              handleClick={handleMenuClick}
+              isPageComponent={isPageComponent}
+              menu={menu}
+              scrollRef={scrollRef}
+              selected={selectedMenu}
+            />
+          )
+        }
 
         <SettingsMain
           handleChange={handleComponentChange}

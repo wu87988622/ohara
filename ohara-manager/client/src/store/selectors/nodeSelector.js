@@ -18,17 +18,17 @@ import { filter, map, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 import * as transforms from 'store/transforms';
 
-const sort = nodes => sortBy(nodes, ['hostname']);
+const sort = (nodes) => sortBy(nodes, ['hostname']);
 
-const getBrokerEntities = state => state?.entities?.brokers;
+const getBrokerEntities = (state) => state?.entities?.brokers;
 
-const getNodeEntities = state => state?.entities?.nodes;
+const getNodeEntities = (state) => state?.entities?.nodes;
 
-const getStreamEntities = state => state?.entities?.streams;
+const getStreamEntities = (state) => state?.entities?.streams;
 
-const getWorkerEntities = state => state?.entities?.workers;
+const getWorkerEntities = (state) => state?.entities?.workers;
 
-const getZookeeperEntities = state => state?.entities?.zookeepers;
+const getZookeeperEntities = (state) => state?.entities?.zookeepers;
 
 const getNamesFormProps = (_, props) => props?.names;
 
@@ -59,7 +59,9 @@ export const makeGetNodesByNames = () =>
   createSelector(
     [getNodeEntities, getClusters, getNamesFormProps],
     (nodeEntities, clusters, names) => {
-      const sortedNodes = sort(filter(map(names, name => nodeEntities[name])));
+      const sortedNodes = sort(
+        filter(map(names, (name) => nodeEntities[name])),
+      );
       return transforms.transformNodes(sortedNodes, clusters);
     },
   );

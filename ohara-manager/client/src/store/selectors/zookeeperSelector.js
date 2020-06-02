@@ -17,7 +17,7 @@
 import { get, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
-export const getEntities = state => state?.entities?.zookeepers;
+export const getEntities = (state) => state?.entities?.zookeepers;
 
 const getIdFromProps = (_, props) => props?.id;
 
@@ -27,7 +27,7 @@ export const isZookeeperLoaded = (state, props) =>
 export const isZookeeperLoading = (state, props) =>
   !!get(state, ['ui', 'zookeepers', props?.id, 'loading']);
 
-export const getAllZookeepers = createSelector([getEntities], entities =>
+export const getAllZookeepers = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 

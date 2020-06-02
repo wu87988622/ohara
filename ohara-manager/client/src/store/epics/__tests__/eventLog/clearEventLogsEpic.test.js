@@ -35,7 +35,7 @@ it('clear event log should be executed correctly', () => {
   const spyClear = jest.spyOn(localForage, 'clear');
   spyClear.mockImplementation(() => of(noop()));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
@@ -71,7 +71,7 @@ it('clear event log multiple times should be executed once only', () => {
   // simulate a 10ms delay "promise-like" function
   spyClear.mockImplementation(() => of(noop()).pipe(delay(10)));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a--a---------|';

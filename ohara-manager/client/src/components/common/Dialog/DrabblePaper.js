@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import Paper from '@material-ui/core/Paper';
 import Draggable from 'react-draggable';
 
-const DrabblePaper = props => {
+const DrabblePaper = (props) => {
   return (
     <Draggable
       cancel={'[class*="MuiDialogContent-root"]'}

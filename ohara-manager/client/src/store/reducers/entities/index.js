@@ -34,14 +34,14 @@ import zookeepers from './zookeepers';
 const customizer = (object, source) =>
   isArray(source) && isEmpty(source) ? source : object;
 
-export const entity = type => (state = {}, action) => {
+export const entity = (type) => (state = {}, action) => {
   const { payload } = action;
 
   const hasEntities = payload?.entities || payload?.[0]?.entities;
 
   if (hasEntities) {
     if (isArray(payload)) {
-      const [result] = payload.map(p =>
+      const [result] = payload.map((p) =>
         mergeWith(p.entities[type], state, customizer),
       );
       return result;

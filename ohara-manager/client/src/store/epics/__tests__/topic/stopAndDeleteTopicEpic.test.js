@@ -44,7 +44,7 @@ const makeTestScheduler = () =>
   });
 
 it('should stop and then delete the topic', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                      ';

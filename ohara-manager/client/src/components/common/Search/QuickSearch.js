@@ -38,7 +38,7 @@ export const Wrapper = styled.div(
     }
 
     .MuiIconButton-root {
-      padding: ${props =>
+      padding: ${(props) =>
         props.size === 'sm' ? theme.spacing(0.75, 0.75) : theme.spacing(1.5)};
     }
   `,
@@ -66,7 +66,7 @@ const QuickSearch = ({
   }, [data, prevData, searchText, prevSearchText, search, setResults]);
 
   const handleChange = debounce(
-    value => setSearchText(trim(value)),
+    (value) => setSearchText(trim(value)),
     isDebounce ? wait : 0,
   );
 
@@ -78,7 +78,7 @@ const QuickSearch = ({
         </IconButton>
         <InputBase
           inputProps={{ 'aria-label': 'Search' }}
-          onChange={event => handleChange(event.target.value)}
+          onChange={(event) => handleChange(event.target.value)}
           placeholder={placeholder}
           type="search"
         />

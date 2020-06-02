@@ -25,7 +25,7 @@ import Typography from '@material-ui/core/Typography';
 import PowerIcon from '@material-ui/icons/Power';
 import Dropzone from 'react-dropzone';
 
-const FileCard = props => {
+const FileCard = (props) => {
   const { handelDrop, sm = false, title, content, values } = props;
   const StyledPluginsCard = styled(Card)(
     ({ theme }) => css`
@@ -64,7 +64,7 @@ const FileCard = props => {
 
   return (
     <StyledCardActionArea>
-      <Dropzone onDrop={file => handelDrop(file, values)}>
+      <Dropzone onDrop={(file) => handelDrop(file, values)}>
         {({ getRootProps, getInputProps }) => (
           <section>
             <div {...getRootProps()}>

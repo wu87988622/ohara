@@ -25,7 +25,7 @@ export const useSuggestiveKeys = () => {
   return useMemo(() => {
     const classInfos = get(currentWorker, 'classInfos', []);
     const keys = classInfos.reduce((acc, classInfo) => {
-      get(classInfo, 'settingDefinitions', []).forEach(definition => {
+      get(classInfo, 'settingDefinitions', []).forEach((definition) => {
         const { group, internal, key, permission } = definition;
         if (group !== 'core' && !internal && permission === 'EDITABLE') {
           acc.add(replace(key, /__/g, '.')); // Like "ftp__hostname" becomes "ftp.hostname");

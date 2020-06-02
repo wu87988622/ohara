@@ -46,7 +46,7 @@ export const useAutoCloseRestartWorkspaceDialogAction = () => {
 };
 
 export const useRestartWorkspace = () =>
-  useSelector(state => state.ui.restartWorkspace);
+  useSelector((state) => state.ui.restartWorkspace);
 
 export const usePauseRestartWorkspaceAction = () => {
   const dispatch = useDispatch();
@@ -97,7 +97,7 @@ export const useRestartWorkspaceAction = () => {
   };
 
   return useCallback(
-    option => dispatch(actions.restartWorkspace.trigger({ values, option })),
+    (option) => dispatch(actions.restartWorkspace.trigger({ values, option })),
     [dispatch, values],
   );
 };
@@ -106,7 +106,7 @@ export const useHasRunningServices = () => {
   const connectors = hooks.useConnectors();
   const streams = hooks.useStreams();
   const shabondis = hooks.useShabondis();
-  const hasRunning = service => service.state === SERVICE_STATE.RUNNING;
+  const hasRunning = (service) => service.state === SERVICE_STATE.RUNNING;
   return (
     connectors.some(hasRunning) ||
     streams.some(hasRunning) ||
@@ -129,7 +129,7 @@ export const useRestartConfirmMessage = () => {
   );
 };
 
-export const useRefreshWorkspaceAction = params => {
+export const useRefreshWorkspaceAction = (params) => {
   const fetchZookeeper = hooks.useFetchZookeeperAction();
   const fetchBroker = hooks.useFetchBrokerAction();
   const fetchWorker = hooks.useFetchWorkerAction();

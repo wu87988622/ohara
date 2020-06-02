@@ -33,11 +33,11 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const createWorker$ = values => {
+export const createWorker$ = (values) => {
   const workerId = getId(values);
   return defer(() => workerApi.create(values)).pipe(
-    map(res => res.data),
-    switchMap(data => {
+    map((res) => res.data),
+    switchMap((data) => {
       const normalizedData = merge(normalize(data, schema.worker), {
         workerId,
       });
@@ -52,7 +52,7 @@ export const createWorker$ = values => {
       ]);
     }),
     startWith(actions.createWorker.request({ workerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.createWorker.failure(merge(err, { workerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -61,10 +61,10 @@ export const createWorker$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createWorker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createWorker$(values)),
+    mergeMap((values) => createWorker$(values)),
   );

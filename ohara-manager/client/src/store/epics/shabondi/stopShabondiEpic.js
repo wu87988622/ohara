@@ -35,7 +35,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-const stopShabondi$ = value => {
+const stopShabondi$ = (value) => {
   const { params, options } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
@@ -45,11 +45,11 @@ const stopShabondi$ = value => {
   return zip(
     defer(() => shabondiApi.stop(params)),
     defer(() => shabondiApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (res.data.state) throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -69,15 +69,15 @@ const stopShabondi$ = value => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.shabondi)),
-    map(normalizedData => merge(normalizedData, { shabondiId })),
-    map(normalizedData => {
+    map((normalizedData) => merge(normalizedData, { shabondiId })),
+    map((normalizedData) => {
       paperApi.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
       return actions.stopShabondi.success(normalizedData);
     }),
     startWith(actions.stopShabondi.request({ shabondiId })),
-    catchError(err => {
+    catchError((err) => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
@@ -89,10 +89,10 @@ const stopShabondi$ = value => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopShabondi.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => stopShabondi$(value)),
+    mergeMap((value) => stopShabondi$(value)),
   );

@@ -30,17 +30,17 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchFiles.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     throttleTime(1000),
     switchMap(() =>
       defer(() => fileApi.getAll()).pipe(
-        map(res => normalize(res.data, [schema.file])),
-        map(normalizedData => actions.fetchFiles.success(normalizedData)),
+        map((res) => normalize(res.data, [schema.file])),
+        map((normalizedData) => actions.fetchFiles.success(normalizedData)),
         startWith(actions.fetchFiles.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.fetchFiles.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

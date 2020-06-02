@@ -24,18 +24,18 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.updateShabondiLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     mergeMap(({ params, options }) =>
       from(shabondiApi.update(params)).pipe(
-        map(res => normalize(res.data, schema.shabondi)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.shabondi)),
+        map((normalizedData) =>
           actions.updateShabondiLink.success(normalizedData),
         ),
         startWith(actions.updateShabondiLink.request()),
-        catchError(err => {
+        catchError((err) => {
           options.paperApi.removeElement(options.link.id);
           return from([
             actions.updateShabondiLink.failure(err),

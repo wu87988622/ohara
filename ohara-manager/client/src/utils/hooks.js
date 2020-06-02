@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 
-export const usePrevious = value => {
+export const usePrevious = (value) => {
   // The ref object is a generic container whose current property is mutable ...
   // ... and can hold any value, similar to an instance property on a class
   const ref = useRef();
@@ -62,7 +62,7 @@ export const useLocalStorage = (key, initialValue) => {
   });
 
   const setValue = useCallback(
-    value => {
+    (value) => {
       try {
         // Allow value to be a function so we have same API as useState
         const valueToStore =

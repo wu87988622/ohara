@@ -29,11 +29,11 @@ import {
 import { KIND, LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.setDevToolLogQueryParams.TRIGGER),
-    map(action => action.payload),
-    concatMap(values =>
+    map((action) => action.payload),
+    concatMap((values) =>
       scheduled(
         [
           of(values).pipe(
@@ -138,7 +138,7 @@ export default action$ =>
         queueScheduler,
       ).pipe(
         mergeAll(),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.setDevToolLogQueryParams.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

@@ -45,7 +45,7 @@ after(async () => {
 });
 
 const customAssertions = (chai, utils) => {
-  const customMethodA = _super => {
+  const customMethodA = (_super) => {
     return function a() {
       utils.flag(this, 'message', '[Type Assert]');
       _super.apply(this, arguments);
@@ -59,12 +59,12 @@ const customAssertions = (chai, utils) => {
 
   chai.Assertion.overwriteChainableMethod(
     'a',
-    _super => customMethodA(_super),
+    (_super) => customMethodA(_super),
     () => customChainingA(),
   );
   chai.Assertion.overwriteChainableMethod(
     'an',
-    _super => customMethodA(_super),
+    (_super) => customMethodA(_super),
     () => customChainingA(),
   );
 };

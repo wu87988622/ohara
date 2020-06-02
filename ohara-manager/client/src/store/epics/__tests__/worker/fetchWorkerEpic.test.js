@@ -37,7 +37,7 @@ const makeTestScheduler = () =>
   });
 
 it('should fetch a worker', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
@@ -83,7 +83,7 @@ it('should fetch a worker', () => {
 });
 
 it('fetch worker multiple times within period should get first result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
@@ -134,7 +134,7 @@ it('fetch worker multiple times within period should get first result', () => {
 });
 
 it('fetch worker multiple times without period should get latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
@@ -200,7 +200,7 @@ it('throw exception of fetch worker should also trigger event log action', () =>
     .spyOn(workerApi, 'get')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

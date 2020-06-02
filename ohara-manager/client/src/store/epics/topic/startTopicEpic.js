@@ -36,16 +36,16 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
-export const startTopic$ = params => {
+export const startTopic$ = (params) => {
   const topicId = getId(params);
   return zip(
     defer(() => topicApi.start(params)),
     defer(() => topicApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data.state || res.data.state !== 'RUNNING') throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -65,20 +65,20 @@ export const startTopic$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.topic)),
-    map(normalizedData => merge(normalizedData, { topicId })),
-    map(normalizedData => actions.startTopic.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { topicId })),
+    map((normalizedData) => actions.startTopic.success(normalizedData)),
     startWith(actions.startTopic.request({ topicId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startTopic.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values =>
+    mergeMap((values) =>
       startTopic$(values).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.startTopic.failure(merge(err, { topicId: getId(values) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

@@ -36,7 +36,7 @@ import LogRow from './LogRow';
 import * as s from './LogPropessStyles';
 import { DeleteDialog } from 'components/common/Dialog';
 
-const LogProgress = props => {
+const LogProgress = (props) => {
   const {
     steps = [],
     isOpen,
@@ -146,7 +146,7 @@ const LogProgress = props => {
       <DialogTitle>{title}</DialogTitle>
       {!isHidden && (
         <Stepper activeStep={activeStep}>
-          {steps.map(step => {
+          {steps.map((step) => {
             let type = {};
             if (stepType === 'error') {
               type.error = true;

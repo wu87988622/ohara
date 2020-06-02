@@ -77,8 +77,10 @@ const defaultOptions = {
   showServicesColumn: true,
 };
 
-const getUnionResourceNames = nodes =>
-  uniq(flatMap(nodes, node => map(node.resources, resource => resource.name)));
+const getUnionResourceNames = (nodes) =>
+  uniq(
+    flatMap(nodes, (node) => map(node.resources, (resource) => resource.name)),
+  );
 
 function NodeTable(props) {
   const {
@@ -106,11 +108,12 @@ function NodeTable(props) {
 
   const resourceNames = getUnionResourceNames(data);
 
-  const willBeRemoved = node => !find(nodes, n => n.hostname === node.hostname);
+  const willBeRemoved = (node) =>
+    !find(nodes, (n) => n.hostname === node.hostname);
 
-  const willBeAdded = node =>
+  const willBeAdded = (node) =>
     !isEmpty(options?.comparedNodes) &&
-    !find(options?.comparedNodes, n => n.hostname === node.hostname);
+    !find(options?.comparedNodes, (n) => n.hostname === node.hostname);
 
   const handleAddIconClick = () => {
     if (isFunction(options?.onAddIconClick)) {
@@ -126,7 +129,7 @@ function NodeTable(props) {
     }
   };
 
-  const handleDeleteIconClick = node => {
+  const handleDeleteIconClick = (node) => {
     if (isFunction(options?.onDeleteIconClick)) {
       options.onDeleteIconClick(node);
     } else {
@@ -135,7 +138,7 @@ function NodeTable(props) {
     }
   };
 
-  const handleDetailIconClick = node => {
+  const handleDetailIconClick = (node) => {
     if (isFunction(options?.onDetailIconClick)) {
       options.onDetailIconClick(node);
     } else {
@@ -144,7 +147,7 @@ function NodeTable(props) {
     }
   };
 
-  const handleEditorIconClick = node => {
+  const handleEditorIconClick = (node) => {
     if (isFunction(options?.onEditorIconClick)) {
       options.onEditorIconClick(node);
     } else {
@@ -153,7 +156,7 @@ function NodeTable(props) {
     }
   };
 
-  const handleUndoIconClick = node => {
+  const handleUndoIconClick = (node) => {
     if (isFunction(options?.onUndoIconClick)) {
       options.onUndoIconClick(node);
     }
@@ -165,7 +168,7 @@ function NodeTable(props) {
     }
   };
 
-  const handleRemoveIconClick = node => {
+  const handleRemoveIconClick = (node) => {
     if (isFunction(options?.onRemoveIconClick)) {
       options.onRemoveIconClick(node);
     } else {
@@ -174,26 +177,26 @@ function NodeTable(props) {
     }
   };
 
-  const handleDeleteDialogConfirm = nodeToDelete => {
+  const handleDeleteDialogConfirm = (nodeToDelete) => {
     onDelete(nodeToDelete);
     setIsDeleteDialogOpen(false);
   };
 
-  const handleEditorDialogConfirm = nodeToUpdate => {
+  const handleEditorDialogConfirm = (nodeToUpdate) => {
     onUpdate(nodeToUpdate);
     setIsEditorDialogOpen(false);
   };
 
-  const handleRemoveDialogConfirm = nodeToRemove => {
+  const handleRemoveDialogConfirm = (nodeToRemove) => {
     onRemove(nodeToRemove);
     setIsRemoveDialogOpen(false);
   };
 
   const renderResourceColumns = () => {
-    return map(resourceNames, resourceName => ({
+    return map(resourceNames, (resourceName) => ({
       title: resourceName,
-      render: node => {
-        const resource = find(node.resources, r => r.name === resourceName);
+      render: (node) => {
+        const resource = find(node.resources, (r) => r.name === resourceName);
         if (!resource) return;
         const { unit, used, value } = resource;
         return (
@@ -218,12 +221,12 @@ function NodeTable(props) {
     return {
       title: 'Services',
       hidden: !options?.showServicesColumn,
-      render: node => {
+      render: (node) => {
         const services = filter(
           node.services,
-          service => service.name !== KIND.configurator,
+          (service) => service.name !== KIND.configurator,
         );
-        const clusters = flatMap(services, service => service.clusterKeys);
+        const clusters = flatMap(services, (service) => service.clusterKeys);
         const count = size(clusters);
         if (count > 0) {
           return (
@@ -231,7 +234,7 @@ function NodeTable(props) {
               {}
               <Link
                 component="button"
-                onClick={event => {
+                onClick={(event) => {
                   handleDetailIconClick(node);
                   event.stopPropagation();
                 }}
@@ -255,8 +258,8 @@ function NodeTable(props) {
       options?.showEditorIcon ||
       options?.showRemoveIcon;
 
-    const render = node => {
-      const getUndoTooltipTitle = node => {
+    const render = (node) => {
+      const getUndoTooltipTitle = (node) => {
         if (willBeAdded(node)) {
           return 'Undo add node';
         } else if (willBeRemoved(node)) {
@@ -265,10 +268,10 @@ function NodeTable(props) {
         return 'Undo';
       };
 
-      const showUndoIcon = node =>
+      const showUndoIcon = (node) =>
         (options?.comparison && willBeAdded(node)) || willBeRemoved(node);
 
-      const showRemoveIcon = node =>
+      const showRemoveIcon = (node) =>
         options?.showRemoveIcon && !showUndoIcon(node);
 
       const disabledDeleteIcon = isFunction(options?.disabledDeleteIcon)
@@ -339,7 +342,7 @@ function NodeTable(props) {
     };
   };
 
-  const getRowStyle = node => {
+  const getRowStyle = (node) => {
     if (options?.comparison && willBeRemoved(node)) {
       return {
         backgroundColor: 'rgba(255, 117, 159, 0.1)',
@@ -385,7 +388,7 @@ function NodeTable(props) {
           {
             title: 'State',
             field: 'state',
-            render: node => <NodeStateChip node={node} />,
+            render: (node) => <NodeStateChip node={node} />,
           },
           ...options?.customColumns,
           renderRowActions(),
@@ -395,7 +398,7 @@ function NodeTable(props) {
         options={{
           predicate: 'hostname',
           prompt: options?.prompt,
-          rowStyle: node => getRowStyle(node),
+          rowStyle: (node) => getRowStyle(node),
           selection: options?.selection,
           selectedData: options?.selectedNodes,
           disabledData: options?.disabledNodes,

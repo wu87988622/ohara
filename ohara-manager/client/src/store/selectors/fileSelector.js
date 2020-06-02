@@ -18,7 +18,7 @@ import { values } from 'lodash';
 import { createSelector } from 'reselect';
 import { transformDef } from 'utils/definition';
 
-const getEntities = state => state?.entities?.files;
+const getEntities = (state) => state?.entities?.files;
 
 const getGroupFromProps = (_, props) => props?.group;
 
@@ -28,7 +28,7 @@ const getClassNameFromProps = (_, props) => props?.className;
 
 export const getFilesByGroup = createSelector(
   [getEntities, getGroupFromProps],
-  (entities, group) => values(entities).filter(file => file?.group === group),
+  (entities, group) => values(entities).filter((file) => file?.group === group),
 );
 
 export const getStreamInfo = createSelector(
@@ -36,12 +36,13 @@ export const getStreamInfo = createSelector(
   (entities, jarKey, className) => {
     const [streamInfo] = values(entities)
       .filter(
-        entity => entity.group === jarKey.group && entity.name === jarKey.name,
+        (entity) =>
+          entity.group === jarKey.group && entity.name === jarKey.name,
       )
-      .map(entity =>
-        entity.classInfos.find(info => info.className === className),
+      .map((entity) =>
+        entity.classInfos.find((info) => info.className === className),
       )
-      .map(entity => {
+      .map((entity) => {
         return {
           ...entity,
           settingDefinitions: transformDef(entity.settingDefinitions),

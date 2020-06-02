@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-final-form';
 import RenderDefinition from './RenderDefinition';
 
-const RenderDefinitions = props => {
+const RenderDefinitions = (props) => {
   const {
     Definitions = [],
     initialValues = {},
@@ -33,7 +33,7 @@ const RenderDefinitions = props => {
   const formHandleSubmit = () =>
     formRef.current.dispatchEvent(new Event('submit'));
 
-  const displayDefinitions = Definitions.filter(def => !def.internal);
+  const displayDefinitions = Definitions.filter((def) => !def.internal);
   const refs = {};
 
   const RenderForm = (
@@ -43,7 +43,7 @@ const RenderDefinitions = props => {
       render={({ handleSubmit }) => {
         return (
           <form onSubmit={handleSubmit} ref={formRef}>
-            {displayDefinitions.map(def => {
+            {displayDefinitions.map((def) => {
               refs[def.key] = createRef();
               return RenderDefinition({
                 def,

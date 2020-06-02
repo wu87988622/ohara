@@ -53,29 +53,29 @@ function PluginTable() {
     () =>
       find(
         worker?.settingDefinitions,
-        definition => definition.key === 'pluginKeys',
+        (definition) => definition.key === 'pluginKeys',
       )?.documentation,
     [worker],
   );
 
   const workerPlugins = useMemo(() => {
     return filter(
-      map(worker?.pluginKeys, pluginKey =>
-        find(workspaceFiles, file => file.name === pluginKey.name),
+      map(worker?.pluginKeys, (pluginKey) =>
+        find(workspaceFiles, (file) => file.name === pluginKey.name),
       ),
-    ).map(file => {
+    ).map((file) => {
       const classNames = file?.classInfos
         ?.filter(
-          classInfo =>
+          (classInfo) =>
             classInfo?.classType === 'source' ||
             classInfo?.classType === 'sink',
         )
-        ?.map(classInfo => classInfo?.className);
+        ?.map((classInfo) => classInfo?.className);
 
       return {
         ...file,
-        pipelines: filter(pipelines, pipeline => {
-          return some(pipeline?.objects, object =>
+        pipelines: filter(pipelines, (pipeline) => {
+          return some(pipeline?.objects, (object) =>
             includes(classNames, object?.className),
           );
         }),
@@ -86,14 +86,14 @@ function PluginTable() {
   const workspacePlugins = useMemo(() => {
     return workspace?.worker?.pluginKeys
       ? filter(
-          map(workspace.worker.pluginKeys, pluginKey =>
-            find(workspaceFiles, file => file.name === pluginKey.name),
+          map(workspace.worker.pluginKeys, (pluginKey) =>
+            find(workspaceFiles, (file) => file.name === pluginKey.name),
           ),
         )
       : workerPlugins;
   }, [workspace, workerPlugins, workspaceFiles]);
 
-  const updatePluginKeysToWorkspace = newPluginKeys => {
+  const updatePluginKeysToWorkspace = (newPluginKeys) => {
     updateWorkspace({
       ...workspace,
       worker: {
@@ -103,8 +103,8 @@ function PluginTable() {
     });
 
     const newSelectedFiles = filter(
-      map(newPluginKeys, pluginKey =>
-        find(workspaceFiles, file => file.name === pluginKey.name),
+      map(newPluginKeys, (pluginKey) =>
+        find(workspaceFiles, (file) => file.name === pluginKey.name),
       ),
     );
 
@@ -115,40 +115,40 @@ function PluginTable() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleRemoveIconClick = fileClicked => {
+  const handleRemoveIconClick = (fileClicked) => {
     setActiveFile(fileClicked);
     setIsRemoveDialogOpen(true);
   };
 
-  const handleRemove = fileToRemove => {
+  const handleRemove = (fileToRemove) => {
     if (!fileToRemove?.group || !fileToRemove?.name) return;
 
     const shouldBeRemoved = some(
       workspace?.worker?.pluginKeys,
-      pluginKey => pluginKey.name === fileToRemove.name,
+      (pluginKey) => pluginKey.name === fileToRemove.name,
     );
 
     if (shouldBeRemoved) {
       const newPluginKeys = reject(
         workspace?.worker?.pluginKeys,
-        pluginKey => pluginKey.name === fileToRemove.name,
+        (pluginKey) => pluginKey.name === fileToRemove.name,
       );
       updatePluginKeysToWorkspace(newPluginKeys);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedFiles => {
-    const newPluginKeys = map(selectedFiles, file => getKey(file));
+  const handleSelectorDialogConfirm = (selectedFiles) => {
+    const newPluginKeys = map(selectedFiles, (file) => getKey(file));
     updatePluginKeysToWorkspace(newPluginKeys);
     setIsSelectorDialogOpen(false);
   };
 
-  const handleUndoIconClick = fileClicked => {
+  const handleUndoIconClick = (fileClicked) => {
     if (!fileClicked?.group || !fileClicked?.name) return;
 
     const shouldBeAdded = every(
       workspace?.worker?.pluginKeys,
-      pluginKey => pluginKey.name !== fileClicked.name,
+      (pluginKey) => pluginKey.name !== fileClicked.name,
     );
 
     if (shouldBeAdded) {
@@ -162,7 +162,7 @@ function PluginTable() {
     }
   };
 
-  const handleLinkClick = pipelineClicked => {
+  const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
       closeSettingsDialog();
       switchPipeline(pipelineClicked.name);
@@ -190,14 +190,14 @@ function PluginTable() {
               title: 'Pipelines',
               customFilterAndSearch: (filterValue, file) => {
                 const value = file?.pipelines
-                  ?.map(pipeline => pipeline?.name)
+                  ?.map((pipeline) => pipeline?.name)
                   .join();
                 return includes(toUpper(value), toUpper(filterValue));
               },
-              render: file => {
+              render: (file) => {
                 return (
                   <>
-                    {map(file?.pipelines, pipeline => (
+                    {map(file?.pipelines, (pipeline) => (
                       <div key={pipeline.name}>
                         <Tooltip title="Click the link to switch to that pipeline">
                           <Link
@@ -236,20 +236,20 @@ function PluginTable() {
         file={activeFile}
         isOpen={isRemoveDialogOpen}
         onClose={() => setIsRemoveDialogOpen(false)}
-        onConfirm={file => {
+        onConfirm={(file) => {
           handleRemove(file);
           setIsRemoveDialogOpen(false);
         }}
         options={{
-          content: file => {
+          content: (file) => {
             if (!isEmpty(file?.pipelines)) {
               return `The file ${file?.name} is already used by pipeline ${file?.pipelines?.[0]?.name}. It is not recommended that you remove this file because it will cause the pipeline to fail to start properly.`;
             } else {
               return `Are you sure you want to remove the file ${file?.name}?`;
             }
           },
-          confirmDisabled: file => !isEmpty(file?.pipelines),
-          showForceCheckbox: file => !isEmpty(file?.pipelines),
+          confirmDisabled: (file) => !isEmpty(file?.pipelines),
+          showForceCheckbox: (file) => !isEmpty(file?.pipelines),
         }}
       />
     </>

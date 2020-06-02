@@ -30,7 +30,7 @@ const StyledAutocomplete = styled(Autocomplete)(
   `,
 );
 
-const ArrayDef = props => {
+const ArrayDef = (props) => {
   const {
     input: { name, onChange, value: options },
     meta = {},
@@ -49,7 +49,7 @@ const ArrayDef = props => {
         onChange(values);
       }}
       ref={refs}
-      renderInput={params => {
+      renderInput={(params) => {
         return (
           <TextField
             {...params}

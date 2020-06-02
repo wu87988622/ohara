@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('should create a new pipeline and switch to it', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
@@ -87,7 +87,7 @@ it('should handle error', () => {
     .spyOn(pipelineApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

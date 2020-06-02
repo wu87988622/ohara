@@ -28,21 +28,21 @@ import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 import { KIND, LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startUpdateMetrics.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ params, options }) =>
       timer(0, 8000).pipe(
         switchMap(() =>
           defer(() => pipelineApi.get(params)).pipe(
-            map(res => {
+            map((res) => {
               const { objects } = res.data;
               updateMetrics(objects, options);
               return actions.startUpdateMetrics.success();
             }),
             startWith(actions.startUpdateMetrics.request()),
-            catchError(err => {
+            catchError((err) => {
               return from([
                 actions.startUpdateMetrics.failure(err),
                 actions.createEventLog.trigger({
@@ -73,7 +73,7 @@ function updateMetrics(objects, options) {
   const { pipelineObjectsRef, paperApi } = options;
   if (paperApi) {
     // Topic metrics are not displayed in Paper cell.
-    const nodeMetrics = objects.filter(object => object.kind !== KIND.topic);
+    const nodeMetrics = objects.filter((object) => object.kind !== KIND.topic);
 
     paperApi.updateMetrics(nodeMetrics);
 

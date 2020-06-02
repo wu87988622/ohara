@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
-const Reference = props => {
+const Reference = (props) => {
   const {
     input: { name, onChange, value = {}, ...restInput },
     meta = {},
@@ -47,7 +47,7 @@ const Reference = props => {
         return placeholder;
       }
     } else if (isArray(value) && value.length > 0) {
-      const { displayName } = list.find(item => item.name === value[0].name);
+      const { displayName } = list.find((item) => item.name === value[0].name);
       return displayName;
     } else if (list.length === 0 || value.length === 0) {
       return placeholder;
@@ -58,7 +58,7 @@ const Reference = props => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
-  const getMenuDisplayValue = item => {
+  const getMenuDisplayValue = (item) => {
     if (has(item, 'displayName')) {
       return item.displayName;
     } else {
@@ -79,7 +79,7 @@ const Reference = props => {
       select
       value={getDisplayValue()}
     >
-      {newList.map(item => {
+      {newList.map((item) => {
         const disabled = disables.includes(item.name);
         const menuDisplayValue = getMenuDisplayValue(item);
         return (

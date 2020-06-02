@@ -21,22 +21,22 @@ export const transformNode = (node, clusters) => {
   const { brokers, workers, streams, zookeepers } = clusters;
   return {
     ...node,
-    services: map(node?.services, service => {
+    services: map(node?.services, (service) => {
       return {
         ...service,
         clusters: filter(
-          map(service.clusterKeys, clusterKey => {
+          map(service.clusterKeys, (clusterKey) => {
             switch (service.name) {
               case SERVICE_NAME.BROKER:
-                return find(brokers, b => b.name === clusterKey.name);
+                return find(brokers, (b) => b.name === clusterKey.name);
               case SERVICE_NAME.CONFIGURATOR:
                 return null;
               case SERVICE_NAME.WORKER:
-                return find(workers, w => w.name === clusterKey.name);
+                return find(workers, (w) => w.name === clusterKey.name);
               case SERVICE_NAME.STREAM:
-                return find(streams, s => s.name === clusterKey.name);
+                return find(streams, (s) => s.name === clusterKey.name);
               case SERVICE_NAME.ZOOKEEPER:
-                return find(zookeepers, z => z.name === clusterKey.name);
+                return find(zookeepers, (z) => z.name === clusterKey.name);
               default:
                 throw Error('Unknown service name: ', service.name);
             }
@@ -48,5 +48,5 @@ export const transformNode = (node, clusters) => {
 };
 
 export const transformNodes = (nodes, clusters) => {
-  return map(nodes, node => transformNode(node, clusters));
+  return map(nodes, (node) => transformNode(node, clusters));
 };

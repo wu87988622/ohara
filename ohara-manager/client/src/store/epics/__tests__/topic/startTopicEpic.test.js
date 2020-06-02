@@ -40,7 +40,7 @@ beforeEach(() => {
 });
 
 it('start topic should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -106,7 +106,7 @@ it('start topic failed after reach retry limit', () => {
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a             ';
@@ -157,7 +157,7 @@ it('start topic failed after reach retry limit', () => {
 });
 
 it('start topic multiple times should be worked once', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
@@ -201,7 +201,7 @@ it('start topic multiple times should be worked once', () => {
 });
 
 it('start different topic should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherTopicEntity = {

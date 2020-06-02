@@ -17,7 +17,7 @@
 import { get, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.brokers;
+const getEntities = (state) => state?.entities?.brokers;
 
 const getIdFromProps = (_, props) => props?.id;
 
@@ -27,7 +27,7 @@ export const isBrokerLoaded = (state, props) =>
 export const isBrokerLoading = (state, props) =>
   !!get(state, ['ui', 'brokers', props?.id, 'loading']);
 
-export const getAllBrokers = createSelector([getEntities], entities =>
+export const getAllBrokers = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 

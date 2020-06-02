@@ -22,7 +22,7 @@ import { TAB } from 'context/devTool/const';
 import { ViewTopic, ViewLog } from './View';
 
 const TabPanel = styled.div`
-  display: ${props => (props.value !== props.index ? 'none' : 'block')};
+  display: ${(props) => (props.value !== props.index ? 'none' : 'block')};
   position: absolute;
   width: 100%;
   top: 48px;

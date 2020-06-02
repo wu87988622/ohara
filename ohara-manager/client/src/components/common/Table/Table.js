@@ -31,8 +31,8 @@ import { TableLoader } from 'components/common/Loader';
 const Wrapper = styled.div`
   &.has-title {
     h6 {
-      padding: ${props => props.theme.spacing(2)}px;
-      border-bottom: 1px solid ${props => props.theme.palette.grey[300]};
+      padding: ${(props) => props.theme.spacing(2)}px;
+      border-bottom: 1px solid ${(props) => props.theme.palette.grey[300]};
     }
   }
 
@@ -40,12 +40,12 @@ const Wrapper = styled.div`
     /* we need to explicit define the background-color since 
        "sticky header" will overwrite our header color...
     */
-    background-color: ${props => props.theme.palette.grey[100]};
+    background-color: ${(props) => props.theme.palette.grey[100]};
   }
 `;
 
 const StyledTableHead = styled(TableHead)`
-  background-color: ${props => props.theme.palette.grey[100]};
+  background-color: ${(props) => props.theme.palette.grey[100]};
 
   th {
     min-width: 120px;
@@ -59,10 +59,10 @@ const StyledTableHead = styled(TableHead)`
 `;
 
 const StyledFooter = styled(TableFooter)`
-  background-color: ${props => props.theme.palette.grey[50]};
+  background-color: ${(props) => props.theme.palette.grey[50]};
 `;
 
-const MuiTable = props => {
+const MuiTable = (props) => {
   const {
     headers,
     fixedHeader = false,

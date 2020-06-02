@@ -29,15 +29,15 @@ import { AddSharedTopicIcon } from 'components/common/Icon';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
-export const removeTemporaryCell = paperApi => {
+export const removeTemporaryCell = (paperApi) => {
   // Remove temporary cells
   paperApi
     .getCells()
-    .filter(cell => cell.isTemporary)
-    .forEach(cell => paperApi.removeElement(cell.id));
+    .filter((cell) => cell.isTemporary)
+    .forEach((cell) => paperApi.removeElement(cell.id));
 };
 
-export const createToolboxList = params => {
+export const createToolboxList = (params) => {
   const {
     connectors,
     sourceGraph,
@@ -141,7 +141,7 @@ export const createToolboxList = params => {
     // 2. Disable the topic If the name is already taken by other elements
     const isDisabled = paperApi
       .getCells(KIND.topic)
-      .some(element => element.name === topic.name);
+      .some((element) => element.name === topic.name);
 
     topicGraph.current.addCell(
       new joint.shapes.html.Element({
@@ -191,7 +191,7 @@ export const createToolboxList = params => {
   });
 };
 
-export const enableDragAndDrop = params => {
+export const enableDragAndDrop = (params) => {
   const {
     toolPapers,
     setCellInfo,
@@ -201,15 +201,15 @@ export const enableDragAndDrop = params => {
 
   // Falsy values are graphs that are not ready to render: source and sink as the
   // API could be still in the air while this component is already to render
-  toolPapers.filter(Boolean).forEach(toolPaper => {
+  toolPapers.filter(Boolean).forEach((toolPaper) => {
     // Add "hover" state in items, I cannot figure out how to do
     // this when initializing the HTML elements...
-    toolPaper.on('cell:mouseenter', cellView => {
+    toolPaper.on('cell:mouseenter', (cellView) => {
       if (cellView.model.get('isDisabled')) return;
       cellView.$box.css('backgroundColor', 'rgba(0, 0, 0, 0.08)');
     });
 
-    toolPaper.on('cell:mouseleave', cellView => {
+    toolPaper.on('cell:mouseleave', (cellView) => {
       if (cellView.model.get('isDisabled')) return;
       cellView.$box.css('backgroundColor', 'transparent');
     });
@@ -243,7 +243,7 @@ export const enableDragAndDrop = params => {
         top: event.pageY,
       });
 
-      $('#paper').on('mousemove.fly', event => {
+      $('#paper').on('mousemove.fly', (event) => {
         // Prevent the flying-paper from interfering by the Toolbox.
         // We will set this back after the drag-and-drop action is finished
         $('.toolbox').css('pointer-events', 'none');
@@ -254,7 +254,7 @@ export const enableDragAndDrop = params => {
         });
       });
 
-      $('#paper').on('mouseup.fly', event => {
+      $('#paper').on('mouseup.fly', (event) => {
         const x = event.pageX;
         const y = event.pageY;
         const paperBbox = paperApi.getBbox();
@@ -297,7 +297,7 @@ export const enableDragAndDrop = params => {
             isShared,
           };
 
-          setCellInfo(prevState => ({
+          setCellInfo((prevState) => ({
             ...prevState,
             ...params,
           }));
@@ -334,9 +334,7 @@ export const enableDragAndDrop = params => {
           }
         }
         // Clean up
-        $('#paper')
-          .off('mousemove.fly')
-          .off('mouseup.fly');
+        $('#paper').off('mousemove.fly').off('mouseup.fly');
         flyingShape.remove();
         $('.flying-paper').remove();
         $('.toolbox').css('pointer-events', 'auto');
@@ -350,9 +348,9 @@ export function getConnectorInfo(worker) {
   let sinks = [];
 
   if (worker && worker.classInfos) {
-    worker.classInfos.forEach(info => {
+    worker.classInfos.forEach((info) => {
       const { className, settingDefinitions: defs } = info;
-      const kind = defs.find(def => def.key === 'kind')?.defaultValue;
+      const kind = defs.find((def) => def.key === 'kind')?.defaultValue;
       const displayClassName = className.split('.').pop();
       if (kind === KIND.sink) {
         return sinks.push({

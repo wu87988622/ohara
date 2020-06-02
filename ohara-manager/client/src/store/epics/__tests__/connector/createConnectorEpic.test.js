@@ -41,7 +41,7 @@ const makeTestScheduler = () =>
   });
 
 it('create connector should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
@@ -87,7 +87,7 @@ it('create connector should be worked correctly', () => {
 });
 
 it('create multiple connectors should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
@@ -162,7 +162,7 @@ it('create multiple connectors should be worked correctly', () => {
 });
 
 it('create same connector within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a    ';
@@ -217,7 +217,7 @@ it('throw exception of create connector should also trigger event log action', (
     .spyOn(connectorApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

@@ -22,7 +22,7 @@ import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 
 export const useIsAppReady = () =>
-  useSelector(useCallback(state => !!state.ui.app.lastUpdated, []));
+  useSelector(useCallback((state) => !!state.ui.app.lastUpdated, []));
 
 export const useInitializeApp = (workspaceName, pipelineName) => {
   const isAppReady = useIsAppReady();

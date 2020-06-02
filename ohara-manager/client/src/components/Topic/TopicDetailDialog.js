@@ -110,9 +110,9 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
                     {flatten(
                       map(
                         get(topic, 'nodeMetrics', {}),
-                        nodeMetric => nodeMetric.meters,
+                        (nodeMetric) => nodeMetric.meters,
                       ),
-                    ).map(metric => {
+                    ).map((metric) => {
                       const document = get(metric, 'document');
                       const value = get(metric, 'value');
                       const unit = get(metric, 'unit');
@@ -122,7 +122,7 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
                           <TableCell align="right">
                             <NumberFormat
                               displayType="text"
-                              renderText={value => (
+                              renderText={(value) => (
                                 <div>
                                   {value} {unit}
                                 </div>

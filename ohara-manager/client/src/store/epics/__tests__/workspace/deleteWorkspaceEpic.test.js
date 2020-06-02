@@ -86,7 +86,7 @@ beforeEach(() => {
 });
 
 it('delete workspace when worker is running should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '---^-a           ';
@@ -150,7 +150,7 @@ it('delete workspace when worker is running should be worked correctly', () => {
 });
 
 it('delete workspace and some components when worker is running should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '---^-a           ';
@@ -261,7 +261,7 @@ it('delete workspace and some components when worker is running should be worked
 });
 
 it('delete workspace when broker is running should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '---^-a           ';
@@ -336,7 +336,7 @@ it('delete workspace when broker is running should be worked correctly', () => {
 });
 
 it('delete workspace when zookeeper is running should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '---^-a           ';
@@ -419,7 +419,7 @@ it('delete workspace when zookeeper is running should be worked correctly', () =
 });
 
 it('delete workspace when all services are stopped should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '---^-a           ';

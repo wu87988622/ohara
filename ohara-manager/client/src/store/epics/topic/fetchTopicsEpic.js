@@ -24,15 +24,15 @@ import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchTopics.TRIGGER),
     switchMap(() =>
       defer(() => topicApi.getAll()).pipe(
-        map(res => normalize(res.data, [schema.topic])),
-        map(normalizedData => actions.fetchTopics.success(normalizedData)),
+        map((res) => normalize(res.data, [schema.topic])),
+        map((normalizedData) => actions.fetchTopics.success(normalizedData)),
         startWith(actions.fetchTopics.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.fetchTopics.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

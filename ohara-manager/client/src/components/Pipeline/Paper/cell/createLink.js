@@ -16,7 +16,7 @@
 
 import * as joint from 'jointjs';
 
-const createLink = options => {
+const createLink = (options) => {
   const { sourceId, targetId, data = {} } = options;
   const { vertices = [] } = data;
 

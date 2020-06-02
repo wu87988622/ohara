@@ -29,7 +29,7 @@ import { FORM } from 'const';
 import * as hooks from 'hooks';
 import validate from './validate';
 
-const ReviewForm = props => {
+const ReviewForm = (props) => {
   const { handleSubmit, previousStep } = props;
   const values = hooks.useReduxFormValues(FORM.CREATE_WORKSPACE);
 

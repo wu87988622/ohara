@@ -348,7 +348,7 @@ function createRefs(menu, sections) {
   const sectionRefs = {};
 
   // Add a React ref object in each item
-  const sectionsWithRefs = sections.map(section => {
+  const sectionsWithRefs = sections.map((section) => {
     const key = section.heading;
     sectionRefs[key] = React.createRef();
 
@@ -358,10 +358,10 @@ function createRefs(menu, sections) {
     };
   });
 
-  const menuWithRefs = menu.map(section => {
+  const menuWithRefs = menu.map((section) => {
     return {
       ...section,
-      items: section.items.map(item => {
+      items: section.items.map((item) => {
         return {
           ...item,
           ref: sectionRefs[item.text],

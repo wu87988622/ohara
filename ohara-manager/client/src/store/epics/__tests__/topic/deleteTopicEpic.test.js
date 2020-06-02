@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('should delete a topic', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
@@ -75,7 +75,7 @@ it('should delete a topic', () => {
 });
 
 it('should delete multiple topics', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
@@ -137,7 +137,7 @@ it('should delete multiple topics', () => {
 });
 
 it('delete same topic within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a----';
@@ -187,7 +187,7 @@ it('throw exception of delete topic should also trigger event log action', () =>
     .spyOn(topicApi, 'remove')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

@@ -48,7 +48,7 @@ MemorizeList.propTypes = {
 
 const EventLogList = ({ data, isFetching }) => {
   const { open: openEventLogContentDialog } = useEventLogContentDialog();
-  const handleRowClick = rowData => openEventLogContentDialog(rowData);
+  const handleRowClick = (rowData) => openEventLogContentDialog(rowData);
   return (
     <>
       <MemorizeList

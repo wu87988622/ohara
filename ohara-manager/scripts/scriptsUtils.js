@@ -37,7 +37,7 @@ exports.checkClientBuildDir = () => {
   return true;
 };
 
-exports.waitOnService = url =>
+exports.waitOnService = (url) =>
   new Promise((resolve, reject) => {
     waitOn(
       {
@@ -46,7 +46,7 @@ exports.waitOnService = url =>
         window: 1000,
         log: true,
       },
-      err => {
+      (err) => {
         if (err) {
           console.error('error waiting for url', url);
           console.error(err.message);
@@ -57,7 +57,7 @@ exports.waitOnService = url =>
     );
   });
 
-const waitUntil = async params => {
+const waitUntil = async (params) => {
   const { condition, sleepTime = 2000, maxRetry = 10 } = params;
   let { retryCount = 0 } = params;
 

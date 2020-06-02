@@ -34,15 +34,15 @@ function ZookeeperNodesPage() {
   const documentation = useMemo(() => {
     return find(
       zookeeper?.settingDefinitions,
-      definition => definition.key === 'nodeNames',
+      (definition) => definition.key === 'nodeNames',
     )?.documentation;
   }, [zookeeper]);
 
   const zookeeperNodesInWorkspace = useMemo(() => {
     return workspace?.zookeeper?.nodeNames
       ? filter(
-          map(workspace.zookeeper.nodeNames, nodeName =>
-            find(nodesInWorkspace, node => node.hostname === nodeName),
+          map(workspace.zookeeper.nodeNames, (nodeName) =>
+            find(nodesInWorkspace, (node) => node.hostname === nodeName),
           ),
         )
       : nodesInZookeeper;
@@ -52,7 +52,7 @@ function ZookeeperNodesPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleUndoIconClick = nodeClicked => {
+  const handleUndoIconClick = (nodeClicked) => {
     const currentIndex = workspace?.zookeeper?.nodeNames?.indexOf(
       nodeClicked?.hostname,
     );
@@ -71,40 +71,40 @@ function ZookeeperNodesPage() {
       },
     });
     selectorDialogRef.current.setSelectedNodes(
-      map(newNodeNames, nodeName =>
-        find(nodesInWorkspace, n => n.hostname === nodeName),
+      map(newNodeNames, (nodeName) =>
+        find(nodesInWorkspace, (n) => n.hostname === nodeName),
       ),
     );
   };
 
-  const handleRemove = nodeToRemove => {
+  const handleRemove = (nodeToRemove) => {
     const shouldBeRemoved = some(
       zookeeperNodesInWorkspace,
-      n => n.hostname === nodeToRemove?.hostname,
+      (n) => n.hostname === nodeToRemove?.hostname,
     );
 
     if (shouldBeRemoved) {
       const newNodes = reject(
         zookeeperNodesInWorkspace,
-        n => n.hostname === nodeToRemove.hostname,
+        (n) => n.hostname === nodeToRemove.hostname,
       );
       updateWorkspace({
         ...workspace,
         zookeeper: {
           ...workspace?.zookeeper,
-          nodeNames: map(newNodes, n => n.hostname),
+          nodeNames: map(newNodes, (n) => n.hostname),
         },
       });
       selectorDialogRef.current.setSelectedNodes(newNodes);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedNodes => {
+  const handleSelectorDialogConfirm = (selectedNodes) => {
     updateWorkspace({
       ...workspace,
       zookeeper: {
         ...workspace?.zookeeper,
-        nodeNames: map(selectedNodes, n => n.hostname),
+        nodeNames: map(selectedNodes, (n) => n.hostname),
       },
     });
     setIsSelectorDialogOpen(false);

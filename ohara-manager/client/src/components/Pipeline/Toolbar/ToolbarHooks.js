@@ -26,9 +26,9 @@ export const useRunningServices = () => {
   const paperApi = React.useContext(PaperContext);
   return paperApi
     .getCells()
-    .filter(cell => cell.kind !== KIND.topic)
-    .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
-    .filter(cell => cell.status?.toLowerCase() !== CELL_STATUS.stopped);
+    .filter((cell) => cell.kind !== KIND.topic)
+    .filter((cell) => cell.cellType === CELL_TYPES.ELEMENT)
+    .filter((cell) => cell.status?.toLowerCase() !== CELL_STATUS.stopped);
 };
 
 export const useRenderDeleteContent = () => {
@@ -145,30 +145,30 @@ export const useMakeRequest = () => {
   const makeRequest = (pipeline, action) => {
     const cells = paperApi.getCells();
     const connectors = cells.filter(
-      cell => cell.kind === KIND.source || cell.kind === KIND.sink,
+      (cell) => cell.kind === KIND.source || cell.kind === KIND.sink,
     );
-    const streams = cells.filter(cell => cell.kind === KIND.stream);
+    const streams = cells.filter((cell) => cell.kind === KIND.stream);
 
     let connectorPromises = [];
     let streamsPromises = [];
 
     if (action === 'start') {
-      connectorPromises = connectors.map(cellData =>
+      connectorPromises = connectors.map((cellData) =>
         connectorApiHelper.start(cellData, paperApi),
       );
-      streamsPromises = streams.map(cellData =>
+      streamsPromises = streams.map((cellData) =>
         streamApiHelper.start(cellData, paperApi),
       );
     } else {
-      connectorPromises = connectors.map(cellData =>
+      connectorPromises = connectors.map((cellData) =>
         connectorApiHelper.stop(cellData, paperApi),
       );
-      streamsPromises = streams.map(cellData =>
+      streamsPromises = streams.map((cellData) =>
         streamApiHelper.stop(cellData, paperApi),
       );
     }
     return Promise.all([...connectorPromises, ...streamsPromises]).then(
-      result => result,
+      (result) => result,
     );
   };
 

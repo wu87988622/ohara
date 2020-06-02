@@ -45,7 +45,7 @@ const makeTestScheduler = () =>
   });
 
 it('create and start topic should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                     ';

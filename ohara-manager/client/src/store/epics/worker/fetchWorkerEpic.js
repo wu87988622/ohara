@@ -40,26 +40,28 @@ import { getId } from 'utils/object';
 const customizer = (objValue, srcValue) => {
   if (isArray(objValue)) {
     // combine the classInfos array and sort it by "displayed" className
-    return sortBy(objValue.concat(srcValue), v => v.className.split('.').pop());
+    return sortBy(objValue.concat(srcValue), (v) =>
+      v.className.split('.').pop(),
+    );
   }
 };
 
-const fetchWorker$ = params => {
+const fetchWorker$ = (params) => {
   const workerId = getId(params);
   return forkJoin(
     defer(() => workerApi.get(params)).pipe(
-      map(res => res.data),
-      map(data => normalize(data, schema.worker)),
+      map((res) => res.data),
+      map((data) => normalize(data, schema.worker)),
     ),
     zip(
       defer(() => inspectApi.getShabondiInfo()),
       defer(() => inspectApi.getWorkerInfo(params)).pipe(
-        map(res => {
+        map((res) => {
           // Ensure classInfos are loaded since it's required in our UI
           if (res.data.classInfos.length === 0) throw res;
           return res;
         }),
-        retryWhen(errors =>
+        retryWhen((errors) =>
           errors.pipe(
             concatMap((value, index) =>
               iif(
@@ -88,13 +90,13 @@ const fetchWorker$ = params => {
           customizer,
         ),
       ),
-      map(data => normalize(data, schema.info)),
+      map((data) => normalize(data, schema.info)),
     ),
   ).pipe(
-    map(normalizedData => merge(...normalizedData, { workerId })),
-    map(normalizedData => actions.fetchWorker.success(normalizedData)),
+    map((normalizedData) => merge(...normalizedData, { workerId })),
+    map((normalizedData) => actions.fetchWorker.success(normalizedData)),
     startWith(actions.fetchWorker.request({ workerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.fetchWorker.failure(merge(err, { workerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -103,12 +105,12 @@ const fetchWorker$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchWorker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     throttleTime(1000),
-    switchMap(params =>
+    switchMap((params) =>
       fetchWorker$(params).pipe(
         // Stop fetching worker info once the delete workspace action is triggered
         takeUntil(action$.pipe(ofType(actions.deleteWorkspace.TRIGGER))),

@@ -25,14 +25,14 @@ import ClusterStateChip from './ClusterStateChip';
 function NodeServiceTable({ node }) {
   if (!node) return null;
 
-  const flatClusters = flatMap(node?.services, service => {
+  const flatClusters = flatMap(node?.services, (service) => {
     const { name, clusterKeys, clusters } = service;
     // we don't want to see configurator in our node service list
     if (name === SERVICE_NAME.CONFIGURATOR) return [];
-    return map(clusterKeys, clusterKey => {
+    return map(clusterKeys, (clusterKey) => {
       const cluster = find(
         clusters,
-        cluster => cluster.name === clusterKey.name,
+        (cluster) => cluster.name === clusterKey.name,
       );
       return merge(clusterKey, {
         serviceName: name,
@@ -58,7 +58,7 @@ function NodeServiceTable({ node }) {
         {
           title: 'State',
           field: 'state',
-          render: cluster => <ClusterStateChip cluster={cluster} />,
+          render: (cluster) => <ClusterStateChip cluster={cluster} />,
         },
       ]}
       data={sortBy(flatClusters, 'workspaceName')}

@@ -26,11 +26,11 @@ import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "delete + stop" for single deletion request
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopAndDeleteTopic.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => {
+    map((action) => action.payload),
+    mergeMap((values) => {
       const { params, options, promise } = values;
       const paperApi = get(options, 'paperApi');
       if (paperApi) {
@@ -41,7 +41,7 @@ export default action$ =>
       return from([
         stopTopic$(params),
         deleteTopic$(params).pipe(
-          tap(action => {
+          tap((action) => {
             if (action.type === actions.deleteTopic.SUCCESS) {
               if (typeof promise?.resolve === 'function') {
                 promise.resolve();
@@ -54,7 +54,7 @@ export default action$ =>
         ),
       ]).pipe(
         concatAll(),
-        catchError(err => {
+        catchError((err) => {
           if (paperApi) {
             paperApi.updateElement(params.id, {
               status: CELL_STATUS.running,

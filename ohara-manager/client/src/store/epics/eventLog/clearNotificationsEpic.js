@@ -21,7 +21,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import * as actions from 'store/actions';
 import { errorKey, warningKey } from './const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.clearNotifications.TRIGGER),
     switchMap(() => {
@@ -33,5 +33,5 @@ export default action$ =>
         actions.updateNotifications.trigger(),
       ]);
     }),
-    catchError(res => of(actions.clearNotifications.failure(res))),
+    catchError((res) => of(actions.clearNotifications.failure(res))),
   );

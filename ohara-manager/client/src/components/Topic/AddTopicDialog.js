@@ -31,7 +31,7 @@ import {
 import * as context from 'context';
 import * as hooks from 'hooks';
 
-const AddTopicDialog = props => {
+const AddTopicDialog = (props) => {
   const { uniqueId } = props;
   const currentBroker = hooks.useBroker();
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();

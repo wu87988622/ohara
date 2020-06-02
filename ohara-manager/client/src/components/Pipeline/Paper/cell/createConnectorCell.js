@@ -30,7 +30,7 @@ import * as joint from 'jointjs';
 
 import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
 
-const createConnectorCell = options => {
+const createConnectorCell = (options) => {
   const {
     id,
     name,
@@ -118,31 +118,31 @@ const createConnectorCell = options => {
       // Binding events for paper
       $box.find('.link').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:link:button:pointerclick', event);
         }.bind(this),
       );
       $box.find('.start').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:start:button:pointerclick', event);
         }.bind(this),
       );
       $box.find('.stop').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:stop:button:pointerclick', event);
         }.bind(this),
       );
       $box.find('.config').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:config:button:pointerclick', event);
         }.bind(this),
       );
       $box.find('.remove').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:remove:button:pointerclick', event);
         }.bind(this),
       );
@@ -267,10 +267,7 @@ const createConnectorCell = options => {
       // Icon status
       const iconStatus =
         CELL_STATUS[status.toLowerCase()] || CELL_STATUS.stopped;
-      $box
-        .find('.icon')
-        .removeClass()
-        .addClass(`icon ${iconStatus}`);
+      $box.find('.icon').removeClass().addClass(`icon ${iconStatus}`);
 
       return this;
     },

@@ -16,20 +16,17 @@
 
 import { PACKAGE_ROOT, KIND } from 'const';
 
-export const getPipelineOnlyTopicDisplayNames = topicCells => {
+export const getPipelineOnlyTopicDisplayNames = (topicCells) => {
   const topicIndex = topicCells
-    .filter(topicCell => !topicCell.isShared)
-    .map(topicCell => topicCell.displayName.replace('T', ''))
+    .filter((topicCell) => !topicCell.isShared)
+    .map((topicCell) => topicCell.displayName.replace('T', ''))
     .sort((a, b) => a - b);
 
   if (topicIndex.length === 0) return 'T1';
   return `T${Number(topicIndex.pop()) + 1}`;
 };
 
-export const isShabondi = className =>
+export const isShabondi = (className) =>
   className &&
-  className
-    .replace(PACKAGE_ROOT, '')
-    .split('.')
-    .slice(1)
-    .shift() === KIND.shabondi;
+  className.replace(PACKAGE_ROOT, '').split('.').slice(1).shift() ===
+    KIND.shabondi;

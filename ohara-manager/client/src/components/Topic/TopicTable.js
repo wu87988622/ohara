@@ -62,7 +62,7 @@ function TopicTable(props) {
     }
   };
 
-  const handleDeleteIconClick = topic => {
+  const handleDeleteIconClick = (topic) => {
     if (isFunction(options?.onDeleteIconClick)) {
       options.onDeleteIconClick(topic);
     } else {
@@ -71,7 +71,7 @@ function TopicTable(props) {
     }
   };
 
-  const handleDetailIconClick = topic => {
+  const handleDetailIconClick = (topic) => {
     if (isFunction(options?.onDetailIconClick)) {
       options.onDetailIconClick(topic);
     } else {
@@ -87,7 +87,7 @@ function TopicTable(props) {
       cellStyle: { textAlign: 'right' },
       headerStyle: { textAlign: 'right' },
       hidden: !isShow,
-      render: rowData => (
+      render: (rowData) => (
         <Actions
           actions={[
             {
@@ -145,7 +145,7 @@ function TopicTable(props) {
             customSort: (topic, anotherTopic) => {
               return sort(topic?.displayName, anotherTopic?.displayName);
             },
-            render: topic => {
+            render: (topic) => {
               return topic.displayName;
             },
           },
@@ -163,14 +163,14 @@ function TopicTable(props) {
             title: 'Pipelines',
             customFilterAndSearch: (filterValue, topic) => {
               const value = join(
-                map(topic?.pipelines, pipeline => pipeline.name),
+                map(topic?.pipelines, (pipeline) => pipeline.name),
               );
               return includes(toUpper(value), toUpper(filterValue));
             },
-            render: topic => {
+            render: (topic) => {
               return (
                 <>
-                  {map(topic?.pipelines, pipeline => (
+                  {map(topic?.pipelines, (pipeline) => (
                     <div key={pipeline.name}>
                       <Tooltip title="Click the link to switch to that pipeline">
                         <Link

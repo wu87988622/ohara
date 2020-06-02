@@ -18,13 +18,13 @@ import { keyBy, range } from 'lodash';
 import { GROUP, SERVICE_NAME } from 'const';
 import { getId } from 'utils/object';
 
-export const generateState = options => {
+export const generateState = (options) => {
   const numberOfNodes = options?.numberOfNodes || 1;
   const numberOfWorkspaces = options?.numberOfWorkspaces || 1;
   const prefixNodeName = options?.prefixNodeName || 'node';
   const prefixWorkspaceName = options?.prefixWorkspaceName || 'workspace';
 
-  const brokers = range(numberOfWorkspaces).map(index => {
+  const brokers = range(numberOfWorkspaces).map((index) => {
     return {
       group: GROUP.BROKER,
       name: `${prefixWorkspaceName}${index + 1}`,
@@ -32,14 +32,14 @@ export const generateState = options => {
     };
   });
 
-  const nodes = range(numberOfNodes).map(index => {
+  const nodes = range(numberOfNodes).map((index) => {
     return {
       hostname: `${prefixNodeName}${index + 1}`,
       resources: [],
       services: [
         {
           name: SERVICE_NAME.BROKER,
-          clusterKeys: range(numberOfWorkspaces).map(index => {
+          clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.BROKER,
               name: `${prefixWorkspaceName}${index + 1}`,
@@ -48,7 +48,7 @@ export const generateState = options => {
         },
         {
           name: SERVICE_NAME.WORKER,
-          clusterKeys: range(numberOfWorkspaces).map(index => {
+          clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.WORKER,
               name: `${prefixWorkspaceName}${index + 1}`,
@@ -57,7 +57,7 @@ export const generateState = options => {
         },
         {
           name: SERVICE_NAME.ZOOKEEPER,
-          clusterKeys: range(numberOfWorkspaces).map(index => {
+          clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.ZOOKEEPER,
               name: `${prefixWorkspaceName}${index + 1}`,
@@ -68,7 +68,7 @@ export const generateState = options => {
     };
   });
 
-  const workers = range(numberOfWorkspaces).map(index => {
+  const workers = range(numberOfWorkspaces).map((index) => {
     return {
       group: GROUP.WORKER,
       name: `${prefixWorkspaceName}${index + 1}`,
@@ -76,14 +76,14 @@ export const generateState = options => {
     };
   });
 
-  const workspaces = range(numberOfWorkspaces).map(index => {
+  const workspaces = range(numberOfWorkspaces).map((index) => {
     return {
       group: GROUP.WORKSPACE,
       name: `${prefixWorkspaceName}${index + 1}`,
     };
   });
 
-  const zookeepers = range(numberOfWorkspaces).map(index => {
+  const zookeepers = range(numberOfWorkspaces).map((index) => {
     return {
       group: GROUP.ZOOKEEPER,
       name: `${prefixWorkspaceName}${index + 1}`,

@@ -76,7 +76,7 @@ const ControllerLog = () => {
     }
   };
 
-  const handleRadioChange = event => {
+  const handleRadioChange = (event) => {
     setLogQueryParams({ timeGroup: event.target.value });
     if (event.target.value === LOG_TIME_GROUP.customize) {
       // for initial the form, we need to set value explicitly
@@ -103,15 +103,15 @@ const ControllerLog = () => {
       <Select
         disabled={isFetching}
         list={Object.keys(LOG_SERVICES)}
-        onChange={event => setLogQueryParams({ logType: event.target.value })}
+        onChange={(event) => setLogQueryParams({ logType: event.target.value })}
         testId="log-type-select"
         value={logType}
       />
       {logType === KIND.shabondi && (
         <Select
           disabled={isFetching || isEmpty(shabondis)}
-          list={shabondis.map(shabondi => shabondi.name)}
-          onChange={event =>
+          list={shabondis.map((shabondi) => shabondi.name)}
+          onChange={(event) =>
             setLogQueryParams({ shabondiName: event.target.value })
           }
           value={shabondiName}
@@ -120,8 +120,8 @@ const ControllerLog = () => {
       {logType === KIND.stream && (
         <Select
           disabled={isFetching || isEmpty(streams)}
-          list={streams.map(stream => stream.name)}
-          onChange={event =>
+          list={streams.map((stream) => stream.name)}
+          onChange={(event) =>
             setLogQueryParams({ streamName: event.target.value })
           }
           value={streamName}
@@ -131,7 +131,9 @@ const ControllerLog = () => {
       <Select
         disabled={getDisableState()}
         list={hosts}
-        onChange={event => setLogQueryParams({ hostName: event.target.value })}
+        onChange={(event) =>
+          setLogQueryParams({ hostName: event.target.value })
+        }
         value={hostName}
       />
       <Tooltip title="Fetch the data again">
@@ -169,7 +171,7 @@ const ControllerLog = () => {
             <TextField
               defaultValue={timeRange}
               disabled={isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.latest}
-              onChange={event =>
+              onChange={(event) =>
                 setLogQueryParams({ timeRange: Number(event.target.value) })
               }
               type="number"
@@ -189,9 +191,7 @@ const ControllerLog = () => {
             <StyledTextField
               defaultValue={
                 startTime ||
-                moment()
-                  .subtract(10, 'minutes')
-                  .format('YYYY-MM-DD[T]hh:mm')
+                moment().subtract(10, 'minutes').format('YYYY-MM-DD[T]hh:mm')
               }
               disabled={
                 isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.customize
@@ -203,7 +203,7 @@ const ControllerLog = () => {
                 max: endTime,
               }}
               label="Start date"
-              onChange={event =>
+              onChange={(event) =>
                 setLogQueryParams({ startTime: event.target.value })
               }
               type="datetime-local"
@@ -215,7 +215,7 @@ const ControllerLog = () => {
                 shrink: true,
               }}
               label="End date"
-              onChange={event =>
+              onChange={(event) =>
                 setLogQueryParams({ endTime: event.target.value })
               }
               type="datetime-local"

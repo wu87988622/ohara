@@ -40,7 +40,7 @@ export const useZookeeperId = () => {
 export const useIsZookeeperLoaded = () => {
   const zookeeperId = hooks.useZookeeperId();
   const selector = useCallback(
-    state => selectors.isZookeeperLoaded(state, { id: zookeeperId }),
+    (state) => selectors.isZookeeperLoaded(state, { id: zookeeperId }),
     [zookeeperId],
   );
   return useSelector(selector);
@@ -49,7 +49,7 @@ export const useIsZookeeperLoaded = () => {
 export const useIsZookeeperLoading = () => {
   const zookeeperId = hooks.useZookeeperId();
   const selector = useCallback(
-    state => selectors.isZookeeperLoading(state, { id: zookeeperId }),
+    (state) => selectors.isZookeeperLoading(state, { id: zookeeperId }),
     [zookeeperId],
   );
   return useSelector(selector);
@@ -66,7 +66,7 @@ export const useZookeeper = () => {
   }, [isLoaded, fetchZookeeper, name]);
 
   const selector = useCallback(
-    state =>
+    (state) =>
       merge(
         selectors.getZookeeperById(state, { id: zookeeperId }),
         selectors.getInfoById(state, { id: zookeeperId }),
@@ -77,7 +77,10 @@ export const useZookeeper = () => {
 };
 
 export const useAllZookeepers = () => {
-  const selector = useCallback(state => selectors.getAllZookeepers(state), []);
+  const selector = useCallback(
+    (state) => selectors.getAllZookeepers(state),
+    [],
+  );
   return useSelector(selector);
 };
 
@@ -85,7 +88,7 @@ export const useFetchZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    name => dispatch(actions.fetchZookeeper.trigger({ group, name })),
+    (name) => dispatch(actions.fetchZookeeper.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -94,7 +97,7 @@ export const useCreateZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    values => dispatch(actions.createZookeeper.trigger({ ...values, group })),
+    (values) => dispatch(actions.createZookeeper.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -103,7 +106,7 @@ export const useUpdateZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    values => dispatch(actions.updateZookeeper.trigger({ ...values, group })),
+    (values) => dispatch(actions.updateZookeeper.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -112,7 +115,7 @@ export const useStartZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    name => dispatch(actions.startZookeeper.trigger({ group, name })),
+    (name) => dispatch(actions.startZookeeper.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -121,7 +124,7 @@ export const useStopZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    name => dispatch(actions.stopZookeeper.trigger({ group, name })),
+    (name) => dispatch(actions.stopZookeeper.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -130,7 +133,7 @@ export const useDeleteZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    name => dispatch(actions.deleteZookeeper.trigger({ group, name })),
+    (name) => dispatch(actions.deleteZookeeper.trigger({ group, name })),
     [dispatch, group],
   );
 };

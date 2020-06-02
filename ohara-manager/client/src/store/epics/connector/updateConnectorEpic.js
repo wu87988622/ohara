@@ -25,17 +25,17 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { KIND, CELL_TYPES, LOG_LEVEL } from 'const';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.updateConnector.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     mergeMap(({ values, options }) => {
       const { paperApi } = options;
       const connectorId = paperApi.getCell(values.name).id;
 
       return defer(() => connectorApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.connector)),
-        map(normalizedData => {
+        map((res) => normalize(res.data, schema.connector)),
+        map((normalizedData) => {
           handleSuccess(values, options);
 
           return actions.updateConnector.success(
@@ -43,7 +43,7 @@ export default action$ => {
           );
         }),
         startWith(actions.updateConnector.request({ connectorId })),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.updateConnector.failure(_.merge(err, { connectorId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -60,7 +60,7 @@ function handleSuccess(values, options) {
   const { cell, paperApi, topics, connectors } = options;
   const cells = paperApi.getCells();
   const currentConnector = connectors.find(
-    connector => connector.name === values.name,
+    (connector) => connector.name === values.name,
   );
   const hasTopicKey = values.topicKeys.length > 0;
   const connectorId = paperApi.getCell(values.name).id;
@@ -72,16 +72,18 @@ function handleSuccess(values, options) {
     switch (cell.kind) {
       case KIND.source:
         linkId = cells
-          .filter(cell => cell.cellType === CELL_TYPES.LINK)
+          .filter((cell) => cell.cellType === CELL_TYPES.LINK)
           .find(
-            cell => cell.sourceId === connectorId && cell.targetId === topicId,
+            (cell) =>
+              cell.sourceId === connectorId && cell.targetId === topicId,
           ).id;
         break;
       case KIND.sink:
         linkId = cells
-          .filter(cell => cell.cellType === CELL_TYPES.LINK)
+          .filter((cell) => cell.cellType === CELL_TYPES.LINK)
           .find(
-            cell => cell.sourceId === topicId && cell.targetId === connectorId,
+            (cell) =>
+              cell.sourceId === topicId && cell.targetId === connectorId,
           ).id;
         break;
       default:

@@ -20,10 +20,10 @@ import { map, catchError } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateSettings.TRIGGER),
-    map(action => action.payload),
-    map(values => actions.updateSettings.success(values)),
-    catchError(res => of(actions.updateSettings.failure(res))),
+    map((action) => action.payload),
+    map((values) => actions.updateSettings.success(values)),
+    catchError((res) => of(actions.updateSettings.failure(res))),
   );

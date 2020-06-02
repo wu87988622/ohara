@@ -25,7 +25,7 @@ import * as hooks from 'hooks';
 const DeleteConfirmDialogContent = ({ workspace, onValidate }) => {
   const hasRunningServices = hooks.useHasRunningServices();
 
-  const handleChange = event => {
+  const handleChange = (event) => {
     if (event?.target?.value) {
       onValidate(event.target.value === workspace.name);
     }

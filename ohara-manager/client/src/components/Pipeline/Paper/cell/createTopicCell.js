@@ -24,7 +24,7 @@ import $ from 'jquery';
 import { SharedTopicIcon, PipelineOnlyTopicIcon } from 'components/common/Icon';
 import { CELL_STATUS, CELL_TYPES } from 'const';
 
-const createTopicCell = options => {
+const createTopicCell = (options) => {
   const {
     id,
     name,
@@ -92,14 +92,14 @@ const createTopicCell = options => {
 
       $box.find('.link').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:link:button:pointerclick', event);
         }.bind(this),
       );
 
       $box.find('.remove').on(
         'click',
-        function(event) {
+        function (event) {
           this.notify('element:remove:button:pointerclick', event);
         }.bind(this),
       );

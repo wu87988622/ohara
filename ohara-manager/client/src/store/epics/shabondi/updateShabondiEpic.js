@@ -25,10 +25,10 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL, CELL_TYPES } from 'const';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.updateShabondi.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     mergeMap(({ values, options }) => {
       const hasSourceTopicKey =
         _.get(values, 'shabondi__source__toTopics', []).length > 0;
@@ -39,8 +39,8 @@ export default action$ => {
       const shabondiId = paperApi.getCell(values.name).id;
 
       return defer(() => shabondiApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.shabondi)),
-        map(normalizedData => {
+        map((res) => normalize(res.data, schema.shabondi)),
+        map((normalizedData) => {
           const currentHasSourceTopicKey =
             _.get(normalizedData, 'shabondi__source__toTopics', []).length > 0;
           const currentHasSinkTopicKey =
@@ -51,9 +51,9 @@ export default action$ => {
               normalizedData.shabondi__source__toTopics[0].name,
             ).id;
             const linkId = cells
-              .filter(cell => cell.cellType === CELL_TYPES.LINK)
+              .filter((cell) => cell.cellType === CELL_TYPES.LINK)
               .find(
-                cell =>
+                (cell) =>
                   cell.sourceId === shabondiId && cell.targetId === topicId,
               ).id;
             paperApi.removeLink(linkId);
@@ -63,9 +63,9 @@ export default action$ => {
               normalizedData.shabondi__sink__fromTopics[0].name,
             ).id;
             const linkId = cells
-              .filter(cell => cell.cellType === CELL_TYPES.LINK)
+              .filter((cell) => cell.cellType === CELL_TYPES.LINK)
               .find(
-                cell =>
+                (cell) =>
                   cell.sourceId === topicId && cell.targetId === shabondiId,
               ).id;
             paperApi.removeLink(linkId);
@@ -79,7 +79,7 @@ export default action$ => {
           );
         }),
         startWith(actions.updateShabondi.request({ shabondiId })),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.updateShabondi.failure(_.merge(err, { shabondiId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

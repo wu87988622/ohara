@@ -26,19 +26,19 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateTopic.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => {
+    map((action) => action.payload),
+    mergeMap((values) => {
       const topicId = getId(values);
       return defer(() => topicApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.topic)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.topic)),
+        map((normalizedData) =>
           actions.updateTopic.success(merge(normalizedData, { topicId })),
         ),
         startWith(actions.updateTopic.request({ topicId })),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.updateTopic.failure(merge(err, { topicId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

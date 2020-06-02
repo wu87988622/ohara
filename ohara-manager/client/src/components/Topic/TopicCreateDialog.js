@@ -36,7 +36,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
     size(get(broker, 'aliveNodes')),
   ]);
 
-  const validate = values => {
+  const validate = (values) => {
     const { numberOfPartitions, numberOfReplications } = values;
 
     const errors = {};
@@ -87,7 +87,7 @@ const TopicCreateDialog = ({ broker, isOpen, onClose, onConfirm, topics }) => {
                 validate={composeValidators(
                   required,
                   validServiceName,
-                  checkDuplicate(topics.map(topic => topic.name)),
+                  checkDuplicate(topics.map((topic) => topic.name)),
                 )}
               />
               <Field

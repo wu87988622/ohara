@@ -33,12 +33,12 @@ const ViewTopic = () => {
 
   const { data, isFetching } = hooks.useDevToolTopicData();
 
-  const getHeaders = messages => {
+  const getHeaders = (messages) => {
     let headers = [];
-    messages.forEach(message => {
+    messages.forEach((message) => {
       if (message.value) {
         const keys = Object.keys(message.value);
-        keys.forEach(key => {
+        keys.forEach((key) => {
           if (!headers.includes(key)) headers.push(key);
         });
       }
@@ -49,7 +49,7 @@ const ViewTopic = () => {
     return headers;
   };
 
-  const renderDataBody = topicData => {
+  const renderDataBody = (topicData) => {
     const headers = getHeaders(topicData);
     // we skip the detail view header
     headers.shift();
@@ -110,7 +110,7 @@ const ViewTopic = () => {
       <Table
         children={renderDataBody(data)}
         fixedHeader
-        headers={getHeaders(data).map(header => capitalize(header))}
+        headers={getHeaders(data).map((header) => capitalize(header))}
         isLoading={isFetching}
         testId="view-topic-table"
       />

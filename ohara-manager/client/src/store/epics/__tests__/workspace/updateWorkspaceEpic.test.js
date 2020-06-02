@@ -31,7 +31,7 @@ const makeTestScheduler = () =>
   });
 
 it('update workspace should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -74,7 +74,7 @@ it('update workspace should be worked correctly', () => {
 });
 
 it('should only get the latest result when updating a workspace multiple times', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s            ';

@@ -28,7 +28,7 @@ import {
   composeValidators,
 } from 'utils/validate';
 
-const parsePort = value => (isNaN(parseInt(value)) ? '' : parseInt(value));
+const parsePort = (value) => (isNaN(parseInt(value)) ? '' : parseInt(value));
 
 const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
   return (

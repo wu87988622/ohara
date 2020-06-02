@@ -57,7 +57,7 @@ function Action(props) {
 
   const disabled = action.disabled || props.disabled;
 
-  const handleClick = event => {
+  const handleClick = (event) => {
     if (action.onClick) {
       action.onClick(props.data);
       event.stopPropagation();

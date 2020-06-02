@@ -22,7 +22,7 @@ import Paper from '@material-ui/core/Paper';
 
 import { FORM } from 'const';
 
-const SetupZookeeperForm = props => {
+const SetupZookeeperForm = (props) => {
   const { handleSubmit, previousStep } = props;
   return (
     <form onSubmit={handleSubmit}>

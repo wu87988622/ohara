@@ -32,9 +32,10 @@ export const useFetchEventLogsAction = () => {
 };
 export const useDeleteEventLogsAction = () => {
   const dispatch = useDispatch();
-  return useCallback(keys => dispatch(actions.deleteEventLogs.trigger(keys)), [
-    dispatch,
-  ]);
+  return useCallback(
+    (keys) => dispatch(actions.deleteEventLogs.trigger(keys)),
+    [dispatch],
+  );
 };
 export const useClearEventLogsAction = () => {
   const dispatch = useDispatch();
@@ -45,7 +46,7 @@ export const useClearEventLogsAction = () => {
 export const useUpdateEventSettingsAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    values => dispatch(actions.updateSettings.trigger(values)),
+    (values) => dispatch(actions.updateSettings.trigger(values)),
     [dispatch],
   );
 };
@@ -59,7 +60,7 @@ export const useClearEventNotificationsAction = () => {
 // data selector
 export const useIsEventLogFetching = () => {
   const selector = useCallback(
-    state => selectors.isEventLogFetching(state),
+    (state) => selectors.isEventLogFetching(state),
     [],
   );
   return useSelector(selector);
@@ -67,24 +68,26 @@ export const useIsEventLogFetching = () => {
 
 export const useEventLogs = () => {
   const getEventLogs = useMemo(selectors.makeGetEventLogs, []);
-  return useSelector(useCallback(state => getEventLogs(state), [getEventLogs]));
+  return useSelector(
+    useCallback((state) => getEventLogs(state), [getEventLogs]),
+  );
 };
 export const useEventNotifications = () => {
   const getNotifications = useMemo(selectors.makeGetNotifications, []);
   return useSelector(
-    useCallback(state => getNotifications(state), [getNotifications]),
+    useCallback((state) => getNotifications(state), [getNotifications]),
   );
 };
 export const useEventSettings = () => {
   const getSettings = useMemo(selectors.makeGetSettings, []);
-  return useSelector(useCallback(state => getSettings(state), [getSettings]));
+  return useSelector(useCallback((state) => getSettings(state), [getSettings]));
 };
 
 export const useEventLog = () => {
   const useCreateEventLogAction = () => {
     const dispatch = useDispatch();
     return useCallback(
-      values => dispatch(actions.createEventLog.trigger(values)),
+      (values) => dispatch(actions.createEventLog.trigger(values)),
       [dispatch],
     );
   };

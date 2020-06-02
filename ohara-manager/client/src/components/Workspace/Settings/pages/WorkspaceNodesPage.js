@@ -46,52 +46,54 @@ function WorkspaceNodesPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleRemove = nodeToRemove => {
+  const handleRemove = (nodeToRemove) => {
     const shouldBeRemoved = some(
       nodesInWorkspace,
-      n => n.hostname === nodeToRemove?.hostname,
+      (n) => n.hostname === nodeToRemove?.hostname,
     );
 
     if (shouldBeRemoved) {
       const newNodes = reject(
         nodesInWorkspace,
-        n => n.hostname === nodeToRemove.hostname,
+        (n) => n.hostname === nodeToRemove.hostname,
       );
       updateWorkspace({
         ...workspace,
-        nodeNames: map(newNodes, n => n.hostname),
+        nodeNames: map(newNodes, (n) => n.hostname),
       });
       selectorDialogRef.current.setSelectedNodes(newNodes);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedNodes => {
+  const handleSelectorDialogConfirm = (selectedNodes) => {
     updateWorkspace({
       ...workspace,
-      nodeNames: map(selectedNodes, n => n.hostname),
+      nodeNames: map(selectedNodes, (n) => n.hostname),
     });
     setIsSelectorDialogOpen(false);
   };
 
-  const isUsedByBroker = node => {
+  const isUsedByBroker = (node) => {
     return (
       includes(broker?.nodeNames, node?.hostname) ||
       includes(workspace?.broker?.nodeNames, node?.hostname)
     );
   };
 
-  const isUsedByStream = node => {
-    return some(streams, stream => includes(stream?.nodeNames, node?.hostname));
+  const isUsedByStream = (node) => {
+    return some(streams, (stream) =>
+      includes(stream?.nodeNames, node?.hostname),
+    );
   };
 
-  const isUsedByWorker = node => {
+  const isUsedByWorker = (node) => {
     return (
       includes(worker?.nodeNames, node?.hostname) ||
       includes(workspace?.worker?.nodeNames, node?.hostname)
     );
   };
 
-  const isUsedByZookeeper = node => {
+  const isUsedByZookeeper = (node) => {
     return (
       includes(zookeeper?.nodeNames, node?.hostname) ||
       includes(workspace?.zookeeper?.nodeNames, node?.hostname)
@@ -115,7 +117,7 @@ function WorkspaceNodesPage() {
                 if (isUsedByZookeeper(node)) value.push(ZOOKEEPER);
                 return includes(toUpper(join(value)), toUpper(filterValue));
               },
-              render: node => {
+              render: (node) => {
                 return (
                   <>
                     {isUsedByBroker(node) && <div>{capitalize(BROKER)}</div>}
@@ -129,7 +131,7 @@ function WorkspaceNodesPage() {
               },
             },
           ],
-          disabledRemoveIcon: node => {
+          disabledRemoveIcon: (node) => {
             return (
               isUsedByBroker(node) ||
               isUsedByStream(node) ||

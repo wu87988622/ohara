@@ -16,9 +16,9 @@
 
 import { Type, Permission } from 'api/apiInterface/definitionInterface';
 
-export const transformDef = settingDefinitions => {
+export const transformDef = (settingDefinitions) => {
   const defs = settingDefinitions;
-  const imageName = defs.find(def => def.key === 'imageName');
+  const imageName = defs.find((def) => def.key === 'imageName');
   const isStream = imageName?.defaultValue?.includes('oharastream/stream:');
 
   const newDefs = {};
@@ -30,10 +30,10 @@ export const transformDef = settingDefinitions => {
     'workerClusterKey',
   ];
 
-  defs.forEach(def => {
+  defs.forEach((def) => {
     Object.keys(def)
-      .filter(key => key.toLowerCase() === 'key')
-      .forEach(key => {
+      .filter((key) => key.toLowerCase() === 'key')
+      .forEach((key) => {
         // The value `.` doesn't work very well with final form
         if (def[key].includes('.')) {
           def[key] = def[key].replace(/\./g, '__');

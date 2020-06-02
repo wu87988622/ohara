@@ -24,18 +24,18 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.removeShabondiSourceLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ params, options }) =>
       from(shabondiApi.update(params)).pipe(
-        map(res => normalize(res.data, schema.shabondi)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.shabondi)),
+        map((normalizedData) =>
           actions.removeShabondiSourceLink.success(normalizedData),
         ),
         startWith(actions.removeShabondiSourceLink.request()),
-        catchError(err => {
+        catchError((err) => {
           options.paperApi.addLink(params.id, options.topic.id);
           return from([
             actions.removeShabondiSourceLink.failure(err),

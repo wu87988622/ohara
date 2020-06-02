@@ -28,11 +28,11 @@ export const CONNECTION_TYPE = {
   TOPIC_STREAM: 'topic_stream',
 };
 
-export const getCellState = cell => {
+export const getCellState = (cell) => {
   return get(cell, 'data.state', CELL_STATUS.stopped).toLowerCase();
 };
 
-export const getConnectionOrder = cells => {
+export const getConnectionOrder = (cells) => {
   const hasSource = get(cells, 'sourceElement.kind', null) === KIND.source;
   const hasSink = get(cells, 'targetElement.kind', null) === KIND.sink;
   const hasFromStream = get(cells, 'targetElement.kind', null) === KIND.stream;

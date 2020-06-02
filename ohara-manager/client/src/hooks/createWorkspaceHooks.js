@@ -22,21 +22,24 @@ import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 
 export const useIsCreateWorkspaceDialogOpen = () =>
-  useSelector(state => !!state.ui.createWorkspace.isOpen);
+  useSelector((state) => !!state.ui.createWorkspace.isOpen);
 
 export const useCreateWorkspaceMode = () =>
-  useSelector(state => state.ui.createWorkspace.mode);
+  useSelector((state) => state.ui.createWorkspace.mode);
 
 export const useCreateWorkspaceStep = () =>
-  useSelector(state => state.ui.createWorkspace.step);
+  useSelector((state) => state.ui.createWorkspace.step);
 
 export const useCreateWorkspaceProgress = () => {
-  const mapState = useCallback(state => state.ui.createWorkspace.progress, []);
+  const mapState = useCallback(
+    (state) => state.ui.createWorkspace.progress,
+    [],
+  );
   return useSelector(mapState, isDeepEqual);
 };
 
 export const useCreateWorkspaceState = () => {
-  const mapState = useCallback(state => state.ui.createWorkspace, []);
+  const mapState = useCallback((state) => state.ui.createWorkspace, []);
   return useSelector(mapState, isDeepEqual);
 };
 
@@ -67,7 +70,7 @@ export const useCloseCreateWorkspaceDialogAction = () => {
 export const useSwitchCreateWorkspaceModeAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    mode => dispatch(actions.switchCreateWorkspaceMode.trigger(mode)),
+    (mode) => dispatch(actions.switchCreateWorkspaceMode.trigger(mode)),
     [dispatch],
   );
 };
@@ -75,7 +78,7 @@ export const useSwitchCreateWorkspaceModeAction = () => {
 export const useSwitchCreateWorkspaceStepAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    step => dispatch(actions.switchCreateWorkspaceStep.trigger(step)),
+    (step) => dispatch(actions.switchCreateWorkspaceStep.trigger(step)),
     [dispatch],
   );
 };
@@ -83,7 +86,7 @@ export const useSwitchCreateWorkspaceStepAction = () => {
 export const useCreateWorkspaceAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    values => dispatch(actions.createWorkspace.trigger(values)),
+    (values) => dispatch(actions.createWorkspace.trigger(values)),
     [dispatch],
   );
 };

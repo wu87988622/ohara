@@ -27,12 +27,12 @@ import { getId } from 'utils/object';
 export const useWorkspaceGroup = () => GROUP.WORKSPACE;
 
 export const useIsWorkspaceReady = () => {
-  const mapState = useCallback(state => !!state.ui.workspace.lastUpdated, []);
+  const mapState = useCallback((state) => !!state.ui.workspace.lastUpdated, []);
   return useSelector(mapState);
 };
 
 export const useWorkspaceName = () =>
-  useSelector(useCallback(state => selectors.getWorkspaceName(state), []));
+  useSelector(useCallback((state) => selectors.getWorkspaceName(state), []));
 
 export const useWorkspaceId = () => {
   const group = useWorkspaceGroup();
@@ -44,18 +44,18 @@ export const useSwitchWorkspaceAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkspaceGroup();
   return useCallback(
-    name => dispatch(actions.switchWorkspace.trigger({ group, name })),
+    (name) => dispatch(actions.switchWorkspace.trigger({ group, name })),
     [dispatch, group],
   );
 };
 
 export const useAllWorkspaces = () =>
-  useSelector(useCallback(state => selectors.getAllWorkspaces(state), []));
+  useSelector(useCallback((state) => selectors.getAllWorkspaces(state), []));
 
 export const useWorkspace = () => {
   const id = hooks.useWorkspaceId();
   return useSelector(
-    useCallback(state => selectors.getWorkspaceById(state, { id }), [id]),
+    useCallback((state) => selectors.getWorkspaceById(state, { id }), [id]),
   );
 };
 
@@ -63,7 +63,7 @@ export const useUpdateWorkspaceAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkspaceGroup();
   return useCallback(
-    values => dispatch(actions.updateWorkspace.trigger({ ...values, group })),
+    (values) => dispatch(actions.updateWorkspace.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -98,8 +98,8 @@ export const useShouldBeRestartWorkspace = () => {
     const countOfChangedWorkerPlugins = workspace?.worker?.pluginKeys
       ? size(
           xor(
-            map(worker?.pluginKeys, key => key.name),
-            map(workspace.worker.pluginKeys, key => key.name),
+            map(worker?.pluginKeys, (key) => key.name),
+            map(workspace.worker.pluginKeys, (key) => key.name),
           ),
         )
       : 0;
@@ -107,8 +107,8 @@ export const useShouldBeRestartWorkspace = () => {
     const countOfChangedWorkerSharedJars = workspace?.worker?.sharedJarKeys
       ? size(
           xor(
-            map(worker?.sharedJarKeys, key => key.name),
-            map(workspace.worker.sharedJarKeys, key => key.name),
+            map(worker?.sharedJarKeys, (key) => key.name),
+            map(workspace.worker.sharedJarKeys, (key) => key.name),
           ),
         )
       : 0;

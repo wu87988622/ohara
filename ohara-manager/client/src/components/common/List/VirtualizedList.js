@@ -33,7 +33,7 @@ const StyledList = styled(List)(
   `,
 );
 
-const VirtualizedList = props => {
+const VirtualizedList = (props) => {
   const {
     isLoading,
     data,

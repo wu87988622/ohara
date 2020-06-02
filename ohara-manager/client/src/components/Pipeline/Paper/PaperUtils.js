@@ -21,7 +21,7 @@ import { createLink } from './cell';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
 
-export const getCellData = cellOrView => {
+export const getCellData = (cellOrView) => {
   const cell = _.has(cellOrView, 'model') ? cellOrView.model : cellOrView;
 
   if (cell.isElement()) {
@@ -50,7 +50,7 @@ export const getCellData = cellOrView => {
   };
 };
 
-export const showMenu = elementView => {
+export const showMenu = (elementView) => {
   elementView.showElement('menu').hover();
 
   if (elementView.model.get('showMetrics')) {
@@ -59,7 +59,7 @@ export const showMenu = elementView => {
   elementView.hideElement('status');
 };
 
-export const hideMenu = elementView => {
+export const hideMenu = (elementView) => {
   elementView.unHover().hideElement('menu');
 
   if (elementView.model.get('showMetrics')) {
@@ -87,7 +87,7 @@ export const updateStatus = (cell, paperApi) => {
   }
 };
 
-export const createConnection = params => {
+export const createConnection = (params) => {
   const { sourceLink, eventLog, targetElementView, paperApi, graph } = params;
 
   const sourceId = sourceLink.get(CELL_PROPS.source).id;
@@ -121,7 +121,7 @@ export const createConnection = params => {
   } else {
     const predecessors = graph.getPredecessors(targetElement);
     const targetHasSource = predecessors.some(
-      predecessor => predecessor.attributes.kind === KIND.topic,
+      (predecessor) => predecessor.attributes.kind === KIND.topic,
     );
 
     // Following are complex connection logic, each source and target

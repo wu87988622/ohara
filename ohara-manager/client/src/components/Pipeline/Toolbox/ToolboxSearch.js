@@ -26,7 +26,7 @@ import { KIND } from 'const';
 import { usePrevious, useDebounce } from 'utils/hooks';
 
 const StyledToolboxSearch = styled.div(
-  props => css`
+  (props) => css`
     display: flex;
 
     .MuiInputBase-root {
@@ -49,7 +49,7 @@ const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
       let topics = [];
       let streams = [];
 
-      searchData.forEach(data => {
+      searchData.forEach((data) => {
         const { name, kind } = data;
         const lowercaseName = name.toLowerCase();
 
@@ -90,7 +90,7 @@ const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
         <SearchIcon />
       </IconButton>
       <InputBase
-        onChange={event => setSearchTerm(event.target.value)}
+        onChange={(event) => setSearchTerm(event.target.value)}
         placeholder="Search topic & connector..."
         type="search"
         value={searchTerm}

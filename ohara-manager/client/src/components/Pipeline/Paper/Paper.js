@@ -135,7 +135,7 @@ const Paper = React.forwardRef((props, ref) => {
       });
     });
 
-    paper.on('blank:pointermove', event => {
+    paper.on('blank:pointermove', (event) => {
       // Prevent this event from interfering with Toolbox's drag and drop event
       // We will re-enable it in `pointerup` event
       $('.toolbox').css('pointer-events', 'none');
@@ -156,7 +156,7 @@ const Paper = React.forwardRef((props, ref) => {
       findElementViews().forEach(paperUtils.hideMenu);
     });
 
-    paper.on('link:mouseenter', linkView => {
+    paper.on('link:mouseenter', (linkView) => {
       const source = linkView.model.getSourceCell();
       const target = linkView.model.getTargetCell();
       const sourceStatus = source.get('status').toLowerCase();
@@ -232,19 +232,19 @@ const Paper = React.forwardRef((props, ref) => {
       linkView.highlight();
     });
 
-    paper.on('link:mouseleave', linkView => {
+    paper.on('link:mouseleave', (linkView) => {
       paper.removeTools();
       linkView.unhighlight();
     });
 
-    paper.on('element:mouseenter', elementView => {
+    paper.on('element:mouseenter', (elementView) => {
       // Make sure all menus are hidden, this prevents a bug where two connectors
       // are hovered
       findElementViews().forEach(paperUtils.hideMenu);
 
       const hasHalfWayLink = graph
         .getLinks()
-        .some(link => !link.get('target').id);
+        .some((link) => !link.get('target').id);
 
       // Don't display the menu if the element is being connected
       if (!hasHalfWayLink) {
@@ -275,9 +275,9 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     // Create a link that moves along with mouse cursor
-    $(document).on('mousemove.createlink', event => {
+    $(document).on('mousemove.createlink', (event) => {
       if (paperApi) {
-        const link = graph.getLinks().find(link => !link.get('target').id);
+        const link = graph.getLinks().find((link) => !link.get('target').id);
 
         if (link) {
           const localPoint = paperApi.getLocalPoint();
@@ -350,7 +350,7 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     // Paper events
-    paper.on('element:pointerclick', elementView => {
+    paper.on('element:pointerclick', (elementView) => {
       // Illegal elements cannot be interactive with
       if (elementView.model.get('isIllegal')) return;
 
@@ -363,7 +363,9 @@ const Paper = React.forwardRef((props, ref) => {
         .hideElement('status')
         .setIsSelected(true);
 
-      const sourceLink = graph.getLinks().find(link => !link.get('target').id);
+      const sourceLink = graph
+        .getLinks()
+        .find((link) => !link.get('target').id);
       if (sourceLink) {
         const result = paperUtils.createConnection({
           sourceLink,
@@ -389,26 +391,26 @@ const Paper = React.forwardRef((props, ref) => {
 
     // Element button events, these are custom event binding down in the
     // element like connector or topic
-    paper.on('element:link:button:pointerclick', elementView => {
+    paper.on('element:link:button:pointerclick', (elementView) => {
       paperApi.addLink(elementView.model.get('id'));
     });
 
-    paper.on('element:start:button:pointerclick', elementView => {
+    paper.on('element:start:button:pointerclick', (elementView) => {
       onCellStart(paperUtils.getCellData(elementView), paperApi);
       isMetricsOn && elementView.toggleMetrics(true);
     });
 
-    paper.on('element:stop:button:pointerclick', elementView => {
+    paper.on('element:stop:button:pointerclick', (elementView) => {
       onCellStop(paperUtils.getCellData(elementView), paperApi);
       elementView.toggleMetrics(false);
     });
 
-    paper.on('element:config:button:pointerclick', elementView => {
+    paper.on('element:config:button:pointerclick', (elementView) => {
       onCellConfig(paperUtils.getCellData(elementView), paperApi);
       paperUtils.hideMenu(elementView);
     });
 
-    paper.on('element:remove:button:pointerclick', elementView => {
+    paper.on('element:remove:button:pointerclick', (elementView) => {
       onCellRemove(paperUtils.getCellData(elementView), paperApi);
     });
 
@@ -419,7 +421,7 @@ const Paper = React.forwardRef((props, ref) => {
     });
 
     function resetElements() {
-      findElementViews().forEach(elementView => {
+      findElementViews().forEach((elementView) => {
         elementView
           .unActive()
           .unHover()
@@ -437,7 +439,7 @@ const Paper = React.forwardRef((props, ref) => {
       const links = graph.getLinks();
       if (links.length > 0) {
         // There should only be one
-        const unConnectedLink = links.find(link => !link.get('target').id);
+        const unConnectedLink = links.find((link) => !link.get('target').id);
         if (unConnectedLink) unConnectedLink.remove();
       }
     }
@@ -551,7 +553,7 @@ const Paper = React.forwardRef((props, ref) => {
       },
       updateElement(id, data, options) {
         const elementView = findElementViews().find(
-          elementView => elementView.model.id === id,
+          (elementView) => elementView.model.id === id,
         );
 
         if (elementView) {
@@ -689,7 +691,7 @@ const Paper = React.forwardRef((props, ref) => {
 
           return graph
             .getCells()
-            .filter(cell => cell.attributes.kind === kind)
+            .filter((cell) => cell.attributes.kind === kind)
             .map(paperUtils.getCellData);
         }
 
@@ -708,7 +710,7 @@ const Paper = React.forwardRef((props, ref) => {
         cells
           // Elements should be render first, and then the links
           .sort((a, b) => a.type.localeCompare(b.type))
-          .forEach(cell => {
+          .forEach((cell) => {
             const { type, source, target, vertices } = cell;
             if (type === CELL_TYPES.ELEMENT) {
               return this.addElement(
@@ -735,7 +737,7 @@ const Paper = React.forwardRef((props, ref) => {
           });
 
         // Disable running and failed elements action buttons
-        findElementViews().forEach(elementView =>
+        findElementViews().forEach((elementView) =>
           this.updateElement(
             elementView.model.get('id'),
             paperUtils.getCellData(elementView),
@@ -814,7 +816,7 @@ const Paper = React.forwardRef((props, ref) => {
               model.get('kind') === KIND.sink ||
               model.get('kind') === KIND.stream,
           )
-          .forEach(element => element.toggleMetrics(isOpen));
+          .forEach((element) => element.toggleMetrics(isOpen));
       },
 
       updateMetrics(elementArray) {
@@ -835,11 +837,8 @@ const Paper = React.forwardRef((props, ref) => {
 
         const elementView = findElementView(id);
         if (elementView) {
-          findElementViews().forEach(elementView =>
-            elementView
-              .unActive()
-              .unHover()
-              .setIsSelected(false),
+          findElementViews().forEach((elementView) =>
+            elementView.unActive().unHover().setIsSelected(false),
           );
 
           elementView.active().setIsSelected(true);
@@ -860,7 +859,7 @@ const Paper = React.forwardRef((props, ref) => {
   function findElementViews() {
     const result = graphRef.current
       .getElements()
-      .map(element => paperRef.current.findViewByModel(element.get('id')));
+      .map((element) => paperRef.current.findViewByModel(element.get('id')));
 
     return result;
   }
@@ -875,7 +874,7 @@ const Paper = React.forwardRef((props, ref) => {
   function findCell(nameOrId) {
     return (
       graphRef.current.getCell(nameOrId) ||
-      graphRef.current.getCells().find(cell => cell.get('name') === nameOrId)
+      graphRef.current.getCells().find((cell) => cell.get('name') === nameOrId)
     );
   }
 

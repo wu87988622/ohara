@@ -55,7 +55,7 @@ export default function reducer(state = initialState, action) {
     case actions.deleteEventLogs.SUCCESS:
       return {
         ...state,
-        data: reject(state.data, log => {
+        data: reject(state.data, (log) => {
           return includes(action.payload, log.key);
         }),
       };

@@ -71,7 +71,7 @@ const useDialogActions = () => {
   };
 };
 
-const createUseDialogActions = name => () => {
+const createUseDialogActions = (name) => () => {
   const {
     isDialogOpen,
     openDialog,
@@ -84,11 +84,11 @@ const createUseDialogActions = name => () => {
   } = useDialogActions();
   return {
     isOpen: isDialogOpen(name),
-    open: data => openDialog(name, data),
+    open: (data) => openDialog(name, data),
     close: () => closeDialog(name),
     toggle: () => toggleDialog(name),
     data: getDialogData(name),
-    setData: data => setDialogData(name, data),
+    setData: (data) => setDialogData(name, data),
     closePeak: closePeakDialog,
     closeAll: closeAllDialog,
   };

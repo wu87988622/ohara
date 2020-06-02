@@ -57,7 +57,7 @@ const makeTestScheduler = () =>
   });
 
 it('update stream should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -103,7 +103,7 @@ it('update stream should be worked correctly', () => {
 });
 
 it('update stream multiple times should got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s            ';
@@ -214,7 +214,7 @@ it('throw exception of update stream should also trigger event log action', () =
     .spyOn(streamApi, 'update')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

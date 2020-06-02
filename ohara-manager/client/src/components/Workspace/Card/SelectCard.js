@@ -110,7 +110,7 @@ const groupBy = (source, key) => {
   }, {});
 };
 
-const SelectCard = props => {
+const SelectCard = (props) => {
   const { rows, handleClose, filterKey = [] } = props;
   return (
     <StyledCard key={rows[Object.keys(rows)[0]]}>
@@ -124,9 +124,9 @@ const SelectCard = props => {
           </StyledToolbar>
         }
         {Object.keys(rows)
-          .filter(key => !filterKey.includes(key))
-          .filter(key => !isObject(rows[key]) && key !== 'name')
-          .map(key => {
+          .filter((key) => !filterKey.includes(key))
+          .filter((key) => !isObject(rows[key]) && key !== 'name')
+          .map((key) => {
             return (
               <StyledDiv key={key + rows[key]}>
                 <Typography variant="subtitle2">
@@ -139,7 +139,7 @@ const SelectCard = props => {
       </CardContent>
       {has(rows, 'classInfos') && (
         <>
-          {Object.keys(groupBy(rows.classInfos, 'classType')).map(key => {
+          {Object.keys(groupBy(rows.classInfos, 'classType')).map((key) => {
             const array = groupBy(rows.classInfos, 'classType')[key];
             return (
               <StyledExpansionPanel key={key}>
@@ -150,7 +150,7 @@ const SelectCard = props => {
                   <StyledTypography variant="subtitle2">{key}</StyledTypography>
                   <div>{array.length}</div>
                 </StyledExpansionPanelSummary>
-                {array.map(classes => {
+                {array.map((classes) => {
                   return (
                     <StyledExpansionPanelDetails key={classes.className}>
                       <StyledTypography variant="subtitle2">
@@ -159,7 +159,7 @@ const SelectCard = props => {
                       <StyledTypographyVersion variant="subtitle2">
                         {get(
                           classes.settingDefinitions.filter(
-                            def => def.key === 'version',
+                            (def) => def.key === 'version',
                           )[0],
                           'defaultValue',
                           '',

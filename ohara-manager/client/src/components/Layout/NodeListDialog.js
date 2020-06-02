@@ -22,7 +22,7 @@ import { NodeTable } from 'components/Node';
 import { MODE } from 'const';
 import * as hooks from 'hooks';
 
-const NodeListDialog = props => {
+const NodeListDialog = (props) => {
   const { isOpen, mode, nodes, onClose } = props;
 
   const createNode = hooks.useCreateNodeAction();
@@ -30,20 +30,20 @@ const NodeListDialog = props => {
   const updateNode = hooks.useUpdateNodeAction();
   const fetchNodes = hooks.useFetchNodesAction();
 
-  const handleCreate = nodeToCreate => {
+  const handleCreate = (nodeToCreate) => {
     return new Promise((resolve, reject) => {
       createNode(nodeToCreate, {
         onSuccess: () => resolve(),
-        onError: error => reject(error),
+        onError: (error) => reject(error),
       });
     });
   };
 
-  const handleDelete = nodeToDelete => {
+  const handleDelete = (nodeToDelete) => {
     deleteNode(nodeToDelete?.hostname);
   };
 
-  const handleUpdate = nodeToUpdate => {
+  const handleUpdate = (nodeToUpdate) => {
     updateNode(nodeToUpdate);
   };
 

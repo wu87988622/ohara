@@ -29,7 +29,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 
 import { Percentage } from '../Progress';
 
-const SelectTableHead = props => {
+const SelectTableHead = (props) => {
   const {
     onSelectAllClick,
     numSelected,
@@ -68,7 +68,7 @@ const SelectTableHead = props => {
   );
 };
 
-const SelectTableToolbar = props => {
+const SelectTableToolbar = (props) => {
   const { numSelected, title, hasSelect } = props;
 
   return (
@@ -84,7 +84,7 @@ const SelectTableToolbar = props => {
   );
 };
 
-const SelectTable = props => {
+const SelectTable = (props) => {
   const {
     rows,
     blockedRows,
@@ -96,7 +96,7 @@ const SelectTable = props => {
     setSelected,
   } = props;
 
-  const handleSelectAllClick = event => {
+  const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       setSelected(rows);
       return;
@@ -104,11 +104,11 @@ const SelectTable = props => {
     setSelected(blockedRows);
   };
 
-  const handleClick = row => {
+  const handleClick = (row) => {
     if (!hasSelect || isItemDisabled(row) || isItemIndeterminate(row)) return;
 
     const selectedIndex = selected
-      .map(select => select[Object.keys(select)[0]])
+      .map((select) => select[Object.keys(select)[0]])
       .indexOf(row[Object.keys(row)[0]]);
     let newSelected = [];
     if (selectedIndex === -1) {
@@ -127,23 +127,23 @@ const SelectTable = props => {
     setSelected(newSelected);
   };
 
-  const isSelected = row =>
+  const isSelected = (row) =>
     selected
-      .map(select => select[Object.keys(select)[0]])
+      .map((select) => select[Object.keys(select)[0]])
       .indexOf(row[Object.keys(row)[0]]) !== -1;
 
-  const isItemDisabled = row => {
+  const isItemDisabled = (row) => {
     return (
       !isEmpty(blockedRows) &&
-      blockedRows.map(blockedRow => blockedRow.name).includes(row.name)
+      blockedRows.map((blockedRow) => blockedRow.name).includes(row.name)
     );
   };
 
-  const isItemIndeterminate = row => {
+  const isItemIndeterminate = (row) => {
     return (
       !isEmpty(unavailableRows) &&
       unavailableRows
-        .map(unavailableRow => unavailableRow.name)
+        .map((unavailableRow) => unavailableRow.name)
         .includes(row.name)
     );
   };
@@ -166,7 +166,7 @@ const SelectTable = props => {
               rowCount={rows.length}
             />
             <TableBody>
-              {rows.map(row => {
+              {rows.map((row) => {
                 const keys = Object.keys(row);
                 const isItemSelected = isSelected(row);
 
@@ -197,7 +197,7 @@ const SelectTable = props => {
                       </TableCell>
                     )}
                     {keys
-                      .filter(key => key !== 'type')
+                      .filter((key) => key !== 'type')
                       .map((key, i, arr) => {
                         return (
                           <TableCell

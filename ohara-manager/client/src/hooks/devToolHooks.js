@@ -48,7 +48,7 @@ export const useSetDevToolTopicQueryParams = () => {
   // we need to pass topics here since fetchTopicData should be triggered after setting
   const topics = hooks.useTopicsInWorkspace();
   return useCallback(
-    params =>
+    (params) =>
       dispatch(
         actions.setDevToolTopicQueryParams.trigger({
           params,
@@ -81,7 +81,7 @@ export const useSetDevToolLogQueryParams = () => {
   const shabondiGroup = hooks.useShabondiGroup();
   const streamGroup = hooks.useStreamGroup();
   return useCallback(
-    params =>
+    (params) =>
       dispatch(
         actions.setDevToolLogQueryParams.trigger({
           params,
@@ -97,10 +97,12 @@ export const useSetDevToolLogQueryParams = () => {
 //topic tab
 export const useDevToolTopicData = () => {
   const getTopicData = useMemo(selectors.makeGetDevToolTopicData, []);
-  return useSelector(useCallback(state => getTopicData(state), [getTopicData]));
+  return useSelector(
+    useCallback((state) => getTopicData(state), [getTopicData]),
+  );
 };
 // log tab
 export const useDevToolLog = () => {
   const getLog = useMemo(selectors.makeGetDevToolLog, []);
-  return useSelector(useCallback(state => getLog(state), [getLog]));
+  return useSelector(useCallback((state) => getLog(state), [getLog]));
 };

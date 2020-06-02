@@ -33,11 +33,11 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL, GROUP } from 'const';
 
-export const createBroker$ = values => {
+export const createBroker$ = (values) => {
   const brokerId = getId(values);
   return defer(() => brokerApi.create(values)).pipe(
-    map(res => res.data),
-    switchMap(data => {
+    map((res) => res.data),
+    switchMap((data) => {
       const normalizedData = merge(normalize(data, schema.broker), {
         brokerId,
       });
@@ -52,7 +52,7 @@ export const createBroker$ = values => {
       ]);
     }),
     startWith(actions.createBroker.request({ brokerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.createBroker.failure(merge(err, { brokerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -61,10 +61,10 @@ export const createBroker$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createBroker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createBroker$(values)),
+    mergeMap((values) => createBroker$(values)),
   );

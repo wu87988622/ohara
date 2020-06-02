@@ -23,7 +23,7 @@ const StyledPaper = styled(Paper)`
   padding: 20px;
 `;
 
-const Loader = props => {
+const Loader = (props) => {
   const random = Math.random() * (1 - 0.7) + 0.7;
   return (
     <ContentLoader

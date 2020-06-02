@@ -27,7 +27,7 @@ function ContextApiError({ title, status, errors, meta }) {
 ContextApiError.prototype = new Error();
 ContextApiError.prototype.constructor = ContextApiError;
 
-ContextApiError.prototype.getPayload = function() {
+ContextApiError.prototype.getPayload = function () {
   const payload = {};
   if (this.title) payload.title = this.title;
   if (this.status) payload.status = this.status;

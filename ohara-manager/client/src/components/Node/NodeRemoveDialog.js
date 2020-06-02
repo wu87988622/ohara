@@ -20,7 +20,7 @@ import { isFunction } from 'lodash';
 import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
-  content: node =>
+  content: (node) =>
     `Are you sure you want to remove the node ${node?.hostname}?`,
   title: 'Remove node?',
 };

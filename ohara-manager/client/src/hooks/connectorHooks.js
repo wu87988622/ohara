@@ -125,12 +125,15 @@ export const useFetchConnectorsAction = () => {
 };
 
 export const useIsConnectorLoaded = () => {
-  const mapState = useCallback(state => !!state.ui.connector?.lastUpdated, []);
+  const mapState = useCallback(
+    (state) => !!state.ui.connector?.lastUpdated,
+    [],
+  );
   return useSelector(mapState);
 };
 
 export const useIsConnectorLoading = () => {
-  const mapState = useCallback(state => !!state.ui.connector?.loading, []);
+  const mapState = useCallback((state) => !!state.ui.connector?.loading, []);
   return useSelector(mapState);
 };
 
@@ -154,14 +157,14 @@ export const useConnectors = () => {
     fetchConnectors();
   }, [fetchConnectors, isAppReady, isConnectorLoaded, isConnectorLoading]);
 
-  return useSelector(state => {
+  return useSelector((state) => {
     const connectors = selectors.getConnectorByGroup(state, { group });
-    const results = connectors.map(connector => {
+    const results = connectors.map((connector) => {
       const info = selectors.getInfoById(state, { id: workerId });
 
       const settingDefinitions =
         info?.classInfos.find(
-          def => def.className === connector.connector__class,
+          (def) => def.className === connector.connector__class,
         )?.settingDefinitions || [];
 
       return _.merge(connector, { settingDefinitions });

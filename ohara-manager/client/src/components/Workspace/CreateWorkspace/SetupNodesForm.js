@@ -24,7 +24,7 @@ import { FORM } from 'const';
 import NodesField from './NodesField';
 import validate from './validate';
 
-const SetupNodesForm = props => {
+const SetupNodesForm = (props) => {
   const { handleSubmit, previousStep, invalid, pristine, submitting } = props;
   return (
     <form onSubmit={handleSubmit}>

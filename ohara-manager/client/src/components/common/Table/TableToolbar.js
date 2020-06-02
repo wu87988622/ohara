@@ -33,7 +33,7 @@ const StyledTypography = styled(Typography)`
 `;
 
 const StyledToolbar = styled(Toolbar)`
-  background-color: ${props => props.theme.palette.warning[700]};
+  background-color: ${(props) => props.theme.palette.warning[700]};
 `;
 
 const StyledButton = styled(Button)`
@@ -47,7 +47,7 @@ const ActionIcon = styled(Icon)`
   width: 30px;
 `;
 
-const TableToolbar = props => {
+const TableToolbar = (props) => {
   const { newCount, deleteCount, handleDiscard, handleRestart } = props;
 
   const message = () => {

@@ -36,7 +36,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-const startConnector$ = values => {
+const startConnector$ = (values) => {
   const { params, options } = values;
   const { paperApi } = options;
   const connectorId = getId(params);
@@ -46,12 +46,12 @@ const startConnector$ = values => {
   return zip(
     defer(() => connectorApi.start(params)),
     defer(() => connectorApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -71,15 +71,15 @@ const startConnector$ = values => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.connector)),
-    map(normalizedData => merge(normalizedData, { connectorId })),
-    map(normalizedData => {
+    map((normalizedData) => merge(normalizedData, { connectorId })),
+    map((normalizedData) => {
       paperApi.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
       return actions.startConnector.success(normalizedData);
     }),
     startWith(actions.startConnector.request({ connectorId })),
-    catchError(err => {
+    catchError((err) => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
@@ -91,10 +91,10 @@ const startConnector$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startConnector.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => startConnector$(values)),
+    mergeMap((values) => startConnector$(values)),
   );

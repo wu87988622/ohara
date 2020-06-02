@@ -19,7 +19,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import Dialog from '@material-ui/core/Dialog';
 
-const StyledDialog = styled(props => (
+const StyledDialog = styled((props) => (
   // Don't pass down props that are meant only used by styled-component.
   // React also complains about this if these props are not omitted
   <Dialog {...omit(props, ['isHidden', 'isDeleteDialog'])} />

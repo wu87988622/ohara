@@ -31,7 +31,7 @@ const EditWorkspaceProvider = ({ children }) => {
   const [stagingNodes, setStagingNodes] = useState([]);
   const [dirties, setDirties] = useState(null);
 
-  const calcDirties = cluster => {
+  const calcDirties = (cluster) => {
     const settings = get(cluster, 'settings');
     const stagingSettings = get(cluster, 'stagingSettings');
 
@@ -79,7 +79,7 @@ const EditWorkspaceProvider = ({ children }) => {
       get(currBk, 'stagingSettings.nodeNames'),
       get(currZk, 'stagingSettings.nodeNames'),
     );
-    const stagingNodes = filter(allNodesInOhara, node =>
+    const stagingNodes = filter(allNodesInOhara, (node) =>
       includes(usedNodeNames, get(node, 'hostname')),
     );
     setStagingNodes(stagingNodes);

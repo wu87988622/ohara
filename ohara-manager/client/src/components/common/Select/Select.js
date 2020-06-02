@@ -37,7 +37,7 @@ const StyledInputBase = styled(InputBase)(
   `,
 );
 
-const Select = props => {
+const Select = (props) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const {
     value,
@@ -49,7 +49,7 @@ const Select = props => {
     testId,
   } = props;
 
-  const getDisplayNameByValue = item => {
+  const getDisplayNameByValue = (item) => {
     if (props?.getDisplayNameByValue) {
       return props.getDisplayNameByValue(item.value);
     }
@@ -69,10 +69,10 @@ const Select = props => {
             transformOrigin,
           }}
           onChange={onChange}
-          onOpen={event => setAnchorEl(event.currentTarget)}
+          onOpen={(event) => setAnchorEl(event.currentTarget)}
           value={value}
         >
-          {map(list, item => {
+          {map(list, (item) => {
             if (isString(item)) {
               return (
                 <MenuItem key={item} value={item}>

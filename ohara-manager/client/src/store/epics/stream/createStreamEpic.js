@@ -32,21 +32,21 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createStream$ = value => {
+const createStream$ = (value) => {
   const { values, options } = value;
   const streamId = getId(values);
   return defer(() => streamApi.create(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.stream)),
-    map(normalizedData => {
+    map((res) => res.data),
+    map((data) => normalize(data, schema.stream)),
+    map((normalizedData) => {
       options.paperApi.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { streamId });
     }),
-    map(normalizedData => actions.createStream.success(normalizedData)),
+    map((normalizedData) => actions.createStream.success(normalizedData)),
     startWith(actions.createStream.request({ streamId })),
-    catchError(error => {
+    catchError((error) => {
       options.paperApi.removeElement(values.id);
       return from([
         actions.createStream.failure(merge(error, { streamId })),
@@ -56,10 +56,10 @@ const createStream$ = value => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createStream.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => createStream$(value)),
+    mergeMap((value) => createStream$(value)),
   );

@@ -26,7 +26,7 @@ const Popover = React.forwardRef((props, ref) => {
   const open = Boolean(anchorEl);
   const id = open ? props.id : undefined;
 
-  const handleClick = event => {
+  const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     props.onOpen();
   };

@@ -64,12 +64,12 @@ function WorkspaceList() {
   const workspaceName = hooks.useWorkspaceName();
   const allTopics = hooks.useAllTopics();
 
-  const handleClick = name => () => {
+  const handleClick = (name) => () => {
     switchWorkspace(name);
     close();
   };
 
-  const pickBrokerKey = object => {
+  const pickBrokerKey = (object) => {
     return {
       name: object?.brokerClusterKey?.name,
       group: object?.brokerClusterKey?.group,
@@ -91,7 +91,7 @@ function WorkspaceList() {
       >
         <Wrapper>
           <Grid container spacing={2}>
-            {workspaces.map(workspace => {
+            {workspaces.map((workspace) => {
               const name = workspace?.name;
               const nodeNames = workspace?.nodeNames;
               const lastModified = workspace?.lastModified;
@@ -105,7 +105,7 @@ function WorkspaceList() {
                 nodes: size(nodeNames),
                 pipelines: 0, // TODO: See the issue (https://github.com/oharastream/ohara/issues/3506)
                 topics: size(
-                  filter(allTopics, topic =>
+                  filter(allTopics, (topic) =>
                     isEqual(pickBrokerKey(topic), brokerKey),
                   ),
                 ),
@@ -127,15 +127,17 @@ function WorkspaceList() {
                           <Statistic label="Nodes" value={count.nodes} />
                         </Grid>
 
-                        {/* Feature is disabled because it's not implemented in 0.9 */
-                        false && (
-                          <Grid item xs={4}>
-                            <Statistic
-                              label="Pipelines"
-                              value={count.pipelines}
-                            />
-                          </Grid>
-                        )}
+                        {
+                          /* Feature is disabled because it's not implemented in 0.9 */
+                          false && (
+                            <Grid item xs={4}>
+                              <Statistic
+                                label="Pipelines"
+                                value={count.pipelines}
+                              />
+                            </Grid>
+                          )
+                        }
                         <Grid item xs={6}>
                           <Statistic label="Topics" value={count.topics} />
                         </Grid>

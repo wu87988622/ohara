@@ -28,11 +28,11 @@ const StyledCard = styled(Card)`
 
   .card-media {
     min-height: 140px;
-    background-color: ${props => props.theme.palette.grey[200]};
+    background-color: ${(props) => props.theme.palette.grey[200]};
   }
 `;
 
-const MuiCard = props => {
+const MuiCard = (props) => {
   const { title, description, ...rest } = props;
 
   return (

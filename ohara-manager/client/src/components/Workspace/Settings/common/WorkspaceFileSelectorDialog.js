@@ -32,7 +32,7 @@ const WorkspaceFileSelectorDialog = React.forwardRef((props, ref) => {
     sortedUniq(tableProps?.options?.selectedFiles),
   );
 
-  const handleSelectionChange = selectFiles => {
+  const handleSelectionChange = (selectFiles) => {
     setSelectedFiles(selectFiles);
   };
 

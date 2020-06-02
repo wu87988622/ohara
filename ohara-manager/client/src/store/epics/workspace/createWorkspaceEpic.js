@@ -43,17 +43,17 @@ import { getKey } from 'utils/object';
 
 const duration = 1000;
 
-const createWorkspace$ = values =>
+const createWorkspace$ = (values) =>
   defer(() => workspaceApi.create(values)).pipe(
     delay(duration),
-    map(res => res.data),
-    map(data =>
+    map((res) => res.data),
+    map((data) =>
       actions.createWorkspace.success(normalize(data, schema.workspace)),
     ),
     startWith(actions.createWorkspace.request()),
   );
 
-const finalize$ = params =>
+const finalize$ = (params) =>
   of(
     of(actions.createWorkspace.fulfill()),
     // Clear form data
@@ -98,7 +98,7 @@ export default (action$, state$) =>
         asapScheduler,
       ).pipe(
         concatAll(),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.createWorkspace.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

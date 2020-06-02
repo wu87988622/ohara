@@ -35,7 +35,7 @@ const makeTestScheduler = () =>
   });
 
 it('create worker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
@@ -85,7 +85,7 @@ it('create worker should be worked correctly', () => {
 });
 
 it('create multiple workers should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b                ';
@@ -166,7 +166,7 @@ it('create multiple workers should be worked correctly', () => {
 });
 
 it('create same worker within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a       ';
@@ -225,7 +225,7 @@ it('throw exception of create worker should also trigger event log action', () =
     .spyOn(workerApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

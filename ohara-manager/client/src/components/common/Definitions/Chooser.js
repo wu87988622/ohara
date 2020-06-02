@@ -26,7 +26,7 @@ import CheckBoxIcon from '@material-ui/icons/CheckBox';
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-const Chooser = props => {
+const Chooser = (props) => {
   const {
     input: { name, onChange, value },
     meta: { error, touched, dirty },
@@ -39,7 +39,7 @@ const Chooser = props => {
     required,
   } = props;
 
-  const getOptionLabel = option => {
+  const getOptionLabel = (option) => {
     if (props?.getOptionLabel) {
       return props.getOptionLabel(option);
     }
@@ -66,7 +66,7 @@ const Chooser = props => {
       }}
       options={options}
       ref={refs}
-      renderInput={params => (
+      renderInput={(params) => (
         <TextField
           {...params}
           error={hasError}

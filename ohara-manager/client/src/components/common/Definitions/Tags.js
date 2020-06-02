@@ -19,7 +19,7 @@ import { omit, isObject } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const Tags = props => {
+const Tags = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},

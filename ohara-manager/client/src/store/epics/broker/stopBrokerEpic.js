@@ -36,16 +36,16 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const stopBroker$ = params => {
+export const stopBroker$ = (params) => {
   const brokerId = getId(params);
   return zip(
     defer(() => brokerApi.stop(params)),
     defer(() => brokerApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (res.data?.state) throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -65,20 +65,20 @@ export const stopBroker$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.broker)),
-    map(normalizedData => merge(normalizedData, { brokerId })),
-    map(normalizedData => actions.stopBroker.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { brokerId })),
+    map((normalizedData) => actions.stopBroker.success(normalizedData)),
     startWith(actions.stopBroker.request({ brokerId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopBroker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       stopBroker$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.stopBroker.failure(merge(err, { brokerId: getId(params) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

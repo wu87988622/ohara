@@ -16,6 +16,6 @@
 
 import moment from 'moment';
 
-export const getDateFromTimestamp = timestamp => {
+export const getDateFromTimestamp = (timestamp) => {
   return moment.unix(timestamp / 1000).format('YYYY-MM-DD HH:mm:ss');
 };

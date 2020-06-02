@@ -22,14 +22,14 @@ import * as actions from 'store/actions';
 import { stopStream$ } from './stopStreamEpic';
 import { deleteStream$ } from './deleteStreamEpic';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopAndDeleteStream.TRIGGER),
-    map(action => action.payload),
-    mergeMap(value =>
+    map((action) => action.payload),
+    mergeMap((value) =>
       of(stopStream$(value), deleteStream$(value)).pipe(
         concatAll(),
-        catchError(error => of(actions.stopAndDeleteStream.failure(error))),
+        catchError((error) => of(actions.stopAndDeleteStream.failure(error))),
       ),
     ),
   );

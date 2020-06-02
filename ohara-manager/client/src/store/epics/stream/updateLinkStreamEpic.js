@@ -24,16 +24,18 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateStreamLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ values, options }) => {
       return defer(() => streamApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.stream)),
-        map(normalizedData => actions.updateStreamLink.success(normalizedData)),
+        map((res) => normalize(res.data, schema.stream)),
+        map((normalizedData) =>
+          actions.updateStreamLink.success(normalizedData),
+        ),
         startWith(actions.updateStreamLink.request()),
-        catchError(error => {
+        catchError((error) => {
           handleError(options);
           return from([
             actions.updateStreamLink.failure(error),

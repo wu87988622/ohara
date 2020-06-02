@@ -35,7 +35,7 @@ it('remove event logs should be executed correctly', () => {
   const spyRemoveItem = jest.spyOn(localForage, 'removeItem');
   spyRemoveItem.mockImplementation(() => of(noop()));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
@@ -69,7 +69,7 @@ it('multiple remove actions within period should be executed the latest one', ()
   const spyRemoveItem = jest.spyOn(localForage, 'removeItem');
   spyRemoveItem.mockImplementation(() => of(noop()).pipe(delay(5)));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a--b------|';

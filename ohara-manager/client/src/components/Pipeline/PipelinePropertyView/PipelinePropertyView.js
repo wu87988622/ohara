@@ -30,7 +30,7 @@ import { KIND, CELL_STATUS } from 'const';
 import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
 
-const PipelinePropertyView = props => {
+const PipelinePropertyView = (props) => {
   const { handleClose, element, pipelineObjects, isMetricsOn } = props;
   const topics = hooks.useTopicsInPipeline();
   const streams = hooks.useStreams();
@@ -48,13 +48,13 @@ const PipelinePropertyView = props => {
   switch (element.kind) {
     case KIND.source:
     case KIND.sink:
-      settings = connectors.find(connector => connector.name === cellName);
+      settings = connectors.find((connector) => connector.name === cellName);
       break;
     case KIND.stream:
-      settings = streams.find(stream => stream.name === cellName);
+      settings = streams.find((stream) => stream.name === cellName);
       break;
     case KIND.topic:
-      settings = topics.find(topic => topic.name === cellName);
+      settings = topics.find((topic) => topic.name === cellName);
       break;
     default:
       break;
@@ -106,11 +106,13 @@ const PipelinePropertyView = props => {
         setTags={setTags}
         settings={settings}
       />
-      {// For topic component, we should display its "partitionInfos" instead.
-      // Please see #4677 for more info about this
-      element.kind !== KIND.topic && (
-        <NodePanel tasksStatus={settings.tasksStatus} />
-      )}
+      {
+        // For topic component, we should display its "partitionInfos" instead.
+        // Please see #4677 for more info about this
+        element.kind !== KIND.topic && (
+          <NodePanel tasksStatus={settings.tasksStatus} />
+        )
+      }
       <MetricsPanel
         currentCellName={cellName}
         isMetricsOn={isMetricsOn}

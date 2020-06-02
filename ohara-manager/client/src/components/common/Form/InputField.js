@@ -25,10 +25,10 @@ const InputWrap = styled.div`
 `;
 
 const StyledTextField = styled(TextField)`
-  width: ${props => props.width};
+  width: ${(props) => props.width};
 `;
 
-const InputField = props => {
+const InputField = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},

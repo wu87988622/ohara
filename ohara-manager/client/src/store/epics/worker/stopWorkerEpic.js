@@ -36,17 +36,17 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
-export const stopWorker$ = params => {
+export const stopWorker$ = (params) => {
   const workerId = getId(params);
   return zip(
     defer(() => workerApi.stop(params)),
     defer(() => workerApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (res.data?.state) throw res;
         else return res.data;
       }),
 
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -66,20 +66,20 @@ export const stopWorker$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.worker)),
-    map(normalizedData => merge(normalizedData, { workerId })),
-    map(normalizedData => actions.stopWorker.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { workerId })),
+    map((normalizedData) => actions.stopWorker.success(normalizedData)),
     startWith(actions.stopWorker.request({ workerId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopWorker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       stopWorker$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.stopWorker.failure(merge(err, { workerId: getId(params) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

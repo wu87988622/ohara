@@ -17,11 +17,11 @@
 import { pick, sortBy, some, isEqual } from 'lodash';
 import { hashByGroupAndName } from './sha';
 
-export const getId = object => `${object?.group}_${object?.name}`;
+export const getId = (object) => `${object?.group}_${object?.name}`;
 
-export const getKey = object => pick(object, ['group', 'name']);
+export const getKey = (object) => pick(object, ['group', 'name']);
 
-export const convertIdToKey = value => {
+export const convertIdToKey = (value) => {
   return { group: value.split('_')[0], name: value.split('_')[1] };
 };
 
@@ -35,19 +35,19 @@ export const isKeyEqual = (object, other) => isEqualByKey(object, other);
 export const isEqualByKey = (object, other) =>
   isEqual(getKey(object), getKey(other));
 
-export const sortByName = objects => sortBy(objects, 'name');
+export const sortByName = (objects) => sortBy(objects, 'name');
 
 /**
  * @deprecated
  *
  * Please use hash(object) instead
  */
-export const hashKey = object => hash(object);
+export const hashKey = (object) => hash(object);
 
-export const hash = object => {
+export const hash = (object) => {
   const key = getKey(object);
   return hashByGroupAndName(key.group, key.name);
 };
 
 export const someByKey = (objects, target) =>
-  some(objects, obj => isEqual(getKey(obj), getKey(target)));
+  some(objects, (obj) => isEqual(getKey(obj), getKey(target)));

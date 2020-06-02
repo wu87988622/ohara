@@ -56,7 +56,7 @@ const PipelinePropertySpeedDial = ({ formRef }) => {
     setIsAutofillSelectorOpen(true);
   };
 
-  const handleAutofill = autofillData => {
+  const handleAutofill = (autofillData) => {
     if (formRef.current && autofillData) {
       const definitions = formRef.current.getDefinitions();
       const formValues = toFormValues(autofillData, definitions);

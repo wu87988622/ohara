@@ -35,7 +35,7 @@ const makeTestScheduler = () =>
   });
 
 it('fetch topics should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----------|';
@@ -73,7 +73,7 @@ it('fetch topics should be worked correctly', () => {
 });
 
 it('fetch topic multiple times within period should be got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a--b----------|';
@@ -126,7 +126,7 @@ it('throw exception of fetch topic list should also trigger event log action', (
     .spyOn(topicApi, 'getAll')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

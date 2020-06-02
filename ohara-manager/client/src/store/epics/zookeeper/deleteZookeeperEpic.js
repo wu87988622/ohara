@@ -31,7 +31,7 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
-export const deleteZookeeper$ = params => {
+export const deleteZookeeper$ = (params) => {
   const zookeeperId = getId(params);
   return defer(() => zookeeperApi.remove(params)).pipe(
     map(() => actions.deleteZookeeper.success({ zookeeperId })),
@@ -39,14 +39,14 @@ export const deleteZookeeper$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.deleteZookeeper.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       deleteZookeeper$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.deleteZookeeper.failure(
               merge(err, { zookeeperId: getId(params) }),

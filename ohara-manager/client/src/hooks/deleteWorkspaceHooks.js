@@ -30,12 +30,12 @@ export const useOpenDeleteWorkspaceDialogAction = () => {
 };
 
 export const useDeleteWorkspace = () =>
-  useSelector(state => state.ui.deleteWorkspace);
+  useSelector((state) => state.ui.deleteWorkspace);
 
 export const useIsRollback = () => {
   const getProgress = useMemo(selectors.makeGetDeleteWorkspaceProgress, []);
   return useSelector(
-    useCallback(state => getProgress(state).isRollback, [getProgress]),
+    useCallback((state) => getProgress(state).isRollback, [getProgress]),
   );
 };
 
@@ -73,13 +73,13 @@ export const useDeleteWorkspaceAction = () => {
   const workspaceKey = getKey(hooks.useWorkspace());
   const pipelineKeys = hooks.usePipelines().map(getKey);
   const files = hooks.useFiles();
-  const connectorKeys = useSelector(state =>
+  const connectorKeys = useSelector((state) =>
     selectors.getConnectorByGroup(state, { group }),
   ).map(getKey);
-  const shabondiKeys = useSelector(state =>
+  const shabondiKeys = useSelector((state) =>
     selectors.getShabondisByGroup(state, { group }),
   ).map(getKey);
-  const streamKeys = useSelector(state =>
+  const streamKeys = useSelector((state) =>
     selectors.getStreamByGroup(state, { group }),
   ).map(getKey);
 
@@ -96,7 +96,7 @@ export const useDeleteWorkspaceAction = () => {
   };
 
   return useCallback(
-    options =>
+    (options) =>
       dispatch(
         actions.deleteWorkspace.trigger({
           values,

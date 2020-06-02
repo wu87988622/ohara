@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('delete file should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -67,7 +67,7 @@ it('delete file should be worked correctly', () => {
 });
 
 it('delete multiple files should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
@@ -113,7 +113,7 @@ it('delete multiple files should be worked correctly', () => {
 });
 
 it('delete same file within period should be deleted once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a   ';
@@ -154,7 +154,7 @@ it('throw exception of delete file should also trigger event log action', () => 
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

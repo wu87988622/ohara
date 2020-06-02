@@ -34,15 +34,15 @@ function BrokerNodesPage() {
   const documentation = useMemo(() => {
     return find(
       broker?.settingDefinitions,
-      definition => definition.key === 'nodeNames',
+      (definition) => definition.key === 'nodeNames',
     )?.documentation;
   }, [broker]);
 
   const brokerNodesInWorkspace = useMemo(() => {
     return workspace?.broker?.nodeNames
       ? filter(
-          map(workspace.broker.nodeNames, nodeName =>
-            find(nodesInWorkspace, node => node.hostname === nodeName),
+          map(workspace.broker.nodeNames, (nodeName) =>
+            find(nodesInWorkspace, (node) => node.hostname === nodeName),
           ),
         )
       : nodesInBroker;
@@ -52,7 +52,7 @@ function BrokerNodesPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleUndoIconClick = nodeClicked => {
+  const handleUndoIconClick = (nodeClicked) => {
     const currentIndex = workspace?.broker?.nodeNames?.indexOf(
       nodeClicked?.hostname,
     );
@@ -71,40 +71,40 @@ function BrokerNodesPage() {
       },
     });
     selectorDialogRef.current.setSelectedNodes(
-      map(newNodeNames, nodeName =>
-        find(nodesInWorkspace, n => n.hostname === nodeName),
+      map(newNodeNames, (nodeName) =>
+        find(nodesInWorkspace, (n) => n.hostname === nodeName),
       ),
     );
   };
 
-  const handleRemove = nodeToRemove => {
+  const handleRemove = (nodeToRemove) => {
     const shouldBeRemoved = some(
       brokerNodesInWorkspace,
-      n => n.hostname === nodeToRemove?.hostname,
+      (n) => n.hostname === nodeToRemove?.hostname,
     );
 
     if (shouldBeRemoved) {
       const newNodes = reject(
         brokerNodesInWorkspace,
-        n => n.hostname === nodeToRemove.hostname,
+        (n) => n.hostname === nodeToRemove.hostname,
       );
       updateWorkspace({
         ...workspace,
         broker: {
           ...workspace?.broker,
-          nodeNames: map(newNodes, n => n.hostname),
+          nodeNames: map(newNodes, (n) => n.hostname),
         },
       });
       selectorDialogRef.current.setSelectedNodes(newNodes);
     }
   };
 
-  const handleSelectorDialogConfirm = selectedNodes => {
+  const handleSelectorDialogConfirm = (selectedNodes) => {
     updateWorkspace({
       ...workspace,
       broker: {
         ...workspace?.broker,
-        nodeNames: map(selectedNodes, n => n.hostname),
+        nodeNames: map(selectedNodes, (n) => n.hostname),
       },
     });
     setIsSelectorDialogOpen(false);

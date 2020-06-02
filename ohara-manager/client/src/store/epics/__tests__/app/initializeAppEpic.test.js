@@ -35,7 +35,7 @@ const makeTestScheduler = () =>
   });
 
 it('initial app correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-|         ';
@@ -57,14 +57,14 @@ it('initial app correctly', () => {
           entities: {
             pipelines: keyBy(
               pipelineEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
             workspaces: keyBy(
               workspaceEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
           },
-          result: pipelineEntities.map(obj => `${obj.group}_${obj.name}`),
+          result: pipelineEntities.map((obj) => `${obj.group}_${obj.name}`),
         },
       },
       b: {
@@ -83,7 +83,7 @@ it('initial app correctly', () => {
 });
 
 it('switch to existed workspace correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
@@ -108,14 +108,14 @@ it('switch to existed workspace correctly', () => {
           entities: {
             pipelines: keyBy(
               pipelineEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
             workspaces: keyBy(
               workspaceEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
           },
-          result: pipelineEntities.map(obj => `${obj.group}_${obj.name}`),
+          result: pipelineEntities.map((obj) => `${obj.group}_${obj.name}`),
         },
       },
       b: {
@@ -136,7 +136,7 @@ it('switch to existed workspace correctly', () => {
 });
 
 it('switch to existed workspace and pipeline correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
@@ -162,14 +162,14 @@ it('switch to existed workspace and pipeline correctly', () => {
           entities: {
             pipelines: keyBy(
               pipelineEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
             workspaces: keyBy(
               workspaceEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
           },
-          result: pipelineEntities.map(obj => `${obj.group}_${obj.name}`),
+          result: pipelineEntities.map((obj) => `${obj.group}_${obj.name}`),
         },
       },
       b: {
@@ -191,7 +191,7 @@ it('switch to existed workspace and pipeline correctly', () => {
 });
 
 it('multiple actions will only used the latest action', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const switchData = {
@@ -221,14 +221,14 @@ it('multiple actions will only used the latest action', () => {
           entities: {
             pipelines: keyBy(
               pipelineEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
             workspaces: keyBy(
               workspaceEntities,
-              obj => `${obj.group}_${obj.name}`,
+              (obj) => `${obj.group}_${obj.name}`,
             ),
           },
-          result: pipelineEntities.map(obj => `${obj.group}_${obj.name}`),
+          result: pipelineEntities.map((obj) => `${obj.group}_${obj.name}`),
         },
       },
       b: {
@@ -259,7 +259,7 @@ it('throw exception of initial app should also trigger event log action', () => 
     .spyOn(workspaceApi, 'getAll')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

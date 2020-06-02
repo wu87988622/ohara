@@ -21,7 +21,7 @@ import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
   confirmDisabled: false,
-  content: file => `Are you sure you want to remove the file ${file?.name}?`,
+  content: (file) => `Are you sure you want to remove the file ${file?.name}?`,
   title: 'Remove file?',
   showForceCheckbox: false,
 };

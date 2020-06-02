@@ -22,7 +22,7 @@ import * as actions from 'store/actions';
 export const useShowMessage = () => {
   const dispatch = useDispatch();
   return useCallback(
-    message => dispatch(actions.showMessage.trigger(message)),
+    (message) => dispatch(actions.showMessage.trigger(message)),
     [dispatch],
   );
 };

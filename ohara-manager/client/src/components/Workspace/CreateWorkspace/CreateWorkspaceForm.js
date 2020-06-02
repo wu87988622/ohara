@@ -37,7 +37,7 @@ import SetupZookeeperForm from './SetupZookeeperForm';
 
 const { EXPERT, QUICK } = CREATE_WORKSPACE_MODE;
 
-const CreateWorkspaceForm = props => {
+const CreateWorkspaceForm = (props) => {
   const { onCancel, onSubmit } = props;
   const mode = hooks.useCreateWorkspaceMode();
   const step = hooks.useCreateWorkspaceStep();
@@ -47,7 +47,7 @@ const CreateWorkspaceForm = props => {
 
   const randomTake = (array, n) => take(shuffle(array), n);
 
-  const applyQuickRules = values => {
+  const applyQuickRules = (values) => {
     const { name, nodeNames } = values.workspace;
     return merge(values, {
       zookeeper: {
@@ -59,7 +59,7 @@ const CreateWorkspaceForm = props => {
     });
   };
 
-  const applyGroup = values =>
+  const applyGroup = (values) =>
     merge(values, {
       workspace: { group: GROUP.WORKSPACE },
       zookeeper: { group: GROUP.ZOOKEEPER },
@@ -67,7 +67,7 @@ const CreateWorkspaceForm = props => {
       worker: { group: GROUP.WORKER },
     });
 
-  const handleSubmit = values => {
+  const handleSubmit = (values) => {
     if (mode === QUICK) {
       values = applyQuickRules(values);
     }

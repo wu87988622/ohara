@@ -30,7 +30,7 @@ export const useTopics = () => {
     tags: { isShared: false, label: 'Pipeline Only' },
   };
 
-  const topics = [pipelineOnlyTopic, ...topicsDataInToolBox].map(topic => ({
+  const topics = [pipelineOnlyTopic, ...topicsDataInToolBox].map((topic) => ({
     displayName: topic.displayName || '',
     kind: KIND.topic,
     className: KIND.topic,
@@ -45,7 +45,7 @@ export const useTopics = () => {
 const getStreamsFromFiles = (results, file) => {
   const { group, name, classInfos } = file;
   const streams = classInfos.filter(({ settingDefinitions: defs }) =>
-    defs.find(def => def.key === 'kind' && def.defaultValue === KIND.stream),
+    defs.find((def) => def.key === 'kind' && def.defaultValue === KIND.stream),
   );
 
   if (streams.length > 0) {
@@ -67,9 +67,9 @@ export const useStreams = () => {
   const currentWorkspace = hooks.useWorkspace();
 
   return files
-    .filter(file =>
+    .filter((file) =>
       currentWorkspace?.stream?.jarKeys.some(
-        jarKey => jarKey.name === file.name,
+        (jarKey) => jarKey.name === file.name,
       ),
     )
     .reduce(getStreamsFromFiles, [])
@@ -107,8 +107,8 @@ export const useToolboxHeight = ({ expanded, searchResults, connectors }) => {
     };
 
     const totalHeight = Object.keys(expanded)
-      .filter(panel => Boolean(expanded[panel])) // Get expanded panels
-      .map(panel => panelHeights[panel])
+      .filter((panel) => Boolean(expanded[panel])) // Get expanded panels
+      .map((panel) => panelHeights[panel])
       .reduce((acc, cur) => acc + cur, summaryHeight + toolboxHeaderHeight);
 
     if (totalHeight + toolboxOffsetTop > paperHeight) {

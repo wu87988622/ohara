@@ -58,7 +58,7 @@ const SettingsMain = ({
           }}
           restartConfirmMessage={restartConfirmMessage}
         />
-        {sections.map(section => {
+        {sections.map((section) => {
           const { heading, components, ref } = section;
           const listWrapperCls = cx('list-wrapper', {
             'is-danger-zone': heading === 'Danger Zone',

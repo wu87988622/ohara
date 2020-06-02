@@ -32,7 +32,7 @@ import { StyledToolbox } from './ToolboxStyles';
 import { useStreams, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { PaperContext } from '../Pipeline';
 
-const Toolbox = props => {
+const Toolbox = (props) => {
   const {
     isOpen: isToolboxOpen,
     expanded,
@@ -78,7 +78,7 @@ const Toolbox = props => {
     connectors,
   });
 
-  const handleAddGraph = newName => {
+  const handleAddGraph = (newName) => {
     const params = {
       ...cellInfo,
       displayName: newName,
@@ -247,8 +247,8 @@ const Toolbox = props => {
           onConfirm={handleAddGraph}
           paperElementNames={paperApi
             .getCells()
-            .filter(cell => cell.cellType !== CELL_TYPES.LINK)
-            .map(element => element.name)}
+            .filter((cell) => cell.cellType !== CELL_TYPES.LINK)
+            .map((element) => element.name)}
         />
       </StyledToolbox>
     </Draggable>

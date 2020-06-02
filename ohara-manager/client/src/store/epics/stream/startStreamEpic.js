@@ -36,7 +36,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-const startStream$ = value => {
+const startStream$ = (value) => {
   const { params, options } = value;
   const { paperApi } = options;
   const streamId = getId(params);
@@ -46,12 +46,12 @@ const startStream$ = value => {
   return zip(
     defer(() => streamApi.start(params)),
     defer(() => streamApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -71,15 +71,15 @@ const startStream$ = value => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.stream)),
-    map(normalizedData => merge(normalizedData, { streamId })),
-    map(normalizedData => {
+    map((normalizedData) => merge(normalizedData, { streamId })),
+    map((normalizedData) => {
       paperApi.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
       return actions.startStream.success(normalizedData);
     }),
     startWith(actions.startStream.request({ streamId })),
-    catchError(error => {
+    catchError((error) => {
       options.paperApi.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
@@ -91,10 +91,10 @@ const startStream$ = value => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startStream.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => startStream$(value)),
+    mergeMap((value) => startStream$(value)),
   );

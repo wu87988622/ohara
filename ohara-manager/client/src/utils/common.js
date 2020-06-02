@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-export const sleep = ms => {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };

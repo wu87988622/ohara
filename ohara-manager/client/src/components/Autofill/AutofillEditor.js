@@ -40,7 +40,7 @@ export const MODE = {
   COPY: 'Copy',
 };
 
-const AutofillEditor = props => {
+const AutofillEditor = (props) => {
   const { isOpen, mode, onClose, data } = props;
 
   const workspace = hooks.useWorkspace();
@@ -48,7 +48,7 @@ const AutofillEditor = props => {
 
   const suggestiveKeys = useSuggestiveKeys();
 
-  const duplicateDisplayName = value => {
+  const duplicateDisplayName = (value) => {
     if (mode === MODE.EDIT && value === data.displayName) return;
     if (some(workspace?.settingFillings, { displayName: value })) {
       return `Name '${value}' already existed. Please use a different name`;
@@ -61,7 +61,7 @@ const AutofillEditor = props => {
     }
   };
 
-  const saveNew = values => {
+  const saveNew = (values) => {
     const newSettingFilling = {
       ...values,
       name: uuid.v4(),
@@ -75,11 +75,11 @@ const AutofillEditor = props => {
     });
   };
 
-  const save = values => {
+  const save = (values) => {
     const newSettingFilling = { ...values, lastModified: new Date() };
     updateWorkspace({
       name: workspace.name,
-      settingFillings: map(workspace?.settingFillings, settingFilling =>
+      settingFillings: map(workspace?.settingFillings, (settingFilling) =>
         settingFilling.name === newSettingFilling.name
           ? newSettingFilling
           : settingFilling,

@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const PositiveDouble = props => {
+const PositiveDouble = (props) => {
   const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
     'tableKeys',
   ]);

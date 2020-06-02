@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('should create a topic', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
@@ -77,7 +77,7 @@ it('should create a topic', () => {
 });
 
 it('should create multiple topics', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
@@ -143,7 +143,7 @@ it('should create multiple topics', () => {
 });
 
 it('create same topic within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a  ';
@@ -195,7 +195,7 @@ it('throw exception of create topic should also trigger event log action', () =>
     .spyOn(topicApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

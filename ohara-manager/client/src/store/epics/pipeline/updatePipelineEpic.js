@@ -24,16 +24,16 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updatePipeline.TRIGGER),
-    map(action => action.payload),
-    switchMap(values => {
+    map((action) => action.payload),
+    switchMap((values) => {
       return from(pipelineApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.pipeline)),
-        map(normalizedData => actions.updatePipeline.success(normalizedData)),
+        map((res) => normalize(res.data, schema.pipeline)),
+        map((normalizedData) => actions.updatePipeline.success(normalizedData)),
         startWith(actions.updatePipeline.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.updatePipeline.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

@@ -41,7 +41,7 @@ const makeTestScheduler = () =>
   });
 
 it('remove source link of stream should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -83,7 +83,7 @@ it('remove source link of stream should be worked correctly', () => {
 });
 
 it('remove stream source link multiple times should got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s        ';
@@ -157,7 +157,7 @@ it('throw exception of remove stream from link should also trigger event log act
     .spyOn(streamApi, 'update')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

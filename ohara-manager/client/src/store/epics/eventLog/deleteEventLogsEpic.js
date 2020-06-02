@@ -27,16 +27,16 @@ localForage.config({
 });
 
 const deleteLogFromLocalForge$ = (keys = []) =>
-  zip(...keys.map(key => defer(() => localForage.removeItem(key))));
+  zip(...keys.map((key) => defer(() => localForage.removeItem(key))));
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.deleteEventLogs.TRIGGER),
-    map(action => action.payload),
-    switchMap(keys =>
+    map((action) => action.payload),
+    switchMap((keys) =>
       deleteLogFromLocalForge$(keys).pipe(
         map(() => actions.deleteEventLogs.success(keys)),
-        catchError(res => of(actions.deleteEventLogs.failure(res))),
+        catchError((res) => of(actions.deleteEventLogs.failure(res))),
       ),
     ),
   );

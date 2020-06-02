@@ -17,7 +17,7 @@
 import { createSelector } from 'reselect';
 import { transformDef } from 'utils/definition';
 
-const getEntities = state => state?.entities?.infos;
+const getEntities = (state) => state?.entities?.infos;
 
 const getIdFromProps = (_, props) => props?.id;
 
@@ -28,7 +28,7 @@ export const getInfoById = createSelector(
 
     if (!entity) return;
 
-    const newClassInfos = entity.classInfos.map(info => {
+    const newClassInfos = entity.classInfos.map((info) => {
       return {
         ...info,
         settingDefinitions: transformDef(info.settingDefinitions),

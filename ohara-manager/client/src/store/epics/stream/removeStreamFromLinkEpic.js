@@ -24,18 +24,18 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.removeStreamFromLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ params, options }) =>
       defer(() => streamApi.update(params)).pipe(
-        map(res => normalize(res.data, schema.stream)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.stream)),
+        map((normalizedData) =>
           actions.removeStreamFromLink.success(normalizedData),
         ),
         startWith(actions.removeStreamFromLink.request()),
-        catchError(error => {
+        catchError((error) => {
           if (options.paperApi) {
             options.paperApi.addLink(params.id, options.topic.id);
           }

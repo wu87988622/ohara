@@ -29,7 +29,7 @@ beforeEach(() => {
 });
 
 it('show message should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
@@ -61,7 +61,7 @@ it('show message should be worked correctly', () => {
 });
 
 it('show message multiple times should be throttled', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 500ms a|';
@@ -97,7 +97,7 @@ it('show message multiple times should be throttled', () => {
 });
 
 it('hide message should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';

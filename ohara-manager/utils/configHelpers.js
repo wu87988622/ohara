@@ -24,7 +24,7 @@ const utils = require('./commonUtils');
 
 /* eslint-disable no-process-exit, no-console */
 
-const validateUrl = async url => {
+const validateUrl = async (url) => {
   const regex = /https?:\/\/[-a-z0-9._+~#=:]{2,256}\/v[0-9]/gi;
   const validUrl = chalk.bold.green('http://localhost:5050/v0');
 
@@ -47,22 +47,22 @@ const validateUrl = async url => {
   const checkConfiguratorReady = () => {
     const { hostname, port } = new URL(url);
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const socket = new net.Socket();
-      const onError = err => {
+      const onError = (err) => {
         console.log(err.message);
         socket.destroy();
         resolve(false);
       };
       socket.setTimeout(10000);
-      socket.once('error', err => onError(err));
-      socket.once('timeout', err => onError(err));
+      socket.once('error', (err) => onError(err));
+      socket.once('timeout', (err) => onError(err));
 
       socket.connect(parseInt(port), hostname, () => {
         socket.end();
         resolve(true);
       });
-    }).catch(error => {
+    }).catch((error) => {
       console.log(error.message);
     });
   };
@@ -112,7 +112,7 @@ const validateUrl = async url => {
   printSuccessMsg();
 };
 
-const validatePort = port => {
+const validatePort = (port) => {
   const isValidPort = port >= 0 && port <= 65535;
 
   if (!isNumber(port)) {
@@ -157,7 +157,7 @@ const getConfig = () => {
       .help()
       .alias('help', 'h')
       .version(false) // Disable version info, see https://github.com/oharastream/ohara/issues/1892
-      .check(argv => {
+      .check((argv) => {
         const { configurator, port } = argv;
         validateUrl(configurator);
         validatePort(port);

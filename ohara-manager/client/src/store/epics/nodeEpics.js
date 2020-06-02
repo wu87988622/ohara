@@ -35,22 +35,22 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import * as nodeApi from 'api/nodeApi';
 
-export const createNodeEpic = action$ =>
+export const createNodeEpic = (action$) =>
   action$.pipe(
     ofType(actions.createNode.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
     mergeMap(({ params, options }) =>
       defer(() => nodeApi.create(params)).pipe(
-        map(res => normalize(res.data, schema.node)),
-        map(entities => {
+        map((res) => normalize(res.data, schema.node)),
+        map((entities) => {
           if (options?.onSuccess) {
             options.onSuccess();
           }
           return actions.createNode.success(entities);
         }),
         startWith(actions.createNode.request()),
-        catchError(err => {
+        catchError((err) => {
           if (options?.onError) {
             options.onError(err);
           }
@@ -63,16 +63,16 @@ export const createNodeEpic = action$ =>
     ),
   );
 
-export const updateNodeEpic = action$ =>
+export const updateNodeEpic = (action$) =>
   action$.pipe(
     ofType(actions.updateNode.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values =>
+    map((action) => action.payload),
+    mergeMap((values) =>
       defer(() => nodeApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.node)),
-        map(entities => actions.updateNode.success(entities)),
+        map((res) => normalize(res.data, schema.node)),
+        map((entities) => actions.updateNode.success(entities)),
         startWith(actions.updateNode.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.updateNode.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -82,16 +82,16 @@ export const updateNodeEpic = action$ =>
     ),
   );
 
-export const fetchNodesEpic = action$ =>
+export const fetchNodesEpic = (action$) =>
   action$.pipe(
     ofType(actions.fetchNodes.TRIGGER),
     throttleTime(1000),
     switchMap(() =>
       defer(() => nodeApi.getAll()).pipe(
-        map(res => normalize(res.data, [schema.node])),
-        map(entities => actions.fetchNodes.success(entities)),
+        map((res) => normalize(res.data, [schema.node])),
+        map((entities) => actions.fetchNodes.success(entities)),
         startWith(actions.fetchNodes.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.fetchNodes.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -101,15 +101,15 @@ export const fetchNodesEpic = action$ =>
     ),
   );
 
-const deleteNode$ = hostname =>
+const deleteNode$ = (hostname) =>
   zip(
     defer(() => nodeApi.remove(hostname)),
     defer(() => nodeApi.getAll()).pipe(
-      map(res => {
-        if (res.data.find(node => node.hostname === hostname)) throw res;
+      map((res) => {
+        if (res.data.find((node) => node.hostname === hostname)) throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -128,7 +128,7 @@ const deleteNode$ = hostname =>
   ).pipe(
     map(() => actions.deleteNode.success(hostname)),
     startWith(actions.deleteNode.request()),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.deleteNode.failure(err),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -136,12 +136,12 @@ const deleteNode$ = hostname =>
     ),
   );
 
-export const deleteNodeEpic = action$ =>
+export const deleteNodeEpic = (action$) =>
   action$.pipe(
     ofType(actions.deleteNode.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(hostname => deleteNode$(hostname)),
+    mergeMap((hostname) => deleteNode$(hostname)),
   );
 
 export default combineEpics(

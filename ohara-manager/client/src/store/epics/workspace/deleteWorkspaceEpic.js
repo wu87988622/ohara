@@ -51,7 +51,7 @@ import { deleteConnector$ } from '../connector/deleteConnectorEpic';
 import { deleteStream$ } from '../stream/deleteStreamEpic';
 import { deleteShabondi$ } from '../shabondi/deleteShabondiEpic';
 
-const deleteWorkspace$ = params => {
+const deleteWorkspace$ = (params) => {
   const workspaceId = getId(params);
   return defer(() => workspaceApi.remove(params)).pipe(
     map(() => actions.deleteWorkspace.success({ workspaceId })),
@@ -59,22 +59,22 @@ const deleteWorkspace$ = params => {
   );
 };
 
-const isRunning = state$ => (key, schema) => {
+const isRunning = (state$) => (key, schema) => {
   const data = denormalize(getId(key), schema, state$.value?.entities);
   return !isEmpty(data) && data.state === SERVICE_STATE.RUNNING;
 };
 
-const isOrphanObject = state$ => (key, schema) => {
+const isOrphanObject = (state$) => (key, schema) => {
   const data = denormalize(getId(key), schema, state$.value?.entities);
   return !isEmpty(data) && !data.state;
 };
 
-const isNonExistedObject = state$ => (key, schema) => {
+const isNonExistedObject = (state$) => (key, schema) => {
   const data = denormalize(getId(key), schema, state$.value?.entities);
   return isEmpty(data);
 };
 
-const finalize$ = options =>
+const finalize$ = (options) =>
   of(options).pipe(
     map(() => {
       if (options?.onSuccess) {
@@ -109,18 +109,18 @@ export default (action$, state$) =>
       return of(
         of(
           of(...connectorKeys).pipe(
-            mergeMap(connectorKey =>
+            mergeMap((connectorKey) =>
               deleteConnector$({ params: connectorKey }),
             ),
           ),
           of(...streamKeys).pipe(
-            mergeMap(streamKey => deleteStream$({ params: streamKey })),
+            mergeMap((streamKey) => deleteStream$({ params: streamKey })),
           ),
           of(...shabondiKeys).pipe(
-            mergeMap(shabondiKey => deleteShabondi$({ params: shabondiKey })),
+            mergeMap((shabondiKey) => deleteShabondi$({ params: shabondiKey })),
           ),
           of(...pipelineKeys).pipe(
-            mergeMap(pipelineKey => deletePipeline$(pipelineKey)),
+            mergeMap((pipelineKey) => deletePipeline$(pipelineKey)),
           ),
         ).pipe(concatAll()),
 
@@ -130,9 +130,11 @@ export default (action$, state$) =>
 
         of(
           from(
-            values(state$.value?.entities?.topics).map(topic => getKey(topic)),
+            values(state$.value?.entities?.topics).map((topic) =>
+              getKey(topic),
+            ),
           ).pipe(
-            concatMap(params =>
+            concatMap((params) =>
               stopTopic$(params).pipe(
                 takeWhile(() => isServiceRunning(params, schema.topic)),
               ),
@@ -162,9 +164,11 @@ export default (action$, state$) =>
 
         of(
           from(
-            values(state$.value?.entities?.topics).map(topic => getKey(topic)),
+            values(state$.value?.entities?.topics).map((topic) =>
+              getKey(topic),
+            ),
           ).pipe(
-            concatMap(params =>
+            concatMap((params) =>
               deleteTopic$(params).pipe(
                 takeWhile(() => isServiceOrphan(params, schema.topic)),
               ),
@@ -186,7 +190,7 @@ export default (action$, state$) =>
         of(
           deleteWorkspace$(workspaceKey),
           of(...files).pipe(
-            mergeMap(file =>
+            mergeMap((file) =>
               deleteFile$({ name: file.name, group: file.group }),
             ),
           ),
@@ -209,7 +213,7 @@ export default (action$, state$) =>
         finalize$(options),
       ).pipe(
         concatAll(),
-        catchError(err => {
+        catchError((err) => {
           if (options?.onError) {
             options.onError(err);
           }

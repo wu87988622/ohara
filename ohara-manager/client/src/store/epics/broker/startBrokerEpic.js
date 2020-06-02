@@ -37,17 +37,17 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const startBroker$ = params => {
+export const startBroker$ = (params) => {
   const brokerId = getId(params);
   return zip(
     defer(() => brokerApi.start(params)),
     defer(() => brokerApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -67,20 +67,20 @@ export const startBroker$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.broker)),
-    map(normalizedData => merge(normalizedData, { brokerId })),
-    map(normalizedData => actions.startBroker.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { brokerId })),
+    map((normalizedData) => actions.startBroker.success(normalizedData)),
     startWith(actions.startBroker.request({ brokerId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.startBroker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params =>
+    mergeMap((params) =>
       startBroker$(params).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.startBroker.failure(
               merge(err, { brokerId: getId(params) }),

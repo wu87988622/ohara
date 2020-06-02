@@ -40,7 +40,7 @@ export const useBrokerId = () => {
 export const useIsBrokerLoaded = () => {
   const brokerId = hooks.useBrokerId();
   const selector = useCallback(
-    state => selectors.isBrokerLoaded(state, { id: brokerId }),
+    (state) => selectors.isBrokerLoaded(state, { id: brokerId }),
     [brokerId],
   );
   return useSelector(selector);
@@ -49,7 +49,7 @@ export const useIsBrokerLoaded = () => {
 export const useIsBrokerLoading = () => {
   const brokerId = hooks.useBrokerId();
   const selector = useCallback(
-    state => selectors.isBrokerLoading(state, { id: brokerId }),
+    (state) => selectors.isBrokerLoading(state, { id: brokerId }),
     [brokerId],
   );
   return useSelector(selector);
@@ -66,7 +66,7 @@ export const useBroker = () => {
   }, [isLoaded, fetchBroker, name]);
 
   const selector = useCallback(
-    state =>
+    (state) =>
       merge(
         selectors.getBrokerById(state, { id: brokerId }),
         selectors.getInfoById(state, { id: brokerId }),
@@ -77,7 +77,7 @@ export const useBroker = () => {
 };
 
 export const useAllBrokers = () => {
-  const selector = useCallback(state => selectors.getAllBrokers(state), []);
+  const selector = useCallback((state) => selectors.getAllBrokers(state), []);
   return useSelector(selector);
 };
 
@@ -85,7 +85,7 @@ export const useFetchBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    name => dispatch(actions.fetchBroker.trigger({ group, name })),
+    (name) => dispatch(actions.fetchBroker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -94,7 +94,7 @@ export const useCreateBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    values => dispatch(actions.createBroker.trigger({ ...values, group })),
+    (values) => dispatch(actions.createBroker.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -103,7 +103,7 @@ export const useUpdateBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    values => dispatch(actions.updateBroker.trigger({ ...values, group })),
+    (values) => dispatch(actions.updateBroker.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -112,7 +112,7 @@ export const useStartBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    name => dispatch(actions.startBroker.trigger({ group, name })),
+    (name) => dispatch(actions.startBroker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -121,7 +121,7 @@ export const useStopBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    name => dispatch(actions.stopBroker.trigger({ group, name })),
+    (name) => dispatch(actions.stopBroker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -130,7 +130,7 @@ export const useDeleteBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    name => dispatch(actions.deleteBroker.trigger({ group, name })),
+    (name) => dispatch(actions.deleteBroker.trigger({ group, name })),
     [dispatch, group],
   );
 };

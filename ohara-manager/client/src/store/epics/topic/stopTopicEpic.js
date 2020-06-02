@@ -36,16 +36,16 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const stopTopic$ = params => {
+export const stopTopic$ = (params) => {
   const topicId = getId(params);
   return zip(
     defer(() => topicApi.stop(params)),
     defer(() => topicApi.get(params)).pipe(
-      map(res => {
+      map((res) => {
         if (res.data.state) throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -65,20 +65,20 @@ export const stopTopic$ = params => {
     ),
   ).pipe(
     map(([, data]) => normalize(data, schema.topic)),
-    map(normalizedData => merge(normalizedData, { topicId })),
-    map(normalizedData => actions.stopTopic.success(normalizedData)),
+    map((normalizedData) => merge(normalizedData, { topicId })),
+    map((normalizedData) => actions.stopTopic.success(normalizedData)),
     startWith(actions.stopTopic.request({ topicId })),
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.stopTopic.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values =>
+    mergeMap((values) =>
       stopTopic$(values).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.stopTopic.failure(merge(err, { topicId: getId(values) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

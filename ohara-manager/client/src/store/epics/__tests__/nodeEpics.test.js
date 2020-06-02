@@ -45,7 +45,7 @@ const makeTestScheduler = () =>
 
 // create action
 it('create node should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
@@ -84,7 +84,7 @@ it('create node should be worked correctly', () => {
 });
 
 it('create multiple nodes should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
@@ -142,7 +142,7 @@ it('create multiple nodes should be worked correctly', () => {
 });
 
 it('create same node within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a    ';
@@ -190,7 +190,7 @@ it('throw exception of create node should also trigger event log action', () => 
     .spyOn(nodeApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
@@ -232,7 +232,7 @@ it('throw exception of create node should also trigger event log action', () => 
 
 // update action
 it('update node should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -271,7 +271,7 @@ it('update node should be worked correctly', () => {
 });
 
 it('update node multiple times should got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s            ';
@@ -361,7 +361,7 @@ it('throw exception of update node should also trigger event log action', () => 
     .spyOn(nodeApi, 'update')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
@@ -403,7 +403,7 @@ it('throw exception of update node should also trigger event log action', () => 
 
 // fetch action
 it('fetch node list should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
@@ -441,7 +441,7 @@ it('fetch node list should be worked correctly', () => {
 });
 
 it('fetch node list multiple times within period should get first result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 50ms a   ';
@@ -488,7 +488,7 @@ it('throw exception of fetch node list should also trigger event log action', ()
     .spyOn(nodeApi, 'getAll')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
@@ -530,7 +530,7 @@ it('throw exception of fetch node list should also trigger event log action', ()
 
 // delete action
 it('delete node should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -582,7 +582,7 @@ it('delete node failed after reach retry limit', () => {
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
@@ -628,7 +628,7 @@ it('delete node failed after reach retry limit', () => {
 });
 
 it('delete node multiple times should be executed once', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
@@ -660,7 +660,7 @@ it('delete node multiple times should be executed once', () => {
 });
 
 it('delete different node should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherNodeEntity = {

@@ -17,50 +17,50 @@
 import { isArray } from 'lodash';
 
 // Return `undefined` means the test has passed!
-export const required = value =>
+export const required = (value) =>
   value ? undefined : 'This is a required field';
 
-export const validServiceName = value => {
+export const validServiceName = (value) => {
   return /[^0-9a-z]/g.test(value)
     ? 'You only can use lower case letters and numbers'
     : undefined;
 };
 
-export const minLength = min => value => {
+export const minLength = (min) => (value) => {
   return value.length >= min
     ? undefined
     : `The value must be greater than or equal to ${min} characters long`;
 };
 
-export const maxLength = max => value => {
+export const maxLength = (max) => (value) => {
   return value.length <= max
     ? undefined
     : `The value must be less than or equal to ${max} characters long`;
 };
 
-export const minNumber = min => value => {
+export const minNumber = (min) => (value) => {
   return value >= min
     ? undefined
     : `The value must be greater than or equal to ${min}`;
 };
 
-export const maxNumber = max => value => {
+export const maxNumber = (max) => (value) => {
   return value <= max
     ? undefined
     : `The value must be less than or equal to ${max}`;
 };
 
-export const validWithRegex = regex => value => {
+export const validWithRegex = (regex) => (value) => {
   return regex.test(value)
     ? `The value does not meet the rules ${regex}`
     : undefined;
 };
 
-export const checkDuplicate = validateList => value => {
+export const checkDuplicate = (validateList) => (value) => {
   // we skip this function if the validate list is empty
   if (!validateList || !isArray(validateList)) return undefined;
   return (
-    validateList.find(validate => Object.is(value, validate)) &&
+    validateList.find((validate) => Object.is(value, validate)) &&
     `The value ${value} is in used`
   );
 };
@@ -71,7 +71,7 @@ export const composeValidators = (...validators) => (value, allValues, meta) =>
     undefined,
   );
 
-export const validWithDef = def => value => {
+export const validWithDef = (def) => (value) => {
   const { necessary, regex, blacklist } = def;
   if (necessary === 'REQUIRED') {
     const requiredValue = required(value);
@@ -80,7 +80,7 @@ export const validWithDef = def => value => {
     }
   }
   if (blacklist.length > 0) {
-    if (blacklist.find(black => black === value)) {
+    if (blacklist.find((black) => black === value)) {
       return 'The value is listed in the blacklist and so cannot be used';
     }
   }

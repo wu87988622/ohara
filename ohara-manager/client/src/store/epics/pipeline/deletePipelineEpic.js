@@ -51,7 +51,7 @@ const deleteStream$ = (params, paperApi) => {
 
 const deleteAllStreams$ = (streams, paperApi) => {
   return of(...streams).pipe(
-    mergeMap(stream => deleteStream$(stream, paperApi)),
+    mergeMap((stream) => deleteStream$(stream, paperApi)),
   );
 };
 
@@ -68,7 +68,7 @@ const deleteConnector$ = (params, paperApi) => {
 
 const deleteAllConnectors$ = (connectors, paperApi) => {
   return of(...connectors).pipe(
-    mergeMap(connector => deleteConnector$(connector, paperApi)),
+    mergeMap((connector) => deleteConnector$(connector, paperApi)),
   );
 };
 
@@ -84,11 +84,11 @@ const deleteShabondi$ = (params, paperApi) => {
 
 const deleteAllShabondis$ = (shabondis, paperApi) => {
   return of(...shabondis).pipe(
-    mergeMap(shabondi => deleteShabondi$(shabondi, paperApi)),
+    mergeMap((shabondi) => deleteShabondi$(shabondi, paperApi)),
   );
 };
 
-const stopTopic$ = params => {
+const stopTopic$ = (params) => {
   return defer(() => topicApi.stop(params)).pipe(
     map(() => actions.stopTopic.request(params)),
   );
@@ -97,7 +97,7 @@ const stopTopic$ = params => {
 const waitUntilTopicStopped$ = (params, paperApi) => {
   const { id, name, group } = params;
   return defer(() => topicApi.get({ name, group })).pipe(
-    map(res => {
+    map((res) => {
       if (res.data.state) throw res;
 
       paperApi.updateElement(
@@ -107,7 +107,7 @@ const waitUntilTopicStopped$ = (params, paperApi) => {
       );
       return actions.stopTopic.success(res.data);
     }),
-    retryWhen(errors =>
+    retryWhen((errors) =>
       errors.pipe(
         concatMap((value, index) =>
           iif(
@@ -140,7 +140,7 @@ const deleteTopic$ = (params, paperApi) => {
 
 const stopAndDeleteAllTopics$ = (topics, paperApi) => {
   return of(...topics).pipe(
-    mergeMap(topic => {
+    mergeMap((topic) => {
       // Allow users to delete topics that don't have the "correct status" like pending or stopped since normally, topic status should always be running in our UI
       if (
         topic.status.toLowerCase() === CELL_STATUS.stopped ||
@@ -158,7 +158,7 @@ const stopAndDeleteAllTopics$ = (topics, paperApi) => {
   );
 };
 
-export const deletePipeline$ = params => {
+export const deletePipeline$ = (params) => {
   const pipelineId = getId(params);
   return defer(() => pipelineApi.remove(params)).pipe(
     mergeMap(() => {
@@ -171,21 +171,21 @@ export const deletePipeline$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.deletePipeline.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ params, options }) => {
       const { name, group, cells } = params;
       const { paperApi } = options;
-      const streams = cells.filter(cell => cell.kind === KIND.stream);
+      const streams = cells.filter((cell) => cell.kind === KIND.stream);
       const connectors = cells
-        .filter(cell => !isShabondi(cell.className))
-        .filter(cell => cell.kind === KIND.source || cell.kind === KIND.sink);
+        .filter((cell) => !isShabondi(cell.className))
+        .filter((cell) => cell.kind === KIND.source || cell.kind === KIND.sink);
 
-      const shabondis = cells.filter(cell => isShabondi(cell.className));
+      const shabondis = cells.filter((cell) => isShabondi(cell.className));
       const topics = cells.filter(
-        cell => cell.kind === KIND.topic && !cell.isShared,
+        (cell) => cell.kind === KIND.topic && !cell.isShared,
       );
 
       return of(
@@ -196,7 +196,7 @@ export default action$ =>
         deletePipeline$({ group, name }),
       ).pipe(
         concatAll(),
-        catchError(err => {
+        catchError((err) => {
           return from([
             actions.deletePipeline.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

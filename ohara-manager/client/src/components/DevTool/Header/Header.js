@@ -50,7 +50,7 @@ const Header = () => {
     if (!isOpen || (prevSelectedCell === selectedCell && prevTab === tabName))
       return;
 
-    const getService = kind => {
+    const getService = (kind) => {
       if (kind === KIND.source || kind === KIND.sink) return KIND.worker;
       if (kind === KIND.topic) return KIND.broker;
       if (kind === KIND.stream) return KIND.stream;

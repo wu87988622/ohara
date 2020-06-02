@@ -17,34 +17,34 @@
 const fs = require('fs');
 
 const copyJars = () => {
-  fs.access('./client/cypress/fixtures/plugin/', err => {
+  fs.access('./client/cypress/fixtures/plugin/', (err) => {
     if (err) {
       fs.mkdirSync('./client/cypress/fixtures/plugin');
     }
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-source.jar',
       'client/cypress/fixtures/plugin/ohara-it-source.jar',
-      err => {
+      (err) => {
         if (err) throw err;
       },
     );
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-sink.jar',
       'client/cypress/fixtures/plugin/ohara-it-sink.jar',
-      err => {
+      (err) => {
         if (err) throw err;
       },
     );
   });
 
-  fs.access('./client/cypress/fixtures/stream', err => {
+  fs.access('./client/cypress/fixtures/stream', (err) => {
     if (err) {
       fs.mkdirSync('./client/cypress/fixtures/stream');
     }
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-stream.jar',
       'client/cypress/fixtures/stream/ohara-it-stream.jar',
-      err => {
+      (err) => {
         if (err) throw err;
       },
     );

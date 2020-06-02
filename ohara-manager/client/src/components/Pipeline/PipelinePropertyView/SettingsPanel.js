@@ -28,15 +28,15 @@ import * as defUtils from 'api/apiInterface/definitionInterface';
 import * as propertyUtils from './PipelinePropertyViewUtils';
 import * as hooks from 'hooks';
 
-const SettingsPanel = props => {
+const SettingsPanel = (props) => {
   const { settings, setTags, setFullTagViewDialogOpen } = props;
   const [isSettingsExpanded, setIsSettingsExpanded] = React.useState(true);
   const topics = hooks.useTopicsInPipeline();
 
-  const getIgnoreDefs = settings => {
+  const getIgnoreDefs = (settings) => {
     return settings.settingDefinitions
-      .filter(def => def.internal)
-      .map(def => def.key)
+      .filter((def) => def.internal)
+      .map((def) => def.key)
       .concat([
         'brokerClusterKey',
         'workerClusterKey',
@@ -52,7 +52,7 @@ const SettingsPanel = props => {
     const { settingDefinitions: defs } = settings;
     const currentSetting = settings[key];
     const defValueType = defUtils.Type;
-    const valueType = defs.find(def => def.key === key).valueType;
+    const valueType = defs.find((def) => def.key === key).valueType;
 
     switch (valueType) {
       case defValueType.TAGS:
@@ -75,10 +75,10 @@ const SettingsPanel = props => {
         });
       case defValueType.OBJECT_KEYS:
         const objectArray = currentSetting
-          .map(value => value.name)
-          .map(value => {
-            if (topics.map(topic => topic.name).includes(value)) {
-              const topic = topics.find(topic => topic.name === value);
+          .map((value) => value.name)
+          .map((value) => {
+            if (topics.map((topic) => topic.name).includes(value)) {
+              const topic = topics.find((topic) => topic.name === value);
               return topic?.displayName ? topic.displayName : topic.name;
             } else {
               return value;
@@ -129,7 +129,7 @@ const SettingsPanel = props => {
     <ExpansionPanel defaultExpanded={true} expanded={isSettingsExpanded} square>
       <ExpansionPanelSummary
         expandIcon={<ExpandMoreIcon />}
-        onClick={() => setIsSettingsExpanded(prevState => !prevState)}
+        onClick={() => setIsSettingsExpanded((prevState) => !prevState)}
       >
         <TuneIcon fontSize="small" />
         <Typography className="section-title" variant="h5">
@@ -138,20 +138,20 @@ const SettingsPanel = props => {
       </ExpansionPanelSummary>
       <ExpansionPanelDetails>
         {Object.keys(settings)
-          .filter(key => !getIgnoreDefs(settings).includes(key))
-          .filter(key => {
+          .filter((key) => !getIgnoreDefs(settings).includes(key))
+          .filter((key) => {
             // We're not displaying empty array or object
             const item = settings[key];
             if (_.isObject(item) && _.isEmpty(item)) return false;
 
             return true;
           })
-          .filter(key => {
+          .filter((key) => {
             return settings.settingDefinitions
-              .map(def => def.key)
-              .find(defKey => defKey === key);
+              .map((def) => def.key)
+              .find((defKey) => defKey === key);
           })
-          .map(key => renderSettings(settings, key))}
+          .map((key) => renderSettings(settings, key))}
       </ExpansionPanelDetails>
     </ExpansionPanel>
   );

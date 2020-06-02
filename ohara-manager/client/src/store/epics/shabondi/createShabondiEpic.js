@@ -32,21 +32,21 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createShabondi$ = value => {
+const createShabondi$ = (value) => {
   const { values, options } = value;
   const shabondiId = getId(values);
   return defer(() => shabondiApi.create(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.shabondi)),
-    map(normalizedData => {
+    map((res) => res.data),
+    map((data) => normalize(data, schema.shabondi)),
+    map((normalizedData) => {
       options.paperApi.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { shabondiId });
     }),
-    map(normalizedData => actions.createShabondi.success(normalizedData)),
+    map((normalizedData) => actions.createShabondi.success(normalizedData)),
     startWith(actions.createShabondi.request({ shabondiId })),
-    catchError(err => {
+    catchError((err) => {
       options.paperApi.removeElement(values.id);
       return from([
         actions.createShabondi.failure(merge(err, { shabondiId })),
@@ -56,10 +56,10 @@ const createShabondi$ = value => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createShabondi.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => createShabondi$(value)),
+    mergeMap((value) => createShabondi$(value)),
   );

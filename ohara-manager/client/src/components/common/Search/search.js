@@ -24,9 +24,9 @@ import {
   toLower,
 } from 'lodash';
 
-const createSearch = keys => (data, searchText) => {
-  return filter(data, obj => {
-    return some(keys, key => {
+const createSearch = (keys) => (data, searchText) => {
+  return filter(data, (obj) => {
+    return some(keys, (key) => {
       const value = get(obj, key);
       if (isString(value) || isNumber(value)) {
         return includes(toLower(value), toLower(searchText));

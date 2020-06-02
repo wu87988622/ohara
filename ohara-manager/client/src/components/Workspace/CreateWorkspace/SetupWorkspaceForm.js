@@ -27,7 +27,7 @@ import InputField from 'components/common/Form/InputField';
 import { checkDuplicate } from 'utils/validate';
 import validate from './validate';
 
-const SetupWorkspaceForm = props => {
+const SetupWorkspaceForm = (props) => {
   const {
     handleSubmit,
     previousStep,

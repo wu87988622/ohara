@@ -33,7 +33,7 @@ const values = {
 };
 
 it('set devTool log query params should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

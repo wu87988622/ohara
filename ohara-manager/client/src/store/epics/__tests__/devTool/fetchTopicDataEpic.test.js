@@ -49,7 +49,7 @@ const stateValues = {
 };
 
 it('fetch topic data should be executed correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const state$ = new StateObservable(hot('v', { v: stateValues }));
@@ -80,7 +80,7 @@ it('fetch topic data should be executed correctly', () => {
 });
 
 it('fetch topic data multiple times should be executed the first one until finished', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
     const spyGetTopicData = jest.spyOn(inspectApi, 'getTopicData');
 
@@ -123,7 +123,7 @@ it('throw exception of fetch topic data should also trigger event log action', (
     .spyOn(inspectApi, 'getTopicData')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

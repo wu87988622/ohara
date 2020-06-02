@@ -23,11 +23,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 // Mui TextField also supports native select, that's why
 // we're not using Mui's <Select /> component directly here
 const StyledSelect = styled(TextField)`
-  width: ${props => props.width};
-  margin: ${props => props.theme.spacing(1)}px;
+  width: ${(props) => props.width};
+  margin: ${(props) => props.theme.spacing(1)}px;
 `;
 
-const Select = props => {
+const Select = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},
@@ -54,7 +54,7 @@ const Select = props => {
       value={_value}
       width={width}
     >
-      {_list.map(item => {
+      {_list.map((item) => {
         const disabled = disables.includes(item);
         return (
           <MenuItem disabled={disabled} key={item} value={item}>

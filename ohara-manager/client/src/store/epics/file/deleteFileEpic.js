@@ -30,24 +30,24 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const deleteFile$ = file =>
+export const deleteFile$ = (file) =>
   defer(() => fileApi.remove(file)).pipe(
     map(() => getId(file)),
-    map(id => actions.deleteFile.success({ fileId: id })),
+    map((id) => actions.deleteFile.success({ fileId: id })),
     startWith(actions.deleteFile.request()),
   );
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.deleteFile.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(params => {
+    mergeMap((params) => {
       const fileId = getId(params);
       return defer(() => fileApi.remove(params)).pipe(
         map(() => actions.deleteFile.success({ fileId })),
         startWith(actions.deleteFile.request({ fileId })),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.deleteFile.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

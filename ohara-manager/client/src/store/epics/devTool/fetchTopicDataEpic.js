@@ -26,8 +26,8 @@ import * as selectors from 'store/selectors';
 export default (action$, state$) =>
   action$.pipe(
     ofType(actions.fetchDevToolTopicData.TRIGGER),
-    map(action => action.payload),
-    exhaustMap(values =>
+    map((action) => action.payload),
+    exhaustMap((values) =>
       defer(() => {
         const getDevToolTopicData = selectors.makeGetDevToolTopicData();
         const topicData = getDevToolTopicData(state$.value);
@@ -40,8 +40,8 @@ export default (action$, state$) =>
           limit: topicData.query.limit,
         });
       }).pipe(
-        map(res => actions.fetchDevToolTopicData.success(res.data.messages)),
-        catchError(err =>
+        map((res) => actions.fetchDevToolTopicData.success(res.data.messages)),
+        catchError((err) =>
           from([
             actions.fetchDevToolTopicData.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

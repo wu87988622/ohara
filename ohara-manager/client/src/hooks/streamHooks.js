@@ -24,12 +24,12 @@ import * as selectors from 'store/selectors';
 import { hashByGroupAndName } from 'utils/sha';
 
 export const useIsStreamLoaded = () => {
-  const mapState = useCallback(state => !!state.ui.stream?.lastUpdated, []);
+  const mapState = useCallback((state) => !!state.ui.stream?.lastUpdated, []);
   return useSelector(mapState);
 };
 
 export const useIsStreamLoading = () => {
-  const mapState = useCallback(state => !!state.ui.stream?.loading, []);
+  const mapState = useCallback((state) => !!state.ui.stream?.loading, []);
   return useSelector(mapState);
 };
 
@@ -125,9 +125,9 @@ export const useStreams = () => {
     fetchStreams();
   }, [fetchStreams, isAppReady, isStreamLoaded, isStreamLoading]);
 
-  return useSelector(state => {
+  return useSelector((state) => {
     const streams = selectors.getStreamByGroup(state, { group });
-    const results = streams.map(stream => {
+    const results = streams.map((stream) => {
       const { stream__class: className, jarKey } = stream;
       const info = selectors.getStreamInfo(state, { jarKey, className });
       const settingDefinitions = info?.settingDefinitions || [];
@@ -176,13 +176,13 @@ export const useUpdateStreamLinkAction = () => {
       if (!isEmpty(values.from)) {
         newValues = {
           ...values,
-          from: values.from.map(t => ({ ...t, group: topicGroup })),
+          from: values.from.map((t) => ({ ...t, group: topicGroup })),
           group: streamGroup,
         };
       } else if (!isEmpty(values.to)) {
         newValues = {
           ...values,
-          to: values.to.map(t => ({ ...t, group: topicGroup })),
+          to: values.to.map((t) => ({ ...t, group: topicGroup })),
           group: streamGroup,
         };
       }

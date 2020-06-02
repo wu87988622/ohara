@@ -52,7 +52,7 @@ export const info = new schema.Entity(ENTITY_TYPE.infos, undefined, {
 });
 
 export const node = new schema.Entity(ENTITY_TYPE.nodes, undefined, {
-  idAttribute: node => node.hostname,
+  idAttribute: (node) => node.hostname,
 });
 
 export const pipeline = new schema.Entity(ENTITY_TYPE.pipelines, undefined, {

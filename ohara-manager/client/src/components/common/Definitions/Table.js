@@ -59,7 +59,7 @@ const tableIcons = {
   ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
 };
 
-const typeConverter = key => {
+const typeConverter = (key) => {
   switch (key) {
     case 'number':
       return 'numeric';
@@ -71,7 +71,7 @@ const typeConverter = key => {
   }
 };
 
-const Table = props => {
+const Table = (props) => {
   const {
     input: { name, onChange, value = [] },
     meta = {},
@@ -84,7 +84,7 @@ const Table = props => {
   const stateRef = React.useRef({});
 
   stateRef.current = {
-    columns: tableKeys.map(tableKey => {
+    columns: tableKeys.map((tableKey) => {
       return {
         title: tableKey.name,
         field: tableKey.name,
@@ -104,8 +104,8 @@ const Table = props => {
         columns={stateRef.current.columns}
         data={stateRef.current.data}
         editable={{
-          onRowAdd: newData =>
-            new Promise(resolve => {
+          onRowAdd: (newData) =>
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
                 const newRow = () => {
@@ -118,7 +118,7 @@ const Table = props => {
               });
             }),
           onRowUpdate: (newData, oldData) =>
-            new Promise(resolve => {
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
                 if (oldData) {
@@ -132,8 +132,8 @@ const Table = props => {
                 }
               });
             }),
-          onRowDelete: oldData =>
-            new Promise(resolve => {
+          onRowDelete: (oldData) =>
+            new Promise((resolve) => {
               setTimeout(() => {
                 resolve();
                 const newRow = () => {

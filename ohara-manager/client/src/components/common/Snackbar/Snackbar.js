@@ -26,7 +26,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import { mapStateToProps } from './SnackbarContainer';
 import * as actions from 'store/actions';
 
-const SnackBar = props => {
+const SnackBar = (props) => {
   const handleClose = (event, reason) => {
     // Disable when a mouse click is on `body`, closing the
     // snackbar behavior

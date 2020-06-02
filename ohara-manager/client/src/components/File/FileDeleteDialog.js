@@ -20,7 +20,7 @@ import { isFunction } from 'lodash';
 import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
-  content: file =>
+  content: (file) =>
     `Are you sure you want to delete the file ${file?.name} ? This action cannot be undone!`,
   title: 'Delete file?',
 };

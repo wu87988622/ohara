@@ -32,7 +32,7 @@ const makeTestScheduler = () =>
   });
 
 it('fetch file list should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s    ';
@@ -68,7 +68,7 @@ it('fetch file list should be worked correctly', () => {
 });
 
 it('fetch file list multiple times within period should get first result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 50ms a   ';

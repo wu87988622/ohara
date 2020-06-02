@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 it('create workspace should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                ';
@@ -279,7 +279,7 @@ it('create workspace should be failure if one of the services start failed', () 
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a               ';

@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('update zookeeper should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -77,7 +77,7 @@ it('update zookeeper should be worked correctly', () => {
 });
 
 it('update zookeeper multiple times should got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s            ';
@@ -179,7 +179,7 @@ it('throw exception of update zookeeper should also trigger event log action', (
     .spyOn(zookeeperApi, 'update')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

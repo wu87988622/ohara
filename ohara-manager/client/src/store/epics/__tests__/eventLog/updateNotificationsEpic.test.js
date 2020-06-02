@@ -51,7 +51,7 @@ it('update notification should be executed correctly', () => {
     },
   };
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     localStorage.setItem(warningKey, 21);
     localStorage.setItem(errorKey, 6);
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
@@ -127,7 +127,7 @@ it('empty payload for update notification should be executed correctly', () => {
     },
   };
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     localStorage.setItem(warningKey, 21);
     localStorage.setItem(errorKey, 6);
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;

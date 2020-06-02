@@ -26,22 +26,22 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL, CELL_TYPES } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateStream.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     mergeMap(({ values, options }) => {
       const streamId = getId(values);
       return defer(() => streamApi.update(values)).pipe(
-        map(res => normalize(res.data, schema.stream)),
-        map(normalizedData => {
+        map((res) => normalize(res.data, schema.stream)),
+        map((normalizedData) => {
           handleSuccess(values, options);
           return actions.updateStream.success(
             _.merge(normalizedData, { streamId }),
           );
         }),
         startWith(actions.updateStream.request({ streamId })),
-        catchError(error =>
+        catchError((error) =>
           from([
             actions.updateStream.failure(_.merge(error, { streamId })),
             actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
@@ -57,7 +57,7 @@ function handleSuccess(values, options) {
   const { paperApi, cell, topics, streams } = options;
   const cells = paperApi.getCells();
 
-  const currentStream = streams.find(stream => stream.name === values.name);
+  const currentStream = streams.find((stream) => stream.name === values.name);
   const hasTo = values.to?.length > 0;
   const hasFrom = values.from?.length > 0;
   const currentHasTo = currentStream.to?.length > 0;
@@ -67,8 +67,9 @@ function handleSuccess(values, options) {
     const streamId = paperApi.getCell(values.name).id;
     const topicId = paperApi.getCell(currentStream.to[0].name).id;
     const linkId = cells
-      .filter(cell => cell.cellType === CELL_TYPES.LINK)
-      .find(cell => cell.sourceId === streamId && cell.targetId === topicId).id;
+      .filter((cell) => cell.cellType === CELL_TYPES.LINK)
+      .find((cell) => cell.sourceId === streamId && cell.targetId === topicId)
+      .id;
     paperApi.removeLink(linkId);
   }
 
@@ -76,19 +77,23 @@ function handleSuccess(values, options) {
     const streamId = paperApi.getCell(values.name).id;
     const topicId = paperApi.getCell(currentStream.from[0].name).id;
     const linkId = cells
-      .filter(cell => cell.cellType === CELL_TYPES.LINK)
-      .find(cell => cell.sourceId === topicId && cell.targetId === streamId).id;
+      .filter((cell) => cell.cellType === CELL_TYPES.LINK)
+      .find((cell) => cell.sourceId === topicId && cell.targetId === streamId)
+      .id;
 
     paperApi.removeLink(linkId);
   }
 
   if (hasTo) {
-    paperApi.addLink(cell.id, topics.find(topic => topic.key === 'to').data.id);
+    paperApi.addLink(
+      cell.id,
+      topics.find((topic) => topic.key === 'to').data.id,
+    );
   }
 
   if (hasFrom) {
     paperApi.addLink(
-      topics.find(topic => topic.key === 'from').data.id,
+      topics.find((topic) => topic.key === 'from').data.id,
       cell.id,
     );
   }

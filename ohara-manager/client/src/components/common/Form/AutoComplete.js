@@ -26,7 +26,7 @@ const Wrapper = styled.div`
   width: 100%;
 `;
 
-const AutoComplete = props => {
+const AutoComplete = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta,
@@ -42,7 +42,7 @@ const AutoComplete = props => {
   const { helperText, ...lessRest } = rest;
   const { variant, ...restTextFieldProps } = textFieldProps;
 
-  const getValue = values => {
+  const getValue = (values) => {
     if (!getOptionValue) {
       return values;
     }
@@ -67,11 +67,11 @@ const AutoComplete = props => {
   if (!getOptionValue) {
     defaultValue = value;
   } else if (value !== undefined && value !== null) {
-    forEach(options, option => {
+    forEach(options, (option) => {
       const optionValue = getOptionValue(option);
       if (multiple) {
         if (!defaultValue) defaultValue = [];
-        forEach(value, v => {
+        forEach(value, (v) => {
           if (v === optionValue) defaultValue.push(option);
         });
       } else {
@@ -88,7 +88,7 @@ const AutoComplete = props => {
         multiple={multiple}
         onChange={handleChange}
         options={options}
-        renderInput={params => (
+        renderInput={(params) => (
           <TextField
             error={showError}
             fullWidth={true}

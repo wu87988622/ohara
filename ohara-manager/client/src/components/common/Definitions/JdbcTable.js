@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const JdbcTable = props => {
+const JdbcTable = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},

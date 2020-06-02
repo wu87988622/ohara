@@ -24,7 +24,7 @@ const StyledTooltip = styled(MuiTooltip)`
   line-height: 0;
 `;
 
-const Tooltip = props => {
+const Tooltip = (props) => {
   const { children, enterDelay = 1000, ...rest } = props;
 
   return (

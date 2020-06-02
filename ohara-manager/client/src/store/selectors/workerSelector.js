@@ -17,7 +17,7 @@
 import { get, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.workers;
+const getEntities = (state) => state?.entities?.workers;
 
 const getIdFromProps = (_, props) => props?.id;
 
@@ -27,7 +27,7 @@ export const isWorkerLoaded = (state, props) =>
 export const isWorkerLoading = (state, props) =>
   !!get(state, ['ui', 'workers', props?.id, 'loading']);
 
-export const getAllWorkers = createSelector([getEntities], entities =>
+export const getAllWorkers = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 

@@ -96,11 +96,11 @@ export default (action$, state$) =>
             throw new Error('Unsupported logType');
         }
       }).pipe(
-        concatMap(res =>
+        concatMap((res) =>
           from(
             [
               actions.fetchDevToolLog.success(
-                _.map(res.data.logs, log => ({
+                _.map(res.data.logs, (log) => ({
                   name: log.hostname,
                   logs: _.split(log.value, '\n'),
                 })),
@@ -113,7 +113,7 @@ export default (action$, state$) =>
             queueScheduler,
           ),
         ),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.fetchDevToolLog.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

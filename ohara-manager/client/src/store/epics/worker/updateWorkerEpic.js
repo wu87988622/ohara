@@ -32,13 +32,13 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateWorkerAndWorkspace$ = values => {
+export const updateWorkerAndWorkspace$ = (values) => {
   const workerId = getId(values);
   return defer(() => workerApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.worker)),
-    map(normalizedData => merge(normalizedData, { workerId })),
-    concatMap(normalizedData =>
+    map((res) => res.data),
+    map((data) => normalize(data, schema.worker)),
+    map((normalizedData) => merge(normalizedData, { workerId })),
+    concatMap((normalizedData) =>
       from([
         actions.updateWorkspace.trigger({
           worker: normalizedData,
@@ -51,15 +51,15 @@ export const updateWorkerAndWorkspace$ = values => {
   );
 };
 
-const updateWorker$ = values => {
+const updateWorker$ = (values) => {
   const workerId = getId(values);
   return defer(() => workerApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.worker)),
-    map(normalizedData => merge(normalizedData, { workerId })),
-    map(normalizedData => actions.updateWorker.success(normalizedData)),
+    map((res) => res.data),
+    map((data) => normalize(data, schema.worker)),
+    map((normalizedData) => merge(normalizedData, { workerId })),
+    map((normalizedData) => actions.updateWorker.success(normalizedData)),
     startWith(actions.updateWorker.request({ workerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.updateWorker.failure(merge(err, { workerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -68,9 +68,9 @@ const updateWorker$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorker.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => updateWorker$(values)),
+    map((action) => action.payload),
+    mergeMap((values) => updateWorker$(values)),
   );

@@ -23,7 +23,7 @@ import CardActionArea from '@material-ui/core/CardActionArea';
 import Typography from '@material-ui/core/Typography';
 import StorageIcon from '@material-ui/icons/Storage';
 
-const WorkspaceCard = props => {
+const WorkspaceCard = (props) => {
   const { onClick, sm = false, title, content } = props;
 
   const StyledNodeCard = styled(Card)(

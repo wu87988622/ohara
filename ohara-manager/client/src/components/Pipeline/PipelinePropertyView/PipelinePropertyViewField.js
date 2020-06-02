@@ -23,7 +23,7 @@ import NumberFormat from 'react-number-format';
 import { Tooltip } from 'components/common/Tooltip';
 import { FieldWrapper } from './PipelinePropertyViewFieldStyles';
 
-const PipelinePropertyViewField = props => {
+const PipelinePropertyViewField = (props) => {
   const {
     label,
     value,

@@ -33,10 +33,10 @@ import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const createTopic$ = params => {
+export const createTopic$ = (params) => {
   const topicId = getId(params);
   return defer(() => topicApi.create(params)).pipe(
-    mergeMap(res => {
+    mergeMap((res) => {
       const normalizedData = normalize(res.data, schema.topic);
       return of(
         actions.createTopic.success(merge(normalizedData, { topicId })),
@@ -46,14 +46,14 @@ export const createTopic$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createTopic.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values =>
+    mergeMap((values) =>
       createTopic$(values).pipe(
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.createTopic.failure(merge(err, { topicId: getId(values) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

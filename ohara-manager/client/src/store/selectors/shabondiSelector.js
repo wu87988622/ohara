@@ -17,12 +17,12 @@
 import _ from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.shabondis;
+const getEntities = (state) => state?.entities?.shabondis;
 
 const getGroupFromProps = (_, props) => props?.group;
 
 export const getShabondisByGroup = createSelector(
   [getEntities, getGroupFromProps],
   (entities, group) =>
-    _.values(entities).filter(shabondi => shabondi.group === group),
+    _.values(entities).filter((shabondi) => shabondi.group === group),
 );

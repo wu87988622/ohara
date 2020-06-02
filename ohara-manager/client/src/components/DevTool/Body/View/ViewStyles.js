@@ -50,5 +50,5 @@ export const StyledTableErrorCell = styled(TableCell)(
 );
 
 export const StyledContent = styled.div`
-  padding-bottom: ${props => props.theme.spacing(1)}px;
+  padding-bottom: ${(props) => props.theme.spacing(1)}px;
 `;

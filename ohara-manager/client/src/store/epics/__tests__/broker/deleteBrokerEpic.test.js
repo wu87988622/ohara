@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('delete broker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -71,7 +71,7 @@ it('delete broker should be worked correctly', () => {
 });
 
 it('delete multiple brokers should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
@@ -125,7 +125,7 @@ it('delete multiple brokers should be worked correctly', () => {
 });
 
 it('delete same broker within period should be deleted once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a---';
@@ -171,7 +171,7 @@ it('throw exception of delete broker should also trigger event log action', () =
     .spyOn(brokerApi, 'remove')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

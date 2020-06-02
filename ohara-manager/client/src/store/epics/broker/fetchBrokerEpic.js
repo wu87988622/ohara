@@ -36,31 +36,31 @@ import { LOG_LEVEL } from 'const';
 
 const addSettingDefByKeyAndType = (...args) => new UISettingDef(...args);
 
-const fetchBroker$ = params => {
+const fetchBroker$ = (params) => {
   const brokerId = getId(params);
   return forkJoin(
     defer(() => brokerApi.get(params)).pipe(
-      map(res => res.data),
-      map(data => normalize(data, schema.broker)),
+      map((res) => res.data),
+      map((data) => normalize(data, schema.broker)),
     ),
     defer(() => inspectApi.getBrokerInfo(params)).pipe(
       // add UI SettingDef to the broker info
       // Note: it is a workaround solution!
-      map(res => {
+      map((res) => {
         get(res.data.classInfos, '[0].settingDefinitions', []).push(
           addSettingDefByKeyAndType('displayName', Type.STRING, false),
           addSettingDefByKeyAndType('isShared', Type.BOOLEAN),
         );
         return res;
       }),
-      map(res => merge(res.data, params)),
-      map(data => normalize(data, schema.info)),
+      map((res) => merge(res.data, params)),
+      map((data) => normalize(data, schema.info)),
     ),
   ).pipe(
-    map(normalizedData => merge(...normalizedData, { brokerId })),
-    map(normalizedData => actions.fetchBroker.success(normalizedData)),
+    map((normalizedData) => merge(...normalizedData, { brokerId })),
+    map((normalizedData) => actions.fetchBroker.success(normalizedData)),
     startWith(actions.fetchBroker.request({ brokerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.fetchBroker.failure(merge(err, { brokerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -69,10 +69,10 @@ const fetchBroker$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchBroker.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     throttleTime(1000),
-    switchMap(params => fetchBroker$(params)),
+    switchMap((params) => fetchBroker$(params)),
   );

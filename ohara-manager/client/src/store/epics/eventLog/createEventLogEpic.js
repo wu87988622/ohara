@@ -26,7 +26,7 @@ localForage.config({
   storeName: 'event_logs',
 });
 
-const setLogToLocalForge$ = values => {
+const setLogToLocalForge$ = (values) => {
   const now = new Date();
   const key = now.getTime().toString();
   const value = {
@@ -39,21 +39,21 @@ const setLogToLocalForge$ = values => {
   return from(localForage.setItem(key, value));
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createEventLog.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     // we should not omit any event
-    concatMap(values =>
+    concatMap((values) =>
       setLogToLocalForge$(values).pipe(
-        concatMap(entity =>
+        concatMap((entity) =>
           from([
             actions.createEventLog.success(entity),
             // Trigger snackbar also
             actions.showMessage.trigger(entity.title),
           ]),
         ),
-        catchError(res => of(actions.createEventLog.failure(res))),
+        catchError((res) => of(actions.createEventLog.failure(res))),
       ),
     ),
   );

@@ -23,12 +23,12 @@ import * as inspectApi from 'api/inspectApi';
 import FileCard from 'components/Workspace/Card/FileCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
 
-const FilesField = props => {
+const FilesField = (props) => {
   const {
     input: { value: files = [], onChange },
   } = props;
 
-  const handleUpload = async filesToUpload => {
+  const handleUpload = async (filesToUpload) => {
     const res = await inspectApi.getFileInfoWithoutUpload({
       file: filesToUpload[0],
     });
@@ -36,11 +36,14 @@ const FilesField = props => {
     const uploadedFile = { ...uploadedFileInfo, file: filesToUpload[0] };
 
     // If the name of the newly uploaded file already exists, replace the old one
-    const isFileExisted = some(files, file => file.name === uploadedFile.name);
+    const isFileExisted = some(
+      files,
+      (file) => file.name === uploadedFile.name,
+    );
     if (isFileExisted) {
       const remainingFiles = reject(
         files,
-        file => file.name === uploadedFile.name,
+        (file) => file.name === uploadedFile.name,
       );
       onChange([...remainingFiles, uploadedFile]);
     } else {
@@ -48,10 +51,10 @@ const FilesField = props => {
     }
   };
 
-  const handleDelete = fileToDelete => () => {
+  const handleDelete = (fileToDelete) => () => {
     const remainingFiles = reject(
       files,
-      file => file.name === fileToDelete.name,
+      (file) => file.name === fileToDelete.name,
     );
     onChange(remainingFiles);
   };
@@ -63,7 +66,7 @@ const FilesField = props => {
       direction="row"
       justify="flex-start"
     >
-      {map(files, file => (
+      {map(files, (file) => (
         <Grid item key={file.name} xs={4}>
           <SelectCard handleClose={handleDelete(file)} rows={file} />
         </Grid>

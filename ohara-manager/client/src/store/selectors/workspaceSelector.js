@@ -17,13 +17,13 @@
 import { head, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 
-const getEntities = state => state?.entities?.workspaces;
+const getEntities = (state) => state?.entities?.workspaces;
 
 const getIdFromProps = (_, props) => props?.id;
 
-export const getWorkspaceName = state => state?.ui?.workspace?.name;
+export const getWorkspaceName = (state) => state?.ui?.workspace?.name;
 
-export const getAllWorkspaces = createSelector([getEntities], entities =>
+export const getAllWorkspaces = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 
@@ -32,6 +32,7 @@ export const getWorkspaceById = createSelector(
   (entities, id) => entities[id],
 );
 
-export const getHeadWorkspace = createSelector([getAllWorkspaces], workspaces =>
-  head(workspaces),
+export const getHeadWorkspace = createSelector(
+  [getAllWorkspaces],
+  (workspaces) => head(workspaces),
 );

@@ -21,7 +21,7 @@ import styled, { css } from 'styled-components';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 
-const convertUnit = value => {
+const convertUnit = (value) => {
   const hasSeparator = value.length > 0 && value.includes(' ');
 
   if (hasSeparator) {
@@ -42,7 +42,7 @@ const StyledTextField = styled(TextField)(
   `,
 );
 
-const Duration = props => {
+const Duration = (props) => {
   const { input, meta = {}, helperText, refs, ...rest } = omit(props, [
     'tableKeys',
   ]);
@@ -51,7 +51,7 @@ const Duration = props => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
 
-  const handleChange = event => {
+  const handleChange = (event) => {
     // Does the conversion again here
     const unit = 'milliseconds';
     const value = `${event.target.value * 1000} ${unit}`;

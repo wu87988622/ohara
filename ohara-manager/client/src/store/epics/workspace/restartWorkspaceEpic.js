@@ -60,7 +60,7 @@ const finalize$ = ({ workerKey, workspaceKey }) =>
     of(actions.fetchWorker.trigger(workerKey)),
   ).pipe(concatAll());
 
-const isRunning = state$ => (key, schema) => {
+const isRunning = (state$) => (key, schema) => {
   const data = denormalize(getId(key), schema, state$.value?.entities);
   return !isEmpty(data) && data.state === SERVICE_STATE.RUNNING;
 };
@@ -94,7 +94,7 @@ export default (action$, state$) =>
         }),
 
         of(...topics).pipe(
-          concatMap(topicKey =>
+          concatMap((topicKey) =>
             stopTopic$(topicKey).pipe(
               takeWhile(() => isServiceRunning(topicKey, schema.topic)),
             ),
@@ -123,14 +123,14 @@ export default (action$, state$) =>
 
         startBroker$(brokerKey),
 
-        of(...topics).pipe(concatMap(topicKey => startTopic$(topicKey))),
+        of(...topics).pipe(concatMap((topicKey) => startTopic$(topicKey))),
 
         startWorker$(workerKey),
 
         finalize$({ workerKey, workspaceKey }),
       ).pipe(
         concatAll(),
-        catchError(error => of(actions.restartWorkspace.failure(error))),
+        catchError((error) => of(actions.restartWorkspace.failure(error))),
         takeUntil(action$.pipe(ofType(actions.pauseRestartWorkspace.TRIGGER))),
       );
     }),

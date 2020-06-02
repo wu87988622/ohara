@@ -23,11 +23,11 @@ import * as selectors from 'store/selectors';
 import { hashByGroupAndName } from 'utils/sha';
 
 export const useIsFileLoaded = () => {
-  return useSelector(useCallback(state => !!state.ui.file?.lastUpdated, []));
+  return useSelector(useCallback((state) => !!state.ui.file?.lastUpdated, []));
 };
 
 export const useIsFileLoading = () => {
-  const mapState = useCallback(state => !!state.ui.file?.loading, []);
+  const mapState = useCallback((state) => !!state.ui.file?.loading, []);
   return useSelector(mapState);
 };
 
@@ -43,7 +43,7 @@ export const useCreateFileAction = () => {
   const dispatch = useDispatch();
   const group = useFileGroup();
   return useCallback(
-    file => {
+    (file) => {
       const { name } = file;
       dispatch(actions.createFile.trigger({ name, group, file }));
     },
@@ -60,7 +60,7 @@ export const useDeleteFileAction = () => {
   const dispatch = useDispatch();
   const group = useFileGroup();
   return useCallback(
-    name => dispatch(actions.deleteFile.trigger({ group, name })),
+    (name) => dispatch(actions.deleteFile.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -74,5 +74,5 @@ export const useFiles = () => {
     if (!isLoaded) fetchFiles();
   }, [fetchFiles, isLoaded]);
 
-  return useSelector(state => selectors.getFilesByGroup(state, { group }));
+  return useSelector((state) => selectors.getFilesByGroup(state, { group }));
 };

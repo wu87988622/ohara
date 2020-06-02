@@ -28,15 +28,15 @@ export const useReduxFormChangeAction = () => {
 
 export const useReduxFormResetAction = () => {
   const dispatch = useDispatch();
-  return useCallback(form => dispatch(reset(form)), [dispatch]);
+  return useCallback((form) => dispatch(reset(form)), [dispatch]);
 };
 
 export const useReduxFormSubmitAction = () => {
   const dispatch = useDispatch();
-  return useCallback(form => dispatch(submit(form)), [dispatch]);
+  return useCallback((form) => dispatch(submit(form)), [dispatch]);
 };
 
-export const useReduxFormValues = form => {
-  const mapState = useCallback(state => getFormValues(form)(state), [form]);
+export const useReduxFormValues = (form) => {
+  const mapState = useCallback((state) => getFormValues(form)(state), [form]);
   return useSelector(mapState);
 };

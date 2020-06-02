@@ -53,7 +53,7 @@ const defaultProps = {
   },
 };
 
-const MuiTable = props => {
+const MuiTable = (props) => {
   const { columns, data, onSelectionChange, options, ...restProps } = props;
   const {
     predicate,
@@ -66,7 +66,7 @@ const MuiTable = props => {
 
   const finalPredicate = isFunction(predicate)
     ? predicate
-    : object => get(object, predicate);
+    : (object) => get(object, predicate);
 
   const isEqual = (object, otherObject) => {
     const value = finalPredicate(object);
@@ -79,12 +79,12 @@ const MuiTable = props => {
 
   const handleRowSelected = (event, rowData) => {
     if (rowData) {
-      const shouldBeRemoved = some(selectedRows, selectedRowData =>
+      const shouldBeRemoved = some(selectedRows, (selectedRowData) =>
         isEqual(selectedRowData, rowData),
       );
 
       const newSelectedRows = shouldBeRemoved
-        ? reject(selectedRows, selectedRowData =>
+        ? reject(selectedRows, (selectedRowData) =>
             isEqual(selectedRowData, rowData),
           )
         : [...selectedRows, rowData];
@@ -108,16 +108,16 @@ const MuiTable = props => {
       cellStyle: style,
       headerStyle: style,
       hidden: !selection,
-      render: rowData => (
+      render: (rowData) => (
         <Checkbox
-          checked={some(selectedRows, selectedRowData =>
+          checked={some(selectedRows, (selectedRowData) =>
             isEqual(selectedRowData, rowData),
           )}
           color="primary"
-          disabled={some(disabledData, disabledRow =>
+          disabled={some(disabledData, (disabledRow) =>
             isEqual(disabledRow, rowData),
           )}
-          onChange={event => handleRowSelected(event, rowData)}
+          onChange={(event) => handleRowSelected(event, rowData)}
         />
       ),
       sorting: false,

@@ -49,7 +49,7 @@ it('switches to a target pipeline if the pipeline exists', () => {
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';
@@ -92,7 +92,7 @@ it('uses the first pipeline as the default when target pipeline cannot be found'
   const history = createBrowserHistory();
   const spyPush = jest.spyOn(history, 'push');
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';
@@ -142,7 +142,7 @@ it('switches to the current workspace if no pipeline is available under the curr
     },
   };
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----|';

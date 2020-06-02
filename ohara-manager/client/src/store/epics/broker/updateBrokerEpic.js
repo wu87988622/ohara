@@ -33,13 +33,13 @@ import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
-export const updateBrokerAndWorkspace$ = values => {
+export const updateBrokerAndWorkspace$ = (values) => {
   const brokerId = getId(values);
   return defer(() => brokerApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.broker)),
-    map(normalizedData => merge(normalizedData, { brokerId })),
-    concatMap(normalizedData =>
+    map((res) => res.data),
+    map((data) => normalize(data, schema.broker)),
+    map((normalizedData) => merge(normalizedData, { brokerId })),
+    concatMap((normalizedData) =>
       from([
         actions.updateWorkspace.trigger({
           broker: normalizedData,
@@ -52,15 +52,15 @@ export const updateBrokerAndWorkspace$ = values => {
   );
 };
 
-const updateBroker$ = values => {
+const updateBroker$ = (values) => {
   const brokerId = getId(values);
   return defer(() => brokerApi.update(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.broker)),
-    map(normalizedData => merge(normalizedData, { brokerId })),
-    map(normalizedData => actions.updateBroker.success(normalizedData)),
+    map((res) => res.data),
+    map((data) => normalize(data, schema.broker)),
+    map((normalizedData) => merge(normalizedData, { brokerId })),
+    map((normalizedData) => actions.updateBroker.success(normalizedData)),
     startWith(actions.updateBroker.request({ brokerId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.updateBroker.failure(merge(err, { brokerId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -69,9 +69,9 @@ const updateBroker$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.updateBroker.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => updateBroker$(values)),
+    map((action) => action.payload),
+    mergeMap((values) => updateBroker$(values)),
   );

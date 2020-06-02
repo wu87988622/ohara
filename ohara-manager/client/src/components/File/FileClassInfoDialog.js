@@ -22,18 +22,18 @@ import { Dialog } from 'components/common/Dialog';
 import Table from 'components/common/Table/MuiTable';
 
 function FileClassInfoDialog(props) {
-  const customizeColumn = key => {
+  const customizeColumn = (key) => {
     return {
       title: capitalize(key),
       customFilterAndSearch: (filterValue, rowData) => {
         const value = rowData?.settingDefinitions?.find(
-          definition => definition?.key === key,
+          (definition) => definition?.key === key,
         )?.defaultValue;
         return includes(toUpper(value), toUpper(filterValue));
       },
-      render: rowData => {
+      render: (rowData) => {
         return rowData?.settingDefinitions?.find(
-          definition => definition?.key === key,
+          (definition) => definition?.key === key,
         )?.defaultValue;
       },
     };

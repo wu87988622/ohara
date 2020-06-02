@@ -45,7 +45,7 @@ beforeEach(() => {
 });
 
 it('should start the stream', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
@@ -124,7 +124,7 @@ it('should fail after reaching the retry limit', () => {
     }),
   );
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
@@ -191,7 +191,7 @@ it('should fail after reaching the retry limit', () => {
 });
 
 it('start stream multiple times should be worked once', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
@@ -248,7 +248,7 @@ it('start stream multiple times should be worked once', () => {
 });
 
 it('start different stream should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherStreamEntity = {

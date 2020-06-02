@@ -80,10 +80,10 @@ function FileTable(props) {
     ? sortBy(unionBy(options?.comparedFiles, files, 'name'), ['name'])
     : files;
 
-  const willBeRemoved = file => !find(files, f => f.name === file.name);
+  const willBeRemoved = (file) => !find(files, (f) => f.name === file.name);
 
-  const willBeAdded = file =>
-    !find(options?.comparedFiles, f => f.name === file.name);
+  const willBeAdded = (file) =>
+    !find(options?.comparedFiles, (f) => f.name === file.name);
 
   const handleAddIconClick = () => {
     if (isFunction(options?.onAddIconClick)) {
@@ -91,7 +91,7 @@ function FileTable(props) {
     }
   };
 
-  const handleDeleteIconClick = file => {
+  const handleDeleteIconClick = (file) => {
     if (isFunction(options?.onDeleteIconClick)) {
       options.onDeleteIconClick(file);
     } else {
@@ -100,7 +100,7 @@ function FileTable(props) {
     }
   };
 
-  const handleDownloadIconClick = file => {
+  const handleDownloadIconClick = (file) => {
     if (isFunction(options?.onDownloadIconClick)) {
       options.onDownloadIconClick(file);
     } else {
@@ -109,13 +109,13 @@ function FileTable(props) {
     }
   };
 
-  const handleUndoIconClick = file => {
+  const handleUndoIconClick = (file) => {
     if (isFunction(options?.onUndoIconClick)) {
       options.onUndoIconClick(file);
     }
   };
 
-  const handleRemoveIconClick = file => {
+  const handleRemoveIconClick = (file) => {
     if (isFunction(options?.onRemoveIconClick)) {
       options.onRemoveIconClick(file);
     } else {
@@ -132,17 +132,17 @@ function FileTable(props) {
     }
   };
 
-  const handleViewIconClick = file => {
+  const handleViewIconClick = (file) => {
     setIsClassInfoDialogOpen(true);
     setActiveFile(file);
   };
 
-  const handleDeleteDialogConfirm = fileToDelete => {
+  const handleDeleteDialogConfirm = (fileToDelete) => {
     onDelete(fileToDelete);
     setIsDeleteDialogOpen(false);
   };
 
-  const handleRemoveDialogConfirm = fileToRemove => {
+  const handleRemoveDialogConfirm = (fileToRemove) => {
     onRemove(fileToRemove);
     setIsRemoveDialogOpen(false);
   };
@@ -153,8 +153,8 @@ function FileTable(props) {
       options?.showDownloadIcon ||
       options?.showRemoveIcon;
 
-    const render = file => {
-      const getUndoTooltipTitle = file => {
+    const render = (file) => {
+      const getUndoTooltipTitle = (file) => {
         if (willBeAdded(file)) {
           return 'Undo add file';
         } else if (willBeRemoved(file)) {
@@ -163,10 +163,10 @@ function FileTable(props) {
         return 'Undo';
       };
 
-      const showUndoIcon = file =>
+      const showUndoIcon = (file) =>
         (options?.comparison && willBeAdded(file)) || willBeRemoved(file);
 
-      const showRemoveIcon = file =>
+      const showRemoveIcon = (file) =>
         options?.showRemoveIcon && !showUndoIcon(file);
 
       const disabledDeleteIcon = isFunction(options?.disabledDeleteIcon)
@@ -235,7 +235,7 @@ function FileTable(props) {
     };
   };
 
-  const getRowStyle = file => {
+  const getRowStyle = (file) => {
     if (options?.comparison && willBeRemoved(file)) {
       return {
         backgroundColor: 'rgba(255, 117, 159, 0.1)',
@@ -273,7 +273,7 @@ function FileTable(props) {
             title: 'File size(KB)',
             type: 'numeric',
             field: 'size',
-            render: file => (
+            render: (file) => (
               <NumberFormat
                 displayType="text"
                 thousandSeparator
@@ -286,7 +286,7 @@ function FileTable(props) {
             title: 'Last modified',
             type: 'date',
             field: 'lastModified',
-            render: file => {
+            render: (file) => {
               return (
                 <Tooltip
                   title={moment(file?.lastModified).format(
@@ -307,7 +307,7 @@ function FileTable(props) {
         options={{
           predicate: 'name',
           prompt: options?.prompt,
-          rowStyle: file => getRowStyle(file),
+          rowStyle: (file) => getRowStyle(file),
           selection: options?.selection,
           selectedData: options?.selectedFiles,
           showTitle: options?.showTitle,

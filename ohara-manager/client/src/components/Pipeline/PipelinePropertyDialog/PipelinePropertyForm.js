@@ -44,7 +44,7 @@ const PipelinePropertyForm = React.forwardRef((props, ref) => {
   const apis = {
     change: (key, value) => formRef.current.change(key, value),
     getDefinitions: () => flatten(definitions),
-    scrollIntoView: key => {
+    scrollIntoView: (key) => {
       if (fieldRefs[key].current)
         fieldRefs[key].current.scrollIntoView(scrollIntoViewOption);
     },
@@ -62,14 +62,14 @@ const PipelinePropertyForm = React.forwardRef((props, ref) => {
         formRef.current = form;
         return (
           <form onSubmit={handleSubmit}>
-            {definitions.map(defs => {
+            {definitions.map((defs) => {
               const title = defs[0].group;
               return (
                 <Fragment key={title}>
                   <Typography variant="h4">{capitalize(title)}</Typography>
                   {defs
-                    .filter(def => !def.internal)
-                    .map(def => {
+                    .filter((def) => !def.internal)
+                    .map((def) => {
                       fieldRefs[def.key] = createRef();
                       return RenderDefinition({
                         def,

@@ -41,7 +41,7 @@ const makeTestScheduler = () =>
   });
 
 it('should delete a stream', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
@@ -92,7 +92,7 @@ it('should delete a stream', () => {
 });
 
 it('should delete multiple streams', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
@@ -176,7 +176,7 @@ it('should delete multiple streams', () => {
 });
 
 it(`should not call paperApi when the options params are not supplied`, () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
@@ -222,7 +222,7 @@ it(`should not call paperApi when the options params are not supplied`, () => {
 });
 
 it('delete same stream within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a------';
@@ -283,7 +283,7 @@ it('should handle error properly', () => {
     .spyOn(streamApi, 'remove')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

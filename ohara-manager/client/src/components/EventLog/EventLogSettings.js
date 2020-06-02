@@ -29,11 +29,11 @@ import { minNumber, composeValidators } from 'utils/validate';
 import Wrapper from './EventLogSettingsStyles';
 import * as hooks from 'hooks';
 
-const EventLogSettings = props => {
+const EventLogSettings = (props) => {
   const updateSettings = hooks.useUpdateEventSettingsAction();
   const { data: eventSettings } = hooks.useEventSettings();
 
-  const onSubmit = values => {
+  const onSubmit = (values) => {
     updateSettings(values);
     props.onSave();
   };

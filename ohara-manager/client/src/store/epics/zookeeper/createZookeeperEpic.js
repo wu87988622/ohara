@@ -33,11 +33,11 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const createZookeeper$ = values => {
+export const createZookeeper$ = (values) => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.create(values)).pipe(
-    map(res => res.data),
-    switchMap(data => {
+    map((res) => res.data),
+    switchMap((data) => {
       const normalizedData = merge(normalize(data, schema.zookeeper), {
         zookeeperId,
       });
@@ -52,7 +52,7 @@ export const createZookeeper$ = values => {
       ]);
     }),
     startWith(actions.createZookeeper.request({ zookeeperId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.createZookeeper.failure(merge(err, { zookeeperId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -61,10 +61,10 @@ export const createZookeeper$ = values => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createZookeeper.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values => createZookeeper$(values)),
+    mergeMap((values) => createZookeeper$(values)),
   );

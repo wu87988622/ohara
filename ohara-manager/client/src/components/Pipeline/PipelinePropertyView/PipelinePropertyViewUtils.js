@@ -51,11 +51,11 @@ export const renderIcon = ({ kind, isShared }) => {
 };
 
 export const getDisplayName = (key, defs) => {
-  const setting = defs.find(def => def.key === key);
+  const setting = defs.find((def) => def.key === key);
   return setting ? setting.displayName : key;
 };
 
-export const tags = params => {
+export const tags = (params) => {
   const {
     currentSetting,
     settings,
@@ -101,7 +101,7 @@ export const objectField = (key, settings, currentSetting, defs) => {
         defaultExpandIcon={<ArrowDropUpIcon />}
       >
         <TreeItem label={getDisplayName(key, defs)} nodeId={key}>
-          {Object.keys(currentSetting).map(objectKey => {
+          {Object.keys(currentSetting).map((objectKey) => {
             return (
               <TreeItem
                 key={objectKey}
@@ -127,7 +127,7 @@ export const objectKeys = (key, defs, currentSetting) => {
           {currentSetting.map((item, index) => {
             return (
               <TreeItem key={index} label="column" nodeId={String(index)}>
-                {Object.keys(item).map(objectKey => {
+                {Object.keys(item).map((objectKey) => {
                   return (
                     <TreeItem
                       key={objectKey}
@@ -145,13 +145,13 @@ export const objectKeys = (key, defs, currentSetting) => {
   );
 };
 
-export const defaultField = params => {
+export const defaultField = (params) => {
   const { currentSetting, settings, key, defs, isPort = false } = params;
 
   // need to do a conversion here, the value could be number
   const value = String(currentSetting);
   const { documentation = '' } = settings.settingDefinitions.find(
-    def => def.key === key,
+    (def) => def.key === key,
   );
   const displayValue = value ? value : '';
 

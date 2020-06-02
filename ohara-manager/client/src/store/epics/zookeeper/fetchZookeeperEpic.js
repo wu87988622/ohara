@@ -33,22 +33,22 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const fetchZookeeper$ = params => {
+const fetchZookeeper$ = (params) => {
   const zookeeperId = getId(params);
   return forkJoin(
     defer(() => zookeeperApi.get(params)).pipe(
-      map(res => res.data),
-      map(data => normalize(data, schema.zookeeper)),
+      map((res) => res.data),
+      map((data) => normalize(data, schema.zookeeper)),
     ),
     defer(() => inspectApi.getZookeeperInfo(params)).pipe(
-      map(res => merge(res.data, params)),
-      map(data => normalize(data, schema.info)),
+      map((res) => merge(res.data, params)),
+      map((data) => normalize(data, schema.info)),
     ),
   ).pipe(
-    map(normalizedData => merge(...normalizedData, { zookeeperId })),
-    map(normalizedData => actions.fetchZookeeper.success(normalizedData)),
+    map((normalizedData) => merge(...normalizedData, { zookeeperId })),
+    map((normalizedData) => actions.fetchZookeeper.success(normalizedData)),
     startWith(actions.fetchZookeeper.request({ zookeeperId })),
-    catchError(err =>
+    catchError((err) =>
       from([
         actions.fetchZookeeper.failure(merge(err, { zookeeperId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
@@ -57,10 +57,10 @@ const fetchZookeeper$ = params => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchZookeeper.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     throttleTime(1000),
-    switchMap(params => fetchZookeeper$(params)),
+    switchMap((params) => fetchZookeeper$(params)),
   );

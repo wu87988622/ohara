@@ -32,21 +32,21 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const createConnector$ = value => {
+const createConnector$ = (value) => {
   const { values, options } = value;
   const connectorId = getId(values);
   return defer(() => connectorApi.create(values)).pipe(
-    map(res => res.data),
-    map(data => normalize(data, schema.connector)),
-    map(normalizedData => {
+    map((res) => res.data),
+    map((data) => normalize(data, schema.connector)),
+    map((normalizedData) => {
       options.paperApi.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { connectorId });
     }),
-    map(normalizedData => actions.createConnector.success(normalizedData)),
+    map((normalizedData) => actions.createConnector.success(normalizedData)),
     startWith(actions.createConnector.request({ connectorId })),
-    catchError(err => {
+    catchError((err) => {
       options.paperApi.removeElement(values.id);
       return from([
         actions.createConnector.failure(merge(err, { connectorId })),
@@ -56,10 +56,10 @@ const createConnector$ = value => {
   );
 };
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createConnector.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => createConnector$(value)),
+    mergeMap((value) => createConnector$(value)),
   );

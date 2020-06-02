@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('should start to update pipeline metrics and stop when a stop action is dispatched', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush } = helpers;
 
     const input = '   ^-a 20000ms                                 (k|)';
@@ -77,7 +77,7 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
 });
 
 it('should terminate the request if an error occurs', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush } = helpers;
 
     const input = '   ^-a 10000ms                 (k|)';

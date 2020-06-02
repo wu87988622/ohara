@@ -21,13 +21,13 @@ import { TAB } from 'context/devTool/const';
 
 export const StyledSearchBody = styled.div`
   width: 280px;
-  height: ${props => (props.tab === TAB.topic ? '210px' : '440px')};
+  height: ${(props) => (props.tab === TAB.topic ? '210px' : '440px')};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: stretch;
-  background-color: ${props => props.theme.palette.common.white};
-  padding: ${props => props.theme.spacing(3)}px;
+  background-color: ${(props) => props.theme.palette.common.white};
+  padding: ${(props) => props.theme.spacing(3)}px;
 
   label {
     font-weight: bold;
@@ -36,7 +36,7 @@ export const StyledSearchBody = styled.div`
   button {
     width: 88px;
     height: 36px;
-    background-color: ${props => props.theme.palette.primary[600]};
+    background-color: ${(props) => props.theme.palette.primary[600]};
     align-self: flex-end;
   }
 `;

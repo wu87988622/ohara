@@ -46,7 +46,7 @@ import {
   useMakeRequest,
 } from './ToolbarHooks';
 
-const Toolbar = props => {
+const Toolbar = (props) => {
   const { handleToolboxOpen, handleToolbarClick, isToolboxOpen } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
@@ -73,7 +73,7 @@ const Toolbar = props => {
   const makeRequest = useMakeRequest();
   const { setZoom, scale, setScale } = useZoom();
 
-  const handleZoomClick = event => {
+  const handleZoomClick = (event) => {
     setZoomAnchorEl(event.currentTarget);
   };
 
@@ -86,7 +86,7 @@ const Toolbar = props => {
     if (instruction === 'fromDropdown') handleZoomClose();
   };
 
-  const handlePipelineControlsClick = event => {
+  const handlePipelineControlsClick = (event) => {
     setPipelineAnchorEl(event.currentTarget);
   };
 
@@ -110,14 +110,14 @@ const Toolbar = props => {
 
     const cells = paperApi
       .getCells()
-      .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
+      .filter((cell) => cell.cellType === CELL_TYPES.ELEMENT)
       .filter(
-        cell =>
+        (cell) =>
           (cell.kind === KIND.topic && !cell.isShared) ||
           cell.kind !== KIND.topic,
       )
       .sort((a, b) => a.kind.localeCompare(b.kind))
-      .map(cell => ({
+      .map((cell) => ({
         ...cell,
         group: cell.kind === KIND.topic ? topicGroup : streamAndConnectorGroup,
       }));
@@ -129,14 +129,14 @@ const Toolbar = props => {
     setPipelineAnchorEl(null);
   };
 
-  const onToolboxClick = panel => {
+  const onToolboxClick = (panel) => {
     // If the Toolbox is not "open", we should open it before opening
     // the expansion panel
     if (!isToolboxOpen) handleToolboxOpen();
     handleToolbarClick(panel);
   };
 
-  const getZoomDisplayedValue = scale => {
+  const getZoomDisplayedValue = (scale) => {
     const percentage = scale * 100;
     return `${Math.trunc(percentage)}%`;
   };
@@ -144,8 +144,8 @@ const Toolbar = props => {
   const hasElements =
     paperApi
       .getCells()
-      .filter(cell => cell.cellType === CELL_TYPES.ELEMENT)
-      .filter(element => element.kind !== KIND.topic).length > 0;
+      .filter((cell) => cell.cellType === CELL_TYPES.ELEMENT)
+      .filter((element) => element.kind !== KIND.topic).length > 0;
 
   return (
     <StyledToolbar>

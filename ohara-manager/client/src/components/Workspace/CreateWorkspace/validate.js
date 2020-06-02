@@ -21,7 +21,7 @@ import {
   maxLength,
 } from 'utils/validate';
 
-export default values => {
+export default (values) => {
   const errors = {};
   errors.workspace = {};
 

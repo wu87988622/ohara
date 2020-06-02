@@ -21,8 +21,8 @@ import styled, { css } from 'styled-components';
 const StyledStatusBar = styled.div(
   ({ theme }) => css`
     width: 100%;
-    height: ${props => props.height};
-    line-height: ${props => props.height};
+    height: ${(props) => props.height};
+    line-height: ${(props) => props.height};
     padding-left: ${theme.spacing(1)}px;
     background-color: ${theme.palette.grey[50]};
     color: ${theme.palette.text.disabled};
@@ -33,7 +33,7 @@ const StyledStatusBar = styled.div(
   `,
 );
 
-const StatusBar = props => (
+const StatusBar = (props) => (
   <StyledStatusBar height={props.height}>{props.children}</StyledStatusBar>
 );
 

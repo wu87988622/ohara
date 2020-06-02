@@ -73,7 +73,7 @@ const reducer = (state, action) => {
       }
       return {
         ...state,
-        dialogs: state.dialogs.map(dialog =>
+        dialogs: state.dialogs.map((dialog) =>
           dialog.name === action.payload.name
             ? { ...dialog, data: action.payload.data }
             : dialog,
@@ -85,7 +85,7 @@ const reducer = (state, action) => {
         ...state,
         dialogs: reject(
           state.dialogs,
-          dialog => dialog.name === action.payload.name,
+          (dialog) => dialog.name === action.payload.name,
         ),
       };
     case closePeakDialogRoutine.TRIGGER:

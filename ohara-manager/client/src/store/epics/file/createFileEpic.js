@@ -30,17 +30,17 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.createFile.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(values =>
+    mergeMap((values) =>
       defer(() => fileApi.create(values)).pipe(
-        map(res => normalize(res.data, schema.file)),
-        map(normalizedData => actions.createFile.success(normalizedData)),
+        map((res) => normalize(res.data, schema.file)),
+        map((normalizedData) => actions.createFile.success(normalizedData)),
         startWith(actions.createFile.request()),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.createFile.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

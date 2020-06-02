@@ -33,7 +33,7 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-export const deleteShabondi$ = value => {
+export const deleteShabondi$ = (value) => {
   const { params, options = {} } = value;
   const { paperApi } = options;
   const shabondiId = getId(params);
@@ -47,11 +47,12 @@ export const deleteShabondi$ = value => {
   return zip(
     defer(() => shabondiApi.remove(params)),
     defer(() => shabondiApi.getAll({ group: params.group })).pipe(
-      map(res => {
-        if (res.data.find(shabondi => shabondi.name === params.name)) throw res;
+      map((res) => {
+        if (res.data.find((shabondi) => shabondi.name === params.name))
+          throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -75,7 +76,7 @@ export const deleteShabondi$ = value => {
       ]);
     }),
     startWith(actions.deleteShabondi.request({ shabondiId })),
-    catchError(err => {
+    catchError((err) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
@@ -90,11 +91,11 @@ export const deleteShabondi$ = value => {
   );
 };
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.deleteShabondi.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => deleteShabondi$(value)),
+    mergeMap((value) => deleteShabondi$(value)),
   );
 };

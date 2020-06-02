@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import styled, { css } from 'styled-components';
 import { FullScreenDialog } from 'components/common/Dialog';
 
-export const StyledFullScreenDialog = styled(props => (
+export const StyledFullScreenDialog = styled((props) => (
   // Don't pass down props that are meant only used by styled-component.
   // React also complains about this if these props are not omitted
   <FullScreenDialog {...omit(props, 'isPageComponent')} />

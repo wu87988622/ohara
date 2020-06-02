@@ -97,7 +97,7 @@ const Pipeline = React.forwardRef((props, ref) => {
   };
 
   const clean = (cells, paperApi, onlyRemoveLink = false) => {
-    Object.keys(cells).forEach(key => {
+    Object.keys(cells).forEach((key) => {
       switch (key) {
         case 'source':
           removeSourceLinkConnector({ ...cells[key] }, cells.topic, paperApi);
@@ -209,20 +209,20 @@ const Pipeline = React.forwardRef((props, ref) => {
     } = forceDeleteList.current;
 
     connectors
-      .filter(connector => _.get(connector, 'state', null) === 'RUNNING')
-      .map(connector => {
+      .filter((connector) => _.get(connector, 'state', null) === 'RUNNING')
+      .map((connector) => {
         const connectorCell = paperApi.getCell(connector.name);
         return stopConnector(connectorCell, paperApi);
       });
 
     [...toStreams, ...fromStreams]
-      .filter(stream => _.get(stream, 'state', null) === 'RUNNING')
-      .map(stream => {
+      .filter((stream) => _.get(stream, 'state', null) === 'RUNNING')
+      .map((stream) => {
         const streamCell = paperApi.getCell(stream.name);
         return stopStream(streamCell, paperApi);
       });
 
-    connectors.forEach(connector => {
+    connectors.forEach((connector) => {
       const connectorCell = paperApi.getCell(connector.name);
       const kind = _.get(connectorCell, 'kind');
       // The connectors may be removed by user from UI but not removed from forceDeleteList
@@ -232,12 +232,12 @@ const Pipeline = React.forwardRef((props, ref) => {
       }
     });
 
-    toStreams.forEach(stream => {
+    toStreams.forEach((stream) => {
       const streamCell = paperApi.getCell(stream.name);
       clean({ to: streamCell, paperApi });
     });
 
-    fromStreams.forEach(stream => {
+    fromStreams.forEach((stream) => {
       const streamCell = paperApi.getCell(stream.name);
       clean({ from: streamCell, paperApi });
     });
@@ -245,7 +245,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     stopAndRemoveTopic(topic, paperApi);
   };
 
-  const handleCellSelect = element => {
+  const handleCellSelect = (element) => {
     setSelectedCell(element);
   };
 
@@ -253,7 +253,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     setSelectedCell(null);
   };
 
-  const handleChange = _.debounce(paperApi => updateCells(paperApi), 1000);
+  const handleChange = _.debounce((paperApi) => updateCells(paperApi), 1000);
 
   const handleElementDelete = () => {
     const paperApi = paperApiRef.current;
@@ -271,7 +271,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     setIsOpen(false);
   };
 
-  const getCurrentCellName = cellData => {
+  const getCurrentCellName = (cellData) => {
     if (cellData === null) return '';
     if (cellData.kind !== KIND.topic) return cellData.name;
     return cellData.isShared ? cellData.name : cellData.displayName;
@@ -308,10 +308,10 @@ const Pipeline = React.forwardRef((props, ref) => {
     switch (kind) {
       case KIND.source:
       case KIND.sink:
-        targetCell = connectors.find(connector => connector.name === name);
+        targetCell = connectors.find((connector) => connector.name === name);
         break;
       case KIND.stream:
-        targetCell = streams.find(stream => stream.name === name);
+        targetCell = streams.find((stream) => stream.name === name);
         break;
       default:
         break;
@@ -476,21 +476,21 @@ const Pipeline = React.forwardRef((props, ref) => {
     }
   };
 
-  const handleCellRemove = cellData => {
+  const handleCellRemove = (cellData) => {
     if (cellData.kind === KIND.topic) {
-      const topicConnectors = connectors.filter(connector => {
+      const topicConnectors = connectors.filter((connector) => {
         const topics =
           _.get(connector, 'topicKeys') ||
           _.get(connector, 'shabondi__source__toTopics') ||
           _.get(connector, 'shabondi__sink__fromTopics') ||
           [];
-        return topics.find(topic => topic.name === cellData.name);
+        return topics.find((topic) => topic.name === cellData.name);
       });
-      const topicToStream = streams.filter(stream =>
-        stream.to.find(topic => topic.name === cellData.name),
+      const topicToStream = streams.filter((stream) =>
+        stream.to.find((topic) => topic.name === cellData.name),
       );
-      const topicFromStream = streams.filter(stream =>
-        stream.from.find(topic => topic.name === cellData.name),
+      const topicFromStream = streams.filter((stream) =>
+        stream.from.find((topic) => topic.name === cellData.name),
       );
 
       forceDeleteList.current = {
@@ -527,7 +527,7 @@ const Pipeline = React.forwardRef((props, ref) => {
         <PaperContext.Provider value={{ ...paperApiRef.current }}>
           {paperApiRef.current && currentPipeline && (
             <Toolbar
-              handleToolbarClick={panel => {
+              handleToolbarClick={(panel) => {
                 const isExpanded = pipelineState.toolboxExpanded[panel];
                 pipelineDispatch({ type: 'resetToolboxExpanded' });
 

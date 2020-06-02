@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-exports.sleep = ms => {
-  return new Promise(resolve => setTimeout(resolve, ms));
+exports.sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 exports.randomPort = ({ min = 5000, max = 65535 } = {}) => {

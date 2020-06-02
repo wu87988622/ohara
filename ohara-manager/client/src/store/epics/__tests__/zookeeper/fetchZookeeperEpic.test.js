@@ -37,7 +37,7 @@ const makeTestScheduler = () =>
   });
 
 it('fetch zookeeper should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
@@ -83,7 +83,7 @@ it('fetch zookeeper should be worked correctly', () => {
 });
 
 it('fetch zookeeper multiple times within period should get first result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
@@ -134,7 +134,7 @@ it('fetch zookeeper multiple times within period should get first result', () =>
 });
 
 it('fetch zookeeper multiple times without period should get latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
@@ -200,7 +200,7 @@ it('throw exception of fetch zookeeper should also trigger event log action', ()
     .spyOn(zookeeperApi, 'get')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

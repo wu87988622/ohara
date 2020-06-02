@@ -33,7 +33,7 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
-export const deleteStream$ = value => {
+export const deleteStream$ = (value) => {
   const { params, options = {} } = value;
   const { paperApi } = options;
   const streamId = getId(params);
@@ -47,11 +47,11 @@ export const deleteStream$ = value => {
   return zip(
     defer(() => streamApi.remove(params)),
     defer(() => streamApi.getAll({ group: params.group })).pipe(
-      map(res => {
-        if (res.data.find(stream => stream.name === params.name)) throw res;
+      map((res) => {
+        if (res.data.find((stream) => stream.name === params.name)) throw res;
         else return res.data;
       }),
-      retryWhen(errors =>
+      retryWhen((errors) =>
         errors.pipe(
           concatMap((value, index) =>
             iif(
@@ -79,7 +79,7 @@ export const deleteStream$ = value => {
       ]);
     }),
     startWith(actions.deleteStream.request({ streamId })),
-    catchError(error => {
+    catchError((error) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
@@ -94,11 +94,11 @@ export const deleteStream$ = value => {
   );
 };
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.deleteStream.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap(value => deleteStream$(value)),
+    mergeMap((value) => deleteStream$(value)),
   );
 };

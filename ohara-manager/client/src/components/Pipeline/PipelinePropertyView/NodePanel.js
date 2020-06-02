@@ -27,14 +27,17 @@ import { partition } from 'lodash';
 import NodeList from './NodeList';
 import NodeErrorDialog from './NodeErrorDialog';
 
-const NodePanel = props => {
+const NodePanel = (props) => {
   const { tasksStatus = [] } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentError, setCurrentError] = React.useState(null);
-  const [masterNodes, slaveNodes] = partition(tasksStatus, node => node.master);
+  const [masterNodes, slaveNodes] = partition(
+    tasksStatus,
+    (node) => node.master,
+  );
 
-  const handleOpenErrorDialog = error => () => {
+  const handleOpenErrorDialog = (error) => () => {
     setIsOpen(true);
     setCurrentError(error);
   };
@@ -45,7 +48,7 @@ const NodePanel = props => {
       <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
           expandIcon={<ExpandMoreIcon />}
-          onClick={() => setIsExpanded(prevState => !prevState)}
+          onClick={() => setIsExpanded((prevState) => !prevState)}
         >
           <StorageIcon fontSize="small" />
           <Typography className="section-title" variant="h5">

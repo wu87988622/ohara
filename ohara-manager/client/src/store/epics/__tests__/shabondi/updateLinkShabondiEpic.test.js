@@ -42,7 +42,7 @@ const makeTestScheduler = () =>
   });
 
 it('remove sink link of shabondi should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a       ';
@@ -84,7 +84,7 @@ it('remove sink link of shabondi should be worked correctly', () => {
 });
 
 it('should handle multiple actions', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-b 60ms c 10s            ';
@@ -177,7 +177,7 @@ it('throw exception of update shabondi link should also trigger event log action
     .spyOn(shabondiApi, 'update')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

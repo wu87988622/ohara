@@ -24,15 +24,15 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchStreams.TRIGGER),
     switchMap(() =>
       defer(() => streamApi.getAll()).pipe(
-        map(res => normalize(res.data, [schema.stream])),
-        map(normalizedData => actions.fetchStreams.success(normalizedData)),
+        map((res) => normalize(res.data, [schema.stream])),
+        map((normalizedData) => actions.fetchStreams.success(normalizedData)),
         startWith(actions.fetchStreams.request()),
-        catchError(error =>
+        catchError((error) =>
           from([
             actions.fetchStreams.failure(error),
             actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),

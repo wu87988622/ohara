@@ -28,12 +28,12 @@ import IconButton from '@material-ui/core/IconButton';
 
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 
-const SectionList = props => {
+const SectionList = (props) => {
   const { list, handleChange, sectionHeading, sectionRef } = props;
 
   return (
     <List className="section-list" component="ul">
-      {list.map(item => {
+      {list.map((item) => {
         const {
           title,
           icon,
@@ -66,7 +66,7 @@ const SectionList = props => {
         };
 
         return (
-          <ListItem key={title} onClick={event => onClick(event, title)}>
+          <ListItem key={title} onClick={(event) => onClick(event, title)}>
             <Badge badgeContent={badge?.count} component="div">
               {icon && <ListItemIcon>{icon}</ListItemIcon>}
               <ListItemText primary={title} secondary={subTitle} />
@@ -75,7 +75,7 @@ const SectionList = props => {
                 <ListItemSecondaryAction>
                   <IconButton
                     edge="end"
-                    onClick={event => onClick(event, title)}
+                    onClick={(event) => onClick(event, title)}
                     size="small"
                   >
                     <ArrowRightIcon fontSize="small" />

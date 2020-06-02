@@ -45,7 +45,7 @@ import {
   StyleExpansionPanel,
 } from './PipelinePropertyDialogStyles';
 
-const PipelinePropertyDialog = props => {
+const PipelinePropertyDialog = (props) => {
   const { isOpen, onClose, onSubmit, data = {}, maxWidth = 'md' } = props;
   const {
     title = '',
@@ -67,13 +67,15 @@ const PipelinePropertyDialog = props => {
     case KIND.source:
     case KIND.sink:
       targetCell = currentConnectors.find(
-        connector =>
+        (connector) =>
           connector.className === classInfo.className &&
           connector.name === cellData.name,
       );
       break;
     case KIND.stream:
-      targetCell = currentStreams.find(stream => stream.name === cellData.name);
+      targetCell = currentStreams.find(
+        (stream) => stream.name === cellData.name,
+      );
       break;
 
     default:
@@ -82,9 +84,9 @@ const PipelinePropertyDialog = props => {
 
   const definitionsByGroup = _(classInfo.settingDefinitions)
     // sort each definition by its orderInGroup property
-    .sortBy(value => value.orderInGroup)
+    .sortBy((value) => value.orderInGroup)
     // we need to group the definitions by their group
-    .groupBy(value => value.group)
+    .groupBy((value) => value.group)
     // this is the tricky part...
     // we need to sort the object by keys
     // see https://github.com/lodash/lodash/issues/1459#issuecomment-253969771
@@ -104,12 +106,12 @@ const PipelinePropertyDialog = props => {
 
     const matchedTopic = _.find(
       currentTopics,
-      topic => topic.displayName === values[key],
+      (topic) => topic.displayName === values[key],
     );
     values[key] = [{ name: matchedTopic.name, group: matchedTopic.group }];
   };
 
-  const isJsonString = str => {
+  const isJsonString = (str) => {
     try {
       JSON.parse(str);
     } catch (e) {
@@ -118,10 +120,10 @@ const PipelinePropertyDialog = props => {
     return true;
   };
 
-  const handleSubmit = async values => {
+  const handleSubmit = async (values) => {
     const topicCells = paperApi.getCells(KIND.topic);
     let topics = [];
-    values.settingDefinitions.forEach(def => {
+    values.settingDefinitions.forEach((def) => {
       if (
         def.valueType === Type.OBJECT_KEYS &&
         def.reference === Reference.TOPIC
@@ -134,7 +136,7 @@ const PipelinePropertyDialog = props => {
           topics.push({
             key: def.key,
             data: topicCells.find(
-              topic => values[def.key][0].name === topic.name,
+              (topic) => values[def.key][0].name === topic.name,
             ),
           });
         }
@@ -144,8 +146,8 @@ const PipelinePropertyDialog = props => {
           Object.keys(values).includes(def.key) &&
           values[def.key].length > 0
         ) {
-          const pickList = def.tableKeys.map(tableKey => tableKey.name);
-          values[def.key] = values[def.key].map(value =>
+          const pickList = def.tableKeys.map((tableKey) => tableKey.name);
+          values[def.key] = values[def.key].map((value) =>
             _.pick(value, pickList),
           );
         }
@@ -154,7 +156,7 @@ const PipelinePropertyDialog = props => {
         values[def.key] = JSON.parse(values[def.key]);
       }
     });
-    topics = topics.filter(topic => topic.data !== undefined);
+    topics = topics.filter((topic) => topic.data !== undefined);
     if (topics.length > 0) {
       onSubmit(
         {
@@ -172,11 +174,11 @@ const PipelinePropertyDialog = props => {
     onClose();
   };
 
-  const handleExpansionPanelChange = panel => (event, isExpanded) => {
+  const handleExpansionPanelChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
-  const DialogTitle = params => {
+  const DialogTitle = (params) => {
     const { title, onClose } = params;
     return (
       <StyleTitle disableTypography>
@@ -190,7 +192,7 @@ const PipelinePropertyDialog = props => {
     );
   };
 
-  const handleClick = async key => {
+  const handleClick = async (key) => {
     setSelected(key);
     setTimeout(() => {
       if (formRef.current) formRef.current.scrollIntoView(key);
@@ -202,24 +204,26 @@ const PipelinePropertyDialog = props => {
       <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
-          {// Unimplemented feature
-          false && (
-            <StyleFilter
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterListIcon />
-                  </InputAdornment>
-                ),
-              }}
-              placeholder="Quick filter"
-              variant="outlined"
-            />
-          )}
+          {
+            // Unimplemented feature
+            false && (
+              <StyleFilter
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FilterListIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                placeholder="Quick filter"
+                variant="outlined"
+              />
+            )
+          }
           <div>
             {definitionsByGroup.map((group, index) => {
               const title = group[0].group;
-              const defs = group.filter(def => !def.internal);
+              const defs = group.filter((def) => !def.internal);
 
               if (defs.length > 0) {
                 return (

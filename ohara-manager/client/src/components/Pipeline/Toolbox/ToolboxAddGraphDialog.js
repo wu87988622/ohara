@@ -30,7 +30,7 @@ import {
   checkDuplicate,
 } from 'utils/validate';
 
-const ToolboxAddGraphDialog = props => {
+const ToolboxAddGraphDialog = (props) => {
   const { isOpen, onClose, onConfirm, kind, paperElementNames } = props;
 
   const onSubmit = async (values, form) => {

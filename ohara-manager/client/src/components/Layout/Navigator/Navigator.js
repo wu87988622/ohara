@@ -40,11 +40,11 @@ const Navigator = ({ pipelineApi }) => {
   const currentWorkspace = hooks.useWorkspace();
   const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
 
-  const handleMenuClick = event => {
+  const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuItemClick = pageName => () => {
+  const handleMenuItemClick = (pageName) => () => {
     openEditWorkspaceDialog(pageName);
     setAnchorEl(null);
   };
@@ -53,7 +53,7 @@ const Navigator = ({ pipelineApi }) => {
     setAnchorEl(null);
   };
 
-  const handlePanelClick = event => {
+  const handlePanelClick = (event) => {
     // Only toggles the panel with button not the whole div.
     // This prevents users from accidentally clicking
     // on the div when they're trying to click on the `+` icon in
@@ -70,7 +70,7 @@ const Navigator = ({ pipelineApi }) => {
     if (isSvg || isIcon) setIsExpanded(!isExpanded);
   };
 
-  const handleAddButtonClick = event => {
+  const handleAddButtonClick = (event) => {
     event.stopPropagation();
     setIsOpen(true);
   };

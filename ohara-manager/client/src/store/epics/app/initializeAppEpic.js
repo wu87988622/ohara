@@ -26,14 +26,14 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.initializeApp.TRIGGER),
-    switchMap(action => {
+    switchMap((action) => {
       const { workspaceName, pipelineName } = action.payload;
       return forkJoin(
-        defer(() => workspaceApi.getAll()).pipe(map(res => res.data)),
-        defer(() => pipelineApi.getAll()).pipe(map(res => res.data)),
+        defer(() => workspaceApi.getAll()).pipe(map((res) => res.data)),
+        defer(() => pipelineApi.getAll()).pipe(map((res) => res.data)),
       ).pipe(
         map(([workspaces, pipelines]) =>
           merge(
@@ -41,7 +41,7 @@ export default action$ =>
             normalize(pipelines, [schema.pipeline]),
           ),
         ),
-        mergeMap(normalizedData =>
+        mergeMap((normalizedData) =>
           from([
             actions.initializeApp.success(normalizedData),
             actions.switchWorkspace.trigger({
@@ -52,7 +52,7 @@ export default action$ =>
             actions.updateNotifications.trigger(),
           ]),
         ),
-        catchError(err =>
+        catchError((err) =>
           from([
             actions.initializeApp.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

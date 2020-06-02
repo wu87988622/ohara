@@ -28,8 +28,8 @@ import CloseIcon from '@material-ui/icons/Close';
 const StyledDialogContent = styled(DialogContent)`
   max-width: 1400px;
   width: 1024px;
-  margin: ${props => props.theme.spacing(12)}px auto;
-  padding: 0 ${props => props.theme.spacing(3)}px;
+  margin: ${(props) => props.theme.spacing(12)}px auto;
+  padding: 0 ${(props) => props.theme.spacing(3)}px;
 
   /* We want to use browser's scrollbar instead of DialogContent's */
   overflow-y: visible;
@@ -39,7 +39,7 @@ const StyledTypography = styled(Typography)`
   flex: 1;
 `;
 
-const FullScreenDialog = props => {
+const FullScreenDialog = (props) => {
   const {
     title,
     children,

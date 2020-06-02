@@ -40,7 +40,7 @@ export const useWorkerId = () => {
 export const useIsWorkerLoaded = () => {
   const workerId = hooks.useWorkerId();
   const selector = useCallback(
-    state => selectors.isWorkerLoaded(state, { id: workerId }),
+    (state) => selectors.isWorkerLoaded(state, { id: workerId }),
     [workerId],
   );
   return useSelector(selector);
@@ -49,7 +49,7 @@ export const useIsWorkerLoaded = () => {
 export const useIsWorkerLoading = () => {
   const workerId = hooks.useWorkerId();
   const selector = useCallback(
-    state => selectors.isWorkerLoading(state, { id: workerId }),
+    (state) => selectors.isWorkerLoading(state, { id: workerId }),
     [workerId],
   );
   return useSelector(selector);
@@ -66,7 +66,7 @@ export const useWorker = () => {
   }, [isLoaded, fetchWorker, name]);
 
   const selector = useCallback(
-    state =>
+    (state) =>
       merge(
         selectors.getWorkerById(state, { id: workerId }),
         selectors.getInfoById(state, { id: workerId }),
@@ -77,7 +77,7 @@ export const useWorker = () => {
 };
 
 export const useAllWorkers = () => {
-  const selector = useCallback(state => selectors.getAllWorkers(state), []);
+  const selector = useCallback((state) => selectors.getAllWorkers(state), []);
   return useSelector(selector);
 };
 
@@ -85,7 +85,7 @@ export const useFetchWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    name => dispatch(actions.fetchWorker.trigger({ group, name })),
+    (name) => dispatch(actions.fetchWorker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -94,7 +94,7 @@ export const useCreateWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    values => dispatch(actions.createWorker.trigger({ ...values, group })),
+    (values) => dispatch(actions.createWorker.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -103,7 +103,7 @@ export const useUpdateWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    values => dispatch(actions.updateWorker.trigger({ ...values, group })),
+    (values) => dispatch(actions.updateWorker.trigger({ ...values, group })),
     [dispatch, group],
   );
 };
@@ -112,7 +112,7 @@ export const useStartWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    name => dispatch(actions.startWorker.trigger({ group, name })),
+    (name) => dispatch(actions.startWorker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -121,7 +121,7 @@ export const useStopWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    name => dispatch(actions.stopWorker.trigger({ group, name })),
+    (name) => dispatch(actions.stopWorker.trigger({ group, name })),
     [dispatch, group],
   );
 };
@@ -130,7 +130,7 @@ export const useDeleteWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    name => dispatch(actions.deleteWorker.trigger({ group, name })),
+    (name) => dispatch(actions.deleteWorker.trigger({ group, name })),
     [dispatch, group],
   );
 };

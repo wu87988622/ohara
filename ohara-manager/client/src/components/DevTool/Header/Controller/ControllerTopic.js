@@ -60,11 +60,11 @@ const ControllerTopic = () => {
       <Tooltip title="Select topic">
         <Select
           disabled={isFetching || isEmpty(topics)}
-          list={topics.map(topic => ({
+          list={topics.map((topic) => ({
             displayName: topic.displayName,
             value: topic.name,
           }))}
-          onChange={event =>
+          onChange={(event) =>
             prevName !== event.target.value &&
             setTopicQueryParams({ name: event.target.value })
           }
@@ -99,7 +99,7 @@ const ControllerTopic = () => {
           <TextField
             defaultValue={limit}
             disabled={isEmpty(name)}
-            onChange={event =>
+            onChange={(event) =>
               setTopicQueryParams({ limit: Number(event.target.value) })
             }
             type="number"

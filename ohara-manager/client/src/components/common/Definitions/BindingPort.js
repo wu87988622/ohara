@@ -20,7 +20,7 @@ import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
-const BindingPort = props => {
+const BindingPort = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},
@@ -51,7 +51,7 @@ const BindingPort = props => {
       type="text"
       value={_value}
     >
-      {_list.map(item => {
+      {_list.map((item) => {
         const disabled = disables.includes(item);
         return (
           <MenuItem disabled={disabled} key={item} value={item}>

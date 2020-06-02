@@ -28,7 +28,7 @@ import TableSortLabel from '@material-ui/core/TableSortLabel';
 import { TableLoader } from 'components/common/Loader';
 import TableToolbar from './TableToolbar';
 
-const SortTable = props => {
+const SortTable = (props) => {
   const {
     isLoading,
     headRows,
@@ -51,7 +51,7 @@ const SortTable = props => {
     setOrderBy(property);
   };
 
-  const createSortHandler = property => event => {
+  const createSortHandler = (property) => (event) => {
     handleRequestSort(event, property);
   };
 
@@ -72,7 +72,7 @@ const SortTable = props => {
       if (order !== 0) return order;
       return a[1] - b[1];
     });
-    return stabilizedThis.map(el => el[0]);
+    return stabilizedThis.map((el) => el[0]);
   };
 
   const getSorting = (order, orderBy) => {
@@ -86,7 +86,7 @@ const SortTable = props => {
   let newCount = 0;
   let deleteCount = 0;
 
-  rows.forEach(row => {
+  rows.forEach((row) => {
     switch (row.type) {
       case 'ADD': {
         newCount++;
@@ -149,7 +149,7 @@ const SortTable = props => {
             const keys = Object.keys(row);
 
             const StyledTableRow = styled(TableRow)`
-              background-color: ${props => {
+              background-color: ${(props) => {
                 switch (row.type) {
                   case 'ADD': {
                     // eslint-disable-next-line react/prop-types
@@ -172,7 +172,7 @@ const SortTable = props => {
               // problem rendering it
               <StyledTableRow data-testid={dataRowTestId} key={index}>
                 {keys
-                  .filter(key => key !== 'type')
+                  .filter((key) => key !== 'type')
                   .map((key, i, arr) => {
                     return (
                       <TableCell

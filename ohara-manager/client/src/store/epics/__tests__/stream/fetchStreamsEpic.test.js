@@ -34,7 +34,7 @@ const makeTestScheduler = () =>
   });
 
 it('fetch streams should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----------|';
@@ -56,9 +56,9 @@ it('fetch streams should be worked correctly', () => {
         type: actions.fetchStreams.SUCCESS,
         payload: {
           entities: {
-            [ENTITY_TYPE.streams]: keyBy(entities, e => getId(e)),
+            [ENTITY_TYPE.streams]: keyBy(entities, (e) => getId(e)),
           },
-          result: entities.map(e => getId(e)),
+          result: entities.map((e) => getId(e)),
         },
       },
     });
@@ -70,7 +70,7 @@ it('fetch streams should be worked correctly', () => {
 });
 
 it('fetch stream multiple times within period should be got latest result', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a--b----------|';
@@ -98,9 +98,9 @@ it('fetch stream multiple times within period should be got latest result', () =
         type: actions.fetchStreams.SUCCESS,
         payload: {
           entities: {
-            [ENTITY_TYPE.streams]: keyBy(entities, e => getId(e)),
+            [ENTITY_TYPE.streams]: keyBy(entities, (e) => getId(e)),
           },
-          result: entities.map(e => getId(e)),
+          result: entities.map((e) => getId(e)),
         },
       },
     });
@@ -121,7 +121,7 @@ it('throw exception of fetch stream list should also trigger event log action', 
     .spyOn(streamApi, 'getAll')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

@@ -34,7 +34,7 @@ beforeEach(() => {
 
 it('fetch event logs should be executed correctly', () => {
   const now = new Date();
-  const getEventLog = key => ({
+  const getEventLog = (key) => ({
     key,
     type: LOG_LEVEL.info,
     title: `mock event log of ${key}`,
@@ -45,9 +45,9 @@ it('fetch event logs should be executed correctly', () => {
   const spyKeys = jest.spyOn(localForage, 'keys');
   const spyGetItem = jest.spyOn(localForage, 'getItem');
   spyKeys.mockReturnValue(of(['k1', 'k2', 'k3']));
-  spyGetItem.mockImplementation(key => of(getEventLog(key)));
+  spyGetItem.mockImplementation((key) => of(getEventLog(key)));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---|';
@@ -80,7 +80,7 @@ it('fetch event logs should be executed correctly', () => {
 
 it('multiple fetch actions within period should be executed the latest one', () => {
   const now = new Date();
-  const getEventLog = key => ({
+  const getEventLog = (key) => ({
     key,
     type: LOG_LEVEL.info,
     title: `mock event log of ${key}`,
@@ -91,9 +91,9 @@ it('multiple fetch actions within period should be executed the latest one', () 
   const spyKeys = jest.spyOn(localForage, 'keys');
   const spyGetItem = jest.spyOn(localForage, 'getItem');
   spyKeys.mockReturnValue(of(['k1', 'k2', 'k3']).pipe(delay(10)));
-  spyGetItem.mockImplementation(key => of(getEventLog(key)).pipe(delay(5)));
+  spyGetItem.mockImplementation((key) => of(getEventLog(key)).pipe(delay(5)));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a----a---------|';

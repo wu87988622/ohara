@@ -26,11 +26,11 @@ import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "create + start" for single creation request
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.createAndStartTopic.TRIGGER),
-    map(action => action.payload),
-    mergeMap(values => {
+    map((action) => action.payload),
+    mergeMap((values) => {
       const { params, options, promise } = values;
       const paperApi = get(options, 'paperApi');
       if (paperApi) {
@@ -40,7 +40,7 @@ export default action$ =>
       }
       return of(
         createTopic$(params).pipe(
-          tap(action => {
+          tap((action) => {
             if (action.type === actions.createTopic.SUCCESS) {
               if (typeof promise?.resolve === 'function') {
                 promise.resolve();
@@ -49,7 +49,7 @@ export default action$ =>
           }),
         ),
         startTopic$(params).pipe(
-          tap(action => {
+          tap((action) => {
             if (action.type === actions.startTopic.SUCCESS && paperApi) {
               paperApi.updateElement(params.id, {
                 status: CELL_STATUS.running,
@@ -59,7 +59,7 @@ export default action$ =>
         ),
       ).pipe(
         concatAll(),
-        catchError(err => {
+        catchError((err) => {
           if (paperApi) {
             paperApi.updateElement(params.id, {
               status: CELL_STATUS.stopped,

@@ -35,7 +35,7 @@ const makeTestScheduler = () =>
   });
 
 it('create broker should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
@@ -85,7 +85,7 @@ it('create broker should be worked correctly', () => {
 });
 
 it('create multiple brokers should be worked correctly', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b                ';
@@ -166,7 +166,7 @@ it('create multiple brokers should be worked correctly', () => {
 });
 
 it('create same broker within period should be created once only', () => {
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a       ';
@@ -225,7 +225,7 @@ it('throw exception of create broker should also trigger event log action', () =
     .spyOn(brokerApi, 'create')
     .mockReturnValueOnce(throwError(error));
 
-  makeTestScheduler().run(helpers => {
+  makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';

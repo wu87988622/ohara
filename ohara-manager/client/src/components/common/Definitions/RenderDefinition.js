@@ -49,7 +49,7 @@ import {
   isNumberType,
 } from 'api/apiInterface/definitionInterface';
 
-const RenderDefinition = props => {
+const RenderDefinition = (props) => {
   const {
     def,
     topics = [],
@@ -60,12 +60,12 @@ const RenderDefinition = props => {
     freePorts,
   } = props;
 
-  const parseValueByType = type => value => {
+  const parseValueByType = (type) => (value) => {
     // we only convert the necessary values to correct type
     return isNumberType(type) ? toNumber(value) : value;
   };
 
-  const getFieldProps = definition => {
+  const getFieldProps = (definition) => {
     const {
       key,
       displayName,
@@ -147,7 +147,7 @@ const RenderDefinition = props => {
               {...ensuredFieldProps}
               component={Chooser}
               multipleChoice={multiple}
-              options={nodes.map(node => node.hostname)}
+              options={nodes.map((node) => node.hostname)}
             />
           );
         default:

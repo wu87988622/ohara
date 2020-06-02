@@ -35,11 +35,11 @@ localForage.config({
 
 const getLogFromLocalForge$ = () =>
   defer(() => localForage.keys()).pipe(
-    mergeMap(keys =>
-      zip(..._.map(keys, key => defer(() => localForage.getItem(key)))),
+    mergeMap((keys) =>
+      zip(..._.map(keys, (key) => defer(() => localForage.getItem(key)))),
     ),
-    map(values =>
-      values.map(value => ({
+    map((values) =>
+      values.map((value) => ({
         key: _.get(value, 'key'),
         type: _.get(value, 'type'),
         title: _.get(value, 'title'),
@@ -49,14 +49,14 @@ const getLogFromLocalForge$ = () =>
     ),
   );
 
-export default action$ =>
+export default (action$) =>
   action$.pipe(
     ofType(actions.fetchEventLogs.TRIGGER),
     switchMap(() =>
       getLogFromLocalForge$().pipe(
         defaultIfEmpty(),
-        map(data => actions.fetchEventLogs.success(data)),
-        catchError(res => of(actions.fetchEventLogs.failure(res))),
+        map((data) => actions.fetchEventLogs.success(data)),
+        catchError((res) => of(actions.fetchEventLogs.failure(res))),
       ),
     ),
   );

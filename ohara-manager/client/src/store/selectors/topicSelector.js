@@ -18,7 +18,7 @@ import { filter, map, some, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 import { findPipelinesByGroup } from './pipelineSelector';
 
-const getEntities = state => state?.entities?.topics;
+const getEntities = (state) => state?.entities?.topics;
 
 const getGroupFromProps = (_, props) => props?.group;
 
@@ -29,19 +29,22 @@ export const getTopicById = createSelector(
   (entities, id) => entities[id],
 );
 
-export const getAllTopics = createSelector([getEntities], entities =>
+export const getAllTopics = createSelector([getEntities], (entities) =>
   sortBy(values(entities), 'name'),
 );
 
 export const getTopicsByGroup = createSelector(
   [getAllTopics, getGroupFromProps, findPipelinesByGroup],
   (allTopics, group, pipelines) => {
-    const topics = filter(allTopics, topic => topic?.group === group);
-    return map(topics, topic => {
+    const topics = filter(allTopics, (topic) => topic?.group === group);
+    return map(topics, (topic) => {
       return {
         ...topic,
-        pipelines: filter(pipelines, pipeline => {
-          return some(pipeline?.objects, object => object.name === topic.name);
+        pipelines: filter(pipelines, (pipeline) => {
+          return some(
+            pipeline?.objects,
+            (object) => object.name === topic.name,
+          );
         }),
       };
     });
@@ -50,10 +53,10 @@ export const getTopicsByGroup = createSelector(
 
 export const getSharedTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => filter(topics, topic => topic?.isShared === true),
+  (topics) => filter(topics, (topic) => topic?.isShared === true),
 );
 
 export const getPipelineOnlyTopicsByGroup = createSelector(
   [getTopicsByGroup],
-  topics => filter(topics, topic => topic?.isShared === false),
+  (topics) => filter(topics, (topic) => topic?.isShared === false),
 );

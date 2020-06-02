@@ -46,7 +46,7 @@ const NodeList = ({ heading, list, onErrorTextClick }) => {
       <Typography variant="h6">{heading}</Typography>
       {list
         .sort((a, b) => a.nodeName.localeCompare(b.nodeName))
-        .map(item => {
+        .map((item) => {
           const { nodeName, state, master, error = null } = item;
 
           // Since `PropertyField` only renders value in pair "abc:efg", we just

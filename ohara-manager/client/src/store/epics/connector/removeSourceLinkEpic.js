@@ -24,18 +24,18 @@ import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 
-export default action$ => {
+export default (action$) => {
   return action$.pipe(
     ofType(actions.removeConnectorSourceLink.TRIGGER),
-    map(action => action.payload),
+    map((action) => action.payload),
     switchMap(({ params, options }) =>
       from(connectorApi.update(params)).pipe(
-        map(res => normalize(res.data, schema.connector)),
-        map(normalizedData =>
+        map((res) => normalize(res.data, schema.connector)),
+        map((normalizedData) =>
           actions.removeConnectorSourceLink.success(normalizedData),
         ),
         startWith(actions.removeConnectorSourceLink.request()),
-        catchError(err => {
+        catchError((err) => {
           options.paperApi.addLink(params.id, options.topic.id);
           return from([
             actions.removeConnectorSourceLink.failure(err),

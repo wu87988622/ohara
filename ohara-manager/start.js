@@ -20,7 +20,7 @@ const compression = require('compression');
 const chalk = require('chalk');
 const path = require('path');
 const morgan = require('morgan');
-const proxy = require('http-proxy-middleware');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const { API_ROOT, PORT } = require('./config');
 
@@ -42,7 +42,7 @@ require('./routes/inspectRoute')(app);
 // API Proxy
 app.use(
   '/api',
-  proxy({
+  createProxyMiddleware({
     target: API_ROOT,
     changeOrigin: true,
     pathRewrite: {

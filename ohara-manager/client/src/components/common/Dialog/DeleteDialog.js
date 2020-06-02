@@ -33,7 +33,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DrabblePaper from './DrabblePaper';
 
 const StyledDialogTitle = styled(DialogTitle)(
-  props => css`
+  (props) => css`
     cursor: move;
 
     h3 {
@@ -55,7 +55,8 @@ const ConfirmButtonWrapper = styled.div`
 
 const ConfirmButton = styled(Button)`
   &[disabled] {
-    background-color: ${props => props.theme.palette.action.disabledBackground};
+    background-color: ${(props) =>
+      props.theme.palette.action.disabledBackground};
   }
 `;
 
@@ -105,7 +106,7 @@ const DeleteDialog = ({
               <Checkbox
                 checked={isForceChecked}
                 color="primary"
-                onChange={event => setIsForceChecked(event.target.checked)}
+                onChange={(event) => setIsForceChecked(event.target.checked)}
               />{' '}
               {`Force ${toLower(confirmText)}`}
             </div>

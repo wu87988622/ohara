@@ -19,7 +19,7 @@ import { omit } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 
-const ObjectKey = props => {
+const ObjectKey = (props) => {
   const {
     input: { name, onChange, value, ...restInput },
     meta = {},
@@ -36,7 +36,7 @@ const ObjectKey = props => {
     group: value.group ? value.group : '',
   });
 
-  const handleChange = event => {
+  const handleChange = (event) => {
     if (event.target.name.endsWith('Name')) {
       setObjectKey({ ...objectKey, name: event.target.value });
     } else {

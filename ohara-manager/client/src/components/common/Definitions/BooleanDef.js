@@ -21,7 +21,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormHelperText from '@material-ui/core/FormHelperText';
 
-const BooleanDef = props => {
+const BooleanDef = (props) => {
   const {
     input,
     meta = {},

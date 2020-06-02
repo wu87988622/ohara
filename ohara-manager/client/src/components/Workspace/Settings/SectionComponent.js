@@ -24,15 +24,15 @@ import Box from '@material-ui/core/Box';
 import { Dialog } from 'components/common/Dialog';
 import { SETTINGS_COMPONENT_TYPES } from 'const';
 
-const SectionComponent = props => {
+const SectionComponent = (props) => {
   const { sections, selectedComponent, handleClose } = props;
 
   if (!selectedComponent) return null;
 
   return (
     <>
-      {sections.map(section =>
-        section.components.map(component => {
+      {sections.map((section) =>
+        section.components.map((component) => {
           const { title } = component;
           if (title !== selectedComponent.name) return null;
           return (

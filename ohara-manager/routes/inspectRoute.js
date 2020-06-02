@@ -17,7 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = app => {
+module.exports = (app) => {
   // This route provides manager's version information for
   // our UI to consume. It reads a JSON file which is generated
   // by our Backend code

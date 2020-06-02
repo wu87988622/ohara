@@ -22,12 +22,12 @@ import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 
 export const useIsNodeLoaded = () => {
-  const mapState = useCallback(state => !!state.ui.node?.lastUpdated, []);
+  const mapState = useCallback((state) => !!state.ui.node?.lastUpdated, []);
   return useSelector(mapState);
 };
 
 export const useIsNodeLoading = () => {
-  const mapState = useCallback(state => !!state.ui.node?.loading, []);
+  const mapState = useCallback((state) => !!state.ui.node?.loading, []);
   return useSelector(mapState);
 };
 
@@ -38,7 +38,7 @@ export const useAllNodes = () => {
     if (!isLoaded) fetchNodes();
   }, [fetchNodes, isLoaded]);
 
-  return useSelector(state => selectors.getAllNodes(state));
+  return useSelector((state) => selectors.getAllNodes(state));
 };
 
 export const useNodesInWorkspace = () => {
@@ -46,7 +46,7 @@ export const useNodesInWorkspace = () => {
   const workspace = hooks.useWorkspace();
   const { nodeNames } = workspace;
   return useSelector(
-    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+    useCallback((state) => getNodesByNames(state, { names: nodeNames }), [
       getNodesByNames,
       nodeNames,
     ]),
@@ -58,7 +58,7 @@ export const useNodesInWorker = () => {
   const worker = hooks.useWorker();
   const { nodeNames } = worker;
   return useSelector(
-    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+    useCallback((state) => getNodesByNames(state, { names: nodeNames }), [
       getNodesByNames,
       nodeNames,
     ]),
@@ -70,7 +70,7 @@ export const useNodesInBroker = () => {
   const broker = hooks.useBroker();
   const { nodeNames } = broker;
   return useSelector(
-    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+    useCallback((state) => getNodesByNames(state, { names: nodeNames }), [
       getNodesByNames,
       nodeNames,
     ]),
@@ -82,7 +82,7 @@ export const useNodesInZookeeper = () => {
   const zookeeper = hooks.useZookeeper();
   const { nodeNames } = zookeeper;
   return useSelector(
-    useCallback(state => getNodesByNames(state, { names: nodeNames }), [
+    useCallback((state) => getNodesByNames(state, { names: nodeNames }), [
       getNodesByNames,
       nodeNames,
     ]),
@@ -100,21 +100,21 @@ export const useCreateNodeAction = () => {
 
 export const useUpdateNodeAction = () => {
   const dispatch = useDispatch();
-  return function(values) {
+  return function (values) {
     dispatch(actions.updateNode.trigger(values));
   };
 };
 
 export const useFetchNodesAction = () => {
   const dispatch = useDispatch();
-  return function() {
+  return function () {
     dispatch(actions.fetchNodes.trigger());
   };
 };
 
 export const useDeleteNodeAction = () => {
   const dispatch = useDispatch();
-  return function(values) {
+  return function (values) {
     dispatch(actions.deleteNode.trigger(values));
   };
 };

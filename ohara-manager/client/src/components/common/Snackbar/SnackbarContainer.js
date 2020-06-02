@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export const mapStateToProps = state => {
+export const mapStateToProps = (state) => {
   return {
     message: state.ui.snackbar.message,
     isOpen: state.ui.snackbar.isOpen,
