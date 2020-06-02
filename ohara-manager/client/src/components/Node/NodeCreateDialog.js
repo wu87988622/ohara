@@ -71,7 +71,7 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
                 validate={composeValidators(required, maxLength(63))}
               />
 
-              {mode === MODE.DOCKER && (
+              {mode !== MODE.K8S && (
                 <>
                   <Field
                     component={InputField}

@@ -16,6 +16,7 @@
 
 import { deleteAllServices } from '../utils';
 import * as generate from '../../src/utils/generate';
+import { hashByGroupAndName } from '../../src/utils/sha';
 
 const nodeHost = Cypress.env('nodeHost');
 
@@ -140,5 +141,103 @@ describe('Workspace Settings', () => {
       .siblings('td')
       .contains('Available')
       .should('exist');
+  });
+
+  it('file operations of Settings', () => {
+    cy.visit('/');
+
+    // we use the default workspace name and group for file tags
+    const workspaceKey = {
+      name: 'workspace1',
+      group: 'workspace',
+    };
+    const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
+
+    // create files object
+    const source = {
+      fixturePath: 'plugin',
+      // we use an existing file to simulate upload jar
+      name: 'ohara-it-source.jar',
+      group: fileGroup,
+      tags: { parentKey: workspaceKey },
+    };
+
+    const sink = {
+      fixturePath: 'plugin',
+      // we use an existing file to simulate upload jar
+      name: 'ohara-it-sink.jar',
+      group: fileGroup,
+      tags: { parentKey: workspaceKey },
+    };
+
+    const stream = {
+      fixturePath: 'stream',
+      name: 'ohara-it-stream.jar',
+      group: fileGroup,
+      tags: { parentKey: workspaceKey },
+    };
+    const files = [source, sink, stream];
+
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
+    // click the file button
+    cy.findAllByText(/^files in this workspace$/i).click({ force: true });
+
+    // upload the files by custom command "createJar"
+    cy.findAllByText('Files in this workspace')
+      .filter(':visible')
+      .parent('div')
+      .siblings('div')
+      .first()
+      .within(() => {
+        files.forEach(file => {
+          cy.get('input[type="file"]').then(element => {
+            cy.createJar(file).then(params => {
+              (element[0] as HTMLInputElement).files = params.fileList;
+              cy.wrap(element).trigger('change', { force: true });
+            });
+          });
+        });
+      });
+
+    // after upload file, click the upload file again
+    cy.wait(1000);
+    cy.findAllByTitle('Upload File')
+      .first()
+      .click();
+
+    cy.findByText(source.name).should('exist');
+    cy.findByText(sink.name).should('exist');
+    cy.findByText(stream.name).should('exist');
+
+    // check the source file could be removed
+    cy.findByText(source.name)
+      .siblings('td')
+      .last()
+      .within(el$ => {
+        el$.find('div[title="Delete file"]').click();
+      });
+    // confirm dialog
+    cy.findByTestId('confirm-button-DELETE').click();
+
+    // after removed, the file should not be existed
+    cy.findByText(source.name).should('not.exist');
+
+    // //filter
+    cy.findAllByPlaceholderText('Search')
+      .filter(':visible')
+      .type(stream.name);
+    cy.findByText(stream.name).should('exist');
+    cy.findByText(sink.name).should('not.exist');
+
+    // view the classNames of stream file
+    cy.findByText(stream.name)
+      .siblings('td')
+      .last()
+      .within(el$ => {
+        el$.find('div[title="View file"]').click();
+      });
+    cy.findAllByText('DumbStream', { exact: false }).should('exist');
   });
 });
