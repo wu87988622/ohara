@@ -20,7 +20,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.RowSourceContext;
@@ -75,7 +74,7 @@ public class CsvDataReader implements DataReader {
     } catch (Exception e) {
       LOG.error("failed to handle " + path, e);
       handleErrorFile(path);
-      return Collections.emptyList();
+      return List.of();
     }
   }
 

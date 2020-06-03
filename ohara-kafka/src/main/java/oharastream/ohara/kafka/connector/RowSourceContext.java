@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.connect.source.SourceTaskContext;
@@ -58,7 +57,7 @@ public interface RowSourceContext {
       public <T> Map<String, Object> offset(Map<String, T> partition) {
 
         Map<String, Object> r = context.offsetStorageReader().offset(partition);
-        return r == null ? Collections.emptyMap() : r;
+        return r == null ? Map.of() : r;
       }
 
       @Override

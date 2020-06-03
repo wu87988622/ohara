@@ -24,6 +24,7 @@ import static oharastream.ohara.common.setting.SettingDef.COLUMN_ORDER_KEY;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -163,7 +164,7 @@ public final class ConnectorDefUtils {
                               .recommendedValues(
                                   Stream.of(DataType.values())
                                       .map(DataType::name)
-                                      .collect(Collectors.toSet()))
+                                      .collect(Collectors.toUnmodifiableSet()))
                               .build(),
                           TableColumn.builder()
                               .name(COLUMN_NAME_KEY)
@@ -186,7 +187,7 @@ public final class ConnectorDefUtils {
                   .optional(
                       Stream.of(SettingDef.CheckRule.values())
                           .map(SettingDef.CheckRule::name)
-                          .collect(Collectors.toSet()))
+                          .collect(Collectors.toUnmodifiableSet()))
                   .build());
 
   public static final SettingDef WORKER_CLUSTER_KEY_DEFINITION =
@@ -353,7 +354,7 @@ public final class ConnectorDefUtils {
         // we format ohara's definition to json and then put it in display_name.
         // This is a workaround to store our setting in kafka...
         def.toString(),
-        Collections.emptyList(),
+        List.of(),
         null,
         false);
   }

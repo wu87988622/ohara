@@ -17,7 +17,6 @@
 package oharastream.ohara.client.kafka
 
 import java.util
-import java.util.Collections
 
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.setting.SettingDef.Type
@@ -40,7 +39,7 @@ class MyConnector extends RowSourceConnector {
   }
 
   override protected def customSettingDefinitions(): util.Map[String, SettingDef] =
-    Collections.singletonMap(
+    java.util.Map.of(
       MyConnector.DURATION_KEY,
       // used by TestConnectorAdmin.passIncorrectDuration
       SettingDef.builder().key(MyConnector.DURATION_KEY).optional(Type.DURATION).build()

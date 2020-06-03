@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,13 +34,14 @@ public class TestStreamUtils extends OharaTest {
     Stream<String> stream = StreamUtils.iterate(names.iterator());
     Assert.assertEquals("a,b,c", stream.collect(Collectors.joining(",")));
     stream = StreamUtils.iterate(names.iterator());
-    Assert.assertEquals(3, stream.collect(Collectors.toList()).size());
+    Assert.assertEquals(3, stream.count());
   }
 
   @Test
   public void testZipWithIndex() {
     Map<Integer, String> namesWithIndex =
-        StreamUtils.zipWithIndex(names.stream()).collect(Collectors.toMap(Pair::left, Pair::right));
+        StreamUtils.zipWithIndex(names.stream())
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     Assert.assertEquals(3, namesWithIndex.size());
     Assert.assertEquals("a", namesWithIndex.get(0));
     Assert.assertEquals("b", namesWithIndex.get(1));
@@ -50,11 +50,11 @@ public class TestStreamUtils extends OharaTest {
 
   @Test
   public void testMapWithIndex() {
-    List<Pair<Integer, String>> namesWithIndex =
-        StreamUtils.mapWithIndex(names.stream(), (index, name) -> Pair.of(index, name))
-            .collect(Collectors.toList());
-    Assert.assertEquals(Pair.of(0, "a"), namesWithIndex.get(0));
-    Assert.assertEquals(Pair.of(1, "b"), namesWithIndex.get(1));
-    Assert.assertEquals(Pair.of(2, "c"), namesWithIndex.get(2));
+    List<Map.Entry<Integer, String>> namesWithIndex =
+        StreamUtils.mapWithIndex(names.stream(), Map::entry)
+            .collect(Collectors.toUnmodifiableList());
+    Assert.assertEquals(Map.entry(0, "a"), namesWithIndex.get(0));
+    Assert.assertEquals(Map.entry(1, "b"), namesWithIndex.get(1));
+    Assert.assertEquals(Map.entry(2, "c"), namesWithIndex.get(2));
   }
 }

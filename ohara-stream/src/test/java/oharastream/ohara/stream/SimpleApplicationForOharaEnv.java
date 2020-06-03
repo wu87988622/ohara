@@ -16,7 +16,6 @@
 
 package oharastream.ohara.stream;
 
-import java.util.Collections;
 import java.util.Map;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
@@ -32,7 +31,7 @@ public class SimpleApplicationForOharaEnv extends Stream {
 
   @Override
   protected Map<String, SettingDef> customSettingDefinitions() {
-    return Collections.singletonMap(
+    return Map.of(
         DEFAULT_KEY, SettingDef.builder().key(DEFAULT_KEY).optional(DEFAULT_VALUE).build());
   }
 

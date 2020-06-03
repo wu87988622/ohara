@@ -84,7 +84,7 @@ public interface ObjectKey extends Comparable<ObjectKey> {
                   if (key instanceof KeyImpl) return (KeyImpl) key;
                   else return new KeyImpl(key.group(), key.name());
                 })
-            .collect(Collectors.toList()));
+            .collect(Collectors.toUnmodifiableList()));
   }
   /**
    * parse input json and then generate a ObjectKey instance.
@@ -127,7 +127,7 @@ public interface ObjectKey extends Comparable<ObjectKey> {
   static List<ObjectKey> toObjectKeys(String json) {
     return JsonUtils.toObject(json, new TypeReference<List<KeyImpl>>() {}).stream()
         .map(key -> (ObjectKey) key)
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   /** @return the group of object */

@@ -27,7 +27,6 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.exception.Exception;
@@ -89,8 +88,6 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
   }
 
   protected void setupInputFile() {
-    List<String> data = INPUT_DATA != null ? INPUT_DATA : setupInputData();
-
     try {
       if (storage.exists(INPUT_FILE.toString())) {
         storage.delete(INPUT_FILE.toString());
@@ -103,11 +100,9 @@ public abstract class WithFakeStorage extends CsvSourceTestBase {
       writer.append(header);
       writer.newLine();
 
-      if (data != null && data.size() > 0) {
-        for (String line : data) {
-          writer.append(line);
-          writer.newLine();
-        }
+      for (String line : INPUT_DATA) {
+        writer.append(line);
+        writer.newLine();
       }
       writer.close();
     } catch (IOException e) {

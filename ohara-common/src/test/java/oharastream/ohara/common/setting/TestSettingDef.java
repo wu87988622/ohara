@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import oharastream.ohara.common.data.Serializer;
@@ -188,30 +188,20 @@ public class TestSettingDef extends OharaTest {
     // illegal format
     Assert.assertThrows(ConfigException.class, () -> settingDef.checker().accept(123));
     // illegal format
-    Assert.assertThrows(
-        ConfigException.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    Assert.assertThrows(ConfigException.class, () -> settingDef.checker().accept(List.of()));
     // neglect column "b"
     Assert.assertThrows(
-        ConfigException.class,
-        () ->
-            settingDef
-                .checker()
-                .accept(Collections.singletonList(Collections.singletonMap("a", "c"))));
+        ConfigException.class, () -> settingDef.checker().accept(List.of(Map.of("a", "c"))));
 
     // too many items
-    Map<String, String> goodMap = new HashMap<>();
-    goodMap.put("a", "a0");
-    goodMap.put("b", "c");
-    settingDef.checker().accept(PropGroup.of(Collections.singletonList(goodMap)).toJsonString());
+    Map<String, String> goodMap = Map.of("a", "a0", "b", "c");
+    settingDef.checker().accept(PropGroup.of(List.of(goodMap)).toJsonString());
 
     Map<String, String> illegalColumnMap = new HashMap<>(goodMap);
     illegalColumnMap.put("dddd", "fff");
     Assert.assertThrows(
         ConfigException.class,
-        () ->
-            settingDef
-                .checker()
-                .accept(PropGroup.of(Collections.singletonList(illegalColumnMap)).toJsonString()));
+        () -> settingDef.checker().accept(PropGroup.of(List.of(illegalColumnMap)).toJsonString()));
   }
 
   @Test
@@ -223,8 +213,7 @@ public class TestSettingDef extends OharaTest {
             .build();
     Assert.assertThrows(ConfigException.class, () -> settingDef.checker().accept(null));
     Assert.assertThrows(ConfigException.class, () -> settingDef.checker().accept(123));
-    Assert.assertThrows(
-        ConfigException.class, () -> settingDef.checker().accept(Collections.emptyList()));
+    Assert.assertThrows(ConfigException.class, () -> settingDef.checker().accept(List.of()));
     settingDef.checker().accept(Duration.ofHours(3).toString());
     settingDef.checker().accept("10 MILLISECONDS");
     settingDef.checker().accept("10 SECONDS");
@@ -259,7 +248,7 @@ public class TestSettingDef extends OharaTest {
     // pass
     s.checker().accept("{\"a\": \"b\"}");
     s.checker().accept("{\"123\":456}");
-    s.checker().accept(Collections.emptyList());
+    s.checker().accept(List.of());
     // not a jsonObject
     Assert.assertThrows(
         ConfigException.class, () -> s.checker().accept(CommonUtils.randomString()));
@@ -286,8 +275,7 @@ public class TestSettingDef extends OharaTest {
     def.checker()
         .accept(
             JsonUtils.toString(
-                Collections.singleton(
-                    TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))));
+                Set.of(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()))));
     // empty array is illegal
     Assert.assertThrows(ConfigException.class, () -> def.checker().accept("[]"));
     Assert.assertThrows(ConfigException.class, () -> def.checker().accept("{}"));
@@ -467,7 +455,7 @@ public class TestSettingDef extends OharaTest {
     def.checker().accept(Arrays.asList("ab", "cd"));
 
     // empty array is ok
-    def.checker().accept(Collections.emptyList());
+    def.checker().accept(List.of());
     def.checker().accept("[]");
   }
 
@@ -595,7 +583,7 @@ public class TestSettingDef extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyRecommendedValuesTest() {
-    SettingDef.builder().key(CommonUtils.randomString()).optional(Collections.emptySet()).build();
+    SettingDef.builder().key(CommonUtils.randomString()).optional(Set.of()).build();
   }
 
   @Test

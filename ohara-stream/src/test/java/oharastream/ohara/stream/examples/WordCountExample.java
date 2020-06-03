@@ -16,7 +16,7 @@
 
 package oharastream.ohara.stream.examples;
 
-import java.util.Collections;
+import java.util.List;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.stream.OStream;
 import oharastream.ohara.stream.Stream;
@@ -67,7 +67,7 @@ public class WordCountExample extends Stream {
   public void start(OStream<Row> ostream, StreamSetting streamSetting) {
     ostream
         // group the row with header: word
-        .groupByKey(Collections.singletonList("word"))
+        .groupByKey(List.of("word"))
         // count the word
         .count()
         // start this OStream

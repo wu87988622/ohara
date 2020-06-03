@@ -16,7 +16,6 @@
 
 package oharastream.ohara.configurator.fake
 
-import java.util.Collections
 import java.util.concurrent.{CompletableFuture, CompletionStage, ConcurrentHashMap}
 import java.{lang, util}
 
@@ -63,7 +62,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
       else {
         val topicInfo = new TopicDescription(
           topicKey,
-          Collections.emptyList(),
+          java.util.List.of(),
           options.asScala
             .map {
               case (key, value) =>
@@ -92,7 +91,7 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
   override def closed(): Boolean = _closed
 
   override def brokerPorts(): CompletionStage[util.Map[String, Integer]] =
-    CompletableFuture.completedFuture(Collections.emptyMap())
+    CompletableFuture.completedFuture(java.util.Map.of())
 
   override def exist(topicKey: TopicKey): CompletionStage[lang.Boolean] =
     CompletableFuture.completedFuture(cachedTopics.containsKey(topicKey))

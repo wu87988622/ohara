@@ -16,11 +16,13 @@
 
 package oharastream.ohara.common.util;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import oharastream.ohara.common.data.Pair;
 
 /** This is a stream helper. */
 public final class StreamUtils {
@@ -50,9 +52,9 @@ public final class StreamUtils {
    * @param <T> the type of the stream elements
    * @return a stream consisting of the results with index
    */
-  public static <T> Stream<Pair<Integer, T>> zipWithIndex(Stream<? extends T> stream) {
+  public static <T> Stream<Map.Entry<Integer, T>> zipWithIndex(Stream<? extends T> stream) {
     return iterate(
-        new Iterator<Pair<Integer, T>>() {
+        new Iterator<>() {
           private final Iterator<? extends T> streamIterator = stream.iterator();
           private int index = 0;
 
@@ -62,8 +64,8 @@ public final class StreamUtils {
           }
 
           @Override
-          public Pair<Integer, T> next() {
-            return Pair.of(index++, streamIterator.next());
+          public Map.Entry<Integer, T> next() {
+            return Map.entry(index++, streamIterator.next());
           }
         });
   }
@@ -81,6 +83,6 @@ public final class StreamUtils {
    */
   public static <T, R> Stream<R> mapWithIndex(
       Stream<? extends T> stream, BiFunction<Integer, ? super T, ? extends R> mapper) {
-    return zipWithIndex(stream).map(pair -> mapper.apply(pair.left(), pair.right()));
+    return zipWithIndex(stream).map(pair -> mapper.apply(pair.getKey(), pair.getValue()));
   }
 }

@@ -17,7 +17,6 @@
 package oharastream.ohara.common.setting;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,15 +32,15 @@ public enum ClassType {
           Arrays.asList(
               "oharastream.ohara.kafka.connector.RowSinkConnector",
               "oharastream.ohara.shabondi.ShabondiSink"))),
-  PARTITIONER(Collections.singleton("oharastream.ohara.kafka.RowPartitioner")),
-  STREAM(Collections.singleton("oharastream.ohara.stream.Stream")),
-  TOPIC(Collections.emptySet()),
-  UNKNOWN(Collections.emptySet());
+  PARTITIONER(Set.of("oharastream.ohara.kafka.RowPartitioner")),
+  STREAM(Set.of("oharastream.ohara.stream.Stream")),
+  TOPIC(Set.of()),
+  UNKNOWN(Set.of());
 
   final Set<String> bases;
 
   ClassType(Set<String> bases) {
-    this.bases = Collections.unmodifiableSet(bases);
+    this.bases = bases;
   }
 
   /**

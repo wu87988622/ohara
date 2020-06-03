@@ -25,13 +25,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.setting.ObjectKey;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -642,6 +648,12 @@ public final class CommonUtils {
     }
   }
 
+  /**
+   * Parse the key=value to Map<key, value></key,>
+   *
+   * @param lines lines
+   * @return map
+   */
   public static Map<String, String> parse(List<String> lines) {
     return lines.stream()
         .filter(
@@ -653,9 +665,9 @@ public final class CommonUtils {
         .map(
             line -> {
               int index = line.indexOf("=");
-              return Pair.of(line.substring(0, index), line.substring(index + 1));
+              return Map.entry(line.substring(0, index), line.substring(index + 1));
             })
-        .collect(Collectors.toMap(Pair::left, Pair::right));
+        .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   /** disable to instantiate CommonUtils. */

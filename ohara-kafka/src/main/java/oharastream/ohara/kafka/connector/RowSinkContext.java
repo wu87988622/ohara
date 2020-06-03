@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,7 +56,7 @@ public interface RowSinkContext {
    * @param offset the offset to reset to.
    */
   default void offset(TopicPartition partition, long offset) {
-    this.offset(Collections.singletonMap(partition, offset));
+    this.offset(Map.of(partition, offset));
   }
 
   static RowSinkContext toRowSinkContext(SinkTaskContext context) {
@@ -67,7 +66,7 @@ public interface RowSinkContext {
         context.offset(
             offsets.entrySet().stream()
                 .collect(
-                    Collectors.toMap(
+                    Collectors.toUnmodifiableMap(
                         entry ->
                             new org.apache.kafka.common.TopicPartition(
                                 entry.getKey().topicKey().topicNameOnKafka(),
@@ -77,7 +76,9 @@ public interface RowSinkContext {
 
       @Override
       public Set<TopicPartition> assignment() {
-        return context.assignment().stream().map(TopicPartition::of).collect(Collectors.toSet());
+        return context.assignment().stream()
+            .map(TopicPartition::of)
+            .collect(Collectors.toUnmodifiableSet());
       }
     };
   }

@@ -17,7 +17,7 @@
 package oharastream.ohara.kafka.connector.json;
 
 import com.google.common.collect.Sets;
-import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.json.JsonUtils;
@@ -42,7 +42,7 @@ public class TestConnectorFormatter extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyColumns() {
-    ConnectorFormatter.of().columns(Collections.emptyList());
+    ConnectorFormatter.of().columns(List.of());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class TestConnectorFormatter extends OharaTest {
     Set<TopicKey> topicKeys =
         Sets.newHashSet(TopicKey.of(CommonUtils.randomString(), CommonUtils.randomString()));
     Set<String> topicNames =
-        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet());
+        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toUnmodifiableSet());
     Creation creation =
         ConnectorFormatter.of()
             .connectorKey(ConnectorKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))

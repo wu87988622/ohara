@@ -25,8 +25,10 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.TASK_TOTAL_KEY;
 import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.*;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.rule.OharaTest;
@@ -40,7 +42,7 @@ import org.junit.Test;
 public class TestCsvSourceConfig extends OharaTest {
 
   private static CsvSourceConfig config(String key, String value) {
-    return CsvSourceConfig.of(TaskSetting.of(Collections.singletonMap(key, value)));
+    return CsvSourceConfig.of(TaskSetting.of(Map.of(key, value)));
   }
 
   @Test
@@ -96,8 +98,8 @@ public class TestCsvSourceConfig extends OharaTest {
   public void testTopicNames() {
     TopicKey key = TopicKey.of("g", "n");
     CsvSourceConfig config =
-        config(TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(Collections.singleton(key)));
-    Assert.assertEquals(config.topicKeys(), Collections.singleton(key));
+        config(TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(Set.of(key)));
+    Assert.assertEquals(config.topicKeys(), Set.of(key));
   }
 
   @Test
@@ -110,6 +112,6 @@ public class TestCsvSourceConfig extends OharaTest {
             .build();
     CsvSourceConfig config =
         config(COLUMNS_DEFINITION.key(), PropGroup.ofColumn(column).toJsonString());
-    Assert.assertEquals(config.columns(), Collections.singletonList(column));
+    Assert.assertEquals(config.columns(), List.of(column));
   }
 }

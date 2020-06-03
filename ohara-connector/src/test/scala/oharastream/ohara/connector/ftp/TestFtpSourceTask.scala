@@ -16,8 +16,6 @@
 
 package oharastream.ohara.connector.ftp
 
-import java.util.Collections
-
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.common.exception.NoSuchFileException
 import oharastream.ohara.common.rule.OharaTest
@@ -95,7 +93,7 @@ class TestFtpSourceTask extends OharaTest {
   def testFileSystem_WithEmptyConfig(): Unit = {
     val task = createTask()
     intercept[NoSuchElementException] {
-      task.fileSystem(TaskSetting.of(Collections.emptyMap()))
+      task.fileSystem(TaskSetting.of(java.util.Map.of()))
     }
   }
 

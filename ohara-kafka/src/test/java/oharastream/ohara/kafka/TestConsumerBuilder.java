@@ -16,7 +16,7 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
+import java.util.Set;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.kafka.connector.TopicPartition;
@@ -41,7 +41,7 @@ public class TestConsumerBuilder extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyTopicKeys() {
-    Consumer.builder().topicKeys(Collections.emptySet());
+    Consumer.builder().topicKeys(Set.of());
   }
 
   @Test(expected = NullPointerException.class)
@@ -66,7 +66,7 @@ public class TestConsumerBuilder extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyAssignments() {
-    Consumer.builder().assignments(Collections.emptySet());
+    Consumer.builder().assignments(Set.of());
   }
 
   @Test(expected = NullPointerException.class)
@@ -77,7 +77,7 @@ public class TestConsumerBuilder extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void assignBothTopicAndAssignments() {
     Consumer.builder()
-        .assignments(Collections.singleton(new TopicPartition(TopicKey.of("g", "n"), 1)))
+        .assignments(Set.of(new TopicPartition(TopicKey.of("g", "n"), 1)))
         .topicKey(TopicKey.of("a", "b"));
   }
 }

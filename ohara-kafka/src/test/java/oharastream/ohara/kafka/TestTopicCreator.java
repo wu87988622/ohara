@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import oharastream.ohara.common.rule.OharaTest;
@@ -57,6 +56,6 @@ public class TestTopicCreator extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyOptions() {
-    fake().options(Collections.emptyMap());
+    fake().options(Map.of());
   }
 }

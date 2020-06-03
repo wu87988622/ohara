@@ -15,8 +15,6 @@
  */
 
 package oharastream.ohara.connector.perf
-import java.util.Collections
-
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -26,8 +24,8 @@ import oharastream.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 class TestPerfSourceProps extends OharaTest {
   private[this] val props     = PerfSourceProps(10, 10 seconds, 10)
@@ -87,19 +85,19 @@ class TestPerfSourceProps extends OharaTest {
 
   @Test
   def testDefaultBatch(): Unit =
-    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).batch shouldBe PERF_BATCH_DEFAULT
+    PerfSourceProps(TaskSetting.of(java.util.Map.of())).batch shouldBe PERF_BATCH_DEFAULT
 
   @Test
   def testDefaultFrequency(): Unit =
-    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).freq shouldBe PERF_FREQUENCY_DEFAULT
+    PerfSourceProps(TaskSetting.of(java.util.Map.of())).freq shouldBe PERF_FREQUENCY_DEFAULT
 
   @Test
   def testDefaultCellSize(): Unit =
-    PerfSourceProps(TaskSetting.of(Collections.emptyMap())).cellSize shouldBe PERF_CELL_LENGTH_DEFAULT
+    PerfSourceProps(TaskSetting.of(java.util.Map.of())).cellSize shouldBe PERF_CELL_LENGTH_DEFAULT
 
   @Test
   def testCellSize(): Unit =
-    PerfSourceProps(TaskSetting.of(Collections.singletonMap(PERF_CELL_LENGTH_KEY, "999"))).cellSize shouldBe 999
+    PerfSourceProps(TaskSetting.of(java.util.Map.of(PERF_CELL_LENGTH_KEY, "999"))).cellSize shouldBe 999
 
   @Test
   def testInvalidFrequency(): Unit =

@@ -110,5 +110,5 @@ task runFtp(type: JavaExec, dependsOn: 'classes') {
     .flatMap {
       word -> Arrays.asList("--$word", project.getProperty(word)).stream()
     }
-    .collect(Collectors.toList())
+    .collect(Collectors.toUnmodifiableList())
 }

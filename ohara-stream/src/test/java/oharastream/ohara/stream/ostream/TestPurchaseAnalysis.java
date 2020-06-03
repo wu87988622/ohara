@@ -20,18 +20,9 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.TopicKey;
@@ -120,17 +111,14 @@ public class TestPurchaseAnalysis extends With3Brokers {
     RunStream app = new RunStream();
     Stream.execute(
         app.getClass(),
-        java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "test-purchase-analysis"),
-                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
-                Pair.of(
-                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(orderTopic))),
-                Pair.of(
-                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(resultTopic))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)));
+        Map.of(
+            StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5),
+            StreamDefUtils.NAME_DEFINITION.key(), "test-purchase-analysis",
+            StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps(),
+            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                TopicKey.toJsonString(List.of(orderTopic)),
+            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+                TopicKey.toJsonString(List.of(resultTopic))));
   }
 
   @After
@@ -167,7 +155,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
       ostream
           .leftJoin(
               userTopic.topicNameOnKafka(),
-              Conditions.create().add(Collections.singletonList(Pair.of("userName", "name"))),
+              Conditions.create().add(List.of(Map.entry("userName", "name"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),
@@ -178,7 +166,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
           .filter(row -> row.cell("address").value() != null)
           .leftJoin(
               itemTopic.topicNameOnKafka(),
-              Conditions.create().add(Collections.singletonList(Pair.of("itemName", "itemName"))),
+              Conditions.create().add(List.of(Map.entry("itemName", "itemName"))),
               (row1, row2) ->
                   Row.of(
                       row1.cell("userName"),
@@ -205,7 +193,7 @@ public class TestPurchaseAnalysis extends With3Brokers {
                           "amount",
                           Double.parseDouble(row.cell("quantity").value().toString())
                               * Double.parseDouble(row.cell("price").value().toString()))))
-          .groupByKey(Collections.singletonList("gender"))
+          .groupByKey(List.of("gender"))
           .reduce(Double::sum, "amount")
           .start();
 
@@ -227,9 +215,10 @@ public class TestPurchaseAnalysis extends With3Brokers {
       Assert.assertEquals(
           "the result will get \"accumulation\" ; hence we will get 4 records.", 4, records.size());
 
-      Map<String, Double[]> actualResultMap = new HashMap<>();
-      actualResultMap.put("male", new Double[] {9000D, 60000D, 69000D});
-      actualResultMap.put("female", new Double[] {15000D, 30000D, 45000D});
+      Map<String, Double[]> actualResultMap =
+          Map.of(
+              "male", new Double[] {9000D, 60000D, 69000D},
+              "female", new Double[] {15000D, 30000D, 45000D});
       final double THRESHOLD = 0.0001;
 
       records.forEach(

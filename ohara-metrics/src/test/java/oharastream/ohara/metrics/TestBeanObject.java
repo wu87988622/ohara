@@ -16,7 +16,7 @@
 
 package oharastream.ohara.metrics;
 
-import java.util.Collections;
+import java.util.Map;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
 import org.junit.Test;
@@ -40,17 +40,17 @@ public class TestBeanObject extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyProperties() {
-    BeanObject.builder().properties(Collections.emptyMap());
+    BeanObject.builder().properties(Map.of());
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullValueInProperties() {
-    BeanObject.builder().properties(Collections.singletonMap("a", null));
+    BeanObject.builder().properties(Map.of("a", null));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyValueInProperties() {
-    BeanObject.builder().properties(Collections.singletonMap("a", ""));
+    BeanObject.builder().properties(Map.of("a", ""));
   }
 
   @Test(expected = NullPointerException.class)
@@ -60,12 +60,12 @@ public class TestBeanObject extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyAttributes() {
-    BeanObject.builder().attributes(Collections.emptyMap());
+    BeanObject.builder().attributes(Map.of());
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullValueInAttributes() {
-    BeanObject.builder().attributes(Collections.singletonMap("a", null));
+    BeanObject.builder().attributes(Map.of("a", null));
   }
 
   @Test(expected = UnsupportedOperationException.class)
@@ -73,8 +73,8 @@ public class TestBeanObject extends OharaTest {
     BeanObject obj =
         BeanObject.builder()
             .domainName(CommonUtils.randomString())
-            .properties(Collections.singletonMap("a", "b"))
-            .attributes(Collections.singletonMap("a", "b"))
+            .properties(Map.of("a", "b"))
+            .attributes(Map.of("a", "b"))
             .queryTime(CommonUtils.current())
             .build();
     obj.properties().remove(("a"));
@@ -85,8 +85,8 @@ public class TestBeanObject extends OharaTest {
     BeanObject obj =
         BeanObject.builder()
             .domainName(CommonUtils.randomString())
-            .properties(Collections.singletonMap("a", "b"))
-            .attributes(Collections.singletonMap("a", "b"))
+            .properties(Map.of("a", "b"))
+            .attributes(Map.of("a", "b"))
             .queryTime(CommonUtils.current())
             .build();
     obj.attributes().remove(("a"));
@@ -96,8 +96,8 @@ public class TestBeanObject extends OharaTest {
   public void testZeroQueryNumber() {
     BeanObject.builder()
         .domainName(CommonUtils.randomString())
-        .properties(Collections.singletonMap("a", "b"))
-        .attributes(Collections.singletonMap("a", "b"))
+        .properties(Map.of("a", "b"))
+        .attributes(Map.of("a", "b"))
         .queryTime(0)
         .build();
   }
@@ -106,8 +106,8 @@ public class TestBeanObject extends OharaTest {
   public void testNegativeQueryNumber() {
     BeanObject.builder()
         .domainName(CommonUtils.randomString())
-        .properties(Collections.singletonMap("a", "b"))
-        .attributes(Collections.singletonMap("a", "b"))
+        .properties(Map.of("a", "b"))
+        .attributes(Map.of("a", "b"))
         .queryTime(-999)
         .build();
   }

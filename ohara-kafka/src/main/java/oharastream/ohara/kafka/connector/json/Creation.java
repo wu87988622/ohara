@@ -39,9 +39,7 @@ public class Creation implements JsonObject {
 
   public static Creation of(String id, String key, String value) {
     return new Creation(
-        id,
-        Collections.singletonMap(
-            CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
+        id, Map.of(CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
   }
 
   public static Creation of(Map<String, String> configs) {
@@ -57,21 +55,20 @@ public class Creation implements JsonObject {
             // key can't be empty or null
             (k, v) -> CommonUtils.requireNonEmpty(k));
     this.configs =
-        Collections.unmodifiableMap(
-            configs.entrySet().stream()
-                // the empty or null value should be removed directly...We all hate the unknown
-                // value
-                // linger in our project.
-                .filter(entry -> !CommonUtils.isEmpty(entry.getValue()))
-                // NOTED: If settings.name exists, kafka will use it to replace the outside name.
-                // for example: {"name":"abc", "settings":{"name":"c"}} is converted to map("name",
-                // "c")...
-                // Hence, we have to filter out the name here...
-                // TODO: this issue is fixed by
-                // https://github.com/apache/kafka/commit/5a2960f811c27f59d78dfdb99c7c3c6eeed16c4b
-                // TODO: we should remove this workaround after we update kafka to 1.1.x
-                .filter(entry -> !entry.getKey().equalsIgnoreCase(NAME_KEY))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        configs.entrySet().stream()
+            // the empty or null value should be removed directly...We all hate the unknown
+            // value
+            // linger in our project.
+            .filter(entry -> !CommonUtils.isEmpty(entry.getValue()))
+            // NOTED: If settings.name exists, kafka will use it to replace the outside name.
+            // for example: {"name":"abc", "settings":{"name":"c"}} is converted to map("name",
+            // "c")...
+            // Hence, we have to filter out the name here...
+            // TODO: this issue is fixed by
+            // https://github.com/apache/kafka/commit/5a2960f811c27f59d78dfdb99c7c3c6eeed16c4b
+            // TODO: we should remove this workaround after we update kafka to 1.1.x
+            .filter(entry -> !entry.getKey().equalsIgnoreCase(NAME_KEY))
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   @JsonProperty(NAME_KEY)

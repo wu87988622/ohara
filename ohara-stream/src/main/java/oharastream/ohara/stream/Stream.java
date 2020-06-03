@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.exception.Exception;
@@ -112,7 +111,7 @@ public abstract class Stream implements WithDefinitions {
    * @return the defined settings
    */
   protected Map<String, SettingDef> customSettingDefinitions() {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   @Override

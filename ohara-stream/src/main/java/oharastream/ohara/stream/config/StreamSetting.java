@@ -53,7 +53,9 @@ public final class StreamSetting {
    * @return config name list
    */
   public List<String> keys() {
-    return settingDefinitions.stream().map(SettingDef::key).collect(Collectors.toList());
+    return settingDefinitions.stream()
+        .map(SettingDef::key)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   /**

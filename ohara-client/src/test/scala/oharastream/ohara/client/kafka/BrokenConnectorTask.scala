@@ -29,5 +29,5 @@ class BrokenConnectorTask extends RowSourceTask {
     // do nothing
   }
 
-  override protected def pollRecords(): util.List[RowSourceRecord] = java.util.Collections.emptyList()
+  override protected def pollRecords(): util.List[RowSourceRecord] = java.util.List.of()
 }

@@ -47,7 +47,7 @@ public class TableColumn implements JsonObject, Serializable {
 
     private String name = null;
     private Type type = Type.STRING;
-    private Set<String> recommendedValues = Collections.emptySet();
+    private Set<String> recommendedValues = Set.of();
 
     public Builder name(String name) {
       this.name = CommonUtils.requireNonEmpty(name);

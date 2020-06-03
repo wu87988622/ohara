@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import oharastream.ohara.common.data.Cell;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
@@ -88,15 +87,16 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
       String joinTopicName, Conditions conditions, ValueJoiner valueJoiner) {
     CommonUtils.requireNonEmpty(joinTopicName, () -> "joinTopicName cannot be null");
     // construct the compare key "row"
-    List<Pair<String, String>> list = conditions.getConditionList();
+    var list = conditions.conditionList();
     CommonUtils.requireNonEmpty(list, () -> "the conditions cannot be empty");
 
     List<String> leftHeaders = new ArrayList<>();
     List<String> rightHeaders = new ArrayList<>();
-    for (Pair<String, String> pair : list) {
-      leftHeaders.add(pair.left());
-      rightHeaders.add(pair.right());
-    }
+    list.forEach(
+        pair -> {
+          leftHeaders.add(pair.getKey());
+          rightHeaders.add(pair.getValue());
+        });
 
     // convert the right topic (the join topic) to <Row: key_header, Row: values>
     KTable<Row, Row> table =
@@ -109,7 +109,7 @@ class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
                                 .map(
                                     name ->
                                         Cell.of(
-                                            list.get(rightHeaders.indexOf(name)).left(),
+                                            list.get(rightHeaders.indexOf(name)).getKey(),
                                             row.cell(name).value()))
                                 .toArray(Cell[]::new)),
                         row))

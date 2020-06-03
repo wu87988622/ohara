@@ -71,16 +71,16 @@ public class CsvRecordConverter implements RecordConverter {
         StreamUtils.zipWithIndex(lines)
             .filter(
                 pair -> {
-                  int index = pair.left();
+                  int index = pair.getKey();
                   if (index == 0) return true;
                   return cache.predicate(path, index);
                 })
             // the header must be included.
             // increase maximumNumberOfLines only if it is smaller than Integer.MAX
             .limit(Math.max(maximumNumberOfLines, maximumNumberOfLines + 1))
-            .collect(Collectors.toMap(Pair::left, Pair::right));
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
-    if (lineAndIndex.isEmpty()) return Collections.emptyMap();
+    if (lineAndIndex.isEmpty()) return Map.of();
 
     String[] header =
         Arrays.stream(lineAndIndex.get(0).split(CSV_REGEX))
@@ -90,14 +90,14 @@ public class CsvRecordConverter implements RecordConverter {
     return lineAndIndex.entrySet().stream()
         .filter(e -> e.getKey() > 0)
         .collect(
-            Collectors.toMap(
+            Collectors.toUnmodifiableMap(
                 Map.Entry::getKey,
                 e -> {
                   String line = e.getValue();
                   String[] items = line.split(CSV_REGEX);
                   return IntStream.range(0, items.length)
                       .mapToObj(i -> Cell.of(header[i], items[i].trim()))
-                      .collect(Collectors.toList());
+                      .collect(Collectors.toUnmodifiableList());
                 }));
   }
 
@@ -109,7 +109,7 @@ public class CsvRecordConverter implements RecordConverter {
   @VisibleForTesting
   Map<Integer, Row> transform(Map<Integer, List<Cell<String>>> indexAndCells) {
     return indexAndCells.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> transform(e.getValue())));
+        .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> transform(e.getValue())));
   }
 
   private Row transform(List<Cell<String>> cells) {
@@ -163,6 +163,8 @@ public class CsvRecordConverter implements RecordConverter {
   @VisibleForTesting
   List<RowSourceRecord> toRecords(Map<Integer, Row> rows) {
     return rows.entrySet().stream()
+        // we have to keep the order of insertion by sorting key (key is the index of line in file)
+        .sorted(Map.Entry.comparingByKey())
         .map(
             e -> {
               int index = e.getKey();
@@ -170,7 +172,7 @@ public class CsvRecordConverter implements RecordConverter {
               return toRecords(row, index);
             })
         .flatMap(List::stream)
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   @VisibleForTesting
@@ -180,11 +182,11 @@ public class CsvRecordConverter implements RecordConverter {
             t ->
                 RowSourceRecord.builder()
                     .sourcePartition(partition)
-                    .sourceOffset(Collections.singletonMap(CSV_OFFSET_KEY, index))
+                    .sourceOffset(Map.of(CSV_OFFSET_KEY, index))
                     .row(row)
                     .topicKey(t)
                     .build())
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   public static class Builder
@@ -196,7 +198,7 @@ public class CsvRecordConverter implements RecordConverter {
     private int maximumNumberOfLines = Integer.MAX_VALUE;
 
     // Optional parameters - initialized to default values
-    private List<Column> schema = Collections.emptyList();
+    private List<Column> schema = List.of();
 
     private Builder() {}
 
@@ -242,6 +244,6 @@ public class CsvRecordConverter implements RecordConverter {
     schema = builder.schema;
     cache = builder.offsetCache;
     maximumNumberOfLines = builder.maximumNumberOfLines;
-    partition = Collections.singletonMap(CSV_PARTITION_KEY, builder.path);
+    partition = Map.of(CSV_PARTITION_KEY, builder.path);
   }
 }

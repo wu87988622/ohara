@@ -17,8 +17,8 @@
 package oharastream.ohara.kafka;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -218,8 +218,7 @@ public class TestProducerToConsumer extends WithBroker {
             .valueSerializer(Serializer.STRING)
             .connectionProps(testUtil().brokersConnProps())
             .options(
-                Collections.singletonMap(
-                    CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout)))
+                Map.of(CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG, String.valueOf(timeout)))
             .build()) {
       Assert.assertEquals(
           producer.sender().key("a").value("b").topicKey(topicKey).send().get().topicKey(),
@@ -310,7 +309,7 @@ public class TestProducerToConsumer extends WithBroker {
       Set<TopicPartition> tps =
           consumer.endOffsets().keySet().stream()
               .filter(tp -> tp.topicKey().equals(topicKey))
-              .collect(Collectors.toSet());
+              .collect(Collectors.toUnmodifiableSet());
       consumer.assignments(tps);
       Assert.assertEquals(tps, consumer.assignment());
     }

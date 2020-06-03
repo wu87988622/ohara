@@ -17,10 +17,8 @@
 package oharastream.ohara.stream.ostream;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import oharastream.ohara.common.data.Pair;
+import java.util.Map;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.TopicKey;
@@ -46,17 +44,13 @@ public class TestStreamTopology extends OharaTest {
     DescribeStream app = new DescribeStream();
     Stream.execute(
         app.getClass(),
-        java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestStreamTopology"),
-                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), "fake"),
-                Pair.of(
-                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
-                Pair.of(
-                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(toKey))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)));
+        Map.of(
+            StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5),
+            StreamDefUtils.NAME_DEFINITION.key(), "TestStreamTopology",
+            StreamDefUtils.BROKER_DEFINITION.key(), "fake",
+            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                TopicKey.toJsonString(List.of(fromKey)),
+            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(List.of(toKey))));
   }
 
   public static class DescribeStream extends Stream {
@@ -68,10 +62,8 @@ public class TestStreamTopology extends OharaTest {
               .filter(row -> !row.cell(0).value().toString().isEmpty())
               .map(row -> Row.of(row.cell(0)))
               .leftJoin(
-                  join,
-                  Conditions.create().add(Collections.singletonList(Pair.of("pk", "fk"))),
-                  (r1, r2) -> r1)
-              .groupByKey(Collections.singletonList("key"))
+                  join, Conditions.create().add(List.of(Map.entry("pk", "fk"))), (r1, r2) -> r1)
+              .groupByKey(List.of("key"))
               .count()
               .getPoneglyph();
 

@@ -16,10 +16,9 @@
 
 package oharastream.ohara.stream.examples;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import oharastream.ohara.common.data.Cell;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.stream.OStream;
@@ -102,8 +101,7 @@ public class PageViewRegionExample extends Stream {
 
   @Override
   protected Map<String, SettingDef> customSettingDefinitions() {
-    return Collections.singletonMap(
-        joinTopicKey, SettingDef.builder().key(joinTopicKey).group("default").build());
+    return Map.of(joinTopicKey, SettingDef.builder().key(joinTopicKey).group("default").build());
   }
 
   @Override
@@ -113,14 +111,14 @@ public class PageViewRegionExample extends Stream {
             streamSetting
                 .string(joinTopicKey)
                 .orElseThrow(() -> new RuntimeException("joinTopicKey not found")),
-            Conditions.create().add(Collections.singletonList(Pair.of("user", "user"))),
+            Conditions.create().add(List.of(Map.entry("user", "user"))),
             (r1, r2) ->
                 Row.of(
                     r1.cell("user"),
                     r1.cell("page"),
                     // since we do "left join", the right hand table may be null after join
                     r2 == null ? Cell.of("region", "") : r2.cell("region")))
-        .groupByKey(Collections.singletonList("region"))
+        .groupByKey(List.of("region"))
         .count()
         .start();
   }

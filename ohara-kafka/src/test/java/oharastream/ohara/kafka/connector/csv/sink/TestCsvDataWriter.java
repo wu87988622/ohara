@@ -118,11 +118,11 @@ public class TestCsvDataWriter extends WithMockStorage {
     Assert.assertEquals(2, dataWriter.getAssignment().size());
     Assert.assertEquals(2, dataWriter.getTopicPartitionWriters().size());
 
-    dataWriter.attach(Collections.singleton(TOPIC_PARTITION3));
+    dataWriter.attach(Set.of(TOPIC_PARTITION3));
     Assert.assertEquals(3, dataWriter.getAssignment().size());
     Assert.assertEquals(3, dataWriter.getTopicPartitionWriters().size());
 
-    dataWriter.write(Collections.emptyList());
+    dataWriter.write(List.of());
 
     dataWriter.close();
     Assert.assertEquals(0, dataWriter.getAssignment().size());
@@ -130,7 +130,7 @@ public class TestCsvDataWriter extends WithMockStorage {
   }
 
   protected void verify(List<RowSinkRecord> sinkRecords, long[] validOffsets) {
-    verify(sinkRecords, validOffsets, Collections.singleton(TOPIC_PARTITION));
+    verify(sinkRecords, validOffsets, Set.of(TOPIC_PARTITION));
   }
 
   protected void verify(

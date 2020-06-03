@@ -18,7 +18,6 @@ package oharastream.ohara.metrics;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -92,12 +91,18 @@ public interface BeanChannel extends Iterable<BeanObject> {
 
   /** @return get only counter type from bean objects */
   default List<CounterMBean> counterMBeans() {
-    return stream().filter(CounterMBean::is).map(CounterMBean::of).collect(Collectors.toList());
+    return stream()
+        .filter(CounterMBean::is)
+        .map(CounterMBean::of)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   /** @return get only TopicMeter type from bean objects */
   default List<TopicMeter> topicMeters() {
-    return stream().filter(TopicMeter::is).map(TopicMeter::of).collect(Collectors.toList());
+    return stream()
+        .filter(TopicMeter::is)
+        .map(TopicMeter::of)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   default Stream<BeanObject> stream() {
@@ -134,7 +139,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
 
   class Builder implements oharastream.ohara.common.pattern.Builder<BeanChannel> {
     private String domainName;
-    private Map<String, String> properties = Collections.emptyMap();
+    private Map<String, String> properties = Map.of();
     private String hostname = null;
     private int port = -1;
     @VisibleForTesting boolean local = true;
@@ -180,7 +185,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
      * @return this builder
      */
     public Builder property(String key, String value) {
-      return properties(Collections.singletonMap(key, value));
+      return properties(Map.of(key, value));
     }
 
     /**
@@ -211,7 +216,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
       Map<String, Object> attributes =
           Stream.of(beanInfo.getAttributes())
               .collect(
-                  Collectors.toMap(
+                  Collectors.toUnmodifiableMap(
                       MBeanAttributeInfo::getName,
                       attribute -> {
                         try {
@@ -223,7 +228,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                       }))
               .entrySet().stream()
               .filter(e -> e.getValue() != unknown)
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+              .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
       return BeanObject.builder()
           .domainName(objectName.getDomain())
           .properties(objectName.getKeyPropertyList())
@@ -275,7 +280,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                 })
             .filter(Optional::isPresent)
             .map(o -> (BeanObject) o.get())
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
       } else {
         try (JMXConnector connector =
             JMXConnectorFactory.connect(
@@ -316,7 +321,7 @@ public interface BeanChannel extends Iterable<BeanObject> {
                   })
               .filter(Optional::isPresent)
               .map(o -> (BeanObject) o.get())
-              .collect(Collectors.toList());
+              .collect(Collectors.toUnmodifiableList());
         } catch (IOException e) {
           throw new IllegalArgumentException(e);
         }
@@ -332,14 +337,14 @@ public interface BeanChannel extends Iterable<BeanObject> {
                   o ->
                       CommonUtils.isEmpty(properties)
                           || new HashMap<>(o.properties()).equals(new HashMap<>(properties)))
-              .collect(Collectors.toList());
+              .collect(Collectors.toUnmodifiableList());
       return () -> objs;
     }
   }
 
   class Register<T> {
     private String domain = null;
-    private Map<String, String> properties = Collections.emptyMap();
+    private Map<String, String> properties = Map.of();
     private T beanObject = null;
 
     private Register() {}

@@ -16,7 +16,7 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import oharastream.ohara.common.rule.OharaTest;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class TestProducerSender extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyHeaders() {
-    fake().headers(Collections.emptyList());
+    fake().headers(List.of());
   }
 
   @Test(expected = NullPointerException.class)

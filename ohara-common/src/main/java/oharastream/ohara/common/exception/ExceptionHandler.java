@@ -59,7 +59,7 @@ public interface ExceptionHandler {
           }
         };
 
-    private Map<Class<? extends Throwable>, Function<Throwable, RuntimeException>>
+    private final Map<Class<? extends Throwable>, Function<Throwable, RuntimeException>>
         exceptionFunctions = new HashMap<>();
 
     private Builder() {}

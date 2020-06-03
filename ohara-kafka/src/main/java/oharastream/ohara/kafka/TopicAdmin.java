@@ -16,12 +16,17 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
@@ -134,7 +139,7 @@ public interface TopicAdmin extends Releasable {
                     List<TopicPartition> tps =
                         entry.getValue().stream()
                             .map(p -> new TopicPartition(p.topic(), p.partition()))
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toUnmodifiableList());
                     Map<TopicPartition, Long> beginningOffsets = consumer.beginningOffsets(tps);
                     Map<TopicPartition, Long> endOffsets = consumer.endOffsets(tps);
                     List<PartitionInfo> ps =
@@ -146,22 +151,22 @@ public interface TopicAdmin extends Releasable {
                                       p.partition(),
                                       PartitionNode.of(p.leader()),
                                       p.replicas() == null
-                                          ? Collections.emptyList()
+                                          ? List.of()
                                           : Arrays.stream(p.replicas())
                                               .map(PartitionNode::of)
-                                              .collect(Collectors.toList()),
+                                              .collect(Collectors.toUnmodifiableList()),
                                       p.inSyncReplicas() == null
-                                          ? Collections.emptyList()
+                                          ? List.of()
                                           : Arrays.stream(p.inSyncReplicas())
                                               .map(PartitionNode::of)
-                                              .collect(Collectors.toList()),
+                                              .collect(Collectors.toUnmodifiableList()),
                                       beginningOffsets.getOrDefault(tp, -1L),
                                       endOffsets.getOrDefault(tp, -1L));
                                 })
-                            .collect(Collectors.toList());
-                    return Pair.of(TopicKey.requirePlain(entry.getKey()), ps);
+                            .collect(Collectors.toUnmodifiableList());
+                    return Map.entry(TopicKey.requirePlain(entry.getKey()), ps);
                   })
-              .collect(Collectors.toMap(Pair::left, Pair::right));
+              .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
         }
       }
 
@@ -177,7 +182,7 @@ public interface TopicAdmin extends Releasable {
             CompletableFuture<Void> f = new CompletableFuture<>();
             admin
                 .createTopics(
-                    Collections.singletonList(
+                    List.of(
                         new NewTopic(
                                 topicKey.topicNameOnKafka(),
                                 numberOfPartitions,
@@ -214,7 +219,7 @@ public interface TopicAdmin extends Releasable {
                             .map(TopicKey::ofPlain)
                             .filter(Optional::isPresent)
                             .map(Optional::get)
-                            .collect(Collectors.toSet()));
+                            .collect(Collectors.toUnmodifiableSet()));
                 });
         return f;
       }
@@ -229,7 +234,7 @@ public interface TopicAdmin extends Releasable {
                             key ->
                                 new ConfigResource(
                                     ConfigResource.Type.TOPIC, key.topicNameOnKafka()))
-                        .collect(Collectors.toList()))
+                        .collect(Collectors.toUnmodifiableList()))
             .thenCompose(
                 rs -> {
                   CompletableFuture<Map<TopicKey, List<TopicOption>>> f = new CompletableFuture<>();
@@ -244,7 +249,7 @@ public interface TopicAdmin extends Releasable {
                                   configs.entrySet().stream()
                                       .map(
                                           entry ->
-                                              Pair.of(
+                                              Map.entry(
                                                   TopicKey.requirePlain(entry.getKey().name()),
                                                   entry.getValue().entries().stream()
                                                       .map(
@@ -255,8 +260,10 @@ public interface TopicAdmin extends Releasable {
                                                                   o.isDefault(),
                                                                   o.isSensitive(),
                                                                   o.isReadOnly()))
-                                                      .collect(Collectors.toList())))
-                                      .collect(Collectors.toMap(Pair::left, Pair::right)));
+                                                      .collect(Collectors.toUnmodifiableList())))
+                                      .collect(
+                                          Collectors.toUnmodifiableMap(
+                                              Map.Entry::getKey, Map.Entry::getValue)));
                           });
                   return f;
                 });
@@ -264,8 +271,7 @@ public interface TopicAdmin extends Releasable {
 
       @Override
       public CompletionStage<TopicDescription> topicDescription(TopicKey key) {
-        return topicDescriptions(Collections.singleton(key))
-            .thenApply(keys -> keys.iterator().next());
+        return topicDescriptions(Set.of(key)).thenApply(keys -> keys.iterator().next());
       }
 
       @Override
@@ -282,11 +288,10 @@ public interface TopicAdmin extends Releasable {
                       .map(
                           entry -> {
                             List<PartitionInfo> infos =
-                                partitionInfos.getOrDefault(
-                                    entry.getKey(), Collections.emptyList());
+                                partitionInfos.getOrDefault(entry.getKey(), List.of());
                             return new TopicDescription(entry.getKey(), infos, entry.getValue());
                           })
-                      .collect(Collectors.toList());
+                      .collect(Collectors.toUnmodifiableList());
                 });
       }
 
@@ -307,7 +312,7 @@ public interface TopicAdmin extends Releasable {
                     CompletableFuture<Void> f = new CompletableFuture<>();
                     admin
                         .createPartitions(
-                            Collections.singletonMap(
+                            Map.of(
                                 key.topicNameOnKafka(),
                                 NewPartitions.increaseTo(numberOfPartitions)))
                         .values()
@@ -330,7 +335,7 @@ public interface TopicAdmin extends Releasable {
                   if (existent) {
                     CompletableFuture<Boolean> f2 = new CompletableFuture<>();
                     admin
-                        .deleteTopics(Collections.singletonList(key.topicNameOnKafka()))
+                        .deleteTopics(List.of(key.topicNameOnKafka()))
                         .values()
                         .get(key.topicNameOnKafka())
                         .whenComplete(
@@ -357,7 +362,10 @@ public interface TopicAdmin extends Releasable {
             .whenComplete(
                 (nodes, exception) -> {
                   if (exception != null) f.completeExceptionally(exception);
-                  else f.complete(nodes.stream().collect(Collectors.toMap(Node::host, Node::port)));
+                  else
+                    f.complete(
+                        nodes.stream()
+                            .collect(Collectors.toUnmodifiableMap(Node::host, Node::port)));
                 });
         return f;
       }

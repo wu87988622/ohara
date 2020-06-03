@@ -110,11 +110,11 @@ public class Topology implements Releasable {
                                     .map(TopologyDescription.Node::name)
                                     .toArray(String[]::new));
                           })
-                      .collect(Collectors.toList());
+                      .collect(Collectors.toUnmodifiableList());
               steles.forEach(pg::addStele);
               return pg;
             })
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   void start() {

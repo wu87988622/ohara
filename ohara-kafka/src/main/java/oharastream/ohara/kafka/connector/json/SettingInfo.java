@@ -79,7 +79,7 @@ public final class SettingInfo implements JsonObject {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .map(s -> (Setting) s)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     if (settings.isEmpty())
       throw new IllegalArgumentException(
           "failed to parse ohara data stored in kafka. Are you using stale worker image?");
@@ -114,7 +114,7 @@ public final class SettingInfo implements JsonObject {
             .map(Setting::value)
             .filter(v -> v.value() != null && v.key().equals(key))
             .map(SettingValue::value)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     if (values.isEmpty()) return Optional.empty();
     else return Optional.of(values.get(0));
   }
@@ -133,7 +133,7 @@ public final class SettingInfo implements JsonObject {
   public List<String> topicNamesOnKafka() {
     return value(ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key())
         .map(StringList::ofKafkaList)
-        .orElse(Collections.emptyList());
+        .orElse(List.of());
   }
 
   /**
@@ -144,7 +144,7 @@ public final class SettingInfo implements JsonObject {
   public List<TopicKey> topicKeys() {
     return value(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key())
         .map(TopicKey::toTopicKeys)
-        .orElse(Collections.emptyList());
+        .orElse(List.of());
   }
 
   public Optional<Integer> numberOfTasks() {

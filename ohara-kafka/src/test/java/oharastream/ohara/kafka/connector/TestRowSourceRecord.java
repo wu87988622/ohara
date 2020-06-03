@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import oharastream.ohara.common.data.Cell;
@@ -87,8 +86,8 @@ public class TestRowSourceRecord extends OharaTest {
     TopicKey topic = TopicKey.of("g", "n");
     long ts = CommonUtils.current();
     int partition = 123;
-    Map<String, String> sourceOffset = Collections.singletonMap("abc", "ddd");
-    Map<String, String> sourcePartition = Collections.singletonMap("abc", "ddd");
+    Map<String, String> sourceOffset = Map.of("abc", "ddd");
+    Map<String, String> sourcePartition = Map.of("abc", "ddd");
 
     RowSourceRecord r =
         RowSourceRecord.builder()
@@ -138,7 +137,7 @@ public class TestRowSourceRecord extends OharaTest {
         new DumbSourceTask() {
           @Override
           protected List<RowSourceRecord> pollRecords() {
-            return Collections.singletonList(record);
+            return List.of(record);
           }
         };
     task.start(

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
@@ -67,7 +66,7 @@ public interface SshdServer extends Releasable {
   }
 
   static SshdServer local(int port) {
-    return local(port, Collections.emptyList());
+    return local(port, List.of());
   }
 
   static SshdServer local(int port, List<CommandHandler> handlers) {

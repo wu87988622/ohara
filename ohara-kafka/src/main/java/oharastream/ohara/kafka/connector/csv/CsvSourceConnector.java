@@ -23,7 +23,6 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.INPU
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.MAXIMUM_NUMBER_OF_LINES_DEFINITION;
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.SIZE_OF_FILE_CACHE_DEFINITION;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -103,15 +102,15 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
             index ->
                 sub.get(index)
                     .append(
-                        ImmutableMap.of(
+                        Map.of(
                             CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(sub.size()),
                             CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(index))))
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   /** @return custom setting definitions from sub csv connectors */
   protected Map<String, SettingDef> csvSettingDefinitions() {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   @Override
@@ -125,7 +124,7 @@ public abstract class CsvSourceConnector extends RowSourceConnector {
                 COMPLETED_FOLDER_DEFINITION,
                 ERROR_FOLDER_DEFINITION,
                 FILE_ENCODE_DEFINITION)
-            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+            .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity())));
     return Collections.unmodifiableMap(finalDefinitions);
   }
 }

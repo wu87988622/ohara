@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.SettingDef;
@@ -145,14 +144,14 @@ public abstract class RowSinkTask extends SinkTask {
     if (raw == null) return;
     List<RowSinkRecord> records =
         raw.stream()
-            .map(kafkaRecord -> Pair.of(toOhara(kafkaRecord), kafkaRecord))
+            .map(kafkaRecord -> Map.entry(toOhara(kafkaRecord), kafkaRecord))
             .filter(
                 pair -> {
-                  long rowSize = ConnectorUtils.sizeOf(pair.right());
+                  long rowSize = ConnectorUtils.sizeOf(pair.getValue());
                   boolean pass =
                       ConnectorUtils.match(
                           rule,
-                          pair.left().row(),
+                          pair.getKey().row(),
                           rowSize,
                           columns,
                           true,
@@ -162,8 +161,8 @@ public abstract class RowSinkTask extends SinkTask {
 
                   return pass;
                 })
-            .map(Pair::left)
-            .collect(Collectors.toList());
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toUnmodifiableList());
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(records.size());
     putRecords(records);
   }
@@ -212,12 +211,14 @@ public abstract class RowSinkTask extends SinkTask {
 
   @Override
   public final void open(Collection<org.apache.kafka.common.TopicPartition> partitions) {
-    openPartitions(partitions.stream().map(TopicPartition::of).collect(Collectors.toList()));
+    openPartitions(
+        partitions.stream().map(TopicPartition::of).collect(Collectors.toUnmodifiableList()));
   }
 
   @Override
   public final void close(Collection<org.apache.kafka.common.TopicPartition> partitions) {
-    closePartitions(partitions.stream().map(TopicPartition::of).collect(Collectors.toList()));
+    closePartitions(
+        partitions.stream().map(TopicPartition::of).collect(Collectors.toUnmodifiableList()));
   }
 
   @Override
@@ -227,12 +228,12 @@ public abstract class RowSinkTask extends SinkTask {
     return preCommitOffsets(
             currentOffsets.entrySet().stream()
                 .collect(
-                    Collectors.toMap(
+                    Collectors.toUnmodifiableMap(
                         x -> TopicPartition.of(x.getKey()),
                         x -> new TopicOffset(x.getValue().metadata(), x.getValue().offset()))))
         .entrySet().stream()
         .collect(
-            Collectors.toMap(
+            Collectors.toUnmodifiableMap(
                 x ->
                     new org.apache.kafka.common.TopicPartition(
                         x.getKey().topicKey().topicNameOnKafka(), x.getKey().partition()),

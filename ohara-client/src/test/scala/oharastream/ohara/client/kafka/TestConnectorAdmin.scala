@@ -16,8 +16,6 @@
 
 package oharastream.ohara.client.kafka
 
-import java.util.Collections
-
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey, WithDefinitions}
@@ -28,8 +26,8 @@ import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.CollectionConverters._
 class TestConnectorAdmin extends With3Brokers3Workers {
   private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
   @Test
@@ -139,7 +137,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
           Map(
             ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key() -> name,
             ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key() -> StringList
-              .toJsonString(Collections.singletonList(topicName)),
+              .toJsonString(java.util.List.of(topicName)),
             ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key() -> numberOfTasks.toString
           )
         )
@@ -325,7 +323,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.KEY_CONVERTER_DEFINITION.key())
       .head
-      .defaultString shouldBe ConverterType.NONE.clz.getName()
+      .defaultString shouldBe ConverterType.NONE.clz.getName
 
     settingDefinitionS.exists(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key()) shouldBe true
     settingDefinitionS
@@ -340,7 +338,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
     settingDefinitionS
       .find(_.key() == ConnectorDefUtils.VALUE_CONVERTER_DEFINITION.key())
       .head
-      .defaultString shouldBe ConverterType.NONE.clz.getName()
+      .defaultString shouldBe ConverterType.NONE.clz.getName
   }
 
   @Test

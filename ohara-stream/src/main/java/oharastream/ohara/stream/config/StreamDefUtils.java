@@ -224,7 +224,7 @@ public final class StreamDefUtils {
                   throw new IllegalArgumentException("field is not able cast to SettingDef", e);
                 }
               })
-          .collect(Collectors.toMap(SettingDef::key, Function.identity()));
+          .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity()));
 
   // disable constructor
   private StreamDefUtils() {}

@@ -341,7 +341,7 @@ public class TestCommonUtils extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyCollection() {
-    CommonUtils.requireNonEmpty(Collections.emptyList());
+    CommonUtils.requireNonEmpty(List.of());
   }
 
   @Test(expected = NullPointerException.class)
@@ -351,7 +351,7 @@ public class TestCommonUtils extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyMap() {
-    CommonUtils.requireNonEmpty(Collections.emptyMap());
+    CommonUtils.requireNonEmpty(Map.of());
   }
 
   @Test

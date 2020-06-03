@@ -65,6 +65,6 @@ public class SinkWithNullableSetting extends RowSinkConnector {
             WithDefinitions.authorDefinition(author),
             WithDefinitions.versionDefinition(version),
             WithDefinitions.revisionDefinition(revision))
-        .collect(Collectors.toMap(SettingDef::key, Function.identity()));
+        .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity()));
   }
 }

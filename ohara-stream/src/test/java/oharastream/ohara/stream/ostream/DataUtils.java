@@ -72,7 +72,7 @@ class DataUtils {
                 return null;
               }
             })
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   private static Class<?> buildClass(String className, String headers)

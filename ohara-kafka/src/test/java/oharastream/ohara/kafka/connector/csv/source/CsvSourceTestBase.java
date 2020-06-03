@@ -53,7 +53,7 @@ public abstract class CsvSourceTestBase extends OharaTest {
     props.put(CsvConnectorDefinitions.TASK_TOTAL_KEY, String.valueOf(TASK_TOTAL));
     props.put(CsvConnectorDefinitions.TASK_HASH_KEY, String.valueOf(TASK_HASH));
     props.put("topics", TOPIC.topicNameOnKafka());
-    props.put("topicKeys", TopicKey.toJsonString(Collections.singleton(TOPIC)));
+    props.put("topicKeys", TopicKey.toJsonString(Set.of(TOPIC)));
     return props;
   }
 
@@ -63,7 +63,7 @@ public abstract class CsvSourceTestBase extends OharaTest {
   }
 
   protected static List<Row> setupVerificationData() {
-    int size = 100;
+    int size = 3;
     return IntStream.range(1, size)
         .mapToObj(
             i ->
@@ -71,18 +71,17 @@ public abstract class CsvSourceTestBase extends OharaTest {
                     Cell.of(SCHEMA.get(0).name(), CommonUtils.randomString()),
                     Cell.of(SCHEMA.get(1).name(), 1024 + i),
                     Cell.of(SCHEMA.get(2).name(), i % 2 == 0)))
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   protected static List<String> setupInputData() {
-    List<Row> data = VERIFICATION_DATA != null ? VERIFICATION_DATA : setupVerificationData();
-    return data.stream()
+    return VERIFICATION_DATA.stream()
         .map(
             row ->
                 row.cells().stream()
                     .map(cell -> cell.value().toString())
                     .collect(Collectors.joining(",")))
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   protected void verifyRecords(List<RowSourceRecord> records) {
@@ -101,6 +100,6 @@ public abstract class CsvSourceTestBase extends OharaTest {
   }
 
   protected List<Row> extractRow(List<RowSourceRecord> records) {
-    return records.stream().map(record -> record.row()).collect(Collectors.toList());
+    return records.stream().map(RowSourceRecord::row).collect(Collectors.toUnmodifiableList());
   }
 }

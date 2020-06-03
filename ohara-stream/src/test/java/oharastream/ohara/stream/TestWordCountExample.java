@@ -64,7 +64,7 @@ public class TestWordCountExample extends WithBroker {
     List<Row> rows =
         java.util.stream.Stream.of("hello", "ohara", "stream", "world", "of", "stream")
             .map(str -> Row.of(Cell.of("word", str)))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     StreamTestUtils.produceData(producer, rows, fromTopic);
 
     // run example
@@ -76,7 +76,7 @@ public class TestWordCountExample extends WithBroker {
         java.util.stream.Stream.of(
                 Row.of(Cell.of("word", "stream"), Cell.of("count", 2L)),
                 Row.of(Cell.of("word", "world"), Cell.of("count", 1L)))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     // Since the result of "count" is "accumulate", we will get the same size as input count
     StreamTestUtils.assertResult(client, toTopic, expected, rows.size());
   }

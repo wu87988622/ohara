@@ -35,7 +35,7 @@ class PerfSourceTask extends RowSourceTask {
   /**
     * this is what we push to topics. We don't generate it repeatedly to avoid extra cost in testing.
     */
-  private[this] var records: java.util.List[RowSourceRecord] = Collections.emptyList()
+  private[this] var records: java.util.List[RowSourceRecord] = java.util.List.of()
 
   override protected def run(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
@@ -73,6 +73,6 @@ class PerfSourceTask extends RowSourceTask {
     if (current - lastPoll > props.freq.toMillis) {
       lastPoll = current
       records
-    } else Collections.emptyList()
+    } else java.util.List.of()
   }
 }

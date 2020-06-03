@@ -20,7 +20,6 @@ import static oharastream.ohara.stream.DataImporter.createKafkaConsumer;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.kafka.TopicAdmin;
 import oharastream.ohara.testing.With3Brokers;
@@ -42,7 +41,7 @@ public class TestDataImporter extends With3Brokers {
     TOPICS.forEach(
         topic -> {
           Consumer<String, String> consumer = createKafkaConsumer(client.connectionProps());
-          consumer.subscribe(Collections.singletonList(topic));
+          consumer.subscribe(List.of(topic));
 
           try {
             ConsumerRecords<String, String> messages = consumer.poll(Duration.ofMillis(10000));

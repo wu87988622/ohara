@@ -16,7 +16,7 @@
 
 package oharastream.ohara.kafka.connector;
 
-import java.util.Collections;
+import java.util.List;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
@@ -39,45 +39,33 @@ public class TestConnectorUtils extends OharaTest {
     // test illegal type
     Assert.assertThrows(
         IllegalArgumentException.class,
-        () ->
-            ConnectorUtils.match(
-                Row.of(Cell.of(column.name(), 123)), Collections.singletonList(column), true));
+        () -> ConnectorUtils.match(Row.of(Cell.of(column.name(), 123)), List.of(column), true));
 
     // test illegal name
     Assert.assertThrows(
         IllegalArgumentException.class,
         () ->
             ConnectorUtils.match(
-                Row.of(Cell.of(CommonUtils.randomString(), 123)),
-                Collections.singletonList(column),
-                true));
+                Row.of(Cell.of(CommonUtils.randomString(), 123)), List.of(column), true));
 
     // pass
     ConnectorUtils.match(
-        Row.of(Cell.of(column.name(), CommonUtils.randomString())),
-        Collections.singletonList(column),
-        true);
+        Row.of(Cell.of(column.name(), CommonUtils.randomString())), List.of(column), true);
 
     // test illegal type
     Assert.assertThrows(
         IllegalArgumentException.class,
-        () ->
-            ConnectorUtils.match(
-                Row.of(Cell.of(column.newName(), 123)), Collections.singletonList(column), false));
+        () -> ConnectorUtils.match(Row.of(Cell.of(column.newName(), 123)), List.of(column), false));
 
     // test illegal name
     Assert.assertThrows(
         IllegalArgumentException.class,
         () ->
             ConnectorUtils.match(
-                Row.of(Cell.of(CommonUtils.randomString(), 123)),
-                Collections.singletonList(column),
-                false));
+                Row.of(Cell.of(CommonUtils.randomString(), 123)), List.of(column), false));
 
     // pass
     ConnectorUtils.match(
-        Row.of(Cell.of(column.newName(), CommonUtils.randomString())),
-        Collections.singletonList(column),
-        false);
+        Row.of(Cell.of(column.newName(), CommonUtils.randomString())), List.of(column), false);
   }
 }

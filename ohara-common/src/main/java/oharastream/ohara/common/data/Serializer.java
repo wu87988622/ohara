@@ -326,9 +326,9 @@ public interface Serializer<T> {
         @Override
         public byte[] to(Row row) {
           List<byte[]> cellsInBytes =
-              row.cells().stream().map(CELL::to).collect(Collectors.toList());
+              row.cells().stream().map(CELL::to).collect(Collectors.toUnmodifiableList());
           List<byte[]> tagsInBytes =
-              row.tags().stream().map(STRING::to).collect(Collectors.toList());
+              row.tags().stream().map(STRING::to).collect(Collectors.toUnmodifiableList());
           int initialSize =
               // version
               ByteUtils.SIZE_OF_BYTE
@@ -413,7 +413,7 @@ public interface Serializer<T> {
                                     forceRead(
                                         input,
                                         SHORT.from(forceRead(input, ByteUtils.SIZE_OF_SHORT)))))
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toUnmodifiableList());
                 return Row.of(tag, cells);
               default:
                 throw new UnsupportedOperationException("Unsupported version:" + version);

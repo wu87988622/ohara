@@ -16,7 +16,6 @@
 
 package oharastream.ohara.configurator.fake
 
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
@@ -141,7 +140,7 @@ private[configurator] class FakeConnectorAdmin extends ConnectorAdmin {
           case _                  => throw new IllegalArgumentException(s"who are you ${validation.className} ???")
         }
         SettingInfo.of(
-          AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, Collections.emptyList())
+          AbstractHerder.generateResult(connectorType, configDef.configKeys(), values, java.util.List.of())
         )
       }(executionContext)
     }

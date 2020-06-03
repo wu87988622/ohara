@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector.csv.source;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import oharastream.ohara.kafka.connector.RowSourceContext;
@@ -32,7 +31,7 @@ public class CsvOffsetCache implements OffsetCache {
      */
     if (!cache.containsKey(path)) {
       Map<String, Object> offset =
-          context.offset(Collections.singletonMap(CsvRecordConverter.CSV_PARTITION_KEY, path));
+          context.offset(Map.of(CsvRecordConverter.CSV_PARTITION_KEY, path));
       if (!offset.isEmpty()) update(path, getOffsetValue(offset));
     }
   }

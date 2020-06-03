@@ -17,12 +17,11 @@
 package oharastream.ohara.it.connector
 
 import java.util
-import java.util.Collections
 
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
 class IncludeAllTypesSourceTask extends RowSourceTask {
   override protected def run(settings: TaskSetting): Unit          = {}
   override protected def terminate(): Unit                         = {}
-  override protected def pollRecords(): util.List[RowSourceRecord] = Collections.emptyList()
+  override protected def pollRecords(): util.List[RowSourceRecord] = java.util.List.of()
 }

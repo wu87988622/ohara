@@ -166,7 +166,7 @@ public interface Consumer<K, V> extends Releasable {
 
   class Builder<Key, Value>
       implements oharastream.ohara.common.pattern.Builder<Consumer<Key, Value>> {
-    private Map<String, String> options = Collections.emptyMap();
+    private Map<String, String> options = Map.of();
     private OffsetResetStrategy fromBegin = OffsetResetStrategy.LATEST;
     private Set<TopicKey> topicKeys;
     private Set<TopicPartition> assignments;
@@ -181,9 +181,7 @@ public interface Consumer<K, V> extends Releasable {
 
     @oharastream.ohara.common.annotations.Optional("default is empty")
     public Builder<Key, Value> option(String key, String value) {
-      return options(
-          Collections.singletonMap(
-              CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
+      return options(Map.of(CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
     }
 
     @oharastream.ohara.common.annotations.Optional("default is empty")
@@ -218,7 +216,7 @@ public interface Consumer<K, V> extends Releasable {
      * @return this builder
      */
     public Builder<Key, Value> topicKey(TopicKey topicKey) {
-      return topicKeys(Collections.singleton(Objects.requireNonNull(topicKey)));
+      return topicKeys(Set.of(Objects.requireNonNull(topicKey)));
     }
 
     /**
@@ -333,10 +331,12 @@ public interface Consumer<K, V> extends Releasable {
 
       if (!CommonUtils.isEmpty(topicKeys))
         kafkaConsumer.subscribe(
-            topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
+            topicKeys.stream()
+                .map(TopicKey::topicNameOnKafka)
+                .collect(Collectors.toUnmodifiableSet()));
       if (!CommonUtils.isEmpty(assignments))
         kafkaConsumer.assign(
-            assignments.stream().map(Builder::toKafka).collect(Collectors.toList()));
+            assignments.stream().map(Builder::toKafka).collect(Collectors.toUnmodifiableList()));
 
       return new Consumer<Key, Value>() {
         @Override
@@ -348,7 +348,7 @@ public interface Consumer<K, V> extends Releasable {
         public List<Record<Key, Value>> poll(Duration timeout) {
           ConsumerRecords<Key, Value> r = kafkaConsumer.poll(timeout);
 
-          if (r == null || r.isEmpty()) return Collections.emptyList();
+          if (r == null || r.isEmpty()) return List.of();
           else
             return StreamSupport.stream(
                     Spliterators.spliteratorUnknownSize(r.iterator(), Spliterator.ORDERED), false)
@@ -365,11 +365,11 @@ public interface Consumer<K, V> extends Releasable {
                                     headers ->
                                         StreamSupport.stream(headers.spliterator(), false)
                                             .map(header -> new Header(header.key(), header.value()))
-                                            .collect(Collectors.toList()))
-                                .orElse(Collections.emptyList()),
+                                            .collect(Collectors.toUnmodifiableList()))
+                                .orElse(List.of()),
                             cr.key(),
                             cr.value()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
         }
 
         @Override
@@ -383,13 +383,13 @@ public interface Consumer<K, V> extends Releasable {
               // remove non-ohara topics
               .filter(p -> TopicKey.ofPlain(p.topic()).isPresent())
               .map(TopicPartition::of)
-              .collect(Collectors.toSet());
+              .collect(Collectors.toUnmodifiableSet());
         }
 
         @Override
         public void seekToBeginning(Collection<TopicPartition> partitions) {
           kafkaConsumer.seekToBeginning(
-              partitions.stream().map(Builder::toKafka).collect(Collectors.toList()));
+              partitions.stream().map(Builder::toKafka).collect(Collectors.toUnmodifiableList()));
         }
 
         @Override
@@ -411,9 +411,11 @@ public interface Consumer<K, V> extends Releasable {
                                       p ->
                                           new org.apache.kafka.common.TopicPartition(
                                               p.topic(), p.partition())))
-                      .collect(Collectors.toList()))
+                      .collect(Collectors.toUnmodifiableList()))
               .entrySet().stream()
-              .collect(Collectors.toMap(e -> TopicPartition.of(e.getKey()), Map.Entry::getValue));
+              .collect(
+                  Collectors.toUnmodifiableMap(
+                      e -> TopicPartition.of(e.getKey()), Map.Entry::getValue));
         }
 
         @Override
@@ -424,13 +426,15 @@ public interface Consumer<K, V> extends Releasable {
         @Override
         public void subscribe(Set<TopicKey> topicKeys) {
           kafkaConsumer.subscribe(
-              topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toList()));
+              topicKeys.stream()
+                  .map(TopicKey::topicNameOnKafka)
+                  .collect(Collectors.toUnmodifiableList()));
         }
 
         @Override
         public void assignments(Set<TopicPartition> assignments) {
           kafkaConsumer.assign(
-              assignments.stream().map(Builder::toKafka).collect(Collectors.toList()));
+              assignments.stream().map(Builder::toKafka).collect(Collectors.toUnmodifiableList()));
         }
 
         @Override

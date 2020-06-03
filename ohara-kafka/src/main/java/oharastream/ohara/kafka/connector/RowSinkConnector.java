@@ -67,7 +67,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
    * @return The ConfigDef for this connector.
    */
   protected Map<String, SettingDef> customSettingDefinitions() {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   /**
@@ -105,7 +105,9 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
   /** We take over this method to disable user to use java collection. */
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
+    return taskSettings(maxTasks).stream()
+        .map(TaskSetting::raw)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;
@@ -131,7 +133,7 @@ public abstract class RowSinkConnector extends SinkConnector implements WithDefi
                 entry ->
                     needColumnDefinition()
                         || entry.getValue() != ConnectorDefUtils.COLUMNS_DEFINITION)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue)),
         customSettingDefinitions());
   }
 

@@ -17,7 +17,6 @@
 package oharastream.ohara.kafka.connector.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
 import java.util.*;
 import oharastream.ohara.common.json.JsonObject;
 import oharastream.ohara.common.json.JsonUtils;
@@ -40,7 +39,7 @@ public class Validation implements JsonObject {
    */
   public static Validation of(String className, Set<String> topicsNames) {
     return new Validation(
-        ImmutableMap.of(
+        Map.of(
             ConnectorDefUtils.CONNECTOR_CLASS_DEFINITION.key(),
                 CommonUtils.requireNonEmpty(className),
             ConnectorDefUtils.TOPIC_NAMES_DEFINITION.key(), StringList.toKafkaString(topicsNames)));
@@ -61,7 +60,7 @@ public class Validation implements JsonObject {
               // by chia
               Objects.requireNonNull(v, () -> "the value of " + k + " can't be empty");
             });
-    this.settings = Collections.unmodifiableMap(new HashMap<>(settings));
+    this.settings = Map.copyOf(settings);
   }
 
   public Map<String, String> settings() {

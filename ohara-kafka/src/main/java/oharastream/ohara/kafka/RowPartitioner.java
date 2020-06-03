@@ -18,7 +18,6 @@ package oharastream.ohara.kafka;
 
 import java.util.Map;
 import java.util.Optional;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.setting.WithDefinitions;
@@ -64,8 +63,8 @@ public abstract class RowPartitioner implements Partitioner, WithDefinitions {
     return TopicKey.ofPlain(topic)
         .flatMap(
             topicKey ->
-                key instanceof Row ? Optional.of(Pair.of(topicKey, (Row) key)) : Optional.empty())
-        .flatMap(pair -> partition(pair.left(), pair.right(), keyBytes, Cluster.of(cluster)))
+                key instanceof Row ? Optional.of(Map.entry(topicKey, (Row) key)) : Optional.empty())
+        .flatMap(pair -> partition(pair.getKey(), pair.getValue(), keyBytes, Cluster.of(cluster)))
         .orElseGet(
             () ->
                 kafkaDefaultPartitioner.partition(

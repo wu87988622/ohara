@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -133,8 +132,7 @@ public class TestTopicAdmin extends With3Brokers {
     int numberOfPartitions = 2;
     short numberOfReplications = (short) 2;
     Map<String, String> options =
-        Collections.singletonMap(
-            TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE);
+        Map.of(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE);
     client
         .topicCreator()
         .numberOfPartitions(numberOfPartitions)
@@ -157,7 +155,7 @@ public class TestTopicAdmin extends With3Brokers {
         TopicConfig.CLEANUP_POLICY_DELETE,
         topicInfo.options().stream()
             .filter(x -> Objects.equals(x.key(), TopicConfig.CLEANUP_POLICY_CONFIG))
-            .collect(Collectors.toList())
+            .collect(Collectors.toUnmodifiableList())
             .get(0)
             .value());
   }

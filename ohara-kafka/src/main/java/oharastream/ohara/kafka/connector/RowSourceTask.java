@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.setting.SettingDef;
@@ -151,15 +150,15 @@ public abstract class RowSourceTask extends SourceTask {
     List<Column> columns = taskSetting.columns();
     List<SourceRecord> raw =
         records.stream()
-            .map(record -> Pair.of(record, toKafka(record)))
+            .map(record -> Map.entry(record, toKafka(record)))
             .filter(
                 pair -> {
-                  cachedRecords.put(pair.right(), pair.left());
-                  long rowSize = ConnectorUtils.sizeOf(pair.right());
+                  cachedRecords.put(pair.getValue(), pair.getKey());
+                  long rowSize = ConnectorUtils.sizeOf(pair.getValue());
                   boolean pass =
                       ConnectorUtils.match(
                           rule,
-                          pair.left().row(),
+                          pair.getKey().row(),
                           rowSize,
                           columns,
                           false,
@@ -168,8 +167,8 @@ public abstract class RowSourceTask extends SourceTask {
                   if (pass && messageSizeCounter != null) messageSizeCounter.addAndGet(rowSize);
                   return pass;
                 })
-            .map(Pair::right)
-            .collect(Collectors.toList());
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toUnmodifiableList());
     if (messageNumberCounter != null) messageNumberCounter.addAndGet(raw.size());
     return raw;
   }

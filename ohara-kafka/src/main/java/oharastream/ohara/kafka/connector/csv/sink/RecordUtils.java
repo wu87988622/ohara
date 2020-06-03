@@ -56,6 +56,6 @@ public class RecordUtils {
     if (schema != null && !schema.isEmpty()) return schema;
     return record.row().cells().stream()
         .map(cell -> Column.builder().name(cell.name()).dataType(DataType.OBJECT).order(0).build())
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 }

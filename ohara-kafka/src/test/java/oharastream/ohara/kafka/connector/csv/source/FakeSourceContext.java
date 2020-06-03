@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector.csv.source;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import oharastream.ohara.kafka.connector.RowSourceContext;
@@ -28,11 +27,11 @@ public class FakeSourceContext implements RowSourceContext {
 
   @Override
   public <T> Map<String, Object> offset(Map<String, T> partition) {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   @Override
   public <T> Map<Map<String, T>, Map<String, Object>> offset(List<Map<String, T>> partitions) {
-    return Collections.emptyMap();
+    return Map.of();
   }
 }

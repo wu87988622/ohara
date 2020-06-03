@@ -33,7 +33,7 @@ public class TestSshdServer extends OharaTest {
 
   @Test
   public void testRandomPort() {
-    try (SshdServer server = SshdServer.local(0, java.util.Collections.emptyList())) {
+    try (SshdServer server = SshdServer.local(0, java.util.List.of())) {
       Assert.assertNotEquals(server.port(), 0);
     }
   }

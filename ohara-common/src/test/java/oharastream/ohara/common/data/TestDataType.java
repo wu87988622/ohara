@@ -33,14 +33,17 @@ public class TestDataType extends OharaTest {
   public void noDuplicateOrder() {
     Assert.assertEquals(
         DataType.all.size(),
-        DataType.all.stream().map(t -> t.order).collect(Collectors.toSet()).size());
+        DataType.all.stream().map(t -> t.order).collect(Collectors.toUnmodifiableSet()).size());
   }
 
   @Test
   public void noDuplicateName() {
     Assert.assertEquals(
         DataType.all.size(),
-        DataType.all.stream().map(Enum<DataType>::name).collect(Collectors.toSet()).size());
+        DataType.all.stream()
+            .map(Enum<DataType>::name)
+            .collect(Collectors.toUnmodifiableSet())
+            .size());
   }
 
   @Test

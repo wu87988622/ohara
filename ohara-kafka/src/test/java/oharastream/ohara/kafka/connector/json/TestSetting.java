@@ -19,7 +19,7 @@ package oharastream.ohara.kafka.connector.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 import oharastream.ohara.common.json.JsonUtils;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.SettingDef;
@@ -33,8 +33,7 @@ public class TestSetting extends OharaTest {
     Setting config =
         Setting.of(
             SettingDef.builder().key(CommonUtils.randomString()).build(),
-            SettingValue.of(
-                CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
+            SettingValue.of(CommonUtils.randomString(), CommonUtils.randomString(), List.of()));
     ObjectMapper mapper = JsonUtils.objectMapper();
     Assert.assertEquals(
         config,
@@ -45,8 +44,7 @@ public class TestSetting extends OharaTest {
   public void testGetter() {
     SettingDef def = SettingDef.builder().key(CommonUtils.randomString()).build();
     SettingValue value =
-        SettingValue.of(
-            CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList());
+        SettingValue.of(CommonUtils.randomString(), CommonUtils.randomString(), List.of());
     Setting config = Setting.of(def, value);
     Assert.assertEquals(def, config.definition());
     Assert.assertEquals(value, config.value());
@@ -55,9 +53,7 @@ public class TestSetting extends OharaTest {
   @Test(expected = NullPointerException.class)
   public void nullDefinition() {
     Setting.of(
-        null,
-        SettingValue.of(
-            CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList()));
+        null, SettingValue.of(CommonUtils.randomString(), CommonUtils.randomString(), List.of()));
   }
 
   @Test(expected = NullPointerException.class)

@@ -17,10 +17,9 @@
 package oharastream.ohara.stream.ostream;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 import oharastream.ohara.common.data.Cell;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.TopicKey;
@@ -100,17 +99,13 @@ public class TestSimpleStreamCounter extends WithBroker {
     DirectWriteStream app = new DirectWriteStream();
     Stream.execute(
         app.getClass(),
-        java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestSimpleStreamCounter"),
-                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
-                Pair.of(
-                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
-                Pair.of(
-                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(toKey))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)));
+        Map.of(
+            StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5),
+            StreamDefUtils.NAME_DEFINITION.key(), "TestSimpleStreamCounter",
+            StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps(),
+            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                TopicKey.toJsonString(List.of(fromKey)),
+            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(List.of(toKey))));
 
     // wait until topic has data
     CommonUtils.await(() -> consumer.poll(timeout).size() > 0, Duration.ofSeconds(30));

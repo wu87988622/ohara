@@ -17,8 +17,6 @@
 package oharastream.ohara.common.setting;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,26 +32,26 @@ public final class PropGroup implements Iterable<Map<String, String>> {
   }
 
   public static PropGroup ofJson(String json) {
-    return of(JsonUtils.toObject(json, new TypeReference<List<Map<String, String>>>() {}));
+    return of(JsonUtils.toObject(json, new TypeReference<>() {}));
   }
 
   public static PropGroup ofColumn(Column column) {
-    return ofColumns(Collections.singletonList(column));
+    return ofColumns(List.of(column));
   }
 
   public static PropGroup ofColumns(List<Column> columns) {
-    return of(columns.stream().map(PropGroup::toPropGroup).collect(Collectors.toList()));
+    return of(
+        columns.stream().map(PropGroup::toPropGroup).collect(Collectors.toUnmodifiableList()));
   }
 
   private final List<Map<String, String>> values;
 
   private PropGroup(List<Map<String, String>> values) {
     this.values =
-        Collections.unmodifiableList(
-            values.stream()
-                .filter(s -> !s.isEmpty())
-                .map(v -> Collections.unmodifiableMap(Collections.unmodifiableMap(v)))
-                .collect(Collectors.toList()));
+        values.stream()
+            .filter(s -> !s.isEmpty())
+            .map(Map::copyOf)
+            .collect(Collectors.toUnmodifiableList());
     this.values.forEach(
         props ->
             props.forEach(
@@ -64,11 +62,11 @@ public final class PropGroup implements Iterable<Map<String, String>> {
   }
 
   public List<Column> toColumns() {
-    return values.stream().map(PropGroup::toColumn).collect(Collectors.toList());
+    return values.stream().map(PropGroup::toColumn).collect(Collectors.toUnmodifiableList());
   }
 
   public Map<String, String> props(int index) {
-    return Collections.unmodifiableMap(values.get(index));
+    return values.get(index);
   }
 
   public boolean isEmpty() {
@@ -121,7 +119,7 @@ public final class PropGroup implements Iterable<Map<String, String>> {
   }
 
   public static Map<String, String> toPropGroup(Column column) {
-    return ImmutableMap.of(
+    return Map.of(
         SettingDef.COLUMN_ORDER_KEY, String.valueOf(column.order()),
         SettingDef.COLUMN_NAME_KEY, column.name(),
         SettingDef.COLUMN_NEW_NAME_KEY, column.newName(),

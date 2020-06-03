@@ -17,7 +17,8 @@
 package oharastream.ohara.kafka;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
@@ -41,11 +42,7 @@ public class TestRowPartitioner extends OharaTest {
     PartitionInfo partitionInfo = new PartitionInfo(key.topicNameOnKafka(), 1, node, nodes, nodes);
     org.apache.kafka.common.Cluster cluster =
         new org.apache.kafka.common.Cluster(
-            "aa",
-            Arrays.asList(nodes),
-            Collections.singletonList(partitionInfo),
-            Collections.emptySet(),
-            Collections.emptySet());
+            "aa", Arrays.asList(nodes), List.of(partitionInfo), Set.of(), Set.of());
     custom.partition(key.topicNameOnKafka(), "sss", "sss".getBytes(), null, null, cluster);
     Assert.assertEquals(0, custom.count.get());
 

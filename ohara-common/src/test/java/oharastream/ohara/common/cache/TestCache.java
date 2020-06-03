@@ -16,8 +16,8 @@
 
 package oharastream.ohara.common.cache;
 
-import com.google.common.collect.ImmutableBiMap;
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,7 +97,7 @@ public class TestCache extends OharaTest {
     cache.put("key2", "ad");
     cache.get("key2");
     Assert.assertEquals(1, count.get());
-    cache.put(ImmutableBiMap.of("key3", "v", "key4", "v2"));
+    cache.put(Map.of("key3", "v", "key4", "v2"));
     cache.get("key3");
     Assert.assertEquals(1, count.get());
     cache.get("key4");

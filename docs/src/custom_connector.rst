@@ -436,8 +436,8 @@ We can convert above json to **partition** and **offset** and then put them in *
 
    public class ExampleOfPartitionAndOffset {
        public static RowSourceRecord addPartitionAndOffset(RowSourceRecord.Builder builder, String fileName, int offset) {
-           Map<String, String> partition = Collections.singletonMap("fileName", fileName);
-           Map<String, Integer> offset = Collections.singletonMap("offset", 1);
+           Map<String, String> partition = Map.of("fileName", fileName);
+           Map<String, Integer> offset = Map.of("offset", 1);
            return builder.sourcePartition(partition)
            .sourceOffset(offset)
            .build();
@@ -669,7 +669,7 @@ throw the exception which obstruct connector from running.
       * @param offset the offset to reset to.
       */
      default void offset(TopicPartition partition, Long offset) {
-       this.offset(Collections.singletonMap(partition, offset));
+       this.offset(Map.of(partition, offset));
      }
    }
 
@@ -896,7 +896,7 @@ Connector developers can override **customSettingDefinitions** to add other addi
      * @return The SettingDef for this connector.
      */
     protected List<SettingDef> customSettingDefinitions() {
-      return Collections.emptyList();
+      return List.of();
     }
   }
 

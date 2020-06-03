@@ -17,7 +17,6 @@
 package oharastream.ohara.common.data;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.rule.OharaTest;
 import org.junit.Assert;
@@ -97,7 +96,7 @@ public class TestSerializer extends OharaTest {
             Row.of(Cell.of("abc", Cell.of("abc", "aaa"))),
             Row.of(Cell.of("abc", "aaa")),
             Row.of(Cell.of("abc", "aaa"), Cell.of("AA", "aaa")),
-            Row.of(Collections.singletonList("tag"), Cell.of("abc", 123)),
+            Row.of(List.of("tag"), Cell.of("abc", 123)),
             Row.of(Arrays.asList("a", "b"), Cell.of("abc", "aaa"), Cell.of("tt", "aaa")),
             Row.of(Cell.of("abc", Row.of(Cell.of("abc", "aaa")))));
     data.forEach(v -> Assert.assertEquals(v, Serializer.ROW.from(Serializer.ROW.to(v))));

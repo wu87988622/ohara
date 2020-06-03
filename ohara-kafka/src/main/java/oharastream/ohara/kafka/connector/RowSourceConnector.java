@@ -66,7 +66,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
    * @return The ConfigDef for this connector.
    */
   protected Map<String, SettingDef> customSettingDefinitions() {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   /**
@@ -104,7 +104,9 @@ public abstract class RowSourceConnector extends SourceConnector implements With
 
   @Override
   public final List<Map<String, String>> taskConfigs(int maxTasks) {
-    return taskSettings(maxTasks).stream().map(TaskSetting::raw).collect(Collectors.toList());
+    return taskSettings(maxTasks).stream()
+        .map(TaskSetting::raw)
+        .collect(Collectors.toUnmodifiableList());
   }
 
   @VisibleForTesting TaskSetting taskSetting = null;
@@ -130,7 +132,7 @@ public abstract class RowSourceConnector extends SourceConnector implements With
                 entry ->
                     needColumnDefinition()
                         || entry.getValue() != ConnectorDefUtils.COLUMNS_DEFINITION)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue)),
         customSettingDefinitions());
   }
 

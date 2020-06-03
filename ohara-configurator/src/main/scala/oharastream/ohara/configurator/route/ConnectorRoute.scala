@@ -130,7 +130,6 @@ private[configurator] object ConnectorRoute {
                       master = true
                     )
 
-                    println(s"[CHIA] ${allStatus.map(_.state).mkString(",")}")
                     connectorInfo.copy(
                       // this is the "summary" of this connector
                       state =

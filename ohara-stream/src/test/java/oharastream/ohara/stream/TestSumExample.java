@@ -64,7 +64,7 @@ public class TestSumExample extends WithBroker {
     List<Row> rows =
         java.util.stream.Stream.of(1, 2, 14, 17, 36, 99)
             .map(v -> Row.of(Cell.of("number", v)))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     StreamTestUtils.produceData(producer, rows, fromTopic);
 
     // run example
@@ -77,7 +77,7 @@ public class TestSumExample extends WithBroker {
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 1)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 18)),
                 Row.of(Cell.of("dummy", 1), Cell.of("number", 117)))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     StreamTestUtils.assertResult(client, toTopic, expected, 3);
   }
 }

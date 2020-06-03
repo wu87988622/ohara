@@ -17,7 +17,6 @@
 package oharastream.ohara.kafka.connector.csv;
 
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -96,7 +95,7 @@ public abstract class CsvSourceTask extends RowSourceTask {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return Collections.emptyList();
+    return List.of();
   }
 
   @Override

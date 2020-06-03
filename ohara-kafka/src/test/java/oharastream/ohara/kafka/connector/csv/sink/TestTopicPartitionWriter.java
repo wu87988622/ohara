@@ -140,7 +140,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
         topicsDir + "/" + TOPIC_PARTITION.topicKey().topicNameOnKafka() + "/" + encodedPartition;
 
     List<String> actualFilenames =
-        StreamUtils.iterate(fs.listFileNames(dir)).collect(Collectors.toList());
+        StreamUtils.iterate(fs.listFileNames(dir)).collect(Collectors.toUnmodifiableList());
 
     for (String filename : filenames) {
       Assert.assertTrue(actualFilenames.contains(filename));

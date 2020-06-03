@@ -16,19 +16,17 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.setting.TopicKey;
 
 public final class Cluster {
 
   private static List<PartitionInfo> partitionInfos(
       List<org.apache.kafka.common.PartitionInfo> partitionInfos) {
-    return partitionInfos.stream().map(PartitionInfo::of).collect(Collectors.toList());
+    return partitionInfos.stream().map(PartitionInfo::of).collect(Collectors.toUnmodifiableList());
   }
 
   public static Cluster of(org.apache.kafka.common.Cluster cluster) {
@@ -36,13 +34,13 @@ public final class Cluster {
         cluster.nodes().stream()
             .map(
                 node ->
-                    Pair.of(
+                    Map.entry(
                         PartitionNode.of(node),
                         partitionInfos(cluster.partitionsForNode(node.id()))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)),
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue)),
         cluster.topics().stream()
-            .map(topic -> Pair.of(topic, partitionInfos(cluster.partitionsForTopic(topic))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)));
+            .map(topic -> Map.entry(topic, partitionInfos(cluster.partitionsForTopic(topic))))
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue)));
   }
 
   private final Map<PartitionNode, List<PartitionInfo>> partitionsByNode;
@@ -64,6 +62,6 @@ public final class Cluster {
   }
 
   public List<PartitionInfo> partitionInfos(TopicKey key) {
-    return partitionsByTopic.getOrDefault(key.topicNameOnKafka(), Collections.emptyList());
+    return partitionsByTopic.getOrDefault(key.topicNameOnKafka(), List.of());
   }
 }

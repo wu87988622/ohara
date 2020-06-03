@@ -16,9 +16,7 @@
 
 package oharastream.ohara.common.cache;
 
-import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,8 +59,7 @@ public class TestRefreshableCache extends OharaTest {
   @Test
   public void testDefaultBuilder() {
     RefreshableCache.<String, String>builder()
-        .supplier(
-            () -> Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+        .supplier(() -> Map.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .build()
         .close();
   }
@@ -77,7 +74,7 @@ public class TestRefreshableCache extends OharaTest {
             .supplier(
                 () -> {
                   supplierCount.incrementAndGet();
-                  return Collections.singletonMap(newKey, newValue);
+                  return Map.of(newKey, newValue);
                 })
             .frequency(Duration.ofSeconds(2))
             .build()) {
@@ -103,7 +100,7 @@ public class TestRefreshableCache extends OharaTest {
   public void testPutsAfterClose() {
     RefreshableCache<String, String> cache = cache();
     cache.close();
-    cache.put(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()));
+    cache.put(Map.of(CommonUtils.randomString(), CommonUtils.randomString()));
   }
 
   @Test
@@ -114,8 +111,7 @@ public class TestRefreshableCache extends OharaTest {
             .supplier(
                 () -> {
                   count.incrementAndGet();
-                  return Collections.singletonMap(
-                      CommonUtils.randomString(), CommonUtils.randomString());
+                  return Map.of(CommonUtils.randomString(), CommonUtils.randomString());
                 })
             // no update before we all die
             .frequency(Duration.ofDays(10000000))
@@ -134,10 +130,7 @@ public class TestRefreshableCache extends OharaTest {
   public void testClear() throws InterruptedException {
     RefreshableCache<String, String> cache =
         RefreshableCache.<String, String>builder()
-            .supplier(
-                () ->
-                    Collections.singletonMap(
-                        CommonUtils.randomString(), CommonUtils.randomString()))
+            .supplier(() -> Map.of(CommonUtils.randomString(), CommonUtils.randomString()))
             // no update before we all die
             .frequency(Duration.ofDays(10000000))
             .build();
@@ -205,10 +198,7 @@ public class TestRefreshableCache extends OharaTest {
   public void testTimeout() throws InterruptedException {
     RefreshableCache<String, String> cache =
         RefreshableCache.<String, String>builder()
-            .supplier(
-                () ->
-                    Collections.singletonMap(
-                        CommonUtils.randomString(), CommonUtils.randomString()))
+            .supplier(() -> Map.of(CommonUtils.randomString(), CommonUtils.randomString()))
             .frequency(Duration.ofSeconds(1000))
             .frequency(Duration.ofSeconds(2))
             .build();
@@ -225,7 +215,7 @@ public class TestRefreshableCache extends OharaTest {
     String key = CommonUtils.randomString();
     String value = CommonUtils.randomString();
     Map<String, String> data =
-        ImmutableMap.of(
+        Map.of(
             key,
             value,
             CommonUtils.randomString(),
@@ -286,7 +276,7 @@ public class TestRefreshableCache extends OharaTest {
             .supplier(
                 () -> {
                   updateCount.incrementAndGet();
-                  return Collections.emptyMap();
+                  return Map.of();
                 })
             .frequency(Duration.ofSeconds(1))
             .preRemoveObserver((k, v) -> !key.equals(k))
@@ -300,8 +290,7 @@ public class TestRefreshableCache extends OharaTest {
 
   private static RefreshableCache<String, String> cache() {
     return RefreshableCache.<String, String>builder()
-        .supplier(
-            () -> Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+        .supplier(() -> Map.of(CommonUtils.randomString(), CommonUtils.randomString()))
         .frequency(Duration.ofSeconds(2))
         .build();
   }

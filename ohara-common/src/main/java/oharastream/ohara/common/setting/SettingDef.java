@@ -368,7 +368,9 @@ public class SettingDef implements JsonObject, Serializable {
                     row -> {
                       if (!tableKeys.isEmpty()) {
                         Set<String> expectedColumnNames =
-                            tableKeys.stream().map(TableColumn::name).collect(Collectors.toSet());
+                            tableKeys.stream()
+                                .map(TableColumn::name)
+                                .collect(Collectors.toUnmodifiableSet());
                         Set<String> actualColumnName = row.keySet();
                         if (!actualColumnName.equals(expectedColumnNames)) {
                           throw new IllegalArgumentException(
@@ -678,9 +680,9 @@ public class SettingDef implements JsonObject, Serializable {
     private Reference reference = Reference.NONE;
     private boolean internal = false;
     private Permission permission = Permission.EDITABLE;
-    private List<TableColumn> tableKeys = Collections.emptyList();
-    private Set<String> recommendedValues = Collections.emptySet();
-    private Set<String> blacklist = Collections.emptySet();
+    private List<TableColumn> tableKeys = List.of();
+    private Set<String> recommendedValues = Set.of();
+    private Set<String> blacklist = Set.of();
     @Nullable private String regex = null;
     @Nullable private String prefix = null;
 

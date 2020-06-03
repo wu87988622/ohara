@@ -42,7 +42,7 @@ public interface Brokers extends Releasable {
     List<File> tempFolders =
         IntStream.range(0, ports.length)
             .mapToObj(i -> CommonUtils.createTempFolder("local_kafka"))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     List<KafkaServer> brokers =
         IntStream.range(0, ports.length)
             .mapToObj(
@@ -64,7 +64,7 @@ public interface Brokers extends Releasable {
                   // increase the timeout in order to avoid ZkTimeoutException
                   config.setProperty(
                       KafkaConfig$.MODULE$.ZkSessionTimeoutMsProp(), String.valueOf(30 * 1000));
-                  scala.jdk.CollectionConverters.IterableHasAsScala(Collections.emptyList());
+                  scala.jdk.CollectionConverters.IterableHasAsScala(List.of());
                   KafkaServer broker =
                       new KafkaServer(
                           new KafkaConfig(config),
@@ -78,7 +78,7 @@ public interface Brokers extends Releasable {
                   broker.startup();
                   return broker;
                 })
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     String connectionProps =
         brokers.stream()
             .map(

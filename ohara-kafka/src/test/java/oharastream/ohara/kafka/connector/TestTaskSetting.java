@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector;
 
-import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +37,7 @@ public class TestTaskSetting extends OharaTest {
 
   @Test
   public void emptyInput() {
-    TaskSetting.of(Collections.emptyMap());
+    TaskSetting.of(Map.of());
   }
 
   @Test
@@ -49,7 +48,7 @@ public class TestTaskSetting extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyKey() {
-    TaskSetting.of(Collections.singletonMap("", CommonUtils.randomString()));
+    TaskSetting.of(Map.of("", CommonUtils.randomString()));
   }
 
   @Test
@@ -60,14 +59,14 @@ public class TestTaskSetting extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyValue() {
-    TaskSetting.of(Collections.singletonMap(CommonUtils.randomString(), ""));
+    TaskSetting.of(Map.of(CommonUtils.randomString(), ""));
   }
 
   @Test
   public void testParseBoolean() {
     String key = CommonUtils.randomString();
     boolean value = true;
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, String.valueOf(value)));
+    TaskSetting config = TaskSetting.of(Map.of(key, String.valueOf(value)));
     Assert.assertEquals(value, config.booleanValue(key));
     Assert.assertFalse(config.booleanOption(CommonUtils.randomString()).isPresent());
   }
@@ -75,7 +74,7 @@ public class TestTaskSetting extends OharaTest {
   @Test(expected = IllegalArgumentException.class)
   public void testParseNonBoolean() {
     String key = CommonUtils.randomString();
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, CommonUtils.randomString()));
+    TaskSetting config = TaskSetting.of(Map.of(key, CommonUtils.randomString()));
     config.booleanValue(key);
   }
 
@@ -83,7 +82,7 @@ public class TestTaskSetting extends OharaTest {
   public void testParseShort() {
     String key = CommonUtils.randomString();
     short value = 123;
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, String.valueOf(value)));
+    TaskSetting config = TaskSetting.of(Map.of(key, String.valueOf(value)));
     Assert.assertEquals(value, config.shortValue(key));
     Assert.assertTrue(config.shortOption(key).isPresent());
     Assert.assertFalse(config.shortOption(CommonUtils.randomString()).isPresent());
@@ -93,7 +92,7 @@ public class TestTaskSetting extends OharaTest {
   public void testParseInt() {
     String key = CommonUtils.randomString();
     int value = 123;
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, String.valueOf(value)));
+    TaskSetting config = TaskSetting.of(Map.of(key, String.valueOf(value)));
     Assert.assertEquals(value, config.intValue(key));
     Assert.assertTrue(config.intOption(key).isPresent());
     Assert.assertFalse(config.intOption(CommonUtils.randomString()).isPresent());
@@ -103,7 +102,7 @@ public class TestTaskSetting extends OharaTest {
   public void testParseLong() {
     String key = CommonUtils.randomString();
     long value = 123;
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, String.valueOf(value)));
+    TaskSetting config = TaskSetting.of(Map.of(key, String.valueOf(value)));
     Assert.assertEquals(value, config.longValue(key));
     Assert.assertTrue(config.longOption(key).isPresent());
     Assert.assertFalse(config.longOption(CommonUtils.randomString()).isPresent());
@@ -113,7 +112,7 @@ public class TestTaskSetting extends OharaTest {
   public void testParseDouble() {
     String key = CommonUtils.randomString();
     double value = 123.333;
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, String.valueOf(value)));
+    TaskSetting config = TaskSetting.of(Map.of(key, String.valueOf(value)));
     Assert.assertEquals(value, config.doubleValue(key), 0);
     Assert.assertTrue(config.doubleOption(key).isPresent());
     Assert.assertFalse(config.doubleOption(CommonUtils.randomString()).isPresent());
@@ -123,8 +122,7 @@ public class TestTaskSetting extends OharaTest {
   public void testParseStrings() {
     String key = CommonUtils.randomString();
     List<String> ss = Arrays.asList(CommonUtils.randomString(), CommonUtils.randomString());
-    TaskSetting config =
-        TaskSetting.of(Collections.singletonMap(key, StringList.toKafkaString(ss)));
+    TaskSetting config = TaskSetting.of(Map.of(key, StringList.toKafkaString(ss)));
     List<String> ss2 = config.stringList(key);
     Assert.assertEquals(ss.size(), ss2.size());
     ss.forEach(s -> Assert.assertEquals(1, ss2.stream().filter(s::equals).count()));
@@ -137,9 +135,8 @@ public class TestTaskSetting extends OharaTest {
     PropGroup propGroup =
         PropGroup.of(
             Arrays.asList(
-                ImmutableMap.of("k0", "v0", "k1", "v1", "k2", "v2"),
-                ImmutableMap.of("k0", "v0", "k1", "v1")));
-    TaskSetting config = TaskSetting.of(Collections.singletonMap(key, propGroup.toJsonString()));
+                Map.of("k0", "v0", "k1", "v1", "k2", "v2"), Map.of("k0", "v0", "k1", "v1")));
+    TaskSetting config = TaskSetting.of(Map.of(key, propGroup.toJsonString()));
     PropGroup another = config.propGroup(key);
     Assert.assertEquals(propGroup, another);
     Assert.assertTrue(config.propGroupOption(key).isPresent());
@@ -148,7 +145,7 @@ public class TestTaskSetting extends OharaTest {
 
   @Test
   public void getEmptyColumn() {
-    TaskSetting config = TaskSetting.of(Collections.singletonMap("pgs", "asdasd"));
+    TaskSetting config = TaskSetting.of(Map.of("pgs", "asdasd"));
     Assert.assertTrue(config.columns().isEmpty());
   }
 

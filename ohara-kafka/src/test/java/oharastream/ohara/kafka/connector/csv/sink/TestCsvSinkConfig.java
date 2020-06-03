@@ -23,7 +23,8 @@ import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.OUTP
 import static oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions.ROTATE_INTERVAL_MS_KEY;
 import static oharastream.ohara.kafka.connector.json.ConnectorDefUtils.COLUMNS_DEFINITION;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
 import oharastream.ohara.common.rule.OharaTest;
@@ -36,7 +37,7 @@ import org.junit.Test;
 public class TestCsvSinkConfig extends OharaTest {
 
   private static CsvSinkConfig config(String key, String value) {
-    return CsvSinkConfig.of(TaskSetting.of(Collections.singletonMap(key, value)));
+    return CsvSinkConfig.of(TaskSetting.of(Map.of(key, value)));
   }
 
   @Test
@@ -55,7 +56,7 @@ public class TestCsvSinkConfig extends OharaTest {
             .build();
     CsvSinkConfig config =
         config(COLUMNS_DEFINITION.key(), PropGroup.ofColumn(column).toJsonString());
-    Assert.assertEquals(config.columns(), Collections.singletonList(column));
+    Assert.assertEquals(config.columns(), List.of(column));
   }
 
   @Test

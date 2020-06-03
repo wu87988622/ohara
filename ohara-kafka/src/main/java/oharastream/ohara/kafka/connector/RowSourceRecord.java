@@ -86,8 +86,8 @@ public class RowSourceRecord {
       // do nothing
     }
 
-    private Map<String, ?> sourcePartition = Collections.emptyMap();
-    private Map<String, ?> sourceOffset = Collections.emptyMap();
+    private Map<String, ?> sourcePartition = Map.of();
+    private Map<String, ?> sourceOffset = Map.of();
     private Integer partition = null;
     private Row row = null;
     private Long timestamp = null;

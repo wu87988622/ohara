@@ -45,6 +45,6 @@ public abstract class WithMockStorage extends CsvSinkTestBase {
   protected Collection<String> readData(String path) {
     InputStream in = fs.open(path);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    return reader.lines().collect(Collectors.toList());
+    return reader.lines().collect(Collectors.toUnmodifiableList());
   }
 }

@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.TopicKey;
@@ -92,7 +91,7 @@ public class TestPageViewRegionExample extends WithBroker {
               Row.of(
                   Cell.of("user", "francesca"),
                   Cell.of("page", "http://www.example.com/?bike=ants&airplane=action")))
-          .collect(Collectors.toList());
+          .collect(Collectors.toUnmodifiableList());
 
   private final List<Row> profiles =
       java.util.stream.Stream.of(
@@ -103,21 +102,22 @@ public class TestPageViewRegionExample extends WithBroker {
               Row.of(Cell.of("user", "tiffany"), Cell.of("region", "Jordan")),
               Row.of(Cell.of("user", "aisha"), Cell.of("region", "Russian")),
               Row.of(Cell.of("user", "elsa"), Cell.of("region", "Cuba")))
-          .collect(Collectors.toList());
+          .collect(Collectors.toUnmodifiableList());
 
   private final Map<String, String> configs =
-      java.util.stream.Stream.of(
-              Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
-              Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestPageViewRegionExample"),
-              Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), client.connectionProps()),
-              Pair.of(
-                  StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-                  "[" + TopicKey.toJsonString(fromTopic) + "]"),
-              Pair.of(
-                  StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-                  "[" + TopicKey.toJsonString(toTopic) + "]"),
-              Pair.of(PageViewRegionExample.joinTopicKey, joinTableTopic.topicNameOnKafka()))
-          .collect(Collectors.toMap(Pair::left, Pair::right));
+      Map.of(
+          StreamDefUtils.GROUP_DEFINITION.key(),
+          CommonUtils.randomString(5),
+          StreamDefUtils.NAME_DEFINITION.key(),
+          "TestPageViewRegionExample",
+          StreamDefUtils.BROKER_DEFINITION.key(),
+          client.connectionProps(),
+          StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+          "[" + TopicKey.toJsonString(fromTopic) + "]",
+          StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+          "[" + TopicKey.toJsonString(toTopic) + "]",
+          PageViewRegionExample.joinTopicKey,
+          joinTableTopic.topicNameOnKafka());
 
   @Before
   public void setup() {
@@ -146,7 +146,7 @@ public class TestPageViewRegionExample extends WithBroker {
                 Row.of(Cell.of("region", "Russian"), Cell.of("count", 10L)),
                 Row.of(Cell.of("region", "Jordan"), Cell.of("count", 5L)),
                 Row.of(Cell.of("region", "Cuba"), Cell.of("count", 3L)))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     StreamTestUtils.assertResult(client, toTopic, expected, 20);
   }
 

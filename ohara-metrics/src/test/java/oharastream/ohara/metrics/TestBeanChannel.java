@@ -16,7 +16,6 @@
 
 package oharastream.ohara.metrics;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import oharastream.ohara.common.rule.OharaTest;
@@ -47,7 +46,7 @@ public class TestBeanChannel extends OharaTest {
   @Test
   public void loadSpecificMean() {
     String domain = CommonUtils.randomString();
-    Map<String, String> props = Collections.singletonMap("a", "b");
+    Map<String, String> props = Map.of("a", "b");
     double value0 = 1.2;
     double value1 = 2.2;
 

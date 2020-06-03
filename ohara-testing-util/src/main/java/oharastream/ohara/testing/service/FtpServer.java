@@ -138,7 +138,7 @@ public interface FtpServer extends Releasable {
       UserManager userManager = userManagerFactory.createUserManager();
       BaseUser _user = new BaseUser();
       _user.setName(user);
-      _user.setAuthorities(Collections.singletonList(new WritePermission()));
+      _user.setAuthorities(List.of(new WritePermission()));
       _user.setEnabled(true);
       _user.setPassword(password);
       _user.setHomeDirectory(homeFolder.getAbsolutePath());
@@ -153,7 +153,7 @@ public interface FtpServer extends Releasable {
           new DataConnectionConfigurationFactory();
 
       List<Integer> availableDataPorts =
-          dataPorts.stream().map(CommonUtils::resolvePort).collect(Collectors.toList());
+          dataPorts.stream().map(CommonUtils::resolvePort).collect(Collectors.toUnmodifiableList());
 
       connectionConfig.setActiveEnabled(false);
       connectionConfig.setPassiveExternalAddress(advertisedHostname);
@@ -207,7 +207,7 @@ public interface FtpServer extends Releasable {
         public List<Integer> dataPorts() {
           return Stream.of(connectionConfig.getPassivePorts().split(","))
               .map(Integer::valueOf)
-              .collect(Collectors.toList());
+              .collect(Collectors.toUnmodifiableList());
         }
 
         @Override
@@ -293,10 +293,12 @@ public interface FtpServer extends Releasable {
                         Integer.parseInt(value.split("-")[0]),
                         Integer.parseInt(value.split("-")[1]) + 1)
                     .boxed()
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toUnmodifiableList());
           else
             dataPorts =
-                Stream.of(value.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+                Stream.of(value.split(","))
+                    .map(Integer::valueOf)
+                    .collect(Collectors.toUnmodifiableList());
           break;
         case TTL:
           ttl = Integer.parseInt(value);

@@ -20,8 +20,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -65,7 +63,7 @@ public interface Cache<K, V> {
    * @param value new value
    */
   default void put(K key, V value) {
-    put(Collections.singletonMap(key, value));
+    put(Map.of(key, value));
   }
 
   /**
@@ -112,13 +110,13 @@ public interface Cache<K, V> {
     @Override
     public Cache<K, V> build() {
       Objects.requireNonNull(fetcher);
-      return new Cache<K, V>() {
+      return new Cache<>() {
         private final LoadingCache<K, V> cache =
             CacheBuilder.newBuilder()
                 .maximumSize(maxSize)
                 .refreshAfterWrite(timeout.toMillis(), TimeUnit.MILLISECONDS)
                 .build(
-                    new CacheLoader<K, V>() {
+                    new CacheLoader<>() {
                       @Override
                       public V load(K key) {
                         return fetcher.apply(key);
@@ -137,7 +135,7 @@ public interface Cache<K, V> {
 
         @Override
         public Map<K, V> snapshot() {
-          return Collections.unmodifiableMap(new HashMap<>(cache.asMap()));
+          return Map.copyOf(cache.asMap());
         }
 
         @Override

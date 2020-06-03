@@ -42,13 +42,13 @@ final class ConnectorUtils {
     Map<String, SettingDef> finalDefinitions =
         new TreeMap<>(
             userDefinedDefinitions.stream()
-                .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+                .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity())));
     finalDefinitions.putAll(
         systemDefinedDefinitions.stream()
             .filter(
                 definition ->
                     needColumnDefinition || definition != ConnectorDefUtils.COLUMNS_DEFINITION)
-            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+            .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity())));
 
     // add system-defined definitions if developers does NOT define them
     finalDefinitions.putIfAbsent(WithDefinitions.AUTHOR_KEY, WithDefinitions.AUTHOR_DEFINITION);
@@ -171,7 +171,7 @@ final class ConnectorUtils {
     List<String> requiredNames =
         columns.stream()
             .map(column -> isSink ? column.name() : column.newName())
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
 
     if (!CommonUtils.isEmpty(columns)) {
       if (row.size() != columns.size())

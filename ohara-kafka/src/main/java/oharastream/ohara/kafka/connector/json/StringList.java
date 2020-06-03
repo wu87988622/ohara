@@ -19,7 +19,6 @@ package oharastream.ohara.kafka.connector.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.json.JsonUtils;
 import oharastream.ohara.common.util.CommonUtils;
@@ -32,7 +31,7 @@ public final class StringList {
 
   public static List<String> ofJson(String json) {
     return CommonUtils.isEmpty(json) || json.equalsIgnoreCase("null")
-        ? Collections.emptyList()
+        ? List.of()
         : JsonUtils.toObject(json, new TypeReference<List<String>>() {});
   }
 
@@ -47,7 +46,7 @@ public final class StringList {
    * @return string list
    */
   public static List<String> ofKafkaList(String value) {
-    return CommonUtils.isEmpty(value) ? Collections.emptyList() : Arrays.asList(value.split(","));
+    return CommonUtils.isEmpty(value) ? List.of() : Arrays.asList(value.split(","));
   }
 
   /**

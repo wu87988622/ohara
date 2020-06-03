@@ -16,8 +16,8 @@
 
 package oharastream.ohara.kafka.connector;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Column;
@@ -40,26 +40,26 @@ public class TestConnectorProps extends OharaTest {
   public void emptyInStartingSource() {
     DumbSource connector = new DumbSource();
     // ohara auto-fill the keys with default values
-    connector.start(Collections.emptyMap());
+    connector.start(Map.of());
   }
 
   @Test
   public void emptyInStartingSink() {
     DumbSink connector = new DumbSink();
     // ohara auto-fill the keys with default values
-    connector.start(Collections.emptyMap());
+    connector.start(Map.of());
   }
 
   @Test
   public void emptyInStartingSourceTask() {
     DumbSourceTask task = new DumbSourceTask();
-    Assert.assertThrows(NoSuchElementException.class, () -> task.start(Collections.emptyMap()));
+    Assert.assertThrows(NoSuchElementException.class, () -> task.start(Map.of()));
   }
 
   @Test
   public void emptyInStartingSinkTask() {
     DumbSinkTask task = new DumbSinkTask();
-    Assert.assertThrows(NoSuchElementException.class, () -> task.start(Collections.emptyMap()));
+    Assert.assertThrows(NoSuchElementException.class, () -> task.start(Map.of()));
   }
 
   @Test
@@ -97,7 +97,7 @@ public class TestConnectorProps extends OharaTest {
 
       // add legal data
       task.put(
-          Collections.singletonList(
+          List.of(
               new SinkRecord(
                   TopicKey.of("g", "n").topicNameOnKafka(),
                   0,
@@ -113,7 +113,7 @@ public class TestConnectorProps extends OharaTest {
 
       // add illegal data
       task.put(
-          Collections.singletonList(
+          List.of(
               new SinkRecord(
                   TopicKey.of("g", "n").topicNameOnKafka(),
                   0,
@@ -148,7 +148,7 @@ public class TestConnectorProps extends OharaTest {
           IllegalArgumentException.class,
           () ->
               task2.put(
-                  Collections.singletonList(
+                  List.of(
                       new SinkRecord(
                           "topic",
                           0,
@@ -179,7 +179,7 @@ public class TestConnectorProps extends OharaTest {
           @Override
           protected List<RowSourceRecord> pollRecords() {
             try {
-              return Collections.singletonList(
+              return List.of(
                   RowSourceRecord.builder()
                       .row(good ? goodRow : badRow)
                       .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))
@@ -238,7 +238,7 @@ public class TestConnectorProps extends OharaTest {
         new DumbSourceTask() {
           @Override
           protected List<RowSourceRecord> pollRecords() {
-            return Collections.singletonList(
+            return List.of(
                 RowSourceRecord.builder()
                     .row(badRow)
                     .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))
@@ -264,7 +264,7 @@ public class TestConnectorProps extends OharaTest {
         new DumbSourceTask() {
           @Override
           protected List<RowSourceRecord> pollRecords() {
-            return Collections.singletonList(
+            return List.of(
                 RowSourceRecord.builder()
                     .row(badRow)
                     .topicKey(TopicKey.of("g", CommonUtils.randomString(10)))

@@ -86,8 +86,7 @@ public abstract class CsvSinkTestBase extends OharaTest {
   }
 
   protected List<RowSinkRecord> createRecords(int size, long startOffset) {
-    return createRecords(
-        size, startOffset, Collections.singleton(new TopicPartition(TOPIC, PARTITION)));
+    return createRecords(size, startOffset, Set.of(new TopicPartition(TOPIC, PARTITION)));
   }
 
   protected List<RowSinkRecord> createRecords(

@@ -155,6 +155,6 @@ public interface WithDefinitions {
 
   /** @return a unmodifiable collection of definitions */
   default Map<String, SettingDef> settingDefinitions() {
-    return merge(this, Collections.emptyMap(), Collections.emptyMap());
+    return merge(this, Map.of(), Map.of());
   }
 }

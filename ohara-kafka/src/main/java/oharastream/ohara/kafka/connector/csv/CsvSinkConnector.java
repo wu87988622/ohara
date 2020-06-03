@@ -93,7 +93,7 @@ public abstract class CsvSinkConnector extends RowSinkConnector {
 
   /** @return custom setting definitions from sub csv connectors */
   protected Map<String, SettingDef> csvSettingDefinitions() {
-    return Collections.emptyMap();
+    return Map.of();
   }
 
   @Override
@@ -106,7 +106,7 @@ public abstract class CsvSinkConnector extends RowSinkConnector {
                 ROTATE_INTERVAL_MS_DEFINITION,
                 FILE_NEED_HEADER_DEFINITION,
                 FILE_ENCODE_DEFINITION)
-            .collect(Collectors.toMap(SettingDef::key, Function.identity())));
+            .collect(Collectors.toUnmodifiableMap(SettingDef::key, Function.identity())));
     return Collections.unmodifiableMap(finalDefinitions);
   }
 }

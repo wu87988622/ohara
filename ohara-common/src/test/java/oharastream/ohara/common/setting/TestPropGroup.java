@@ -17,7 +17,6 @@
 package oharastream.ohara.common.setting;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,18 +73,17 @@ public class TestPropGroup extends OharaTest {
 
   @Test
   public void testEmpty() {
-    Assert.assertTrue(PropGroup.of(Collections.emptyList()).isEmpty());
+    Assert.assertTrue(PropGroup.of(List.of()).isEmpty());
   }
 
   @Test
   public void testEmpty2() {
-    Assert.assertTrue(PropGroup.of(Collections.singletonList(Collections.emptyMap())).isEmpty());
+    Assert.assertTrue(PropGroup.of(List.of(Map.of())).isEmpty());
   }
 
   @Test
   public void testEmpty3() {
-    Assert.assertEquals(
-        0, PropGroup.of(Collections.singletonList(Collections.emptyMap())).numberOfElements());
+    Assert.assertEquals(0, PropGroup.of(List.of(Map.of())).numberOfElements());
   }
 
   @Test
@@ -154,26 +152,25 @@ public class TestPropGroup extends OharaTest {
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemove() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
+    PropGroup pgs = PropGroup.of(List.of(Map.of("a", "b")));
     pgs.iterator().remove();
   }
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemoveFromList() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
+    PropGroup pgs = PropGroup.of(List.of(Map.of("a", "b")));
     pgs.raw().remove(0);
   }
 
   @Test(expected = UnsupportedOperationException.class)
   public void testRemoveFromMap() {
-    PropGroup pgs = PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
+    PropGroup pgs = PropGroup.of(List.of(Map.of("a", "b")));
     pgs.raw().get(0).remove("a");
   }
 
   @Test
   public void testConvert() {
-    PropGroup propGroup =
-        PropGroup.of(Collections.singletonList(Collections.singletonMap("a", "b")));
+    PropGroup propGroup = PropGroup.of(List.of(Map.of("a", "b")));
     PropGroup another = PropGroup.ofJson(propGroup.toJsonString());
     Assert.assertEquals(propGroup, another);
   }
@@ -189,7 +186,7 @@ public class TestPropGroup extends OharaTest {
     Map<String, String> raw = new HashMap<>(PropGroup.toPropGroup(column));
     raw.put(
         SettingDef.COLUMN_DATA_TYPE_KEY, raw.get(SettingDef.COLUMN_DATA_TYPE_KEY).toLowerCase());
-    PropGroup group = PropGroup.of(Collections.singletonList(raw));
+    PropGroup group = PropGroup.of(List.of(raw));
     Column another = group.toColumns().get(0);
     Assert.assertEquals(column, another);
   }

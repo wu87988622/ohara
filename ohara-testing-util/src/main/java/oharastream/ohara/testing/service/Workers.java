@@ -100,7 +100,7 @@ public interface Workers extends Releasable {
                     }
                   }
                 })
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     return new Workers() {
       @Override
       public void close() {

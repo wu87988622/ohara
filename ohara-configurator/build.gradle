@@ -78,7 +78,7 @@ task runConfigurator(type: JavaExec, dependsOn: 'classes') {
     .flatMap {
       word -> Arrays.asList("--$word", project.getProperty(word)).stream()
     }
-    .collect(Collectors.toList())
+    .collect(Collectors.toUnmodifiableList())
 }
 // this testing jar is useful in testing route
 test.dependsOn(':ohara-stream:streamJar')

@@ -17,7 +17,7 @@
 package oharastream.ohara.common.data;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import oharastream.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class TestRow extends OharaTest {
   @Test
   public void testEqualsWithoutTags() {
     Row row = Row.of(Arrays.asList("tag", "tag2"), Cell.of("aa", "aa"), Cell.of("b", 123));
-    Row row2 = Row.of(Collections.singletonList("tag"), Cell.of("aa", "aa"), Cell.of("b", 123));
+    Row row2 = Row.of(List.of("tag"), Cell.of("aa", "aa"), Cell.of("b", 123));
     Assert.assertTrue(row.equals(row, false));
     Assert.assertTrue(row.equals(row2, false));
     Assert.assertTrue(row2.equals(row, false));
@@ -76,5 +76,16 @@ public class TestRow extends OharaTest {
     Assert.assertEquals(row, row);
     Assert.assertEquals(row, row2);
     Assert.assertEquals(row2, row);
+  }
+
+  @Test
+  public void testOrder() {
+    var cell0 = Cell.of("name", "chia");
+    var cell1 = Cell.of("ranking", 1);
+    var cell2 = Cell.of("single", false);
+    var row = Row.of(cell0, cell1, cell2);
+    Assert.assertEquals(cell0, row.cell(0));
+    Assert.assertEquals(cell1, row.cell(1));
+    Assert.assertEquals(cell2, row.cell(2));
   }
 }

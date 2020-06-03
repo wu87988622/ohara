@@ -18,12 +18,12 @@ package oharastream.ohara.stream.ostream;
 
 import java.util.ArrayList;
 import java.util.List;
-import oharastream.ohara.common.data.Pair;
+import java.util.Map;
 
 /** Assign a condition pair (left key and right key) list for the required operation */
 public class Conditions {
 
-  private List<Pair<String, String>> conditionsPairList;
+  private final List<Map.Entry<String, String>> conditionsPairList;
 
   private Conditions() {
     this.conditionsPairList = new ArrayList<>();
@@ -41,12 +41,12 @@ public class Conditions {
    * @param pair the conditions of key pair for join
    * @return the conditions
    */
-  public Conditions add(List<Pair<String, String>> pair) {
+  public Conditions add(List<Map.Entry<String, String>> pair) {
     this.conditionsPairList.addAll(pair);
     return this;
   }
 
-  List<Pair<String, String>> getConditionList() {
-    return this.conditionsPairList;
+  List<Map.Entry<String, String>> conditionList() {
+    return List.copyOf(conditionsPairList);
   }
 }

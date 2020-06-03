@@ -16,8 +16,8 @@
 
 package oharastream.ohara.kafka.connector.json;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import oharastream.ohara.common.data.Column;
@@ -170,14 +170,12 @@ public class TestConnectorDefUtils extends OharaTest {
         ConfigException.class, () -> key.validator.ensureValid(settingDef.key(), 123));
     Assert.assertThrows(
         ConfigException.class,
-        () ->
-            key.validator.ensureValid(
-                settingDef.key(), Collections.singletonList(CommonUtils.randomString())));
+        () -> key.validator.ensureValid(settingDef.key(), List.of(CommonUtils.randomString())));
 
     key.validator.ensureValid(
         settingDef.key(),
         PropGroup.ofColumns(
-                Collections.singletonList(
+                List.of(
                     Column.builder()
                         .name(CommonUtils.randomString())
                         .dataType(DataType.BOOLEAN)
@@ -239,7 +237,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .get();
     Assert.assertEquals(4, def.tableKeys().size());
     Assert.assertEquals(
-        Collections.emptySet(),
+        Set.of(),
         def.tableKeys().stream()
             .filter(d -> d.name().equals(SettingDef.COLUMN_NEW_NAME_KEY))
             .findFirst()
@@ -247,7 +245,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .recommendedValues());
 
     Assert.assertEquals(
-        Collections.emptySet(),
+        Set.of(),
         def.tableKeys().stream()
             .filter(d -> d.name().equals(SettingDef.COLUMN_NAME_KEY))
             .findFirst()
@@ -255,7 +253,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .recommendedValues());
 
     Assert.assertEquals(
-        Collections.emptySet(),
+        Set.of(),
         def.tableKeys().stream()
             .filter(d -> d.name().equals(SettingDef.COLUMN_ORDER_KEY))
             .findFirst()
@@ -263,7 +261,7 @@ public class TestConnectorDefUtils extends OharaTest {
             .recommendedValues());
 
     Assert.assertEquals(
-        Stream.of(DataType.values()).map(DataType::name).collect(Collectors.toSet()),
+        Stream.of(DataType.values()).map(DataType::name).collect(Collectors.toUnmodifiableSet()),
         def.tableKeys().stream()
             .filter(d -> d.name().equals(SettingDef.COLUMN_DATA_TYPE_KEY))
             .findFirst()
@@ -345,7 +343,7 @@ public class TestConnectorDefUtils extends OharaTest {
         ConnectorDefUtils.DEFAULT.size(),
         ConnectorDefUtils.DEFAULT.values().stream()
             .map(SettingDef::key)
-            .collect(Collectors.toSet())
+            .collect(Collectors.toUnmodifiableSet())
             .size());
   }
 

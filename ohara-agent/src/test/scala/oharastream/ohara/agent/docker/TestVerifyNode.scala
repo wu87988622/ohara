@@ -50,7 +50,7 @@ class TestVerifyNode extends OharaTest {
         override def execute(cmd: String): util.List[String] =
           if (errorMessage != null)
             throw new IllegalArgumentException(errorMessage)
-          else util.Collections.singletonList("""
+          else util.List.of("""
               |  {
               |    "NCPU": 1,
               |    "MemTotal": 1024

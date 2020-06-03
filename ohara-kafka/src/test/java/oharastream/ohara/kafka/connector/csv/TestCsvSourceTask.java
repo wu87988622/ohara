@@ -161,7 +161,7 @@ class MockCsvSourceFileSystem implements FileSystem {
     return IntStream.range(1, 100)
         .boxed()
         .map(i -> "file" + i)
-        .collect(Collectors.toList())
+        .collect(Collectors.toUnmodifiableList())
         .iterator();
   }
 

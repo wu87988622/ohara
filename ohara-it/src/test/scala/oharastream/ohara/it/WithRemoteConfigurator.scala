@@ -49,7 +49,7 @@ object WithRemoteConfigurator {
   @Parameters(name = "{index} mode = {0}")
   def parameters: java.util.Collection[ContainerPlatform] = {
     val modes = ContainerPlatform.all
-    if (modes.isEmpty) java.util.Collections.singletonList(ContainerPlatform.empty)
+    if (modes.isEmpty) java.util.List.of(ContainerPlatform.empty)
     else modes.asJava
   }
 }

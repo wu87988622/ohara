@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -63,7 +62,7 @@ public class TestFtpServer extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyDataPorts() {
-    FtpServer.builder().dataPorts(Collections.emptyList()).build();
+    FtpServer.builder().dataPorts(List.of()).build();
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -73,7 +72,7 @@ public class TestFtpServer extends OharaTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void negativeDataPort() {
-    FtpServer.builder().dataPorts(Collections.singletonList(-1)).build();
+    FtpServer.builder().dataPorts(List.of(-1)).build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -89,8 +88,7 @@ public class TestFtpServer extends OharaTest {
   @Test
   public void testSpecificDataPort() {
     int port = CommonUtils.availablePort();
-    try (FtpServer ftpServer =
-        FtpServer.builder().dataPorts(Collections.singletonList(port)).build()) {
+    try (FtpServer ftpServer = FtpServer.builder().dataPorts(List.of(port)).build()) {
       assertEquals(port, (int) ftpServer.dataPorts().get(0));
     }
   }
@@ -113,7 +111,7 @@ public class TestFtpServer extends OharaTest {
 
   @Test
   public void testRandomControlPort() {
-    List<Integer> dataPorts = Collections.singletonList(0);
+    List<Integer> dataPorts = List.of(0);
     try (FtpServer ftpServer = FtpServer.builder().controlPort(0).dataPorts(dataPorts).build()) {
       assertNotEquals(0, ftpServer.port());
     }
@@ -176,7 +174,7 @@ public class TestFtpServer extends OharaTest {
         IntStream.range(0, 3)
             .map(i -> CommonUtils.availablePort())
             .boxed()
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     int ttl = 3;
     ExecutorService es = Executors.newSingleThreadExecutor();
     try {
@@ -216,7 +214,7 @@ public class TestFtpServer extends OharaTest {
     int portRange = 2;
     int p = CommonUtils.availablePort();
     List<Integer> dataPorts =
-        IntStream.range(p, p + portRange).boxed().collect(Collectors.toList());
+        IntStream.range(p, p + portRange).boxed().collect(Collectors.toUnmodifiableList());
     int ttl = 3;
     ExecutorService es = Executors.newSingleThreadExecutor();
     try {

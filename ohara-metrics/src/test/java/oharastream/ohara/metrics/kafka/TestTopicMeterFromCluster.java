@@ -32,7 +32,7 @@ public class TestTopicMeterFromCluster extends WithBrokerWorker {
         () ->
             BeanChannel.local().topicMeters().stream()
                     .map(TopicMeter::topicName)
-                    .collect(Collectors.toSet())
+                    .collect(Collectors.toUnmodifiableSet())
                     .size()
                 >= 3,
         java.time.Duration.ofSeconds(30));

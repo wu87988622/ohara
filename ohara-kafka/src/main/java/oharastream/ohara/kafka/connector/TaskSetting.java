@@ -296,7 +296,7 @@ public class TaskSetting {
     return ObjectKey.toObjectKeys(stringValue(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
         .stream()
         .map(key -> TopicKey.of(key.group(), key.name()))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   public List<Column> columns() {

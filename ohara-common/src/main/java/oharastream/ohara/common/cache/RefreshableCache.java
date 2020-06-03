@@ -70,7 +70,7 @@ public interface RefreshableCache<K, V> extends Releasable {
    * @param value new value
    */
   default void put(K key, V value) {
-    put(Collections.singletonMap(key, value));
+    put(Map.of(key, value));
   }
 
   /**
@@ -239,7 +239,7 @@ public interface RefreshableCache<K, V> extends Releasable {
         @Override
         public Map<K, V> snapshot() {
           if (closed.get()) throw new IllegalStateException("cache is closed!!!");
-          return Collections.unmodifiableMap(new HashMap<>(cache.asMap()));
+          return Map.copyOf(cache.asMap());
         }
 
         @Override

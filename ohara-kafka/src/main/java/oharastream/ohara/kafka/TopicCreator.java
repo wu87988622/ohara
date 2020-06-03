@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +33,7 @@ public abstract class TopicCreator
     implements oharastream.ohara.common.pattern.Creator<CompletionStage<Void>> {
   protected int numberOfPartitions = 1;
   protected short numberOfReplications = 1;
-  protected Map<String, String> options = Collections.emptyMap();
+  protected Map<String, String> options = Map.of();
   protected TopicKey topicKey = null;
 
   @Optional("default value is 1")
@@ -64,9 +63,7 @@ public abstract class TopicCreator
   @Optional("default is deleted")
   public TopicCreator compacted() {
     return doOptions(
-        Collections.singletonMap(
-            TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT),
-        false);
+        Map.of(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_COMPACT), false);
   }
   /**
    * Specify that the topic's data should be deleted. It means the topic won't keep any data when
@@ -77,9 +74,7 @@ public abstract class TopicCreator
   @Optional("default is deleted")
   public TopicCreator deleted() {
     return doOptions(
-        Collections.singletonMap(
-            TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE),
-        false);
+        Map.of(TopicConfig.CLEANUP_POLICY_CONFIG, TopicConfig.CLEANUP_POLICY_DELETE), false);
   }
 
   private TopicCreator doOptions(Map<String, String> options, boolean overwrite) {

@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,7 +57,7 @@ public interface Producer<Key, Value> extends Releasable {
 
   class Builder<Key, Value>
       implements oharastream.ohara.common.pattern.Builder<Producer<Key, Value>> {
-    private Map<String, String> options = Collections.emptyMap();
+    private Map<String, String> options = Map.of();
     private String connectionProps;
     // default number of acks is 1.
     private short numberOfAcks = 1;
@@ -71,9 +70,7 @@ public interface Producer<Key, Value> extends Releasable {
 
     @Optional("default is empty")
     public Builder<Key, Value> option(String key, String value) {
-      return options(
-          Collections.singletonMap(
-              CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
+      return options(Map.of(CommonUtils.requireNonEmpty(key), CommonUtils.requireNonEmpty(value)));
     }
 
     @Optional("default is empty")
@@ -183,7 +180,7 @@ public interface Producer<Key, Value> extends Releasable {
                       value,
                       headers.stream()
                           .map(Builder.this::toKafkaHeader)
-                          .collect(Collectors.toList()));
+                          .collect(Collectors.toUnmodifiableList()));
 
               producer.send(
                   record,
@@ -238,7 +235,7 @@ public interface Producer<Key, Value> extends Releasable {
    */
   abstract class Sender<Key, Value> {
     protected Integer partition = null;
-    protected List<Header> headers = Collections.emptyList();
+    protected List<Header> headers = List.of();
     protected Key key = null;
     protected Value value = null;
     protected Long timestamp = null;
@@ -257,7 +254,7 @@ public interface Producer<Key, Value> extends Releasable {
 
     @Optional("default is empty")
     public Sender<Key, Value> header(Header header) {
-      return headers(Collections.singletonList(Objects.requireNonNull(header)));
+      return headers(List.of(Objects.requireNonNull(header)));
     }
 
     @Optional("default is empty")

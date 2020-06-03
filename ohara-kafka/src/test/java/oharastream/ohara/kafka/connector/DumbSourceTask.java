@@ -16,7 +16,6 @@
 
 package oharastream.ohara.kafka.connector;
 
-import java.util.Collections;
 import java.util.List;
 
 public class DumbSourceTask extends RowSourceTask {
@@ -28,6 +27,6 @@ public class DumbSourceTask extends RowSourceTask {
 
   @Override
   protected List<RowSourceRecord> pollRecords() {
-    return Collections.emptyList();
+    return List.of();
   }
 }

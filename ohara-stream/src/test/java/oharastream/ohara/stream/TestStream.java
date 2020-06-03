@@ -16,10 +16,9 @@
 
 package oharastream.ohara.stream;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import oharastream.ohara.common.data.Pair;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.ClassType;
@@ -42,17 +41,13 @@ public class TestStream extends OharaTest {
     // initial all required environment
     Stream.execute(
         app.getClass(),
-        java.util.stream.Stream.of(
-                Pair.of(StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5)),
-                Pair.of(StreamDefUtils.NAME_DEFINITION.key(), "TestStream"),
-                Pair.of(StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString()),
-                Pair.of(
-                    StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(fromKey))),
-                Pair.of(
-                    StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-                    TopicKey.toJsonString(Collections.singletonList(toKey))))
-            .collect(Collectors.toMap(Pair::left, Pair::right)));
+        Map.of(
+            StreamDefUtils.GROUP_DEFINITION.key(), CommonUtils.randomString(5),
+            StreamDefUtils.NAME_DEFINITION.key(), "TestStream",
+            StreamDefUtils.BROKER_DEFINITION.key(), CommonUtils.randomString(),
+            StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
+                TopicKey.toJsonString(List.of(fromKey)),
+            StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(List.of(toKey))));
   }
 
   @Test

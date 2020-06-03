@@ -17,8 +17,6 @@
 package oharastream.ohara.metrics.basic;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
@@ -64,8 +62,7 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
       long value,
       long lastModified) {
     this.needClose = needClose;
-    this.properties =
-        Collections.unmodifiableMap(new HashMap<>(CommonUtils.requireNonEmpty(properties)));
+    this.properties = Map.copyOf(CommonUtils.requireNonEmpty(properties));
     this.key = Objects.requireNonNull(key);
     this.item = CommonUtils.requireNonEmpty(item);
     this.document = CommonUtils.requireNonEmpty(document);
@@ -375,16 +372,23 @@ public final class Counter extends ReleaseOnce implements CounterMBean, Serializ
      */
     private Counter build(boolean needClose) {
       checkArgument();
-      Map<String, String> properties = new HashMap<>();
-      properties.put(TYPE_KEY, TYPE_VALUE);
-      // the metrics tools (for example, jmc) can distinguish the counter via the name.
-      properties.put(KEY_KEY, key.toPlain());
-      // the metrics tools (for example, jmc) can distinguish the counter via the name.
-      properties.put(ITEM_KEY, item);
-      // we use a random string to avoid duplicate jmx
-      // This property is required since kafka worker may create multiple tasks on same worker node.
-      // If we don't have this id, the multiple tasks will fail since the duplicate counters.
-      properties.put(ID_KEY, CommonUtils.isEmpty(id) ? CommonUtils.randomString() : id);
+      var properties =
+          Map.of(
+              TYPE_KEY,
+              TYPE_VALUE,
+              // the metrics tools (for example, jmc) can distinguish the counter via the name.
+              KEY_KEY,
+              key.toPlain(),
+              // the metrics tools (for example, jmc) can distinguish the counter via the name.
+              ITEM_KEY,
+              item,
+              // we use a random string to avoid duplicate jmx
+              // This property is required since kafka worker may create multiple tasks on same
+              // worker node.
+              // If we don't have this id, the multiple tasks will fail since the duplicate
+              // counters.
+              ID_KEY,
+              CommonUtils.isEmpty(id) ? CommonUtils.randomString() : id);
       return new Counter(
           needClose,
           properties,

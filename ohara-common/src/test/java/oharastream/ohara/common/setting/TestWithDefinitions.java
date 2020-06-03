@@ -16,7 +16,7 @@
 
 package oharastream.ohara.common.setting;
 
-import java.util.Collections;
+import java.util.Map;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.VersionUtils;
@@ -32,9 +32,8 @@ public class TestWithDefinitions extends OharaTest {
         author,
         WithDefinitions.merge(
                 this,
-                Collections.singletonMap(
-                    WithDefinitions.AUTHOR_KEY, WithDefinitions.authorDefinition(author)),
-                Collections.emptyMap())
+                Map.of(WithDefinitions.AUTHOR_KEY, WithDefinitions.authorDefinition(author)),
+                Map.of())
             .get(WithDefinitions.AUTHOR_KEY)
             .defaultString());
   }
@@ -43,7 +42,7 @@ public class TestWithDefinitions extends OharaTest {
   public void authorShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.USER,
-        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Map.of(), Map.of())
             .get(WithDefinitions.AUTHOR_KEY)
             .defaultString());
   }
@@ -55,9 +54,8 @@ public class TestWithDefinitions extends OharaTest {
         version,
         WithDefinitions.merge(
                 this,
-                Collections.singletonMap(
-                    WithDefinitions.VERSION_KEY, WithDefinitions.versionDefinition(version)),
-                Collections.emptyMap())
+                Map.of(WithDefinitions.VERSION_KEY, WithDefinitions.versionDefinition(version)),
+                Map.of())
             .get(WithDefinitions.VERSION_KEY)
             .defaultString());
   }
@@ -66,7 +64,7 @@ public class TestWithDefinitions extends OharaTest {
   public void versionShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.VERSION,
-        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Map.of(), Map.of())
             .get(WithDefinitions.VERSION_KEY)
             .defaultString());
   }
@@ -78,9 +76,8 @@ public class TestWithDefinitions extends OharaTest {
         revision,
         WithDefinitions.merge(
                 this,
-                Collections.singletonMap(
-                    WithDefinitions.REVISION_KEY, WithDefinitions.revisionDefinition(revision)),
-                Collections.emptyMap())
+                Map.of(WithDefinitions.REVISION_KEY, WithDefinitions.revisionDefinition(revision)),
+                Map.of())
             .get(WithDefinitions.REVISION_KEY)
             .defaultString());
   }
@@ -89,7 +86,7 @@ public class TestWithDefinitions extends OharaTest {
   public void revisionShouldHaveDefaultValue() {
     Assert.assertEquals(
         VersionUtils.REVISION,
-        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Map.of(), Map.of())
             .get(WithDefinitions.REVISION_KEY)
             .defaultString());
   }
@@ -98,7 +95,7 @@ public class TestWithDefinitions extends OharaTest {
   public void kindShouldBeUnknown() {
     Assert.assertEquals(
         ClassType.UNKNOWN.key(),
-        WithDefinitions.merge(this, Collections.emptyMap(), Collections.emptyMap())
+        WithDefinitions.merge(this, Map.of(), Map.of())
             .get(WithDefinitions.KIND_KEY)
             .defaultString());
   }

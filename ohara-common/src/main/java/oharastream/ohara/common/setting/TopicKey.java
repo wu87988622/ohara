@@ -87,7 +87,7 @@ public interface TopicKey extends ObjectKey {
   static List<TopicKey> toTopicKeys(String json) {
     return ObjectKey.toObjectKeys(json).stream()
         .map(key -> TopicKey.of(key.group(), key.name()))
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
   }
 
   /**

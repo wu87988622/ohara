@@ -17,7 +17,6 @@
 package oharastream.ohara.kafka.connector;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.data.DataType;
@@ -39,7 +38,7 @@ public class DumbSource extends RowSourceConnector {
 
   @Override
   protected List<TaskSetting> taskSettings(int maxTasks) {
-    return Collections.singletonList(
+    return List.of(
         TaskSetting.of(
             ConnectorFormatter.of()
                 .connectorKey(

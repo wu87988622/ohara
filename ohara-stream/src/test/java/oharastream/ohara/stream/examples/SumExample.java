@@ -17,7 +17,6 @@
 package oharastream.ohara.stream.examples;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
@@ -81,7 +80,7 @@ public class SumExample extends Stream {
               return Row.of(newCells.toArray(new Cell[0]));
             })
         // group the row with header: dummy
-        .groupByKey(Collections.singletonList("dummy"))
+        .groupByKey(List.of("dummy"))
         // sum the result (since we assure the input value is "int" type, here we directly use the
         // int wrapped type)
         .reduce(((Integer v1, Integer v2) -> v1 + v2), "number")

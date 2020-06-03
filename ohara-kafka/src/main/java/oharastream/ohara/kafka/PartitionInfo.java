@@ -33,10 +33,12 @@ public final class PartitionInfo {
     return new PartitionInfo(
         partitionInfo.partition(),
         PartitionNode.of(partitionInfo.leader()),
-        Stream.of(partitionInfo.replicas()).map(PartitionNode::of).collect(Collectors.toList()),
+        Stream.of(partitionInfo.replicas())
+            .map(PartitionNode::of)
+            .collect(Collectors.toUnmodifiableList()),
         Stream.of(partitionInfo.inSyncReplicas())
             .map(PartitionNode::of)
-            .collect(Collectors.toList()),
+            .collect(Collectors.toUnmodifiableList()),
         -1,
         -1);
   }

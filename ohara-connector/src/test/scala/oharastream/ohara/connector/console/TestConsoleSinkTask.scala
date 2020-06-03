@@ -72,7 +72,7 @@ class TestConsoleSinkTask extends OharaTest {
     task.start(configs(CONSOLE_FREQUENCE, "2 seconds"))
     task.lastLog shouldBe -1
 
-    task.put(java.util.Collections.emptyList())
+    task.put(java.util.List.of())
     task.lastLog shouldBe -1
 
     putRecord(task)
@@ -95,7 +95,7 @@ class TestConsoleSinkTask extends OharaTest {
 
   private[this] def putRecord(task: ConsoleSinkTask): Unit =
     task.put(
-      java.util.Collections.singletonList(
+      java.util.List.of(
         new SinkRecord(
           TopicKey.of("g", "n").topicNameOnKafka(),
           1,

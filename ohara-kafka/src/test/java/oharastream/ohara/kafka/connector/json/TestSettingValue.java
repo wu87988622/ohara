@@ -19,7 +19,7 @@ package oharastream.ohara.kafka.connector.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 import oharastream.ohara.common.json.JsonUtils;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
@@ -30,8 +30,7 @@ public class TestSettingValue extends OharaTest {
   @Test
   public void testEqual() throws IOException {
     SettingValue value =
-        SettingValue.of(
-            CommonUtils.randomString(), CommonUtils.randomString(), Collections.emptyList());
+        SettingValue.of(CommonUtils.randomString(), CommonUtils.randomString(), List.of());
     ObjectMapper mapper = JsonUtils.objectMapper();
     Assert.assertEquals(
         value,
@@ -43,7 +42,7 @@ public class TestSettingValue extends OharaTest {
     String name = CommonUtils.randomString(5);
     String value = CommonUtils.randomString(5);
     String error = CommonUtils.randomString(5);
-    SettingValue settingValue = SettingValue.of(name, value, Collections.singletonList(error));
+    SettingValue settingValue = SettingValue.of(name, value, List.of(error));
     Assert.assertEquals(name, settingValue.key());
     Assert.assertEquals(value, settingValue.value());
     Assert.assertEquals(1, settingValue.errors().size());
@@ -52,23 +51,23 @@ public class TestSettingValue extends OharaTest {
 
   @Test(expected = NullPointerException.class)
   public void nullName() {
-    SettingValue.of(null, CommonUtils.randomString(), Collections.emptyList());
+    SettingValue.of(null, CommonUtils.randomString(), List.of());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyName() {
-    SettingValue.of("", CommonUtils.randomString(), Collections.emptyList());
+    SettingValue.of("", CommonUtils.randomString(), List.of());
   }
 
   @Test
   public void nullValue() {
-    SettingValue value = SettingValue.of(CommonUtils.randomString(), null, Collections.emptyList());
+    SettingValue value = SettingValue.of(CommonUtils.randomString(), null, List.of());
     Assert.assertNull(value.value());
   }
 
   @Test
   public void emptyValue() {
-    SettingValue value = SettingValue.of(CommonUtils.randomString(), "", Collections.emptyList());
+    SettingValue value = SettingValue.of(CommonUtils.randomString(), "", List.of());
     Assert.assertEquals("", value.value());
   }
 
@@ -79,7 +78,7 @@ public class TestSettingValue extends OharaTest {
 
   @Test
   public void emptyError() {
-    SettingValue.of(CommonUtils.randomString(), "", Collections.emptyList());
+    SettingValue.of(CommonUtils.randomString(), "", List.of());
   }
 
   @Test
@@ -87,7 +86,7 @@ public class TestSettingValue extends OharaTest {
     String name = CommonUtils.randomString(5);
     String value = CommonUtils.randomString(5);
     String error = CommonUtils.randomString(5);
-    SettingValue validatedValue = SettingValue.of(name, value, Collections.singletonList(error));
+    SettingValue validatedValue = SettingValue.of(name, value, List.of(error));
     Assert.assertTrue(validatedValue.toString().contains(name));
     Assert.assertTrue(validatedValue.toString().contains(value));
     Assert.assertTrue(validatedValue.toString().contains(error));

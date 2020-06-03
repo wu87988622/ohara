@@ -16,11 +16,20 @@
 
 package oharastream.ohara.kafka.connector.json;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
-import oharastream.ohara.common.setting.*;
+import oharastream.ohara.common.setting.ConnectorKey;
+import oharastream.ohara.common.setting.ObjectKey;
+import oharastream.ohara.common.setting.PropGroup;
+import oharastream.ohara.common.setting.SettingDef;
+import oharastream.ohara.common.setting.TopicKey;
 import oharastream.ohara.common.util.CommonUtils;
 
 /**
@@ -130,13 +139,13 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter topicKey(TopicKey key) {
-    return topicKeys(Collections.singleton(key));
+    return topicKeys(Set.of(key));
   }
 
   public ConnectorFormatter topicKeys(Set<TopicKey> topicKeys) {
     setting(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key(), TopicKey.toJsonString(topicKeys));
     return topicNames(
-        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toSet()));
+        topicKeys.stream().map(TopicKey::topicNameOnKafka).collect(Collectors.toUnmodifiableSet()));
   }
 
   public ConnectorFormatter numberOfTasks(int numberOfTasks) {
@@ -156,7 +165,7 @@ public final class ConnectorFormatter {
   }
 
   public ConnectorFormatter column(Column column) {
-    return columns(Collections.singletonList(Objects.requireNonNull(column)));
+    return columns(List.of(Objects.requireNonNull(column)));
   }
 
   public ConnectorFormatter columns(List<Column> columns) {
@@ -166,7 +175,7 @@ public final class ConnectorFormatter {
   }
 
   public Creation requestOfCreation() {
-    return Creation.of(Collections.unmodifiableMap(settings));
+    return Creation.of(settings);
   }
 
   public Validation requestOfValidation() {

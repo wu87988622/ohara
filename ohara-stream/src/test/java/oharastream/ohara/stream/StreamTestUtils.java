@@ -80,7 +80,7 @@ public class StreamTestUtils {
                   Assert.assertTrue(record.key().isPresent());
                   return record.key().get();
                 })
-            .collect(Collectors.toList())
+            .collect(Collectors.toUnmodifiableList())
             .containsAll(expectedContainedRows));
 
     consumer.close();

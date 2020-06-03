@@ -16,8 +16,6 @@
 
 package oharastream.ohara.client.kafka
 
-import java.util.Collections
-
 import oharastream.ohara.client.kafka.WorkerJson._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.CommonUtils
@@ -108,7 +106,7 @@ class TestWorkerJson extends OharaTest {
 
   @Test
   def testValidation(): Unit = {
-    val validation = Validation.of(Collections.singletonMap(CommonUtils.randomString(), CommonUtils.randomString()))
+    val validation = Validation.of(java.util.Map.of(CommonUtils.randomString(), CommonUtils.randomString()))
     validation shouldBe KAFKA_VALIDATION_JSON_FORMAT.read(KAFKA_VALIDATION_JSON_FORMAT.write(validation))
   }
 }

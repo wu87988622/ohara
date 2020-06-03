@@ -16,9 +16,6 @@
 
 package oharastream.ohara.common.data;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -65,7 +62,7 @@ public interface Row extends Iterable<Cell<?>> {
   @Override
   default Iterator<Cell<?>> iterator() {
     List<Cell<?>> cells = cells();
-    if (cells == null) cells = Collections.emptyList();
+    if (cells == null) cells = List.of();
     return cells.iterator();
   }
 
@@ -92,21 +89,22 @@ public interface Row extends Iterable<Cell<?>> {
   }
 
   static Row of(Cell<?>... cells) {
-    return of(Collections.emptyList(), cells);
+    return of(List.of(), cells);
   }
 
   static Row of(List<String> tags, Cell<?>... cells) {
-    List<String> tagsCopy = new ArrayList<>(tags);
-    List<Cell<?>> cellsCopy = Arrays.asList(cells);
+    var tagsCopy = List.copyOf(tags);
+    var cellsCopy = List.of(cells);
     // check duplicate names
-    int numberOfNames = cellsCopy.stream().map(Cell::name).collect(Collectors.toSet()).size();
+    int numberOfNames =
+        cellsCopy.stream().map(Cell::name).collect(Collectors.toUnmodifiableSet()).size();
     if (numberOfNames != cellsCopy.size())
       throw new IllegalArgumentException("Row can't accept duplicate cell name");
     return new Row() {
 
       @Override
       public List<String> names() {
-        return cellsCopy.stream().map(Cell::name).collect(Collectors.toList());
+        return cellsCopy.stream().map(Cell::name).collect(Collectors.toUnmodifiableList());
       }
 
       @Override
@@ -126,12 +124,12 @@ public interface Row extends Iterable<Cell<?>> {
 
       @Override
       public List<Cell<?>> cells() {
-        return Collections.unmodifiableList(cellsCopy);
+        return cellsCopy;
       }
 
       @Override
       public List<String> tags() {
-        return Collections.unmodifiableList(tagsCopy);
+        return tagsCopy;
       }
 
       @Override

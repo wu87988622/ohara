@@ -90,7 +90,7 @@ public class TestByteUtils extends OharaTest {
     List<byte[]> data =
         Stream.of(Short.MIN_VALUE, (short) -10, (short) 0, (short) 10, Short.MAX_VALUE)
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
@@ -104,7 +104,7 @@ public class TestByteUtils extends OharaTest {
     List<byte[]> data =
         Stream.of(Integer.MIN_VALUE, -10, 0, 10, Integer.MAX_VALUE)
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
@@ -118,7 +118,7 @@ public class TestByteUtils extends OharaTest {
     List<byte[]> data =
         Stream.of(Long.MIN_VALUE, (long) -10, (long) 0, (long) 10, Long.MAX_VALUE)
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
@@ -132,7 +132,7 @@ public class TestByteUtils extends OharaTest {
     List<byte[]> data =
         Stream.of(Float.MIN_VALUE, (float) -10, (float) 0, (float) 10, Float.MAX_VALUE)
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
@@ -146,7 +146,7 @@ public class TestByteUtils extends OharaTest {
     List<byte[]> data =
         Stream.of(Double.MIN_VALUE, (double) -10, (double) 0, (double) 10, Double.MAX_VALUE)
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
@@ -165,7 +165,7 @@ public class TestByteUtils extends OharaTest {
                 "Ccccc",
                 String.valueOf(Double.MAX_VALUE))
             .map(ByteUtils::toBytes)
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.BYTES_COMPARATOR.compare(v, v)));
     data.forEach(v -> Assert.assertEquals(0, ByteUtils.compare(v, v)));
 
