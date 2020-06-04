@@ -17,6 +17,7 @@
 const execa = require('execa');
 const yargs = require('yargs');
 const chalk = require('chalk');
+const _ = require('lodash');
 const fs = require('fs');
 
 const mergeReports = require('./mergeReports');
@@ -27,6 +28,7 @@ const { getConfig } = require('../utils/configHelpers');
 
 const { configurator, port } = getConfig();
 const {
+  testMode,
   prod = false,
   nodeHost,
   nodePort,
@@ -64,8 +66,11 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     },
   );
 
+  console.log('server.pid', server.pid);
+
   try {
-    await server;
+    const serverProcess = await server;
+    console.log(`server output: ${serverProcess.stdout}`);
   } catch (err) {
     console.log(err.message);
     process.exit(1);
@@ -74,9 +79,9 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   // Wait until the server is ready
   await utils.waitOnService(`http://localhost:${serverPort}`);
 
-  // Start client server, this server only starts on local env not
-  // on jenkins
-  if (!prod) {
+  // Start client server for e2e or it tests
+  // this server only starts on local env not on jenkins
+  if (!prod && testMode !== 'api') {
     console.log(chalk.blue(`Starting client server`));
     client = execa(
       'forever',
@@ -88,7 +93,8 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     );
 
     try {
-      await client;
+      const clientProcess = await client;
+      console.log(`client output: ${clientProcess.stdout}`);
     } catch (err) {
       console.log(err.message);
       process.exit(1);
@@ -121,14 +127,16 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     return env.join(',');
   };
 
-  // Run e2e test
-  console.log(chalk.blue('Running End-to-End tests with Cypress'));
+  // Run test
+  console.log(chalk.blue(`Running ${testMode} tests with Cypress`));
   cypress = execa(
     'yarn',
     [
-      'test:e2e:run',
+      `test:${testMode}:run`,
       '--config',
-      `baseUrl=http://localhost:${prod ? serverPort : clientPort}`,
+      `baseUrl=http://localhost:${
+        prod || testMode === 'api' ? serverPort : clientPort
+      }`,
       '--env',
       buildCypressEnv(),
     ],
@@ -137,6 +145,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
       stdio: 'inherit',
     },
   );
+  console.log('cypress.pid', cypress.pid);
 
   const killSubProcess = () => {
     if (cypress) cypress.kill();
@@ -150,7 +159,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   } catch (err) {
     console.log(chalk.red(err.message));
   } finally {
-    await mergeReports('clientE2e');
+    await mergeReports(`client${_.capitalize(testMode)}`);
   }
 
   try {

@@ -1,0 +1,18 @@
+{
+  "reporter": "junit",
+  "integrationFolder": "cypress/it",
+  "reporterOptions": {
+    "mochaFile": "../test-reports/itReport-[hash].xml",
+    "toConsole": true,
+    "jenkinsMode": true,
+    "rootSuiteTitle": "IT Tests"
+  },
+  "screenshotsFolder": "cypress/screenshots/it",
+  "video": true,
+  "videosFolder": "cypress/videos/it",
+  "requestTimeout": 10000,
+  "defaultCommandTimeout": 20000,
+  "watchForFileChanges": false,
+  "viewportWidth": 1600,
+  "viewportHeight": 800
+}

@@ -18,6 +18,8 @@
     "test:coverage": "yarn test --coverage --watchAll=false",
     "test:api:open": "cross-env CYPRESS_CONFIG_FILE=api cypress open",
     "test:api:run": "cross-env CYPRESS_CONFIG_FILE=api cypress run",
+    "test:it:open": "cross-env CYPRESS_CONFIG_FILE=it cypress open",
+    "test:it:run": "cross-env CYPRESS_CONFIG_FILE=it cypress run",
     "test:e2e:open": "cross-env CYPRESS_CONFIG_FILE=e2e cypress open",
     "test:e2e:run": "cross-env CYPRESS_CONFIG_FILE=e2e cypress run"
   },
