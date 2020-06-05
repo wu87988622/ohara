@@ -649,7 +649,7 @@ public final class CommonUtils {
   }
 
   /**
-   * Parse the key=value to Map<key, value></key,>
+   * Parse the key=value to Map.
    *
    * @param lines lines
    * @return map
