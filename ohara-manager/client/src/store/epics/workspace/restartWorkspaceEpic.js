@@ -46,9 +46,8 @@ import { startWorker$ } from '../worker/startWorkerEpic';
 import { startTopic$ } from '../topic/startTopicEpic';
 import { startBroker$ } from '../broker/startBrokerEpic';
 import { startZookeeper$ } from '../zookeeper/startZookeeperEpic';
-import { async } from 'rxjs/internal/scheduler/async';
 
-const finalize$ = ({ workerKey, workspaceKey }) =>
+const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
   of(
     of(actions.restartWorkspace.success()),
     of(
@@ -61,6 +60,10 @@ const finalize$ = ({ workerKey, workspaceKey }) =>
     of(actions.fetchNodes.trigger()),
     // Refetch connector list (inspect worker and shabondi) for those new added plugins
     of(actions.fetchWorker.trigger(workerKey)),
+    // Refetch broker to update broker info
+    of(actions.fetchBroker.trigger(brokerKey)),
+    // Refetch zookeeper to update zookeeper info
+    of(actions.fetchZookeeper.trigger(zookeeperKey)),
   ).pipe(concatAll());
 
 const isServiceRunning$ = async (api) => {
@@ -176,7 +179,7 @@ export default (action$, state$) =>
           ),
         ),
 
-        finalize$({ workerKey, workspaceKey }),
+        finalize$({ zookeeperKey, brokerKey, workerKey, workspaceKey }),
       ).pipe(
         concatAll(),
         catchError((error) => of(actions.restartWorkspace.failure(error))),
