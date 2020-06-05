@@ -15,9 +15,8 @@
  */
 
 import { isEmpty } from 'lodash';
-import { denormalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of } from 'rxjs';
+import { of, defer } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -26,13 +25,16 @@ import {
   takeUntil,
   takeWhile,
   concatMap,
+  map,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import { LOG_LEVEL } from 'const';
-import * as schema from 'store/schema';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import * as workerApi from 'api/workerApi';
+import * as topicApi from 'api/topicApi';
+import * as brokerApi from 'api/brokerApi';
+import * as zookeeperApi from 'api/zookeeperApi';
 import { updateWorkerAndWorkspace$ } from '../worker/updateWorkerEpic';
 import { updateBrokerAndWorkspace$ } from '../broker/updateBrokerEpic';
 import { updateZookeeperAndWorkspace$ } from '../zookeeper/updateZookeeperEpic';
@@ -45,7 +47,7 @@ import { startTopic$ } from '../topic/startTopicEpic';
 import { startBroker$ } from '../broker/startBrokerEpic';
 import { startZookeeper$ } from '../zookeeper/startZookeeperEpic';
 
-const finalize$ = ({ workerKey, workspaceKey }) =>
+const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
   of(
     of(actions.restartWorkspace.success()),
     of(
@@ -58,11 +60,20 @@ const finalize$ = ({ workerKey, workspaceKey }) =>
     of(actions.fetchNodes.trigger()),
     // Refetch connector list (inspect worker and shabondi) for those new added plugins
     of(actions.fetchWorker.trigger(workerKey)),
+    // Refetch broker to update broker info
+    of(actions.fetchBroker.trigger(brokerKey)),
+    // Refetch zookeeper to update zookeeper info
+    of(actions.fetchZookeeper.trigger(zookeeperKey)),
   ).pipe(concatAll());
 
-const isRunning = (state$) => (key, schema) => {
-  const data = denormalize(getId(key), schema, state$.value?.entities);
-  return !isEmpty(data) && data.state === SERVICE_STATE.RUNNING;
+const isServiceRunning$ = async (api) => {
+  const isRunning = await defer(() => api)
+    .pipe(
+      map((res) => res.data),
+      map((data) => !isEmpty(data) && data?.state === SERVICE_STATE.RUNNING),
+    )
+    .toPromise();
+  return isRunning;
 };
 
 export default (action$, state$) =>
@@ -81,53 +92,94 @@ export default (action$, state$) =>
         topics = [],
       } = action.payload.values;
 
-      const isServiceRunning = isRunning(state$);
-
       return of(
         stopWorker$(workerKey).pipe(
-          takeWhile(() => isServiceRunning(workerKey, schema.worker)),
+          takeWhile(
+            async () => await isServiceRunning$(workerApi.get(workerKey)),
+          ),
         ),
+
         updateWorkerAndWorkspace$({
           workspaceKey,
           ...workerKey,
           ...workerSettings,
-        }),
+        }).pipe(
+          takeWhile(
+            async () => await !isServiceRunning$(workerApi.get(workerKey)),
+          ),
+        ),
 
         of(...topics).pipe(
           concatMap((topicKey) =>
             stopTopic$(topicKey).pipe(
-              takeWhile(() => isServiceRunning(topicKey, schema.topic)),
+              takeWhile(
+                async () => await isServiceRunning$(topicApi.get(topicKey)),
+              ),
             ),
           ),
         ),
 
         stopBroker$(brokerKey).pipe(
-          takeWhile(() => isServiceRunning(brokerKey, schema.broker)),
+          takeWhile(
+            async () => await isServiceRunning$(brokerApi.get(brokerKey)),
+          ),
         ),
         updateBrokerAndWorkspace$({
           workspaceKey,
           ...brokerKey,
           ...brokerSettings,
-        }),
+        }).pipe(
+          takeWhile(
+            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
+          ),
+        ),
 
         stopZookeeper$(zookeeperKey).pipe(
-          takeWhile(() => isServiceRunning(zookeeperKey, schema.zookeeper)),
+          takeWhile(
+            async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
+          ),
         ),
         updateZookeeperAndWorkspace$({
           workspaceKey,
           ...zookeeperKey,
           ...zookeeperSettings,
-        }),
+        }).pipe(
+          takeWhile(
+            async () =>
+              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
+          ),
+        ),
 
-        startZookeeper$(zookeeperKey),
+        startZookeeper$(zookeeperKey).pipe(
+          takeWhile(
+            async () =>
+              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
+          ),
+        ),
 
-        startBroker$(brokerKey),
+        startBroker$(brokerKey).pipe(
+          takeWhile(
+            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
+          ),
+        ),
 
-        of(...topics).pipe(concatMap((topicKey) => startTopic$(topicKey))),
+        of(...topics).pipe(
+          concatMap((topicKey) =>
+            startTopic$(topicKey).pipe(
+              takeWhile(
+                async () => await !isServiceRunning$(topicApi.get(topicKey)),
+              ),
+            ),
+          ),
+        ),
 
-        startWorker$(workerKey),
+        startWorker$(workerKey).pipe(
+          takeWhile(
+            async () => await !isServiceRunning$(workerApi.get(workerKey)),
+          ),
+        ),
 
-        finalize$({ workerKey, workspaceKey }),
+        finalize$({ zookeeperKey, brokerKey, workerKey, workspaceKey }),
       ).pipe(
         concatAll(),
         catchError((error) => of(actions.restartWorkspace.failure(error))),

@@ -51,7 +51,6 @@ const LogProgress = (props) => {
     onRollback,
     onClose,
     onAutoClose,
-    onResetClusters,
     isAutoClose,
     closeDisable,
   } = props;
@@ -105,7 +104,6 @@ const LogProgress = (props) => {
       timer = setInterval(tick, 500);
     } else if (completed === 100 && isAutoClose) {
       setIsLoading(false);
-      onResetClusters();
     }
 
     if (!isOpen) {
@@ -132,7 +130,6 @@ const LogProgress = (props) => {
     isLoading,
     createTitle,
     isAutoClose,
-    onResetClusters,
   ]);
 
   return (
@@ -265,7 +262,6 @@ LogProgress.propTypes = {
   onRollback: PropTypes.func,
   onAutoClose: PropTypes.func,
   onClose: PropTypes.func,
-  onResetClusters: PropTypes.func,
   isAutoClose: PropTypes.bool,
   closeDisable: PropTypes.bool,
 };
