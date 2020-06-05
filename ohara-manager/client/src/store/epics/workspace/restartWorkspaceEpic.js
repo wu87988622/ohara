@@ -79,9 +79,6 @@ const isServiceRunning$ = async (api) => {
 const setTargetService$ = (targetService) => (service) => {
   let tmpTargetService = [];
   switch (targetService) {
-    case KIND.zookeeper:
-      tmpTargetService = [KIND.zookeeper, KIND.broker, KIND.worker];
-      break;
     case KIND.broker:
       tmpTargetService = [KIND.broker, KIND.worker];
       break;
@@ -89,7 +86,7 @@ const setTargetService$ = (targetService) => (service) => {
       tmpTargetService = [KIND.worker];
       break;
     default:
-      tmpTargetService = [];
+      tmpTargetService = [KIND.zookeeper, KIND.broker, KIND.worker];
   }
   return tmpTargetService.includes(service);
 };
