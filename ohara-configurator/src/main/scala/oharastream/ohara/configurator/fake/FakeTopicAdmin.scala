@@ -51,8 +51,15 @@ private[configurator] class FakeTopicAdmin extends TopicAdmin {
     f
   }
 
-  override def topicDescriptions(): CompletionStage[util.List[TopicDescription]] =
-    CompletableFuture.completedFuture(new util.ArrayList[TopicDescription](cachedTopics.values()))
+  override def topicKeys: CompletionStage[util.Set[TopicKey]] = CompletableFuture.completedFuture(cachedTopics.keySet())
+
+  override def topicDescription(key: TopicKey): CompletionStage[TopicDescription] = {
+    val topic = cachedTopics.get(key)
+    val f     = new CompletableFuture[TopicDescription]()
+    if (topic == null) f.completeExceptionally(new NoSuchElementException(s"$key does not exist"))
+    else f.complete(topic)
+    f
+  }
 
   override def topicCreator(): TopicCreator =
     (_: Int, _: Short, options: util.Map[String, String], topicKey: TopicKey) => {

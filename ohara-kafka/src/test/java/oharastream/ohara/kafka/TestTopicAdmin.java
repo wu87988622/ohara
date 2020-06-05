@@ -116,12 +116,7 @@ public class TestTopicAdmin extends With3Brokers {
     assertEquals(numberOfPartitions, topicInfo.numberOfPartitions());
     assertEquals(numberOfReplications, topicInfo.numberOfReplications());
 
-    assertEquals(
-        topicInfo,
-        client.topicDescriptions().toCompletableFuture().get().stream()
-            .filter(t -> t.topicKey().equals(topicKey))
-            .findFirst()
-            .get());
+    assertEquals(topicInfo, client.topicDescription(topicKey).toCompletableFuture().get());
 
     client.deleteTopic(topicKey).toCompletableFuture().get();
     assertFalse(client.exist(topicKey).toCompletableFuture().get());
@@ -163,13 +158,13 @@ public class TestTopicAdmin extends With3Brokers {
   @After
   public void cleanup() throws ExecutionException, InterruptedException {
     client
-        .topicDescriptions()
+        .topicKeys()
         .toCompletableFuture()
         .get()
         .forEach(
-            t -> {
+            key -> {
               try {
-                client.deleteTopic(t.topicKey()).toCompletableFuture().get();
+                client.deleteTopic(key).toCompletableFuture().get();
               } catch (Exception e) {
                 throw new RuntimeException(e);
               }

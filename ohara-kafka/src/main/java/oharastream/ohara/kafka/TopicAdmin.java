@@ -19,7 +19,6 @@ package oharastream.ohara.kafka;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -64,26 +63,19 @@ public interface TopicAdmin extends Releasable {
   CompletionStage<Boolean> exist(TopicKey key);
 
   /**
+   * list all ohara topic keys. Noted that non-ohara topics are excluded
+   *
+   * @return ohara topic keys
+   */
+  CompletionStage<Set<TopicKey>> topicKeys();
+
+  /**
    * describe the topic existing in kafka. If the topic doesn't exist, exception will be thrown
    *
    * @param key topic key
    * @return TopicDescription
    */
-  default CompletionStage<TopicDescription> topicDescription(TopicKey key) {
-    return topicDescriptions()
-        .thenApply(
-            tds -> {
-              if (tds.isEmpty()) throw new NoSuchElementException(key + " does not exist");
-              else return tds.get(0);
-            });
-  }
-
-  /**
-   * list all topics details from kafka
-   *
-   * @return topic details
-   */
-  CompletionStage<List<TopicDescription>> topicDescriptions();
+  CompletionStage<TopicDescription> topicDescription(TopicKey key);
 
   /**
    * create new partitions for specified topic
@@ -205,7 +197,8 @@ public interface TopicAdmin extends Releasable {
         return topicKeys().thenApply(keys -> keys.contains(key));
       }
 
-      private CompletionStage<Set<TopicKey>> topicKeys() {
+      @Override
+      public CompletionStage<Set<TopicKey>> topicKeys() {
         CompletableFuture<Set<TopicKey>> f = new CompletableFuture<>();
         admin
             .listTopics()
@@ -272,11 +265,6 @@ public interface TopicAdmin extends Releasable {
       @Override
       public CompletionStage<TopicDescription> topicDescription(TopicKey key) {
         return topicDescriptions(Set.of(key)).thenApply(keys -> keys.iterator().next());
-      }
-
-      @Override
-      public CompletionStage<List<TopicDescription>> topicDescriptions() {
-        return topicKeys().thenCompose(this::topicDescriptions);
       }
 
       private CompletionStage<List<TopicDescription>> topicDescriptions(Set<TopicKey> topicKeys) {
