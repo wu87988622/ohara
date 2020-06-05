@@ -156,9 +156,9 @@ element. However, we still list the available values here.
 
 #. TOPIC
 #. FILE
-#. ZOOKEEPER_CLUSTER
-#. BROKER_CLUSTER
-#. WORKER_CLUSTER
+#. ZOOKEEPER
+#. BROKER
+#. WORKER
 
 .. note::
    For each reference value, it may has different type and will produce different behavior.

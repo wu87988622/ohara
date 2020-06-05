@@ -109,7 +109,7 @@ public class TestSettingDef extends OharaTest {
     String key = CommonUtils.randomString(5);
     String displayName = CommonUtils.randomString(5);
     String group = CommonUtils.randomString(5);
-    SettingDef.Reference reference = SettingDef.Reference.WORKER_CLUSTER;
+    SettingDef.Reference reference = SettingDef.Reference.WORKER;
     int orderInGroup = 100;
     String valueDefault = CommonUtils.randomString(5);
     String documentation = CommonUtils.randomString(5);
@@ -142,7 +142,7 @@ public class TestSettingDef extends OharaTest {
     SettingDef.Type type = SettingDef.Type.TABLE;
     String displayName = CommonUtils.randomString(5);
     String group = CommonUtils.randomString(5);
-    SettingDef.Reference reference = SettingDef.Reference.WORKER_CLUSTER;
+    SettingDef.Reference reference = SettingDef.Reference.WORKER;
     int orderInGroup = 100;
     String documentation = CommonUtils.randomString(5);
     SettingDef def =

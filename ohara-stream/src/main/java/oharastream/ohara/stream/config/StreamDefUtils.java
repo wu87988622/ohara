@@ -45,7 +45,7 @@ public final class StreamDefUtils {
           .displayName("Broker cluster key")
           .documentation("the key of broker cluster used to transfer data for this stream")
           .required(Type.OBJECT_KEY)
-          .reference(SettingDef.Reference.BROKER_CLUSTER)
+          .reference(SettingDef.Reference.BROKER)
           .build();
 
   public static final SettingDef BROKER_DEFINITION =

@@ -61,7 +61,7 @@ object BrokerApi {
     _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
       .documentation("the zookeeper cluster used to manage broker nodes")
       .required(Type.OBJECT_KEY)
-      .reference(Reference.ZOOKEEPER_CLUSTER)
+      .reference(Reference.ZOOKEEPER)
       .build()
   )
   private[this] val LOG_DIRS_KEY: String = "log.dirs"

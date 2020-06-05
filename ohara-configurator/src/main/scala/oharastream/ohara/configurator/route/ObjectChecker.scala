@@ -119,15 +119,15 @@ object ObjectChecker {
       */
     private[this] def reference(objectKey: ObjectKey, reference: SettingDef.Reference): CheckList =
       reference match {
-        case SettingDef.Reference.NONE              => this
-        case SettingDef.Reference.NODE              => node(objectKey)
-        case SettingDef.Reference.TOPIC             => topic(TopicKey.of(objectKey.group(), objectKey.name()))
-        case SettingDef.Reference.ZOOKEEPER_CLUSTER => zookeeperCluster(objectKey)
-        case SettingDef.Reference.BROKER_CLUSTER    => brokerCluster(objectKey)
-        case SettingDef.Reference.WORKER_CLUSTER    => workerCluster(objectKey)
-        case SettingDef.Reference.FILE              => file(objectKey)
-        case SettingDef.Reference.VOLUME            => volume(objectKey)
-        case _                                      => throw new RuntimeException(s"$reference is NOT added to related check!!!")
+        case SettingDef.Reference.NONE      => this
+        case SettingDef.Reference.NODE      => node(objectKey)
+        case SettingDef.Reference.TOPIC     => topic(TopicKey.of(objectKey.group(), objectKey.name()))
+        case SettingDef.Reference.ZOOKEEPER => zookeeperCluster(objectKey)
+        case SettingDef.Reference.BROKER    => brokerCluster(objectKey)
+        case SettingDef.Reference.WORKER    => workerCluster(objectKey)
+        case SettingDef.Reference.FILE      => file(objectKey)
+        case SettingDef.Reference.VOLUME    => volume(objectKey)
+        case _                              => throw new RuntimeException(s"$reference is NOT added to related check!!!")
       }
 
     //---------------[volume]---------------//

@@ -23,9 +23,9 @@ export enum Necessary {
 export enum Reference {
   NONE = 'NONE',
   TOPIC = 'TOPIC',
-  ZOOKEEPER_CLUSTER = 'ZOOKEEPER_CLUSTER',
-  BROKER_CLUSTER = 'BROKER_CLUSTER',
-  WORKER_CLUSTER = 'WORKER_CLUSTER',
+  ZOOKEEPER = 'ZOOKEEPER',
+  BROKER = 'BROKER',
+  WORKER = 'WORKER',
   FILE = 'FILE',
   NODE = 'NODE',
 }

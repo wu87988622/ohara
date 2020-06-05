@@ -198,7 +198,7 @@ public final class ConnectorDefUtils {
                   .key("workerClusterKey")
                   .required(Type.OBJECT_KEY)
                   .documentation("the cluster name of running this connector.")
-                  .reference(Reference.WORKER_CLUSTER)
+                  .reference(Reference.WORKER)
                   .build());
 
   public static final SettingDef KEY_CONVERTER_DEFINITION =

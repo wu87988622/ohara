@@ -61,7 +61,7 @@ object WorkerApi {
     _.key(BROKER_CLUSTER_KEY_KEY)
       .documentation("broker cluster used to store data for this worker cluster")
       .required(Type.OBJECT_KEY)
-      .reference(Reference.BROKER_CLUSTER)
+      .reference(Reference.BROKER)
       .build()
   )
   private[this] val PLUGIN_KEYS_KEY = "pluginKeys"

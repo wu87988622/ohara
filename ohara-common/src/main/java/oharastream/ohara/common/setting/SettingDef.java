@@ -69,9 +69,9 @@ public class SettingDef implements JsonObject, Serializable {
     NONE,
     NODE,
     TOPIC,
-    ZOOKEEPER_CLUSTER,
-    BROKER_CLUSTER,
-    WORKER_CLUSTER,
+    ZOOKEEPER,
+    BROKER,
+    WORKER,
     FILE,
     VOLUME
   }

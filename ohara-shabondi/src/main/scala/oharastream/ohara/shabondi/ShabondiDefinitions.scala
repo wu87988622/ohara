@@ -128,7 +128,7 @@ object ShabondiDefinitions {
     .key("brokerClusterKey")
     .orderInGroup(orderInGroup())
     .required(Type.OBJECT_KEY)
-    .reference(SettingDef.Reference.BROKER_CLUSTER)
+    .reference(SettingDef.Reference.BROKER)
     .displayName("Broker cluster key")
     .documentation("the key of broker cluster used to transfer data for this Shabondi")
     .build

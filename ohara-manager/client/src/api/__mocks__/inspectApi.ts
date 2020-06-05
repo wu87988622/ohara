@@ -133,7 +133,7 @@ export const shabondiInfoEntity = {
       orderInGroup: 6,
       permission: Permission.EDITABLE,
       recommendedValues: [],
-      reference: Reference.BROKER_CLUSTER,
+      reference: Reference.BROKER,
       tableKeys: [],
       valueType: Type.OBJECT_KEY,
     },
