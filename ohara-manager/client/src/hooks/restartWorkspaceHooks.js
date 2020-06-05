@@ -131,8 +131,6 @@ export const useRestartConfirmMessage = (kind) => {
     );
   } else {
     switch (kind) {
-      case KIND.workspace:
-        return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: zookeepers, brokers, workers and pipelines`;
       case KIND.broker:
         return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: brokers, workers and pipelines`;
       case KIND.worker:

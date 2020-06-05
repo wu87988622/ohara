@@ -316,7 +316,7 @@ export const useConfig = ({
           title: 'Restart this workspace',
           type: SETTINGS_COMPONENT_TYPES.DIALOG,
           componentProps: {
-            children: restartConfirmMessage(KIND.workspace),
+            children: restartConfirmMessage(),
             title: 'Are you absolutely sure?',
             confirmText: 'Restart',
             onConfirm: openRestartWorkspaceProgressDialog,
