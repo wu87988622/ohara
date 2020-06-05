@@ -29,7 +29,7 @@ import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
 import { useShouldBeRestartWorkspace } from 'hooks';
-import { SETTINGS_COMPONENT_TYPES } from 'const';
+import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import AutofillPage from './pages/AutofillPage';
 import BrokerNodesPage from './pages/BrokerNodesPage';
@@ -70,9 +70,11 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
 
 export const useConfig = ({
   openDeleteProgressDialog,
-  openRestartProgressDialog,
   hasRunningServices,
   restartConfirmMessage,
+  openRestartWorkerProgressDialog,
+  openRestartBrokerProgressDialog,
+  openRestartWorkspaceProgressDialog,
   workspace,
 }) => {
   const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
@@ -283,38 +285,41 @@ export const useConfig = ({
     {
       heading: 'Danger Zone',
       components: [
-        // Feature is disabled because it's not implemented in 0.10
-        // {
-        //   icon: <PowerSettingsNewIcon />,
-        //   title: 'Restart this worker',
-        //   type: SETTINGS_COMPONENT_TYPES.DIALOG,
-        //   componentProps: {
-        //     children: 'This will restart the worker.',
-        //     title: 'Are you absolutely sure?',
-        //     confirmText: 'Restart',
-        //     handleConfirm: () => {},
-        //   },
-        // },
-        // {
-        //   icon: <PowerSettingsNewIcon />,
-        //   title: 'Restart this broker',
-        //   type: SETTINGS_COMPONENT_TYPES.DIALOG,
-        //   componentProps: {
-        //     children: 'This will restart the broker and worker.',
-        //     title: 'Are you absolutely sure?',
-        //     confirmText: 'Restart',
-        //     handleConfirm: () => {},
-        //   },
-        // },
+        {
+          icon: <PowerSettingsNewIcon />,
+          title: 'Restart this worker',
+          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          componentProps: {
+            children: restartConfirmMessage(KIND.worker),
+            title: 'Are you absolutely sure?',
+            confirmText: 'Restart',
+            onConfirm: openRestartWorkerProgressDialog,
+            maxWidth: 'sm',
+            confirmDisabled: hasRunningServices,
+          },
+        },
+        {
+          icon: <PowerSettingsNewIcon />,
+          title: 'Restart this broker',
+          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          componentProps: {
+            children: restartConfirmMessage(KIND.broker),
+            title: 'Are you absolutely sure?',
+            confirmText: 'Restart',
+            onConfirm: openRestartBrokerProgressDialog,
+            maxWidth: 'sm',
+            confirmDisabled: hasRunningServices,
+          },
+        },
         {
           icon: <PowerSettingsNewIcon />,
           title: 'Restart this workspace',
           type: SETTINGS_COMPONENT_TYPES.DIALOG,
           componentProps: {
-            children: restartConfirmMessage,
+            children: restartConfirmMessage(KIND.workspace),
             title: 'Are you absolutely sure?',
             confirmText: 'Restart',
-            onConfirm: openRestartProgressDialog,
+            onConfirm: openRestartWorkspaceProgressDialog,
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
           },

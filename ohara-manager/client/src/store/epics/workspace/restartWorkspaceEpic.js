@@ -29,7 +29,7 @@ import {
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { LOG_LEVEL } from 'const';
+import { LOG_LEVEL, KIND } from 'const';
 import * as actions from 'store/actions';
 import * as workerApi from 'api/workerApi';
 import * as topicApi from 'api/topicApi';
@@ -76,6 +76,24 @@ const isServiceRunning$ = async (api) => {
   return isRunning;
 };
 
+const setTargetService$ = (targetService) => (service) => {
+  let tmpTargetService = [];
+  switch (targetService) {
+    case KIND.zookeeper:
+      tmpTargetService = [KIND.zookeeper, KIND.broker, KIND.worker];
+      break;
+    case KIND.broker:
+      tmpTargetService = [KIND.broker, KIND.worker];
+      break;
+    case KIND.worker:
+      tmpTargetService = [KIND.worker];
+      break;
+    default:
+      tmpTargetService = [];
+  }
+  return tmpTargetService.includes(service);
+};
+
 export default (action$, state$) =>
   action$.pipe(
     ofType(actions.restartWorkspace.TRIGGER),
@@ -91,9 +109,12 @@ export default (action$, state$) =>
         zookeeperSettings = {},
         topics = [],
       } = action.payload.values;
+      const targetService = action.payload.option;
+      const isTarget = setTargetService$(targetService);
 
       return of(
         stopWorker$(workerKey).pipe(
+          takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await isServiceRunning$(workerApi.get(workerKey)),
           ),
@@ -104,6 +125,7 @@ export default (action$, state$) =>
           ...workerKey,
           ...workerSettings,
         }).pipe(
+          takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await !isServiceRunning$(workerApi.get(workerKey)),
           ),
@@ -112,6 +134,7 @@ export default (action$, state$) =>
         of(...topics).pipe(
           concatMap((topicKey) =>
             stopTopic$(topicKey).pipe(
+              takeWhile(() => isTarget(KIND.broker)),
               takeWhile(
                 async () => await isServiceRunning$(topicApi.get(topicKey)),
               ),
@@ -120,6 +143,7 @@ export default (action$, state$) =>
         ),
 
         stopBroker$(brokerKey).pipe(
+          takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await isServiceRunning$(brokerApi.get(brokerKey)),
           ),
@@ -129,12 +153,14 @@ export default (action$, state$) =>
           ...brokerKey,
           ...brokerSettings,
         }).pipe(
+          takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
           ),
         ),
 
         stopZookeeper$(zookeeperKey).pipe(
+          takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
           ),
@@ -144,6 +170,7 @@ export default (action$, state$) =>
           ...zookeeperKey,
           ...zookeeperSettings,
         }).pipe(
+          takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () =>
               await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
@@ -151,6 +178,7 @@ export default (action$, state$) =>
         ),
 
         startZookeeper$(zookeeperKey).pipe(
+          takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () =>
               await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
@@ -158,6 +186,7 @@ export default (action$, state$) =>
         ),
 
         startBroker$(brokerKey).pipe(
+          takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
           ),
@@ -166,6 +195,7 @@ export default (action$, state$) =>
         of(...topics).pipe(
           concatMap((topicKey) =>
             startTopic$(topicKey).pipe(
+              takeWhile(() => isTarget(KIND.broker)),
               takeWhile(
                 async () => await !isServiceRunning$(topicApi.get(topicKey)),
               ),
@@ -174,6 +204,7 @@ export default (action$, state$) =>
         ),
 
         startWorker$(workerKey).pipe(
+          takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await !isServiceRunning$(workerApi.get(workerKey)),
           ),

@@ -15,6 +15,7 @@
  */
 
 import * as actions from 'store/actions';
+import { get } from 'lodash';
 
 const defaultSteps = [
   'Stop Worker',
@@ -44,10 +45,16 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   const now = new Date(Date.now()).toLocaleString();
+  const steps = get(action, 'payload.steps', defaultSteps);
+  let activeStep = state.progress.activeStep;
   switch (action.type) {
     case actions.openRestartWorkspace.TRIGGER:
       return {
         ...initialState,
+        progress: {
+          ...initialState.progress,
+          steps,
+        },
         isAutoClose: false,
         closeDisable: true,
         isOpen: true,
@@ -97,11 +104,12 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.startZookeeper.SUCCESS:
+      activeStep++;
       return {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 4,
+          activeStep,
           message: 'Start zookeeper success... (59% complete)',
           log: [
             ...state.progress.log,
@@ -119,11 +127,12 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.startBroker.SUCCESS:
+      activeStep++;
       return {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 5,
+          activeStep,
           message: 'Start broker success... (73% complete)',
           log: [
             ...state.progress.log,
@@ -153,11 +162,12 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.stopWorker.SUCCESS:
+      activeStep++;
       return {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 1,
+          activeStep,
           message: 'Stop worker success... (14% complete)',
           log: [
             ...state.progress.log,
@@ -166,11 +176,12 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.stopBroker.SUCCESS:
+      activeStep++;
       return {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 2,
+          activeStep,
           message: 'Stop broker success... (28% complete)',
           log: [
             ...state.progress.log,
@@ -179,11 +190,12 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.stopZookeeper.SUCCESS:
+      activeStep++;
       return {
         ...state,
         progress: {
           ...state.progress,
-          activeStep: 3,
+          activeStep,
           message: 'Stop zookeeper success... (42% complete)',
           log: [
             ...state.progress.log,
@@ -194,12 +206,13 @@ export default function reducer(state = initialState, action) {
         },
       };
     case actions.restartWorkspace.SUCCESS:
+      activeStep++;
       return {
         ...state,
         closeDisable: false,
         progress: {
           ...state.progress,
-          activeStep: 6,
+          activeStep,
           message: 'Restart workspace success... (100% complete)',
           isPause: false,
         },

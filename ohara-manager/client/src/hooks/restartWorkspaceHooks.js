@@ -22,12 +22,14 @@ import * as actions from 'store/actions';
 import * as hooks from 'hooks';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import { getKey } from 'utils/object';
+import { KIND } from 'const';
 
 export const useOpenRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.openRestartWorkspace.trigger()), [
-    dispatch,
-  ]);
+  return useCallback(
+    (steps) => dispatch(actions.openRestartWorkspace.trigger(steps)),
+    [dispatch],
+  );
 };
 
 export const useCloseRestartWorkspaceDialogAction = () => {
@@ -94,6 +96,7 @@ export const useRestartWorkspaceAction = () => {
     tmpBroker,
     tmpZookeeper,
     topics,
+    targetService: KIND.worker,
   };
 
   return useCallback(
@@ -114,19 +117,30 @@ export const useHasRunningServices = () => {
   );
 };
 
-export const useRestartConfirmMessage = () => {
+export const useRestartConfirmMessage = (kind) => {
   const workspaceName = hooks.useWorkerName();
   const hasRunningServices = hooks.useHasRunningServices();
 
-  return hasRunningServices ? (
-    <Typography paragraph>
-      Oops, there are still some services running in your workspace. You should
-      stop all pipelines under this workspace first and then you will be able to
-      delete this workspace.
-    </Typography>
-  ) : (
-    `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: zookeepers, brokers, workers and pipelines`
-  );
+  if (hasRunningServices) {
+    return (
+      <Typography paragraph>
+        Oops, there are still some services running in your workspace. You
+        should stop all pipelines under this workspace first and then you will
+        be able to delete this workspace.
+      </Typography>
+    );
+  } else {
+    switch (kind) {
+      case KIND.workspace:
+        return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: zookeepers, brokers, workers and pipelines`;
+      case KIND.broker:
+        return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: brokers, workers and pipelines`;
+      case KIND.worker:
+        return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: workers and pipelines`;
+      default:
+        return `This action cannot be undone. This will permanently restart the ${workspaceName} and the services under it: zookeepers, brokers, workers and pipelines`;
+    }
+  }
 };
 
 export const useRefreshWorkspaceAction = (params) => {
