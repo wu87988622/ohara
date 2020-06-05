@@ -27,10 +27,10 @@ describe('Root route', () => {
   it('should display root route', () => {
     cy.visit('/')
       .location()
-      .should(location => {
+      .should((location) => {
         expect(location.pathname).to.be.eq('/');
-      })
-      .findByText(/^quick create$/i)
+      });
+    cy.findByText(/^quick create$/i)
       .should('exist')
       .end();
   });
@@ -43,19 +43,18 @@ describe('Redirect route', () => {
     cy.createServices({
       withWorkspace: true,
       withTopic: true,
-    }).then(res => {
-      cy.visit('/')
-        .findAllByText(workspaceNameInAppBar)
-        .should('exist');
+    }).then((res) => {
+      cy.visit('/');
+      cy.findAllByText(workspaceNameInAppBar).should('exist');
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}`);
       });
 
       // not exist workspace will redirect to default workspace
       cy.visit('/fakeworkspacehaha');
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}`);
       });
 
@@ -63,38 +62,35 @@ describe('Redirect route', () => {
       cy.findByText(/^pipelines$/i)
         .siblings('svg')
         .first()
-        .click()
-        .findByText(/^add a new pipeline$/i)
-        .should('exist');
+        .click();
+      cy.findByText(/^add a new pipeline$/i).should('exist');
 
-      cy.findByTestId('new-pipeline-dialog')
-        .find('input')
-        .type('pipeline1');
+      cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
       cy.findByText(/^add$/i).click();
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}/pipeline1`);
       });
 
       // not exist workspace will redirect to default workspace with pipeline
       cy.visit('/fakeworkspacehaha');
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}/pipeline1`);
       });
 
       // not exist pipeline will redirect to default workspace
       cy.visit(`/${res.workspaceName}/foobar`);
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}/pipeline1`);
       });
 
       // not exist workspace and pipeline will redirect to default workspace with pipeline
       cy.visit(`/fakeworkspacehaha/foobar`);
 
-      cy.location().should(location => {
+      cy.location().should((location) => {
         expect(location.pathname).to.be.eq(`/${res.workspaceName}/pipeline1`);
       });
     });
@@ -103,9 +99,7 @@ describe('Redirect route', () => {
 
 describe('Not implement page', () => {
   it('should display page not implement route', () => {
-    cy.visit('/501-page-not-implemented')
-      .contains('501')
-      .should('exist');
+    cy.visit('/501-page-not-implemented').contains('501').should('exist');
   });
 });
 

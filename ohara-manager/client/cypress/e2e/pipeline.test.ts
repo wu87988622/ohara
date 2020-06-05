@@ -38,7 +38,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
   const shiftWidth = 350;
   const shiftHeight = 110;
 
-  cy.get('body').then($body => {
+  cy.get('body').then(($body) => {
     let size = topics.length;
     cy.log(
       'calculate the size of elements(source, sink, stream, topic) in pipeline',
@@ -46,9 +46,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
     if ($body.find('div.connector').length > 0)
       size = size + $body.find('div.connector').length;
 
-    cy.findByText(capitalize(kind))
-      .should('exist')
-      .click();
+    cy.findByText(capitalize(kind)).should('exist').click();
 
     // re-render the cell position to maximize the available space
     // the view of cells will be a [n, 2] matrix
@@ -75,18 +73,13 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
         name,
       );
-      cy.findAllByText(/^add$/i)
-        .filter(':visible')
-        .click();
+      cy.findAllByText(/^add$/i).filter(':visible').click();
     } else if (kind === KIND.topic) {
       topics.push(name);
       cy.log(`Available topics in this pipeline: ${topics.join(',')}`);
       if (!name.startsWith('T')) {
         // create a shared topic
-        cy.findByText('Add topics')
-          .siblings('button')
-          .first()
-          .click();
+        cy.findByText('Add topics').siblings('button').first().click();
 
         cy.findAllByLabelText('topic name', { exact: false })
           .filter(':visible')
@@ -97,9 +90,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.findAllByLabelText('replication factor', { exact: false })
           .filter(':visible')
           .type('1');
-        cy.findAllByText(/^add$/i)
-          .filter(':visible')
-          .click();
+        cy.findAllByText(/^add$/i).filter(':visible').click();
 
         cy.findByText(name).should('exist');
 
@@ -132,9 +123,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
         name,
       );
-      cy.findAllByText(/^add$/i)
-        .filter(':visible')
-        .click();
+      cy.findAllByText(/^add$/i).filter(':visible').click();
     }
 
     // wait a little time for the cell added
@@ -146,7 +135,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
   });
 });
 
-Cypress.Commands.add('getCell', name => {
+Cypress.Commands.add('getCell', (name) => {
   // open the cell menu
   cy.findAllByText(name)
     .filter(':visible')
@@ -157,7 +146,7 @@ Cypress.Commands.add('getCell', name => {
         : 'div.connector',
     )
     .first()
-    .then(el => {
+    .then((el) => {
       const testId = el[0].getAttribute('data-testid');
       return cy.get(`g[model-id="${testId}"]`);
     });
@@ -189,13 +178,10 @@ describe('ToolBox of Pipeline', () => {
     cy.findByText(/^pipelines$/i)
       .siblings('svg')
       .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
+      .click();
+    cy.findByText(/^add a new pipeline$/i).should('exist');
 
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
+    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
     cy.findByText(/^add$/i).click();
   });
@@ -214,7 +200,7 @@ describe('ToolBox of Pipeline', () => {
     cy.findByText(/^source$/i)
       .should('exist')
       .click();
-    Object.values(sources).forEach(clz => {
+    Object.values(sources).forEach((clz) => {
       const name = clz.slice(clz.lastIndexOf('.') + 1);
       cy.findByText(name).should('exist');
     });
@@ -230,7 +216,7 @@ describe('ToolBox of Pipeline', () => {
     cy.findByText(/^sink$/i)
       .should('exist')
       .click();
-    Object.values(sinks).forEach(clz => {
+    Object.values(sinks).forEach((clz) => {
       const name = clz.slice(clz.lastIndexOf('.') + 1);
       cy.findByText(name).should('exist');
     });
@@ -241,7 +227,7 @@ describe('ToolBox of Pipeline', () => {
       .siblings('div')
       .first()
       .within(() => {
-        cy.get('button').each(el => cy.wrap(el).click());
+        cy.get('button').each((el) => cy.wrap(el).click());
       });
     //after all clicks, the sink connector list should be visible
     cy.contains('span:visible', 'PerfSource').should('not.exist');
@@ -280,13 +266,10 @@ describe.skip('Element Links of Pipeline', () => {
     cy.findByText(/^pipelines$/i)
       .siblings('svg')
       .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
+      .click();
+    cy.findByText(/^add a new pipeline$/i).should('exist');
 
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
+    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
     cy.findByText(/^add$/i).click();
 
@@ -402,13 +385,11 @@ describe.skip('Element Links of Pipeline', () => {
     cy.findAllByText(elements.pipelineOnlyTopicName1).should('exist');
 
     // delete all elements
-    Object.values(elements).forEach(element => {
+    Object.values(elements).forEach((element) => {
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove).click();
       cy.findByText(/^delete$/i).click();
-      cy.findAllByText(element)
-        .filter(':visible')
-        .should('not.exist');
+      cy.findAllByText(element).filter(':visible').should('not.exist');
       cy.wait(2000);
     });
 
@@ -506,13 +487,10 @@ describe.skip('Topic Operations of Pipeline', () => {
     cy.findByText(/^pipelines$/i)
       .siblings('svg')
       .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
+      .click();
+    cy.findByText(/^add a new pipeline$/i).should('exist');
 
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
+    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
     cy.findByText(/^add$/i).click();
 

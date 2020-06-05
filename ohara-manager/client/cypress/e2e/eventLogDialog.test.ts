@@ -34,7 +34,7 @@ describe('EventLogDialog', () => {
     cy.findByTitle('Clear event logs')
       .should('exist')
       .find('button')
-      .within($el => {
+      .within(($el) => {
         const isDisabled = $el.is(':disabled');
         if (!isDisabled) {
           cy.wrap($el).click();
@@ -55,9 +55,7 @@ describe('EventLogDialog', () => {
       );
     });
 
-    cy.findByTitle('Event logs settings')
-      .should('exist')
-      .click();
+    cy.findByTitle('Event logs settings').should('exist').click();
     cy.findByPlaceholderText('The maximum amount of logs.')
       .should('exist')
       .clear()
@@ -70,13 +68,10 @@ describe('EventLogDialog', () => {
     cy.findByText(/^pipelines$/i)
       .siblings('svg')
       .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
+      .click();
+    cy.findByText(/^add a new pipeline$/i).should('exist');
 
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
+    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
     cy.findByText(/^add$/i).click();
 

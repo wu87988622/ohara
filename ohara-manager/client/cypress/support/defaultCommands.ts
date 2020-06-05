@@ -67,7 +67,7 @@ Cypress.Commands.add('createJar', (file: Cypress.FixtureRequest) => {
   const { fixturePath, name, group: jarGroup, tags: jarTags } = file;
   cy.fixture(`${fixturePath}/${name}`, 'base64')
     .then(Cypress.Blob.base64StringToBlob)
-    .then(blob => {
+    .then((blob) => {
       const blobObj = blob as Blob;
       const type = 'application/java-archive';
       const testFile = new File([blobObj], name, { type });
@@ -95,7 +95,7 @@ Cypress.Commands.add(
       .trigger('mousedown', 'topLeft', { timeout: 1000, which: 1 });
     // we only get one "flying element" at one time
     // it's ok to find by testid
-    cy.findByTestId('flying-element').then(element => {
+    cy.findByTestId('flying-element').then((element) => {
       cy.wrap(element)
         .trigger('mousemove', 'topLeft', {
           timeout: 1000,
@@ -116,12 +116,12 @@ Cypress.Commands.add(
     workspaceName?: string;
   } = {}) => {
     Cypress.Commands.add('addNode', () => {
-      cy.get('body').then($body => {
+      cy.get('body').then(($body) => {
         const isDockerMode =
           $body.find('span > button[title="Create Node"]').length > 0;
 
         if (isDockerMode) {
-          cy.get('body').then($body => {
+          cy.get('body').then(($body) => {
             // the node has not been added yet, added directly
             if ($body.find(`td:contains(${nodeHost})`).length === 0) {
               cy.findByTitle('Create Node').click();
@@ -134,9 +134,8 @@ Cypress.Commands.add(
             cy.findByText(nodeHost)
               .siblings('td')
               .find('input[type="checkbox"]')
-              .click()
-              .findByText(/^save$/i)
               .click();
+            cy.findByText(/^save$/i).click();
             cy.findAllByText(/^next$/i)
               .filter(':visible')
               .click();
@@ -145,9 +144,8 @@ Cypress.Commands.add(
           cy.findByText(nodeHost)
             .siblings('td')
             .find('input[type="checkbox"]')
-            .click()
-            .findByText(/^save$/i)
             .click();
+          cy.findByText(/^save$/i).click();
           cy.findAllByText(/^next$/i)
             .filter(':visible')
             .click();
@@ -163,7 +161,7 @@ Cypress.Commands.add(
     // need to wait a little time for url applying
     cy.wait(2000);
 
-    cy.location().then(location => {
+    cy.location().then((location) => {
       if (location.pathname === '/') {
         // first time in homepage, close the helper quickMode dialog
         cy.findByTestId('close-intro-button').click();
@@ -197,9 +195,7 @@ Cypress.Commands.add(
       .filter(':visible')
       .click();
 
-    cy.findByTitle('Workspace list')
-      .children()
-      .should('not.be.disabled');
+    cy.findByTitle('Workspace list').children().should('not.be.disabled');
 
     cy.end();
   },

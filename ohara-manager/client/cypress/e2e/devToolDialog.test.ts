@@ -27,10 +27,8 @@ describe('DevToolDialog - Topics tab', () => {
     // App bar is visible
     cy.findByTitle('Create a new workspace').should('be.visible');
 
-    cy.findByTitle('Developer Tools')
-      .click()
-      .findByText(/^topics$/i)
-      .should('exist');
+    cy.findByTitle('Developer Tools').click();
+    cy.findByText(/^topics$/i).should('exist');
 
     // check the topic Select component
     cy.findByTitle('Select topic')
@@ -44,7 +42,7 @@ describe('DevToolDialog - Topics tab', () => {
     cy.createServices({
       withWorkspace: true,
       withTopic: true,
-    }).then(res => {
+    }).then((res) => {
       cy.produceTopicData(res.workspaceName, res.topic).visit('/', {
         onBeforeLoad(win) {
           // to surveillance the window.open() event
@@ -62,18 +60,15 @@ describe('DevToolDialog - Topics tab', () => {
       // Check the status bar of no data
       cy.findByText(/^no topic data$/i).should('exist');
 
-      cy.findByTitle('Select topic')
-        .click()
-        .findByText(res?.topic?.data.name)
-        .click();
+      cy.findByTitle('Select topic').click();
+      cy.findByText(res?.topic?.data.name).click();
 
       // Check the topic data detail view
       cy.findByTestId('view-topic-table')
         .should('exist')
         .get('tbody tr')
-        .should('have.length.greaterThan', 0)
-        .findByTestId('detail-view-icon-0')
-        .click();
+        .should('have.length.greaterThan', 0);
+      cy.findByTestId('detail-view-icon-0').click();
 
       // Check the status bar
       cy.findByText(/^10 rows per query$/i).should('exist');
@@ -91,9 +86,8 @@ describe('DevToolDialog - Topics tab', () => {
         .should('exist');
 
       // query button
-      cy.findByTitle('Query with different parameters')
-        .click()
-        .findByText(/^query$/i)
+      cy.findByTitle('Query with different parameters').click();
+      cy.findByText(/^query$/i)
         .click()
         .get('table')
         .should('exist');
@@ -105,9 +99,7 @@ describe('DevToolDialog - Topics tab', () => {
 
       // open new window button
       cy.findByTitle('Open in a new window').click();
-      cy.window()
-        .its('open')
-        .should('be.called');
+      cy.window().its('open').should('be.called');
 
       // verify the switching tab operations work normally
       cy.findByText(/^logs$/i).click();
@@ -133,7 +125,7 @@ describe('DevToolDialog - Logs tab', () => {
   it.only('with an exist workspace, configurator log of devTool should work normally', () => {
     cy.createServices({
       withWorkspace: true,
-    }).then(res => {
+    }).then((res) => {
       cy.visit(`/${res.workspaceName}`, {
         onBeforeLoad(win) {
           // to surveillance the window.open() event
@@ -147,10 +139,8 @@ describe('DevToolDialog - Logs tab', () => {
       );
 
       // Check the log tab exist
-      cy.findByTitle('Developer Tools')
-        .click()
-        .findByText(/^logs$/i)
-        .click();
+      cy.findByTitle('Developer Tools').click();
+      cy.findByText(/^logs$/i).click();
 
       // Check the status bar of no data
       cy.findByText(/^no log data$/i).should('exist');
@@ -166,20 +156,15 @@ describe('DevToolDialog - Logs tab', () => {
       cy.findByText(/^latest 10 minutes$/i).should('exist');
 
       // refresh button
-      cy.get('span[title="Fetch the data again"] > button:enabled')
-        .click()
-        .findByTestId('view-log-list')
-        .should('exist');
+      cy.get('span[title="Fetch the data again"] > button:enabled').click();
+      cy.findByTestId('view-log-list').should('exist');
 
       // query button
       cy.get(
         'span[title="Query with different parameters"] > button:enabled',
       ).click();
-      cy.findByTestId('log-query-popover')
-        .find('button')
-        .click()
-        .findByTestId('view-log-list')
-        .should('exist');
+      cy.findByTestId('log-query-popover').find('button').click();
+      cy.findByTestId('view-log-list').should('exist');
       cy.findByText(/^minutes per query$/i)
         .parent()
         .find('input[type=number]')
@@ -188,9 +173,7 @@ describe('DevToolDialog - Logs tab', () => {
 
       // open new window button
       cy.findByTitle('Open in a new window').click();
-      cy.window()
-        .its('open')
-        .should('be.called');
+      cy.window().its('open').should('be.called');
 
       // close button
       cy.findByTitle('Close this panel').click();

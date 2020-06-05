@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { filter, map, noop, some, values } from 'lodash';
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { Form, Field } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
 import { FieldArray } from 'react-final-form-arrays';

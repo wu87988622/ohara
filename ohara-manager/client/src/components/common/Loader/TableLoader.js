@@ -27,9 +27,9 @@ const Loader = (props) => {
   const random = Math.random() * (1 - 0.7) + 0.7;
   return (
     <ContentLoader
+      backgroundColor="#d9d9d9"
+      foregroundColor="#ecebeb"
       height={40}
-      primaryColor="#d9d9d9"
-      secondaryColor="#ecebeb"
       speed={2}
       width={1060}
       {...props}

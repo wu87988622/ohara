@@ -31,9 +31,7 @@ describe('RestartWorkspace', () => {
     // click upload jars dialog
     cy.findByText('Worker plugins and shared jars').click();
     // click upload plugins
-    cy.findAllByTitle('Add File')
-      .first()
-      .click();
+    cy.findAllByTitle('Add File').first().click();
     cy.findAllByTitle('Upload File').filter(':visible');
 
     // upload the file by custom command "createJar"
@@ -52,8 +50,8 @@ describe('RestartWorkspace', () => {
       .siblings('div')
       .first()
       .find('input[type="file"]')
-      .then(element => {
-        cy.createJar(source).then(params => {
+      .then((element) => {
+        cy.createJar(source).then((params) => {
           (element[0] as HTMLInputElement).files = params.fileList;
           cy.wrap(element).trigger('change', { force: true });
         });
@@ -61,20 +59,17 @@ describe('RestartWorkspace', () => {
 
     // after upload file, click the upload file again
     cy.wait(1000);
-    cy.findAllByTitle('Upload File')
-      .first()
-      .click();
+    cy.findAllByTitle('Upload File').first().click();
 
     // select the uploaded file
     cy.findByText('ohara-it-source.jar')
       .siblings('td')
       .eq(0)
-      .click();
+      .find('input')
+      .check();
 
     // click save button
-    cy.findAllByText('Save')
-      .filter(':visible')
-      .click();
+    cy.findAllByText('Save').filter(':visible').click();
 
     // click the arrow button back to Settings dialog
     cy.findAllByText('Worker plugins and shared jars')
@@ -85,9 +80,7 @@ describe('RestartWorkspace', () => {
 
     // click the restart workspace button
     cy.findByText('Restart this workspace').click();
-    cy.findAllByText('Restart')
-      .filter(':visible')
-      .click();
+    cy.findAllByText('Restart').filter(':visible').click();
 
     // wait and click button back to homepage
     cy.findAllByText('CLOSE')
@@ -108,13 +101,10 @@ describe('RestartWorkspace', () => {
     cy.findByText(/^pipelines$/i)
       .siblings('svg')
       .first()
-      .click()
-      .findByText(/^add a new pipeline$/i)
-      .should('exist');
+      .click();
+    cy.findByText(/^add a new pipeline$/i).should('exist');
 
-    cy.findByTestId('new-pipeline-dialog')
-      .find('input')
-      .type('pipeline1');
+    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
     cy.findByText(/^add$/i).click();
 
