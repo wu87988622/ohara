@@ -275,20 +275,20 @@ it('delete same stream within period should be created once only', () => {
 
 it('should handle error properly', () => {
   const error = {
-    status: -1,
     data: {},
-    title: 'mock delete stream failed',
+    meta: undefined,
+    title: `Try to remove stream: "${streamEntity.name}" failed after retry 5 times.`,
   };
   const spyCreate = jest
     .spyOn(streamApi, 'remove')
-    .mockReturnValueOnce(throwError(error));
+    .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-----|';
-    const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const input = '   ^-a------------|';
+    const expected = '--a 9999ms (eu|)';
+    const subs = '    ^--------------!';
 
     const id = '1234';
     const action$ = hot(input, {

@@ -163,20 +163,20 @@ it('delete same worker within period should be created once only', () => {
 
 it('throw exception of delete worker should also trigger event log action', () => {
   const error = {
-    status: -1,
     data: {},
-    title: 'mock delete worker failed',
+    meta: undefined,
+    title: `delete worker exceeded max retry count`,
   };
   const spyCreate = jest
     .spyOn(workerApi, 'remove')
-    .mockReturnValueOnce(throwError(error));
+    .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-----|';
-    const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const input = '   ^-a-------------|';
+    const expected = '--a 21999ms (eu|)';
+    const subs = '    ^---------------!';
 
     const action$ = hot(input, {
       a: {

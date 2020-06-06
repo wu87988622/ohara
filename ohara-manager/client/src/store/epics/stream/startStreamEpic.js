@@ -51,25 +51,25 @@ const startStream$ = (value) => {
           throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 4,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to start stream: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 4,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to start stream: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.stream)),
     map((normalizedData) => merge(normalizedData, { streamId })),
     map((normalizedData) => {

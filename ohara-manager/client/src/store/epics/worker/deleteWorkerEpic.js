@@ -47,20 +47,23 @@ export const deleteWorker$ = (params) => {
           throw res;
         else return res.data;
       }),
-
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 10,
-              throwError({ title: 'delete worker exceeded max retry count' }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 10,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title: 'delete worker exceeded max retry count',
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(() => actions.deleteWorker.success({ workerId })),
     startWith(actions.deleteWorker.request({ workerId })),
   );

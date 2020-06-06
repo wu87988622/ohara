@@ -45,25 +45,25 @@ export const stopZookeeper$ = (params) => {
         if (res.data?.state) throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 10,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to stop zookeeper: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state is nonexistent, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 10,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to stop zookeeper: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state is nonexistent, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.zookeeper)),
     map((normalizedData) => merge(normalizedData, { zookeeperId })),
     map((normalizedData) => actions.stopZookeeper.success(normalizedData)),

@@ -276,20 +276,20 @@ it('delete same shabondi within period should be created once only', () => {
 
 it('should handle error properly', () => {
   const error = {
-    status: -1,
     data: {},
-    title: 'mock delete shabondi failed',
+    meta: undefined,
+    title: `Try to remove shabondi: "${shabondiEntity.name}" failed after retry 5 times.`,
   };
   const spyCreate = jest
     .spyOn(shabondiApi, 'remove')
-    .mockReturnValueOnce(throwError(error));
+    .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-----|';
-    const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const input = '   ^-a------------|';
+    const expected = '--a 9999ms (eu|)';
+    const subs = '    ^--------------!';
     const id = '1234';
 
     const action$ = hot(input, {

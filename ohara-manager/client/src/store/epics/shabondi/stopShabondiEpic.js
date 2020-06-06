@@ -49,25 +49,25 @@ const stopShabondi$ = (value) => {
         if (res.data.state) throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 4,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to stop shabondi: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state is nonexistent, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 4,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to stop shabondi: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state is nonexistent, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.shabondi)),
     map((normalizedData) => merge(normalizedData, { shabondiId })),
     map((normalizedData) => {

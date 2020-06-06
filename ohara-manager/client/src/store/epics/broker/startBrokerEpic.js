@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, throwError, iif, zip, from } from 'rxjs';
+import { defer, of, throwError, iif, from, zip } from 'rxjs';
 import {
   catchError,
   delay,
@@ -47,25 +47,25 @@ export const startBroker$ = (params) => {
           throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 10,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to start broker: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 10,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to start broker: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.broker)),
     map((normalizedData) => merge(normalizedData, { brokerId })),
     map((normalizedData) => actions.startBroker.success(normalizedData)),

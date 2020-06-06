@@ -45,25 +45,25 @@ export const startTopic$ = (params) => {
         if (!res.data.state || res.data.state !== 'RUNNING') throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 10,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to start topic: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state: RUNNING, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 10,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to start topic: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state: RUNNING, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.topic)),
     map((normalizedData) => merge(normalizedData, { topicId })),
     map((normalizedData) => actions.startTopic.success(normalizedData)),

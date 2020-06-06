@@ -52,23 +52,23 @@ export const deleteConnector$ = (values) => {
           throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 4,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title: `Try to remove connector: "${params.name}" failed after retry ${index} times.`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 4,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title: `Try to remove connector: "${params.name}" failed after retry ${index} times.`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     mergeMap(() => {
       if (paperApi) {
         paperApi.removeElement(params.id);

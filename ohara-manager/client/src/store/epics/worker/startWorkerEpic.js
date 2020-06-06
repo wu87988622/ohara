@@ -47,25 +47,25 @@ export const startWorker$ = (params) => {
           throw res;
         else return res.data;
       }),
-      retryWhen((errors) =>
-        errors.pipe(
-          concatMap((value, index) =>
-            iif(
-              () => index > 10,
-              throwError({
-                data: value?.data,
-                meta: value?.meta,
-                title:
-                  `Try to start worker: "${params.name}" failed after retry ${index} times. ` +
-                  `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
-              }),
-              of(value).pipe(delay(2000)),
-            ),
+    ),
+  ).pipe(
+    retryWhen((errors) =>
+      errors.pipe(
+        concatMap((value, index) =>
+          iif(
+            () => index > 10,
+            throwError({
+              data: value?.data,
+              meta: value?.meta,
+              title:
+                `Try to start worker: "${params.name}" failed after retry ${index} times. ` +
+                `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
+            }),
+            of(value).pipe(delay(2000)),
           ),
         ),
       ),
     ),
-  ).pipe(
     map(([, data]) => normalize(data, schema.worker)),
     map((normalizedData) => merge(normalizedData, { workerId })),
     map((normalizedData) => actions.startWorker.success(normalizedData)),
