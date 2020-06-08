@@ -16,6 +16,8 @@
 
 package oharastream.ohara.connector.ftp
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.SettingDef.Necessary
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -27,12 +29,12 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestFtpDefinition extends WithBrokerWorker {
   private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   @Test
   def testSource(): Unit = {

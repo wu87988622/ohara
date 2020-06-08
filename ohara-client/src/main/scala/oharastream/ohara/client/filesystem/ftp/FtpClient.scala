@@ -29,7 +29,7 @@ import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.connector.storage.FileType
 import org.apache.commons.net.ftp.{FTP, FTPClient}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 /**
   * A general interface from ftp file system.
@@ -185,8 +185,8 @@ object FtpClient {
     private[this] var port: Int              = 21
     private[this] var user: String           = _
     private[this] var password: String       = _
-    private[this] var retryTimeout: Duration = 0 second
-    private[this] var retryBackoff: Duration = 1 second
+    private[this] var retryTimeout: Duration = Duration(0, TimeUnit.SECONDS)
+    private[this] var retryBackoff: Duration = Duration(1, TimeUnit.SECONDS)
 
     /**
       * ftp server's hostname
@@ -229,7 +229,7 @@ object FtpClient {
       * disable the retry in connecting to ftp server.
       * @return this builder
       */
-    def disableRetry(): Builder = retryTimeout(0 seconds)
+    def disableRetry(): Builder = retryTimeout(Duration(0, TimeUnit.SECONDS))
 
     /**
       * timeout of retrying connection to ftp

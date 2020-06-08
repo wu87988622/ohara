@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent.k8s
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.fake.FakeK8SClient
 import oharastream.ohara.client.configurator.v0.NodeApi
@@ -25,8 +27,9 @@ import org.junit.Test
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration._
 import org.scalatest.matchers.should.Matchers._
+
+import scala.concurrent.duration.Duration
 
 class TestK8SServiceCollieImpl extends OharaTest {
   @Test
@@ -86,5 +89,5 @@ class TestK8SServiceCollieImpl extends OharaTest {
     resource.size shouldBe 0
   }
 
-  private[this] def result[T](future: Future[T]): T = Await.result(future, 10 seconds)
+  private[this] def result[T](future: Future[T]): T = Await.result(future, Duration(10, TimeUnit.SECONDS))
 }

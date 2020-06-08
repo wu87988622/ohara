@@ -20,6 +20,7 @@ import java.io.{InputStream, OutputStream}
 import java.nio.file.Paths
 import java.util
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.filesystem.{FileFilter, FileSystem}
@@ -28,8 +29,8 @@ import oharastream.ohara.common.exception.NoSuchFileException
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.connector.storage.FileType
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 
 private[filesystem] object FtpFileSystem {
   private[this] lazy val LOG = Logger(getClass.getName)
@@ -45,8 +46,8 @@ private[filesystem] object FtpFileSystem {
     private[this] var port: Int              = 21
     private[this] var user: String           = _
     private[this] var password: String       = _
-    private[this] var retryTimeout: Duration = 0 second
-    private[this] var retryBackoff: Duration = 1 second
+    private[this] var retryTimeout: Duration = Duration(0, TimeUnit.SECONDS)
+    private[this] var retryBackoff: Duration = Duration(1, TimeUnit.SECONDS)
 
     /**
       * ftp server's hostname
@@ -89,7 +90,7 @@ private[filesystem] object FtpFileSystem {
       * disable the retry in connecting to ftp server.
       * @return this builder
       */
-    def disableRetry(): Builder = retryTimeout(0 seconds)
+    def disableRetry(): Builder = retryTimeout(Duration(0, TimeUnit.SECONDS))
 
     /**
       * timeout of retrying connection to ftp

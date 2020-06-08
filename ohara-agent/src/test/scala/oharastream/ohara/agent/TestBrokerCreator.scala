@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.BrokerApi
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.rule.OharaTest
@@ -25,7 +27,7 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json.DeserializationException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestBrokerCreator extends OharaTest {
@@ -117,7 +119,7 @@ class TestBrokerCreator extends OharaTest {
       .nodeName(CommonUtils.randomString)
       .zookeeperClusterKey(ObjectKey.of("default", "name"))
       .create(),
-    5 seconds
+    Duration(5, TimeUnit.SECONDS)
   )
 
   @Test
@@ -137,6 +139,6 @@ class TestBrokerCreator extends OharaTest {
     )
 
     // pass
-    Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), 30 seconds)
+    Await.result(bkCreator().settings(brokerClusterInfo.settings).create(), Duration(30, TimeUnit.SECONDS))
   }
 }

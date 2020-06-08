@@ -34,13 +34,12 @@ import oharastream.ohara.testing.service.Database
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
-
-import scala.concurrent.duration._
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 @RunWith(value = classOf[Parameterized])
@@ -314,7 +313,7 @@ class TestJDBCSourceConnectorExactlyOnce(inputDataTime: Long) extends With3Broke
     )
   )
 
-  private[this] def result[T](future: Future[T]): T = Await.result(future, 20 seconds)
+  private[this] def result[T](future: Future[T]): T = Await.result(future, Duration(20, TimeUnit.SECONDS))
 
   @After
   def after(): Unit = {

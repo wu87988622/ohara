@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.ZookeeperApi
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.common.rule.OharaTest
@@ -25,7 +27,7 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json.DeserializationException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestZookeeperCreator extends OharaTest {
   private[this] def zkCreator(): ZookeeperCollie.ClusterCreator =
@@ -126,7 +128,7 @@ class TestZookeeperCreator extends OharaTest {
     )
 
     // pass
-    Await.result(zkCreator().settings(zookeeperClusterInfo.settings).create(), 30 seconds)
+    Await.result(zkCreator().settings(zookeeperClusterInfo.settings).create(), Duration(30, TimeUnit.SECONDS))
   }
 
   @Test
@@ -136,6 +138,6 @@ class TestZookeeperCreator extends OharaTest {
       .group(CommonUtils.randomString(10))
       .nodeName(CommonUtils.randomString)
       .create(),
-    5 seconds
+    Duration(5, TimeUnit.SECONDS)
   )
 }

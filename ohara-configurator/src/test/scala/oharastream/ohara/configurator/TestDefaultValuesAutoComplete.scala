@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import oharastream.ohara.client.configurator.v0.{ConnectorApi, WorkerApi}
 import oharastream.ohara.testing.WithBrokerWorker
@@ -24,11 +24,11 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestDefaultValuesAutoComplete extends WithBrokerWorker {
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] val configurator =
     Configurator.builder.fake(testUtil().brokersConnProps(), testUtil().workersConnProps()).build()

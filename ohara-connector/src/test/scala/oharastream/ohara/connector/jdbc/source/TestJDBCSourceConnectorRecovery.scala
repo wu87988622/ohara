@@ -17,6 +17,7 @@
 package oharastream.ohara.connector.jdbc.source
 
 import java.sql.Statement
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
@@ -33,7 +34,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
@@ -189,5 +190,5 @@ class TestJDBCSourceConnectorRecovery extends With3Brokers3Workers {
       ).asJava
     )
   )
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(30, TimeUnit.SECONDS))
 }

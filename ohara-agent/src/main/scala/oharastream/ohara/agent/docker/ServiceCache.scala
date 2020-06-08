@@ -17,16 +17,16 @@
 package oharastream.ohara.agent.docker
 
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.agent.ClusterStatus
-import oharastream.ohara.agent.ClusterKind
+import oharastream.ohara.agent.{ClusterKind, ClusterStatus}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.cache.RefreshableCache
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration.{Duration, _}
 
 /**
   * The cost of fetching containers via ssh is too expensive, and our ssh collie almost die for it. A quick solution
@@ -81,8 +81,8 @@ object ServiceCache {
   }
 
   class Builder private[ServiceCache] extends oharastream.ohara.common.pattern.Builder[ServiceCache] {
-    private[this] var frequency: Duration                = 5 seconds
-    private[this] var lazyRemove: Duration               = 0 seconds
+    private[this] var frequency: Duration                = Duration(5, TimeUnit.SECONDS)
+    private[this] var lazyRemove: Duration               = Duration(0, TimeUnit.SECONDS)
     private[this] var supplier: () => Seq[ClusterStatus] = _
 
     @Optional("default value is 5 seconds")

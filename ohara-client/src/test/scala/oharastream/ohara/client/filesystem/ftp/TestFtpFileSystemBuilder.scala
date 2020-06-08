@@ -16,11 +16,14 @@
 
 package oharastream.ohara.client.filesystem.ftp
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
+
 class TestFtpFileSystemBuilder extends OharaTest {
   @Test
   def ignoreHostname(): Unit = {
@@ -28,8 +31,8 @@ class TestFtpFileSystemBuilder extends OharaTest {
       .port(123)
       .user("adasd")
       .password("asda")
-      .retryTimeout(5 seconds)
-      .retryBackoff(5 seconds)
+      .retryTimeout(Duration(5, TimeUnit.SECONDS))
+      .retryBackoff(Duration(5, TimeUnit.SECONDS))
       .build()
   }
 
@@ -50,8 +53,8 @@ class TestFtpFileSystemBuilder extends OharaTest {
       .hostname("abc")
       .user("adasd")
       .password("asda")
-      .retryTimeout(5 seconds)
-      .retryBackoff(5 seconds)
+      .retryTimeout(Duration(5, TimeUnit.SECONDS))
+      .retryBackoff(Duration(5, TimeUnit.SECONDS))
       .build()
   }
 
@@ -66,8 +69,8 @@ class TestFtpFileSystemBuilder extends OharaTest {
       .port(123)
       .hostname("adasd")
       .password("asda")
-      .retryTimeout(5 seconds)
-      .retryBackoff(5 seconds)
+      .retryTimeout(Duration(5, TimeUnit.SECONDS))
+      .retryBackoff(Duration(5, TimeUnit.SECONDS))
       .build()
   }
 
@@ -87,8 +90,8 @@ class TestFtpFileSystemBuilder extends OharaTest {
       .port(123)
       .hostname("adasd")
       .user("asda")
-      .retryTimeout(5 seconds)
-      .retryBackoff(5 seconds)
+      .retryTimeout(Duration(5, TimeUnit.SECONDS))
+      .retryBackoff(Duration(5, TimeUnit.SECONDS))
       .build()
   }
 
@@ -105,7 +108,13 @@ class TestFtpFileSystemBuilder extends OharaTest {
   @Test
   def ignoreRetryTimeout(): Unit = {
     // pass
-    FtpFileSystem.builder.hostname("aa").port(123).password("adasd").user("asda").retryBackoff(5 seconds).build()
+    FtpFileSystem.builder
+      .hostname("aa")
+      .port(123)
+      .password("adasd")
+      .user("asda")
+      .retryBackoff(Duration(5, TimeUnit.SECONDS))
+      .build()
   }
   @Test
   def nullRetryTimeout(): Unit = {
@@ -115,7 +124,13 @@ class TestFtpFileSystemBuilder extends OharaTest {
   @Test
   def ignoreRetryBackoff(): Unit = {
     // pass
-    FtpFileSystem.builder.hostname("aa").port(123).password("adasd").user("asda").retryTimeout(5 seconds).build()
+    FtpFileSystem.builder
+      .hostname("aa")
+      .port(123)
+      .password("adasd")
+      .user("asda")
+      .retryTimeout(Duration(5, TimeUnit.SECONDS))
+      .build()
   }
   @Test
   def nullRetryBackoff(): Unit = {

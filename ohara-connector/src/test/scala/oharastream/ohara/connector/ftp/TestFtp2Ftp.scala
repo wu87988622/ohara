@@ -17,7 +17,7 @@
 package oharastream.ohara.connector.ftp
 
 import java.io.{BufferedWriter, OutputStreamWriter}
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -31,7 +31,7 @@ import org.scalatest.matchers.should.Matchers._
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 /**
   * ftp csv -> topic -> ftp csv
@@ -92,7 +92,7 @@ class TestFtp2Ftp extends With3Brokers3Workers {
           )
         )
         .create(),
-      10 seconds
+      Duration(20, TimeUnit.SECONDS)
     )
 
     try {
@@ -116,20 +116,20 @@ class TestFtp2Ftp extends With3Brokers3Workers {
               )
             )
             .create(),
-          10 seconds
+          Duration(20, TimeUnit.SECONDS)
         )
         CommonUtils
-          .await(() => fileSystem.listFileNames(inputFolder).asScala.isEmpty, Duration.ofSeconds(30))
+          .await(() => fileSystem.listFileNames(inputFolder).asScala.isEmpty, java.time.Duration.ofSeconds(30))
         CommonUtils.await(
           () => fileSystem.listFileNames(completedFolder).asScala.size == 1,
-          Duration.ofSeconds(30)
+          java.time.Duration.ofSeconds(30)
         )
         val committedFolder = CommonUtils.path(outputFolder, topicKey.topicNameOnKafka(), "partition0")
         CommonUtils.await(() => {
           if (fileSystem.exists(committedFolder))
             listCommittedFiles(committedFolder).size == 1
           else false
-        }, Duration.ofSeconds(30))
+        }, java.time.Duration.ofSeconds(30))
         val lines =
           fileSystem.readLines(
             oharastream.ohara.common.util.CommonUtils

@@ -17,7 +17,6 @@
 package oharastream.ohara.connector
 
 import java.nio.file.Paths
-import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.filesystem.FileSystem
@@ -32,8 +31,8 @@ import oharastream.ohara.testing.With3Brokers3Workers
 import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 abstract class CsvSinkTestBase extends With3Brokers3Workers {
@@ -63,7 +62,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] def pushData(data: Seq[Row], topicKey: TopicKey): Unit = {
     val producer = Producer
@@ -126,7 +125,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).lengthCompare(3) == 0, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).lengthCompare(3) == 0, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe 3
 
@@ -146,7 +145,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 3, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size
 
@@ -163,7 +162,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 4, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size + 1
     receivedData.head shouldBe schema.sortBy(_.order).map(_.name).mkString(",")
@@ -178,7 +177,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 4, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size + 1
     receivedData.head shouldBe schema.sortBy(_.order).map(_.name).mkString(",")
@@ -200,7 +199,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 4, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 4, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size + 1
     receivedData.head shouldBe newSchema.sortBy(_.order).map(_.newName).mkString(",")
@@ -217,7 +216,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 3, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size
     receivedData.foreach { line =>
@@ -233,7 +232,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data      = createReplicaData(row, 3)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 3, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 3, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size
 
@@ -263,7 +262,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 10)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 10, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 10, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size
     receivedData.foreach { line =>
@@ -273,7 +272,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
 
   @Test
   def testCommitPer10Seconds(): Unit = {
-    // auto commit per 10 seconds
+    // auto commit per Duration(20, TimeUnit.SECONDS)
     val newProps = props ++ Map(
       FLUSH_SIZE_KEY         -> Int.MaxValue.toString, // don't commit by size
       ROTATE_INTERVAL_MS_KEY -> "10000"
@@ -282,7 +281,7 @@ abstract class CsvSinkTestBase extends With3Brokers3Workers {
     val data     = createReplicaData(row, 99)
     pushData(data, topicKey)
     // connector is running in async mode so we have to wait data is pushed to connector
-    CommonUtils.await(() => fetchData(topicKey).size == 99, Duration.ofSeconds(20))
+    CommonUtils.await(() => fetchData(topicKey).size == 99, java.time.Duration.ofSeconds(20))
     val receivedData = fetchData(topicKey)
     receivedData.size shouldBe data.size
     receivedData.foreach { line =>

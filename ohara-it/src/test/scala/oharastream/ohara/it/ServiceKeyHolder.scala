@@ -16,6 +16,8 @@
 
 package oharastream.ohara.it
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -23,7 +25,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 /**
@@ -97,7 +99,7 @@ object ServiceKeyHolder {
   private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
   private[this] val LOG             = Logger(classOf[ServiceKeyHolder])
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   /**
     * create a name holder based on k8s.

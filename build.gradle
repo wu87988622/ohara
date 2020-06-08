@@ -324,7 +324,6 @@ subprojects {
       "-encoding", "utf8",
       "-Xlog-reflective-calls",
       "-feature",
-      "-language:postfixOps",
       "-language:implicitConversions",
       "-language:existentials",
       "-target:11",

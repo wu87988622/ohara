@@ -16,7 +16,7 @@
 
 package oharastream.ohara.client
 
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -24,14 +24,15 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.connector.TaskSetting
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+
 package object kafka {
   val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 
-  def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+  def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
 
-  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), Duration.ofSeconds(300))
+  def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(300))
 
   def assertExist(connectorAdmin: ConnectorAdmin, connectorKey: ConnectorKey): Boolean =
     CommonUtils.await(() => result(connectorAdmin.exist(connectorKey)) == true, java.time.Duration.ofSeconds(30))

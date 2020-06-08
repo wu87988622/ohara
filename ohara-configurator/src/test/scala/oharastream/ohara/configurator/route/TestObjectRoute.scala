@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator.route
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.ObjectApi
 import oharastream.ohara.client.configurator.v0.ObjectApi.ObjectInfo
 import oharastream.ohara.common.rule.OharaTest
@@ -27,14 +29,14 @@ import org.scalatest.matchers.should.Matchers._
 import spray.json.JsString
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestObjectRoute extends OharaTest {
   private[this] val configurator = Configurator.builder.fake(1, 1).build()
 
   private[this] val objectApi = ObjectApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] def create(): ObjectInfo = {
     val key = ObjectKey.of("g", "n")

@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.ConnectorApi.State
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -28,7 +30,7 @@ import org.scalatest.matchers.should.Matchers._
 import spray.json.{JsArray, JsBoolean, JsNumber, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestControlConnector extends WithBrokerWorker {
@@ -39,7 +41,7 @@ class TestControlConnector extends WithBrokerWorker {
 
   private[this] val topicApi = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(10, TimeUnit.SECONDS))
 
   private[this] def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(20))
 
@@ -201,7 +203,10 @@ class TestControlConnector extends WithBrokerWorker {
           .topicKey(topic.key)
           .workerClusterKey(
             Await
-              .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+              .result(
+                WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+                Duration(20, TimeUnit.SECONDS)
+              )
               .head
               .key
           )

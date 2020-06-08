@@ -17,6 +17,7 @@
 package oharastream.ohara.agent.docker
 
 import java.util
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
@@ -30,7 +31,7 @@ import org.scalatest.matchers.should.Matchers._
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 /**
   * the default implementation of verifying node consists of 1 actions.
@@ -76,13 +77,13 @@ class TestVerifyNode extends OharaTest {
   private[this] val collie = ServiceCollie.dockerModeBuilder.dataCollie(DataCollie(Seq(node))).build
 
   @Test
-  def happyCase(): Unit = Await.result(collie.verifyNode(node), 30 seconds)
+  def happyCase(): Unit = Await.result(collie.verifyNode(node), Duration(30, TimeUnit.SECONDS))
 
   @Test
   def badCase(): Unit = {
     errorMessage = CommonUtils.randomString()
     intercept[Exception] {
-      Await.result(collie.verifyNode(node), 30 seconds)
+      Await.result(collie.verifyNode(node), Duration(30, TimeUnit.SECONDS))
     }.getMessage should include("unavailable")
   }
 

@@ -18,7 +18,7 @@ package oharastream.ohara.agent
 import java.lang.reflect.Modifier
 import java.net.{URL, URLClassLoader}
 import java.util.Objects
-import java.util.concurrent.{ExecutorService, Executors}
+import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
@@ -41,6 +41,7 @@ import org.reflections.util.ConfigurationBuilder
 
 import scala.jdk.CollectionConverters._
 import scala.compat.java8.OptionConverters._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -313,11 +314,9 @@ object ServiceCollie {
     */
   def dockerModeBuilder: DockerModeBuilder = new DockerModeBuilder
 
-  import scala.concurrent.duration._
-
   class DockerModeBuilder private[ServiceCollie] extends Builder[ServiceCollie] {
     private[this] var dataCollie: DataCollie           = _
-    private[this] var cacheTimeout: Duration           = 3 seconds
+    private[this] var cacheTimeout: Duration           = Duration(3, TimeUnit.SECONDS)
     private[this] var cacheThreadPool: ExecutorService = _
 
     def dataCollie(dataCollie: DataCollie): DockerModeBuilder = {

@@ -15,6 +15,8 @@
  */
 
 package oharastream.ohara.connector.perf
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -24,17 +26,17 @@ import oharastream.ohara.kafka.connector.json.ConnectorFormatter
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 class TestPerfSourceProps extends OharaTest {
-  private[this] val props     = PerfSourceProps(10, 10 seconds, 10)
+  private[this] val props     = PerfSourceProps(10, Duration(20, TimeUnit.SECONDS), 10)
   private[this] val topicKeys = Set(TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5)))
   private[this] val schema    = Seq(Column.builder().name("name").dataType(DataType.SHORT).order(1).build())
 
   @Test
   def testPlainMap(): Unit = {
-    val props = PerfSourceProps(123, 10 seconds, 10)
+    val props = PerfSourceProps(123, Duration(20, TimeUnit.SECONDS), 10)
     val copy  = PerfSourceProps(TaskSetting.of(props.toMap.asJava))
     props shouldBe copy
   }

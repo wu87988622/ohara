@@ -18,6 +18,7 @@ package oharastream.ohara.client.configurator.v0
 
 import java.io.File
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
@@ -26,14 +27,14 @@ import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsObject, JsValue, RootJsonFormat}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 object InspectApi {
   val KIND: String                    = "inspect"
   val RDB_KIND: String                = "rdb"
   val TOPIC_TIMEOUT_KEY: String       = "timeout"
-  val TOPIC_TIMEOUT_DEFAULT: Duration = 3 seconds
+  val TOPIC_TIMEOUT_DEFAULT: Duration = Duration(3, TimeUnit.SECONDS)
   val TOPIC_LIMIT_KEY: String         = "limit"
   val TOPIC_LIMIT_DEFAULT: Int        = 5
 

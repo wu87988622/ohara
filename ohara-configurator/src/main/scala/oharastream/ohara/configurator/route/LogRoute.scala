@@ -105,7 +105,7 @@ object LogRoute {
   def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH | LogApi.KIND) {
       path(oharastream.ohara.client.configurator.v0.CONFIGURATOR_KIND) {
-        parameters(SINCE_SECONDS_KEY.as[Long] ?) { sinceSeconds =>
+        parameters(SINCE_SECONDS_KEY.as[Long].?) { sinceSeconds =>
           // the log folder is kept by ../conf/log4j.properties
           val folder   = new File("../logs")
           val logFiles = folder.listFiles()
@@ -125,32 +125,32 @@ object LogRoute {
           )
         }
       } ~ path((ZOOKEEPER_PREFIX_PATH | ZookeeperApi.KIND) / Segment) { clusterName =>
-        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long].?)) {
           case (group, sinceSeconds) =>
             val clusterKey =
               ObjectKey.of(group, clusterName)
             route(clusterKey, collie.zookeeperCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path((BROKER_PREFIX_PATH | BrokerApi.KIND) / Segment) { clusterName =>
-        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long].?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
             route(clusterKey, collie.brokerCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path((WORKER_PREFIX_PATH | WorkerApi.KIND) / Segment) { clusterName =>
-        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long].?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
             route(clusterKey, collie.workerCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path((STREAM_PREFIX_PATH | StreamApi.KIND) / Segment) { clusterName =>
-        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long].?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
             route(clusterKey, collie.streamCollie.log(clusterKey, sinceSeconds))
         }
       } ~ path((SHABONDI_PREFIX_PATH | ShabondiApi.KIND) / Segment) { clusterName =>
-        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long] ?)) {
+        parameter((GROUP_KEY ? GROUP_DEFAULT, SINCE_SECONDS_KEY.as[Long].?)) {
           case (group, sinceSeconds) =>
             val clusterKey = ObjectKey.of(group, clusterName)
             route(clusterKey, collie.shabondiCollie.log(clusterKey, sinceSeconds))

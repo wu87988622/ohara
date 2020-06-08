@@ -29,7 +29,7 @@ import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestInspectTopic extends WithBrokerWorker {
@@ -48,7 +48,7 @@ class TestInspectTopic extends WithBrokerWorker {
   private[this] def connectorApi = ConnectorApi.access.hostname(configurator.hostname).port(configurator.port)
   private[this] def inspectApi   = InspectApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   @Test
   def goodCase(): Unit = {

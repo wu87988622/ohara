@@ -17,6 +17,7 @@
 package oharastream.ohara.connector.ftp
 
 import java.io.{BufferedWriter, OutputStreamWriter}
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -32,7 +33,7 @@ import org.scalatest.matchers.should.Matchers._
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 class TestFtpSourceConnector extends With3Brokers3Workers {
   private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
@@ -110,11 +111,11 @@ class TestFtpSourceConnector extends With3Brokers3Workers {
             )
           )
           .create(),
-        10 seconds
+        Duration(10, TimeUnit.SECONDS)
       )
 
       val allFileRecordCount = sourceFileNumber * oneFileDataCount
-      val records            = pollData(topicKey, 60 seconds, allFileRecordCount)
+      val records            = pollData(topicKey, Duration(60, TimeUnit.SECONDS), allFileRecordCount)
       records.size shouldBe allFileRecordCount
 
       records

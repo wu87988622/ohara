@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.WithBrokerWorker
@@ -23,7 +25,7 @@ import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestListManyPipelines extends WithBrokerWorker {
   private[this] val configurator =
@@ -33,7 +35,7 @@ class TestListManyPipelines extends WithBrokerWorker {
     WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()
   ).head
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] val numberOfPipelines = 30
   @Test
@@ -77,11 +79,12 @@ class TestListManyPipelines extends WithBrokerWorker {
     }
 
     val listPipeline =
-      Await.result(PipelineApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+      Await.result(
+        PipelineApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+        Duration(20, TimeUnit.SECONDS)
+      )
     pipelines.size shouldBe listPipeline.size
-    pipelines.foreach { p =>
-      listPipeline.exists(_.name == p.name) shouldBe true
-    }
+    pipelines.foreach(p => listPipeline.exists(_.name == p.name) shouldBe true)
   }
 
   @After

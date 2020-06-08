@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent.k8s
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.agent.fake.FakeK8SClient
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
@@ -25,7 +27,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 class TestK8SClientVerify extends OharaTest {
   private[this] val dataCollie: DataCollie = DataCollie(Seq.empty)
@@ -39,7 +41,7 @@ class TestK8SClientVerify extends OharaTest {
       ServiceCollie.k8sModeBuilder.dataCollie(dataCollie).k8sClient(fakeK8SClient).build()
     Await.result(
       serviceCollie.verifyNode(node),
-      30 seconds
+      Duration(30, TimeUnit.SECONDS)
     ) shouldBe "ohara node is running."
   }
 
@@ -51,7 +53,7 @@ class TestK8SClientVerify extends OharaTest {
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     }.getMessage shouldBe "ohara node doesn't running container. cause: node failed."
   }
@@ -64,7 +66,7 @@ class TestK8SClientVerify extends OharaTest {
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     }.getMessage shouldBe "ohara node doesn't running container. cause: failed"
   }
@@ -77,7 +79,7 @@ class TestK8SClientVerify extends OharaTest {
     intercept[IllegalStateException] {
       Await.result(
         serviceCollie.verifyNode(node),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     }.getMessage shouldBe "ohara node doesn't running container. cause: ohara node doesn't exists."
   }

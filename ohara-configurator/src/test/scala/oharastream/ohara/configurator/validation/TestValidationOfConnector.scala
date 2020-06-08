@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator.validation
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -28,7 +30,7 @@ import spray.json.{JsString, _}
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestValidationOfConnector extends With3Brokers3Workers {
   private[this] val configurator =
@@ -36,7 +38,7 @@ class TestValidationOfConnector extends With3Brokers3Workers {
 
   private[this] val wkCluster = result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list()).head
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   @Test
   def goodCase(): Unit = {

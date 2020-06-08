@@ -16,6 +16,8 @@
 
 package oharastream.ohara.connector.perf
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
@@ -26,13 +28,14 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
+
 class TestPerfSourceMetrics extends WithBrokerWorker {
   private[this] val connectorAdmin = ConnectorAdmin(testUtil.workersConnProps)
 
   private[this] val props = PerfSourceProps(
     batch = 5,
-    freq = 5 seconds,
+    freq = Duration(5, TimeUnit.SECONDS),
     cellSize = 10
   )
 
@@ -49,7 +52,7 @@ class TestPerfSourceMetrics extends WithBrokerWorker {
         .connectorKey(connectorKey)
         .settings(props.toMap)
         .create(),
-      10 seconds
+      Duration(20, TimeUnit.SECONDS)
     )
     CommonUtils.await(() => {
       !BeanChannel.local().counterMBeans().isEmpty

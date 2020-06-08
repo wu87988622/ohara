@@ -17,6 +17,7 @@
 package oharastream.ohara.configurator.route
 
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
 import oharastream.ohara.client.configurator.v0.{
@@ -39,14 +40,14 @@ import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestInspectRoute extends OharaTest {
   private[this] val db           = Database.local()
   private[this] val configurator = Configurator.builder.fake().build()
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(30, TimeUnit.SECONDS))
 
   private[this] val zookeeperClusterInfo = result(
     ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).list()

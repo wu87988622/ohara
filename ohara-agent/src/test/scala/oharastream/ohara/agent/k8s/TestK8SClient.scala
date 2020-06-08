@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent.k8s
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
@@ -30,7 +32,8 @@ import spray.json._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
+
 class TestK8SClient extends OharaTest {
   private[this] val namespace: String = K8SClient.NAMESPACE_DEFAULT_VALUE
 
@@ -136,7 +139,7 @@ class TestK8SClient extends OharaTest {
           .nodeName(nodeName)
           .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
           .create(),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     } finally s.close()
   }
@@ -156,7 +159,7 @@ class TestK8SClient extends OharaTest {
           .nodeName(nodeName)
           .threadPool(scala.concurrent.ExecutionContext.Implicits.global)
           .create(),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     } finally s.close()
   }
@@ -176,7 +179,7 @@ class TestK8SClient extends OharaTest {
           .pullImagePolicy(ImagePullPolicy.ALWAYS)
           .nodeName(nodeName)
           .create(),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     } finally s.close()
   }
@@ -196,7 +199,7 @@ class TestK8SClient extends OharaTest {
           .pullImagePolicy(ImagePullPolicy.NEVER)
           .nodeName(nodeName)
           .create(),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     } finally s.close()
   }
@@ -215,7 +218,7 @@ class TestK8SClient extends OharaTest {
           .hostname("test1")
           .nodeName(nodeName)
           .create(),
-        30 seconds
+        Duration(30, TimeUnit.SECONDS)
       )
     } finally s.close()
   }
@@ -255,7 +258,7 @@ class TestK8SClient extends OharaTest {
     }
     try {
       val client           = K8SClient.builder.apiServerURL(s.url).build()
-      val imagesFromServer = Await.result(client.imageNames(), 30 seconds)
+      val imagesFromServer = Await.result(client.imageNames(), Duration(30, TimeUnit.SECONDS))
       imagesFromServer shouldBe Map(node -> images)
     } finally s.close()
   }
@@ -264,7 +267,7 @@ class TestK8SClient extends OharaTest {
   def testForceRemovePod(): Unit = {
     val s         = forceRemovePodURL("057aac6a97-bk-c720992")
     val k8sClient = K8SClient.builder.apiServerURL(s.url).build()
-    try Await.result(k8sClient.forceRemove("057aac6a97-bk-c720992"), 30 seconds)
+    try Await.result(k8sClient.forceRemove("057aac6a97-bk-c720992"), Duration(30, TimeUnit.SECONDS))
     finally s.close()
   }
 
@@ -274,7 +277,7 @@ class TestK8SClient extends OharaTest {
     val s       = log(podName)
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      Await.result(client.log(podName, None), 10 seconds)
+      Await.result(client.log(podName, None), Duration(10, TimeUnit.SECONDS))
     } finally s.close()
   }
 
@@ -291,9 +294,9 @@ class TestK8SClient extends OharaTest {
             .hostname("test1")
             .nodeName("node1")
             .create(),
-          30 seconds
+          Duration(30, TimeUnit.SECONDS)
         )
-      }.getMessage() shouldBe "host name error"
+      }.getMessage shouldBe "host name error"
     } finally s.close()
   }
 
@@ -302,7 +305,7 @@ class TestK8SClient extends OharaTest {
     val s = nodes()
     try {
       val client                    = K8SClient.builder.apiServerURL(s.url).build()
-      val nodes: Seq[K8SNodeReport] = Await.result(client.nodes, 5 seconds)
+      val nodes: Seq[K8SNodeReport] = Await.result(client.nodes, Duration(5, TimeUnit.SECONDS))
       nodes.size shouldBe 3
       nodes(0).nodeName shouldBe "ohara-jenkins-it-00"
       nodes(1).nodeName shouldBe "ohara-jenkins-it-01"
@@ -315,7 +318,7 @@ class TestK8SClient extends OharaTest {
     val s = nodes()
     try {
       val client = K8SClient.builder.apiServerURL(s.url).build()
-      val result = Await.result(client.resources(), 5 seconds)
+      val result = Await.result(client.resources(), Duration(5, TimeUnit.SECONDS))
       result.size shouldBe 0
       result.isEmpty shouldBe true
     } finally s.close()
@@ -326,8 +329,8 @@ class TestK8SClient extends OharaTest {
     val s = resources()
     try {
       val k8sClient          = K8SClient.builder.apiServerURL(s.url).metricsApiServerURL(s.url).build()
-      val resource           = Await.result(k8sClient.resources(), 5 seconds)
-      val nodes: Seq[String] = resource.map(x => x._1).toSeq
+      val resource           = Await.result(k8sClient.resources(), Duration(5, TimeUnit.SECONDS))
+      val nodes: Seq[String] = resource.keys.toSeq
       nodes(0) shouldBe "ohara-jenkins-it-00"
 
       val node1Resource = resource.map(x => (x._1, x._2)).filter(_._1 == "ohara-jenkins-it-00").map(_._2).head
@@ -347,8 +350,8 @@ class TestK8SClient extends OharaTest {
     val s = emptyResources()
     try {
       val k8sClient          = K8SClient.builder.apiServerURL(s.url).metricsApiServerURL(s.url).build()
-      val resource           = Await.result(k8sClient.resources(), 5 seconds)
-      val nodes: Seq[String] = resource.map(x => x._1).toSeq
+      val resource           = Await.result(k8sClient.resources(), Duration(5, TimeUnit.SECONDS))
+      val nodes: Seq[String] = resource.keys.toSeq
       nodes(0) shouldBe "ohara-jenkins-it-00"
 
       val node1Resource = resource.map(x => (x._1, x._2)).filter(_._1 == "ohara-jenkins-it-00").map(_._2).head
@@ -736,14 +739,14 @@ class TestK8SClient extends OharaTest {
   }
 
   private[this] def toServer(route: server.Route): SimpleServer = {
-    implicit val system = ActorSystem("my-system")
-    val server          = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    implicit val system: ActorSystem = ActorSystem("my-system")
+    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), Duration(30, TimeUnit.SECONDS))
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
       override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
-        Await.result(server.unbind(), 30 seconds)
-        Await.result(system.terminate(), 30 seconds)
+        Await.result(server.unbind(), Duration(30, TimeUnit.SECONDS))
+        Await.result(system.terminate(), Duration(30, TimeUnit.SECONDS))
       }
     }
   }

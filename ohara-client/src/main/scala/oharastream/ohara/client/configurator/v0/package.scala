@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.configurator
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.setting.SettingDef.Type
 import oharastream.ohara.common.setting._
@@ -23,8 +25,9 @@ import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
+
 package object v0 {
   /**
     * Our first version of APIs!!!
@@ -197,7 +200,7 @@ package object v0 {
     new RootJsonFormat[Duration] {
       override def read(json: JsValue): Duration = json match {
         case JsString(s) =>
-          try CommonUtils.toDuration(s).toMillis milliseconds
+          try Duration(CommonUtils.toDuration(s).toMillis, TimeUnit.MILLISECONDS)
           catch {
             case _: Throwable =>
               throw DeserializationException(s"the value must be duration value, actual:$s")

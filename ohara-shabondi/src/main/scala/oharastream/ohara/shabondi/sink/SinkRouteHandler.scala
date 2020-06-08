@@ -17,6 +17,7 @@
 package oharastream.ohara.shabondi.sink
 
 import java.time.{Duration => JDuration}
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
@@ -30,7 +31,7 @@ import org.apache.commons.lang3.StringUtils
 import scala.collection.mutable.ArrayBuffer
 import scala.compat.java8.DurationConverters._
 import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 private[shabondi] object SinkRouteHandler {
   def apply(config: SinkConfig)(implicit actorSystem: ActorSystem) =
@@ -45,7 +46,7 @@ private[shabondi] class SinkRouteHandler(config: SinkConfig)(implicit actorSyste
   private[sink] val dataGroups = SinkDataGroups(config)
 
   def scheduleFreeIdleGroups(interval: JDuration, idleTime: JDuration): Unit =
-    actorSystem.scheduler.scheduleWithFixedDelay(1 second, interval.toScala) { () =>
+    actorSystem.scheduler.scheduleWithFixedDelay(Duration(1, TimeUnit.SECONDS), interval.toScala) { () =>
       {
         log.trace("scheduled free group, total group: {} ", dataGroups.size)
         dataGroups.freeIdleGroup(idleTime)

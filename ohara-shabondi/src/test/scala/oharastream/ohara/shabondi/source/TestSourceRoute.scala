@@ -16,6 +16,8 @@
 
 package oharastream.ohara.shabondi.source
 
+import java.util.concurrent.TimeUnit
+
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
@@ -26,9 +28,10 @@ import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 import spray.json._
 
-import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import org.scalatest.matchers.should.Matchers._
+
+import scala.concurrent.duration.Duration
 
 final class TestSourceRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -36,7 +39,7 @@ final class TestSourceRoute extends BasicShabondiTest {
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
-  implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
+  implicit val routeTestTimeout = RouteTestTimeout(Duration(5, TimeUnit.SECONDS))
 
   private val columnCount  = 6
   private val requestCount = 200

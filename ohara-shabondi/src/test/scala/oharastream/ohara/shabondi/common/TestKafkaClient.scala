@@ -16,6 +16,8 @@
 
 package oharastream.ohara.shabondi.common
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.setting.TopicKey
@@ -25,7 +27,7 @@ import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 final class TestKafkaClient extends BasicShabondiTest {
@@ -55,7 +57,7 @@ final class TestKafkaClient extends BasicShabondiTest {
 
       val future = sender.send.toScala
 
-      val metadata = Await.result(future, 3 seconds)
+      val metadata = Await.result(future, Duration(10, TimeUnit.SECONDS))
 
       metadata.topicKey should ===(topicKey)
       metadata.offset should ===(0)

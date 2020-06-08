@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.testing.WithBrokerWorker
@@ -24,7 +26,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 /**
   * Embedded mode with fake cluster.
@@ -36,15 +38,24 @@ class TestMixedFakeCollie extends WithBrokerWorker {
 
     try {
       Await
-        .result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+        .result(
+          BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+          Duration(20, TimeUnit.SECONDS)
+        )
         .size shouldBe 1
 
       Await
-        .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+        .result(
+          WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+          Duration(20, TimeUnit.SECONDS)
+        )
         .size shouldBe 1
 
       val nodes =
-        Await.result(NodeApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds)
+        Await.result(
+          NodeApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+          Duration(20, TimeUnit.SECONDS)
+        )
 
       // embedded mode always add single node since embedded mode assign different client port to each thread and
       // our collie demands that all "processes" should use same port.
@@ -58,10 +69,13 @@ class TestMixedFakeCollie extends WithBrokerWorker {
           .name(CommonUtils.randomString(10))
           .nodeNames(nodes.map(_.name).toSet)
           .create(),
-        20 seconds
+        Duration(20, TimeUnit.SECONDS)
       )
       Await
-        .result(ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key), 20 seconds)
+        .result(
+          ZookeeperApi.access.hostname(configurator.hostname).port(configurator.port).start(zk.key),
+          Duration(20, TimeUnit.SECONDS)
+        )
 
       val bk = Await.result(
         BrokerApi.access
@@ -72,12 +86,18 @@ class TestMixedFakeCollie extends WithBrokerWorker {
           .zookeeperClusterKey(zk.key)
           .nodeNames(nodes.map(_.name).toSet)
           .create(),
-        20 seconds
+        Duration(20, TimeUnit.SECONDS)
       )
-      Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.key), 20 seconds)
+      Await.result(
+        BrokerApi.access.hostname(configurator.hostname).port(configurator.port).start(bk.key),
+        Duration(20, TimeUnit.SECONDS)
+      )
 
       Await
-        .result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+        .result(
+          BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+          Duration(20, TimeUnit.SECONDS)
+        )
         .size shouldBe 2
 
       Await.result(
@@ -89,11 +109,14 @@ class TestMixedFakeCollie extends WithBrokerWorker {
           .brokerClusterKey(bk.key)
           .nodeNames(nodes.map(_.name).toSet)
           .create(),
-        20 seconds
+        Duration(20, TimeUnit.SECONDS)
       )
 
       Await
-        .result(WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 20 seconds)
+        .result(
+          WorkerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+          Duration(20, TimeUnit.SECONDS)
+        )
         .size shouldBe 2
     } finally configurator.close()
   }

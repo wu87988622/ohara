@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator.route
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.{
   BrokerApi,
   ClusterState,
@@ -35,7 +37,7 @@ import org.scalatest.matchers.should.Matchers._
 import spray.json.{DeserializationException, JsArray, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestWorkerRoute extends OharaTest {
   private[this] val numberOfCluster = 1
@@ -48,14 +50,20 @@ class TestWorkerRoute extends OharaTest {
   private[this] val workerApi            = WorkerApi.access.hostname(configurator.hostname).port(configurator.port)
 
   private[this] val brokerClusterKey =
-    Await.result(BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(), 10 seconds).head.key
+    Await
+      .result(
+        BrokerApi.access.hostname(configurator.hostname).port(configurator.port).list(),
+        Duration(20, TimeUnit.SECONDS)
+      )
+      .head
+      .key
 
   private[this] val nodeNames: Set[String] = Set("n0", "n1")
 
   private[this] val fileApi: FileInfoApi.Access =
     FileInfoApi.access.hostname(configurator.hostname).port(configurator.port)
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 30 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(30, TimeUnit.SECONDS))
 
   @Before
   def setup(): Unit = {

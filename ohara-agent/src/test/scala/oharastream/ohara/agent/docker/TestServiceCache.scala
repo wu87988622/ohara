@@ -29,7 +29,8 @@ import oharastream.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
+
 class TestServiceCache extends OharaTest {
   private[this] def status(name: String): ClusterStatus = ClusterStatus(
     group = "default",
@@ -77,7 +78,7 @@ class TestServiceCache extends OharaTest {
         refreshCount.incrementAndGet()
         Seq(clusterInfo0, clusterInfo1)
       })
-      .frequency(2 seconds)
+      .frequency(Duration(2, TimeUnit.SECONDS))
       .build
     try {
       refreshCount.get() shouldBe 0
@@ -100,7 +101,7 @@ class TestServiceCache extends OharaTest {
         refreshCount.incrementAndGet()
         Seq(clusterInfo0, clusterInfo1)
       })
-      .frequency(1000 seconds)
+      .frequency(Duration(1000, TimeUnit.SECONDS))
       .build
     try {
       refreshCount.get() shouldBe 0
@@ -115,7 +116,7 @@ class TestServiceCache extends OharaTest {
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = ServiceCache.builder.supplier(() => Seq.empty).frequency(1000 seconds).build
+    val cache = ServiceCache.builder.supplier(() => Seq.empty).frequency(Duration(1000, TimeUnit.SECONDS)).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.snapshot
@@ -129,7 +130,7 @@ class TestServiceCache extends OharaTest {
       .supplier(() => {
         Seq(clusterInfo0)
       })
-      .frequency(1000 seconds)
+      .frequency(Duration(1000, TimeUnit.SECONDS))
       .build
     try {
       cache.snapshot shouldBe Seq.empty
@@ -148,8 +149,8 @@ class TestServiceCache extends OharaTest {
         count.incrementAndGet()
         Seq.empty
       })
-      .frequency(1 seconds)
-      .lazyRemove(5 seconds)
+      .frequency(Duration(1, TimeUnit.SECONDS))
+      .lazyRemove(Duration(5, TimeUnit.SECONDS))
       .build
     try {
       val clusterInfo = status(CommonUtils.randomString())

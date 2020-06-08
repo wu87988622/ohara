@@ -17,6 +17,7 @@
 package oharastream.ohara.configurator.store
 
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
@@ -31,7 +32,7 @@ import oharastream.ohara.common.cache.RefreshableCache
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.Releasable
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 
 trait MetricsCache extends Releasable {
   /**
@@ -70,7 +71,7 @@ object MetricsCache {
 
   class Builder private[MetricsCache] extends oharastream.ohara.common.pattern.Builder[MetricsCache] {
     private[this] var refresher: () => Map[ClusterInfo, Map[String, Map[ObjectKey, Metrics]]] = _
-    private[this] var frequency: Duration                                                     = 5 seconds
+    private[this] var frequency: Duration                                                     = Duration(5, TimeUnit.SECONDS)
 
     def refresher(refresher: () => Map[ClusterInfo, Map[String, Map[ObjectKey, Metrics]]]): Builder = {
       this.refresher = Objects.requireNonNull(refresher)

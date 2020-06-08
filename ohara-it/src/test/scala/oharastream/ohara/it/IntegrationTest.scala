@@ -16,7 +16,7 @@
 
 package oharastream.ohara.it
 
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.NoSuchClusterException
 import oharastream.ohara.agent.docker.ContainerState
@@ -27,7 +27,7 @@ import oharastream.ohara.common.util.CommonUtils
 import org.junit.rules.Timeout
 import org.junit.{AssumptionViolatedException, Rule}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 abstract class IntegrationTest {
@@ -40,7 +40,7 @@ abstract class IntegrationTest {
     */
   protected def skipTest(message: String): Unit = throw new AssumptionViolatedException(message)
 
-  protected def result[T](f: Future[T]): T = Await.result(f, 2 minutes)
+  protected def result[T](f: Future[T]): T = Await.result(f, Duration(120, TimeUnit.SECONDS))
 
   /**
     * await until the function return true. If the function fails, the exception is thrown.
@@ -61,7 +61,7 @@ abstract class IntegrationTest {
           case _: Throwable if swallowException =>
             false
         },
-      Duration.ofMinutes(2)
+      java.time.Duration.ofMinutes(2)
     )
 
   /**

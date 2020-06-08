@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
 import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
@@ -26,7 +28,7 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestStreamCreator extends OharaTest {
@@ -49,7 +51,7 @@ class TestStreamCreator extends OharaTest {
     }
   }
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(10, TimeUnit.SECONDS))
 
   @Test
   def nullClusterName(): Unit = {

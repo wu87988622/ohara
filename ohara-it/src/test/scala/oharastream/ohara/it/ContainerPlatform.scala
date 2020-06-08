@@ -18,6 +18,7 @@ package oharastream.ohara.it
 
 import java.net.URL
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.container.ContainerClient
@@ -32,7 +33,7 @@ import org.junit.AssumptionViolatedException
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 trait ContainerPlatform {
   /**
@@ -62,7 +63,7 @@ object ContainerPlatform {
     def containerClient: ContainerClient
   }
 
-  private[ContainerPlatform] def result[T](f: Future[T]): T = Await.result(f, 120 seconds)
+  private[ContainerPlatform] def result[T](f: Future[T]): T = Await.result(f, Duration(120, TimeUnit.SECONDS))
 
   val K8S_MASTER_KEY: String    = "ohara.it.k8s"
   val K8S_METRICS_SERVER_URL    = "ohara.it.k8s.metrics.server"

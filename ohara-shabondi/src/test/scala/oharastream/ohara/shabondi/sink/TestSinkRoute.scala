@@ -30,10 +30,11 @@ import oharastream.ohara.shabondi.common.JsonSupport
 import org.junit.Test
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import org.scalatest.matchers.should.Matchers._
+
+import scala.concurrent.duration.Duration
 
 final class TestSinkRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
@@ -41,7 +42,7 @@ final class TestSinkRoute extends BasicShabondiTest {
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
-  implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
+  implicit val routeTestTimeout = RouteTestTimeout(Duration(5, TimeUnit.SECONDS))
 
   private def pollRowsRequest(
     webServer: WebServer,
@@ -78,7 +79,7 @@ final class TestSinkRoute extends BasicShabondiTest {
 
     try {
       val rowCount1 = 50
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount1)
 
       // test invalid endpoint
@@ -125,15 +126,15 @@ final class TestSinkRoute extends BasicShabondiTest {
       val clientFetch1: Future[Seq[Row]] = pollRowsRequest(webServer, groupName, 10 * 1000, ec)
 
       val rowCount1 = 50
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount1); Thread.sleep(1000)
 
       val rowCount2 = 80
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount2, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount2, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount2); Thread.sleep(1000)
 
       val rowCount3 = 40
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount3, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount3, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount3); Thread.sleep(1000)
 
       val totalCount = rowCount1 + rowCount2 + rowCount3
@@ -172,15 +173,15 @@ final class TestSinkRoute extends BasicShabondiTest {
       val clientFetch3: Future[Seq[Row]] = pollRowsRequest(webServer, group1Name, 10 * 1000, ec)
 
       val rowCount1 = 150
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount1, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount1); Thread.sleep(1000)
 
       val rowCount2 = 180
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount2, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount2, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount2); Thread.sleep(1000)
 
       val rowCount3 = 140
-      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount3, FiniteDuration(10, SECONDS))
+      KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount3, Duration(10, TimeUnit.SECONDS))
       log.info("produce {} rows", rowCount3); Thread.sleep(1000)
 
       val totalCount = rowCount1 + rowCount2 + rowCount3

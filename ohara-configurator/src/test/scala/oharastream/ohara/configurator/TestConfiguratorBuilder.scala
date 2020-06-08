@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
@@ -31,10 +33,10 @@ import org.mockito.Mockito
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestConfiguratorBuilder extends OharaTest {
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 60 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
 
   @Test
   def nullHomeFolder(): Unit = an[NullPointerException] should be thrownBy Configurator.builder.homeFolder(null)
@@ -113,7 +115,10 @@ class TestConfiguratorBuilder extends OharaTest {
     val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sApiServer(apiServer.url).build()
-      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await
+        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
+        .head
+        ._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -125,7 +130,10 @@ class TestConfiguratorBuilder extends OharaTest {
     val apiServer  = k8sServer(namespace, podName, logMessage)
     try {
       val configurator: Configurator = Configurator.builder.k8sNamespace(namespace).k8sApiServer(apiServer.url).build()
-      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await
+        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
+        .head
+        ._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -138,7 +146,10 @@ class TestConfiguratorBuilder extends OharaTest {
     try {
       val k8sClient                  = K8SClient.builder.apiServerURL(apiServer.url).build()
       val configurator: Configurator = Configurator.builder.k8sClient(k8sClient).build()
-      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await
+        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
+        .head
+        ._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -153,7 +164,10 @@ class TestConfiguratorBuilder extends OharaTest {
 
       val configurator: Configurator =
         Configurator.builder.k8sClient(k8sClient).build()
-      Await.result(configurator.containerClient.log(podName, None), 10 seconds).head._2 shouldBe logMessage
+      Await
+        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
+        .head
+        ._2 shouldBe logMessage
     } finally apiServer.close()
   }
 
@@ -202,14 +216,14 @@ class TestConfiguratorBuilder extends OharaTest {
 
   private[this] def toServer(route: server.Route): SimpleServer = {
     implicit val system: ActorSystem = ActorSystem("my-system")
-    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), Duration(30, TimeUnit.SECONDS))
 
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
       override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
-        Await.result(server.unbind(), 30 seconds)
-        Await.result(system.terminate(), 30 seconds)
+        Await.result(server.unbind(), Duration(30, TimeUnit.SECONDS))
+        Await.result(system.terminate(), Duration(30, TimeUnit.SECONDS))
       }
     }
   }

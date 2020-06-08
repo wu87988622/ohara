@@ -18,6 +18,7 @@ package oharastream.ohara.configurator
 
 import java.io.File
 import java.util.Objects
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent._
 import oharastream.ohara.agent.docker.ServiceCollieImpl
@@ -36,7 +37,7 @@ import oharastream.ohara.configurator.fake._
 import oharastream.ohara.configurator.store.DataStore
 import org.rocksdb.RocksDBException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.ClassTag
 class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
@@ -398,7 +399,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .metricsApiServerURL(metricsServiceURL)
         .build()
 
-      try if (Await.result(client.nodeNameIPInfo(), 30 seconds).isEmpty)
+      try if (Await.result(client.nodeNameIPInfo(), Duration(30, TimeUnit.SECONDS)).isEmpty)
         throw new IllegalArgumentException("your k8s clusters is empty!!!")
       catch {
         case e: Throwable =>

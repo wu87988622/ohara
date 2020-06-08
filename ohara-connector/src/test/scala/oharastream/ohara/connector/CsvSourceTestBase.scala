@@ -17,7 +17,7 @@
 package oharastream.ohara.connector
 
 import java.io.{BufferedWriter, OutputStreamWriter}
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -34,7 +34,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 abstract class CsvSourceTestBase extends With3Brokers3Workers {
@@ -70,7 +70,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
 
   protected def props: Map[String, String] = defaultProps ++ setupProps
 
-  protected def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  protected def result[T](f: Future[T]): T = Await.result(f, Duration(10, TimeUnit.SECONDS))
 
   protected def inputDir: String = props(INPUT_FOLDER_KEY)
 
@@ -132,7 +132,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
 
   protected def pollData(
     topicKey: TopicKey,
-    timeout: scala.concurrent.duration.Duration = 100 seconds,
+    timeout: scala.concurrent.duration.Duration = Duration(30, TimeUnit.SECONDS),
     size: Int = data.length
   ): Seq[Record[Row, Array[Byte]]] = {
     val consumer = Consumer
@@ -154,7 +154,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
           fileSystem.listFileNames(completedDir).asScala.size == outputCount &&
           fileSystem.listFileNames(errorDir).asScala.size == errorCount
       },
-      Duration.ofSeconds(20)
+      java.time.Duration.ofSeconds(20)
     )
   }
 
@@ -209,12 +209,12 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       (2 to duplicateCount).foreach { fileCount =>
         setupInput()
         checkFileCount(fileCount, 0)
-        pollData(topicKey, 10 second).size shouldBe data.length
+        pollData(topicKey, Duration(20, TimeUnit.SECONDS)).size shouldBe data.length
       }
 
       setupInput(CommonUtils.randomString(5))
       checkFileCount(duplicateCount + 1, 0)
-      pollData(topicKey, 10 second).size shouldBe (data.length * 2)
+      pollData(topicKey, Duration(20, TimeUnit.SECONDS)).size shouldBe (data.length * 2)
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -230,12 +230,12 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
       val fileNames = (1 to 5).map(_ => CommonUtils.randomString(5))
       // loop chaos 10 times
       (1 to 10).foreach { _ =>
-        CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, Duration.ofSeconds(20))
+        CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, java.time.Duration.ofSeconds(20))
         val files = fileNames.map(name => setupInput(name))
         // remove a file
         Releasable.close(() => fileSystem.delete(files((Math.random() * files.size).toInt)))
       }
-      pollData(topicKey, 10 second).size shouldBe (data.length * (fileNames.size + 1))
+      pollData(topicKey, Duration(20, TimeUnit.SECONDS)).size shouldBe (data.length * (fileNames.size + 1))
     } finally result(connectorAdmin.delete(connectorKey))
   }
 
@@ -378,7 +378,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     try {
       checkFileCount(0, 1)
 
-      val records = pollData(topicKey, 10 second)
+      val records = pollData(topicKey, Duration(20, TimeUnit.SECONDS))
       records.size shouldBe 0
 
       // add a file to input again
@@ -401,7 +401,7 @@ abstract class CsvSourceTestBase extends With3Brokers3Workers {
     val (topicKey, connectorKey) = setupConnector(newProps, schema)
 
     try {
-      CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, Duration.ofSeconds(20))
+      CommonUtils.await(() => fileSystem.listFileNames(inputDir).asScala.isEmpty, java.time.Duration.ofSeconds(20))
       checkTopicData(topicKey)
     } finally result(connectorAdmin.delete(connectorKey))
   }

@@ -18,6 +18,7 @@ package oharastream.ohara.configurator.route
 
 import java.net.URL
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{HttpEntity, HttpResponse}
@@ -101,7 +102,7 @@ private[configurator] object FileInfoRoute {
     // The timeout here used seconds by the formula (for a worse case):
     // timeout = DEFAULT_FILE_SIZE_BYTES(50MB) / 10Mbps upload = 40 seconds
     //see https://github.com/akka/akka-http/issues/1216#issuecomment-311973943
-    toStrictEntity(40.seconds) {
+    toStrictEntity(Duration(40, TimeUnit.SECONDS)) {
       formFields((GROUP_KEY ? GROUP_DEFAULT, TAGS_KEY.as(tagsUnmarshaller) ? JsObject.empty)) {
         case (group, tags) =>
           storeUploadedFile(FIELD_NAME, fileInfo => CommonUtils.createTempFile(fileInfo.getFileName, ".jar")) {

@@ -36,10 +36,10 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 import scala.compat.java8.OptionConverters._
+import scala.concurrent.duration.Duration
 
 /**
   * a helper class used to send the rest request to kafka worker.
@@ -176,7 +176,7 @@ object ConnectorAdmin {
     private[this] var workerClusterKey: ObjectKey = ObjectKey.of("fake", "fake")
     private[this] var connectionProps: String     = _
     private[this] var retryLimit: Int             = 3
-    private[this] var retryInternal: Duration     = 3 seconds
+    private[this] var retryInternal: Duration     = Duration(3, TimeUnit.SECONDS)
 
     def workerClusterKey(workerClusterKey: ObjectKey): Builder = {
       this.workerClusterKey = Objects.requireNonNull(workerClusterKey)

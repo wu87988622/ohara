@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.agent.fake.FakeK8SClient
 import oharastream.ohara.agent.k8s.K8SNodeReport
 import oharastream.ohara.client.configurator.v0.NodeApi
@@ -24,7 +26,7 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class TestConfigurator extends OharaTest {
@@ -43,11 +45,11 @@ class TestConfigurator extends OharaTest {
     val configurator = Configurator.builder.k8sClient(k8sClient).build()
 
     val nodeApi    = NodeApi.access.hostname(configurator.hostname).port(configurator.port)
-    val createNode = Await.result(nodeApi.request.hostname("node1").create(), 15 seconds)
+    val createNode = Await.result(nodeApi.request.hostname("node1").create(), Duration(5, TimeUnit.SECONDS))
     createNode.hostname shouldBe "node1"
 
-    Await.result(configurator.addK8SNodes(), 15 seconds)
-    val nodes = Await.result(nodeApi.list(), 15 seconds).map(_.hostname)
+    Await.result(configurator.addK8SNodes(), Duration(15, TimeUnit.SECONDS))
+    val nodes = Await.result(nodeApi.list(), Duration(5, TimeUnit.SECONDS)).map(_.hostname)
     nodes.size shouldBe 3
     nodes should contain("node1")
     nodes should contain("node2")

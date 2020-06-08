@@ -26,7 +26,8 @@ import oharastream.ohara.configurator.store.MetricsCache.RequestKey
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
+
 class TestMetricsCache extends OharaTest {
   @Test
   def testRequestKey(): Unit = {
@@ -69,7 +70,7 @@ class TestMetricsCache extends OharaTest {
     val clusterInfo = FakeClusterInfo(CommonUtils.randomString())
     val cache = MetricsCache.builder
       .refresher(() => Map(clusterInfo -> Map(CommonUtils.hostname() -> data)))
-      .frequency(2 seconds)
+      .frequency(Duration(2, TimeUnit.SECONDS))
       .build
     try {
       cache.meters(clusterInfo) shouldBe Map.empty
@@ -80,7 +81,7 @@ class TestMetricsCache extends OharaTest {
 
   @Test
   def failToOperateAfterClose(): Unit = {
-    val cache = MetricsCache.builder.refresher(() => Map.empty).frequency(2 seconds).build
+    val cache = MetricsCache.builder.refresher(() => Map.empty).frequency(Duration(2, TimeUnit.SECONDS)).build
     cache.close()
 
     an[IllegalStateException] should be thrownBy cache.meters(FakeClusterInfo(CommonUtils.randomString()))

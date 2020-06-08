@@ -27,8 +27,9 @@ import org.apache.kafka.connect.sink.SinkRecord
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
+
 class TestConsoleSinkTask extends OharaTest {
   private[this] val connectorKey = ConnectorKey.of("group", "TestConsoleSinkTask")
   private[this] def configs(key: String, value: String): java.util.Map[String, String] =
@@ -54,8 +55,8 @@ class TestConsoleSinkTask extends OharaTest {
   @Test
   def testFrequence(): Unit = {
     val task = new ConsoleSinkTask()
-    task.start(configs(CONSOLE_FREQUENCE, "10 seconds"))
-    task.freq shouldBe (10 seconds)
+    task.start(configs(CONSOLE_FREQUENCE, "20 seconds"))
+    task.freq shouldBe Duration(20, TimeUnit.SECONDS)
   }
 
   @Test

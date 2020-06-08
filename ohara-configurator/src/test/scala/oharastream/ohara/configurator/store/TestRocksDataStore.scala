@@ -16,6 +16,8 @@
 
 package oharastream.ohara.configurator.store
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
@@ -24,7 +26,7 @@ import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestRocksDataStore extends OharaTest {
@@ -37,7 +39,7 @@ class TestRocksDataStore extends OharaTest {
     kind = _name
   )
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] def createData(): SimpleData = createData(random())
 

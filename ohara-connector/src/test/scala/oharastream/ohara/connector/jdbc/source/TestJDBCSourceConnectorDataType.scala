@@ -17,6 +17,7 @@
 package oharastream.ohara.connector.jdbc.source
 
 import java.sql.{Date, Time, Timestamp}
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
@@ -32,9 +33,9 @@ import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
   private[this] val db                  = Database.local()
@@ -101,7 +102,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
     )
 
     try {
-      val record = pollData(topicKey, 30 seconds, 1)
+      val record = pollData(topicKey, Duration(30, TimeUnit.SECONDS), 1)
       val row0   = record.head.key.get
 
       record.size shouldBe 1
@@ -177,7 +178,7 @@ class TestJDBCSourceConnectorDataType extends With3Brokers3Workers {
     finally consumer.close()
   }
 
-  private[this] def result[T](future: Future[T]): T = Await.result(future, 10 seconds)
+  private[this] def result[T](future: Future[T]): T = Await.result(future, Duration(20, TimeUnit.SECONDS))
 
   @After
   def tearDown(): Unit = {

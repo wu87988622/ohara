@@ -32,8 +32,8 @@ import oharastream.ohara.common.util.CommonUtils
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.junit.AssumptionViolatedException
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 
 abstract class BasicTestPerformance4Jdbc extends BasicTestPerformance {
   protected[this] val url: String =

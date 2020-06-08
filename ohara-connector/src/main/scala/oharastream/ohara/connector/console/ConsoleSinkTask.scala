@@ -17,13 +17,14 @@
 package oharastream.ohara.connector.console
 
 import java.util
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSetting}
 import com.typesafe.scalalogging.Logger
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 class ConsoleSinkTask extends RowSinkTask {
@@ -36,10 +37,13 @@ class ConsoleSinkTask extends RowSinkTask {
   private[console] var lastLog: Long = -1
   override protected def run(config: TaskSetting): Unit = {
     divider = config.stringOption(CONSOLE_ROW_DIVIDER).orElse(CONSOLE_ROW_DIVIDER_DEFAULT)
-    freq = config
-      .durationOption(CONSOLE_FREQUENCE)
-      .orElse(java.time.Duration.ofMillis(CONSOLE_FREQUENCE_DEFAULT.toMillis))
-      .toMillis milliseconds
+    freq = Duration(
+      config
+        .durationOption(CONSOLE_FREQUENCE)
+        .orElse(java.time.Duration.ofMillis(CONSOLE_FREQUENCE_DEFAULT.toMillis))
+        .toMillis,
+      TimeUnit.MILLISECONDS
+    )
   }
 
   override protected def terminate(): Unit = {

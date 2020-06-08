@@ -16,6 +16,8 @@
 
 package oharastream.ohara.shabondi.common
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.{Done, NotUsed}
@@ -26,7 +28,7 @@ import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 final class TestStreamFlow extends BasicShabondiTest {
@@ -41,7 +43,7 @@ final class TestStreamFlow extends BasicShabondiTest {
     val sink   = Sink.fold(0)((a: Int, b: Int) => a + b)
 
     val futureSum = source.toMat(sink)(Keep.right).run()
-    val sum       = Await.result(futureSum, 2 seconds)
+    val sum       = Await.result(futureSum, Duration(10, TimeUnit.SECONDS))
     sum should ===(55)
   }
 
@@ -65,7 +67,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       }
 
       val future: Future[Done] = source.via(pushRow).toMat(sink)(Keep.right).run()
-      Await.result(future, 2 seconds)
+      Await.result(future, Duration(10, TimeUnit.SECONDS))
 
       val rows = KafkaSupport.pollTopicOnce(brokerProps, topicKey1, 10, 10)
       rows.size should ===(1)
@@ -132,7 +134,7 @@ final class TestStreamFlow extends BasicShabondiTest {
       val sink = Sink.ignore
 
       val future: Future[Done] = source.via(sendRow).toMat(sink)(Keep.right).run()
-      Await.result(future, 10 seconds)
+      Await.result(future, Duration(10, TimeUnit.SECONDS))
 
       // assertion
       val rowsTopic1: Seq[Consumer.Record[Row, Array[Byte]]] =

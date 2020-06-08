@@ -16,6 +16,8 @@
 
 package oharastream.ohara.agent
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.common.rule.OharaTest
@@ -25,7 +27,7 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json.DeserializationException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestWorkerCreator extends OharaTest {
   private[this] def wkCreator(): WorkerCollie.ClusterCreator = (executionContext, creation) => {
@@ -184,7 +186,7 @@ class TestWorkerCreator extends OharaTest {
       .nodeName(CommonUtils.randomString)
       .brokerClusterKey(ObjectKey.of("g", "n"))
       .create(),
-    5 seconds
+    Duration(5, TimeUnit.SECONDS)
   )
 
   @Test
@@ -200,6 +202,6 @@ class TestWorkerCreator extends OharaTest {
     )
 
     // pass
-    Await.result(wkCreator().settings(workerClusterInfo.settings).create(), 30 seconds)
+    Await.result(wkCreator().settings(workerClusterInfo.settings).create(), Duration(30, TimeUnit.SECONDS))
   }
 }

@@ -17,6 +17,7 @@
 package oharastream.ohara.connector.jdbc.source
 
 import java.sql.Statement
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
@@ -31,10 +32,10 @@ import oharastream.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
   private[this] val db                  = Database.local()
@@ -155,7 +156,7 @@ class TestMultipleJDBCSourceConnector extends With3Brokers3Workers {
     } finally consumer.close()
   }
 
-  private[this] def result[T](future: Future[T]): T = Await.result(future, 10 seconds)
+  private[this] def result[T](future: Future[T]): T = Await.result(future, Duration(20, TimeUnit.SECONDS))
 
   @After
   def tearDown(): Unit = {

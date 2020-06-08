@@ -45,7 +45,7 @@ import oharastream.ohara.configurator.route._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import spray.json.DeserializationException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 import scala.util.control.Breaks._
 
@@ -84,7 +84,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
           while (!Thread.currentThread().isInterrupted) {
             try {
               TimeUnit.SECONDS.sleep(5)
-              Await.result(addK8SNodes(), 5 seconds)
+              Await.result(addK8SNodes(), Duration(5, TimeUnit.SECONDS))
             } catch {
               case timeoutException: TimeoutException => log.error("timeout exception", timeoutException)
               case interruptedException: InterruptedException =>
@@ -103,7 +103,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   /**
     * this timeout is used to wait the socket server to be ready to accept connection.
     */
-  private[this] val initializationTimeout = 10 seconds
+  private[this] val initializationTimeout = Duration(10, TimeUnit.SECONDS)
 
   /**
     * this timeout is used to
@@ -113,9 +113,9 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     * A small timeout can reduce the time to close configurator, and it is useful for testing. Perhaps we should expose this timeout to production
     * purpose. However, we have not met related use cases or bugs and hence we leave a constant timeout here.
     */
-  private[this] val terminateTimeout = 3 seconds
-  private[this] val cacheTimeout     = 3 seconds
-  private[this] val cleanupTimeout   = 10 seconds
+  private[this] val terminateTimeout = Duration(3, TimeUnit.SECONDS)
+  private[this] val cacheTimeout     = Duration(3, TimeUnit.SECONDS)
+  private[this] val cleanupTimeout   = Duration(10, TimeUnit.SECONDS)
 
   private[configurator] def size: Int = store.size()
 
@@ -308,7 +308,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         interface = CommonUtils.anyLocalAddress(),
         port = port
       ),
-      initializationTimeout.toMillis milliseconds
+      Duration(initializationTimeout.toMillis, TimeUnit.MILLISECONDS)
     )
     catch {
       case e: Throwable =>

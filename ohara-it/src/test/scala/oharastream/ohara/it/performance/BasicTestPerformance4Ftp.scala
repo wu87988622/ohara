@@ -18,13 +18,16 @@ package oharastream.ohara.it.performance
 
 import java.io.{BufferedWriter, OutputStreamWriter}
 import java.util.concurrent.atomic.LongAdder
+
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.AssumptionViolatedException
 import spray.json.{JsNumber, JsString, JsValue}
-import scala.concurrent.duration._
+
 import scala.jdk.CollectionConverters._
 import oharastream.ohara.client.filesystem.FileSystem
+
+import scala.concurrent.duration.Duration
 
 abstract class BasicTestPerformance4Ftp extends BasicTestPerformance {
   private[this] val ftpHostname = value(PerformanceTestingUtils.FTP_HOSTNAME_KEY)

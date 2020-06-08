@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.configurator.v0
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef.Permission
@@ -28,7 +30,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestStreamApi extends OharaTest {
@@ -36,7 +38,7 @@ class TestStreamApi extends OharaTest {
     StreamApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
   private[this] final val fakeJar = ObjectKey.of(CommonUtils.randomString(1), CommonUtils.randomString(1))
 
-  private[this] final def result[T](f: Future[T]): T = Await.result(f, 10 seconds)
+  private[this] final def result[T](f: Future[T]): T = Await.result(f, Duration(10, TimeUnit.SECONDS))
 
   private[this] def topicKey(): TopicKey             = topicKey(CommonUtils.randomString())
   private[this] def topicKey(name: String): TopicKey = TopicKey.of(GROUP_DEFAULT, name)

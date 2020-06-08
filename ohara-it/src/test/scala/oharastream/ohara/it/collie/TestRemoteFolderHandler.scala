@@ -16,16 +16,20 @@
 
 package oharastream.ohara.it.collie
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.agent.{DataCollie, FolderInfo, RemoteFolderHandler}
 import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.it.ContainerPlatform
 import org.junit.{AssumptionViolatedException, Test}
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import org.scalatest.matchers.should.Matchers._
+
+import scala.concurrent.duration.Duration
 
 class TestRemoteFolderHandler extends OharaTest {
   private[this] val nodeInfos: String = sys.env.getOrElse(
@@ -127,5 +131,5 @@ class TestRemoteFolderHandler extends OharaTest {
     )
   }
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 2 minutes)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(120, TimeUnit.SECONDS))
 }

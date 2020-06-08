@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator
 
-import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.ClusterState
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
@@ -43,7 +43,7 @@ import spray.json.{JsNumber, JsString}
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 class TestMetrics extends WithBrokerWorker {
   private[this] val configurator =
@@ -61,7 +61,7 @@ class TestMetrics extends WithBrokerWorker {
 
   private[this] val nodeNames = workerClusterInfo.nodeNames
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, 15 seconds)
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(15, TimeUnit.SECONDS))
 
   private[this] def awaitTrue(f: () => Boolean, swallowException: Boolean = false): Unit =
     CommonUtils.await(
@@ -71,7 +71,7 @@ class TestMetrics extends WithBrokerWorker {
           case _: Throwable if swallowException =>
             false
         },
-      Duration.ofSeconds(20)
+      java.time.Duration.ofSeconds(20)
     )
 
   private[this] def assertNoMetricsForTopic(topicId: String): Unit =

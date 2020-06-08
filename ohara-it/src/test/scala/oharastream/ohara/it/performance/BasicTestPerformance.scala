@@ -34,7 +34,7 @@ import spray.json.JsValue
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.util.control.Breaks.break
 
 /**
@@ -68,12 +68,12 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
 
   //------------------------------[global properties]------------------------------//
   private[this] val durationOfPerformanceKey     = PerformanceTestingUtils.DURATION_KEY
-  private[this] val durationOfPerformanceDefault = 50 seconds
+  private[this] val durationOfPerformanceDefault = Duration(50, TimeUnit.SECONDS)
   protected val durationOfPerformance: Duration =
     value(durationOfPerformanceKey).map(Duration.apply).getOrElse(durationOfPerformanceDefault)
 
   private[this] val timeoutOfInputDataKey               = PerformanceTestingUtils.INPUTDATA_TIMEOUT_KEY
-  private[this] val timeoutOfInputDataDefault: Duration = 10 seconds
+  private[this] val timeoutOfInputDataDefault: Duration = Duration(10, TimeUnit.SECONDS)
   protected val timeoutOfInputData: Duration =
     value(timeoutOfInputDataKey).map(Duration(_)).getOrElse(timeoutOfInputDataDefault)
 
@@ -93,7 +93,7 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
   override def timeout: Timeout = Timeout.seconds(wholeTimeout)
 
   private[this] val logMetersFrequencyKey               = PerformanceTestingUtils.LOG_METERS_FREQUENCY_KEY
-  private[this] val logMetersFrequencyDefault: Duration = 5 seconds
+  private[this] val logMetersFrequencyDefault: Duration = Duration(5, TimeUnit.SECONDS)
   protected val logMetersFrequency: Duration =
     value(logMetersFrequencyKey).map(Duration(_)).getOrElse(logMetersFrequencyDefault)
 

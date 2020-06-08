@@ -17,6 +17,7 @@
 package oharastream.ohara.client
 
 import java.net.HttpRetryException
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -29,6 +30,7 @@ import akka.stream.scaladsl.Sink
 import oharastream.ohara.common.util.Releasable
 import spray.json.RootJsonFormat
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
@@ -226,11 +228,9 @@ private[ohara] object HttpExecutor {
     )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
       Http().singleRequest(request).flatMap(unmarshal[Res, E])
 
-    import scala.concurrent.duration._
-
     /**
       * I hate hard code but this method is used only when terminating configurator. Hence, it should be ok... by chia
       */
-    override def close(): Unit = Await.result(actorSystem.terminate(), 30 seconds)
+    override def close(): Unit = Await.result(actorSystem.terminate(), Duration(30, TimeUnit.SECONDS))
   }
 }

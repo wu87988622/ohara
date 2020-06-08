@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.kafka
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
@@ -30,7 +32,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 /**
@@ -82,13 +84,13 @@ class Test873 extends OharaTest {
 
   private[this] def toServer(route: server.Route): SimpleServer = {
     implicit val system: ActorSystem = ActorSystem("my-system")
-    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), 30 seconds)
+    val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), Duration(30, TimeUnit.SECONDS))
     new SimpleServer {
       override def hostname: String = server.localAddress.getHostString
       override def port: Int        = server.localAddress.getPort
       override def close(): Unit = {
-        Await.result(server.unbind(), 30 seconds)
-        Await.result(system.terminate(), 30 seconds)
+        Await.result(server.unbind(), Duration(30, TimeUnit.SECONDS))
+        Await.result(system.terminate(), Duration(30, TimeUnit.SECONDS))
       }
     }
   }

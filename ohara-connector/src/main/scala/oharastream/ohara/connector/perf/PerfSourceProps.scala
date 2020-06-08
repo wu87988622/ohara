@@ -15,10 +15,12 @@
  */
 
 package oharastream.ohara.connector.perf
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.kafka.connector.TaskSetting
 
-import scala.concurrent.duration._
 import scala.compat.java8.OptionConverters._
+import scala.concurrent.duration.Duration
 case class PerfSourceProps(batch: Int, freq: Duration, cellSize: Int) {
   def toMap: Map[String, String] = Map(
     PERF_BATCH_KEY       -> batch.toString,
@@ -33,7 +35,7 @@ object PerfSourceProps {
     freq = settings
       .durationOption(PERF_FREQUENCY_KEY)
       .asScala
-      .map(_.toMillis milliseconds)
+      .map(d => Duration(d.toMillis, TimeUnit.MILLISECONDS))
       .getOrElse(PERF_FREQUENCY_DEFAULT),
     cellSize = settings.intOption(PERF_CELL_LENGTH_KEY).orElse(PERF_CELL_LENGTH_DEFAULT)
   )

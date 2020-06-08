@@ -26,14 +26,15 @@ import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.{After, Test}
 
 import scala.compat.java8.DurationConverters
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutorService}
 import org.scalatest.matchers.should.Matchers._
+
+import scala.concurrent.duration.Duration
 
 final class TestSinkDataGroups extends BasicShabondiTest {
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second
-  implicit val routeTestTimeout = RouteTestTimeout(5 seconds)
+  implicit val routeTestTimeout: RouteTestTimeout = RouteTestTimeout(Duration(5, TimeUnit.SECONDS))
 
   @After
   override def tearDown(): Unit = {
@@ -42,13 +43,18 @@ final class TestSinkDataGroups extends BasicShabondiTest {
 
   @Test
   def testSingleGroup(): Unit = {
-    val threadPool: ExecutorService = newThreadPool()
-    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
-    val objectKey                   = ObjectKey.of("g", "n")
-    val topicKey1                   = createTopicKey
-    val rowCount                    = 999
+    val threadPool: ExecutorService                  = newThreadPool()
+    implicit val ec: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                                    = ObjectKey.of("g", "n")
+    val topicKey1                                    = createTopicKey
+    val rowCount                                     = 999
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(
+        objectKey,
+        brokerProps,
+        Set(topicKey1),
+        DurationConverters.toJava(Duration(10, TimeUnit.SECONDS))
+      )
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount)
 
@@ -59,7 +65,7 @@ final class TestSinkDataGroups extends BasicShabondiTest {
 
       val rows = countRows(queue, 10 * 1000, ec)
 
-      Await.result(rows, 30 seconds) should ===(rowCount)
+      Await.result(rows, Duration(30, TimeUnit.SECONDS)) should ===(rowCount)
     } finally {
       Releasable.close(dataGroups)
       threadPool.shutdown()
@@ -68,13 +74,18 @@ final class TestSinkDataGroups extends BasicShabondiTest {
 
   @Test
   def testMultipleGroup(): Unit = {
-    val threadPool: ExecutorService = newThreadPool()
-    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
-    val objectKey                   = ObjectKey.of("g", "n")
-    val topicKey1                   = createTopicKey
-    val rowCount                    = 999
+    val threadPool: ExecutorService                  = newThreadPool()
+    implicit val ec: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                                    = ObjectKey.of("g", "n")
+    val topicKey1                                    = createTopicKey
+    val rowCount                                     = 999
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(
+        objectKey,
+        brokerProps,
+        Set(topicKey1),
+        DurationConverters.toJava(Duration(10, TimeUnit.SECONDS))
+      )
     try {
       KafkaSupport.prepareBulkOfRow(brokerProps, topicKey1, rowCount)
 
@@ -91,9 +102,9 @@ final class TestSinkDataGroups extends BasicShabondiTest {
       val rows1 = countRows(queue1, 10 * 1000, ec)
       val rows2 = countRows(queue2, 10 * 1000, ec)
 
-      Await.result(rows, 30 seconds) should ===(rowCount)
-      Await.result(rows1, 30 seconds) should ===(rowCount)
-      Await.result(rows2, 30 seconds) should ===(rowCount)
+      Await.result(rows, Duration(30, TimeUnit.SECONDS)) should ===(rowCount)
+      Await.result(rows1, Duration(30, TimeUnit.SECONDS)) should ===(rowCount)
+      Await.result(rows2, Duration(30, TimeUnit.SECONDS)) should ===(rowCount)
     } finally {
       Releasable.close(dataGroups)
       threadPool.shutdown()
@@ -118,13 +129,18 @@ final class TestSinkDataGroups extends BasicShabondiTest {
 
   @Test
   def testFreeIdleGroup(): Unit = {
-    val threadPool: ExecutorService = newThreadPool()
-    implicit val ec                 = ExecutionContext.fromExecutorService(threadPool)
-    val objectKey                   = ObjectKey.of("g", "n")
-    val topicKey1                   = createTopicKey
-    val idleTime                    = JDuration.ofSeconds(3)
+    val threadPool: ExecutorService                  = newThreadPool()
+    implicit val ec: ExecutionContextExecutorService = ExecutionContext.fromExecutorService(threadPool)
+    val objectKey                                    = ObjectKey.of("g", "n")
+    val topicKey1                                    = createTopicKey
+    val idleTime                                     = JDuration.ofSeconds(3)
     val dataGroups =
-      new SinkDataGroups(objectKey, brokerProps, Set(topicKey1), DurationConverters.toJava(10 seconds))
+      new SinkDataGroups(
+        objectKey,
+        brokerProps,
+        Set(topicKey1),
+        DurationConverters.toJava(Duration(10, TimeUnit.SECONDS))
+      )
     try {
       val group0Name = "group0"
       val group1Name = "group1"

@@ -17,6 +17,7 @@
 package oharastream.ohara.configurator.route
 
 import java.time.{Duration => JDuration}
+import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, ShabondiApi, TopicApi}
@@ -30,7 +31,7 @@ import org.scalatest.matchers.should.Matchers._
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
 class TestShabondiRoute extends OharaTest {
@@ -44,7 +45,7 @@ class TestShabondiRoute extends OharaTest {
   private[this] val topicKey  = TopicKey.of("g", CommonUtils.randomString(10))
   private[this] val objectKey = ObjectKey.of("group", "name")
 
-  private[this] def await[T](f: Future[T]): T = Await.result(f, 20 seconds)
+  private[this] def await[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
 
   private[this] def awaitTrue(f: () => Boolean, swallowException: Boolean = false): Unit =
     CommonUtils.await(
