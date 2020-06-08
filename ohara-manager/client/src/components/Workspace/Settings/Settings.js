@@ -19,7 +19,7 @@ import React from 'react';
 import * as hooks from 'hooks';
 import SettingsMain from './SettingsMain';
 import SettingsMenu from './SettingsMenu';
-import { SETTINGS_COMPONENT_TYPES } from 'const';
+import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
 import { useEditWorkspaceDialog } from 'context';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
@@ -41,7 +41,6 @@ const Settings = () => {
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
   const restartWorkspace = hooks.useRestartWorkspaceAction();
-  const restartConfirmMessage = hooks.useRestartConfirmMessage();
   const hasRunningServices = hooks.useHasRunningServices();
   const workspace = hooks.useWorkspace();
   const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
@@ -60,12 +59,26 @@ const Settings = () => {
         onSuccess: () => closeEditWorkspaceDialog(),
       });
     },
-    openRestartProgressDialog: () => {
+    openRestartWorkspaceProgressDialog: () => {
       resetSelectedItem();
       openRestartWorkspace();
-      restartWorkspace();
+      restartWorkspace(KIND.workspace);
     },
-    restartConfirmMessage,
+    openRestartBrokerProgressDialog: () => {
+      resetSelectedItem();
+      openRestartWorkspace({
+        steps: ['Stop Worker', 'Stop Broker', 'Start Broker', 'Start Worker'],
+      });
+      restartWorkspace(KIND.broker);
+    },
+    openRestartWorkerProgressDialog: () => {
+      resetSelectedItem();
+      openRestartWorkspace({
+        steps: ['Stop Worker', 'Start Worker'],
+      });
+      restartWorkspace(KIND.worker);
+    },
+    restartConfirmMessage: (kind) => hooks.useRestartConfirmMessage(kind),
     hasRunningServices,
     workspace,
   });

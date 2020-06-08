@@ -19,6 +19,7 @@ export const PACKAGE_ROOT = 'oharastream.ohara';
 // kind of all objects
 export enum KIND {
   configurator = 'configurator',
+  workspace = 'workspace',
   zookeeper = 'zookeeper',
   broker = 'broker',
   worker = 'worker',
