@@ -22,7 +22,7 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi._
 import oharastream.ohara.client.configurator.v0.{ShabondiApi, TopicApi}
-import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
@@ -30,6 +30,7 @@ import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo
 import spray.json.JsString
 
+import scala.annotation.nowarn
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -317,6 +318,7 @@ private[configurator] object TopicRoute {
             }
         }
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
@@ -326,7 +328,8 @@ private[configurator] object TopicRoute {
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[Creation, Updating, TopicInfo]()
-      .root(TOPICS_PREFIX_PATH)
+      .prefixOfPlural(TOPICS_PREFIX_PATH)
+      .prefixOfSingular(SettingDef.Reference.TOPIC.name().toLowerCase)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(hookOfGet)

@@ -72,10 +72,10 @@ class ValidatorTask extends SourceTask {
 
   private[this] def toJsObject: JsObject = props(InspectApi.SETTINGS_KEY).parseJson.asJsObject
   private[this] def information = require(InspectApi.TARGET_KEY) match {
-    case InspectApi.RDB_PREFIX_PATH => InspectApi.RDB_QUERY_JSON_FORMAT.read(toJsObject)
+    case InspectApi.RDB_KIND => InspectApi.RDB_QUERY_JSON_FORMAT.read(toJsObject)
     case other: String =>
       throw new IllegalArgumentException(
-        s"valid targets are ${InspectApi.RDB_PREFIX_PATH}. current is $other"
+        s"valid targets are ${InspectApi.RDB_KIND}. current is $other"
       )
   }
 

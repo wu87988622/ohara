@@ -30,7 +30,9 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerApi {
-  val KIND: String               = "broker"
+  val KIND: String = SettingDef.Reference.BROKER.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val BROKER_PREFIX_PATH: String = "brokers"
 
   /**
@@ -292,8 +294,7 @@ object BrokerApi {
     def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
   }
 
-  final class Access private[BrokerApi]
-      extends ClusterAccess[Creation, Updating, BrokerClusterInfo](BROKER_PREFIX_PATH) {
+  final class Access private[BrokerApi] extends ClusterAccess[Creation, Updating, BrokerClusterInfo](KIND) {
     override def query: Query[BrokerClusterInfo] = new Query[BrokerClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

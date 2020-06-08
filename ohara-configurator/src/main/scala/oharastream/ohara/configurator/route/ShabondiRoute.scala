@@ -19,7 +19,7 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
 import oharastream.ohara.client.configurator.v0.ShabondiApi
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
@@ -27,6 +27,7 @@ import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.shabondi.ShabondiDefinitions
 import spray.json.JsString
 
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ShabondiRoute {
@@ -169,6 +170,7 @@ private[configurator] object ShabondiRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
@@ -179,6 +181,7 @@ private[configurator] object ShabondiRoute {
   ): server.Route = {
     clusterRoute[ShabondiClusterInfo, ShabondiClusterCreation, ShabondiClusterUpdating](
       root = SHABONDI_PREFIX_PATH,
+      prefixOfSingular = SettingDef.Reference.SHABONDI.name().toLowerCase,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

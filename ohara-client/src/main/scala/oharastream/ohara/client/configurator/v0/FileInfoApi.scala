@@ -32,7 +32,9 @@ import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
-  val KIND: String             = "file"
+  val KIND: String = SettingDef.Reference.FILE.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val FILE_PREFIX_PATH: String = "files"
 
   /**
@@ -248,7 +250,7 @@ object FileInfoApi {
     ): Future[FileInfo]
   }
 
-  final class Access private[v0] extends BasicAccess(FILE_PREFIX_PATH) {
+  final class Access private[v0] extends BasicAccess(KIND) {
     def list()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
       exec.get[Seq[FileInfo], ErrorApi.Error](url)
 

@@ -26,7 +26,7 @@ import spray.json.{JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object NodeApi {
-  val KIND: String = "node"
+  val KIND: String = SettingDef.Reference.NODE.name().toLowerCase
   // We use the hostname field as "spec.hostname" label in k8s, which has a limit length <= 63
   // also see https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
   val LIMIT_OF_HOSTNAME_LENGTH: Int = 63
@@ -39,6 +39,7 @@ object NodeApi {
     */
   def key(hostname: String): ObjectKey = ObjectKey.of(GROUP_DEFAULT, hostname)
 
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val NODES_PREFIX_PATH: String = "nodes"
 
   val ZOOKEEPER_SERVICE_NAME: String    = "zookeeper"
@@ -253,8 +254,7 @@ object NodeApi {
     def update()(implicit executionContext: ExecutionContext): Future[Node]
   }
 
-  class Access private[v0]
-      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, Node](NODES_PREFIX_PATH) {
+  class Access private[v0] extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, Node](KIND) {
     def request: Request = new Request {
       private[this] var hostname: String           = _
       private[this] var port: Option[Int]          = None

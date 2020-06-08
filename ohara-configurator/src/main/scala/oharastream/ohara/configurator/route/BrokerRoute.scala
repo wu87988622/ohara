@@ -24,12 +24,13 @@ import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerRoute {
   private[this] def creationToClusterInfo(
@@ -200,6 +201,7 @@ object BrokerRoute {
         }
         .map(_ => ())
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
@@ -210,6 +212,7 @@ object BrokerRoute {
   ): server.Route =
     clusterRoute[BrokerClusterInfo, Creation, Updating](
       root = BROKER_PREFIX_PATH,
+      prefixOfSingular = SettingDef.Reference.BROKER.name().toLowerCase,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

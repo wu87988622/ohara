@@ -21,9 +21,7 @@ import spray.json.{RootJsonFormat, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
-  val VALIDATION_PREFIX_PATH: String = "validate"
-
-  val VALIDATION_CONNECTOR_PREFIX_PATH: String = "connector"
+  val VALIDATION_KIND: String = "validate"
 
   private[this] implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
     override def write(obj: SettingInfo): JsValue = obj.toJsonString.parseJson
@@ -77,11 +75,11 @@ object ValidationApi {
     def connectorRequest: ConnectorRequest
   }
 
-  def access: Access = new Access(VALIDATION_PREFIX_PATH) {
+  def access: Access = new Access(VALIDATION_KIND) {
     override def connectorRequest: ConnectorRequest = new ConnectorRequest {
       override def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo] =
         exec.put[oharastream.ohara.client.configurator.v0.ConnectorApi.Creation, SettingInfo, ErrorApi.Error](
-          s"$url/$VALIDATION_CONNECTOR_PREFIX_PATH",
+          s"$url/${ConnectorApi.KIND}",
           creation
         )
     }

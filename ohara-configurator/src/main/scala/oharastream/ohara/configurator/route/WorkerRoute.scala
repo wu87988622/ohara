@@ -21,12 +21,13 @@ import oharastream.ohara.agent._
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi._
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
   private[this] def creationToClusterInfo(
@@ -179,6 +180,7 @@ object WorkerRoute {
         }
         .map(_ => ())
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
@@ -189,6 +191,7 @@ object WorkerRoute {
   ): server.Route =
     clusterRoute[WorkerClusterInfo, Creation, Updating](
       root = WORKER_PREFIX_PATH,
+      prefixOfSingular = SettingDef.Reference.WORKER.name().toLowerCase,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

@@ -31,8 +31,10 @@ import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-final object ShabondiApi {
-  val KIND: String         = "shabondi"
+object ShabondiApi {
+  val KIND: String = SettingDef.Reference.SHABONDI.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val SHABONDI_PREFIX_PATH = "shabondis"
 
   val SHABONDI_SOURCE_CLASS: Class[ShabondiSource] = classOf[ShabondiSource]
@@ -184,7 +186,7 @@ final object ShabondiApi {
   }
 
   final class Access private[ShabondiApi]
-      extends ClusterAccess[ShabondiClusterCreation, ShabondiClusterUpdating, ShabondiClusterInfo](SHABONDI_PREFIX_PATH) {
+      extends ClusterAccess[ShabondiClusterCreation, ShabondiClusterUpdating, ShabondiClusterInfo](KIND) {
     override def query: Query[ShabondiClusterInfo] = new Query[ShabondiClusterInfo] {
       override protected def doExecute(
         request: QueryRequest

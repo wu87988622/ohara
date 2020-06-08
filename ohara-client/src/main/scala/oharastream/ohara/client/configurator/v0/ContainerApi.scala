@@ -22,6 +22,9 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 
 object ContainerApi {
+  val KIND: String = "container"
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val CONTAINER_PREFIX_PATH: String = "containers"
 
   final case class PortMapping(hostIp: String, hostPort: Int, containerPort: Int)
@@ -45,7 +48,7 @@ object ContainerApi {
   final case class ContainerGroup(clusterKey: ObjectKey, clusterType: String, containers: Seq[ContainerInfo])
   implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
 
-  class Access private[v0] extends BasicAccess(CONTAINER_PREFIX_PATH) {
+  class Access private[v0] extends BasicAccess(KIND) {
     def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =
       exec.get[Seq[ContainerGroup], ErrorApi.Error](urlBuilder.key(key).build())
   }

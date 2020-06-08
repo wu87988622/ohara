@@ -18,12 +18,12 @@ package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.Data
+import oharastream.ohara.common.setting.SettingDef
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
 
 object VolumeApi {
-  val KIND: String                = "volume"
-  val OBJECTS_PREFIX_PATH: String = "volumes"
+  val KIND: String = SettingDef.Reference.VOLUME.name().toLowerCase
 
   final case class Creation(
     group: String,

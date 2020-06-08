@@ -19,7 +19,7 @@ import java.util.Objects
 
 import oharastream.ohara.client.Enum
 import oharastream.ohara.client.configurator.{Data, QueryRequest}
-import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
+import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.SettingDef.{Reference, Type}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
@@ -29,15 +29,14 @@ import org.apache.kafka.common.config.TopicConfig
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 object TopicApi {
-  val KIND: String = "topic"
-
-  @VisibleForTesting
-  private[ohara] val TOPICS_PREFIX_PATH: String = "topics"
+  val KIND: String = SettingDef.Reference.TOPIC.name().toLowerCase
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
+  val TOPICS_PREFIX_PATH: String = "topics"
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -367,7 +366,7 @@ object TopicApi {
   }
 
   class Access private[v0]
-      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, TopicInfo](TOPICS_PREFIX_PATH) {
+      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, TopicInfo](KIND) {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit]  = put(key, STOP_COMMAND)
 

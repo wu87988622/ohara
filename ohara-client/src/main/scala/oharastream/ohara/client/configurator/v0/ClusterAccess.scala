@@ -27,8 +27,12 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 private[v0] abstract class ClusterAccess[Creation <: ClusterCreation, Updating <: ClusterUpdating, Res <: ClusterInfo](
   prefixPath: String
-)(implicit rm1: RootJsonFormat[Creation], rm2: RootJsonFormat[Updating], rm3: RootJsonFormat[Res])
-    extends Access[Creation, Updating, Res](prefixPath) {
+)(
+  implicit
+  rm1: RootJsonFormat[Creation],
+  rm2: RootJsonFormat[Updating],
+  rm3: RootJsonFormat[Res]
+) extends Access[Creation, Updating, Res](prefixPath) {
   def query: Query[Res]
 
   final def addNode(objectKey: ObjectKey, nodeName: String)(implicit executionContext: ExecutionContext): Future[Unit] =

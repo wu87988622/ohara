@@ -17,7 +17,7 @@
 package oharastream.ohara.client.configurator.v0
 
 import oharastream.ohara.client.configurator.Data
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
@@ -25,7 +25,9 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
-  val KIND: String                = "object"
+  val KIND: String = SettingDef.Reference.OBJECT.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val OBJECTS_PREFIX_PATH: String = "objects"
 
   final class Creation(val settings: Map[String, JsValue]) extends BasicCreation {
@@ -140,7 +142,7 @@ object ObjectApi {
   }
 
   class Access private[v0]
-      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, ObjectInfo](OBJECTS_PREFIX_PATH) {
+      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, ObjectInfo](KIND) {
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ObjectInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[ObjectInfo] =

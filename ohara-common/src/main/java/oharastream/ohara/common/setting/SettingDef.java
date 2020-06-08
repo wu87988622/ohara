@@ -66,14 +66,19 @@ public class SettingDef implements JsonObject, Serializable {
   public static final String COLUMN_DATA_TYPE_KEY = "dataType";
   // -------------------------------[reference]-------------------------------//
   public enum Reference {
+    BROKER,
+    CONNECTOR,
+    FILE,
     NONE,
     NODE,
+    OBJECT,
+    PIPELINE,
+    SHABONDI,
+    STREAM,
     TOPIC,
-    ZOOKEEPER,
-    BROKER,
+    VOLUME,
     WORKER,
-    FILE,
-    VOLUME
+    ZOOKEEPER,
   }
 
   // -------------------------------[value permission]-------------------------------//
@@ -174,7 +179,7 @@ public class SettingDef implements JsonObject, Serializable {
   @VisibleForTesting static final String PREFIX_KEY = "prefix";
 
   public static SettingDef ofJson(String json) {
-    return JsonUtils.toObject(json, new TypeReference<SettingDef>() {});
+    return JsonUtils.toObject(json, new TypeReference<>() {});
   }
 
   private final String displayName;

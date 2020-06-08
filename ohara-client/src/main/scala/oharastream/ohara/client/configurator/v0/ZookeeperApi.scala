@@ -30,7 +30,9 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperApi {
-  val KIND: String                  = "zookeeper"
+  val KIND: String = SettingDef.Reference.ZOOKEEPER.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
 
   /**
@@ -272,8 +274,7 @@ object ZookeeperApi {
     def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
   }
 
-  final class Access private[ZookeeperApi]
-      extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](ZOOKEEPER_PREFIX_PATH) {
+  final class Access private[ZookeeperApi] extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](KIND) {
     override def query: Query[ZookeeperClusterInfo] = new Query[ZookeeperClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

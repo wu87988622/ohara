@@ -30,13 +30,10 @@ import spray.json._
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 object StreamApi {
-  val KIND: String               = "stream"
-  val STREAM_PREFIX_PATH: String = "streams"
+  val KIND: String = SettingDef.Reference.STREAM.name().toLowerCase
 
-  /**
-    * container name is controlled by streamRoute, the service name here use six words was ok.
-    */
-  val STREAM_SERVICE_NAME: String = STREAM_PREFIX_PATH
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
+  val STREAM_PREFIX_PATH: String = "streams"
 
   def DEFINITIONS: Seq[SettingDef] = StreamDefUtils.DEFAULT.asScala.values.toSeq
 
@@ -237,8 +234,7 @@ object StreamApi {
     def update()(implicit executionContext: ExecutionContext): Future[StreamClusterInfo]
   }
 
-  final class Access private[StreamApi]
-      extends ClusterAccess[Creation, Updating, StreamClusterInfo](STREAM_PREFIX_PATH) {
+  final class Access private[StreamApi] extends ClusterAccess[Creation, Updating, StreamClusterInfo](KIND) {
     override def query: Query[StreamClusterInfo] = new Query[StreamClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

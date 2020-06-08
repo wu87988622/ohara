@@ -43,11 +43,12 @@ import oharastream.ohara.client.configurator.v0.{
   WorkerApi,
   ZookeeperApi
 }
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
+import scala.annotation.nowarn
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -376,6 +377,7 @@ private[configurator] object PipelineRoute {
         .flatMap(pipeline => store.add[Pipeline](pipeline))
         .map(_ => ())
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
@@ -386,7 +388,8 @@ private[configurator] object PipelineRoute {
     meterCache: MetricsCache
   ): server.Route =
     RouteBuilder[Creation, Updating, Pipeline]()
-      .root(PIPELINES_PREFIX_PATH)
+      .prefixOfPlural(PIPELINES_PREFIX_PATH)
+      .prefixOfSingular(SettingDef.Reference.PIPELINE.name().toLowerCase)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(hookOfGet)

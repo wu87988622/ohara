@@ -30,7 +30,9 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
-  val KIND: String               = "worker"
+  val KIND: String = SettingDef.Reference.WORKER.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val WORKER_PREFIX_PATH: String = "workers"
 
   /**
@@ -388,8 +390,7 @@ object WorkerApi {
     def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo]
   }
 
-  final class Access private[WorkerApi]
-      extends ClusterAccess[Creation, Updating, WorkerClusterInfo](WORKER_PREFIX_PATH) {
+  final class Access private[WorkerApi] extends ClusterAccess[Creation, Updating, WorkerClusterInfo](KIND) {
     override def query: Query[WorkerClusterInfo] = new Query[WorkerClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

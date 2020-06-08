@@ -19,7 +19,7 @@ import java.util.Objects
 
 import oharastream.ohara.client.configurator.{Data, QueryRequest}
 import oharastream.ohara.common.annotations.Optional
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsValue, RootJsonFormat}
@@ -27,7 +27,9 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object PipelineApi {
-  val KIND: String                  = "pipeline"
+  val KIND: String = SettingDef.Reference.PIPELINE.name().toLowerCase
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val PIPELINES_PREFIX_PATH: String = "pipelines"
 
   /**
@@ -161,8 +163,7 @@ object PipelineApi {
     // TODO: there are a lot of settings which is worth of having parameters ... by chia
   }
 
-  class Access private[v0]
-      extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, Pipeline](PIPELINES_PREFIX_PATH) {
+  class Access private[v0] extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, Pipeline](KIND) {
     def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
 
     def query: Query = new Query {

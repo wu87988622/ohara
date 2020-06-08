@@ -30,8 +30,8 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.client.configurator.v0.FileInfoApi._
-import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefinerBuilder, JsonRefiner}
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, JsonRefinerBuilder}
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfUpdating}
@@ -39,6 +39,7 @@ import oharastream.ohara.configurator.store.DataStore
 import com.typesafe.scalalogging.Logger
 import spray.json._
 
+import scala.annotation.nowarn
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object FileInfoRoute {
@@ -69,7 +70,7 @@ private[configurator] object FileInfoRoute {
   /**
     * This is a specific prefix which enables user to download binary of file
     */
-  private[this] val DOWNLOAD_FILE_PREFIX_PATH: String = "downloadFiles"
+  private[this] val DOWNLOAD_FILE_PREFIX_PATH: String = "downloadFile"
 
   def routeToDownload(
     implicit store: DataStore,
@@ -197,6 +198,7 @@ private[configurator] object FileInfoRoute {
     })
     .build
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     advertisedInfo: AdvertisedInfo,
@@ -205,7 +207,8 @@ private[configurator] object FileInfoRoute {
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()
-      .root(FILE_PREFIX_PATH)
+      .prefixOfPlural(FILE_PREFIX_PATH)
+      .prefixOfSingular(SettingDef.Reference.FILE.name().toLowerCase)
       .customPost(customPost)
       .hookOfUpdating(hookOfUpdating)
       .hookBeforeDelete(hookBeforeDelete)

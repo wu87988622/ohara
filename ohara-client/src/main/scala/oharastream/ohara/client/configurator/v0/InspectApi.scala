@@ -30,15 +30,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 object InspectApi {
-  val INSPECT_PREFIX_PATH: String     = "inspect"
-  val RDB_PREFIX_PATH: String         = "rdb"
-  val TOPIC_PREFIX_PATH: String       = "topic"
+  val KIND: String                    = "inspect"
+  val RDB_KIND: String                = "rdb"
   val TOPIC_TIMEOUT_KEY: String       = "timeout"
   val TOPIC_TIMEOUT_DEFAULT: Duration = 3 seconds
   val TOPIC_LIMIT_KEY: String         = "limit"
   val TOPIC_LIMIT_DEFAULT: Int        = 5
-
-  val CONFIGURATOR_PREFIX_PATH: String = "configurator"
 
   //-------------[rdb]-------------//
   /**
@@ -55,16 +52,8 @@ object InspectApi {
     * add this to setting and then the key pushed to topic will be same with the value
     */
   val REQUEST_ID = "requestId"
-  //-------------[image]-------------//
-  val ZOOKEEPER_PREFIX_PATH: String = "zookeeper"
-  val BROKER_PREFIX_PATH: String    = "broker"
-  val WORKER_PREFIX_PATH: String    = "worker"
-  val STREAM_PREFIX_PATH: String    = "stream"
-  val SHABONDI_PREFIX_PATH: String  = "shabondi"
 
   //-------------[FILE]-------------//
-  val FILE_PREFIX_PATH: String = FileInfoApi.FILE_PREFIX_PATH
-
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
   implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
 
@@ -183,36 +172,36 @@ object InspectApi {
     def query()(implicit executionContext: ExecutionContext): Future[FileInfo]
   }
 
-  final class Access extends BasicAccess(INSPECT_PREFIX_PATH) {
+  final class Access extends BasicAccess(KIND) {
     def configuratorInfo()(implicit executionContext: ExecutionContext): Future[ConfiguratorInfo] =
-      exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
+      exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_KIND")
 
     def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$ZOOKEEPER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ZookeeperApi.KIND}")
 
     def zookeeperInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(ZOOKEEPER_PREFIX_PATH).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(ZookeeperApi.KIND).key(key).build())
 
     def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$BROKER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${BrokerApi.KIND}")
 
     def brokerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(BROKER_PREFIX_PATH).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(BrokerApi.KIND).key(key).build())
 
     def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$WORKER_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${WorkerApi.KIND}")
 
     def workerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(WORKER_PREFIX_PATH).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(WorkerApi.KIND).key(key).build())
 
     def streamInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$STREAM_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${StreamApi.KIND}")
 
     def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(STREAM_PREFIX_PATH).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(StreamApi.KIND).key(key).build())
 
     def shabondiInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/$SHABONDI_PREFIX_PATH")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ShabondiApi.KIND}")
 
     def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String             = _
@@ -269,7 +258,7 @@ object InspectApi {
       )
 
       override def query()(implicit executionContext: ExecutionContext): Future[RdbInfo] =
-        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_PREFIX_PATH", query)
+        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_KIND", query)
     }
 
     def topicRequest: TopicRequest = new TopicRequest {
@@ -296,7 +285,7 @@ object InspectApi {
         exec.post[TopicData, ErrorApi.Error](
           urlBuilder
             .key(key)
-            .prefix(TOPIC_PREFIX_PATH)
+            .prefix(TopicApi.KIND)
             .param(TOPIC_LIMIT_KEY, limit.toString)
             .param(TOPIC_TIMEOUT_KEY, timeout.toMillis.toString)
             .build()

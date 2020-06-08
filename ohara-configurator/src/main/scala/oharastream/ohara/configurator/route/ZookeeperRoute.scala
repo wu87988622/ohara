@@ -21,12 +21,13 @@ import oharastream.ohara.agent.{ServiceCollie, ZookeeperCollie}
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi
 import oharastream.ohara.client.configurator.v0.ZookeeperApi._
-import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.ObjectChecker.Condition.STOPPED
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZookeeperRoute {
@@ -139,6 +140,7 @@ object ZookeeperRoute {
         }
         .map(_ => ())
 
+  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: ObjectChecker,
@@ -149,6 +151,7 @@ object ZookeeperRoute {
   ): server.Route =
     clusterRoute[ZookeeperClusterInfo, Creation, Updating](
       root = ZOOKEEPER_PREFIX_PATH,
+      prefixOfSingular = SettingDef.Reference.ZOOKEEPER.name().toLowerCase,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

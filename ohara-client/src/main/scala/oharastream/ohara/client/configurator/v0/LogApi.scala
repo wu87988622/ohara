@@ -23,8 +23,10 @@ import spray.json.RootJsonFormat
 import scala.concurrent.{ExecutionContext, Future}
 
 object LogApi {
-  val LOG_PREFIX_PATH: String          = "logs"
-  val CONFIGURATOR_PREFIX_PATH: String = "configurator"
+  val KIND: String = "log"
+
+  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
+  val LOG_PREFIX_PATH: String = "logs"
 
   val SINCE_SECONDS_KEY: String = "sinceSeconds"
 
@@ -34,12 +36,12 @@ object LogApi {
   case class ClusterLog(clusterKey: ObjectKey, logs: Seq[NodeLog])
   implicit val CLUSTER_LOG_FORMAT: RootJsonFormat[ClusterLog] = jsonFormat2(ClusterLog)
 
-  class Access extends BasicAccess(LOG_PREFIX_PATH) {
+  class Access extends BasicAccess(KIND) {
     private[this] def _url(service: String, clusterKey: ObjectKey): String =
       s"$url/$service/${clusterKey.name()}?$GROUP_KEY=${clusterKey.group()}"
 
     def log4ZookeeperCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(ZookeeperApi.ZOOKEEPER_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(ZookeeperApi.KIND, clusterKey))
 
     def log4ZookeeperCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -47,13 +49,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(ZookeeperApi.ZOOKEEPER_PREFIX_PATH)
+          .prefix(ZookeeperApi.KIND)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4BrokerCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(BrokerApi.BROKER_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(BrokerApi.KIND, clusterKey))
 
     def log4BrokerCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -61,13 +63,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(BrokerApi.BROKER_PREFIX_PATH)
+          .prefix(BrokerApi.KIND)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4WorkerCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(WorkerApi.WORKER_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(WorkerApi.KIND, clusterKey))
 
     def log4WorkerCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -75,13 +77,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(WorkerApi.WORKER_PREFIX_PATH)
+          .prefix(WorkerApi.KIND)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4StreamCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.STREAM_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.KIND, clusterKey))
 
     def log4StreamCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -89,13 +91,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(StreamApi.STREAM_PREFIX_PATH)
+          .prefix(StreamApi.KIND)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4ShabondiCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(ShabondiApi.SHABONDI_PREFIX_PATH, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(ShabondiApi.KIND, clusterKey))
 
     def log4ShabondiCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -103,17 +105,17 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(ShabondiApi.SHABONDI_PREFIX_PATH)
+          .prefix(ShabondiApi.KIND)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4Configurator()(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](s"$url/$CONFIGURATOR_PREFIX_PATH")
+      exec.get[ClusterLog, ErrorApi.Error](s"$url/$CONFIGURATOR_KIND")
 
     def log4Configurator(sinceSeconds: Long)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
       exec.get[ClusterLog, ErrorApi.Error](
-        urlBuilder.prefix(CONFIGURATOR_PREFIX_PATH).param(SINCE_SECONDS_KEY, sinceSeconds.toString).build()
+        urlBuilder.prefix(CONFIGURATOR_KIND).param(SINCE_SECONDS_KEY, sinceSeconds.toString).build()
       )
   }
 
