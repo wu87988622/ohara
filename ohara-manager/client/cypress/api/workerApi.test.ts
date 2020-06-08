@@ -18,21 +18,22 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+// Note: Do not change the usage of absolute path
+// unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
 import * as wkApi from '../../src/api/workerApi';
 import * as inspectApi from '../../src/api/inspectApi';
+import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 import {
-  createServices,
+  createServicesInNodes,
   deleteAllServices,
   assertSettingsByDefinitions,
 } from '../utils';
-import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
 
 const generateWorker = async () => {
-  const { node, broker } = await createServices({
+  const { node, broker } = await createServicesInNodes({
     withBroker: true,
     withZookeeper: true,
-    withNode: true,
   });
   const wkName = generate.serviceName({ prefix: 'wk' });
   const worker = {
@@ -90,7 +91,7 @@ describe('Worker API', () => {
 
     const result = await wkApi.getAll();
 
-    const workers = result.data.map(wk => wk.name);
+    const workers = result.data.map((wk) => wk.name);
     expect(workers.includes(wkClusterOne.name)).to.be.true;
     expect(workers.includes(wkClusterTwo.name)).to.be.true;
   });
@@ -103,7 +104,7 @@ describe('Worker API', () => {
     await wkApi.remove(wkCluster);
     const result = await wkApi.getAll();
 
-    const workers = result.data.map(wk => wk.name);
+    const workers = result.data.map((wk) => wk.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
 
     // delete a running worker
@@ -168,7 +169,7 @@ describe('Worker API', () => {
     await wkApi.remove(wkCluster);
     const result = await wkApi.getAll();
 
-    const workers = result.data.map(wk => wk.name);
+    const workers = result.data.map((wk) => wk.name);
     expect(workers.includes(wkCluster.name)).to.be.false;
   });
 
@@ -184,7 +185,7 @@ describe('Worker API', () => {
     expect(runningWkRes.data.state).to.eq(SERVICE_STATE.RUNNING);
     expect(runningWkRes.data.nodeNames).have.lengthOf(1);
 
-    const { node: newNode } = await createServices({ withNode: true });
+    const { node: newNode } = await createServicesInNodes();
     await wkApi.addNode(wkCluster, newNode.hostname);
     const result = await wkApi.get(wkCluster);
 
@@ -240,7 +241,7 @@ describe('Worker API', () => {
     expect(runningWkRes.data.state).to.eq(SERVICE_STATE.RUNNING);
     expect(runningWkRes.data.nodeNames).have.lengthOf(1);
 
-    const { node: newNode } = await createServices({ withNode: true });
+    const { node: newNode } = await createServicesInNodes();
     await wkApi.addNode(wkCluster, newNode.hostname);
     const twoNodeWkData = await wkApi.get(wkCluster);
 

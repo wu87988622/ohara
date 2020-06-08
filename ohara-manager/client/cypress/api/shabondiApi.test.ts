@@ -18,23 +18,24 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+// Note: Do not change the usage of absolute path
+// unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as shabondiApi from '../../src/api/shabondiApi';
 import * as inspectApi from '../../src/api/inspectApi';
+import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
+import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 import {
-  createServices,
+  createServicesInNodes,
   deleteAllServices,
   assertSettingsByDefinitions,
 } from '../utils';
-import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 
 const generateShabondi = async () => {
-  const { node, broker } = await createServices({
+  const { node, broker } = await createServicesInNodes({
     withBroker: true,
     withZookeeper: true,
-    withNode: true,
   });
 
   const topic = {
@@ -80,7 +81,7 @@ describe('Shabondi API', () => {
     const result = await shabondiApi.create(shabondi);
     const info = await inspectApi.getShabondiInfo();
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === shabondi.shabondi__class,
+      (classInfo) => classInfo.className === shabondi.shabondi__class,
     );
 
     if (defs) {
@@ -101,7 +102,7 @@ describe('Shabondi API', () => {
     const result = await shabondiApi.get(shabondi);
     const info = await inspectApi.getShabondiInfo();
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === shabondi.shabondi__class,
+      (classInfo) => classInfo.className === shabondi.shabondi__class,
     );
 
     if (defs) {
@@ -124,7 +125,7 @@ describe('Shabondi API', () => {
 
     const result = await shabondiApi.getAll();
 
-    const shabondis = result.data.map(zk => zk.name);
+    const shabondis = result.data.map((zk) => zk.name);
     expect(shabondis.includes(shabondi1.name)).to.be.true;
     expect(shabondis.includes(shabondi2.name)).to.be.true;
   });
@@ -137,7 +138,7 @@ describe('Shabondi API', () => {
     await shabondiApi.remove(shabondi);
     const result = await shabondiApi.getAll();
 
-    const shabondis = result.data.map(shabondi => shabondi.name);
+    const shabondis = result.data.map((shabondi) => shabondi.name);
     expect(shabondis.includes(shabondi.name)).to.be.false;
 
     // delete a running shabondi
@@ -162,7 +163,7 @@ describe('Shabondi API', () => {
     const result = await shabondiApi.update(newShabondi);
     const info = await inspectApi.getShabondiInfo();
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === shabondi.shabondi__class,
+      (classInfo) => classInfo.className === shabondi.shabondi__class,
     );
 
     if (defs) {
@@ -205,7 +206,7 @@ describe('Shabondi API', () => {
     await shabondiApi.remove(shabondi);
     const result = await shabondiApi.getAll();
 
-    const shabondis = result.data.map(shabondi => shabondi.name);
+    const shabondis = result.data.map((shabondi) => shabondi.name);
     expect(shabondis.includes(shabondi.name)).to.be.false;
   });
 });

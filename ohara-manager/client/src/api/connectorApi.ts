@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+// Note: Do not change the usage of absolute path
+// unless you have a solution to resolve TypeScript + Coverage
 import { omit } from 'lodash';
-import { RESOURCE, API, COMMAND } from 'api/utils/apiUtils';
+import { RESOURCE, API, COMMAND } from '../api/utils/apiUtils';
 import { ObjectKey, BasicResponse } from './apiInterface/basicInterface';
 import {
   ConnectorResponse,
@@ -75,12 +77,4 @@ export const forceStop = (objectKey: ObjectKey) => {
     action: COMMAND.STOP,
     queryParams: { force: true },
   });
-};
-
-export const addNode = (objectKey: ObjectKey, nodeName: string) => {
-  return connectorApi.addNode<BasicResponse>({ objectKey, nodeName });
-};
-
-export const removeNode = (objectKey: ObjectKey, nodeName: string) => {
-  return connectorApi.removeNode<BasicResponse>({ objectKey, nodeName });
 };

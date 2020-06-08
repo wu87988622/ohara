@@ -18,23 +18,24 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+// Note: Do not change the usage of absolute path
+// unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as inspectApi from '../../src/api/inspectApi';
 import { SOURCES, State } from '../../src/api/apiInterface/connectorInterface';
 import * as topicApi from '../../src/api/topicApi';
 import {
-  createServices,
+  createServicesInNodes,
   deleteAllServices,
   assertSettingsByDefinitions,
 } from '../utils';
 
 const generateConnector = async () => {
-  const { node, broker, worker } = await createServices({
+  const { node, broker, worker } = await createServicesInNodes({
     withWorker: true,
     withBroker: true,
     withZookeeper: true,
-    withNode: true,
   });
   const topic = {
     name: generate.serviceName({ prefix: 'topic' }),
@@ -74,7 +75,7 @@ describe('Connector API', () => {
     const result = await connectorApi.create(connector);
     const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === connector.connector__class,
+      (classInfo) => classInfo.className === connector.connector__class,
     );
 
     if (defs) {
@@ -95,7 +96,7 @@ describe('Connector API', () => {
     const result = await connectorApi.get(connector);
     const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === connector.connector__class,
+      (classInfo) => classInfo.className === connector.connector__class,
     );
 
     if (defs) {
@@ -118,7 +119,7 @@ describe('Connector API', () => {
 
     const result = await connectorApi.getAll();
 
-    const connectors = result.data.map(connector => connector.name);
+    const connectors = result.data.map((connector) => connector.name);
     expect(connectors.includes(connectorOne.name)).to.be.true;
     expect(connectors.includes(connectorTwo.name)).to.be.true;
   });
@@ -131,7 +132,7 @@ describe('Connector API', () => {
     await connectorApi.remove(connector);
     const result = await connectorApi.getAll();
 
-    const brokers = result.data.map(connector => connector.name);
+    const brokers = result.data.map((connector) => connector.name);
     expect(brokers.includes(connector.name)).to.be.false;
 
     // delete a running connector
@@ -157,7 +158,7 @@ describe('Connector API', () => {
     const result = await connectorApi.update(newConnector);
     const info = await inspectApi.getWorkerInfo(connector.workerClusterKey);
     const defs = info.data.classInfos.find(
-      classInfo => classInfo.className === connector.connector__class,
+      (classInfo) => classInfo.className === connector.connector__class,
     );
 
     if (defs) {
@@ -242,7 +243,7 @@ describe('Connector API', () => {
     await connectorApi.remove(connector);
     const result = await connectorApi.getAll();
 
-    const connectors = result.data.map(connector => connector.name);
+    const connectors = result.data.map((connector) => connector.name);
     expect(connectors.includes(connector.name)).to.be.false;
   });
 });

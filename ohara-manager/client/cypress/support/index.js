@@ -32,8 +32,10 @@
 // eslint complain we use an undef object which is cypress pre-defined object "chai"
 /* eslint-disable no-undef */
 
+import '@cypress/code-coverage/support';
+
 import './defaultCommands';
-import './e2eCommands';
+import './customCommands';
 import './retryOnFail';
 import { deleteAllServices } from '../utils';
 

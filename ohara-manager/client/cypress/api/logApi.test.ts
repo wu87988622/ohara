@@ -18,12 +18,16 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 // eslint is complaining about `expect(thing).to.be.undefined`
 
+// Note: Do not change the usage of absolute path
+// unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
 import * as logApi from '../../src/api/logApi';
 import * as topicApi from '../../src/api/topicApi';
 import * as streamApi from '../../src/api/streamApi';
+import * as shabondiApi from '../../src/api/shabondiApi';
 import * as fileApi from '../../src/api/fileApi';
-import { createServices, deleteAllServices } from '../utils';
+import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { createServicesInNodes, deleteAllServices } from '../utils';
 
 const file = {
   fixturePath: 'stream',
@@ -33,20 +37,16 @@ const file = {
 };
 
 const generateCluster = async () => {
-  const result = await createServices({
+  const result = await createServicesInNodes({
     withWorker: true,
     withBroker: true,
     withZookeeper: true,
-    withNode: true,
   });
   return result;
 };
 
 describe('Log API', () => {
-  beforeEach(async () => {
-    await deleteAllServices();
-    cy.createJar(file).then(params => fileApi.create(params));
-  });
+  beforeEach(() => deleteAllServices());
 
   it('fetchConfiguratorLog', async () => {
     const result = await logApi.getConfiguratorLog();
@@ -58,61 +58,91 @@ describe('Log API', () => {
     expect(logs).to.be.an('array');
   });
 
-  it('fetchServiceLog', async () => {
-    const { node, zookeeper, broker, worker } = await generateCluster();
+  it('fetchServiceLog', () => {
+    cy.createJar(file)
+      .then((params) => fileApi.create(params))
+      .then(async () => {
+        const { node, zookeeper, broker, worker } = await generateCluster();
 
-    const logZookeeper = await logApi.getZookeeperLog(zookeeper);
+        const logZookeeper = await logApi.getZookeeperLog(zookeeper);
 
-    expect(logZookeeper.data.clusterKey.name).to.be.eq(zookeeper.name);
-    expect(logZookeeper.data.clusterKey.group).to.be.eq(zookeeper.group);
-    expect(logZookeeper.data.logs).to.be.an('array');
+        expect(logZookeeper.data.clusterKey.name).to.be.eq(zookeeper.name);
+        expect(logZookeeper.data.clusterKey.group).to.be.eq(zookeeper.group);
+        expect(logZookeeper.data.logs).to.be.an('array');
 
-    const logBroker = await logApi.getBrokerLog(broker);
+        const logBroker = await logApi.getBrokerLog(broker);
 
-    expect(logBroker.data.clusterKey.name).to.be.eq(broker.name);
-    expect(logBroker.data.clusterKey.group).to.be.eq(broker.group);
-    expect(logBroker.data.logs).to.be.an('array');
+        expect(logBroker.data.clusterKey.name).to.be.eq(broker.name);
+        expect(logBroker.data.clusterKey.group).to.be.eq(broker.group);
+        expect(logBroker.data.logs).to.be.an('array');
 
-    const logWorker = await logApi.getWorkerLog(worker);
+        const logWorker = await logApi.getWorkerLog(worker);
 
-    expect(logWorker.data.clusterKey.name).to.be.eq(worker.name);
-    expect(logWorker.data.clusterKey.group).to.be.eq(worker.group);
-    expect(logWorker.data.logs).to.be.an('array');
+        expect(logWorker.data.clusterKey.name).to.be.eq(worker.name);
+        expect(logWorker.data.clusterKey.group).to.be.eq(worker.group);
+        expect(logWorker.data.logs).to.be.an('array');
 
-    const topic = {
-      name: generate.serviceName({ prefix: 'topic' }),
-      group: generate.serviceName({ prefix: 'group' }),
-      nodeNames: [node.hostname],
-      brokerClusterKey: {
-        name: broker.name,
-        group: broker.group,
-      },
-    };
-    await topicApi.create(topic);
-    await topicApi.start(topic);
+        const topic = {
+          name: generate.serviceName({ prefix: 'topic' }),
+          group: generate.serviceName({ prefix: 'group' }),
+          nodeNames: [node.hostname],
+          brokerClusterKey: {
+            name: broker.name,
+            group: broker.group,
+          },
+        };
+        await topicApi.create(topic);
+        await topicApi.start(topic);
 
-    const stream = {
-      name: generate.serviceName({ prefix: 'stream' }),
-      group: generate.serviceName({ prefix: 'group' }),
-      nodeNames: [node.hostname],
-      brokerClusterKey: {
-        name: broker.name,
-        group: broker.group,
-      },
-      jarKey: {
-        name: file.name,
-        group: file.group,
-      },
-      from: [{ name: topic.name, group: topic.group }],
-      to: [{ name: topic.name, group: topic.group }],
-    };
-    await streamApi.create(stream);
-    await streamApi.start(stream);
+        const stream = {
+          name: generate.serviceName({ prefix: 'stream' }),
+          group: generate.serviceName({ prefix: 'group' }),
+          nodeNames: [node.hostname],
+          brokerClusterKey: {
+            name: broker.name,
+            group: broker.group,
+          },
+          jarKey: {
+            name: file.name,
+            group: file.group,
+          },
+          from: [{ name: topic.name, group: topic.group }],
+          to: [{ name: topic.name, group: topic.group }],
+        };
+        await streamApi.create(stream);
+        await streamApi.start(stream);
 
-    const logStream = await logApi.getStreamLog(stream);
+        const logStream = await logApi.getStreamLog(stream);
 
-    expect(logStream.data.clusterKey.name).to.be.eq(stream.name);
-    expect(logStream.data.clusterKey.group).to.be.eq(stream.group);
-    expect(logStream.data.logs).to.be.an('array');
+        expect(logStream.data.clusterKey.name).to.be.eq(stream.name);
+        expect(logStream.data.clusterKey.group).to.be.eq(stream.group);
+        expect(logStream.data.logs).to.be.an('array');
+
+        const shabondi = {
+          name: generate.serviceName({ prefix: 'shabondi' }),
+          group: generate.serviceName({ prefix: 'group' }),
+          shabondi__class: SOURCES.shabondi,
+          shabondi__client__port: 1234,
+          nodeNames: [node.hostname],
+          brokerClusterKey: {
+            name: broker.name,
+            group: broker.group,
+          },
+          shabondi__source__toTopics: [
+            { name: topic.name, group: topic.group },
+          ],
+          shabondi__sink__fromTopics: [
+            { name: topic.name, group: topic.group },
+          ],
+        };
+        await shabondiApi.create(shabondi);
+        await shabondiApi.start(shabondi);
+
+        const logShabondi = await logApi.getShabondiLog(shabondi);
+
+        expect(logShabondi.data.clusterKey.name).to.be.eq(shabondi.name);
+        expect(logShabondi.data.clusterKey.group).to.be.eq(shabondi.group);
+        expect(logShabondi.data.logs).to.be.an('array');
+      });
   });
 });

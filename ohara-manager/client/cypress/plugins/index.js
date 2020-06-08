@@ -30,13 +30,19 @@
 // in plugins/index.js
 const fs = require('fs');
 const path = require('path');
-const wp = require('@cypress/webpack-preprocessor');
+const browserify = require('@cypress/browserify-preprocessor');
 
 module.exports = (on, config) => {
-  const options = {
-    webpackOptions: require('../webpack.config'),
-  };
-  on('file:preprocessor', wp(options));
+  require('@cypress/code-coverage/task')(on, config);
+  on(
+    'file:preprocessor',
+    browserify({
+      onBundle(bundle) {
+        bundle.transform(require('browserify-istanbul'));
+      },
+      typescript: require.resolve('typescript'),
+    }),
+  );
 
   const configFile = process.env.CYPRESS_CONFIG_FILE;
 
