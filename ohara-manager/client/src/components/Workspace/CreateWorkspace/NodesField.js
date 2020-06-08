@@ -20,9 +20,7 @@ import { filter, includes, map, reject } from 'lodash';
 import Grid from '@material-ui/core/Grid';
 import FormHelperText from '@material-ui/core/FormHelperText';
 
-import * as context from 'context';
 import * as hooks from 'hooks';
-import { MODE } from 'const';
 import Card from 'components/Workspace/Card/WorkspaceCard';
 import SelectCard from 'components/Workspace/Card/SelectCard';
 import { NodeSelectorDialog } from 'components/Node';
@@ -42,8 +40,6 @@ const NodesField = (props) => {
     meta: { touched, error },
   } = props;
 
-  const { data: configuratorInfo } = context.useConfiguratorState();
-  const mode = configuratorInfo?.mode;
   const allNodes = hooks.useAllNodes();
   const createNode = hooks.useCreateNodeAction();
   const fetchNodes = hooks.useFetchNodesAction();
@@ -117,15 +113,14 @@ const NodesField = (props) => {
           nodes: allNodes,
           onCreate: createNode,
           options: {
-            mode,
             onRefreshIconClick: fetchNodes,
             selectedNodes,
             disabledNodes: filter(
               allNodes,
               (node) => node.state === NODE_STATE.UNAVAILABLE,
             ),
-            showCreateIcon: mode !== MODE.K8S,
-            showRefreshIcon: mode === MODE.K8S,
+            showCreateIcon: true,
+            showRefreshIcon: true,
           },
           title: 'All node',
         }}

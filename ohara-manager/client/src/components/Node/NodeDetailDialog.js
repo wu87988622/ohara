@@ -22,7 +22,7 @@ import Dialog from 'components/common/Dialog/Dialog';
 import NodeInfoTable from './NodeInfoTable';
 import NodeServiceTable from './NodeServiceTable';
 
-function NodeDetailDialog({ mode, node, isOpen, onClose }) {
+function NodeDetailDialog({ node, isOpen, onClose }) {
   return (
     <Dialog
       maxWidth="md"
@@ -33,7 +33,7 @@ function NodeDetailDialog({ mode, node, isOpen, onClose }) {
     >
       <Grid container spacing={3}>
         <Grid item md={4} xs={12}>
-          {node && <NodeInfoTable mode={mode} node={node} />}
+          {node && <NodeInfoTable node={node} />}
         </Grid>
         <Grid item md={8} xs={12}>
           {node && <NodeServiceTable node={node} />}
@@ -45,7 +45,6 @@ function NodeDetailDialog({ mode, node, isOpen, onClose }) {
 
 NodeDetailDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  mode: PropTypes.string,
   node: PropTypes.object,
   onClose: PropTypes.func,
 };

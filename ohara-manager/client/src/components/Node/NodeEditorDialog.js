@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Field } from 'react-final-form';
 
-import { MODE } from 'const';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -30,7 +29,7 @@ import {
 
 const parsePort = (value) => (isNaN(parseInt(value)) ? '' : parseInt(value));
 
-const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
+const NodeEditorDialog = ({ isOpen, node, onClose, onConfirm }) => {
   return (
     <Form
       initialValues={{}}
@@ -60,53 +59,49 @@ const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
                 placeholder="node-01"
                 type="text"
               />
-              {mode === MODE.DOCKER && (
-                <>
-                  <Field
-                    component={InputField}
-                    defaultValue={node?.port}
-                    helperText="SSH port of the node"
-                    inputProps={{
-                      min: 1,
-                      max: 65535,
-                    }}
-                    label="Port"
-                    margin="normal"
-                    name="port"
-                    parse={parsePort}
-                    placeholder="22"
-                    type="number"
-                    validate={composeValidators(
-                      required,
-                      minNumber(1),
-                      maxNumber(65535),
-                    )}
-                  />
-                  <Field
-                    component={InputField}
-                    defaultValue={node?.user}
-                    fullWidth
-                    helperText="SSH username"
-                    label="User"
-                    margin="normal"
-                    name="user"
-                    placeholder="admin"
-                    validate={required}
-                  />
-                  <Field
-                    component={InputField}
-                    defaultValue={node?.password}
-                    fullWidth
-                    helperText="SSH password"
-                    label="Password"
-                    margin="normal"
-                    name="password"
-                    placeholder="password"
-                    type="password"
-                    validate={required}
-                  />
-                </>
-              )}
+              <Field
+                component={InputField}
+                defaultValue={node?.port}
+                helperText="SSH port of the node"
+                inputProps={{
+                  min: 1,
+                  max: 65535,
+                }}
+                label="Port"
+                margin="normal"
+                name="port"
+                parse={parsePort}
+                placeholder="22"
+                type="number"
+                validate={composeValidators(
+                  required,
+                  minNumber(1),
+                  maxNumber(65535),
+                )}
+              />
+              <Field
+                component={InputField}
+                defaultValue={node?.user}
+                fullWidth
+                helperText="SSH username"
+                label="User"
+                margin="normal"
+                name="user"
+                placeholder="admin"
+                validate={required}
+              />
+              <Field
+                component={InputField}
+                defaultValue={node?.password}
+                fullWidth
+                helperText="SSH password"
+                label="Password"
+                margin="normal"
+                name="password"
+                placeholder="password"
+                type="password"
+                validate={required}
+              />
             </form>
           </Dialog>
         );
@@ -117,7 +112,6 @@ const NodeEditorDialog = ({ isOpen, mode, node, onClose, onConfirm }) => {
 
 NodeEditorDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  mode: PropTypes.string,
   node: PropTypes.shape({
     hostname: PropTypes.string,
     port: PropTypes.number,
@@ -129,7 +123,6 @@ NodeEditorDialog.propTypes = {
 };
 
 NodeEditorDialog.defaultProps = {
-  mode: MODE.K8S,
   node: null,
   onClose: () => {},
 };

@@ -40,7 +40,7 @@ import CreateIcon from '@material-ui/icons/Create';
 import RefreshOutlinedIcon from '@material-ui/icons/RefreshOutlined';
 
 import { Actions, MuiTable as Table } from 'components/common/Table';
-import { KIND, MODE } from 'const';
+import { KIND } from 'const';
 import NodeCreateDialog from './NodeCreateDialog';
 import NodeDeleteDialog from './NodeDeleteDialog';
 import NodeDetailDialog from './NodeDetailDialog';
@@ -54,7 +54,6 @@ const defaultOptions = {
   customColumns: [],
   disabledDeleteIcon: false,
   disabledRemoveIcon: false,
-  mode: MODE.K8S,
   onCreateIconClick: null,
   onDeleteIconClick: null,
   onDetailIconClick: null,
@@ -409,7 +408,6 @@ function NodeTable(props) {
 
       <NodeCreateDialog
         isOpen={isCreateDialogOpen}
-        mode={options?.mode}
         onClose={() => setIsCreateDialogOpen(false)}
         onConfirm={onCreate}
       />
@@ -421,13 +419,11 @@ function NodeTable(props) {
       />
       <NodeDetailDialog
         isOpen={isDetailDialogOpen}
-        mode={options?.mode}
         node={activeNode}
         onClose={() => setIsDetailDialogOpen(false)}
       />
       <NodeEditorDialog
         isOpen={isEditorDialogOpen}
-        mode={options?.mode}
         node={activeNode}
         onClose={() => setIsEditorDialogOpen(false)}
         onConfirm={handleEditorDialogConfirm}
@@ -482,7 +478,6 @@ NodeTable.propTypes = {
     ),
     disabledDeleteIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
     disabledRemoveIcon: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
-    mode: PropTypes.string,
     onAddIconClick: PropTypes.func,
     onCreateIconClick: PropTypes.func,
     onDeleteIconClick: PropTypes.func,

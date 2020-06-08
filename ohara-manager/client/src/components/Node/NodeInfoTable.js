@@ -27,10 +27,9 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 
-import { MODE } from 'const';
 import NodeStateChip from './NodeStateChip';
 
-function NodeInfoTable({ mode, node }) {
+function NodeInfoTable({ node }) {
   if (!node) return null;
 
   return (
@@ -44,22 +43,18 @@ function NodeInfoTable({ mode, node }) {
               <TableCell>Hostname</TableCell>
               <TableCell>{node?.hostname}</TableCell>
             </TableRow>
-            {mode === MODE.DOCKER && (
-              <>
-                <TableRow>
-                  <TableCell>Port</TableCell>
-                  <TableCell>{node?.port || 'Unknown'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>{node?.user || 'Unknown'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Password</TableCell>
-                  <TableCell>{node?.password || 'Unknown'}</TableCell>
-                </TableRow>
-              </>
-            )}
+            <TableRow>
+              <TableCell>Port</TableCell>
+              <TableCell>{node?.port || 'Unknown'}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>User</TableCell>
+              <TableCell>{node?.user || 'Unknown'}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Password</TableCell>
+              <TableCell>{node?.password || 'Unknown'}</TableCell>
+            </TableRow>
             {map(node?.resources, (resource) => (
               <TableRow key={resource.name}>
                 <TableCell>{resource.name}</TableCell>
@@ -86,7 +81,6 @@ function NodeInfoTable({ mode, node }) {
 }
 
 NodeInfoTable.propTypes = {
-  mode: PropTypes.string,
   node: PropTypes.shape({
     hostname: PropTypes.string,
     port: PropTypes.number,

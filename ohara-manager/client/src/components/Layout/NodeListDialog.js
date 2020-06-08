@@ -19,11 +19,10 @@ import PropTypes from 'prop-types';
 
 import { FullScreenDialog } from 'components/common/Dialog';
 import { NodeTable } from 'components/Node';
-import { MODE } from 'const';
 import * as hooks from 'hooks';
 
 const NodeListDialog = (props) => {
-  const { isOpen, mode, nodes, onClose } = props;
+  const { isOpen, nodes, onClose } = props;
 
   const createNode = hooks.useCreateNodeAction();
   const deleteNode = hooks.useDeleteNodeAction();
@@ -55,13 +54,12 @@ const NodeListDialog = (props) => {
         onDelete={handleDelete}
         onUpdate={handleUpdate}
         options={{
-          mode,
           onRefreshIconClick: fetchNodes,
           selection: false,
-          showCreateIcon: mode !== MODE.K8S,
-          showDeleteIcon: mode === MODE.DOCKER,
-          showEditorIcon: mode === MODE.DOCKER,
-          showRefreshIcon: mode === MODE.K8S,
+          showCreateIcon: true,
+          showDeleteIcon: true,
+          showEditorIcon: true,
+          showRefreshIcon: true,
         }}
         title="All nodes"
       />
@@ -71,13 +69,11 @@ const NodeListDialog = (props) => {
 
 NodeListDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  mode: PropTypes.string,
   nodes: PropTypes.array,
   onClose: PropTypes.func,
 };
 
 NodeListDialog.defaultProps = {
-  mode: MODE.K8S,
   nodes: [],
   onClose: () => {},
 };

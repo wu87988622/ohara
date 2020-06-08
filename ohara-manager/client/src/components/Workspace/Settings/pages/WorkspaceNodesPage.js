@@ -18,9 +18,7 @@ import React, { useState, useRef } from 'react';
 import { capitalize, includes, join, map, reject, some, toUpper } from 'lodash';
 
 import { NodeSelectorDialog, NodeTable } from 'components/Node';
-import * as context from 'context';
 import * as hooks from 'hooks';
-import { MODE } from 'const';
 
 const BROKER = 'broker';
 const STREAM = 'stream';
@@ -28,7 +26,6 @@ const WORKER = 'worker';
 const ZOOKEEPER = 'zookeeper';
 
 function WorkspaceNodesPage() {
-  const { data: configuratorInfo } = context.useConfiguratorState();
   const allNodes = hooks.useAllNodes();
   const nodesInWorkspace = hooks.useNodesInWorkspace();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
@@ -139,7 +136,6 @@ function WorkspaceNodesPage() {
               isUsedByZookeeper(node)
             );
           },
-          mode: configuratorInfo?.mode,
           onAddIconClick: handleAddIconClick,
           showAddIcon: true,
           showCreateIcon: false,
@@ -161,7 +157,7 @@ function WorkspaceNodesPage() {
           options: {
             onRefreshIconClick: fetchNodes,
             selectedNodes: nodesInWorkspace,
-            showRefreshIcon: configuratorInfo?.mode === MODE.K8S,
+            showRefreshIcon: true,
           },
           title: 'All nodes',
         }}

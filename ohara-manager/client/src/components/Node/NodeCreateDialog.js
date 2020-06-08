@@ -20,7 +20,6 @@ import { Form, Field } from 'react-final-form';
 import { FORM_ERROR } from 'final-form';
 import Typography from '@material-ui/core/Typography';
 
-import { MODE } from 'const';
 import { InputField } from 'components/common/Form';
 import { Dialog } from 'components/common/Dialog';
 import {
@@ -31,7 +30,7 @@ import {
   composeValidators,
 } from 'utils/validate';
 
-const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
+const NodeCreateDialog = ({ isOpen, onClose, onConfirm }) => {
   return (
     <Form
       initialValues={{}}
@@ -70,50 +69,45 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
                 type="text"
                 validate={composeValidators(required, maxLength(63))}
               />
-
-              {mode !== MODE.K8S && (
-                <>
-                  <Field
-                    component={InputField}
-                    helperText="SSH port of the node"
-                    inputProps={{
-                      min: 1,
-                      max: 65535,
-                    }}
-                    label="Port"
-                    margin="normal"
-                    name="port"
-                    placeholder="22"
-                    type="number"
-                    validate={composeValidators(
-                      required,
-                      minNumber(1),
-                      maxNumber(65535),
-                    )}
-                  />
-                  <Field
-                    component={InputField}
-                    fullWidth
-                    helperText="SSH username"
-                    label="User"
-                    margin="normal"
-                    name="user"
-                    placeholder="admin"
-                    validate={required}
-                  />
-                  <Field
-                    component={InputField}
-                    fullWidth
-                    helperText="SSH password"
-                    label="Password"
-                    margin="normal"
-                    name="password"
-                    placeholder="password"
-                    type="password"
-                    validate={required}
-                  />
-                </>
-              )}
+              <Field
+                component={InputField}
+                helperText="SSH port of the node"
+                inputProps={{
+                  min: 1,
+                  max: 65535,
+                }}
+                label="Port"
+                margin="normal"
+                name="port"
+                placeholder="22"
+                type="number"
+                validate={composeValidators(
+                  required,
+                  minNumber(1),
+                  maxNumber(65535),
+                )}
+              />
+              <Field
+                component={InputField}
+                fullWidth
+                helperText="SSH username"
+                label="User"
+                margin="normal"
+                name="user"
+                placeholder="admin"
+                validate={required}
+              />
+              <Field
+                component={InputField}
+                fullWidth
+                helperText="SSH password"
+                label="Password"
+                margin="normal"
+                name="password"
+                placeholder="password"
+                type="password"
+                validate={required}
+              />
               {submitError && (
                 <Typography align="center" color="error" variant="h5">
                   {submitError}
@@ -129,13 +123,11 @@ const NodeCreateDialog = ({ isOpen, onClose, onConfirm, mode }) => {
 
 NodeCreateDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  mode: PropTypes.string,
   onClose: PropTypes.func,
   onConfirm: PropTypes.func.isRequired,
 };
 
 NodeCreateDialog.defaultProps = {
-  mode: MODE.K8S,
   onClose: () => {},
 };
 
