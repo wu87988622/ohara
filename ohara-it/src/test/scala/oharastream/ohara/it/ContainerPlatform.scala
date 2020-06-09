@@ -75,9 +75,12 @@ object ContainerPlatform {
     */
   val DOCKER_NODES_KEY = "ohara.it.docker"
   private[this] def _k8sMode: Option[ContainerPlatform] =
-    sys.env
-      .get(ContainerPlatform.K8S_MASTER_KEY)
-      .map { masterUrl =>
+    Seq(
+      sys.env.get(ContainerPlatform.K8S_MASTER_KEY),
+      // k8s mode needs user and password passed by docker arguments
+      sys.env.get(ContainerPlatform.DOCKER_NODES_KEY)
+    ).flatten match {
+      case Seq(masterUrl, plainNodes) =>
         def createClient(): K8SClient = {
           val metricsUrl = sys.env.get(ContainerPlatform.K8S_METRICS_SERVER_URL).orNull
           K8SClient.builder
@@ -87,21 +90,25 @@ object ContainerPlatform {
             .build()
         }
         val containerClient = createClient()
-        try ContainerPlatform.builder
-        // the master node is NOT able to run pods by default so we must exclude it
-          .excludedHostname(new URL(masterUrl).getHost)
-          .modeName("K8S")
-          .nodes(result(containerClient.nodes()).map(_.nodeName).map(Node.apply))
-          .clientCreator(() => createClient())
-          .arguments(
-            Seq(
-              "--k8s",
-              masterUrl
-            ) ++ containerClient.metricsUrl.map(s => Seq("--k8s-metrics-server", s)).getOrElse(Seq.empty)
-          )
-          .build
+        try Some(
+          ContainerPlatform.builder
+          // the master node is NOT able to run pods by default
+            .masterName(new URL(masterUrl).getHost)
+            .mode("K8S")
+            .nodes(parserNode(plainNodes))
+            .clientCreator(() => createClient())
+            .arguments(
+              Seq(
+                "--k8s",
+                masterUrl
+              ) ++ containerClient.metricsUrl.map(s => Seq("--k8s-metrics-server", s)).getOrElse(Seq.empty)
+            )
+            .build
+        )
         finally Releasable.close(containerClient)
-      }
+      case _ =>
+        None
+    }
 
   /**
     * @return k8s platform information. Or skip test
@@ -111,36 +118,40 @@ object ContainerPlatform {
       throw new AssumptionViolatedException(s"set ${ContainerPlatform.K8S_MASTER_KEY} to run IT on k8s mode")
     )
 
-  private[this] def parserNode(nodeInfo: String): Node = {
-    val user     = nodeInfo.split(":").head
-    val password = nodeInfo.split("@").head.split(":").last
-    val hostname = nodeInfo.split("@").last.split(":").head
-    val port     = nodeInfo.split("@").last.split(":").last.toInt
-    Node(
-      hostname = hostname,
-      port = Some(port),
-      user = Some(user),
-      password = Some(password),
-      services = Seq.empty,
-      state = State.AVAILABLE,
-      error = None,
-      lastModified = CommonUtils.current(),
-      resources = Seq.empty,
-      tags = Map.empty
-    )
+  private[this] def parserNode(plainNodes: String): Seq[Node] = {
+    def parse(nodeInfo: String): Node = {
+      val user     = nodeInfo.split(":").head
+      val password = nodeInfo.split("@").head.split(":").last
+      val hostname = nodeInfo.split("@").last.split(":").head
+      val port     = nodeInfo.split("@").last.split(":").last.toInt
+      Node(
+        hostname = hostname,
+        port = Some(port),
+        user = Some(user),
+        password = Some(password),
+        services = Seq.empty,
+        state = State.AVAILABLE,
+        error = None,
+        lastModified = CommonUtils.current(),
+        resources = Seq.empty,
+        tags = Map.empty
+      )
+    }
+    plainNodes.split(",").map(parse).toSeq
   }
 
   private[this] def _dockerMode: Option[ContainerPlatform] = {
     sys.env
       .get(ContainerPlatform.DOCKER_NODES_KEY)
-      .map(plainString => plainString.split(",").map(parserNode).toSeq)
-      .map { nodes =>
-        ContainerPlatform.builder
-          .modeName("DOCKER")
-          .nodes(nodes)
-          .clientCreator(() => DockerClient(DataCollie(nodes)))
-          .build
-      }
+      .map(parserNode)
+      .map(
+        nodes =>
+          ContainerPlatform.builder
+            .mode("DOCKER")
+            .nodes(nodes)
+            .clientCreator(() => DockerClient(DataCollie(nodes)))
+            .build
+      )
   }
 
   /**
@@ -235,14 +246,14 @@ object ContainerPlatform {
   def builder = new Builder
 
   private[ContainerPlatform] class Builder extends oharastream.ohara.common.pattern.Builder[ContainerPlatform] {
-    private[this] var modeName: String                     = _
+    private[this] var mode: String                         = _
     private[this] var nodes: Seq[Node]                     = Seq.empty
     private[this] var arguments: Seq[String]               = Seq.empty
-    private[this] var excludedHostname: Option[String]     = None
+    private[this] var masterName: Option[String]           = None
     private[this] var clientCreator: () => ContainerClient = _
 
-    def modeName(modeName: String): Builder = {
-      this.modeName = CommonUtils.requireNonEmpty(modeName)
+    def mode(mode: String): Builder = {
+      this.mode = CommonUtils.requireNonEmpty(mode)
       this
     }
 
@@ -262,14 +273,16 @@ object ContainerPlatform {
     }
 
     /**
-      * don't select this node as configurator node
-      * @param hostname excluded hostname
+      * the master name is NOT running any service later.
+      * @param masterName master hostname
       * @return this builder
       */
-    def excludedHostname(hostname: String): Builder = {
-      this.excludedHostname = Some(hostname)
+    def masterName(masterName: String): Builder = {
+      this.masterName = Some(masterName)
       this
     }
+
+    private[this] def slaveNodes: Seq[Node] = nodes.filterNot(n => masterName.contains(n.hostname))
 
     private[this] def createConfigurator(containerClient: ContainerClient): (String, String, Int) =
       try {
@@ -277,7 +290,7 @@ object ContainerPlatform {
           val images = result(containerClient.imageNames())
           images
             .filter(_._2.contains(s"oharastream/configurator:${VersionUtils.VERSION}"))
-            .filterNot(e => excludedHostname.contains(e._1))
+            .filterNot(e => masterName.contains(e._1))
             .keys
             .headOption
             .getOrElse(
@@ -303,7 +316,7 @@ object ContainerPlatform {
               ) ++ Objects.requireNonNull(arguments)
             )
             // add the routes manually since not all envs have deployed the DNS.
-            .routes(nodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap)
+            .routes(slaveNodes.map(node => node.hostname -> CommonUtils.address(node.hostname)).toMap)
             .name(configuratorName)
             .create()
         )
@@ -316,10 +329,10 @@ object ContainerPlatform {
               catch {
                 case _: Throwable => Seq.empty
               }
-              nodes
+              slaveNodes
                 .filterNot(node => existentNodes.exists(_.hostname == node.hostname))
                 .foreach(node => Releasable.close(() => result(nodeApi.request.node(node).create())))
-              existentNodes.size == nodes.size
+              existentNodes.size == slaveNodes.size
             },
             java.time.Duration.ofSeconds(60)
           )
@@ -354,9 +367,9 @@ object ContainerPlatform {
         override def setupContainerClient(): ContainerClient = clientCreator()
 
         override val nodeNames: Set[String] =
-          CommonUtils.requireNonEmpty(Builder.this.nodes.asJava).asScala.map(_.hostname).toSet
+          CommonUtils.requireNonEmpty(Builder.this.slaveNodes.asJava).asScala.map(_.hostname).toSet
 
-        override val toString: String = CommonUtils.requireNonEmpty(modeName)
+        override val toString: String = CommonUtils.requireNonEmpty(mode)
       }
     }
   }
