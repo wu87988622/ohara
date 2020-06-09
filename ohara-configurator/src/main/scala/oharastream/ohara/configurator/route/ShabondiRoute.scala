@@ -21,7 +21,6 @@ import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
 import oharastream.ohara.client.configurator.v0.ShabondiApi
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.shabondi.ShabondiDefinitions
@@ -49,7 +48,7 @@ private[configurator] object ShabondiRoute {
   }
 
   private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
     objectChecker.checkList
@@ -57,7 +56,7 @@ private[configurator] object ShabondiRoute {
       .brokerCluster(creation.brokerClusterKey)
       .references(creation.settings, creation.definitions)
       .check()
-      .map { _: ObjectChecker.ObjectInfos =>
+      .map { _ =>
         val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
           .more(
             (creation.shabondiClass match {
@@ -83,13 +82,13 @@ private[configurator] object ShabondiRoute {
   }
 
   private[this] def hookOfCreation(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfCreation[ShabondiClusterCreation, ShabondiClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[ShabondiClusterUpdating, ShabondiClusterInfo] =
     (key: ObjectKey, updating: ShabondiClusterUpdating, previousOption: Option[ShabondiClusterInfo]) =>
@@ -121,7 +120,7 @@ private[configurator] object ShabondiRoute {
       }
 
   private[this] def hookOfStart(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     shabondiCollie: ShabondiCollie,
     executionContext: ExecutionContext
   ): HookOfAction[ShabondiClusterInfo] =
@@ -144,14 +143,14 @@ private[configurator] object ShabondiRoute {
       }
       objectChecker.checkList
         .shabondi(clusterInfo.key)
-        .brokerCluster(clusterInfo.brokerClusterKey, RUNNING)
-        .topics(checkTopics, RUNNING)
+        .brokerCluster(clusterInfo.brokerClusterKey, DataCondition.RUNNING)
+        .topics(checkTopics, DataCondition.RUNNING)
         .check()
-        .flatMap { objInfo: ObjectChecker.ObjectInfos =>
+        .flatMap { objInfo =>
           val condition = objInfo.shabondiClusterInfos.head._2
           condition match {
-            case RUNNING => Future.unit
-            case STOPPED =>
+            case DataCondition.RUNNING => Future.unit
+            case DataCondition.STOPPED =>
               val brokerClusterInfo = objInfo.brokerClusterInfos.head._1
               shabondiCollie.creator
                 .settings(clusterInfo.settings)
@@ -173,7 +172,7 @@ private[configurator] object ShabondiRoute {
   @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     shabondiCollie: ShabondiCollie,
     serviceCollie: ServiceCollie,
     meterCache: MetricsCache,

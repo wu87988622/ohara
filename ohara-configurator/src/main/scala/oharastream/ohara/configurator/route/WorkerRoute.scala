@@ -23,7 +23,6 @@ import oharastream.ohara.client.configurator.v0.WorkerApi
 import oharastream.ohara.client.configurator.v0.WorkerApi._
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
@@ -32,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object WorkerRoute {
   private[this] def creationToClusterInfo(
     creation: Creation
-  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[WorkerClusterInfo] =
+  )(implicit objectChecker: DataChecker, executionContext: ExecutionContext): Future[WorkerClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
@@ -52,20 +51,20 @@ object WorkerRoute {
       )
 
   private[this] def hookOfCreation(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, WorkerClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, WorkerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[WorkerClusterInfo]) =>
       previousOption match {
         case None => creationToClusterInfo(WorkerApi.access.request.settings(updating.settings).key(key).creation)
         case Some(previous) =>
-          objectChecker.checkList.workerCluster(key, STOPPED).check().flatMap { _ =>
+          objectChecker.checkList.workerCluster(key, DataCondition.STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
             // 2) overwrite previous settings by updated settings
             // 3) fill the ignored settings by creation
@@ -89,14 +88,14 @@ object WorkerRoute {
   }
 
   private[this] def hookOfStart(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
       objectChecker.checkList
       // node names check is covered in super route
-        .brokerCluster(workerClusterInfo.brokerClusterKey, RUNNING)
+        .brokerCluster(workerClusterInfo.brokerClusterKey, DataCondition.RUNNING)
         .allWorkers()
         .check()
         .map(_.runningWorkers)
@@ -154,20 +153,20 @@ object WorkerRoute {
         .map(_ => ())
 
   private[this] def hookBeforeStop(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfAction[WorkerClusterInfo] =
     (workerClusterInfo: WorkerClusterInfo, _, _) =>
       objectChecker.checkList.allConnectors().check().map(_.runningConnectors).map(checkConflict(workerClusterInfo, _))
 
   private[this] def hookBeforeDelete(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookBeforeDelete =
     key =>
       objectChecker.checkList
         .allConnectors()
-        .workerCluster(key, STOPPED)
+        .workerCluster(key, DataCondition.STOPPED)
         .check()
         .map(report => (report.workerClusterInfos.keys.head, report.connectorInfos.keys.toSeq))
         .map {
@@ -175,15 +174,15 @@ object WorkerRoute {
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
-          case e: Throwable                                           => throw e
+          case e: DataCheckException if e.nonexistent.contains(key) => ()
+          case e: Throwable                                         => throw e
         }
         .map(_ => ())
 
   @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     meterCache: MetricsCache,
     workerCollie: WorkerCollie,
     serviceCollie: ServiceCollie,

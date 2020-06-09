@@ -23,7 +23,6 @@ import oharastream.ohara.client.configurator.v0.ZookeeperApi
 import oharastream.ohara.client.configurator.v0.ZookeeperApi._
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.STOPPED
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
@@ -33,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperRoute {
   private[this] def creationToClusterInfo(
     creation: Creation
-  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
+  )(implicit objectChecker: DataChecker, executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .references(creation.settings, DEFINITIONS)
@@ -49,20 +48,20 @@ object ZookeeperRoute {
       }
 
   private[this] def hookOfCreation(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, ZookeeperClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, ZookeeperClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
       previousOption match {
         case None => creationToClusterInfo(access.request.settings(updating.settings).key(key).creation)
         case Some(previous) =>
-          objectChecker.checkList.zookeeperCluster(key, STOPPED).check().flatMap { _ =>
+          objectChecker.checkList.zookeeperCluster(key, DataCondition.STOPPED).check().flatMap { _ =>
             creationToClusterInfo(
               // 1) fill the previous settings (if exists)
               // 2) overwrite previous settings by updated settings
@@ -79,7 +78,7 @@ object ZookeeperRoute {
 
   private[this] def hookOfStart(
     implicit serviceCollie: ServiceCollie,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _, _) =>
@@ -111,7 +110,7 @@ object ZookeeperRoute {
   }
 
   private[this] def hookBeforeStop(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfAction[ZookeeperClusterInfo] =
     (zookeeperClusterInfo: ZookeeperClusterInfo, _: String, _: Map[String, String]) =>
@@ -120,12 +119,12 @@ object ZookeeperRoute {
       }
 
   private[this] def hookBeforeDelete(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookBeforeDelete =
     key =>
       objectChecker.checkList
-        .zookeeperCluster(key, STOPPED)
+        .zookeeperCluster(key, DataCondition.STOPPED)
         .allBrokers()
         .check()
         .map(report => (report.zookeeperClusterInfos.head._1, report.brokerClusterInfos.keys.toSeq))
@@ -135,15 +134,15 @@ object ZookeeperRoute {
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
-          case e: Throwable                                           => throw e
+          case e: DataCheckException if e.nonexistent.contains(key) => ()
+          case e: Throwable                                         => throw e
         }
         .map(_ => ())
 
   @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     meterCache: MetricsCache,
     zookeeperCollie: ZookeeperCollie,
     serviceCollie: ServiceCollie,

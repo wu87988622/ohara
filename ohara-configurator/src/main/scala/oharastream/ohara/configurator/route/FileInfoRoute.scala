@@ -47,7 +47,7 @@ private[configurator] object FileInfoRoute {
   private[this] val LOG = Logger(FileInfoRoute.getClass)
 
   private[this] def hookBeforeDelete(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookBeforeDelete =
     (key: ObjectKey) =>
@@ -204,7 +204,7 @@ private[configurator] object FileInfoRoute {
     implicit store: DataStore,
     advertisedInfo: AdvertisedInfo,
     serviceCollie: ServiceCollie,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[FakeCreation, Updating, FileInfo]()

@@ -22,7 +22,6 @@ import oharastream.ohara.client.configurator.v0.StreamApi
 import oharastream.ohara.client.configurator.v0.StreamApi._
 import oharastream.ohara.common.setting.{ClassType, ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.stream.config.StreamDefUtils
@@ -32,7 +31,7 @@ import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
   private[this] def creationToClusterInfo(creation: Creation)(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): Future[StreamClusterInfo] =
     objectChecker.checkList
@@ -107,13 +106,13 @@ private[configurator] object StreamRoute {
       }
 
   private[this] def hookOfCreation(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, StreamClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, StreamClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[StreamClusterInfo]) =>
@@ -129,7 +128,7 @@ private[configurator] object StreamRoute {
         case Some(previous) =>
           objectChecker.checkList
           // we don't support to update a running stream
-            .stream(previous.key, STOPPED)
+            .stream(previous.key, DataCondition.STOPPED)
             .check()
             .flatMap { _ =>
               // 1) fill the previous settings (if exists)
@@ -147,7 +146,7 @@ private[configurator] object StreamRoute {
       }
 
   private[this] def hookOfStart(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     streamCollie: StreamCollie,
     executionContext: ExecutionContext
   ): HookOfAction[StreamClusterInfo] =
@@ -161,7 +160,7 @@ private[configurator] object StreamRoute {
       // node names check is covered in super route
         .stream(streamClusterInfo.key)
         .file(streamClusterInfo.jarKey)
-        .brokerCluster(streamClusterInfo.brokerClusterKey, RUNNING)
+        .brokerCluster(streamClusterInfo.brokerClusterKey, DataCondition.RUNNING)
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
           if (streamClusterInfo.toTopicKeys.isEmpty)
@@ -170,7 +169,7 @@ private[configurator] object StreamRoute {
               fieldNames = List(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key())
             )
           else streamClusterInfo.toTopicKeys,
-          RUNNING
+          DataCondition.RUNNING
         )
         .topics(
           // our UI needs to create a stream without topics so the stream info may has no topics...
@@ -180,7 +179,7 @@ private[configurator] object StreamRoute {
               fieldNames = List(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key())
             )
           else streamClusterInfo.fromTopicKeys,
-          RUNNING
+          DataCondition.RUNNING
         )
         .check()
         .map(
@@ -195,8 +194,8 @@ private[configurator] object StreamRoute {
         .flatMap {
           case (condition, fileInfo, brokerClusterInfo, topicInfos) =>
             condition match {
-              case RUNNING => Future.unit
-              case STOPPED =>
+              case DataCondition.RUNNING => Future.unit
+              case DataCondition.STOPPED =>
                 topicInfos.filter(_.brokerClusterKey != brokerClusterInfo.key).foreach { topicInfo =>
                   throw new IllegalArgumentException(
                     s"stream app counts on broker cluster:${streamClusterInfo.brokerClusterKey} " +
@@ -226,7 +225,7 @@ private[configurator] object StreamRoute {
   @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     streamCollie: StreamCollie,
     serviceCollie: ServiceCollie,
     meterCache: MetricsCache,

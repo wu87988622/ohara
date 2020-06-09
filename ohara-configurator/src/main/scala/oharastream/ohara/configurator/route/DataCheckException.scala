@@ -17,20 +17,18 @@
 package oharastream.ohara.configurator.route
 
 import oharastream.ohara.common.setting.ObjectKey
-import oharastream.ohara.configurator.route.ObjectChecker.Condition
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 
-final class ObjectCheckException(
+final class DataCheckException(
   val objectType: String,
   val nonexistent: Set[ObjectKey],
-  val illegalObjs: Map[ObjectKey, Condition]
+  val illegalObjs: Map[ObjectKey, DataCondition]
 ) extends RuntimeException(
       s"type:$objectType ${nonexistent.map(k => s"$k does not exist").mkString(",")} ${illegalObjs
         .map {
           case (key, condition) =>
             condition match {
-              case STOPPED => s"$key MUST be stopped"
-              case RUNNING => s"$key MUST be running"
+              case DataCondition.STOPPED => s"$key MUST be stopped"
+              case DataCondition.RUNNING => s"$key MUST be running"
             }
         }
         .mkString(",")}"

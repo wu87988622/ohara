@@ -47,7 +47,6 @@ import oharastream.ohara.common.setting.{ClassType, ConnectorKey, ObjectKey, Top
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.fake.FakeConnectorAdmin
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.RUNNING
 import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
@@ -136,7 +135,7 @@ private[configurator] object InspectRoute {
     dataStore: DataStore,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): server.Route = pathPrefix(KIND) {
     path(RDB_KIND) {
@@ -185,13 +184,13 @@ private[configurator] object InspectRoute {
             )
           complete(
             objectChecker.checkList
-              .topic(topicKey, RUNNING)
+              .topic(topicKey, DataCondition.RUNNING)
               .check()
               .map(_.topicInfos.head._1.brokerClusterKey)
               .flatMap(
                 brokerClusterKey =>
                   objectChecker.checkList
-                    .brokerCluster(brokerClusterKey, RUNNING)
+                    .brokerCluster(brokerClusterKey, DataCondition.RUNNING)
                     .check()
                     .map(_.runningBrokers.head.connectionProps)
               )

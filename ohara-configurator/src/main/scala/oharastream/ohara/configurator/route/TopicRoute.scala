@@ -24,7 +24,6 @@ import oharastream.ohara.client.configurator.v0.TopicApi._
 import oharastream.ohara.client.configurator.v0.{ShabondiApi, TopicApi}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
-import oharastream.ohara.configurator.route.ObjectChecker.Condition.{RUNNING, STOPPED}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.PartitionInfo
@@ -44,7 +43,7 @@ private[configurator] object TopicRoute {
   private[this] def updateState(topicInfo: TopicInfo)(
     implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): Future[TopicInfo] =
@@ -53,7 +52,7 @@ private[configurator] object TopicRoute {
       .check()
       .map(_.topicInfos.head._2)
       .flatMap {
-        case STOPPED =>
+        case DataCondition.STOPPED =>
           Future.successful(
             topicInfo.copy(
               partitionInfos = Seq.empty,
@@ -61,9 +60,9 @@ private[configurator] object TopicRoute {
               state = None
             )
           )
-        case RUNNING =>
+        case DataCondition.RUNNING =>
           objectChecker.checkList
-            .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+            .brokerCluster(topicInfo.brokerClusterKey, DataCondition.RUNNING)
             .check()
             .map(_.runningBrokers.head)
             .flatMap { brokerClusterInfo =>
@@ -114,7 +113,7 @@ private[configurator] object TopicRoute {
   private[this] def hookOfGet(
     implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): HookOfGet[TopicInfo] = (topicInfo: TopicInfo) => updateState(topicInfo)
@@ -122,7 +121,7 @@ private[configurator] object TopicRoute {
   private[this] def hookOfList(
     implicit meterCache: MetricsCache,
     adminCleaner: AdminCleaner,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): HookOfList[TopicInfo] =
@@ -130,7 +129,7 @@ private[configurator] object TopicRoute {
 
   private[this] def creationToTopicInfo(
     creation: Creation
-  )(implicit objectChecker: ObjectChecker, executionContext: ExecutionContext): Future[TopicInfo] =
+  )(implicit objectChecker: DataChecker, executionContext: ExecutionContext): Future[TopicInfo] =
     objectChecker.checkList
       .brokerCluster(creation.brokerClusterKey)
       .references(creation.settings, DEFINITIONS)
@@ -146,13 +145,13 @@ private[configurator] object TopicRoute {
       }
 
   private[this] def hookOfCreation(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfCreation[Creation, TopicInfo] =
     creationToTopicInfo(_)
 
   private[this] def hookOfUpdating(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, TopicInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[TopicInfo]) =>
@@ -169,7 +168,7 @@ private[configurator] object TopicRoute {
         case Some(previous) =>
           objectChecker.checkList
           // we don't support to update a running topic
-            .topic(previous.key, STOPPED)
+            .topic(previous.key, DataCondition.STOPPED)
             .check()
             .flatMap { _ =>
               // 1) fill the previous settings (if exists)
@@ -219,12 +218,12 @@ private[configurator] object TopicRoute {
   }
 
   private[this] def hookBeforeDelete(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookBeforeDelete =
     (key: ObjectKey) =>
       objectChecker.checkList
-        .topic(TopicKey.of(key.group(), key.name()), STOPPED)
+        .topic(TopicKey.of(key.group(), key.name()), DataCondition.STOPPED)
         .allConnectors()
         .allStreams()
         .check()
@@ -239,13 +238,13 @@ private[configurator] object TopicRoute {
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
-          case e: Throwable                                           => throw e
+          case e: DataCheckException if e.nonexistent.contains(key) => ()
+          case e: Throwable                                         => throw e
         }
         .map(_ => ())
 
   private[this] def hookOfStart(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     adminCleaner: AdminCleaner,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
@@ -253,14 +252,14 @@ private[configurator] object TopicRoute {
     (topicInfo: TopicInfo, _, _) =>
       objectChecker.checkList
         .topic(topicInfo.key)
-        .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+        .brokerCluster(topicInfo.brokerClusterKey, DataCondition.RUNNING)
         .check()
         .map(report => (report.topicInfos.head._2, report.runningBrokers.head))
         .flatMap {
           case (condition, brokerClusterInfo) =>
             condition match {
-              case RUNNING => Future.unit
-              case STOPPED =>
+              case DataCondition.RUNNING => Future.unit
+              case DataCondition.STOPPED =>
                 topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
                   topicAdmin.topicCreator
                     .topicKey(topicInfo.key)
@@ -281,7 +280,7 @@ private[configurator] object TopicRoute {
         }
 
   private[this] def hookOfStop(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     adminCleaner: AdminCleaner,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
@@ -300,12 +299,12 @@ private[configurator] object TopicRoute {
         .flatMap {
           case (condition, runningConnectors, runningStreams, runningShabondis) =>
             condition match {
-              case STOPPED => Future.unit
-              case RUNNING =>
+              case DataCondition.STOPPED => Future.unit
+              case DataCondition.RUNNING =>
                 checkConflict(topicInfo, runningConnectors, runningStreams, runningShabondis)
                 objectChecker.checkList
                 // topic is running so the related broker MUST be running
-                  .brokerCluster(topicInfo.brokerClusterKey, RUNNING)
+                  .brokerCluster(topicInfo.brokerClusterKey, DataCondition.RUNNING)
                   .check()
                   .map(_.runningBrokers.head)
                   .flatMap(b => topicAdmin(b))
@@ -321,7 +320,7 @@ private[configurator] object TopicRoute {
   @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     adminCleaner: AdminCleaner,
     meterCache: MetricsCache,
     brokerCollie: BrokerCollie,

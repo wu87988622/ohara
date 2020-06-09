@@ -101,7 +101,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] implicit val streamCollie: StreamCollie       = serviceCollie.streamCollie
   private[this] implicit val shabondiCollie: ShabondiCollie   = serviceCollie.shabondiCollie
   private[this] implicit val adminCleaner: AdminCleaner       = new AdminCleaner(cleanupTimeout)
-  private[this] implicit val objectChecker: ObjectChecker     = ObjectChecker()
+  private[this] implicit val objectChecker: DataChecker       = DataChecker()
 
   def mode: Mode = serviceCollie match {
     case _: ServiceCollieImpl                                     => Mode.DOCKER

@@ -208,7 +208,7 @@ object NodeRoute {
 
   private[this] def hookOfUpdating(
     implicit
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookOfUpdating[Updating, Node] =
     (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
@@ -267,7 +267,7 @@ object NodeRoute {
       }
 
   private[this] def hookBeforeDelete(
-    implicit objectChecker: ObjectChecker,
+    implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): HookBeforeDelete =
     (key: ObjectKey) =>
@@ -298,8 +298,8 @@ object NodeRoute {
         }
         .recover {
           // the duplicate deletes are legal to ohara
-          case e: ObjectCheckException if e.nonexistent.contains(key) => ()
-          case e: Throwable                                           => throw e
+          case e: DataCheckException if e.nonexistent.contains(key) => ()
+          case e: Throwable                                         => throw e
         }
         .map(_ => ())
 
@@ -307,7 +307,7 @@ object NodeRoute {
   def apply(
     implicit store: DataStore,
     advertisedInfo: AdvertisedInfo,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     serviceCollie: ServiceCollie,
     executionContext: ExecutionContext
   ): server.Route =

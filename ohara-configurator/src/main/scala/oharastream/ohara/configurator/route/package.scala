@@ -94,7 +94,7 @@ package object route {
     hookBeforeDelete: HookBeforeDelete
   )(
     implicit store: DataStore,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     meterCache: MetricsCache,
     collie: Collie,
     serviceCollie: ServiceCollie,
@@ -232,7 +232,7 @@ package object route {
     */
   private[this] def checkResourcesConflict[Cluster <: ClusterInfo: ClassTag](req: Cluster)(
     implicit executionContext: ExecutionContext,
-    objectChecker: ObjectChecker,
+    objectChecker: DataChecker,
     serviceCollie: ServiceCollie
   ): Future[Unit] =
     objectChecker.checkList
