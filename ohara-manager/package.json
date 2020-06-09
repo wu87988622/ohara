@@ -4,7 +4,7 @@
   "private": true,
   "main": "start.js",
   "engines": {
-    "node": "^10.16.3"
+    "node": ">=10.16.3 <13"
   },
   "scripts": {
     "preinstall": "node ./scripts/checkYarnVersion.js",

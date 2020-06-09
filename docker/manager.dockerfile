@@ -35,12 +35,12 @@ RUN tar -xvf $(find "/testpatch/ohara/ohara-manager/build/distributions" -maxdep
 FROM centos:7.7.1908
 
 # install nodejs
-# NOTED: ohara-manager requires nodejs 10.x
-RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+# NOTED: ohara-manager requires nodejs 12.x
+RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
 RUN yum install -y nodejs
 
 # install yarn
-RUN npm install -g yarn@1.17.3
+RUN npm install -g yarn@1.12.4
 
 # add user
 ARG USER=ohara
