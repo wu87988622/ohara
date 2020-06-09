@@ -37,7 +37,7 @@ RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
 RUN yum install -y nodejs
 
 # install yarn
-RUN npm install -g yarn@1.12.4
+RUN npm install -g yarn@1.22.4
 
 # install dependencies for cypress
 RUN yum install -y \
