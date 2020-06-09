@@ -66,6 +66,8 @@ const Toolbar = (props) => {
   const deletePipeline = hooks.useDeletePipelineAction();
   const streamAndConnectorGroup = hooks.useStreamGroup();
   const topicGroup = hooks.useTopicGroup();
+  const startUpdateMetrics = hooks.useStartUpdateMetricsAction();
+  const stopUpdateMetrics = hooks.useStopUpdateMetricsAction();
 
   const paperApi = React.useContext(pipelineContext.PaperContext);
   const runningServices = useRunningServices();
@@ -298,6 +300,12 @@ const Toolbar = (props) => {
                 onChange={() => {
                   pipelineDispatch({ type: 'toggleMetricsButton' });
                   paperApi.toggleMetrics(!isMetricsOn);
+
+                  if (!isMetricsOn) {
+                    startUpdateMetrics(currentPipeline?.name);
+                  } else {
+                    stopUpdateMetrics(currentPipeline?.name);
+                  }
                 }}
               />
             }

@@ -23,6 +23,7 @@ const initialState = {
   error: null,
   selectedCell: null,
   deleting: false,
+  objects: [],
 };
 
 export default function reducer(state = initialState, action) {
@@ -68,6 +69,17 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         selectedCell: action.payload,
+      };
+    case actions.startUpdateMetrics.SUCCESS:
+      return {
+        ...state,
+        // Supply a default since the epic won't always return an action which means no payload at all
+        objects: action.payload || [],
+      };
+    case actions.stopUpdateMetrics.SUCCESS:
+      return {
+        ...state,
+        objects: initialState.objects,
       };
     default:
       return state;

@@ -31,7 +31,7 @@ import { Wrapper } from './PipelinePropertyViewStyles';
 import { Dialog } from 'components/common/Dialog';
 
 const PipelinePropertyView = (props) => {
-  const { handleClose, element, pipelineObjects, isMetricsOn } = props;
+  const { handleClose, element, isMetricsOn } = props;
   const topics = hooks.useTopicsInPipeline();
   const streams = hooks.useStreams();
   const connectors = [...hooks.useConnectors(), ...hooks.useShabondis()];
@@ -113,11 +113,7 @@ const PipelinePropertyView = (props) => {
           <NodePanel tasksStatus={settings.tasksStatus} />
         )
       }
-      <MetricsPanel
-        currentCellName={cellName}
-        isMetricsOn={isMetricsOn}
-        pipelineObjects={pipelineObjects}
-      />
+      <MetricsPanel currentCellName={cellName} isMetricsOn={isMetricsOn} />
 
       <Dialog
         onClose={() => setIsOpen(false)}
@@ -139,7 +135,6 @@ PipelinePropertyView.propTypes = {
   handleClose: PropTypes.func.isRequired,
   isMetricsOn: PropTypes.bool.isRequired,
   element: PropTypes.object,
-  pipelineObjects: PropTypes.array,
 };
 
 export default PipelinePropertyView;

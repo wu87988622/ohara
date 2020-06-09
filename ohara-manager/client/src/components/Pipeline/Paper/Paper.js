@@ -53,7 +53,7 @@ const Paper = React.forwardRef((props, ref) => {
   const paperRef = React.useRef(null);
 
   // Ensure that we only call the event handler once, this prevent paper from
-  // making too many network request to the backend service
+  // making too many network requests to the backend service
   const cellAddRef = React.useRef(null);
   const cellChangeRef = React.useRef(null);
   const cellRemoveRef = React.useRef(null);
@@ -309,6 +309,7 @@ const Paper = React.forwardRef((props, ref) => {
       if (_.isEqual(cellAddRef.current, cell)) return;
       // half-way link is not counted in the `add` event
       if (cell.isLink() && !cell.target().id) return;
+
       const { skipGraphEvents = false } = options;
       const data = paperUtils.getCellData(cell);
 
@@ -325,6 +326,7 @@ const Paper = React.forwardRef((props, ref) => {
       if (!paperApi) return;
       if (_.isEqual(cellChangeRef.current, options)) return;
       if (cell.isLink() && !cell.target().id) return;
+
       const { skipGraphEvents = false } = options;
 
       paperUtils.updateStatus(cell, paperApi);
@@ -339,6 +341,7 @@ const Paper = React.forwardRef((props, ref) => {
       if (!paperApi) return;
       if (_.isEqual(cellRemoveRef.current, cell)) return;
       if (cell.isLink() && !cell.target().id) return;
+
       const { skipGraphEvents = false } = options;
       paperUtils.updateStatus(cell, paperApi);
 
@@ -485,7 +488,6 @@ const Paper = React.forwardRef((props, ref) => {
     onCellSelect,
     onCellStart,
     onCellStop,
-    onChange,
     onConnect,
     onDisconnect,
     palette.common.white,
@@ -819,13 +821,15 @@ const Paper = React.forwardRef((props, ref) => {
           .forEach((element) => element.toggleMetrics(isOpen));
       },
 
-      updateMetrics(elementArray) {
-        elementArray.forEach(({ nodeMetrics, name }) => {
-          // Since there could be more than one node's metrics data available
-          // in the element, we will only display the first node
-          const firstNode = Object.keys(nodeMetrics)[0];
-          findElementView(name).updateMeters(nodeMetrics[firstNode]);
-        });
+      updateMetrics(objects) {
+        objects
+          .filter((object) => object.kind !== KIND.topic) // topic metrics are not displayed in the current UI
+          .forEach(({ nodeMetrics, name }) => {
+            // Since there could be more than one node's metrics data available
+            // in the element, we will only display the first node
+            const firstNode = Object.keys(nodeMetrics)[0];
+            findElementView(name).updateMeters(nodeMetrics[firstNode]);
+          });
       },
 
       highlight(id) {
@@ -845,10 +849,7 @@ const Paper = React.forwardRef((props, ref) => {
         }
       },
 
-      // TODO: the state here will be stale, we should update
-      // the state will there are updates
       state: {
-        isReady: true,
         // Only expose necessary options from JointJS' default
         options: _.pick(paper.options, ['origin']),
       },
@@ -886,16 +887,16 @@ const Paper = React.forwardRef((props, ref) => {
 });
 
 Paper.propTypes = {
-  onChange: PropTypes.func,
-  onConnect: PropTypes.func,
-  onDisconnect: PropTypes.func,
-  onCellSelect: PropTypes.func,
-  onCellDeselect: PropTypes.func,
-  onElementAdd: PropTypes.func,
-  onCellStart: PropTypes.func,
-  onCellStop: PropTypes.func,
-  onCellRemove: PropTypes.func,
-  onCellConfig: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
+  onConnect: PropTypes.func.isRequired,
+  onDisconnect: PropTypes.func.isRequired,
+  onCellSelect: PropTypes.func.isRequired,
+  onCellDeselect: PropTypes.func.isRequired,
+  onElementAdd: PropTypes.func.isRequired,
+  onCellStart: PropTypes.func.isRequired,
+  onCellStop: PropTypes.func.isRequired,
+  onCellRemove: PropTypes.func.isRequired,
+  onCellConfig: PropTypes.func.isRequired,
 };
 
 export default Paper;

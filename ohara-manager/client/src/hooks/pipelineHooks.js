@@ -41,6 +41,11 @@ export const useIsPipelineDeleting = () => {
   return useSelector(selector);
 };
 
+export const usePipelineObjects = () => {
+  const selector = useCallback((state) => state.ui.pipeline.objects, []);
+  return useSelector(selector);
+};
+
 export const usePipelineError = () => {
   const selector = useCallback((state) => state.ui.pipeline.error, []);
   return useSelector(selector);

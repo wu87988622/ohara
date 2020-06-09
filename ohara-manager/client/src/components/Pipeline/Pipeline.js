@@ -123,7 +123,6 @@ const Pipeline = React.forwardRef((props, ref) => {
   };
 
   const paperApiRef = useRef(null);
-  const pipelineObjectsRef = useRef([]);
 
   const prevWorkspace = usePrevious(currentWorkspace);
   const prevPipeline = usePrevious(currentPipeline);
@@ -156,6 +155,15 @@ const Pipeline = React.forwardRef((props, ref) => {
     paperApiRef.current.clearGraph({ skipGraphEvents: true });
   }, [currentPipeline]);
 
+  useEffect(() => {
+    if (!currentPipeline?.name) return;
+    if (!pipelineState.isMetricsOn) return;
+
+    startUpdateMetrics(currentPipeline?.name, {
+      paperApi: paperApiRef.current,
+    });
+  }, [currentPipeline, pipelineState.isMetricsOn, startUpdateMetrics]);
+
   // Only run this once since we only want to load the graph once and maintain
   // the local state ever since
   useEffect(() => {
@@ -166,21 +174,8 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!currentPipeline) return;
 
     paperApiRef.current.loadGraph(getUpdatedCells(currentPipeline));
-
-    // Fire this epic only once and it will keep fetching and updating metrics
-    // before users leave our App by closing the Tab or browser
-    startUpdateMetrics(currentPipeline.name, {
-      paperApi: paperApiRef.current,
-      pipelineObjectsRef,
-    });
     isInitialized.current = true;
-  }, [
-    isConnectorLoaded,
-    currentPipeline,
-    getUpdatedCells,
-    isStreamLoaded,
-    startUpdateMetrics,
-  ]);
+  }, [currentPipeline, getUpdatedCells, isConnectorLoaded, isStreamLoaded]);
 
   const handleSubmit = (params, values, paperApi) => {
     const { cell, topics = [] } = params;
@@ -562,7 +557,6 @@ const Pipeline = React.forwardRef((props, ref) => {
                     element={selectedCell}
                     handleClose={() => setSelectedCell(null)}
                     isMetricsOn={pipelineState.isMetricsOn}
-                    pipelineObjects={pipelineObjectsRef.current}
                   />
                 </StyledSplitPane>
               </>
@@ -615,5 +609,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     </PipelineDispatchContext.Provider>
   );
 });
+
+Pipeline.displayName = 'Pipeline';
 
 export default Pipeline;

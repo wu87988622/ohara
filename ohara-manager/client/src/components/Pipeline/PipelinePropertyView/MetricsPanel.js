@@ -25,10 +25,12 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 
 import PropertyField from './PipelinePropertyViewField';
 import { Wrapper } from './MetricsPanelStyles';
+import * as hooks from 'hooks';
 
 const MetricsPanel = (props) => {
-  const { pipelineObjects: objects, isMetricsOn, currentCellName } = props;
+  const { isMetricsOn, currentCellName } = props;
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const objects = hooks.usePipelineObjects();
 
   const findByCellName = ({ name }) => name === currentCellName;
   const metrics = objects.find(findByCellName)?.nodeMetrics || {};
@@ -88,12 +90,6 @@ const MetricsPanel = (props) => {
 MetricsPanel.propTypes = {
   isMetricsOn: PropTypes.bool.isRequired,
   currentCellName: PropTypes.string.isRequired,
-  pipelineObjects: PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      nodeMetrics: PropTypes.object.isRequired,
-    }),
-  ).isRequired,
 };
 
 export default MetricsPanel;

@@ -15,10 +15,15 @@
  */
 
 import { TestScheduler } from 'rxjs/testing';
+import { delay } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import * as actions from 'store/actions';
+import * as pipelineApi from 'api/pipelineApi';
 import updatePipelineMetricsEpic from '../../pipeline/updatePipelineMetricsEpic';
 import { entity as pipelineEntity } from 'api/__mocks__/pipelineApi';
+import { KIND } from 'const';
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 jest.mock('api/pipelineApi');
 
@@ -34,11 +39,39 @@ const makeTestScheduler = () =>
   });
 
 it('should start to update pipeline metrics and stop when a stop action is dispatched', () => {
+  const objects = [
+    {
+      kind: KIND.topic,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+    {
+      kind: KIND.source,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+  ];
+
+  jest.spyOn(pipelineApi, 'get').mockReturnValue(
+    of({
+      status: 200,
+      title: 'Get pipeline mock',
+      data: {
+        ...pipelineEntity,
+        objects,
+      },
+    }).pipe(delay(6)),
+  );
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush } = helpers;
 
-    const input = '   ^-a 20000ms                                 (k|)';
-    const expected = '--a 5ms b 7993ms a 5ms b 7993ms a 5ms b 3994ms |';
+    const input = '   ^-a 20000ms                    (k|)';
+    const expected = '-- 6ms a 7999ms a 7999ms a 3994ms |';
 
     const action$ = hot(input, {
       a: {
@@ -50,7 +83,6 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
           },
           options: {
             paperApi,
-            pipelineObjectsRef: { current: null },
           },
         },
       },
@@ -63,25 +95,52 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startUpdateMetrics.REQUEST,
-      },
-      b: {
         type: actions.startUpdateMetrics.SUCCESS,
+        payload: objects,
       },
     });
 
     flush();
 
     expect(paperApi.updateMetrics).toHaveBeenCalledTimes(3);
+    expect(paperApi.updateMetrics).toHaveBeenCalledWith(objects);
   });
 });
 
-it('should terminate the request if an error occurs', () => {
+it('should not trigger any actions when no running services found in the response', () => {
+  const objects = [
+    {
+      kind: KIND.topic,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+    {
+      kind: KIND.source,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+  ];
+
+  jest.spyOn(pipelineApi, 'get').mockReturnValue(
+    of({
+      status: 200,
+      title: 'Get pipeline mock',
+      data: {
+        ...pipelineEntity,
+        objects: [],
+      },
+    }).pipe(delay(6)),
+  );
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush } = helpers;
 
-    const input = '   ^-a 10000ms                 (k|)';
-    const expected = '--a 5ms b 7993ms a 5ms b 1994ms |';
+    const input = '   ^-a 10000ms (k|)';
+    const expected = '--- 10000ms    |';
 
     const action$ = hot(input, {
       a: {
@@ -93,7 +152,74 @@ it('should terminate the request if an error occurs', () => {
           },
           options: {
             paperApi,
-            pipelineObjectsRef: { current: null },
+          },
+        },
+      },
+      k: {
+        type: actions.stopUpdateMetrics.TRIGGER,
+      },
+    });
+
+    const output$ = updatePipelineMetricsEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.startUpdateMetrics.SUCCESS,
+        payload: objects,
+      },
+    });
+
+    flush();
+
+    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(0);
+  });
+});
+
+it('should terminate the request if an error occurs', () => {
+  const objects = [
+    {
+      kind: KIND.topic,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+    {
+      kind: KIND.source,
+      state: SERVICE_STATE.RUNNING,
+      nodeMetrics: {
+        'ohara-dev-node-01': { meters: [] },
+      },
+    },
+  ];
+
+  jest.spyOn(pipelineApi, 'get').mockReturnValue(
+    of({
+      status: 200,
+      title: 'Get pipeline mock',
+      data: {
+        ...pipelineEntity,
+        objects,
+      },
+    }).pipe(delay(6)),
+  );
+
+  makeTestScheduler().run((helpers) => {
+    const { hot, expectObservable, flush } = helpers;
+
+    const input = '   ^-a 10000ms           (k|)';
+    const expected = '-- 6ms a 7999ms a 1994ms |';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.startUpdateMetrics.TRIGGER,
+        payload: {
+          params: {
+            group: pipelineEntity.group,
+            name: pipelineEntity.name,
+          },
+          options: {
+            paperApi,
           },
         },
       },
@@ -106,15 +232,14 @@ it('should terminate the request if an error occurs', () => {
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.startUpdateMetrics.REQUEST,
-      },
-      b: {
         type: actions.startUpdateMetrics.SUCCESS,
+        payload: objects,
       },
     });
 
     flush();
 
     expect(paperApi.updateMetrics).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateMetrics).toHaveBeenCalledWith(objects);
   });
 });
