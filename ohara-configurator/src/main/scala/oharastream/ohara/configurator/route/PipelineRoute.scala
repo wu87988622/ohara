@@ -60,74 +60,71 @@ private[configurator] object PipelineRoute {
     serviceCollie: ServiceCollie,
     brokerCollie: BrokerCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
   ): Future[ObjectAbstract] = obj match {
     case data: ConnectorInfo =>
-      connectorAdmin(data.workerClusterKey).flatMap {
-        case (clusterInfo, connectorAdmin) =>
-          connectorAdmin
-            .connectorDefinition(data.className)
-            .map(
-              classInfo =>
-                ObjectAbstract(
-                  group = data.group,
-                  name = data.name,
-                  kind = classInfo.classType.key(),
-                  className = Some(data.className),
-                  state = None,
-                  error = None,
-                  // the group of counter is equal to connector's name (this is a part of kafka's core setting)
-                  // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
-                  nodeMetrics = meterCache.meters(clusterInfo, data.key),
-                  lastModified = data.lastModified,
-                  tags = data.tags
+      connectorAdmin(data.workerClusterKey) { (clusterInfo, connectorAdmin) =>
+        connectorAdmin
+          .connectorDefinition(data.className)
+          .map(
+            classInfo =>
+              ObjectAbstract(
+                group = data.group,
+                name = data.name,
+                kind = classInfo.classType.key(),
+                className = Some(data.className),
+                state = None,
+                error = None,
+                // the group of counter is equal to connector's name (this is a part of kafka's core setting)
+                // Hence, we filter the connectors having different "name" (we use name instead of name in creating connector)
+                nodeMetrics = meterCache.meters(clusterInfo, data.key),
+                lastModified = data.lastModified,
+                tags = data.tags
+              )
+          )
+          .flatMap { obj =>
+            connectorAdmin
+              .status(data.key)
+              .map { connectorInfo =>
+                obj.copy(
+                  state = Some(connectorInfo.connector.state),
+                  error = connectorInfo.connector.trace
                 )
-            )
-            .flatMap { obj =>
-              connectorAdmin
-                .status(data.key)
-                .map { connectorInfo =>
-                  obj.copy(
-                    state = Some(connectorInfo.connector.state),
-                    error = connectorInfo.connector.trace
-                  )
-                }
-                // we don't put this recovery in the final chain since we want to keep the definitions fetched from kafka
-                .recover {
-                  case e: Throwable =>
-                    LOG.debug(s"failed to fetch obj for $data", e)
-                    obj
-                }
-            }
+              }
+              // we don't put this recovery in the final chain since we want to keep the definitions fetched from kafka
+              .recover {
+                case e: Throwable =>
+                  LOG.debug(s"failed to fetch obj for $data", e)
+                  obj
+              }
+          }
       }
     case data: TopicInfo =>
-      topicAdmin(data.brokerClusterKey).flatMap {
-        case (clusterInfo, topicAdmin) =>
-          topicAdmin
-            .exist(data.key)
-            .toScala
-            .map { existent =>
-              try if (existent) Some(TopicState.RUNNING) else None
-              finally topicAdmin.close()
-            }
-            .map(_.map(_.name))
-            .map(
-              state =>
-                ObjectAbstract(
-                  group = data.group,
-                  name = data.name,
-                  kind = data.kind,
-                  className = None,
-                  state = state,
-                  error = None,
-                  // noted we create a topic with name rather than name
-                  nodeMetrics = meterCache.meters(clusterInfo, data.key),
-                  lastModified = data.lastModified,
-                  tags = data.tags
-                )
-            )
+      topicAdmin(data.brokerClusterKey) { (clusterInfo, topicAdmin) =>
+        topicAdmin
+          .exist(data.key)
+          .toScala
+          .map { existent =>
+            try if (existent) Some(TopicState.RUNNING) else None
+            finally topicAdmin.close()
+          }
+          .map(_.map(_.name))
+          .map(
+            state =>
+              ObjectAbstract(
+                group = data.group,
+                name = data.name,
+                kind = data.kind,
+                className = None,
+                state = state,
+                error = None,
+                // noted we create a topic with name rather than name
+                nodeMetrics = meterCache.meters(clusterInfo, data.key),
+                lastModified = data.lastModified,
+                tags = data.tags
+              )
+          )
       }
     case data @ (_: ZookeeperClusterInfo | _: BrokerClusterInfo | _: WorkerClusterInfo | _: StreamClusterInfo |
         _: ShabondiClusterInfo) =>
@@ -184,7 +181,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
@@ -264,7 +260,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
@@ -274,7 +269,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
@@ -285,7 +279,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
@@ -307,7 +300,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache
@@ -382,7 +374,6 @@ private[configurator] object PipelineRoute {
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
-    adminCleaner: AdminCleaner,
     store: DataStore,
     executionContext: ExecutionContext,
     meterCache: MetricsCache

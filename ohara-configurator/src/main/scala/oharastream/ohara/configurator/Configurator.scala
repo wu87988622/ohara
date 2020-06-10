@@ -91,7 +91,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     */
   private[this] val terminateTimeout = Duration(3, TimeUnit.SECONDS)
   private[this] val cacheTimeout     = Duration(3, TimeUnit.SECONDS)
-  private[this] val cleanupTimeout   = Duration(10, TimeUnit.SECONDS)
 
   private[configurator] def size: Int = store.size()
 
@@ -100,7 +99,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
   private[this] implicit val workerCollie: WorkerCollie       = serviceCollie.workerCollie
   private[this] implicit val streamCollie: StreamCollie       = serviceCollie.streamCollie
   private[this] implicit val shabondiCollie: ShabondiCollie   = serviceCollie.shabondiCollie
-  private[this] implicit val adminCleaner: AdminCleaner       = new AdminCleaner(cleanupTimeout)
   private[this] implicit val objectChecker: DataChecker       = DataChecker()
 
   def mode: Mode = serviceCollie match {
@@ -288,7 +286,6 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
 
     Releasable.close(serviceCollie)
     Releasable.close(store)
-    Releasable.close(adminCleaner)
     log.info(s"succeed to close Ohara Configurator. elapsed:${CommonUtils.current() - start} ms")
   }
 }

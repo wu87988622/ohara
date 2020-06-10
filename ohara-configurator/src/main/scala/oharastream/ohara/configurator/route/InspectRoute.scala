@@ -131,7 +131,6 @@ private[configurator] object InspectRoute {
   @nowarn("cat=deprecation")
   def apply(mode: Mode, k8sUrls: Option[K8sUrls])(
     implicit brokerCollie: BrokerCollie,
-    adminCleaner: AdminCleaner,
     dataStore: DataStore,
     serviceCollie: ServiceCollie,
     workerCollie: WorkerCollie,
@@ -141,29 +140,28 @@ private[configurator] object InspectRoute {
     path(RDB_KIND) {
       post {
         entity(as[RdbQuery]) { query =>
-          complete(both(query.workerClusterKey).flatMap {
-            case (_, topicAdmin, _, connectorAdmin) =>
-              connectorAdmin match {
-                case _: FakeConnectorAdmin =>
-                  val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
-                  try Future.successful(
-                    RdbInfo(
-                      name = client.databaseType,
-                      tables = client.tableQuery
-                        .catalog(query.catalogPattern)
-                        .schema(query.schemaPattern)
-                        .tableName(query.tableName)
-                        .execute()
-                    )
+          complete(both(query.workerClusterKey) { (_, connectorAdmin, _, topicAdmin) =>
+            connectorAdmin match {
+              case _: FakeConnectorAdmin =>
+                val client = DatabaseClient.builder.url(query.url).user(query.user).password(query.password).build
+                try Future.successful(
+                  RdbInfo(
+                    name = client.databaseType,
+                    tables = client.tableQuery
+                      .catalog(query.catalogPattern)
+                      .schema(query.schemaPattern)
+                      .tableName(query.tableName)
+                      .execute()
                   )
-                  finally client.close()
-                case _ =>
-                  rdbInfo(
-                    connectorAdmin,
-                    topicAdmin,
-                    query
-                  )
-              }
+                )
+                finally client.close()
+              case _ =>
+                rdbInfo(
+                  connectorAdmin,
+                  topicAdmin,
+                  query
+                )
+            }
           })
         }
       }

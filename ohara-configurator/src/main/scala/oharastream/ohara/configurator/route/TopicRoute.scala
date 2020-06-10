@@ -42,7 +42,6 @@ private[configurator] object TopicRoute {
     */
   private[this] def updateState(topicInfo: TopicInfo)(
     implicit meterCache: MetricsCache,
-    adminCleaner: AdminCleaner,
     objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
@@ -66,7 +65,7 @@ private[configurator] object TopicRoute {
             .check()
             .map(_.runningBrokers.head)
             .flatMap { brokerClusterInfo =>
-              topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
+              topicAdmin(brokerClusterInfo) { topicAdmin =>
                 topicAdmin
                   .exist(topicInfo.key)
                   .toScala
@@ -112,7 +111,6 @@ private[configurator] object TopicRoute {
 
   private[this] def hookOfGet(
     implicit meterCache: MetricsCache,
-    adminCleaner: AdminCleaner,
     objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
@@ -120,7 +118,6 @@ private[configurator] object TopicRoute {
 
   private[this] def hookOfList(
     implicit meterCache: MetricsCache,
-    adminCleaner: AdminCleaner,
     objectChecker: DataChecker,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
@@ -245,7 +242,6 @@ private[configurator] object TopicRoute {
 
   private[this] def hookOfStart(
     implicit objectChecker: DataChecker,
-    adminCleaner: AdminCleaner,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): HookOfAction[TopicInfo] =
@@ -260,7 +256,7 @@ private[configurator] object TopicRoute {
             condition match {
               case DataCondition.RUNNING => Future.unit
               case DataCondition.STOPPED =>
-                topicAdmin(brokerClusterInfo).flatMap { topicAdmin =>
+                topicAdmin(brokerClusterInfo) { topicAdmin =>
                   topicAdmin.topicCreator
                     .topicKey(topicInfo.key)
                     .numberOfPartitions(topicInfo.numberOfPartitions)
@@ -281,7 +277,6 @@ private[configurator] object TopicRoute {
 
   private[this] def hookOfStop(
     implicit objectChecker: DataChecker,
-    adminCleaner: AdminCleaner,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext
   ): HookOfAction[TopicInfo] =
@@ -307,13 +302,15 @@ private[configurator] object TopicRoute {
                   .brokerCluster(topicInfo.brokerClusterKey, DataCondition.RUNNING)
                   .check()
                   .map(_.runningBrokers.head)
-                  .flatMap(b => topicAdmin(b))
-                  .flatMap { topicAdmin =>
-                    topicAdmin
-                      .deleteTopic(topicInfo.key)
-                      .toScala
-                      .flatMap(_ => Future.unit)
-                  }
+                  .flatMap(
+                    b =>
+                      topicAdmin(b) { topicAdmin =>
+                        topicAdmin
+                          .deleteTopic(topicInfo.key)
+                          .toScala
+                          .flatMap(_ => Future.unit)
+                      }
+                  )
             }
         }
 
@@ -321,7 +318,6 @@ private[configurator] object TopicRoute {
   def apply(
     implicit store: DataStore,
     objectChecker: DataChecker,
-    adminCleaner: AdminCleaner,
     meterCache: MetricsCache,
     brokerCollie: BrokerCollie,
     executionContext: ExecutionContext

@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.agent.{ClusterStatus, Collie, ServiceCollie}
+import oharastream.ohara.agent.{BrokerCollie, ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
@@ -444,7 +444,7 @@ object DataChecker {
     def check()(implicit executionContext: ExecutionContext): Future[DataReport]
   }
 
-  def apply()(implicit store: DataStore, serviceCollie: ServiceCollie, adminCleaner: AdminCleaner): DataChecker =
+  def apply()(implicit store: DataStore, serviceCollie: ServiceCollie): DataChecker =
     new DataChecker {
       override def checkList: CheckList = new CheckList {
         //---------------------[Broker]---------------------//
@@ -618,14 +618,15 @@ object DataChecker {
                   condition match {
                     case DataCondition.STOPPED => Future.successful(Some(topicInfo -> DataCondition.STOPPED))
                     case DataCondition.RUNNING =>
-                      topicAdmin(brokerClusterInfo)(serviceCollie.brokerCollie, adminCleaner, executionContext)
-                      // make sure the topic admin is closed!!!
-                        .flatMap(_.exist(topicInfo.key).toScala)
-                        .map(
-                          existent =>
-                            if (existent) Some(topicInfo -> DataCondition.RUNNING)
-                            else Some(topicInfo          -> DataCondition.STOPPED)
-                        )
+                      implicit val bkService: BrokerCollie = serviceCollie.brokerCollie
+                      topicAdmin(brokerClusterInfo)(
+                        _.exist(topicInfo.key).toScala
+                          .map(
+                            existent =>
+                              if (existent) Some(topicInfo -> DataCondition.RUNNING)
+                              else Some(topicInfo          -> DataCondition.STOPPED)
+                          )
+                      )
                   }
               }
           }

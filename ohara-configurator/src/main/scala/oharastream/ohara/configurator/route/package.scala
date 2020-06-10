@@ -30,7 +30,7 @@ import oharastream.ohara.client.configurator.v0.{ClusterCreation, ClusterInfo, C
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
-import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
+import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.TopicAdmin
@@ -397,59 +397,65 @@ package object route {
       .map(_.asInstanceOf[Cluster])
 
   /**
-    * Create a topic admin according to passed cluster name.
-    * Noted: if target cluster doesn't exist, an future with exception will return
-    * @param clusterKey target cluster
-    * @return cluster info and topic admin
-    */
-  def topicAdmin(clusterKey: ObjectKey)(
-    implicit brokerCollie: BrokerCollie,
-    store: DataStore,
-    cleaner: AdminCleaner,
-    executionContext: ExecutionContext
-  ): Future[(BrokerClusterInfo, TopicAdmin)] =
-    store.value[BrokerClusterInfo](clusterKey).flatMap(cluster => topicAdmin(cluster).map(cluster -> _))
-
-  /**
     * Create a worker client according to passed cluster name.
     * Noted: if target cluster doesn't exist, an future with exception will return
     * @param clusterKey target cluster
     * @return cluster info and client
     */
-  def connectorAdmin(clusterKey: ObjectKey)(
+  def connectorAdmin[T](clusterKey: ObjectKey)(action: (WorkerClusterInfo, ConnectorAdmin) => Future[T])(
     implicit workerCollie: WorkerCollie,
     store: DataStore,
     executionContext: ExecutionContext
-  ): Future[(WorkerClusterInfo, ConnectorAdmin)] =
+  ): Future[T] =
     store
       .value[WorkerClusterInfo](clusterKey)
-      .flatMap(cluster => workerCollie.connectorAdmin(cluster).map(cluster -> _))
+      .flatMap(cluster => workerCollie.connectorAdmin(cluster).flatMap(admin => action(cluster, admin)))
 
   /**
     * create worker client and topic admin based on input worker cluster key.
     */
-  def both[T](workerClusterKey: ObjectKey)(
+  def both[T](
+    workerClusterKey: ObjectKey
+  )(action: (WorkerClusterInfo, ConnectorAdmin, BrokerClusterInfo, TopicAdmin) => Future[T])(
     implicit brokerCollie: BrokerCollie,
     store: DataStore,
-    cleaner: AdminCleaner,
     workerCollie: WorkerCollie,
     executionContext: ExecutionContext
-  ): Future[(BrokerClusterInfo, TopicAdmin, WorkerClusterInfo, ConnectorAdmin)] =
-    connectorAdmin(workerClusterKey).flatMap {
-      case (wkInfo, wkClient) =>
-        topicAdmin(wkInfo.brokerClusterKey).map {
-          case (bkInfo, topicAdmin) => (bkInfo, cleaner.add(topicAdmin), wkInfo, wkClient)
-        }
+  ): Future[T] =
+    connectorAdmin(workerClusterKey) { (workerClusterInfo, connectorAdmin) =>
+      topicAdmin(workerClusterInfo.brokerClusterKey) { (brokerClusterInfo, topicAdmin) =>
+        action(workerClusterInfo, connectorAdmin, brokerClusterInfo, topicAdmin)
+      }
     }
 
   /**
-    * create a topic admin and then add it to cleanup process in order to avoid resource leak.
+    * Create a topic admin according to passed cluster name. The topic admin will get closed when the future created
+    * by action is completed.
+    * Noted: if target cluster doesn't exist, an future with exception will return
+    * @param clusterKey target cluster
+    * @return cluster info and topic admin
     */
-  def topicAdmin(brokerClusterInfo: BrokerClusterInfo)(
+  def topicAdmin[T](clusterKey: ObjectKey)(action: (BrokerClusterInfo, TopicAdmin) => Future[T])(
     implicit brokerCollie: BrokerCollie,
-    adminCleaner: AdminCleaner,
+    store: DataStore,
     executionContext: ExecutionContext
-  ): Future[TopicAdmin] = brokerCollie.topicAdmin(brokerClusterInfo).map(adminCleaner.add)
+  ): Future[T] =
+    store.value[BrokerClusterInfo](clusterKey).flatMap(cluster => topicAdmin(cluster)(admin => action(cluster, admin)))
+
+  /**
+    * Create a topic admin according to passed cluster name. The topic admin will get closed when the future created
+    * by action is completed.
+    */
+  def topicAdmin[T](brokerClusterInfo: BrokerClusterInfo)(
+    action: TopicAdmin => Future[T]
+  )(implicit brokerCollie: BrokerCollie, executionContext: ExecutionContext): Future[T] =
+    brokerCollie
+      .topicAdmin(brokerClusterInfo)
+      .flatMap { topicAdmin =>
+        val f = action(topicAdmin)
+        f.onComplete(_ => Releasable.close(topicAdmin))
+        f
+      }
 
   /**
     * a helper method to Updating request that it remove all fields declared as non-updatable.
