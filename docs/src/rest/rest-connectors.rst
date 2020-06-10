@@ -70,7 +70,7 @@ The following information are updated by Ohara.
     - tasksStatus[i].state (**string**) — the state of a started task.
     - tasksStatus[i].nodeName (**string**) — the node hosting this task
     - tasksStatus[i].error (**option(string)**) — the error message from a failed task. If the task is fine or un-started, you won’t get this field.
-    - tasksStatus[i].master (**boolean**) — true if this status is master. otherwise, false
+    - tasksStatus[i].coordinator (**boolean**) — true if this status is coordinator. otherwise, false
 
 #. :ref:`nodeMetrics <connector-metrics>` (**object**) — the metrics from a running connector
 

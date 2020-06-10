@@ -32,9 +32,9 @@ const NodePanel = (props) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentError, setCurrentError] = React.useState(null);
-  const [masterNodes, slaveNodes] = partition(
+  const [coordinatorNodes, followerNodes] = partition(
     tasksStatus,
-    (node) => node.master,
+    (node) => node.coordinator,
   );
 
   const handleOpenErrorDialog = (error) => () => {
@@ -57,13 +57,13 @@ const NodePanel = (props) => {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
           <NodeList
-            heading={`Masters (${masterNodes.length})`}
-            list={masterNodes}
+            heading={`Coordinators (${coordinatorNodes.length})`}
+            list={coordinatorNodes}
             onErrorTextClick={handleOpenErrorDialog}
           />
           <NodeList
-            heading={`Slaves (${slaveNodes.length})`}
-            list={slaveNodes}
+            heading={`Followers (${followerNodes.length})`}
+            list={followerNodes}
             onErrorTextClick={handleOpenErrorDialog}
           />
         </ExpansionPanelDetails>
@@ -81,7 +81,7 @@ const NodePanel = (props) => {
 NodePanel.propTypes = {
   tasksStatus: PropTypes.arrayOf(
     PropTypes.shape({
-      master: PropTypes.bool.isRequired,
+      coordinator: PropTypes.bool.isRequired,
     }),
   ),
 };

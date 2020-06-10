@@ -180,7 +180,7 @@ object ConnectorApi {
 
   import MetricsApi._
 
-  case class Status(state: State, nodeName: String, error: Option[String], master: Boolean)
+  case class Status(state: State, nodeName: String, error: Option[String], coordinator: Boolean)
   implicit val STATUS_FORMAT: RootJsonFormat[Status] = jsonFormat4(Status)
 
   /**

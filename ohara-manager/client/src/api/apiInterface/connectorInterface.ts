@@ -43,7 +43,7 @@ interface Status {
   state: State;
   nodeName: string;
   error?: string;
-  master: boolean;
+  coordinator: boolean;
 }
 interface Data {
   state?: State;

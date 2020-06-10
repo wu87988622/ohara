@@ -121,19 +121,19 @@ private[configurator] object ConnectorRoute {
                         state = State.forName(taskStatus.state),
                         error = taskStatus.trace,
                         nodeName = taskStatus.workerHostname,
-                        master = false
+                        coordinator = false
                       )
                     } :+ Status(
                       state = State.forName(connectorInfoFromKafka.connector.state),
                       error = connectorInfoFromKafka.connector.trace,
                       nodeName = connectorInfoFromKafka.connector.workerHostname,
-                      master = true
+                      coordinator = true
                     )
 
                     connectorInfo.copy(
                       // this is the "summary" of this connector
                       state =
-                        // this connector is running only if there is a running master and a running slave as least.
+                        // this connector is running only if there is a running coordinator and a running follower as least.
                         if (allStatus.count(_.state == State.RUNNING) >= 2) Some(State.RUNNING)
                         // this connector is in pending
                         else if (allStatus.isEmpty) None

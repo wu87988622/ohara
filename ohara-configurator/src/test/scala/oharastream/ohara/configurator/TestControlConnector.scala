@@ -284,8 +284,8 @@ class TestControlConnector extends WithBrokerWorker {
     await(() => result(connectorApi.get(sink.key)).tasksStatus.nonEmpty)
     result(connectorApi.get(sink.key)).aliveNodes should contain(CommonUtils.hostname())
     await(() => result(connectorApi.get(sink.key)).tasksStatus.size == 2) // connector + task
-    result(connectorApi.get(sink.key)).tasksStatus.count(_.master) shouldBe 1
-    result(connectorApi.get(sink.key)).tasksStatus.filterNot(_.master).size shouldBe 1
+    result(connectorApi.get(sink.key)).tasksStatus.count(_.coordinator) shouldBe 1
+    result(connectorApi.get(sink.key)).tasksStatus.filterNot(_.coordinator).size shouldBe 1
     result(connectorApi.get(sink.key)).tasksStatus.foreach(_.nodeName shouldBe CommonUtils.hostname())
   }
 
@@ -460,8 +460,8 @@ class TestControlConnector extends WithBrokerWorker {
     await(() => result(connectorApi.get(source.key)).state.contains(State.FAILED))
     await(() => result(connectorApi.get(source.key)).error.nonEmpty)
     await(() => result(connectorApi.get(source.key)).tasksStatus.nonEmpty)
-    result(connectorApi.get(source.key)).tasksStatus.filter(_.master).foreach(_.state shouldBe State.RUNNING)
-    result(connectorApi.get(source.key)).tasksStatus.filterNot(_.master).foreach(_.state shouldBe State.FAILED)
+    result(connectorApi.get(source.key)).tasksStatus.filter(_.coordinator).foreach(_.state shouldBe State.RUNNING)
+    result(connectorApi.get(source.key)).tasksStatus.filterNot(_.coordinator).foreach(_.state shouldBe State.FAILED)
   }
 
   @Ignore("this test case should be enabled by https://github.com/oharastream/ohara/issues/4506")

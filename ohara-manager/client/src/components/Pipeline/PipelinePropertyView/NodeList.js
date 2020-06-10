@@ -47,14 +47,16 @@ const NodeList = ({ heading, list, onErrorTextClick }) => {
       {list
         .sort((a, b) => a.nodeName.localeCompare(b.nodeName))
         .map((item) => {
-          const { nodeName, state, master, error = null } = item;
+          const { nodeName, state, coordinator, error = null } = item;
 
           // Since `PropertyField` only renders value in pair "abc:efg", we just
           // need the first name to be rendered
           const className = cx('node-status', { 'is-failed': error });
           const onClick = error
             ? onErrorTextClick({
-                title: `${nodeName} ${master ? 'master' : 'slave'} errors`,
+                title: `${nodeName} ${
+                  coordinator ? 'coordinator' : 'follower'
+                } errors`,
                 message: { error },
               })
             : undefined;
@@ -88,7 +90,7 @@ NodeList.propTypes = {
     PropTypes.shape({
       nodeName: PropTypes.string.isRequired,
       state: PropTypes.string.isRequired,
-      master: PropTypes.bool.isRequired,
+      coordinator: PropTypes.bool.isRequired,
       error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     }).isRequired,
   ).isRequired,
