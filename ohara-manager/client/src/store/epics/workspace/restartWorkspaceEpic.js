@@ -93,6 +93,7 @@ const setTargetService$ = (targetService) => (service) => {
 };
 
 const date = new Date(Date.now()).toLocaleString();
+const key = new Date(Date.now());
 
 export default (action$, state$) =>
   action$.pipe(
@@ -127,6 +128,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -157,6 +160,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -185,6 +190,8 @@ export default (action$, state$) =>
                   actions.createLogProgress.trigger({
                     data: {
                       ...err,
+                      payload: err.data,
+                      key,
                       title: `${date} ${err.title}`,
                       type: LOG_LEVEL.error,
                     },
@@ -213,6 +220,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -242,6 +251,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -270,6 +281,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -301,6 +314,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -330,6 +345,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -357,6 +374,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
@@ -385,6 +404,8 @@ export default (action$, state$) =>
                   actions.createLogProgress.trigger({
                     data: {
                       ...err,
+                      payload: err.data,
+                      key,
                       title: `${date} ${err.title}`,
                       type: LOG_LEVEL.error,
                     },
@@ -413,6 +434,8 @@ export default (action$, state$) =>
               actions.createLogProgress.trigger({
                 data: {
                   ...err,
+                  payload: err.data,
+                  key,
                   title: `${date} ${err.title}`,
                   type: LOG_LEVEL.error,
                 },
