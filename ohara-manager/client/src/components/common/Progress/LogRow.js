@@ -15,20 +15,48 @@
  */
 
 import React from 'react';
-import _ from 'lodash';
-import clx from 'classnames';
+import cx from 'classnames';
+import Link from '@material-ui/core/Link';
 import PropTypes from 'prop-types';
+import WarningIcon from '@material-ui/icons/Warning';
+import CancelIcon from '@material-ui/icons/Cancel';
 
 import { LOG_LEVEL } from 'const';
 import Row from './LogRowStyles';
 
-const LogRow = ({ rowData: log, style }) => {
-  const title = _.get(log, 'title');
-  const isError = _.get(log, 'type') === LOG_LEVEL.error;
+const LogRow = ({ onClick, rowData: log, style }) => {
+  const title = log?.title;
+  const message = log?.payload?.error?.message || '';
+  const logType = log?.type;
+  const isError = logType === LOG_LEVEL.error;
+  const isWarning = logType === LOG_LEVEL.warning;
+  const isInfo = logType === LOG_LEVEL.info;
+
+  const classNames = cx({
+    error: isError,
+    warning: isWarning,
+    info: isInfo,
+  });
 
   return (
-    <Row className={clx({ error: isError })} style={style}>
-      <div>{title}</div>
+    <Row className={classNames} style={style}>
+      {isError ? (
+        <Link onClick={onClick}>
+          <CancelIcon className="log-icon" />
+          <span className="log-content">
+            {title} {message && `--> ${message}`}
+          </span>
+        </Link>
+      ) : isWarning ? (
+        <>
+          <WarningIcon className="log-icon" />
+          <span className="log-content">
+            {title} {message && `--> ${message}`}
+          </span>
+        </>
+      ) : (
+        <span className="log-content">{title}</span>
+      )}
     </Row>
   );
 };
@@ -36,6 +64,7 @@ const LogRow = ({ rowData: log, style }) => {
 LogRow.propTypes = {
   rowData: PropTypes.object.isRequired,
   style: PropTypes.object.isRequired,
+  onClick: PropTypes.func,
 };
 
 export default LogRow;

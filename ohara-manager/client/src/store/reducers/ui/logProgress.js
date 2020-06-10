@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './deleteWorkspaceSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import * as actions from 'store/actions';
+
+const initialState = {
+  data: [],
+};
+
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    case actions.createLogProgress.SUCCESS:
+      return {
+        data: [...state.data, action.payload.data],
+      };
+    case actions.clearLogProgress.TRIGGER:
+      return initialState;
+    default:
+      return state;
+  }
+}

@@ -23,26 +23,22 @@ export default styled.div(
     align-items: flex-start;
     padding: ${theme.spacing(0.5, 1.5, 0.25, 3)};
 
+    .log-icon {
+      position: absolute;
+      left: 5px;
+      top: 5px;
+      font-size: 15px;
+    }
+
+    &.warning {
+      color: ${theme.palette.warning.dark};
+    }
+
     &.error {
       color: ${theme.palette.error.main};
       a {
+        color: inherit;
         cursor: pointer;
-      }
-
-      :before {
-        position: absolute;
-        margin-left: -${theme.spacing(2)}px;
-        margin-top: ${theme.spacing(0.5)}px;
-        content: '+';
-        transform: rotate(45deg);
-        height: 10px;
-        width: 10px;
-        color: white;
-        background: ${theme.palette.error.main};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 100%;
       }
     }
 

@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './deleteWorkspaceSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { createRoutine } from 'redux-routines';
+
+export const createLogProgress = createRoutine('CREATE_LOG_PROGRESS');
+export const clearLogProgress = createRoutine('CLEAR_LOG_PROGRESS');

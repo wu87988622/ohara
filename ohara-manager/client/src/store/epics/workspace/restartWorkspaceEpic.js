@@ -16,7 +16,7 @@
 
 import { isEmpty } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer } from 'rxjs';
+import { of, defer, from, merge } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -26,6 +26,7 @@ import {
   takeWhile,
   concatMap,
   map,
+  endWith,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -91,6 +92,8 @@ const setTargetService$ = (targetService) => (service) => {
   return tmpTargetService.includes(service);
 };
 
+const date = new Date(Date.now()).toLocaleString();
+
 export default (action$, state$) =>
   action$.pipe(
     ofType(actions.restartWorkspace.TRIGGER),
@@ -111,6 +114,25 @@ export default (action$, state$) =>
 
       return of(
         stopWorker$(workerKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Stop worker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.stopWorker.failure(merge(err, { workerId: workerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await isServiceRunning$(workerApi.get(workerKey)),
@@ -122,6 +144,25 @@ export default (action$, state$) =>
           ...workerKey,
           ...workerSettings,
         }).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Update worker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.updateWorker.failure(merge(err, { workerId: workerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await !isServiceRunning$(workerApi.get(workerKey)),
@@ -131,6 +172,25 @@ export default (action$, state$) =>
         of(...topics).pipe(
           concatMap((topicKey) =>
             stopTopic$(topicKey).pipe(
+              endWith(
+                actions.createLogProgress.trigger({
+                  data: {
+                    title: `${date} Stop topics success...`,
+                  },
+                }),
+              ),
+              catchError((err) =>
+                from([
+                  actions.stopTopic.failure(merge(err, { topicId: topicKey })),
+                  actions.createLogProgress.trigger({
+                    data: {
+                      ...err,
+                      title: `${date} ${err.title}`,
+                      type: LOG_LEVEL.error,
+                    },
+                  }),
+                ]),
+              ),
               takeWhile(() => isTarget(KIND.broker)),
               takeWhile(
                 async () => await isServiceRunning$(topicApi.get(topicKey)),
@@ -140,6 +200,25 @@ export default (action$, state$) =>
         ),
 
         stopBroker$(brokerKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Stop broker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.stopBroker.failure(merge(err, { brokerId: brokerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await isServiceRunning$(brokerApi.get(brokerKey)),
@@ -150,6 +229,25 @@ export default (action$, state$) =>
           ...brokerKey,
           ...brokerSettings,
         }).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Update broker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.updateBroker.failure(merge(err, { brokerId: brokerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
@@ -157,6 +255,27 @@ export default (action$, state$) =>
         ),
 
         stopZookeeper$(zookeeperKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Stop zookeeper success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.stopZookeeper.failure(
+                merge(err, { zookeeperId: zookeeperKey }),
+              ),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
@@ -167,6 +286,27 @@ export default (action$, state$) =>
           ...zookeeperKey,
           ...zookeeperSettings,
         }).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Update zookeeper success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.updateZookeeper.failure(
+                merge(err, { zookeeperApi: zookeeperKey }),
+              ),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () =>
@@ -175,6 +315,27 @@ export default (action$, state$) =>
         ),
 
         startZookeeper$(zookeeperKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Start zookeeper success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.startZookeeper.failure(
+                merge(err, { zookeeperId: zookeeperKey }),
+              ),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
             async () =>
@@ -183,6 +344,25 @@ export default (action$, state$) =>
         ),
 
         startBroker$(brokerKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Start broker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.startBroker.failure(merge(err, { brokerId: brokerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
             async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
@@ -192,6 +372,25 @@ export default (action$, state$) =>
         of(...topics).pipe(
           concatMap((topicKey) =>
             startTopic$(topicKey).pipe(
+              endWith(
+                actions.createLogProgress.trigger({
+                  data: {
+                    title: `${date} Start topic success...`,
+                  },
+                }),
+              ),
+              catchError((err) =>
+                from([
+                  actions.startTopic.failure(merge(err, { topicId: topicKey })),
+                  actions.createLogProgress.trigger({
+                    data: {
+                      ...err,
+                      title: `${date} ${err.title}`,
+                      type: LOG_LEVEL.error,
+                    },
+                  }),
+                ]),
+              ),
               takeWhile(() => isTarget(KIND.broker)),
               takeWhile(
                 async () => await !isServiceRunning$(topicApi.get(topicKey)),
@@ -201,6 +400,25 @@ export default (action$, state$) =>
         ),
 
         startWorker$(workerKey).pipe(
+          endWith(
+            actions.createLogProgress.trigger({
+              data: {
+                title: `${date} Start worker success...`,
+              },
+            }),
+          ),
+          catchError((err) =>
+            from([
+              actions.startWorker.failure(merge(err, { workerId: workerKey })),
+              actions.createLogProgress.trigger({
+                data: {
+                  ...err,
+                  title: `${date} ${err.title}`,
+                  type: LOG_LEVEL.error,
+                },
+              }),
+            ]),
+          ),
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await !isServiceRunning$(workerApi.get(workerKey)),

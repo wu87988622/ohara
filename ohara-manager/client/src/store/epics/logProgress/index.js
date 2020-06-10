@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './deleteWorkspaceSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { combineEpics } from 'redux-observable';
+import createLogProgressEpic from './createLogProgressEpic';
+import clearLogProgressEpic from './clearLogProgressEpic';
+
+export default combineEpics(createLogProgressEpic, clearLogProgressEpic);
