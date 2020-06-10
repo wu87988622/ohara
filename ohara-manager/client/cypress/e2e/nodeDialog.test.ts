@@ -16,44 +16,27 @@
 
 // Note: Do not change the usage of absolute path
 // unless you have a solution to resolve TypeScript + Coverage
-import { MODE } from '../../src/const';
-import * as inspectApi from '../../src/api/inspectApi';
 import * as generate from '../../src/utils/generate';
 import { deleteAllServices } from '../utils';
 
-let mode: MODE;
 const nodeHost = Cypress.env('nodeHost');
 const nodePort = Cypress.env('nodePort');
 const nodeUser = Cypress.env('nodeUser');
 const nodePass = Cypress.env('nodePass');
 
 describe('NodeDialog of AppBar', () => {
-  beforeEach(async () => {
-    await deleteAllServices();
-    const res = await inspectApi.getConfiguratorInfo();
-    mode = res.data.mode;
-  });
+  beforeEach(() => deleteAllServices());
 
   it('check node list initially', () => {
     cy.visit('/');
     cy.findByTestId('close-intro-button').click();
     cy.findByTitle('Node list').should('exist').click();
 
-    if (mode === MODE.DOCKER) {
-      // empty node list in DOCKER mode
-      cy.findByText(nodeHost).should('not.exist');
-    } else if (mode === MODE.K8S) {
-      // K8S will show the available node for us
-      cy.findByText(nodeHost).should('exist');
-    }
+    // empty node list
+    cy.findByText(nodeHost).should('not.exist');
   });
 
   it('add a random node should be worked', () => {
-    if (mode === MODE.K8S) {
-      cy.log('Add node not support in K8S mode');
-      return;
-    }
-
     cy.visit('/');
     cy.findByTestId('close-intro-button').click();
     cy.findByTitle('Node list').should('exist').click();
@@ -91,18 +74,6 @@ describe('NodeDialog of AppBar', () => {
     cy.visit('/');
     cy.findByTestId('close-intro-button').click();
     cy.findByTitle('Node list').should('exist').click();
-
-    if (mode === MODE.K8S) {
-      cy.findAllByPlaceholderText('Search').filter(':visible').type(nodeHost);
-      cy.findByText(nodeHost).should('exist');
-
-      cy.findAllByPlaceholderText('Search')
-        .filter(':visible')
-        .clear()
-        .type('fake');
-      cy.findByText(nodeHost).should('not.exist');
-      return;
-    }
 
     const hostname1 = generate.serviceName();
     cy.findByTitle('Create Node').should('be.visible').click();
@@ -145,15 +116,12 @@ describe('NodeDialog of AppBar', () => {
     cy.findByTestId('close-intro-button').click();
     cy.findByTitle('Node list').should('exist').click();
 
-    if (mode === MODE.DOCKER) {
-      // We only need to add node if was DOCKER mode
-      cy.findByTitle('Create Node').click();
-      cy.get('input[name=hostname]').type(nodeHost);
-      cy.get('input[name=port]').type(nodePort);
-      cy.get('input[name=user]').type(nodeUser);
-      cy.get('input[name=password]').type(nodePass);
-      cy.findByText(/^create$/i).click();
-    }
+    cy.findByTitle('Create Node').click();
+    cy.get('input[name=hostname]').type(nodeHost);
+    cy.get('input[name=port]').type(nodePort);
+    cy.get('input[name=user]').type(nodeUser);
+    cy.get('input[name=password]').type(nodePass);
+    cy.findByText(/^create$/i).click();
 
     cy.findByTestId(`view-node-${nodeHost}`).click();
 
@@ -197,17 +165,11 @@ describe('NodeDialog of AppBar', () => {
 });
 
 describe('NodeDialog of workspaceQuick', () => {
-  beforeEach(async () => {
-    await deleteAllServices();
-    const res = await inspectApi.getConfiguratorInfo();
-    mode = res.data.mode;
+  beforeEach(() => {
+    deleteAllServices();
   });
 
   it('nodes should be able to selected and filtered', () => {
-    if (mode === MODE.K8S) {
-      cy.log('Add node not support in K8S mode');
-      return;
-    }
     cy.visit('/');
     cy.findByTestId('close-intro-button').click();
     cy.findByTitle('Node list').should('exist').click();

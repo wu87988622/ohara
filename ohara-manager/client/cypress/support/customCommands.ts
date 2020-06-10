@@ -129,41 +129,25 @@ Cypress.Commands.add(
   } = {}) => {
     Cypress.Commands.add('addNode', () => {
       cy.get('body').then(($body) => {
-        const isDockerMode =
-          $body.find('span > button[title="Create Node"]').length > 0;
-
-        if (isDockerMode) {
-          cy.get('body').then(($body) => {
-            // the node has not been added yet, added directly
-            if ($body.find(`td:contains(${nodeHost})`).length === 0) {
-              cy.findByTitle('Create Node').click();
-              cy.get('input[name=hostname]').type(nodeHost);
-              cy.get('input[name=port]').type(nodePort);
-              cy.get('input[name=user]').type(nodeUser);
-              cy.get('input[name=password]').type(nodePass);
-              cy.findByText(/^create$/i).click();
-            }
-            cy.findByText(nodeHost)
-              .siblings('td')
-              .find('input[type="checkbox"]')
-              .click();
-            cy.findByText(/^save$/i).click();
-            cy.findAllByText(/^next$/i)
-              .filter(':visible')
-              .click();
-          });
-        } else {
-          cy.findByText(nodeHost)
-            .siblings('td')
-            .find('input[type="checkbox"]')
-            .click();
-          cy.findByText(/^save$/i).click();
-          cy.findAllByText(/^next$/i)
-            .filter(':visible')
-            .click();
+        // the node has not been added yet, added directly
+        if ($body.find(`td:contains(${nodeHost})`).length === 0) {
+          cy.findByTitle('Create Node').click();
+          cy.get('input[name=hostname]').type(nodeHost);
+          cy.get('input[name=port]').type(nodePort);
+          cy.get('input[name=user]').type(nodeUser);
+          cy.get('input[name=password]').type(nodePass);
+          cy.findByText(/^create$/i).click();
         }
-        cy.end();
+        cy.findByText(nodeHost)
+          .siblings('td')
+          .find('input[type="checkbox"]')
+          .click();
+        cy.findByText(/^save$/i).click();
+        cy.findAllByText(/^next$/i)
+          .filter(':visible')
+          .click();
       });
+      cy.end();
     });
 
     // Click the quickstart dialog

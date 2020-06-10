@@ -17,7 +17,6 @@
 
 // Note: Do not change the usage of absolute path
 // unless you have a solution to resolve TypeScript + Coverage
-import { MODE } from '../src/const';
 import * as generate from '../src/utils/generate';
 import * as nodeApi from '../src/api/nodeApi';
 import * as fileApi from '../src/api/fileApi';
@@ -30,7 +29,6 @@ import * as streamApi from '../src/api/streamApi';
 import * as shabondiApi from '../src/api/shabondiApi';
 import * as pipelineApi from '../src/api/pipelineApi';
 import * as objectApi from '../src/api/objectApi';
-import * as inspectApi from '../src/api/inspectApi';
 import { wait, waitForRunning, waitForStopped } from './waitUtils';
 import { API, RESOURCE } from '../src/api/utils/apiUtils';
 import {
@@ -273,15 +271,12 @@ export const deleteAllServices = async () => {
     ),
   );
 
-  // delete all nodes if not k8s mode
-  const inspectRes = await inspectApi.getConfiguratorInfo();
-  if (inspectRes.data.mode !== MODE.K8S) {
-    const nodeRes = await nodeApi.getAll();
-    const nodes = nodeRes.data;
-    // we don't care the execute order of each individual node was done or not.
-    // Using Promise.all() to make sure all nodes were deleted.
-    await Promise.all(nodes.map((node) => nodeApi.remove(node.hostname)));
-  }
+  // delete all nodes
+  const nodeRes = await nodeApi.getAll();
+  const nodes = nodeRes.data;
+  // we don't care the execute order of each individual node was done or not.
+  // Using Promise.all() to make sure all nodes were deleted.
+  await Promise.all(nodes.map((node) => nodeApi.remove(node.hostname)));
 
   // delete all files
   const fileRes = await fileApi.getAll();
