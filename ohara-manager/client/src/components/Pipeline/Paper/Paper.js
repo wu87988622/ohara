@@ -589,12 +589,16 @@ const Paper = React.forwardRef((props, ref) => {
                 elementView.disableMenu(['link']);
               } else {
                 elementView.disableMenu(['link', 'config', 'remove']);
-                elementView.toggleMetrics(false); // Stop displaying metrics once an error occurs
+                elementView.toggleMetrics(false);
               }
 
               break;
             case CELL_STATUS.stopped:
               elementView.enableMenu();
+
+              if (!isTopic) {
+                elementView.toggleMetrics(false);
+              }
 
               // If a connector or stream doesn't have any connections yet,
               // disable the `start` and `stop` action buttons

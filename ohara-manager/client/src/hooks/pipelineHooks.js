@@ -53,7 +53,7 @@ export const usePipelineError = () => {
 
 export const useSwitchPipelineAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   return useCallback(
     (name) => dispatch(actions.switchPipeline.trigger({ group, name })),
     [dispatch, group],
@@ -62,7 +62,7 @@ export const useSwitchPipelineAction = () => {
 
 export const useFetchPipelineAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   return useCallback(
     (name) => dispatch(actions.fetchPipeline.trigger({ name, group })),
     [dispatch, group],
@@ -71,7 +71,7 @@ export const useFetchPipelineAction = () => {
 
 export const useCreatePipelineAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   return useCallback(
     (values) => dispatch(actions.createPipeline.trigger({ ...values, group })),
     [dispatch, group],
@@ -97,7 +97,7 @@ const updateEndpointGroup = ({
 
 export const useUpdatePipelineAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
 
   // Both connector and stream are using same group key
   const streamAndConnectorGroup = hooks.useStreamGroup();
@@ -125,7 +125,7 @@ export const useUpdatePipelineAction = () => {
 
 export const useDeletePipelineAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   return useCallback(
     (params, options) => {
       const newParams = { ...params, group };
@@ -145,7 +145,7 @@ export const useSetSelectedCellAction = () => {
 
 export const useStartUpdateMetricsAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   return useCallback(
     (name, options) => {
       const newParams = { group, name };
@@ -170,7 +170,7 @@ export const useAllPipelines = () => {
 };
 
 export const usePipelines = () => {
-  const group = hooks.usePipelineGroup();
+  const group = usePipelineGroup();
   const selector = useCallback(
     (state) => selectors.findPipelinesByGroup(state, { group }),
     [group],

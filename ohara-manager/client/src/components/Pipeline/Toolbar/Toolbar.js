@@ -302,7 +302,7 @@ const Toolbar = (props) => {
                   paperApi.toggleMetrics(!isMetricsOn);
 
                   if (!isMetricsOn) {
-                    startUpdateMetrics(currentPipeline?.name);
+                    startUpdateMetrics(currentPipeline?.name, { paperApi });
                   } else {
                     stopUpdateMetrics(currentPipeline?.name);
                   }

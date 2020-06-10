@@ -29,8 +29,8 @@ export default (action$) =>
     map((action) => action.payload),
     switchMap(({ params, options = {} }) =>
       timer(0, 8000).pipe(
-        switchMap(() =>
-          defer(() => pipelineApi.get(params)).pipe(
+        switchMap(() => {
+          return defer(() => pipelineApi.get(params)).pipe(
             filter((res) => {
               const { objects } = res.data;
               const hasRunningServices = objects
@@ -44,17 +44,8 @@ export default (action$) =>
               if (paperApi) paperApi.updateMetrics(objects);
               return actions.startUpdateMetrics.success(objects);
             }),
-            catchError((err) => {
-              return from([
-                actions.startUpdateMetrics.failure(err),
-                actions.createEventLog.trigger({
-                  ...err,
-                  type: LOG_LEVEL.error,
-                }),
-              ]);
-            }),
-          ),
-        ),
+          );
+        }),
         takeUntil(
           merge(
             action$.pipe(
@@ -69,4 +60,13 @@ export default (action$) =>
         ),
       ),
     ),
+    catchError((err) => {
+      return from([
+        actions.startUpdateMetrics.failure(err),
+        actions.createEventLog.trigger({
+          ...err,
+          type: LOG_LEVEL.error,
+        }),
+      ]);
+    }),
   );
