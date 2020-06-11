@@ -32,5 +32,11 @@
 import { AddSharedTopicIcon } from './AddSharedTopicIcon';
 import { SharedTopicIcon } from './SharedTopicIcon';
 import { PipelineOnlyTopicIcon } from './PipelineOnlyTopicIcon';
+import { IconWrapper } from './IconWrapper';
 
-export { AddSharedTopicIcon, SharedTopicIcon, PipelineOnlyTopicIcon };
+export {
+  AddSharedTopicIcon,
+  SharedTopicIcon,
+  PipelineOnlyTopicIcon,
+  IconWrapper,
+};

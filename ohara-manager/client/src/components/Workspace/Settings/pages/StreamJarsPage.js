@@ -28,8 +28,12 @@ import {
 } from 'lodash';
 import Link from '@material-ui/core/Link';
 import Tooltip from '@material-ui/core/Tooltip';
+import CheckIcon from '@material-ui/icons/Check';
+import WarningIcon from '@material-ui/icons/Warning';
 
+import { IconWrapper } from 'components/common/Icon';
 import { FileTable, FileRemoveDialog } from 'components/File';
+import { KIND } from 'const';
 import * as context from 'context';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
@@ -55,7 +59,7 @@ function StreamJarsPage() {
       ),
     ).map((file) => {
       const classNames = file?.classInfos
-        ?.filter((classInfo) => classInfo?.classType === 'stream')
+        ?.filter((classInfo) => classInfo?.classType === KIND.stream)
         ?.map((classInfo) => classInfo?.className);
 
       return {
@@ -183,6 +187,29 @@ function StreamJarsPage() {
                   </>
                 );
               },
+            },
+            {
+              title: 'Valid',
+              render: (file) => {
+                const isValidStreamJar = some(
+                  file?.classInfos,
+                  (classInfo) => classInfo?.classType === KIND.stream,
+                );
+                return isValidStreamJar ? (
+                  <Tooltip title="This is a valid jar">
+                    <IconWrapper severity="success">
+                      <CheckIcon fontSize="small" />
+                    </IconWrapper>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="This is an invalid jar. No stream class found.">
+                    <IconWrapper severity="warning">
+                      <WarningIcon fontSize="small" />
+                    </IconWrapper>
+                  </Tooltip>
+                );
+              },
+              sorting: false,
             },
           ],
         }}
