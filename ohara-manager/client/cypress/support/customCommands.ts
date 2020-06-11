@@ -25,7 +25,10 @@ import { capitalize } from 'lodash';
 
 import { KIND, CELL_TYPES } from '../../src/const';
 import * as connectorApi from '../../src/api/connectorApi';
-import { NodeResponse } from '../../src/api/apiInterface/nodeInterface';
+import {
+  NodeRequest,
+  NodeResponse,
+} from '../../src/api/apiInterface/nodeInterface';
 import { ClusterResponse } from '../../src/api/apiInterface/clusterInterface';
 import { TopicResponse } from '../../src/api/apiInterface/topicInterface';
 import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
@@ -63,8 +66,10 @@ declare global {
       createJar: (file: FixtureRequest) => Promise<FixtureResponse>;
       createWorkspace: ({
         workspaceName,
+        node,
       }: {
         workspaceName?: string;
+        node?: NodeRequest;
       }) => Chainable<null>;
       produceTopicData: (
         workspaceName?: string,
@@ -90,10 +95,10 @@ declare global {
 const workspaceGroup = 'workspace';
 const workerGroup = 'worker';
 
-const nodeHost = Cypress.env('nodeHost');
-const nodePort = Cypress.env('nodePort');
-const nodeUser = Cypress.env('nodeUser');
-const nodePass = Cypress.env('nodePass');
+let nodeHost = Cypress.env('nodeHost');
+let nodePort = Cypress.env('nodePort');
+let nodeUser = Cypress.env('nodeUser');
+let nodePass = Cypress.env('nodePass');
 
 const sources = Object.values(SOURCES).sort();
 const sinks = Object.values(SINKS).sort();
@@ -124,10 +129,20 @@ Cypress.Commands.add(
   'createWorkspace',
   ({
     workspaceName,
+    node,
   }: {
     workspaceName?: string;
+    node?: NodeRequest;
   } = {}) => {
     Cypress.Commands.add('addNode', () => {
+      // use passed node data if defined
+      if (node) {
+        nodeHost = node.hostname;
+        nodePort = node.port;
+        nodeUser = node.user;
+        nodePass = node.password;
+      }
+
       cy.get('body').then(($body) => {
         // the node has not been added yet, added directly
         if ($body.find(`td:contains(${nodeHost})`).length === 0) {

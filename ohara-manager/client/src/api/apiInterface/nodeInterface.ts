@@ -34,18 +34,18 @@ interface Resource {
 
 export interface NodeRequest {
   hostname: string;
-  port?: number;
-  user?: string;
-  password?: string;
+  port: number;
+  user: string;
+  password: string;
   tags?: {
     [k: string]: any;
   };
 }
 export interface NodeData {
   hostname: string;
-  port?: number;
-  user?: string;
-  password?: string;
+  port: number;
+  user: string;
+  password: string;
   services: NodeService[];
   state: NODE_STATE;
   error?: string;

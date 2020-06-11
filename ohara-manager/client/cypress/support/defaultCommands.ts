@@ -34,5 +34,14 @@ Cypress.Commands.overwrite('click', (originFn, subject, options) => {
     ...options,
     timeout: SINGLE_COMMAND_TIMEOUT,
   };
+  // The API of testing library "findByTitle" or "getByTitle" will try to query the element which has the "title=" attribute.
+  // However, cypress click() command is a synthetic event (https://dev.to/gabbersepp/doing-native-clicks-with-cypress-io-and-open-file-dialog-18n6)
+  // which will produce weird in our material UI ToolTip component
+  // ex: cypress click the button which has tooltip by "findByTitle" -> do something operations -> try to "findByTitle" will never found
+  // it may be a workaround to replace .click() by .trigger("click") for such cases...
+  // more example could be found in appBar.test.ts
+  if (subject?.selector && subject.selector.includes('ByTitle')) {
+    return cy.wrap(subject).trigger('click', customOptions);
+  }
   return originFn(subject, customOptions);
 });

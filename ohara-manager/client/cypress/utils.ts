@@ -300,6 +300,23 @@ export const deleteAllServices = async () => {
   await Promise.all(
     objects.map((object) => objectApi.remove(object as ObjectKey)),
   );
+
+  // make sure the indexDB is clear
+  indexedDB.deleteDatabase('ohara');
+
+  return {
+    connectRes,
+    workerRes,
+    streamRes,
+    shabondiRes,
+    topicRes,
+    brokerRes,
+    zookeeperRes,
+    nodeRes,
+    fileRes,
+    pipelineRes,
+    objectRes,
+  };
 };
 
 export const assertSettingsByDefinitions = (

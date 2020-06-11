@@ -33,6 +33,7 @@
 /* eslint-disable no-undef */
 
 import '@cypress/code-coverage/support';
+import _ from 'lodash';
 
 import './defaultCommands';
 import './customCommands';
@@ -43,7 +44,20 @@ after(async () => {
   // after each spec (file) tests finished, we make sure all service are stopped and deleted directly
   // even some tests of spec were failed, this command still run instantly.
   // see https://github.com/cypress-io/cypress/issues/203#issuecomment-251009808
-  await deleteAllServices();
+  await deleteAllServices().then((res) => {
+    // after each spec tests, we create own custom message here
+    // which will print out to our browsers console
+    // to indicate which objects are deleted
+    Cypress.log({
+      name: 'Stage of After All',
+      message: [],
+      consoleProps: () =>
+        _(res)
+          .mapKeys((_value, key) => `Deleted ${key.replace('res', 's')}`)
+          .mapValues((value) => value.data)
+          .value(),
+    }).end();
+  });
 });
 
 const customAssertions = (chai, utils) => {

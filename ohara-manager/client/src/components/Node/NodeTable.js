@@ -303,6 +303,7 @@ function NodeTable(props) {
               name: 'edit',
               onClick: handleEditorIconClick,
               tooltip: 'Edit node',
+              testid: `edit-node-${node.hostname}`,
             },
             {
               disabled: disabledDeleteIcon,

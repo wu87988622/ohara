@@ -51,7 +51,7 @@ describe('EventLogDialog', () => {
     cy.createWorkspace({});
 
     cy.findByTitle('Event logs').click();
-    cy.findByTestId('event-logs').within(() => {
+    cy.findByTestId('event-log-list').within(() => {
       cy.findAllByText('Successfully created workspace workspace1.').should(
         'exist',
       );
@@ -78,7 +78,7 @@ describe('EventLogDialog', () => {
     cy.findByText(/^add$/i).click();
 
     // the workspace event log should be still existed after create pipeline
-    cy.findByTestId('event-logs').within(() => {
+    cy.findByTestId('event-log-list').within(() => {
       cy.findByText('Successfully created workspace workspace1.').should(
         'exist',
       );

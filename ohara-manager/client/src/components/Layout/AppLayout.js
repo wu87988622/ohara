@@ -47,7 +47,7 @@ const AppLayout = () => {
   return (
     <Wrapper>
       <SplitPane allowResize={false} defaultSize={64} split="vertical">
-        <AppBar className="app-bar" />
+        <AppBar />
         <SplitPane
           defaultSize={isDevToolOpen || isEventLogOpen ? 240 : 0}
           maxSize={isDevToolOpen || isEventLogOpen ? 480 : 0}
