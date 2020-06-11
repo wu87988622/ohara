@@ -23,6 +23,7 @@ export * from './devToolActions';
 export * from './eventLogActions';
 export * from './fileActions';
 export * from './introActions';
+export * from './logProgressAction';
 export * from './nodeActions';
 export * from './pipelineActions';
 export * from './restartWorkspaceActions';

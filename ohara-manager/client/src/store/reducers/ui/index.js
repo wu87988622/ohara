@@ -24,6 +24,7 @@ import devTool from './devTool';
 import eventLog from './eventLog';
 import file from './file';
 import intro from './intro';
+import logProgress from './logProgress';
 import node from './node';
 import pipeline from './pipeline';
 import restartWorkspace from './restartWorkspace';
@@ -45,6 +46,7 @@ export default combineReducers({
   eventLog,
   file,
   intro,
+  logProgress,
   node,
   pipeline,
   restartWorkspace,

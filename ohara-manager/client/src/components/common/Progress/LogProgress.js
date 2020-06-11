@@ -35,6 +35,9 @@ import { VirtualizedList } from 'components/common/List';
 import LogRow from './LogRow';
 import * as s from './LogPropessStyles';
 import { DeleteDialog } from 'components/common/Dialog';
+import * as hooks from 'hooks';
+import { useEventLogContentDialog } from 'context';
+import EventLogContentDialog from 'components/EventLog/EventLogContentDialog';
 
 const LogProgress = (props) => {
   const {
@@ -43,7 +46,6 @@ const LogProgress = (props) => {
     activeStep,
     createTitle = 'Creating',
     testId = 'step-testid',
-    data = [],
     message = null,
     onPause,
     isPause,
@@ -67,6 +69,9 @@ const LogProgress = (props) => {
     isRollbackConfirmDialogOpen,
     setIsRollbackConfirmDialogOpen,
   ] = useState(false);
+  const log = hooks.useLogProgress().data;
+  const { open: openEventLogContentDialog } = useEventLogContentDialog();
+  const handleRowClick = (rowData) => openEventLogContentDialog(rowData);
 
   const progress = useRef(() => {});
 
@@ -209,11 +214,15 @@ const LogProgress = (props) => {
       </div>
       {!isHidden && (
         <Card className={'StyledCard'}>
-          <VirtualizedList
-            autoScrollToBottom
-            data={data}
-            rowRenderer={LogRow}
-          />
+          <>
+            <VirtualizedList
+              autoScrollToBottom
+              data={log}
+              onRowClick={handleRowClick}
+              rowRenderer={LogRow}
+            />
+            <EventLogContentDialog />
+          </>
         </Card>
       )}
       <div className={'FlexFooterDiv'}>

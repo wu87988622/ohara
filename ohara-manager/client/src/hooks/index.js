@@ -23,6 +23,7 @@ export * from './devToolHooks';
 export * from './eventLogHooks';
 export * from './fileHooks';
 export * from './introHooks';
+export * from './logProgressHooks';
 export * from './nodeHooks';
 export * from './pipelineHooks';
 export * from './restartWorkspaceHooks';

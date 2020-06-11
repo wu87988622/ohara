@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './deleteWorkspaceSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { ofType } from 'redux-observable';
+import { from, of } from 'rxjs';
+import { concatMap, map, catchError } from 'rxjs/operators';
+
+import * as actions from 'store/actions';
+
+export default (action$) =>
+  action$.pipe(
+    ofType(actions.clearLogProgress.TRIGGER),
+    map((action) => action.payload),
+    concatMap((entity) => from(actions.clearLogProgress.success(entity))),
+    catchError((res) => of(actions.clearLogProgress.failure(res))),
+  );

@@ -34,9 +34,10 @@ export const useOpenRestartWorkspaceDialogAction = () => {
 
 export const useCloseRestartWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.closeRestartWorkspace.trigger()), [
-    dispatch,
-  ]);
+  return useCallback(() => {
+    dispatch(actions.closeRestartWorkspace.trigger());
+    dispatch(actions.clearLogProgress.trigger());
+  }, [dispatch]);
 };
 
 export const useAutoCloseRestartWorkspaceDialogAction = () => {
