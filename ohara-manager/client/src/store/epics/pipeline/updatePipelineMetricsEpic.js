@@ -58,15 +58,15 @@ export default (action$) =>
             ),
           ),
         ),
+        catchError((err) => {
+          return from([
+            actions.startUpdateMetrics.failure(err),
+            actions.createEventLog.trigger({
+              ...err,
+              type: LOG_LEVEL.error,
+            }),
+          ]);
+        }),
       ),
     ),
-    catchError((err) => {
-      return from([
-        actions.startUpdateMetrics.failure(err),
-        actions.createEventLog.trigger({
-          ...err,
-          type: LOG_LEVEL.error,
-        }),
-      ]);
-    }),
   );

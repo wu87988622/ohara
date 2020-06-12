@@ -267,9 +267,9 @@ it('should handle error', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush, expectSubscriptions } = helpers;
 
-    const input = '   ^-a--| ';
-    const expected = '--(eu|)';
-    const subs = ['^-!', '--(^!)'];
+    const input = '   ^a---| ';
+    const expected = '-(eu)|';
+    const subs = ['^----!', '-(^!)'];
 
     const action$ = hot(input, {
       a: {
