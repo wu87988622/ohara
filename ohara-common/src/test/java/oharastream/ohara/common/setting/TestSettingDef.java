@@ -507,8 +507,8 @@ public class TestSettingDef extends OharaTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void nullBlacklist() {
-    SettingDef.builder().blacklist(null);
+  public void nullDenyList() {
+    SettingDef.builder().denyList(null);
   }
 
   @Test

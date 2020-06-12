@@ -135,13 +135,13 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
             case _ =>
               requireJsonType[JsArray](definition.key())
           }
-          // check black list
+          // check deny list
           requireJsonType[JsArray](
             definition.key(),
             (array: JsArray) => {
               array.elements.foreach {
                 case JsString(s) =>
-                  if (definition.blacklist().asScala.contains(s))
+                  if (definition.denyList().asScala.contains(s))
                     throw DeserializationException(s"the $s is protected word", fieldNames = List(definition.key()))
                 case _ => // we only check the string value
               }

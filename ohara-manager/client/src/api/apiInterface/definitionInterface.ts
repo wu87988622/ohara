@@ -133,7 +133,7 @@ export interface SettingDef {
   permission: Permission;
   tableKeys: TableColumn[];
   recommendedValues: string[];
-  blacklist: string[];
+  denyList: string[];
   prefix?: string;
 }
 
@@ -152,7 +152,7 @@ export class UISettingDef implements SettingDef {
   permission: Permission;
   tableKeys: TableColumn[];
   recommendedValues: string[];
-  blacklist: string[];
+  denyList: string[];
   prefix?: string | undefined;
 
   constructor(key: string, type: Type, internal: boolean = true) {
@@ -167,7 +167,7 @@ export class UISettingDef implements SettingDef {
     this.permission = Permission.CREATE_ONLY;
     this.tableKeys = [];
     this.recommendedValues = [];
-    this.blacklist = [];
+    this.denyList = [];
   }
 }
 

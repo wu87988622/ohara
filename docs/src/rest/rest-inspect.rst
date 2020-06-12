@@ -81,7 +81,7 @@ Example Response
       "imageName": "oharastream/zookeeper:$|version|",
       "settingDefinitions": [
         {
-           "blacklist": [],
+           "denyList": [],
            "reference": "NONE",
            "displayName": "peerPort",
            "regex": null,
@@ -132,7 +132,7 @@ Example Response
       "imageName": "oharastream/broker:$|version|",
       "settingDefinitions": [
         {
-          "blacklist": [],
+          "denyList": [],
           "reference": "NONE",
           "displayName": "xmx",
           "regex": null,
@@ -155,7 +155,7 @@ Example Response
           "className": "N/A",
           "settingDefinitions": [
             {
-              "blacklist": [],
+              "denyList": [],
               "reference": "NONE",
               "displayName": "numberOfPartitions",
               "regex": null,
@@ -335,7 +335,7 @@ Example Response
           "className": "oharastream.ohara.it.connector.IncludeAllTypesSinkConnector",
           "settingDefinitions": [
             {
-              "blacklist": [],
+              "denyList": [],
               "reference": "NONE",
               "displayName": "kind",
               "regex": null,

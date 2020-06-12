@@ -175,7 +175,7 @@ public class SettingDef implements JsonObject, Serializable {
   private static final String PERMISSION_KEY = "permission";
   // exposed to TableColumn
   static final String RECOMMENDED_VALUES_KEY = "recommendedValues";
-  private static final String BLACKLIST_KEY = "blacklist";
+  private static final String DENY_LIST_KEY = "denyList";
   @VisibleForTesting static final String PREFIX_KEY = "prefix";
 
   public static SettingDef ofJson(String json) {
@@ -196,7 +196,7 @@ public class SettingDef implements JsonObject, Serializable {
   private final Permission permission;
   private final List<TableColumn> tableKeys;
   private final Set<String> recommendedValues;
-  private final Set<String> blacklist;
+  private final Set<String> denyList;
   /**
    * this is used by RANDOM_DEFAULT and type.String that the prefix will be added to the random
    * string.
@@ -219,7 +219,7 @@ public class SettingDef implements JsonObject, Serializable {
       @JsonProperty(PERMISSION_KEY) Permission permission,
       @JsonProperty(TABLE_KEYS_KEY) List<TableColumn> tableKeys,
       @JsonProperty(RECOMMENDED_VALUES_KEY) Set<String> recommendedValues,
-      @JsonProperty(BLACKLIST_KEY) Set<String> blacklist,
+      @JsonProperty(DENY_LIST_KEY) Set<String> denyList,
       @Nullable @JsonProperty(PREFIX_KEY) String prefix) {
     this.group = CommonUtils.requireNonEmpty(group);
     this.orderInGroup = orderInGroup;
@@ -247,7 +247,7 @@ public class SettingDef implements JsonObject, Serializable {
     // However, we all hate null so we set the default value equal to key.
     this.displayName = CommonUtils.isEmpty(displayName) ? this.key : displayName;
     this.recommendedValues = Objects.requireNonNull(recommendedValues);
-    this.blacklist = Objects.requireNonNull(blacklist);
+    this.denyList = Objects.requireNonNull(denyList);
     this.regex = regex;
     this.prefix = prefix;
   }
@@ -631,9 +631,9 @@ public class SettingDef implements JsonObject, Serializable {
     return Collections.unmodifiableSet(recommendedValues);
   }
 
-  @JsonProperty(BLACKLIST_KEY)
-  public Set<String> blacklist() {
-    return Collections.unmodifiableSet(blacklist);
+  @JsonProperty(DENY_LIST_KEY)
+  public Set<String> denyList() {
+    return Collections.unmodifiableSet(denyList);
   }
 
   @Override
@@ -653,7 +653,7 @@ public class SettingDef implements JsonObject, Serializable {
           && Objects.equals(permission, another.permission)
           && Objects.equals(tableKeys, another.tableKeys)
           && Objects.equals(recommendedValues, another.recommendedValues)
-          && Objects.equals(blacklist, another.blacklist)
+          && Objects.equals(denyList, another.denyList)
           && Objects.equals(prefix, another.prefix);
     }
     return false;
@@ -687,7 +687,7 @@ public class SettingDef implements JsonObject, Serializable {
     private Permission permission = Permission.EDITABLE;
     private List<TableColumn> tableKeys = List.of();
     private Set<String> recommendedValues = Set.of();
-    private Set<String> blacklist = Set.of();
+    private Set<String> denyList = Set.of();
     @Nullable private String regex = null;
     @Nullable private String prefix = null;
 
@@ -987,11 +987,11 @@ public class SettingDef implements JsonObject, Serializable {
      * this method includes following settings. 1. set the type to ARRAY 2. disable specific values
      * 3. set the value to be required
      *
-     * @param blacklist the values in this list is illegal
+     * @param denyList the values in this list is illegal
      * @return builder
      */
-    public Builder blacklist(Set<String> blacklist) {
-      this.blacklist = Objects.requireNonNull(blacklist);
+    public Builder denyList(Set<String> denyList) {
+      this.denyList = Objects.requireNonNull(denyList);
       return checkAndSet(
           Type.ARRAY, this.necessary == null ? Necessary.REQUIRED : this.necessary, null);
     }
@@ -1063,7 +1063,7 @@ public class SettingDef implements JsonObject, Serializable {
           permission,
           tableKeys,
           recommendedValues,
-          blacklist,
+          denyList,
           prefix);
     }
   }

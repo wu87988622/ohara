@@ -578,17 +578,17 @@ either java.time.Duration or scala.duration.Duration. However, you are
 going to design a complicated connector which has specific limit for
 input value.
 
-.. _blacklist:
+.. _denylist:
 
-Blacklist
+DenyList
 ---------
 
-The blacklist is a useful information that it offers following checks.
+The denyList is a useful information that it offers following checks.
 
-1. The restful APIs will reject the values in the blacklist
+1. The restful APIs will reject the values in the denyList
 1. Ohara UI disable user to input the illegal words
 
-Currently, blacklist is used by Array type only.
+Currently, denyList is used by Array type only.
 
 .. _recommendedValues:
 

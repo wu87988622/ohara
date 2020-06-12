@@ -88,7 +88,7 @@ Example Response
           "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
-              "blacklist": [],
+              "denyList": [],
               "reference": "BROKER_CLUSTER",
               "displayName": "Broker cluster key",
               "regex": null,
@@ -134,7 +134,7 @@ Example Response
             "className": "oharastream.ohara.it.stream.DumbStream",
             "settingDefinitions": [
               {
-                "blacklist": [],
+                "denyList": [],
                 "reference": "BROKER_CLUSTER",
                 "displayName": "Broker cluster key",
                 "regex": null,
@@ -200,7 +200,7 @@ Example Response
           "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
-              "blacklist": [],
+              "denyList": [],
               "reference": "BROKER_CLUSTER",
               "displayName": "Broker cluster key",
               "regex": null,
@@ -258,7 +258,7 @@ Example Response
           "className": "oharastream.ohara.it.stream.DumbStream",
           "settingDefinitions": [
             {
-              "blacklist": [],
+              "denyList": [],
               "reference": "BROKER_CLUSTER",
               "displayName": "Broker cluster key",
               "regex": null,

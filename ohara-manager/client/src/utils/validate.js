@@ -72,16 +72,16 @@ export const composeValidators = (...validators) => (value, allValues, meta) =>
   );
 
 export const validWithDef = (def) => (value) => {
-  const { necessary, regex, blacklist } = def;
+  const { necessary, regex, denyList } = def;
   if (necessary === 'REQUIRED') {
     const requiredValue = required(value);
     if (requiredValue) {
       return requiredValue;
     }
   }
-  if (blacklist.length > 0) {
-    if (blacklist.find((black) => black === value)) {
-      return 'The value is listed in the blacklist and so cannot be used';
+  if (denyList.length > 0) {
+    if (denyList.find((deny) => deny === value)) {
+      return 'The value is listed in the denyList and so cannot be used';
     }
   }
   if (regex) {

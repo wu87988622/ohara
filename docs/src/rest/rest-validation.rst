@@ -69,7 +69,7 @@ Example Response
              "permission": "EDITABLE",
              "tableKeys": [],
              "recommendedValues": [],
-             "blacklist": []
+             "denyList": []
            },
            "value": {
              "key": "connector.class",

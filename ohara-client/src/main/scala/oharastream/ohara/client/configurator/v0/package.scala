@@ -389,7 +389,7 @@ package object v0 {
   private[v0] def nodeDefinition: SettingDef.Builder => SettingDef =
     _.key(NODE_NAMES_KEY)
       .documentation("the nodes hosting this cluster")
-      .blacklist(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
+      .denyList(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
       .reference(SettingDef.Reference.NODE)
       .build()
 

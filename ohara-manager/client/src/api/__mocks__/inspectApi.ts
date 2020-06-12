@@ -31,7 +31,7 @@ export const brokerInfoEntity = {
   imageName: 'oharastream/broker:0.11.0-SNAPSHOT',
   settingDefinitions: [
     {
-      blacklist: [],
+      denyList: [],
       reference: Reference.NONE,
       displayName: 'xmx',
       internal: false,
@@ -54,7 +54,7 @@ export const zookeeperInfoEntity = {
   imageName: 'oharastream/zookeeper:0.11.0-SNAPSHOT',
   settingDefinitions: [
     {
-      blacklist: [],
+      denyList: [],
       reference: Reference.NONE,
       displayName: 'peerPort',
       internal: false,
@@ -80,7 +80,7 @@ export const workerInfoEntity = {
       classType: 'sink',
       settingDefinitions: [
         {
-          blacklist: [],
+          denyList: [],
           displayName: 'Connector name',
           documentation: 'the name of this connector',
           group: 'core',
@@ -100,7 +100,7 @@ export const workerInfoEntity = {
   imageName: 'oharastream/connect-worker:0.11.0-SNAPSHOT',
   settingDefinitions: [
     {
-      blacklist: [],
+      denyList: [],
       displayName: 'sharedJarKeys',
       documentation: 'the shared jars',
       group: 'core',
@@ -122,7 +122,7 @@ export const shabondiInfoEntity = {
   imageName: 'oharastream/shabondi:0.11.0-SNAPSHOT',
   settingDefinitions: [
     {
-      blacklist: [],
+      denyList: [],
       displayName: 'Broker cluster key',
       documentation:
         'the key of broker cluster used to transfer data for this Shabondi',

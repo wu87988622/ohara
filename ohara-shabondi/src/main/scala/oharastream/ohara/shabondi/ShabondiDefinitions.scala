@@ -149,7 +149,7 @@ object ShabondiDefinitions {
     .group(CORE_GROUP)
     .key("nodeNames")
     .orderInGroup(orderInGroup())
-    .blacklist(Set("stop", "start", "pause", "resume").asJava)
+    .denyList(Set("stop", "start", "pause", "resume").asJava)
     .optional(Type.ARRAY)
     .reference(SettingDef.Reference.NODE)
     .displayName("Node name list")
