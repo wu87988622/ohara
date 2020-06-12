@@ -74,10 +74,10 @@ abstract class WithPerformanceRemoteWorkers extends WithPerformanceRemoteConfigu
       val hostNameList = result(nodeApi.list()).map(_.hostname)
       if (!hostNameList.contains(node.hostname)) {
         nodeApi.request
-          .hostname(node.hostname)
-          .port(node.port.get)
-          .user(node.user.get)
-          .password(node.password.get)
+          .nodeName(node.hostname)
+          .port(node.port)
+          .user(node.user)
+          .password(node.password)
           .create()
       }
     }

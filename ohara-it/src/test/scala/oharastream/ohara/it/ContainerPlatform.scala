@@ -126,9 +126,9 @@ object ContainerPlatform {
       val port     = nodeInfo.split("@").last.split(":").last.toInt
       Node(
         hostname = hostname,
-        port = Some(port),
-        user = Some(user),
-        password = Some(password),
+        port = port,
+        user = user,
+        password = password,
         services = Seq.empty,
         state = State.AVAILABLE,
         error = None,

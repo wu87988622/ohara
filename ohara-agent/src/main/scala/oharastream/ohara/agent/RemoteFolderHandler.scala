@@ -163,9 +163,9 @@ object RemoteFolderHandler {
         .map { node =>
           Agent.builder
             .hostname(node.hostname)
-            .user(node._user)
-            .password(node._password)
-            .port(node._port)
+            .user(node.user)
+            .password(node.password)
+            .port(node.port)
             .build
         }
     }

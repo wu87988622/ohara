@@ -59,9 +59,9 @@ object NodeApi {
 
   case class Creation(
     hostname: String,
-    port: Option[Int],
-    user: Option[String],
-    password: Option[String],
+    port: Int,
+    user: String,
+    password: String,
     tags: Map[String, JsValue]
   ) extends oharastream.ohara.client.configurator.v0.BasicCreation {
     override def group: String = GROUP_DEFAULT
@@ -150,9 +150,9 @@ object NodeApi {
     */
   case class Node(
     hostname: String,
-    port: Option[Int],
-    user: Option[String],
-    password: Option[String],
+    port: Int,
+    user: String,
+    password: String,
     services: Seq[NodeService],
     state: State,
     error: Option[String],
@@ -161,14 +161,9 @@ object NodeApi {
     tags: Map[String, JsValue]
   ) extends Data {
     // Node does not support to define group
-    override def group: String                 = GROUP_DEFAULT
-    private[this] def msg(key: String): String = s"$key is required since Ohara Configurator is in docker mode"
-    def _port: Int                             = port.getOrElse(throw new NoSuchElementException(msg("port")))
-    def _user: String                          = user.getOrElse(throw new NoSuchElementException(msg("user")))
-    def _password: String                      = password.getOrElse(throw new NoSuchElementException(msg("password")))
-    override def name: String                  = hostname
-    override def kind: String                  = KIND
-
+    override def group: String                       = GROUP_DEFAULT
+    override def name: String                        = hostname
+    override def kind: String                        = KIND
     override protected def raw: Map[String, JsValue] = NODE_JSON_FORMAT.write(this).asJsObject.fields
   }
 
@@ -178,11 +173,11 @@ object NodeApi {
       * @param hostname hostname
       * @return node
       */
-    def apply(hostname: String): Node = Node(
+    def apply(hostname: String, user: String, password: String): Node = Node(
       hostname = hostname,
-      port = None,
-      user = None,
-      password = None,
+      port = 22,
+      user = user,
+      password = password,
       services = Seq.empty,
       state = State.AVAILABLE,
       error = None,
@@ -211,7 +206,12 @@ object NodeApi {
       */
     def node(node: Node): Request
 
-    def hostname(hostname: String): Request
+    /**
+      * set the node name
+      * @param nodeName node name
+      * @return this request builder
+      */
+    def nodeName(nodeName: String): Request
 
     @Optional("it is ignorable if you are going to send update request")
     def port(port: Int): Request
@@ -256,23 +256,23 @@ object NodeApi {
 
   class Access private[v0] extends oharastream.ohara.client.configurator.v0.Access[Creation, Updating, Node](KIND) {
     def request: Request = new Request {
-      private[this] var hostname: String           = _
+      private[this] var nodeName: String           = _
       private[this] var port: Option[Int]          = None
-      private[this] var user: Option[String]       = None
-      private[this] var password: Option[String]   = None
+      private[this] var user: String               = _
+      private[this] var password: String           = _
       private[this] var tags: Map[String, JsValue] = _
 
       override def node(node: Node): Request = {
-        this.hostname = node.hostname
-        this.port = node.port
+        this.nodeName = node.hostname
+        this.port = Some(node.port)
         this.user = node.user
         this.password = node.password
         this.tags = node.tags
         this
       }
 
-      override def hostname(hostname: String): Request = {
-        this.hostname = CommonUtils.requireNonEmpty(hostname)
+      override def nodeName(nodeName: String): Request = {
+        this.nodeName = CommonUtils.requireNonEmpty(nodeName)
         this
       }
       override def port(port: Int): Request = {
@@ -280,11 +280,11 @@ object NodeApi {
         this
       }
       override def user(user: String): Request = {
-        this.user = Some(CommonUtils.requireNonEmpty(user))
+        this.user = CommonUtils.requireNonEmpty(user)
         this
       }
       override def password(password: String): Request = {
-        this.password = Some(CommonUtils.requireNonEmpty(password))
+        this.password = CommonUtils.requireNonEmpty(password)
         this
       }
 
@@ -298,10 +298,10 @@ object NodeApi {
         CREATION_JSON_FORMAT.read(
           CREATION_JSON_FORMAT.write(
             Creation(
-              hostname = CommonUtils.requireNonEmpty(hostname),
-              user = user.map(CommonUtils.requireNonEmpty),
-              password = password.map(CommonUtils.requireNonEmpty),
-              port = port.map(CommonUtils.requireConnectionPort),
+              hostname = CommonUtils.requireNonEmpty(nodeName),
+              user = CommonUtils.requireNonEmpty(user),
+              password = CommonUtils.requireNonEmpty(password),
+              port = CommonUtils.requireConnectionPort(port.getOrElse(22)),
               tags = if (tags == null) Map.empty else tags
             )
           )
@@ -313,8 +313,8 @@ object NodeApi {
           UPDATING_JSON_FORMAT.write(
             Updating(
               port = port.map(CommonUtils.requireConnectionPort),
-              user = user.map(CommonUtils.requireNonEmpty),
-              password = password.map(CommonUtils.requireNonEmpty),
+              user = Option(user).map(CommonUtils.requireNonEmpty),
+              password = Option(password).map(CommonUtils.requireNonEmpty),
               tags = Option(tags)
             )
           )
@@ -322,7 +322,7 @@ object NodeApi {
 
       override def create()(implicit executionContext: ExecutionContext): Future[Node] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[Node] =
-        put(ObjectKey.of(GROUP_DEFAULT, hostname), updating)
+        put(ObjectKey.of(GROUP_DEFAULT, nodeName), updating)
     }
   }
 

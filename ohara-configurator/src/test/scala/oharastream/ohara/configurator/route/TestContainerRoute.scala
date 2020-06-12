@@ -47,7 +47,7 @@ class TestContainerRoute extends OharaTest {
 
     nodeNames.isEmpty shouldBe false
     nodeNames.foreach { n =>
-      result(nodeApi.request.hostname(n).port(22).user("user").password("pwd").create())
+      result(nodeApi.request.nodeName(n).port(22).user("user").password("pwd").create())
     }
 
     val zk = result(

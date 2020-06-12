@@ -72,7 +72,7 @@ class TestWorkerRoute extends OharaTest {
     nodeNames.isEmpty shouldBe false
 
     nodeNames.foreach { n =>
-      result(nodeAccess.request.hostname(n).port(22).user("user").password("pwd").create())
+      result(nodeAccess.request.nodeName(n).port(22).user("user").password("pwd").create())
     }
 
     result(nodeAccess.list()).size shouldBe (nodeNames.size + numberOfDefaultNodes)

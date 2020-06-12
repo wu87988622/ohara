@@ -32,7 +32,7 @@ class TestNodeApi extends OharaTest {
       .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString(10))
       .user(CommonUtils.randomString(10))
       .password(CommonUtils.randomString(10))
       .create()
@@ -42,11 +42,11 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def ignoreUserOnCreation(): Unit =
-    NodeApi.access
+    an[NullPointerException] should be thrownBy NodeApi.access
       .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .password(CommonUtils.randomString(10))
       .create()
@@ -80,18 +80,18 @@ class TestNodeApi extends OharaTest {
       .update()
 
   @Test
-  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy NodeApi.access.request.hostname("")
+  def emptyHostname(): Unit = an[IllegalArgumentException] should be thrownBy NodeApi.access.request.nodeName("")
 
   @Test
-  def nullHostname(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.hostname(null)
+  def nullHostname(): Unit = an[NullPointerException] should be thrownBy NodeApi.access.request.nodeName(null)
 
   @Test
   def ignorePasswordOnCreation(): Unit =
-    NodeApi.access
+    an[NullPointerException] should be thrownBy NodeApi.access
       .hostname(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .request
-      .hostname(CommonUtils.randomString(10))
+      .nodeName(CommonUtils.randomString(10))
       .port(CommonUtils.availablePort())
       .user(CommonUtils.randomString(10))
       .create()
@@ -109,12 +109,12 @@ class TestNodeApi extends OharaTest {
     val password = CommonUtils.randomString(10)
     val port     = CommonUtils.availablePort()
     val creation =
-      NodeApi.access.request.hostname(hostname).user(user).password(password).port(port).creation
+      NodeApi.access.request.nodeName(hostname).user(user).password(password).port(port).creation
     creation.name shouldBe hostname
     creation.hostname shouldBe hostname
-    creation.user.get shouldBe user
-    creation.password.get shouldBe password
-    creation.port.get shouldBe port
+    creation.user shouldBe user
+    creation.password shouldBe password
+    creation.port shouldBe port
   }
 
   @Test
@@ -193,10 +193,10 @@ class TestNodeApi extends OharaTest {
                                                           """.stripMargin.parseJson)
 
     creation.hostname shouldBe hostname
-    creation.user.get shouldBe "user"
-    creation.password.get shouldBe "password"
+    creation.user shouldBe "user"
+    creation.password shouldBe "password"
     // default is ssh port: 22
-    creation.port.get shouldBe 22
+    creation.port shouldBe 22
   }
 
   @Test
@@ -271,9 +271,9 @@ class TestNodeApi extends OharaTest {
     creation.group shouldBe GROUP_DEFAULT
     creation.name shouldBe name
     creation.hostname shouldBe name
-    creation.port.get shouldBe port
-    creation.user.get shouldBe user
-    creation.password.get shouldBe password
+    creation.port shouldBe port
+    creation.user shouldBe user
+    creation.password shouldBe password
 
     val hostname  = CommonUtils.randomString(10)
     val creation2 = NodeApi.CREATION_JSON_FORMAT.read(s"""
@@ -291,9 +291,9 @@ class TestNodeApi extends OharaTest {
     // the name is alias to hostname
     creation2.name shouldBe hostname
     creation2.hostname shouldBe hostname
-    creation2.port.get shouldBe port
-    creation2.user.get shouldBe user
-    creation2.password.get shouldBe password
+    creation2.port shouldBe port
+    creation2.user shouldBe user
+    creation2.password shouldBe password
   }
 
   @Test
@@ -309,7 +309,9 @@ class TestNodeApi extends OharaTest {
         .hostname(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .request
-        .hostname(CommonUtils.randomString(LIMIT_OF_HOSTNAME_LENGTH + 1))
+        .user("user")
+        .password("password")
+        .nodeName(CommonUtils.randomString(LIMIT_OF_HOSTNAME_LENGTH + 1))
         .creation
 
   @Test
@@ -331,5 +333,5 @@ class TestNodeApi extends OharaTest {
   def testMemoryResourceInGB(): Unit = Resource.memory(1024 * 1024 * 1024, None).unit shouldBe "GB"
 
   @Test
-  def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString(10)))
+  def testNodeSetter(): Unit = NodeApi.access.request.node(Node(CommonUtils.randomString(10), "user", "password"))
 }

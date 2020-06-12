@@ -32,7 +32,7 @@ import scala.concurrent.duration.Duration
 class TestK8SClientVerify extends OharaTest {
   private[this] val dataCollie: DataCollie = DataCollie(Seq.empty)
 
-  private[this] def node: Node = Node("ohara")
+  private[this] def node: Node = Node("ohara", "user", "password")
 
   @Test
   def testMockK8sClientVerifyNode1(): Unit = {

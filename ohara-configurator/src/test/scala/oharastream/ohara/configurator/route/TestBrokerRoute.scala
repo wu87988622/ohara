@@ -50,7 +50,7 @@ class TestBrokerRoute extends OharaTest {
 
     nodeNames.foreach { n =>
       result(
-        nodeAccess.request.hostname(n).port(22).user("user").password("password").create()
+        nodeAccess.request.nodeName(n).port(22).user("user").password("password").create()
       )
     }
 

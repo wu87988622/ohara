@@ -39,25 +39,25 @@ class TestNodeNameUpperCaseRoute extends OharaTest {
   @Test
   def testAddNodeNameLowerCase(): Unit = {
     val name = CommonUtils.randomString(10).toLowerCase
-    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create()).name shouldBe name
+    result(nodeApi.request.nodeName(name).port(22).user("b").password("c").create()).name shouldBe name
   }
 
   @Test
   def testAddNodeNameUpperCase1(): Unit = {
     val name = CommonUtils.randomString(10).toUpperCase
-    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.nodeName(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase2(): Unit = {
     val name = "HOST1.test"
-    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.nodeName(name).port(22).user("b").password("c").create())
   }
 
   @Test
   def testAddNodeNameUpperCase3(): Unit = {
     val name = "aaa-Node1.test"
-    result(nodeApi.request.hostname(name).port(22).user("b").password("c").create())
+    result(nodeApi.request.nodeName(name).port(22).user("b").password("c").create())
   }
 
   @After

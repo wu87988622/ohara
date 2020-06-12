@@ -38,7 +38,7 @@ class TestClusterNameUpperCaseRoute extends OharaTest {
   private[this] def result[T](f: Future[T]): T = Await.result(f, Duration("20 seconds"))
   @Test
   def testAddZookeeper(): Unit = {
-    result(nodeApi.request.hostname("host1").port(22).user("b").password("c").create())
+    result(nodeApi.request.nodeName("host1").port(22).user("b").password("c").create())
 
     an[DeserializationException] should be thrownBy result(
       zookeeperApi.request.name(s"ZK-${CommonUtils.randomString(10)}").nodeName("host1").create()

@@ -143,9 +143,9 @@ object DockerClient {
             if (previous == null || !previous.isOpen)
               Agent.builder
                 .hostname(node.hostname)
-                .port(node._port)
-                .user(node._user)
-                .password(node._password)
+                .port(node.port)
+                .user(node.user)
+                .password(node.password)
                 .build
             else previous
         )

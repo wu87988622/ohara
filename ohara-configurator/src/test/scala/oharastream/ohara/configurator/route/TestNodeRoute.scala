@@ -63,18 +63,18 @@ class TestNodeRoute extends OharaTest {
     val port     = CommonUtils.availablePort()
     val user     = CommonUtils.randomString()
     val password = CommonUtils.randomString()
-    val res      = result(nodeApi.request.hostname(hostname).port(port).user(user).password(password).create())
+    val res      = result(nodeApi.request.nodeName(hostname).port(port).user(user).password(password).create())
     res.name shouldBe hostname
     res.hostname shouldBe hostname
-    res.port.get shouldBe port
-    res.user.get shouldBe user
-    res.password.get shouldBe password
+    res.port shouldBe port
+    res.user shouldBe user
+    res.password shouldBe password
 
     result(nodeApi.list()).size shouldBe (1 + numberOfDefaultNodes)
     compare(result(nodeApi.list()).find(_.name == hostname).get, res)
 
     an[IllegalArgumentException] should be thrownBy result(
-      nodeApi.request.hostname(hostname).port(port).user(user).password(password).create()
+      nodeApi.request.nodeName(hostname).port(port).user(user).password(password).create()
     )
   }
 
@@ -82,7 +82,7 @@ class TestNodeRoute extends OharaTest {
   def testDelete(): Unit = {
     val res = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -106,7 +106,7 @@ class TestNodeRoute extends OharaTest {
   def testUpdate(): Unit = {
     val res = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -117,7 +117,7 @@ class TestNodeRoute extends OharaTest {
 
     result(
       nodeApi.request
-        .hostname(res.hostname)
+        .nodeName(res.hostname)
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
@@ -140,7 +140,7 @@ class TestNodeRoute extends OharaTest {
     (0 until count).foreach { _ =>
       result(
         nodeApi.request
-          .hostname(CommonUtils.randomString(10))
+          .nodeName(CommonUtils.randomString(10))
           .port(CommonUtils.availablePort())
           .user(CommonUtils.randomString())
           .password(CommonUtils.randomString())
@@ -156,7 +156,7 @@ class TestNodeRoute extends OharaTest {
     invalidStrings.foreach { invalidString =>
       an[DeserializationException] should be thrownBy result(
         nodeApi.request
-          .hostname(invalidString)
+          .nodeName(invalidString)
           .port(CommonUtils.availablePort())
           .user(CommonUtils.randomString())
           .password(CommonUtils.randomString())
@@ -168,31 +168,31 @@ class TestNodeRoute extends OharaTest {
   @Test
   def testUpdatePort(): Unit = {
     val port = CommonUtils.availablePort()
-    updatePartOfField(_.port(port), _.copy(port = Some(port)))
+    updatePartOfField(_.port(port), _.copy(port = port))
   }
 
   @Test
   def testUpdateUser(): Unit = {
     val user = CommonUtils.randomString()
-    updatePartOfField(_.user(user), _.copy(user = Some(user)))
+    updatePartOfField(_.user(user), _.copy(user = user))
   }
 
   @Test
   def testUpdatePassword(): Unit = {
     val password = CommonUtils.randomString()
-    updatePartOfField(_.password(password), _.copy(password = Some(password)))
+    updatePartOfField(_.password(password), _.copy(password = password))
   }
 
   private[this] def updatePartOfField(req: Request => Request, _expected: Node => Node): Unit = {
     val previous = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update()
     )
-    val updated  = result(req(nodeApi.request.hostname(previous.hostname)).update())
+    val updated  = result(req(nodeApi.request.nodeName(previous.hostname)).update())
     val expected = _expected(previous)
     updated.name shouldBe expected.name
     updated.port shouldBe expected.port
@@ -204,7 +204,7 @@ class TestNodeRoute extends OharaTest {
   def createNodeWithoutPort(): Unit =
     result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .user(CommonUtils.randomString())
         .password(CommonUtils.randomString())
         .update()
@@ -212,9 +212,9 @@ class TestNodeRoute extends OharaTest {
 
   @Test
   def createNodeWithoutUser(): Unit =
-    result(
+    an[IllegalArgumentException] should be thrownBy result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .password(CommonUtils.randomString())
         .update()
@@ -222,9 +222,9 @@ class TestNodeRoute extends OharaTest {
 
   @Test
   def createNodeWithoutPassword(): Unit =
-    result(
+    an[IllegalArgumentException] should be thrownBy result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(CommonUtils.availablePort())
         .user(CommonUtils.randomString())
         .update()
@@ -238,7 +238,7 @@ class TestNodeRoute extends OharaTest {
     )
     val nodeDesc = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(22)
         .user("user")
         .password("password")
@@ -251,13 +251,13 @@ class TestNodeRoute extends OharaTest {
       CommonUtils.randomString(10) -> JsString(CommonUtils.randomString(10)),
       CommonUtils.randomString(10) -> JsNumber(CommonUtils.randomInteger())
     )
-    val nodeDesc2 = result(nodeApi.request.hostname(nodeDesc.name).tags(tags2).update())
+    val nodeDesc2 = result(nodeApi.request.nodeName(nodeDesc.name).tags(tags2).update())
     nodeDesc2.tags shouldBe tags2
 
-    val nodeDesc3 = result(nodeApi.request.hostname(nodeDesc.name).update())
+    val nodeDesc3 = result(nodeApi.request.nodeName(nodeDesc.name).update())
     nodeDesc3.tags shouldBe tags2
 
-    val nodeDesc4 = result(nodeApi.request.hostname(nodeDesc.name).tags(Map.empty).update())
+    val nodeDesc4 = result(nodeApi.request.nodeName(nodeDesc.name).tags(Map.empty).update())
     nodeDesc4.tags shouldBe Map.empty
   }
 
@@ -265,7 +265,7 @@ class TestNodeRoute extends OharaTest {
   def resourcesShouldBeInResponse(): Unit = {
     val resources = result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(22)
         .user("user")
         .password("password")
@@ -279,7 +279,7 @@ class TestNodeRoute extends OharaTest {
   def stateShouldBeAvailable(): Unit =
     result(
       nodeApi.request
-        .hostname(CommonUtils.randomString(10))
+        .nodeName(CommonUtils.randomString(10))
         .port(22)
         .user("user")
         .password("password")

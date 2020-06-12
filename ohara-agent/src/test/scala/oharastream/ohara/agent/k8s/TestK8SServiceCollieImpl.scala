@@ -34,7 +34,7 @@ import scala.concurrent.duration.Duration
 class TestK8SServiceCollieImpl extends OharaTest {
   @Test
   def testResource(): Unit = {
-    val nodeCache  = (1 to 3).map(x => Node(s"node$x"))
+    val nodeCache  = (1 to 3).map(x => Node(s"node$x", "user", "password"))
     val dataCollie = DataCollie(nodeCache)
 
     val k8sClient = new FakeK8SClient(false, None, "container1") {
@@ -74,7 +74,7 @@ class TestK8SServiceCollieImpl extends OharaTest {
 
   @Test
   def testEmptyResource(): Unit = {
-    val nodeCache  = (1 to 3).map(x => Node(s"node$x"))
+    val nodeCache  = (1 to 3).map(x => Node(s"node$x", "user", "password"))
     val dataCollie = DataCollie(nodeCache)
 
     val k8sClient = new FakeK8SClient(false, None, "container1") {

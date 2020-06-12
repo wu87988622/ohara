@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.docker.{ContainerState, DockerClient}
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
+import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.it.{ContainerPlatform, IntegrationTest}
 import org.junit.{After, Test}
@@ -193,15 +193,8 @@ class TestDockerClient extends IntegrationTest {
         Seq(
           Node(
             hostname = "abc",
-            port = Some(22),
-            user = Some("user"),
-            password = Some("password"),
-            services = Seq.empty,
-            state = State.AVAILABLE,
-            error = None,
-            lastModified = CommonUtils.current(),
-            resources = Seq.empty,
-            tags = Map.empty
+            user = "user",
+            password = "password"
           )
         )
       )

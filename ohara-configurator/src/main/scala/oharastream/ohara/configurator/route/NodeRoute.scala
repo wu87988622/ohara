@@ -26,6 +26,7 @@ import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.DataStore
+import spray.json.DeserializationException
 
 import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
@@ -214,12 +215,17 @@ object NodeRoute {
     (key: ObjectKey, updating: Updating, previousOption: Option[Node]) =>
       previousOption match {
         case None =>
+          // Node does not use definition so we check the field manually
+          if (updating.user.isEmpty)
+            throw DeserializationException(s"user field is required", fieldNames = List("user"))
+          if (updating.password.isEmpty)
+            throw DeserializationException(s"password field is required", fieldNames = List("password"))
           creationToNode(
             Creation(
               hostname = key.name(),
-              port = updating.port,
-              user = updating.user,
-              password = updating.password,
+              port = updating.port.getOrElse(22),
+              user = updating.user.get,
+              password = updating.password.get,
               tags = updating.tags.getOrElse(Map.empty)
             )
           )
@@ -257,9 +263,9 @@ object NodeRoute {
                 creationToNode(
                   Creation(
                     hostname = key.name(),
-                    port = updating.port.orElse(previous.port),
-                    user = updating.user.orElse(previous.user),
-                    password = updating.password.orElse(previous.password),
+                    port = updating.port.getOrElse(previous.port),
+                    user = updating.user.getOrElse(previous.user),
+                    password = updating.password.getOrElse(previous.password),
                     tags = updating.tags.getOrElse(previous.tags)
                   )
                 )

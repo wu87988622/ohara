@@ -125,9 +125,9 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
               ++ (if (wkConnectionProps.contains(nodeName))
                     Seq(NodeService(NodeApi.WORKER_SERVICE_NAME, Seq(embeddedWorkerKey)))
                   else Seq.empty),
-            port = Some(22),
-            user = Some("fake"),
-            password = Some("fake"),
+            port = 22,
+            user = "fake",
+            password = "fake",
             state = State.AVAILABLE,
             error = None,
             lastModified = CommonUtils.current(),
@@ -321,7 +321,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .flatMap(_.nodeNames)
         // DON'T add duplicate nodes!!!
         .toSet[String]
-        .map(Node.apply)
+        .map(name => Node(name, "fake", "fake"))
         .foreach(store.addIfAbsent[Node])
       serviceCollie(collie)
     }

@@ -63,9 +63,9 @@ class TestVerifyNode extends OharaTest {
 
   private[this] val node = Node(
     hostname = sshServer.hostname(),
-    port = Some(sshServer.port()),
-    user = Some(sshServer.user()),
-    password = Some(sshServer.password()),
+    port = sshServer.port(),
+    user = sshServer.user(),
+    password = sshServer.password(),
     services = Seq.empty,
     state = State.AVAILABLE,
     error = None,
