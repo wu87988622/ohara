@@ -37,6 +37,7 @@ import _ from 'lodash';
 
 import './defaultCommands';
 import './customCommands';
+import './pipelineCommands';
 import './retryOnFail';
 import { deleteAllServices } from '../utils';
 

@@ -5,6 +5,6 @@ yarn-error.log
 
 /client/cypress/videos
 /client/cypress/screenshots
-/client/cypress/fixtures
+/client/cypress/fixtures/*
 /client/cypress.env.json
 /client/.nyc_output

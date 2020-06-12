@@ -80,7 +80,7 @@ const Navigator = ({ pipelineApi }) => {
   const { name: workspaceName } = currentWorkspace;
 
   return (
-    <StyledNavigator>
+    <StyledNavigator id="navigator">
       <div className="button-wrapper">
         <Button
           className="workspace-settings-menu"

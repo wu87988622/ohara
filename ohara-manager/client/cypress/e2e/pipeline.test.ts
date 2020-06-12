@@ -29,26 +29,16 @@ const ACTIONS = {
 const sources = Object.values(SOURCES).sort();
 const sinks = Object.values(SINKS).sort();
 
-describe('ToolBox of Pipeline', () => {
+describe('ToolBox', () => {
   before(async () => await deleteAllServices());
 
-  it('create an empty pipeline should work normally', () => {
+  it('should create an empty pipeline', () => {
     cy.createWorkspace({});
-
-    // Add new pipeline
-    cy.findByText(/^pipelines$/i)
-      .siblings('svg')
-      .first()
-      .click();
-    cy.findByText(/^add a new pipeline$/i).should('exist');
-
-    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
-
-    cy.findByText(/^add$/i).click();
+    cy.createPipeline();
   });
 
-  it('check the toolbox works normally', () => {
-    // wait 20s for the connectors loaded into toolbox
+  it('should work as it should', () => {
+    // wait 20s until all connectors are fully loaded
     cy.wait(20000);
 
     cy.visit('/');
@@ -117,22 +107,12 @@ describe('ToolBox of Pipeline', () => {
   });
 });
 
-// TODO in https://github.com/oharastream/ohara/issues/4049
-describe.skip('Element Links of Pipeline', () => {
+describe('Paper Element connections', () => {
   before(async () => await deleteAllServices());
+
   it('tests of connector and topic links in pipeline', () => {
     cy.createWorkspace({});
-
-    // Add new pipeline
-    cy.findByText(/^pipelines$/i)
-      .siblings('svg')
-      .first()
-      .click();
-    cy.findByText(/^add a new pipeline$/i).should('exist');
-
-    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
-
-    cy.findByText(/^add$/i).click();
+    cy.createPipeline();
 
     // wait 20s for the connectors loaded into toolbox
     cy.wait(20000);
@@ -153,13 +133,13 @@ describe.skip('Element Links of Pipeline', () => {
       pipelineOnlyTopicName2: 'T2',
     };
 
-    cy.log('add elements:');
-    cy.log(`element: perf source ${elements.perfSourceName}`);
-    cy.log(`element: ftp source ${elements.ftpSourceName}`);
-    cy.log(`element: pipeline-only topic 1 ${elements.pipelineOnlyTopicName1}`);
-    cy.log(`element: console sink ${elements.consoleSinkName}`);
-    cy.log(`element: pipeline-only topic 2 ${elements.pipelineOnlyTopicName2}`);
-    cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
+    cy.log('Add elements:');
+    cy.log(`Element: perf source ${elements.perfSourceName}`);
+    cy.log(`Element: ftp source ${elements.ftpSourceName}`);
+    cy.log(`Element: pipeline-only topic 1 ${elements.pipelineOnlyTopicName1}`);
+    cy.log(`Element: console sink ${elements.consoleSinkName}`);
+    cy.log(`Element: pipeline-only topic 2 ${elements.pipelineOnlyTopicName2}`);
+    cy.log(`Element: hdfs sink ${elements.hdfsSinkName}`);
     cy.addElement(elements.perfSourceName, KIND.source, SOURCES.perf);
     cy.addElement(elements.ftpSourceName, KIND.source, SOURCES.ftp);
     cy.addElement(elements.pipelineOnlyTopicName1, KIND.topic);
@@ -175,7 +155,7 @@ describe.skip('Element Links of Pipeline', () => {
     cy.reload();
 
     // 1. perf source -> ftp source
-    cy.log(`cannot create a link from perf source to ftp source`);
+    cy.log(`Cannot create a link from perf source to ftp source`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
     cy.getCell(elements.ftpSourceName).click();
@@ -186,7 +166,7 @@ describe.skip('Element Links of Pipeline', () => {
       .click();
 
     // 2. pipeline-only topic 1 -> pipeline-only topic 2
-    cy.log(`cannot create a link between pipeline-only topic 1 and 2`);
+    cy.log(`Cannot create a link between pipeline-only topic 1 and 2`);
     cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
     cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.link).click();
     cy.getCell(elements.pipelineOnlyTopicName2).click();
@@ -200,7 +180,7 @@ describe.skip('Element Links of Pipeline', () => {
 
     // 3. pipeline-only topic 1 -> hdfs sink
     cy.log(
-      `create a link from a perf source to pipeline-only topic 1 to hdfs sink`,
+      `Create a link from a perf source to pipeline-only topic 1 to hdfs sink`,
     );
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
@@ -212,7 +192,7 @@ describe.skip('Element Links of Pipeline', () => {
     cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 2);
 
     // 4. ftp source -> hdfs sink
-    cy.log(`cannot create a link from ftp source to hdfs sink`);
+    cy.log(`Cannot create a link from ftp source to hdfs sink`);
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
@@ -225,7 +205,7 @@ describe.skip('Element Links of Pipeline', () => {
       .click();
 
     // 5. pipeline-only topic 2 -> hdfs sink
-    cy.log(`cannot create a link from pipeline-only topic to hdfs sink`);
+    cy.log(`Cannot create a link from pipeline-only topic to hdfs sink`);
     cy.getCell(elements.pipelineOnlyTopicName2).trigger('mouseover');
     cy.cellAction(elements.pipelineOnlyTopicName2, ACTIONS.link).click();
     cy.getCell(elements.hdfsSinkName).click();
@@ -267,19 +247,22 @@ describe.skip('Element Links of Pipeline', () => {
       ftpSourceName: generate.serviceName({ prefix: 'source' }),
       consoleSinkName: generate.serviceName({ prefix: 'sink' }),
       hdfsSinkName: generate.serviceName({ prefix: 'sink' }),
-      topicName1: generate.serviceName({ prefix: 'topic' }),
+      topicName1: 'T1',
       streamName: generate.serviceName({ prefix: 'stream' }),
-      topicName2: generate.serviceName({ prefix: 'topic' }),
+      topicName2: 'T2',
     };
 
-    cy.log('add elements:');
-    cy.log(`element: perf source ${elements.perfSourceName}`);
-    cy.log(`element: ftp source ${elements.ftpSourceName}`);
-    cy.log(`element: console sink ${elements.consoleSinkName}`);
-    cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
-    cy.log(`element: shared topic 1 ${elements.topicName1}`);
-    cy.log(`element: stream ${elements.streamName}`);
-    cy.log(`element: shared topic 2 ${elements.topicName2}`);
+    // Prepare a stream jar for this test case
+    cy.uploadStreamJar();
+
+    cy.log('Add elements:');
+    cy.log(`Element: perf source ${elements.perfSourceName}`);
+    cy.log(`Element: ftp source ${elements.ftpSourceName}`);
+    cy.log(`Element: console sink ${elements.consoleSinkName}`);
+    cy.log(`Element: hdfs sink ${elements.hdfsSinkName}`);
+    cy.log(`Element: pipeline-only topic 1 ${elements.topicName1}`);
+    cy.log(`Element: stream ${elements.streamName}`);
+    cy.log(`Element: pipeline-only topic 2 ${elements.topicName2}`);
     cy.addElement(elements.perfSourceName, KIND.source, SOURCES.perf);
     cy.addElement(elements.ftpSourceName, KIND.source, SOURCES.ftp);
     cy.addElement(elements.consoleSinkName, KIND.sink, SINKS.console);
@@ -297,7 +280,7 @@ describe.skip('Element Links of Pipeline', () => {
 
     // 1. perf source -> topic1 -> stream -> topic2 -> hdfs sink
     cy.log(
-      `create a link from perf source to topic 1 to stream to topic 2 to hdfs sink`,
+      `Create a link from perf source to topic 1 to stream to topic 2 to hdfs sink`,
     );
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
@@ -318,7 +301,7 @@ describe.skip('Element Links of Pipeline', () => {
     cy.get(`g[data-type="${CELL_TYPES.LINK}"]`).should('have.length', 4);
 
     // ftp source -> stream
-    cy.log(`cannot create a link from ftp source to stream`);
+    cy.log(`Cannot create a link from ftp source to stream`);
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link).click();
     cy.getCell(elements.streamName).click();
@@ -332,22 +315,11 @@ describe.skip('Element Links of Pipeline', () => {
   });
 });
 
-// TODO in https://github.com/oharastream/ohara/issues/4049
-describe.skip('Topic Operations of Pipeline', () => {
+describe('Topic Operations of Pipeline', () => {
   before(async () => await deleteAllServices());
   it('connect two elements of pipeline should auto generate pipeline-only topic', () => {
     cy.createWorkspace({});
-
-    // Add new pipeline
-    cy.findByText(/^pipelines$/i)
-      .siblings('svg')
-      .first()
-      .click();
-    cy.findByText(/^add a new pipeline$/i).should('exist');
-
-    cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
-
-    cy.findByText(/^add$/i).click();
+    cy.createPipeline();
 
     // force to reload the page in order to get the correct data in toolbox
     cy.reload();
@@ -365,14 +337,17 @@ describe.skip('Topic Operations of Pipeline', () => {
       streamName3: generate.serviceName({ prefix: 'stream' }),
     };
 
-    cy.log('add elements:');
-    cy.log(`element: perf source ${elements.perfSourceName}`);
-    cy.log(`element: console sink ${elements.consoleSinkName}`);
-    cy.log(`element: ftp source ${elements.ftpSourceName}`);
-    cy.log(`element: hdfs sink ${elements.hdfsSinkName}`);
-    cy.log(`element: stream1 ${elements.streamName1}`);
-    cy.log(`element: stream2 ${elements.streamName2}`);
-    cy.log(`element: stream3 ${elements.streamName3}`);
+    // Prepare a stream jar for this test case
+    cy.uploadStreamJar();
+
+    cy.log('Add elements:');
+    cy.log(`Element: perf source ${elements.perfSourceName}`);
+    cy.log(`Element: console sink ${elements.consoleSinkName}`);
+    cy.log(`Element: ftp source ${elements.ftpSourceName}`);
+    cy.log(`Element: hdfs sink ${elements.hdfsSinkName}`);
+    cy.log(`Element: stream1 ${elements.streamName1}`);
+    cy.log(`Element: stream2 ${elements.streamName2}`);
+    cy.log(`Element: stream3 ${elements.streamName3}`);
     cy.addElement(elements.perfSourceName, KIND.source, SOURCES.perf);
     cy.addElement(elements.consoleSinkName, KIND.sink, SINKS.console);
     cy.addElement(elements.ftpSourceName, KIND.source, SOURCES.ftp);
@@ -388,7 +363,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // we need to refresh the paper again
     cy.reload();
 
-    cy.log(`auto generate topic for perf source -> console sink`);
+    cy.log(`Auto generate topic for perf source -> console sink`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
     cy.cellAction(elements.perfSourceName, ACTIONS.link).click();
     cy.getCell(elements.consoleSinkName).click();
@@ -401,7 +376,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);
 
-    cy.log(`auto generate topic for ftp source -> stream1`);
+    cy.log(`Auto generate topic for ftp source -> stream1`);
     cy.getCell(elements.ftpSourceName).trigger('mouseover');
     cy.cellAction(elements.ftpSourceName, ACTIONS.link).click();
     cy.getCell(elements.streamName1).click();
@@ -414,7 +389,7 @@ describe.skip('Topic Operations of Pipeline', () => {
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);
 
-    cy.log(`auto generate topic for stream2 -> stream3`);
+    cy.log(`Auto generate topic for stream2 -> stream3`);
     cy.getCell(elements.streamName2).trigger('mouseover');
     cy.cellAction(elements.streamName2, ACTIONS.link).click();
     cy.getCell(elements.streamName3).click();
@@ -427,21 +402,13 @@ describe.skip('Topic Operations of Pipeline', () => {
     // topic creation is a heavy request...we need to wait util ready
     cy.wait(5000);
 
-    // check pipeline-only topics will be shown in topic list
-    cy.contains('button', /workspace/i)
-      .should('exist')
-      .click();
+    // click the settings dialog
+    cy.findByText('workspace1').click();
+    cy.contains('li', 'Settings').click();
 
-    cy.findByText(/^topics$/i)
-      .should('exist')
-      .click();
-
+    cy.findByText('Topics in this workspace').click({ force: true });
     cy.contains('td', 'T1').should('exist');
     cy.contains('td', 'T2').should('exist');
     cy.contains('td', 'T3').should('exist');
-
-    cy.findAllByText(/pipeline only/i)
-      .filter(':visible')
-      .should('have.length', 3);
   });
 });

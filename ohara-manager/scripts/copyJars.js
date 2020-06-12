@@ -19,7 +19,7 @@ const fs = require('fs');
 const copyJars = () => {
   fs.access('./client/cypress/fixtures/plugin/', (err) => {
     if (err) {
-      fs.mkdirSync('./client/cypress/fixtures/plugin');
+      fs.mkdirSync('./client/cypress/fixtures/plugin', { recursive: true });
     }
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-source.jar',
@@ -39,7 +39,7 @@ const copyJars = () => {
 
   fs.access('./client/cypress/fixtures/stream', (err) => {
     if (err) {
-      fs.mkdirSync('./client/cypress/fixtures/stream');
+      fs.mkdirSync('./client/cypress/fixtures/stream', { recursive: true });
     }
     fs.copyFile(
       '../ohara-it/build/libs/ohara-it-stream.jar',
