@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * a interface of Ohara containers. It is able to operate all containers created by ohara across all nodes.
-  * For k8s mode, the entrypoint is k8s master. By contrast, for docker mode, the implementation traverse all nodes
+  * For k8s mode, the entrypoint is k8s coordinator. By contrast, for docker mode, the implementation traverse all nodes
   * to handle requests.
   *
   * Noted: You should use this interface rather than docker client or k8s client since this interface consists of common

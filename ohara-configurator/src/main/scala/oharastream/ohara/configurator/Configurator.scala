@@ -222,7 +222,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         ValidationRoute.apply,
         ConnectorRoute.apply,
         InspectRoute.apply(mode, containerClient match {
-          case c: K8SClient => Some(K8sUrls(c.masterUrl, c.metricsUrl))
+          case c: K8SClient => Some(K8sUrls(c.coordinatorUrl, c.metricsUrl))
           case _            => None
         }),
         StreamRoute.apply,

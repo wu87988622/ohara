@@ -24,7 +24,7 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeK8SClient(isK8SNode: Boolean, k8sStatusInfo: Option[K8SStatusInfo], containerName: String) extends K8SClient {
-  override def masterUrl: String = "fake url"
+  override def coordinatorUrl: String = "fake url"
 
   override def metricsUrl: Option[String] = None
 
