@@ -150,4 +150,9 @@ private[configurator] class FakeServiceCollie(
     Future.failed(new NoSuchElementException)
 
   override def containerClient: ContainerClient = client
+
+  /**
+    * @return true if this service is built with embedded kafka. Otherwise, false
+    */
+  def embedded: Boolean = wkConnectionProps != null && bkConnectionProps != null
 }

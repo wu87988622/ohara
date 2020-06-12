@@ -38,6 +38,7 @@ import oharastream.ohara.configurator.{Configurator, ReflectionUtils}
 import oharastream.ohara.testing.service.Database
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
+import spray.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -309,6 +310,32 @@ class TestInspectRoute extends OharaTest {
       .find(_.key() == WithDefinitions.KIND_KEY)
       .get
       .defaultString() shouldBe ClassType.SINK.key()
+  }
+
+  @Test
+  def testInspectFakeTopicData(): Unit = {
+    val topicApi  = TopicApi.access.hostname(configurator.hostname).port(configurator.port)
+    val topicInfo = result(topicApi.request.brokerClusterKey(brokerClusterInfo.key).create())
+    result(topicApi.start(topicInfo.key))
+    val data = result(
+      inspectApi.topicRequest
+        .key(topicInfo.key)
+        .query()
+    )
+    data.messages.size shouldBe 1
+    data.messages.head.value should not be None
+    val fields = data.messages.head.value.get.asJsObject.fields
+    fields.size should not be 0
+    var typeCount = 0
+    fields.values.foreach {
+      case _: JsString  => typeCount += 1
+      case _: JsNumber  => typeCount += 1
+      case _: JsBoolean => typeCount += 1
+      case _: JsArray   => typeCount += 1
+      case _: JsObject  => typeCount += 1
+      case JsNull       => throw new RuntimeException("JsNull is illegal")
+    }
+    typeCount shouldBe 5
   }
 
   @After

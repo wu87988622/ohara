@@ -46,13 +46,13 @@ import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ClassType, ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
-import oharastream.ohara.configurator.fake.FakeConnectorAdmin
+import oharastream.ohara.configurator.fake.{FakeConnectorAdmin, FakeServiceCollie}
 import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
 import oharastream.ohara.shabondi.ShabondiDefinitions
 import oharastream.ohara.stream.config.StreamDefUtils
-import spray.json.{DeserializationException, JsNull, JsObject}
+import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsTrue}
 
 import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
@@ -193,36 +193,63 @@ private[configurator] object InspectRoute {
                     .map(_.runningBrokers.head.connectionProps)
               )
               .map { connectionProps =>
-                val consumer = Consumer
-                  .builder()
-                  .connectionProps(connectionProps)
-                  .build()
-                try {
-                  val endTime = CommonUtils.current() + timeoutMs
-                  consumer.assignments(
-                    consumer
-                      .endOffsets()
-                      .asScala
-                      .filter {
-                        case (tp, _) =>
-                          tp.topicKey() == topicKey
-                      }
-                      .map {
-                        case (tp, offset) =>
-                          tp -> lang.Long.valueOf(offset - limit)
-                      }
-                      .toMap
-                      .asJava
-                  )
-                  topicData(
-                    consumer
-                    // even if the timeout reach the limit, we still give a last try :)
-                      .poll(java.time.Duration.ofMillis(Math.max(1000L, endTime - CommonUtils.current())), limit)
-                      .asScala
-                      .slice(0, limit)
-                      .toSeq
-                  )
-                } finally Releasable.close(consumer)
+                serviceCollie match {
+                  // no true service so fake data
+                  case s: FakeServiceCollie if !s.embedded =>
+                    TopicData(
+                      Seq(
+                        Message(
+                          partition = 0,
+                          offset = 0,
+                          sourceClass = None,
+                          sourceKey = None,
+                          value = Some(
+                            JsObject(
+                              Map(
+                                "a" -> JsString("b"),
+                                "b" -> JsNumber(123),
+                                "c" -> JsArray(Vector(JsString("c"), JsString("d"), JsString("e"))),
+                                "d" -> JsObject(Map("a" -> JsString("aaa"))),
+                                "e" -> JsTrue
+                              )
+                            )
+                          ),
+                          error = None
+                        )
+                      )
+                    )
+                  case _ =>
+                    val consumer = Consumer
+                      .builder()
+                      .connectionProps(connectionProps)
+                      .build()
+                    try {
+                      val endTime = CommonUtils.current() + timeoutMs
+                      consumer.assignments(
+                        consumer
+                          .endOffsets()
+                          .asScala
+                          .filter {
+                            case (tp, _) =>
+                              tp.topicKey() == topicKey
+                          }
+                          .map {
+                            case (tp, offset) =>
+                              tp -> lang.Long.valueOf(offset - limit)
+                          }
+                          .toMap
+                          .asJava
+                      )
+                      topicData(
+                        consumer
+                        // even if the timeout reach the limit, we still give a last try :)
+                          .poll(java.time.Duration.ofMillis(Math.max(1000L, endTime - CommonUtils.current())), limit)
+                          .asScala
+                          .slice(0, limit)
+                          .toSeq
+                      )
+                    } finally Releasable.close(consumer)
+                }
               }
           )
         }
