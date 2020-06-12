@@ -36,6 +36,7 @@ import * as workerApi from 'api/workerApi';
 import * as topicApi from 'api/topicApi';
 import * as brokerApi from 'api/brokerApi';
 import * as zookeeperApi from 'api/zookeeperApi';
+import * as workspaceApi from 'api/workspaceApi';
 import { updateWorkerAndWorkspace$ } from '../worker/updateWorkerEpic';
 import { updateBrokerAndWorkspace$ } from '../broker/updateBrokerEpic';
 import { updateZookeeperAndWorkspace$ } from '../zookeeper/updateZookeeperEpic';
@@ -47,6 +48,9 @@ import { startWorker$ } from '../worker/startWorkerEpic';
 import { startTopic$ } from '../topic/startTopicEpic';
 import { startBroker$ } from '../broker/startBrokerEpic';
 import { startZookeeper$ } from '../zookeeper/startZookeeperEpic';
+import { createWorker$ } from '../worker/createWorkerEpic';
+import { createBroker$ } from '../broker/createBrokerEpic';
+import { createZookeeper$ } from '../zookeeper/createZookeeperEpic';
 
 const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
   of(
@@ -67,14 +71,40 @@ const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
     of(actions.fetchZookeeper.trigger(zookeeperKey)),
   ).pipe(concatAll());
 
-const isServiceRunning$ = async (api) => {
-  const isRunning = await defer(() => api)
+const isServiceRunning$ = (api) => {
+  const isRunning = defer(() => api)
     .pipe(
       map((res) => res.data),
       map((data) => !isEmpty(data) && data?.state === SERVICE_STATE.RUNNING),
     )
     .toPromise();
-  return isRunning;
+  return from(isRunning).resolved;
+};
+
+const isNonExistedObject$ = (api, objectKey) => {
+  const isNonExistedObject = defer(() => api)
+    .pipe(
+      map((res) => res.data),
+      map((dataArray) =>
+        dataArray.find(
+          (data) =>
+            data.name === objectKey.name && data.group === objectKey.group,
+        ),
+      ),
+      map((object) => isEmpty(object)),
+    )
+    .toPromise();
+  return from(isNonExistedObject).resolved;
+};
+
+const getSetting$ = (workspaceKey, kind) => {
+  const setting = defer(() => workspaceApi.get(workspaceKey))
+    .pipe(
+      map((res) => res.data),
+      map((data) => data[kind]),
+    )
+    .toPromise();
+  return from(setting).resolved;
 };
 
 const setTargetService$ = (targetService) => (service) => {
@@ -114,6 +144,10 @@ export default (action$, state$) =>
       const isTarget = setTargetService$(targetService);
 
       return of(
+        createWorker$(getSetting$(workspaceKey, KIND.worker)).pipe(
+          takeWhile(() => isNonExistedObject$(workerApi.getAll(), workerKey)),
+        ),
+
         stopWorker$(workerKey).pipe(
           endWith(
             actions.createLogProgress.trigger({
@@ -141,9 +175,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.worker)),
-          takeWhile(
-            async () => await isServiceRunning$(workerApi.get(workerKey)),
-          ),
+          takeWhile(() => isServiceRunning$(workerApi.get(workerKey))),
         ),
 
         updateWorkerAndWorkspace$({
@@ -177,9 +209,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.worker)),
-          takeWhile(
-            async () => await !isServiceRunning$(workerApi.get(workerKey)),
-          ),
+          takeWhile(() => !isServiceRunning$(workerApi.get(workerKey))),
         ),
 
         of(...topics).pipe(
@@ -211,11 +241,13 @@ export default (action$, state$) =>
                 ]),
               ),
               takeWhile(() => isTarget(KIND.broker)),
-              takeWhile(
-                async () => await isServiceRunning$(topicApi.get(topicKey)),
-              ),
+              takeWhile(() => isServiceRunning$(topicApi.get(topicKey))),
             ),
           ),
+        ),
+
+        createBroker$(getSetting$(workspaceKey, KIND.broker)).pipe(
+          takeWhile(() => isNonExistedObject$(brokerApi.getAll(), brokerKey)),
         ),
 
         stopBroker$(brokerKey).pipe(
@@ -245,9 +277,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.broker)),
-          takeWhile(
-            async () => await isServiceRunning$(brokerApi.get(brokerKey)),
-          ),
+          takeWhile(() => isServiceRunning$(brokerApi.get(brokerKey))),
         ),
         updateBrokerAndWorkspace$({
           workspaceKey,
@@ -280,8 +310,12 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.broker)),
-          takeWhile(
-            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
+          takeWhile(() => !isServiceRunning$(brokerApi.get(brokerKey))),
+        ),
+
+        createZookeeper$(getSetting$(workspaceKey, KIND.zookeeper)).pipe(
+          takeWhile(() =>
+            isNonExistedObject$(zookeeperApi.getAll(), zookeeperKey),
           ),
         ),
 
@@ -314,9 +348,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.zookeeper)),
-          takeWhile(
-            async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
-          ),
+          takeWhile(() => isServiceRunning$(zookeeperApi.get(zookeeperKey))),
         ),
         updateZookeeperAndWorkspace$({
           workspaceKey,
@@ -351,10 +383,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.zookeeper)),
-          takeWhile(
-            async () =>
-              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
-          ),
+          takeWhile(() => !isServiceRunning$(zookeeperApi.get(zookeeperKey))),
         ),
 
         startZookeeper$(zookeeperKey).pipe(
@@ -386,10 +415,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.zookeeper)),
-          takeWhile(
-            async () =>
-              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
-          ),
+          takeWhile(() => !isServiceRunning$(zookeeperApi.get(zookeeperKey))),
         ),
 
         startBroker$(brokerKey).pipe(
@@ -419,9 +445,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.broker)),
-          takeWhile(
-            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
-          ),
+          takeWhile(() => !isServiceRunning$(brokerApi.get(brokerKey))),
         ),
 
         of(...topics).pipe(
@@ -453,9 +477,7 @@ export default (action$, state$) =>
                 ]),
               ),
               takeWhile(() => isTarget(KIND.broker)),
-              takeWhile(
-                async () => await !isServiceRunning$(topicApi.get(topicKey)),
-              ),
+              takeWhile(() => !isServiceRunning$(topicApi.get(topicKey))),
             ),
           ),
         ),
@@ -487,9 +509,7 @@ export default (action$, state$) =>
             ]),
           ),
           takeWhile(() => isTarget(KIND.worker)),
-          takeWhile(
-            async () => await !isServiceRunning$(workerApi.get(workerKey)),
-          ),
+          takeWhile(() => !isServiceRunning$(workerApi.get(workerKey))),
         ),
 
         finalize$({ zookeeperKey, brokerKey, workerKey, workspaceKey }),
