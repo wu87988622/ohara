@@ -22,7 +22,15 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterInfo, ContainerApi, LogApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.v0.{
+  BrokerApi,
+  ClusterInfo,
+  ContainerApi,
+  LogApi,
+  NodeApi,
+  WorkerApi,
+  ZookeeperApi
+}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.exception.{ExecutionException, TimeoutException}
@@ -63,6 +71,8 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
 
   private[this] def containerApi = ContainerApi.access.hostname(configuratorHostname).port(configuratorPort)
 
+  private[this] def nodeApi = NodeApi.access.hostname(configuratorHostname).port(configuratorPort)
+
   @Test
   def testSingleCluster(): Unit = testZookeeperBrokerWorker(1)
 
@@ -78,9 +88,22 @@ class TestCollie(platform: ContainerPlatform) extends WithRemoteConfigurator(pla
       val brokerClusterInfos = zookeeperClusterInfos.map(testBroker)
       try {
         val workerClusterInfos = brokerClusterInfos.map(testWorker)
-        workerClusterInfos.foreach(testStopWorker)
+        try testNodeServices(zookeeperClusterInfos ++ brokerClusterInfos ++ workerClusterInfos)
+        finally workerClusterInfos.foreach(testStopWorker)
       } finally brokerClusterInfos.foreach(testStopBroker)
     } finally zookeeperClusterInfos.foreach(testStopZookeeper)
+  }
+
+  private[this] def testNodeServices(clusterInfos: Seq[ClusterInfo]): Unit = {
+    val nodes = result(nodeApi.list())
+    nodes.size should not be 0
+    clusterInfos
+      .foreach { clusterInfo =>
+        clusterInfo.nodeNames.foreach { name =>
+          val services = nodes.find(_.hostname == name).get.services
+          services.flatMap(_.clusterKeys) should contain(clusterInfo.key)
+        }
+      }
   }
 
   private[this] def testZookeeper(): ZookeeperClusterInfo = {
