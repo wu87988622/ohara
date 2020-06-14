@@ -18,6 +18,9 @@ package oharastream.ohara.it.collie
 
 import java.util.concurrent.TimeUnit
 
+import oharastream.ohara.agent.DataCollie
+import oharastream.ohara.agent.docker.DockerClient
+import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.it.{ContainerPlatform, IntegrationTest}
 import org.junit.runner.RunWith
@@ -26,14 +29,17 @@ import org.junit.runners.Parameterized.Parameters
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.CollectionConverters._
 
 @RunWith(value = classOf[Parameterized])
 class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
   private[this] val containerClient = platform.setupContainerClient()
+  private[this] val name            = CommonUtils.randomString(5)
+  private[this] val imageName       = "centos:7"
+  private[this] val webHost         = "www.google.com.tw"
 
-  private[this] def createBusyBox(name: String, arguments: Seq[String]): Unit =
+  private[this] def createBusyBox(arguments: Seq[String]): Unit =
     result(
       containerClient.containerCreator
         .nodeName(platform.nodeNames.head)
@@ -43,13 +49,13 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
         .create()
     )
 
-  private[this] def log(name: String, sinceSeconds: Option[Long]): String =
-    result(containerClient.log(name, sinceSeconds)).head._2
-
   @Test
   def testLog(): Unit = {
-    val name = CommonUtils.randomString(10)
-    createBusyBox(name, Seq("sh", "-c", "while true; do $(echo date); sleep 1; done"))
+    def log(name: String, sinceSeconds: Option[Long]): String =
+      result(containerClient.log(name, sinceSeconds)).head._2
+
+    createBusyBox(Seq("sh", "-c", "while true; do $(echo date); sleep 1; done"))
+
     try {
       // wait the container
       await(() => log(name, None).contains("UTC"))
@@ -62,6 +68,11 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
 
   @Test
   def testVolume(): Unit = {
+    def checkVolumeExists(names: Seq[String]): Unit = {
+      names.foreach { volumeName =>
+        await(() => !result(containerClient.volumes()).exists(_.name == volumeName))
+      }
+    }
     val names = Seq(CommonUtils.randomString(), CommonUtils.randomString())
     checkVolumeExists(names)
     try {
@@ -86,14 +97,155 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
     }
   }
 
-  private[this] def checkVolumeExists(names: Seq[String]): Unit = {
-    names.foreach { volumeName =>
-      await(() => !result(containerClient.volumes()).exists(_.name == volumeName))
-    }
+  @Test
+  def testList(): Unit = {
+    result(
+      containerClient.containerCreator
+        .nodeName(platform.nodeNames.head)
+        .name(name)
+        .imageName(imageName)
+        .command(s"""/bin/bash -c \"ping $webHost\"""")
+        .create()
+    )
+    result(containerClient.containerNames()).map(_.name) should contain(name)
+  }
+
+  @Test
+  def testRoute(): Unit = containerClient match {
+    case _: DockerClient =>
+      result(
+        containerClient.containerCreator
+          .nodeName(platform.nodeNames.head)
+          .name(name)
+          .routes(Map("ABC" -> "192.168.123.123"))
+          .imageName(imageName)
+          .command(s"""/bin/bash -c \"ping $webHost\"""")
+          .create()
+      )
+      val hostFile =
+        result(containerClient.asInstanceOf[DockerClient].containerInspector.name(name).cat("/etc/hosts")).head._2
+      hostFile should include("192.168.123.123")
+      hostFile should include("ABC")
+    case _ => skipTest(s"${containerClient.getClass.getName} is skipped")
+  }
+
+  @Test
+  def testPortMapping(): Unit = {
+    val availablePort = CommonUtils.availablePort()
+    result(
+      containerClient.containerCreator
+        .nodeName(platform.nodeNames.head)
+        .name(name)
+        .imageName(imageName)
+        .portMappings(Map(availablePort -> availablePort))
+        .command(s"""/bin/bash -c \"ping $webHost\"""")
+        .create()
+    )
+
+    val container = result(containerClient.containers()).find(_.name == name).get
+    container.portMappings.size shouldBe 1
+    container.portMappings.size shouldBe 1
+    container.portMappings.head.hostPort shouldBe availablePort
+    container.portMappings.head.containerPort shouldBe availablePort
+  }
+
+  @Test
+  def testSetEnv(): Unit = {
+    result(
+      containerClient.containerCreator
+        .nodeName(platform.nodeNames.head)
+        .name(name)
+        .imageName(imageName)
+        .envs(Map("abc" -> "123", "ccc" -> "ttt"))
+        .command(s"""/bin/bash -c \"ping $webHost\"""")
+        .create()
+    )
+    val container = result(containerClient.containers()).find(_.name == name).get
+    container.environments("abc") shouldBe "123"
+    container.environments("ccc") shouldBe "ttt"
+  }
+
+  @Test
+  def testHostname(): Unit = {
+    val hostname = CommonUtils.randomString(5)
+    result(
+      containerClient.containerCreator
+        .nodeName(platform.nodeNames.head)
+        .name(name)
+        .imageName(imageName)
+        .hostname(hostname)
+        .command(s"""/bin/bash -c \"ping $webHost\"""")
+        .create()
+    )
+    result(containerClient.containers()).find(_.name == name).get.hostname shouldBe hostname
+  }
+
+  @Test
+  def testNodeName(): Unit = {
+    result(
+      containerClient.containerCreator
+        .nodeName(platform.nodeNames.head)
+        .name(name)
+        .imageName(imageName)
+        .command(s"""/bin/bash -c \"ping $webHost\"""")
+        .create()
+    )
+    result(containerClient.containers()).find(_.name == name).get.nodeName shouldBe platform.nodeNames.head
+  }
+
+  @Test
+  def testAppend(): Unit = containerClient match {
+    case _: DockerClient =>
+      result(
+        containerClient.containerCreator
+          .nodeName(platform.nodeNames.head)
+          .name(name)
+          .imageName(imageName)
+          .command(s"""/bin/bash -c \"ping $webHost\"""")
+          .create()
+      )
+      val container = result(containerClient.containers()).find(_.name == name).get
+      result(
+        containerClient.asInstanceOf[DockerClient].containerInspector.name(container.name).append("/tmp/ttt", "abc")
+      ).head._2 shouldBe "abc\n"
+      result(
+        containerClient.asInstanceOf[DockerClient].containerInspector.name(container.name).append("/tmp/ttt", "abc")
+      ).head._2 shouldBe "abc\nabc\n"
+      result(
+        containerClient
+          .asInstanceOf[DockerClient]
+          .containerInspector
+          .name(container.name)
+          .append("/tmp/ttt", Seq("t", "z"))
+      ).head._2 shouldBe "abc\nabc\nt\nz\n"
+    case _ => skipTest(s"${containerClient.getClass.getName} is skipped")
+  }
+
+  @Test
+  def testResources(): Unit = result(containerClient.resources()) should not be Map.empty
+
+  @Test
+  def testResourcesOfUnavailableNode(): Unit = {
+    val c = DockerClient(
+      DataCollie(
+        Seq(
+          Node(
+            hostname = "abc",
+            user = "user",
+            password = "password"
+          )
+        )
+      )
+    )
+    try result(c.resources()) shouldBe Map.empty
+    finally c.close()
   }
 
   @After
-  def tearDown(): Unit = Releasable.close(containerClient)
+  def tearDown(): Unit = {
+    Releasable.close(() => result(containerClient.forceRemove(name)))
+    Releasable.close(containerClient)
+  }
 }
 
 object TestContainerClient {
