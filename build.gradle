@@ -38,6 +38,7 @@ def needHeaders() {
     fileTree(dir: ".").include("**/*.sh"),
     fileTree(dir: ".").include("**/*.properties"),
     fileTree(dir: ".").include("**/*.js"),
+    fileTree(dir: ".").include("**/*.ts"),
     fileTree(dir: ".").include("**/*.dockerfile"),
     fileTree(dir: ".").include("**/*.conf"),
     fileTree(dir: ".").include("**/*.gradle"),
@@ -75,6 +76,7 @@ license {
   // http://code.mycila.com/license-maven-plugin/#supported-comment-types
   mapping {
     js='JAVADOC_STYLE'
+    ts='JAVADOC_STYLE'
     scala='JAVADOC_STYLE'
     gradle='JAVADOC_STYLE'
     dockerfile='SCRIPT_STYLE'
