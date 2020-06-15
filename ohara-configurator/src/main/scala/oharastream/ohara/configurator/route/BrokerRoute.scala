@@ -183,10 +183,10 @@ object BrokerRoute {
           report =>
             (
               report.brokerClusterInfos.head._1,
-              report.runningWorkers,
-              report.runningStreams,
-              report.runningShabondis,
-              report.runningTopics
+              report.workerClusterInfos.keys.toSeq,
+              report.streamClusterInfos.keys.toSeq,
+              report.shabondiClusterInfos.keys.toSeq,
+              report.topicInfos.keys.toSeq
             )
         )
         .map {

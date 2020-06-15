@@ -223,6 +223,7 @@ private[configurator] object TopicRoute {
         .topic(TopicKey.of(key.group(), key.name()), DataCondition.STOPPED)
         .allConnectors()
         .allStreams()
+        .allShabondis()
         .check()
         .map { report =>
           checkConflict(
