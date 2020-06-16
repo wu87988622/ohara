@@ -29,7 +29,7 @@ const { getConfig } = require('../utils/configHelpers');
 const { configurator, port } = getConfig();
 const {
   testMode,
-  prod = false,
+  ci = false,
   nodeHost,
   nodePort,
   nodeUser,
@@ -47,7 +47,7 @@ const getDefaultEnv = () => {
 };
 
 /* eslint-disable no-process-exit, no-console */
-const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
+const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
@@ -79,16 +79,26 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
   // Wait until the server is ready
   await utils.waitOnService(`http://localhost:${serverPort}`);
 
-  // Start client server for e2e or it tests
-  // this server only starts on local env not on jenkins
-  if (!prod && testMode !== 'api') {
+  // Start client server for generating instrument code
+  // by instrument-cra plugin
+  // This instrument plugin is only available in the development environment!
+  // https://github.com/cypress-io/instrument-cra/issues/135
+  if (ci && testMode !== 'api') {
     console.log(chalk.blue(`Starting client server`));
     client = execa(
       'forever',
-      ['start', 'node_modules/react-scripts/scripts/start.js'],
+      [
+        'start',
+        '-c',
+        'node -r @cypress/instrument-cra',
+        'node_modules/react-scripts/scripts/start.js',
+      ],
       {
         cwd: 'client',
         stdio: 'inherit',
+        env: {
+          BROWSER: 'none',
+        },
       },
     );
 
@@ -106,7 +116,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
 
   const buildCypressEnv = () => {
     const env = [];
-    env.push(`port=${prod ? serverPort : clientPort}`);
+    env.push(`port=${ci ? clientPort : serverPort}`);
 
     if (nodeHost) {
       env.push(`nodeHost=${nodeHost}`);
@@ -134,9 +144,7 @@ const run = async (prod, apiRoot, serverPort = 5050, clientPort = 3000) => {
     [
       `test:${testMode}:run`,
       '--config',
-      `baseUrl=http://localhost:${
-        prod || testMode === 'api' ? serverPort : clientPort
-      }`,
+      `baseUrl=http://localhost:${ci ? clientPort : serverPort}`,
       '--env',
       buildCypressEnv(),
     ],
@@ -182,4 +190,4 @@ if (!utils.checkClientBuildDir()) {
   process.exit(1);
 }
 
-run(prod, configurator, port);
+run(ci, configurator, port);

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "setup": "yarn install --frozen-lockfile && yarn build",
-    "start": "react-scripts -r @cypress/instrument-cra start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "test:watch": "yarn test",
