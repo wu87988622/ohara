@@ -38,8 +38,8 @@ describe('ToolBox', () => {
   });
 
   it('should work as it should', () => {
-    // wait 20s until all connectors are fully loaded
-    cy.wait(20000);
+    // Ensure Toolbox items are ready
+    cy.findByText('FtpSource').should('exist');
 
     cy.visit('/');
 
@@ -321,11 +321,11 @@ describe('Topic Operations of Pipeline', () => {
     cy.createWorkspace({});
     cy.createPipeline();
 
-    // force to reload the page in order to get the correct data in toolbox
-    cy.reload();
-
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
+
+    // Ensure Toolbox items are ready
+    cy.findByText('FtpSource').should('exist');
 
     const elements = {
       perfSourceName: generate.serviceName({ prefix: 'source' }),

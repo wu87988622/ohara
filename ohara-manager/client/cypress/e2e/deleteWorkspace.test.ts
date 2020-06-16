@@ -44,7 +44,8 @@ describe('DeleteWorkspace', () => {
     });
   });
 
-  it('unexpected stop a workspace deletion should be deleted successfully after retry', () => {
+  // TODO: Enable this test after #5249 is resolved.
+  it.skip('unexpected stop a workspace deletion should be deleted successfully after retry', () => {
     // create workspace
     cy.createWorkspace({});
 
