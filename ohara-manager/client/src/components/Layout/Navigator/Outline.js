@@ -54,7 +54,7 @@ const Outline = ({ pipelineApi, isExpanded }) => {
   if (!pipelineApi) return null;
 
   return (
-    <Wrapper isExpanded={isExpanded}>
+    <Wrapper id="outline" isExpanded={isExpanded}>
       <Typography variant="h5">
         <ExtensionIcon />
         Outline

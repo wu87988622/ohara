@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-console */
-
-// Note: Do not change the usage of absolute path
-// unless you have a solution to resolve TypeScript + Coverage
 import '@testing-library/cypress/add-commands';
 import { capitalize } from 'lodash';
 
@@ -33,9 +27,43 @@ const sinks = Object.values(SINKS).sort();
 Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.log(`Creating pipeline: ${name}`);
   cy.get('.new-pipeline-button').click();
-  cy.findByText(/^add a new pipeline$/i).should('exist');
   cy.findByTestId('new-pipeline-dialog').find('input').type(name);
   cy.findByText(/^add$/i).click();
+});
+
+Cypress.Commands.add('deletePipeline', (name) => {
+  cy.log(`Deleting ${name}`);
+
+  cy.get('#pipeline-list').within(() => {
+    cy.findByText(name).click();
+  });
+
+  cy.get('.pipeline-controls').find('button').click();
+  cy.findByText('Delete this pipeline').click();
+  cy.findByText(/^delete$/i)
+    .filter(':visible')
+    .click();
+
+  cy.findByText(name).should('not.exist');
+});
+
+// Delete all pipelines under current workspace
+Cypress.Commands.add('deleteAllPipelines', () => {
+  cy.log(`Deleting all pipelines`);
+
+  cy.get('#pipeline-list').then(($list) => {
+    if ($list.find('> li').length === 0) {
+      return;
+    }
+
+    cy.get('#pipeline-list > li').as('items');
+
+    cy.get('@items').each(($el) => {
+      cy.deletePipeline($el.text());
+    });
+
+    cy.get('@items').should('have.length', 0);
+  });
 });
 
 // Drag & Drop

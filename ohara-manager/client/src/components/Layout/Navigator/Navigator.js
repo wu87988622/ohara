@@ -110,12 +110,15 @@ const Navigator = ({ pipelineApi }) => {
       <StyledExpansionPanel defaultExpanded={true} expanded={isExpanded}>
         <ExpansionPanelSummary
           disableRipple
-          expandIcon={<ExpandMoreIcon />}
+          expandIcon={
+            <ExpandMoreIcon data-testid="pipeline-list-expand-button" />
+          }
           onClick={handlePanelClick}
         >
           <Typography variant="h5">Pipelines</Typography>
           <AddIcon
             className="new-pipeline-button"
+            data-testid="new-pipeline-button"
             onClick={handleAddButtonClick}
           />
         </ExpansionPanelSummary>

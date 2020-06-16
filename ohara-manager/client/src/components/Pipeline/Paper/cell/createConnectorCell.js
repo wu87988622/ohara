@@ -248,7 +248,7 @@ const createConnectorCell = (options) => {
     updateElement(cellData, options) {
       const { $box, model } = this;
 
-      const isIllegal = cellData.isIllegal;
+      const { isIllegal, id } = cellData;
 
       if (isIllegal) {
         $box.addClass('is-illegal');
@@ -260,6 +260,9 @@ const createConnectorCell = (options) => {
       const status = cellData.status.toLowerCase();
       $box.find('.status-value').text(status);
       model.set('status', status, options);
+
+      // ID, for e2e and it testing
+      $box.attr('data-testid', id);
 
       // Display name
       $box.find('.display-name').text(displayName);

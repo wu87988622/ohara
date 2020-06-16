@@ -88,6 +88,8 @@ declare global {
       cellAction: (name: string, action: string) => Chainable<HTMLElement>;
       uploadStreamJar: () => Chainable<null>;
       createPipeline: (name?: string) => Chainable<null>;
+      deletePipeline: (name: string) => Chainable<null>;
+      deleteAllPipelines: (name?: string) => Chainable<null>;
     }
   }
 }

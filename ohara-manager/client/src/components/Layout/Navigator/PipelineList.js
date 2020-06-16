@@ -30,7 +30,7 @@ const PipelineList = () => {
 
   return (
     <Scrollbar>
-      <Wrapper>
+      <Wrapper id="pipeline-list">
         {pipelines.map((pipeline) => (
           <li key={pipeline.name}>
             <Link
