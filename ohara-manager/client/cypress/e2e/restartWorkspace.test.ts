@@ -43,7 +43,7 @@ describe('RestartWorkspace', () => {
     };
     const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
     const source = {
-      fixturePath: 'plugin',
+      fixturePath: 'jars',
       name: 'ohara-it-source.jar',
       group: fileGroup,
     };

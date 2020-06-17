@@ -16,38 +16,22 @@
 
 const fs = require('fs');
 
-const copyJars = () => {
-  fs.access('./client/cypress/fixtures/plugin/', (err) => {
-    if (err) {
-      fs.mkdirSync('./client/cypress/fixtures/plugin', { recursive: true });
-    }
-    fs.copyFile(
-      '../ohara-it/build/libs/ohara-it-source.jar',
-      'client/cypress/fixtures/plugin/ohara-it-source.jar',
-      (err) => {
-        if (err) throw err;
-      },
-    );
-    fs.copyFile(
-      '../ohara-it/build/libs/ohara-it-sink.jar',
-      'client/cypress/fixtures/plugin/ohara-it-sink.jar',
-      (err) => {
-        if (err) throw err;
-      },
-    );
-  });
+const srcBase = '../ohara-it/build/libs';
+const distBase = './client/cypress/fixtures/jars';
+const files = [
+  'ohara-it-source.jar',
+  'ohara-it-sink.jar',
+  'ohara-it-stream.jar',
+  'ohara-it-0.11.0-SNAPSHOT.jar',
+];
 
-  fs.access('./client/cypress/fixtures/stream', (err) => {
-    if (err) {
-      fs.mkdirSync('./client/cypress/fixtures/stream', { recursive: true });
-    }
-    fs.copyFile(
-      '../ohara-it/build/libs/ohara-it-stream.jar',
-      'client/cypress/fixtures/stream/ohara-it-stream.jar',
-      (err) => {
-        if (err) throw err;
-      },
-    );
+const copyJars = () => {
+  if (!fs.existsSync(`${distBase}`)) {
+    fs.mkdirSync(`${distBase}`, { recursive: true });
+  }
+
+  files.forEach((file) => {
+    fs.copyFileSync(`${srcBase}/${file}`, `${distBase}/${file}`);
   });
 };
 

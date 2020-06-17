@@ -249,7 +249,7 @@ Cypress.Commands.add('uploadStreamJar', () => {
 
   const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
   const source = {
-    fixturePath: 'stream',
+    fixturePath: 'jars',
     name: 'ohara-it-stream.jar',
     group: fileGroup,
   };

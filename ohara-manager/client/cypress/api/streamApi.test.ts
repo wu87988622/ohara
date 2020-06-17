@@ -33,7 +33,7 @@ import {
 } from '../utils';
 
 const file = {
-  fixturePath: 'stream',
+  fixturePath: 'jars',
   // we use an existing file to simulate upload jar
   name: 'ohara-it-stream.jar',
   group: generate.serviceName({ prefix: 'group' }),

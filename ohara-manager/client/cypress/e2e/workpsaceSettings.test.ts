@@ -152,7 +152,7 @@ describe('Workspace Settings', () => {
 
     // create files object
     const source = {
-      fixturePath: 'plugin',
+      fixturePath: 'jars',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-source.jar',
       group: fileGroup,
@@ -160,7 +160,7 @@ describe('Workspace Settings', () => {
     };
 
     const sink = {
-      fixturePath: 'plugin',
+      fixturePath: 'jars',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-sink.jar',
       group: fileGroup,
@@ -168,7 +168,7 @@ describe('Workspace Settings', () => {
     };
 
     const stream = {
-      fixturePath: 'stream',
+      fixturePath: 'jars',
       name: 'ohara-it-stream.jar',
       group: fileGroup,
       tags: { parentKey: workspaceKey },

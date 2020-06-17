@@ -176,7 +176,7 @@ describe('Inspect API', () => {
 
   it('fetchStreamFileDefinition', () => {
     const file: Cypress.FixtureRequest = {
-      fixturePath: 'stream',
+      fixturePath: 'jars',
       name: 'ohara-it-stream.jar',
       group: generate.serviceName({ prefix: 'group' }),
     };
@@ -229,7 +229,7 @@ describe('Inspect API', () => {
 
   it('fetchSourceConnectorFileDefinition', () => {
     const source = {
-      fixturePath: 'plugin',
+      fixturePath: 'jars',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-source.jar',
       group: generate.serviceName({ prefix: 'group' }),
@@ -283,7 +283,7 @@ describe('Inspect API', () => {
 
   it('fetchSinkConnectorFileDefinition', () => {
     const sink = {
-      fixturePath: 'plugin',
+      fixturePath: 'jars',
       // we use an existing file to simulate upload jar
       name: 'ohara-it-sink.jar',
       group: generate.serviceName({ prefix: 'group' }),

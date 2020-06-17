@@ -27,7 +27,7 @@ import { deleteAllServices } from '../utils';
 
 const generateFile = () => {
   const params: Cypress.FixtureRequest = {
-    fixturePath: 'plugin',
+    fixturePath: 'jars',
     // we use an existing file to simulate upload jar
     name: 'ohara-it-source.jar',
     group: generate.serviceName({ prefix: 'group' }),

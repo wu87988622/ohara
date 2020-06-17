@@ -30,7 +30,7 @@ import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 import { createServicesInNodes, deleteAllServices } from '../utils';
 
 const file = {
-  fixturePath: 'stream',
+  fixturePath: 'jars',
   // we use an existing file to simulate upload jar
   name: 'ohara-it-stream.jar',
   group: generate.serviceName({ prefix: 'group' }),
