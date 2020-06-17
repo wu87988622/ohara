@@ -16,7 +16,7 @@
 
 import { isEmpty } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, from, merge } from 'rxjs';
+import { of, defer, from, merge, empty } from 'rxjs';
 import {
   catchError,
   concatAll,
@@ -27,6 +27,7 @@ import {
   concatMap,
   map,
   endWith,
+  mergeMap,
 } from 'rxjs/operators';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -36,6 +37,7 @@ import * as workerApi from 'api/workerApi';
 import * as topicApi from 'api/topicApi';
 import * as brokerApi from 'api/brokerApi';
 import * as zookeeperApi from 'api/zookeeperApi';
+import * as workspaceApi from 'api/workspaceApi';
 import { updateWorkerAndWorkspace$ } from '../worker/updateWorkerEpic';
 import { updateBrokerAndWorkspace$ } from '../broker/updateBrokerEpic';
 import { updateZookeeperAndWorkspace$ } from '../zookeeper/updateZookeeperEpic';
@@ -47,6 +49,9 @@ import { startWorker$ } from '../worker/startWorkerEpic';
 import { startTopic$ } from '../topic/startTopicEpic';
 import { startBroker$ } from '../broker/startBrokerEpic';
 import { startZookeeper$ } from '../zookeeper/startZookeeperEpic';
+import { createWorker$ } from '../worker/createWorkerEpic';
+import { createBroker$ } from '../broker/createBrokerEpic';
+import { createZookeeper$ } from '../zookeeper/createZookeeperEpic';
 
 const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
   of(
@@ -68,13 +73,41 @@ const finalize$ = ({ zookeeperKey, brokerKey, workerKey, workspaceKey }) =>
   ).pipe(concatAll());
 
 const isServiceRunning$ = async (api) => {
-  const isRunning = await defer(() => api)
+  const isServiceRunning = await defer(() => api)
     .pipe(
       map((res) => res.data),
       map((data) => !isEmpty(data) && data?.state === SERVICE_STATE.RUNNING),
     )
     .toPromise();
-  return isRunning;
+  return isServiceRunning;
+};
+
+const createService$ = ({
+  objectKey,
+  workspaceKey,
+  kind,
+  getApi,
+  createApi,
+}) => {
+  return defer(() => getApi()).pipe(
+    map((res) => res.data),
+    map((dataArray) =>
+      dataArray.find(
+        (data) =>
+          data.name === objectKey.name && data.group === objectKey.group,
+      ),
+    ),
+    mergeMap((isNonExistedObject) => {
+      if (isEmpty(isNonExistedObject)) {
+        return defer(() => workspaceApi.get(workspaceKey)).pipe(
+          map((res) => res.data),
+          map((data) => data[kind]),
+          mergeMap((setting) => defer(() => createApi(setting))),
+        );
+      }
+      return empty();
+    }),
+  );
 };
 
 const setTargetService$ = (targetService) => (service) => {
@@ -114,6 +147,13 @@ export default (action$, state$) =>
       const isTarget = setTargetService$(targetService);
 
       return of(
+        createService$({
+          objectKey: workerKey,
+          workspaceKey,
+          kind: KIND.worker,
+          getApi: workerApi.getAll,
+          createApi: createWorker$,
+        }),
         stopWorker$(workerKey).pipe(
           endWith(
             actions.createLogProgress.trigger({
@@ -178,7 +218,7 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
-            async () => await !isServiceRunning$(workerApi.get(workerKey)),
+            async () => await isServiceRunning$(workerApi.get(workerKey)),
           ),
         ),
 
@@ -217,6 +257,14 @@ export default (action$, state$) =>
             ),
           ),
         ),
+
+        createService$({
+          objectKey: brokerKey,
+          workspaceKey,
+          kind: KIND.broker,
+          getApi: brokerApi.getAll,
+          createApi: createBroker$,
+        }),
 
         stopBroker$(brokerKey).pipe(
           endWith(
@@ -281,9 +329,17 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
-            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
+            async () => await isServiceRunning$(brokerApi.get(brokerKey)),
           ),
         ),
+
+        createService$({
+          objectKey: zookeeperKey,
+          workspaceKey,
+          kind: KIND.zookeeper,
+          getApi: zookeeperApi.getAll,
+          createApi: createZookeeper$,
+        }),
 
         stopZookeeper$(zookeeperKey).pipe(
           endWith(
@@ -352,8 +408,7 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
-            async () =>
-              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
+            async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
           ),
         ),
 
@@ -387,8 +442,7 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.zookeeper)),
           takeWhile(
-            async () =>
-              await !isServiceRunning$(zookeeperApi.get(zookeeperKey)),
+            async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
           ),
         ),
 
@@ -420,7 +474,7 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.broker)),
           takeWhile(
-            async () => await !isServiceRunning$(brokerApi.get(brokerKey)),
+            async () => await isServiceRunning$(brokerApi.get(brokerKey)),
           ),
         ),
 
@@ -454,7 +508,7 @@ export default (action$, state$) =>
               ),
               takeWhile(() => isTarget(KIND.broker)),
               takeWhile(
-                async () => await !isServiceRunning$(topicApi.get(topicKey)),
+                async () => await isServiceRunning$(topicApi.get(topicKey)),
               ),
             ),
           ),
@@ -488,7 +542,7 @@ export default (action$, state$) =>
           ),
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
-            async () => await !isServiceRunning$(workerApi.get(workerKey)),
+            async () => await isServiceRunning$(workerApi.get(workerKey)),
           ),
         ),
 
