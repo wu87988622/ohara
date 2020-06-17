@@ -29,7 +29,6 @@ import { times } from 'lodash';
 
 import * as context from 'context';
 import ToolboxRedirectButton from './ToolboxRedirectButton';
-import { AddTopicDialog } from 'components/Topic';
 
 const ToolboxList = (props) => {
   const {
@@ -111,8 +110,6 @@ const ToolboxList = (props) => {
           </div>
         </ExpansionPanelDetails>
       </ExpansionPanel>
-
-      <AddTopicDialog uniqueId="toolbox" />
 
       <ExpansionPanel expanded={expanded.stream} square>
         <ExpansionPanelSummary

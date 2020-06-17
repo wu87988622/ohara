@@ -107,7 +107,11 @@ const Navigator = ({ pipelineApi }) => {
       </Menu>
 
       <AddPipelineDialog isOpen={isOpen} setIsOpen={setIsOpen} />
-      <StyledExpansionPanel defaultExpanded={true} expanded={isExpanded}>
+      <StyledExpansionPanel
+        defaultExpanded={true}
+        expanded={isExpanded}
+        id="pipeline"
+      >
         <ExpansionPanelSummary
           disableRipple
           expandIcon={

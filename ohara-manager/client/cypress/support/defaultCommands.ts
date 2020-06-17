@@ -45,3 +45,13 @@ Cypress.Commands.overwrite('click', (originFn, subject, options) => {
   }
   return originFn(subject, customOptions);
 });
+
+// referenced from: https://github.com/cypress-io/cypress/issues/871#issuecomment-509392310
+// When scrolling an element into view, the click callback function may have problem
+// this is a workaround for now until the issue has been resolved...
+Cypress.on('scrolled', ($el) => {
+  $el.get(0).scrollIntoView({
+    block: 'center',
+    inline: 'center',
+  });
+});

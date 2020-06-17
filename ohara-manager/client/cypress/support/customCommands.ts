@@ -33,6 +33,7 @@ import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
+import { deleteAllServices } from '../utils';
 
 interface FixtureResponse {
   name: string;
@@ -40,6 +41,18 @@ interface FixtureResponse {
   file: File;
   group: string;
   tags?: object;
+}
+
+export enum SETTING_SECTIONS {
+  topics = 'Topics',
+  autofill = 'Autofill',
+  zookeeper = 'Zookeeper',
+  broker = 'Broker',
+  worker = 'Worker',
+  stream = 'Stream',
+  nodes = 'Nodes',
+  files = 'Files',
+  dangerZone = 'Danger Zone',
 }
 
 declare global {
@@ -73,6 +86,7 @@ declare global {
         workspaceName?: string,
         topicName?: string,
       ) => Chainable<void>;
+      deleteAllServices: () => Chainable<null>;
       // Drag & Drop
       dragAndDrop: (
         shiftX: number,
@@ -87,9 +101,12 @@ declare global {
       getCell: (name: string) => Chainable<HTMLElement>;
       cellAction: (name: string, action: string) => Chainable<HTMLElement>;
       uploadStreamJar: () => Chainable<null>;
+      // Pipeline
       createPipeline: (name?: string) => Chainable<null>;
       deletePipeline: (name: string) => Chainable<null>;
       deleteAllPipelines: (name?: string) => Chainable<null>;
+      // Settings
+      switchSettingSection: (section: SETTING_SECTIONS) => Chainable<null>;
     }
   }
 }
@@ -249,3 +266,26 @@ Cypress.Commands.add(
     await connectorApi.remove(connector);
   },
 );
+
+Cypress.Commands.add('deleteAllServices', async () => {
+  await deleteAllServices();
+});
+
+// Settings
+Cypress.Commands.add('switchSettingSection', (section: SETTING_SECTIONS) => {
+  cy.get('#navigator').within(() => {
+    cy.get('button').should('have.length', 1).click();
+  });
+  // enter the settings dialog
+  cy.findAllByRole('menu').filter(':visible').find('li').click();
+
+  cy.contains('h2', section)
+    .parent('section')
+    .find('ul')
+    .should('have.length', 1)
+    // We need to "offset" the element we just scrolled from the header of Settings
+    // which has 64px height
+    .scrollIntoView({ offset: { top: -64, left: 0 } })
+    .should('be.visible')
+    .click();
+});

@@ -64,7 +64,7 @@ const AutofillEditor = (props) => {
   const saveNew = (values) => {
     const newSettingFilling = {
       ...values,
-      name: uuid.v4(),
+      name: uuid(),
       lastModified: new Date(),
     };
     updateWorkspace({

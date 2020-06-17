@@ -56,7 +56,7 @@ const AppBar = () => {
   const [isNodeListDialogOpen, setIsNodeListDialogOpen] = useState(false);
 
   return (
-    <StyledAppBar data-testid="app-bar">
+    <StyledAppBar id="app-bar">
       <header>
         <div className="brand">
           <Logo height="38" width="38" />

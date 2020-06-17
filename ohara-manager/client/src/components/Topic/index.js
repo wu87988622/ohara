@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-import AddTopicDialog from './AddTopicDialog';
-
 import TopicCreateDialog from './TopicCreateDialog';
 import TopicDeleteDialog from './TopicDeleteDialog';
 import TopicDetailDialog from './TopicDetailDialog';
 import TopicTable from './TopicTable';
 
-export {
-  AddTopicDialog,
-  TopicCreateDialog,
-  TopicDeleteDialog,
-  TopicDetailDialog,
-  TopicTable,
-};
+export { TopicCreateDialog, TopicDeleteDialog, TopicDetailDialog, TopicTable };

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { LOG_SERVICES } from '../../src/api/apiInterface/logInterface';
-import * as generate from '../../src/utils/generate';
-import { deleteAllServices } from '../utils';
-import { NodeRequest } from '../../src/api/apiInterface/nodeInterface';
+import { LOG_SERVICES } from '../../../src/api/apiInterface/logInterface';
+import * as generate from '../../../src/utils/generate';
+import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 
-describe('App Bar - UI Flows', () => {
-  before(() => deleteAllServices());
+describe('App Bar', () => {
+  before(() => cy.deleteAllServices());
 
   beforeEach(() => {
     // our tests should begin from home page
@@ -63,7 +62,7 @@ describe('App Bar - UI Flows', () => {
       cy.findByTestId('close-intro-button').click();
 
       // there should have only 1 element of workspace list link which is "create workspace button"
-      cy.findByTestId('app-bar')
+      cy.get('#app-bar')
         .find('div.workspace-list span')
         .should('have.length', 1);
 
@@ -123,7 +122,7 @@ describe('App Bar - UI Flows', () => {
       cy.createWorkspace({ node });
 
       // there should have 2 element of workspace list link (workspace1 and new-add-button)
-      cy.findByTestId('app-bar')
+      cy.get('#app-bar')
         .find('div.workspace-list span')
         .should('have.length', 2)
         .first()
@@ -150,7 +149,7 @@ describe('App Bar - UI Flows', () => {
       cy.createWorkspace({ workspaceName: name, node });
 
       // there should have 3 element of workspace list link now
-      cy.findByTestId('app-bar')
+      cy.get('#app-bar')
         .find('div.workspace-list span')
         .should('have.length', 3)
         .first()
@@ -158,7 +157,7 @@ describe('App Bar - UI Flows', () => {
       cy.location('pathname').should('equal', `/${name}`);
 
       // switch workspace from quick icon to default one
-      cy.findByTestId('app-bar')
+      cy.get('#app-bar')
         .find('div.workspace-list span')
         .contains('a', 'WO')
         .click();

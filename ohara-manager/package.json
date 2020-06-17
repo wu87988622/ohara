@@ -12,6 +12,7 @@
     "start": "cross-env NODE_ENV=development nodemon start.js --exec \"yarn lint:server && ts-node\"",
     "start:prod": "cross-env NODE_ENV=production node start.js",
     "start:client": "yarn --cwd client start",
+    "start:client:ci": "yarn --cwd client start:ci",
     "lint": "run-s lint:server lint:client",
     "lint:fix": "run-s lint:server:fix lint:client:fix",
     "lint:ci": "run-s lint:server:ci lint:client",

@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import * as generate from '../../src/utils/generate';
-import { deleteAllServices } from '../utils';
-import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
-import { KIND } from '../../src/const';
-import { NodeRequest } from '../../src/api/apiInterface/nodeInterface';
+import * as generate from '../../../src/utils/generate';
+import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 
 describe('Navigator', () => {
   before(() => {
@@ -29,11 +26,11 @@ describe('Navigator', () => {
       password: generate.password(),
     };
 
-    deleteAllServices();
+    cy.deleteAllServices();
     cy.createWorkspace({ node });
   });
 
-  describe('Pipeline list', () => {
+  context('Pipeline list', () => {
     beforeEach(() => {
       cy.deleteAllPipelines();
     });
@@ -158,8 +155,8 @@ describe('Navigator', () => {
     });
   });
 
-  describe('Create pipeline dialog', () => {
-    it('should render the UI', () => {
+  context('Create pipeline dialog', () => {
+    it('should render the UI after creation', () => {
       cy.findByTestId('new-pipeline-button').click();
 
       cy.findByTestId('new-pipeline-dialog').within(() => {
@@ -245,82 +242,6 @@ describe('Navigator', () => {
         .click();
 
       cy.findByText(validName).should('exist');
-    });
-  });
-
-  describe('Outline', () => {
-    beforeEach(() => {
-      cy.deleteAllPipelines();
-      cy.createPipeline();
-    });
-
-    it('should render the UI', () => {
-      cy.findByText(/^outline$/i).should('exist');
-    });
-
-    it('should render all Paper elements in the list', () => {
-      const sources = Object.values(SOURCES).map((type) => ({
-        name: generate.serviceName({ prefix: 'source' }),
-        kind: KIND.source,
-        type,
-      }));
-
-      const sinks = Object.values(SINKS).map((type) => ({
-        name: generate.serviceName({ prefix: 'sink' }),
-        kind: KIND.sink,
-        type,
-      }));
-
-      const elements = [...sources, ...sinks];
-
-      // Scroll bar is not visible when Outline list is empty or not long enough
-      // to display it
-      cy.get('.ScrollbarsCustom-TrackY').should('not.be.visible');
-
-      elements.forEach(({ name, kind, type }) => {
-        cy.addElement(name, kind, type);
-      });
-
-      // While we're here, let's assert the scroll bar is properly displayed when
-      // there are too many items
-      cy.get('.ScrollbarsCustom-TrackY').should('be.visible');
-
-      cy.get('#outline').within(() => {
-        elements.forEach((element) => {
-          cy.findByText(element.name).should('exist');
-        });
-      });
-    });
-
-    it('should highlight the selected element', () => {
-      const source = generate.serviceName({ prefix: 'source' });
-      const sink = generate.serviceName({ prefix: 'sink' });
-
-      cy.addElement(source, KIND.source, SOURCES.ftp);
-      cy.addElement(sink, KIND.sink, SINKS.ftp);
-
-      cy.get('#outline').within(() => {
-        cy.findByText(source).click().should('have.class', 'is-selected');
-      });
-
-      // Element on Paper should also be highlighted
-      cy.get('#paper').within(() => {
-        cy.findByText(source)
-          .parents('.connector')
-          .should('have.class', 'is-active');
-      });
-
-      // Reset active item
-      cy.get('#paper').click();
-
-      // No active item should be found on both Outline and Paper
-      cy.get('#outline').within(() => {
-        cy.get('.is-selected').should('have.length', 0);
-      });
-
-      cy.get('#paper').within(() => {
-        cy.get('.is-active').should('have.length', 0);
-      });
     });
   });
 });
