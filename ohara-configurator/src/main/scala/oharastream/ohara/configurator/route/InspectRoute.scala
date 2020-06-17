@@ -42,7 +42,7 @@ import oharastream.ohara.client.configurator.v0.{
 }
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
-import oharastream.ohara.common.data.{Row, Serializer}
+import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.setting.{ClassType, ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
@@ -51,6 +51,7 @@ import oharastream.ohara.configurator.store.DataStore
 import oharastream.ohara.kafka.Consumer.Record
 import oharastream.ohara.kafka.{Consumer, Header, TopicAdmin}
 import oharastream.ohara.shabondi.ShabondiDefinitions
+import oharastream.ohara.shabondi.common.JsonSupport
 import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsTrue}
 
@@ -59,13 +60,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 private[configurator] object InspectRoute {
-  /**
-    * we reuse the great conversion of JIO connectors
-    * @param row row
-    * @return json representation
-    */
-  def toJson(row: Row): JsObject = oharastream.ohara.client.configurator.v0.toJson(row)
-
   private[this] def topicData(records: Seq[Record[Array[Byte], Array[Byte]]]): TopicData =
     TopicData(
       records.reverse
@@ -95,7 +89,7 @@ private[configurator] object InspectRoute {
                   .map(h => new String(h.value(), StandardCharsets.UTF_8))
                   .map(ObjectKey.toObjectKey)
               ),
-              value = swallowException(Some(toJson(Serializer.ROW.from(bytes)))),
+              value = swallowException(Some(JsonSupport.toJson(Serializer.ROW.from(bytes)))),
               error = error
             )
         }

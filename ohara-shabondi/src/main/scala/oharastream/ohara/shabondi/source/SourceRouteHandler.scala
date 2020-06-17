@@ -21,6 +21,7 @@ import java.util.function.Consumer
 
 import akka.actor.ActorSystem
 import akka.event.Logging
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.stream.OverflowStrategy
@@ -29,7 +30,9 @@ import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Producer
 import oharastream.ohara.metrics.basic.Counter
+import oharastream.ohara.shabondi.common.JsonSupport.RowData
 import oharastream.ohara.shabondi.common.{ConvertSupport, JsonSupport, RouteHandler, ShabondiUtils}
+import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
 
@@ -41,7 +44,6 @@ private[shabondi] class SourceRouteHandler(
   config: SourceConfig
 )(implicit actorSystem: ActorSystem)
     extends RouteHandler {
-  import oharastream.ohara.shabondi.common.JsonSupport._
   private val log = Logging(actorSystem, classOf[SourceRouteHandler])
 
   private val threadPool: ExecutorService                  = Executors.newFixedThreadPool(4)

@@ -16,13 +16,17 @@
 
 package oharastream.ohara.shabondi.common
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.data.{Cell, Row}
+import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.jdk.CollectionConverters._
 
-private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+object JsonSupport {
+  @VisibleForTesting
+  private[common] val TAGS_KEY: String = "tags"
+
   type RowData = Map[String, JsValue] // column, value
 
   implicit val rowDataFormat: RootJsonFormat[RowData] = new RootJsonFormat[RowData] {
@@ -30,12 +34,9 @@ private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonPr
     override def read(json: JsValue): RowData = json.asJsObject.fields
   }
 
-  def toRow(rowData: RowData): Row = toRow(JsObject(rowData))
   def toRowData(row: Row): RowData = toJson(row).fields
 
-  private val TAGS_KEY: String = "tags"
-
-  private def toJson(row: Row): JsObject = JsObject(
+  def toJson(row: Row): JsObject = JsObject(
     row.cells().asScala.map(cell => cell.name() -> toJson(cell.value())).toMap + (TAGS_KEY -> JsArray(
       row.tags().asScala.map(JsString(_)).toVector
     ))
@@ -61,11 +62,14 @@ private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonPr
     //--------[for java]--------//
     case i: java.math.BigDecimal  => JsNumber(i)
     case s: java.lang.Iterable[_] => JsArray(s.asScala.map(toJson).toVector)
+    case t: java.util.Date        => JsString(t.toString)
     //--------[other]--------//
     case _ => throw new IllegalArgumentException(s"${value.getClass.getName} is unsupported!!!")
   }
 
-  private def toRow(obj: JsObject): Row = Row.of(
+  def toRow(rowData: RowData): Row = toRow(JsObject(rowData))
+
+  def toRow(obj: JsObject): Row = Row.of(
     noJsNull(obj.fields)
       .get(TAGS_KEY)
       .map {
@@ -81,14 +85,15 @@ private[shabondi] object JsonSupport extends SprayJsonSupport with DefaultJsonPr
     }.toSeq: _*
   )
 
-  private def noJsNull(fields: Map[String, JsValue]): Map[String, JsValue] = fields.filter {
+  @VisibleForTesting
+  private[common] def noJsNull(fields: Map[String, JsValue]): Map[String, JsValue] = fields.filter {
     _._2 match {
       case JsNull => false
       case _      => true
     }
   }
 
-  private def toValue(value: JsValue): Any = value match {
+  private[this] def toValue(value: JsValue): Any = value match {
     case JsNull       => throw new IllegalArgumentException("null should be eliminated")
     case JsBoolean(b) => b
     case JsNumber(i)  => i

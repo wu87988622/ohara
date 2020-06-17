@@ -32,6 +32,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.compat.java8.DurationConverters._
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.Duration
+import spray.json.DefaultJsonProtocol._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 private[shabondi] object SinkRouteHandler {
   def apply(config: SinkConfig)(implicit actorSystem: ActorSystem) =
@@ -39,7 +41,6 @@ private[shabondi] object SinkRouteHandler {
 }
 
 private[shabondi] class SinkRouteHandler(config: SinkConfig)(implicit actorSystem: ActorSystem) extends RouteHandler {
-  import oharastream.ohara.shabondi.common.JsonSupport._
   implicit private val contextExecutor: ExecutionContextExecutor = actorSystem.dispatcher
 
   private val log              = Logger(classOf[SinkRouteHandler])

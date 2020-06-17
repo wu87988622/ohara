@@ -23,6 +23,7 @@ import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, Inspec
 import oharastream.ohara.common.data.{Cell, Row, Serializer}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.Producer
+import oharastream.ohara.shabondi.common.JsonSupport
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
@@ -82,7 +83,7 @@ class TestInspectTopic extends WithBrokerWorker {
     }
 
     def checkRow(json: JsValue, row: Row): Unit =
-      oharastream.ohara.client.configurator.v0.toRow(json.asJsObject) shouldBe row
+      JsonSupport.toRow(json.asJsObject) shouldBe row
 
     def check(count: Int): Unit = {
       val messages = result(inspectApi.topicRequest.key(topicInfo.key).limit(count).query()).messages

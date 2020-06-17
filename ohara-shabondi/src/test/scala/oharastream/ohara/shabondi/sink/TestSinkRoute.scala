@@ -19,6 +19,7 @@ package oharastream.ohara.shabondi.sink
 import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import oharastream.ohara.common.data.Row
@@ -27,18 +28,17 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi._
 import oharastream.ohara.shabondi.common.JsonSupport
+import oharastream.ohara.shabondi.common.JsonSupport.RowData
 import org.junit.Test
+import org.scalatest.matchers.should.Matchers._
+import spray.json.DefaultJsonProtocol._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
-import org.scalatest.matchers.should.Matchers._
-
-import scala.concurrent.duration.Duration
-
 final class TestSinkRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
-  import oharastream.ohara.shabondi.common.JsonSupport._
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second

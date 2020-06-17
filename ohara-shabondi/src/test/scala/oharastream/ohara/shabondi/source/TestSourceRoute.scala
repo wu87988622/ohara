@@ -26,16 +26,14 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.CounterMBean
 import oharastream.ohara.shabondi.{BasicShabondiTest, KafkaSupport}
 import org.junit.Test
+import org.scalatest.matchers.should.Matchers._
+import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.jdk.CollectionConverters._
-import org.scalatest.matchers.should.Matchers._
-
 import scala.concurrent.duration.Duration
-
+import scala.jdk.CollectionConverters._
 final class TestSourceRoute extends BasicShabondiTest {
   import oharastream.ohara.shabondi.ShabondiRouteTestSupport._
-  import oharastream.ohara.shabondi.common.JsonSupport._
 
   // Extend the timeout to avoid the exception:
   // org.scalatest.exceptions.TestFailedException: Request was neither completed nor rejected within 1 second

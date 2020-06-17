@@ -14,21 +14,39 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.client.configurator.v0
+package oharastream.ohara.shabondi.common
 
 import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.CommonUtils
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
-import spray.json.{JsObject, _}
+import spray.json._
 
 import scala.jdk.CollectionConverters._
 
-class TestPackage extends OharaTest {
+final class TestJsonSupport extends OharaTest {
+  @Test
+  def testRowData(): Unit = {
+    val jsonData =
+      """
+        |{"col1":"hello", "col2": 200}
+        |""".stripMargin
+
+    val rowData: JsonSupport.RowData = JsonSupport.rowDataFormat.read(jsonData.parseJson)
+
+    rowData("col1") should ===(JsString("hello"))
+    rowData("col2") should ===(JsNumber(200))
+
+    val row = JsonSupport.toRow(rowData)
+
+    row.cell(0) should ===(Cell.of("col1", "hello"))
+    row.cell(1) should ===(Cell.of("col2", 200))
+  }
+
   @Test
   def testConversion(): Unit = {
-    val s =
+    val json =
       """
         |  {
         |    "a": "b",
@@ -54,22 +72,29 @@ class TestPackage extends OharaTest {
         |    },
         |    "tags": []
         |  }
-        |""".stripMargin
+        |""".stripMargin.parseJson.asJsObject
 
-    val json  = s.parseJson.asJsObject
-    val row   = toRow(json)
-    val json2 = toJson(row)
-    JsObject(noJsNull(json.fields)) shouldBe json2
+    val row   = JsonSupport.toRow(json)
+    val json2 = JsonSupport.toJson(row)
+    JsObject(JsonSupport.noJsNull(json.fields)) shouldBe json2
   }
 
   @Test
   def testTags(): Unit = {
     val tags = Seq(CommonUtils.randomString(), CommonUtils.randomString())
     val row  = Row.of(tags.asJava, Cell.of("a", "b"))
-    val json = toJson(row)
-    json.fields(TAGS_KEY).asInstanceOf[JsArray].elements.map(_.asInstanceOf[JsString].value) shouldBe tags
+    val json = JsonSupport.toJson(row)
+    json.fields(JsonSupport.TAGS_KEY).asInstanceOf[JsArray].elements.map(_.asInstanceOf[JsString].value) shouldBe tags
 
-    val row2 = toRow(json)
+    val row2 = JsonSupport.toRow(json)
     row2.tags().asScala shouldBe tags
+  }
+
+  @Test
+  def testTimestamp(): Unit = {
+    val key       = "a"
+    val timestamp = new java.sql.Timestamp(System.currentTimeMillis())
+    val row       = Row.of(Cell.of(key, timestamp))
+    JsonSupport.toJson(row).fields(key).asInstanceOf[JsString].value shouldBe timestamp.toString
   }
 }
