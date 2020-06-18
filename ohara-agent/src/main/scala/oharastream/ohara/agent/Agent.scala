@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.apache.sshd.client.SshClient
+import org.apache.sshd.client.session.ClientSession
+import org.apache.sshd.client.simple.SimpleClient
 
 import scala.concurrent.duration.Duration
 
@@ -130,45 +132,71 @@ object Agent {
     }
 
     override def build: Agent = new Agent {
-      override val hostname: String      = CommonUtils.requireNonEmpty(Builder.this.hostname)
-      private[this] val port: Int        = CommonUtils.requireConnectionPort(Builder.this.port)
-      override val user: String          = CommonUtils.requireNonEmpty(Builder.this.user)
-      private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)
-      private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
-      private[this] val client = {
-        val c = SshClient.setUpDefaultSimpleClient()
-        c.setAuthenticationTimeout(timeout.toMillis)
-        c.setConnectTimeout(timeout.toMillis)
-        c
+      override val hostname: String          = CommonUtils.requireNonEmpty(Builder.this.hostname)
+      private[this] val port: Int            = CommonUtils.requireConnectionPort(Builder.this.port)
+      override val user: String              = CommonUtils.requireNonEmpty(Builder.this.user)
+      private[this] val password: String     = CommonUtils.requireNonEmpty(Builder.this.password)
+      private[this] val charset: Charset     = Objects.requireNonNull(Builder.this.charset)
+      private[this] var client: SimpleClient = createClient()
+
+      private[this] def createClient(): SimpleClient = {
+        val client = SshClient.setUpDefaultSimpleClient()
+        client.setAuthenticationTimeout(timeout.toMillis)
+        client.setConnectTimeout(timeout.toMillis)
+        client
+      }
+
+      private[this] def getOrCreateClient(): SimpleClient = {
+        if (!isOpen) client = createClient()
+        client
+      }
+
+      /**
+        * try to create a session to remote node. Noted: it may fail to connect to remote node due to connection issue
+        * and it is fine to give a retry.
+        *
+        * @return session
+        */
+      private[this] def session(): ClientSession = {
+        try getOrCreateClient().sessionLogin(hostname, port, user, password)
+        catch {
+          case e: IllegalStateException if e.getMessage.contains("SshClient not started") =>
+            Releasable.close(client)
+            client = null
+            // try again
+            getOrCreateClient().sessionLogin(hostname, port, user, password)
+        }
       }
 
       override def execute(command: String): Option[String] = {
-        val session = client.sessionLogin(hostname, port, user, password)
+        val stdOut = new ByteArrayOutputStream
         try {
-          val stdOut = new ByteArrayOutputStream
+          val stdError = new ByteArrayOutputStream
+          def response(): Option[String] =
+            if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
+            else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
+            else None
           try {
-            val stdError = new ByteArrayOutputStream
+            val s = session()
             try {
-              def response(): Option[String] =
-                if (stdOut.size() != 0) Some(new String(stdOut.toByteArray, charset))
-                else if (stdError.size() != 0) Some(new String(stdError.toByteArray, charset))
-                else None
-              try {
-                session.executeRemoteCommand(command, stdOut, stdError, charset)
-                response()
-              } catch {
-                case e: Throwable =>
-                  throw new RemoteException(s"receive error message:${response().getOrElse("")} when ${e.getMessage}")
-              }
-            } finally stdError.close()
-          } finally stdOut.close()
-        } finally session.close()
+              s.executeRemoteCommand(command, stdOut, stdError, charset)
+              response()
+            } catch {
+              case e: Throwable =>
+                throw new RemoteException(s"receive error message: ${response().getOrElse("")}", e)
+            } finally s.close()
+          } finally stdError.close()
+        } finally stdOut.close()
       }
-      override def close(): Unit = Releasable.close(client)
+
+      override def close(): Unit = {
+        Releasable.close(client)
+        client = null
+      }
 
       override def toString: String = s"$user@$hostname:$port"
 
-      override def isOpen: Boolean = client.isOpen
+      override def isOpen: Boolean = client != null && client.isOpen
     }
   }
 }

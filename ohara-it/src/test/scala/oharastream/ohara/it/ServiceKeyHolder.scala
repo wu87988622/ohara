@@ -99,7 +99,7 @@ object ServiceKeyHolder {
   private[this] val KEEP_CONTAINERS = sys.env.get("ohara.it.keep.containers").exists(_.toLowerCase == "true")
   private[this] val LOG             = Logger(classOf[ServiceKeyHolder])
 
-  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(20, TimeUnit.SECONDS))
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
 
   /**
     * create a name holder based on k8s.
