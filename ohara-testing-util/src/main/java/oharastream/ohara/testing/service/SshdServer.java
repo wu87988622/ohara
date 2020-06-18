@@ -21,6 +21,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import org.apache.sshd.server.Environment;
@@ -47,42 +50,26 @@ public interface SshdServer extends Releasable {
   /** @return ssh client's password */
   String password();
 
-  interface CommandHandler {
-    /**
-     * @param cmd will be executed on ssh server
-     * @return true if this handler want to handle the command
-     */
-    boolean belong(String cmd);
-
-    /**
-     * @param cmd will be executed on ssh server
-     * @return response of the command
-     */
-    List<String> execute(String cmd);
-  }
-
   static SshdServer local() {
     return local(0);
   }
 
   static SshdServer local(int port) {
-    return local(port, List.of());
+    return local(port, Map.of());
   }
 
-  static SshdServer local(int port, List<CommandHandler> handlers) {
-    String _user = CommonUtils.randomString();
+  static SshdServer local(int port, Map<String, Function<String, List<String>>> handlers) {
+    String _user = System.getProperty("user.name");
     String _password = CommonUtils.randomString();
     SshServer sshd = SshServer.setUpDefaultServer();
     sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
     sshd.setPasswordAuthenticator(
         (String username, String password, ServerSession session) ->
             username.equals(_user) && password.equals(_password));
-    sshd.setShellFactory(new ProcessShellFactory("/bin/sh", "-i", "-l"));
+    sshd.setShellFactory(new ProcessShellFactory("/bin/bash", "-i", "-l"));
     sshd.setCommandFactory(
         (ChannelSession channel, String command) ->
-            handlers.stream()
-                .filter(h -> h.belong(command))
-                .findFirst()
+            Optional.ofNullable(handlers.get(command))
                 .map(
                     h ->
                         (Command)
@@ -94,7 +81,7 @@ public interface SshdServer extends Releasable {
                               @Override
                               public void start(ChannelSession channel, Environment env) {
                                 try {
-                                  h.execute(command)
+                                  h.apply(command)
                                       .forEach(
                                           s -> {
                                             try {

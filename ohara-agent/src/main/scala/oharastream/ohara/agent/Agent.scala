@@ -37,6 +37,11 @@ trait Agent extends Releasable {
   def hostname: String
 
   /**
+    * @return the user used to login
+    */
+  def user: String
+
+  /**
     * execute the command by ssh
     * @param command command
     * @return response from remote node
@@ -125,9 +130,9 @@ object Agent {
     }
 
     override def build: Agent = new Agent {
-      val hostname: String               = CommonUtils.requireNonEmpty(Builder.this.hostname)
+      override val hostname: String      = CommonUtils.requireNonEmpty(Builder.this.hostname)
       private[this] val port: Int        = CommonUtils.requireConnectionPort(Builder.this.port)
-      private[this] val user: String     = CommonUtils.requireNonEmpty(Builder.this.user)
+      override val user: String          = CommonUtils.requireNonEmpty(Builder.this.user)
       private[this] val password: String = CommonUtils.requireNonEmpty(Builder.this.password)
       private[this] val charset: Charset = Objects.requireNonNull(Builder.this.charset)
       private[this] val client = {

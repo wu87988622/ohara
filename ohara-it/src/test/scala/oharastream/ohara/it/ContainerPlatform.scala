@@ -118,6 +118,14 @@ object ContainerPlatform {
       throw new AssumptionViolatedException(s"set ${ContainerPlatform.K8S_COORDINATOR_URL_KEY} to run IT on k8s mode")
     )
 
+  /**
+    * @return docker nodes information passed by env
+    */
+  def dockerNodes: Option[Seq[Node]] =
+    sys.env
+      .get(ContainerPlatform.DOCKER_NODES_KEY)
+      .map(parserNode)
+
   private[this] def parserNode(plainNodes: String): Seq[Node] = {
     def parse(nodeInfo: String): Node = {
       val user     = nodeInfo.split(":").head
@@ -140,10 +148,8 @@ object ContainerPlatform {
     plainNodes.split(",").map(parse).toSeq
   }
 
-  private[this] def _dockerMode: Option[ContainerPlatform] = {
-    sys.env
-      .get(ContainerPlatform.DOCKER_NODES_KEY)
-      .map(parserNode)
+  private[this] def _dockerMode: Option[ContainerPlatform] =
+    dockerNodes
       .map(
         nodes =>
           ContainerPlatform.builder
@@ -152,7 +158,6 @@ object ContainerPlatform {
             .clientCreator(() => DockerClient(DataCollie(nodes)))
             .build
       )
-  }
 
   /**
     * @return docker platform information. Or skip test

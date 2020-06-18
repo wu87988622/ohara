@@ -16,8 +16,11 @@
 
 package oharastream.ohara.agent
 
-import oharastream.ohara.client.Enum
+import java.util.Objects
+
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.common.util.Releasable
+
 import scala.concurrent.{ExecutionContext, Future}
 
 trait RemoteFolderHandler {
@@ -28,40 +31,43 @@ trait RemoteFolderHandler {
     * @param executionContext thread pool
     * @return True is exist, false is not exist
     */
-  def exists(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[Boolean]
+  def exist(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * Create folder for the remote node
     * @param hostname remote host name
     * @param path new folder path
     * @param executionContext thread pool
-    * @return result message
+    * @return true if it does create a folder. Otherwise, false
     */
-  def mkFolder(hostname: String, path: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Unit]
+  def create(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 
   /**
     * List folder info for the remote node
     * @param hostname remote host name
     * @param path remote folder path
     * @param executionContext thread pool
-    * @return folder info for the list
+    * @return folder names
     */
-  def listFolder(hostname: String, path: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Seq[FolderInfo]]
+  def list(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[Set[String]]
+
+  /**
+    * get the details of folder
+    * @param hostname hostname
+    * @param path folder path
+    * @param executionContext thread pool
+    * @return folder information
+    */
+  def inspect(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[FolderInfo]
 
   /**
     * Delete folder for the remote node
     * @param hostname remote host name
     * @param path delete folder path
     * @param executionContext thread pool
-    * @return result message
+    * @return true if it does delete a folder. Otherwise, false
     */
-  def deleteFolder(hostname: String, path: String)(
-    implicit executionContext: ExecutionContext
-  ): Future[Unit]
+  def delete(hostname: String, path: String)(implicit executionContext: ExecutionContext): Future[Boolean]
 }
 
 object RemoteFolderHandler {
@@ -71,93 +77,116 @@ object RemoteFolderHandler {
     private var dataCollie: DataCollie = _
 
     def dataCollie(dataCollie: DataCollie): Builder = {
-      if (dataCollie == null) throw new IllegalArgumentException("Please setting the dataCollie function")
-      else this.dataCollie = dataCollie
+      this.dataCollie = Objects.requireNonNull(dataCollie)
       this
     }
 
     override def build: RemoteFolderHandler = new RemoteFolderHandler() {
-      override def exists(hostname: String, path: String)(
-        implicit executionContext: ExecutionContext
-      ): Future[Boolean] =
-        agent(hostname)
-          .map { agent =>
-            agent.execute(s"""
-                   |if [ -d "$path" ]; then
-                   |  echo "Exists"
-                   |fi
-            """.stripMargin).getOrElse("").trim()
-          }
-          .map(_ == "Exists")
-
-      override def mkFolder(
-        hostname: String,
-        path: String
-      )(implicit executionContext: ExecutionContext): Future[Unit] =
-        agent(hostname).map { agent =>
-          agent
-            .execute(s"mkdir ${path}")
-            .map(message => throw new IllegalArgumentException(s"Create folder error: $message"))
+      private[this] def exist(agent: Agent, path: String): Boolean =
+        // it returns the "path" if the "path" is a file
+        try !agent
+          .execute(s"ls $path")
+          .map(_.trim)
+          .contains(path)
+        catch {
+          case e: Throwable if e.getMessage.contains("No such file or directory") => false
         }
 
-      override def listFolder(
-        hostname: String,
-        path: String
-      )(implicit executionContext: ExecutionContext): Future[Seq[FolderInfo]] =
-        agent(hostname)
-          .map { agent =>
-            (
-              agent.execute("ls -l " + path + "|awk '{print $1\",\"$3\",\"$4\",\"$5\",\"$9}'"),
-              agent.execute("cat /etc/passwd|awk 'BEGIN { FS=\":\"} {print $1\":\"$3}'")
-            )
-          }
-          .map { result =>
-            val uidList: Map[String, Int] = result._2
-              .getOrElse("")
+      override def exist(hostname: String, path: String)(
+        implicit executionContext: ExecutionContext
+      ): Future[Boolean] = agent(hostname)(agent => exist(agent, path))
+
+      override def create(hostname: String, path: String)(
+        implicit executionContext: ExecutionContext
+      ): Future[Boolean] =
+        agent(hostname) { agent =>
+          if (!exist(agent, path)) {
+            agent.execute(s"mkdir $path")
+            true
+          } else false
+        }
+
+      override def inspect(hostname: String, path: String)(
+        implicit executionContext: ExecutionContext
+      ): Future[FolderInfo] = agent(hostname) { agent =>
+        if (!exist(agent, path)) throw new NoSuchElementException(s"$path does not exist")
+        // ex: drwx------ 16 chia7712 chia7712
+        val detail = agent
+          .execute(s"ls -ld $path")
+          .getOrElse(throw new IllegalArgumentException(s"failed to get permission of $path"))
+
+        // ex: drwx------
+        val permission = detail.substring(0, 3) match {
+          case "drw" => FolderPermission.READWRITE
+          case "dr-" => FolderPermission.READONLY
+          case _     => FolderPermission.UNKNOWN
+        }
+
+        val splits = detail.split(" ")
+        if (splits.length < 4) throw new IllegalArgumentException(s"illegal permission:$detail of $path")
+        val owner = splits(2)
+        val group = splits(3)
+
+        val size = agent
+          .execute(s"du -sb $path")
+          // take last string since something inaccessible happens before size count
+          .map(_.split("\n").last)
+          // ex: 613878290	/home/chia7712
+          .map(_.split("\t").head.toLong)
+          .getOrElse(throw new IllegalArgumentException(s"failed to get size of $path"))
+
+        val name = agent
+          .execute(s"basename $path")
+          .getOrElse(throw new IllegalArgumentException(s"failed to get name of $path"))
+          .replaceAll("\n", "")
+
+        val uid = agent
+          .execute(s"id -u $owner")
+          .getOrElse(throw new IllegalArgumentException(s"failed to get uid of $owner"))
+          .replaceAll("\n", "")
+          .toInt
+
+        FolderInfo(
+          permission = permission,
+          owner = owner,
+          group = group,
+          uid = uid,
+          size = size,
+          name = name
+        )
+      }
+
+      override def list(hostname: String, path: String)(
+        implicit executionContext: ExecutionContext
+      ): Future[Set[String]] =
+        agent(hostname) { agent =>
+          if (exist(agent, path)) {
+            val subFolders = agent
+              .execute(s"find $path -maxdepth 1 -type d")
+              .getOrElse(throw new IllegalArgumentException(s"failed to get name of $path"))
               .split("\n")
-              .map { record =>
-                val fields = record.split(":")
-                (fields.head, fields.last.toInt)
-              }
-              .toMap
-            val folderInfo = result._1.getOrElse("").split("\n").filter(_.split(",").size == 5).toSeq.map { record =>
-              val values = record.split(",")
-              FolderInfo(
-                permission = parserPermission(values(0)),
-                uid = uidList
-                  .get(values(1))
-                  .getOrElse(throw new IllegalArgumentException("Please confirm your UID value")),
-                owner = values(1),
-                group = values(2),
-                size = values(3),
-                fileName = values(4)
-              )
-            }
-            folderInfo
-          }
+              .toSeq
+            subFolders.slice(1, subFolders.size).toSet
+          } else throw new NoSuchElementException(s"$path is not a folder")
+        }
 
-      override def deleteFolder(
-        hostname: String,
-        path: String
-      )(implicit executionContext: ExecutionContext): Future[Unit] =
-        agent(hostname)
-          .map { agent =>
-            val folderNotExists = agent.execute(s"""
-                |if [ ! -d "$path" ]; then
-                |  echo "NotExists"
-                |fi
-              """.stripMargin).getOrElse("").trim()
-
-            if (folderNotExists == "NotExists")
-              throw new IllegalArgumentException("Folder is not exists")
-            else
+      override def delete(hostname: String, path: String)(
+        implicit executionContext: ExecutionContext
+      ): Future[Boolean] =
+        agent(hostname)(
+          agent =>
+            if (exist(agent, path)) {
               agent
-                .execute(s"rm -rf ${path}")
-                .map(message => throw new IllegalArgumentException(s"Delete folder error: ${message}"))
-          }
+                .execute(s"rm -rf $path")
+                .map(message => throw new IllegalArgumentException(s"Delete folder error: $message"))
+              true
+            } else false
+        )
     }
 
-    private[this] def agent(hostname: String)(implicit executionContext: ExecutionContext): Future[Agent] = {
+    private[this] def agent[T](
+      hostname: String
+    )(f: Agent => T)(implicit executionContext: ExecutionContext): Future[T] =
       dataCollie
         .value[Node](hostname)
         .map { node =>
@@ -168,34 +197,10 @@ object RemoteFolderHandler {
             .port(node.port)
             .build
         }
-    }
-
-    private[this] def parserPermission(value: String): FolderPermission = {
-      if (value.length < 3) throw new IllegalArgumentException("The permission parser error")
-      else {
-        val result = value.substring(1, 3)
-        if (result == "rw") FolderPermission.READWRITE
-        else if (result == "r-") FolderPermission.READONLY
-        else FolderPermission.UNKNOWN
-      }
-    }
+        .map(
+          agent =>
+            try f(agent)
+            finally Releasable.close(agent)
+        )
   }
-}
-
-case class FolderInfo(
-  permission: FolderPermission,
-  uid: Int,
-  owner: String,
-  group: String,
-  size: String,
-  fileName: String
-)
-
-sealed abstract class FolderPermission(val name: String)
-object FolderPermission extends Enum[FolderPermission] {
-  case object READONLY extends FolderPermission("ReadOnly")
-
-  case object READWRITE extends FolderPermission("ReadWrite")
-
-  case object UNKNOWN extends FolderPermission("Unknown")
 }

@@ -173,9 +173,16 @@ object NodeApi {
       * @param hostname hostname
       * @return node
       */
-    def apply(hostname: String, user: String, password: String): Node = Node(
+    def apply(hostname: String, user: String, password: String): Node = apply(
       hostname = hostname,
       port = 22,
+      user = user,
+      password = password
+    )
+
+    def apply(hostname: String, port: Int, user: String, password: String): Node = Node(
+      hostname = hostname,
+      port = port,
       user = user,
       password = password,
       services = Seq.empty,

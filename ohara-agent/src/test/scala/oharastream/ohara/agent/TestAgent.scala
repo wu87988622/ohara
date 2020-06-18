@@ -19,26 +19,20 @@ package oharastream.ohara.agent
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.testing.service.SshdServer
-import oharastream.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
+import scala.jdk.CollectionConverters._
 
 class TestAgent extends OharaTest {
-  private[this] val customCommands = Map(
-    "hello"    -> Seq("world"),
-    "chia7712" -> Seq("jellynina")
+  private[this] val server = SshdServer.local(
+    0,
+    java.util.Map.of(
+      "hello",
+      (_: String) => java.util.List.of("world"),
+      "oharastream",
+      (_: String) => java.util.List.of("ohara")
+    )
   )
-
-  import scala.jdk.CollectionConverters._
-  private[this] val handlers = customCommands.map {
-    case (k, response) =>
-      new CommandHandler {
-        override def belong(command: String): Boolean = command == k
-        override def execute(command: String): java.util.List[String] =
-          if (belong(command)) response.asJava else throw new IllegalArgumentException(s"$k doesn't support")
-      }
-  }.toSeq
-  private[this] val server = SshdServer.local(0, handlers.map(h => h.asInstanceOf[CommandHandler]).asJava)
 
   @Test
   def testJaveVersion(): Unit = {
@@ -52,13 +46,14 @@ class TestAgent extends OharaTest {
 
   @Test
   def testCustomCommand(): Unit = {
-    customCommands.foreach {
-      case (command, response) =>
-        val agent =
-          Agent.builder.hostname(server.hostname).port(server.port).user(server.user).password(server.password).build
-        try agent.execute(command).get.split("\n") shouldBe response
-        finally agent.close()
+    def assertResponse(request: String, response: java.util.List[String]): Unit = {
+      val agent =
+        Agent.builder.hostname(server.hostname).port(server.port).user(server.user).password(server.password).build
+      try agent.execute(request).get.split("\n").toSeq shouldBe response.asScala.toSeq
+      finally agent.close()
     }
+    assertResponse("hello", java.util.List.of("world"))
+    assertResponse("oharastream", java.util.List.of("ohara"))
   }
 
   @Test

@@ -14,27 +14,15 @@
  * limitations under the License.
  */
 
-package oharastream.ohara.testing.service;
+package oharastream.ohara.agent
 
-import oharastream.ohara.common.rule.OharaTest;
-import oharastream.ohara.common.util.CommonUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import oharastream.ohara.client.Enum
 
-public class TestSshdServer extends OharaTest {
+sealed abstract class FolderPermission(val name: String)
+object FolderPermission extends Enum[FolderPermission] {
+  case object READONLY extends FolderPermission("ReadOnly")
 
-  @Test
-  public void testSpecificPort() {
-    int port = CommonUtils.availablePort();
-    try (SshdServer server = SshdServer.local(port)) {
-      Assert.assertEquals(server.port(), port);
-    }
-  }
+  case object READWRITE extends FolderPermission("ReadWrite")
 
-  @Test
-  public void testRandomPort() {
-    try (SshdServer server = SshdServer.local(0)) {
-      Assert.assertNotEquals(server.port(), 0);
-    }
-  }
+  case object UNKNOWN extends FolderPermission("Unknown")
 }

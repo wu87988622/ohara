@@ -24,11 +24,9 @@ import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.service.SshdServer
-import oharastream.ohara.testing.service.SshdServer.CommandHandler
 import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -42,23 +40,18 @@ class TestVerifyNode extends OharaTest {
   private[this] var errorMessage: String = _
   private[this] val sshServer = SshdServer.local(
     0,
-    Seq(
-      /**
-        * this commend is used by ServiceCollieImpl#verifyNode.
-        */
-      new CommandHandler {
-        override def belong(cmd: String): Boolean = cmd.contains("docker info --format '{{json .}}'")
-        override def execute(cmd: String): util.List[String] =
-          if (errorMessage != null)
-            throw new IllegalArgumentException(errorMessage)
-          else util.List.of("""
-              |  {
-              |    "NCPU": 1,
-              |    "MemTotal": 1024
-              |  }
-              |""".stripMargin)
-      }
-    ).asJava
+    java.util.Map.of(
+      "docker info --format '{{json .}}'",
+      (_: String) =>
+        if (errorMessage != null)
+          throw new IllegalArgumentException(errorMessage)
+        else util.List.of("""
+                        |  {
+                        |    "NCPU": 1,
+                        |    "MemTotal": 1024
+                        |  }
+                        |""".stripMargin)
+    )
   )
 
   private[this] val node = Node(
