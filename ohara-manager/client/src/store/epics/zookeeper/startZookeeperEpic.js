@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
-import { merge } from 'lodash';
-import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip, from } from 'rxjs';
+import { defer, from, iif, of, throwError, zip } from 'rxjs';
 import {
   catchError,
+  concatMap,
   delay,
+  distinctUntilChanged,
   map,
+  mergeMap,
   retryWhen,
   startWith,
-  concatMap,
-  mergeMap,
-  distinctUntilChanged,
+  takeUntil,
 } from 'rxjs/operators';
+import { ofType } from 'redux-observable';
+import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as zookeeperApi from 'api/zookeeperApi';
+import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
+import { startZookeeper } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
 export const startZookeeper$ = (params) => {
@@ -78,16 +80,27 @@ export default (action$) =>
     ofType(actions.startZookeeper.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      startZookeeper$(params).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) => {
+      const zookeeperId = getId(values);
+      return startZookeeper(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.zookeeper), {
+            zookeeperId,
+          });
+          return actions.startZookeeper.success(normalizedData);
+        }),
+        startWith(actions.startZookeeper.request({ zookeeperId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.startZookeeper.failure(
-              merge(err, { zookeeperId: getId(params) }),
+              merge(err, { zookeeperId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.startZookeeper.CANCEL))),
+      );
+    }),
   );

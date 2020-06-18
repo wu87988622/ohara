@@ -19,24 +19,24 @@ import { catchError, map } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import * as workerApi from 'api/workerApi';
+import * as brokerApi from 'api/brokerApi';
 import { deferApi } from './internal/deferApi';
 import { isServiceRunning } from './utils';
 
-export function createWorker(values: any) {
-  return deferApi(() => workerApi.create(values)).pipe(map((res) => res.data));
+export function createBroker(values: any) {
+  return deferApi(() => brokerApi.create(values)).pipe(map((res) => res.data));
 }
 
-export function fetchWorker(values: ObjectKey) {
-  return deferApi(() => workerApi.get(values)).pipe(map((res) => res.data));
+export function fetchBroker(key: ObjectKey) {
+  return deferApi(() => brokerApi.get(key)).pipe(map((res) => res.data));
 }
 
-export function startWorker(key: ObjectKey) {
+export function startBroker(key: ObjectKey) {
   return zip(
     // attempt to start at intervals
-    deferApi(() => workerApi.start(key)),
+    deferApi(() => brokerApi.start(key)),
     // wait until the service is running
-    deferApi(() => workerApi.get(key)).pipe(
+    deferApi(() => brokerApi.get(key)).pipe(
       map((res) => {
         if (!isServiceRunning(res)) throw res;
         return res.data;
@@ -55,7 +55,7 @@ export function startWorker(key: ObjectKey) {
         data: error?.data,
         meta: error?.meta,
         title:
-          `Try to start worker: "${key.name}" failed after retry 10 times. ` +
+          `Try to start broker: "${key.name}" failed after retry 10 times. ` +
           `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${error.data.state}`,
       }),
     ),

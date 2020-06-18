@@ -223,7 +223,7 @@ Cypress.Commands.add(
       .filter(':visible')
       .click();
 
-    cy.findByTitle('Workspace list').children().should('not.be.disabled');
+    cy.findByTestId('create-workspace').should('not.be.visible');
 
     cy.end();
   },

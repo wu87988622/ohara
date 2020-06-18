@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import createRoutine from './createRoutine';
 
 export const createWorkspace = createRoutine('CREATE_WORKSPACE');
 export const deleteWorkspace = createRoutine('DELETE_WORKSPACE');

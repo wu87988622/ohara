@@ -16,6 +16,7 @@
 
 import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
+import { times } from 'lodash';
 
 import { LOG_LEVEL, GROUP } from 'const';
 import * as workerApi from 'api/workerApi';
@@ -35,17 +36,24 @@ const makeTestScheduler = () =>
   });
 
 it('create worker should be worked correctly', () => {
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
     const expected = '--a 1999ms (bu)';
-    const subs = '    ^--------------';
+    const subs = ['   ^--------------', '--^ 1999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createWorker.TRIGGER,
-        payload: workerEntity,
+        payload: {
+          values: workerEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = createWorkerEpic(action$);
@@ -81,6 +89,10 @@ it('create worker should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).toHaveBeenCalled();
+    expect(mockResolve).toHaveBeenCalledWith(workerEntity);
+    expect(mockReject).not.toHaveBeenCalled();
   });
 });
 
@@ -90,17 +102,21 @@ it('create multiple workers should be worked correctly', () => {
 
     const input = '   ^-a---b                ';
     const expected = '--a---b 1995ms (xu)(yv)';
-    const subs = '    ^----------------------';
+    const subs = [
+      '               ^----                  ',
+      '               --^---- 1995ms !       ',
+      '               ------^---- 1995ms !   ',
+    ];
     const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
     const action$ = hot(input, {
       a: {
         type: actions.createWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
       b: {
         type: actions.createWorker.TRIGGER,
-        payload: anotherWorkerEntity,
+        payload: { values: anotherWorkerEntity },
       },
     });
     const output$ = createWorkerEpic(action$);
@@ -171,12 +187,12 @@ it('create same worker within period should be created once only', () => {
 
     const input = '   ^-aa 10s a       ';
     const expected = '--a 1999ms (bu)--';
-    const subs = '    ^----------------';
+    const subs = ['    ^---------------', '--^ 1999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
     });
     const output$ = createWorkerEpic(action$);
@@ -221,21 +237,26 @@ it('throw exception of create worker should also trigger event log action', () =
     data: {},
     title: 'mock create worker failed',
   };
-  const spyCreate = jest
-    .spyOn(workerApi, 'create')
-    .mockReturnValueOnce(throwError(error));
+  const spyCreate = jest.spyOn(workerApi, 'create');
+  times(10, () => spyCreate.mockReturnValueOnce(throwError(error)));
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const subs = ['   ^-------!', '--(^!)'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createWorker.TRIGGER,
-        payload: workerEntity,
+        payload: {
+          values: workerEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = createWorkerEpic(action$);
@@ -264,5 +285,8 @@ it('throw exception of create worker should also trigger event log action', () =
     flush();
 
     expect(spyCreate).toHaveBeenCalled();
+    expect(mockResolve).not.toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalledWith(error);
   });
 });

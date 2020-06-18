@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import createRoutine from './createRoutine';
 
 export const fetchZookeepers = createRoutine('FETCH_ZOOKEEPERS');
 export const fetchZookeeper = createRoutine('FETCH_ZOOKEEPER');

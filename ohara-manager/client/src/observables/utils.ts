@@ -16,6 +16,6 @@
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
-export function isServiceRunning(data: any) {
-  return data?.state === SERVICE_STATE.RUNNING;
+export function isServiceRunning(res: any) {
+  return res?.data?.state === SERVICE_STATE.RUNNING;
 }

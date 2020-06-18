@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
-import { merge } from 'lodash';
-import { ofType } from 'redux-observable';
-import { defer, of, throwError, iif, from, zip } from 'rxjs';
+import { defer, from, iif, of, throwError, zip } from 'rxjs';
 import {
   catchError,
+  concatMap,
   delay,
+  distinctUntilChanged,
   map,
+  mergeMap,
   retryWhen,
   startWith,
-  mergeMap,
-  distinctUntilChanged,
-  concatMap,
+  takeUntil,
 } from 'rxjs/operators';
+import { ofType } from 'redux-observable';
+import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as brokerApi from 'api/brokerApi';
+import { LOG_LEVEL } from 'const';
+import { startBroker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
 export const startBroker$ = (params) => {
@@ -78,16 +80,27 @@ export default (action$) =>
     ofType(actions.startBroker.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      startBroker$(params).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) => {
+      const brokerId = getId(values);
+      return startBroker(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.broker), {
+            brokerId,
+          });
+          return actions.startBroker.success(normalizedData);
+        }),
+        startWith(actions.startBroker.request({ brokerId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.startBroker.failure(
-              merge(err, { brokerId: getId(params) }),
+              merge(err, { brokerId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.startBroker.CANCEL))),
+      );
+    }),
   );

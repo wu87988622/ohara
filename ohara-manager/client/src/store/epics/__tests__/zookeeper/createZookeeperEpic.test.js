@@ -16,6 +16,7 @@
 
 import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
+import { times } from 'lodash';
 
 import { LOG_LEVEL, GROUP } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
@@ -35,17 +36,24 @@ const makeTestScheduler = () =>
   });
 
 it('create zookeeper should be worked correctly', () => {
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
     const expected = '--a 1999ms (bu)';
-    const subs = '    ^--------------';
+    const subs = ['   ^--------------', '--^ 1999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: {
+          values: zookeeperEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = createZookeeperEpic(action$);
@@ -81,6 +89,10 @@ it('create zookeeper should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).toHaveBeenCalled();
+    expect(mockResolve).toHaveBeenCalledWith(zookeeperEntity);
+    expect(mockReject).not.toHaveBeenCalled();
   });
 });
 
@@ -90,17 +102,21 @@ it('create multiple zookeepers should be worked correctly', () => {
 
     const input = '   ^-a---b                ';
     const expected = '--a---b 1995ms (xu)(yv)';
-    const subs = '    ^----------------------';
+    const subs = [
+      '               ^----                  ',
+      '               --^---- 1995ms !       ',
+      '               ------^---- 1995ms !   ',
+    ];
     const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
       a: {
         type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
       b: {
         type: actions.createZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        payload: { values: anotherZookeeperEntity },
       },
     });
     const output$ = createZookeeperEpic(action$);
@@ -171,12 +187,12 @@ it('create same zookeeper within period should be created once only', () => {
 
     const input = '   ^-aa 10s a       ';
     const expected = '--a 1999ms (bu)--';
-    const subs = '    ^----------------';
+    const subs = ['    ^---------------', '--^ 1999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
     });
     const output$ = createZookeeperEpic(action$);
@@ -221,21 +237,26 @@ it('throw exception of create zookeeper should also trigger event log action', (
     data: {},
     title: 'mock create zookeeper failed',
   };
-  const spyCreate = jest
-    .spyOn(zookeeperApi, 'create')
-    .mockReturnValueOnce(throwError(error));
+  const spyCreate = jest.spyOn(zookeeperApi, 'create');
+  times(10, () => spyCreate.mockReturnValueOnce(throwError(error)));
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const subs = ['   ^-------!', '--(^!)'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: {
+          values: zookeeperEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = createZookeeperEpic(action$);
@@ -264,5 +285,8 @@ it('throw exception of create zookeeper should also trigger event log action', (
     flush();
 
     expect(spyCreate).toHaveBeenCalled();
+    expect(mockResolve).not.toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalledWith(error);
   });
 });

@@ -51,7 +51,6 @@ const AppBar = () => {
   const { data: configuratorInfo } = context.useConfiguratorState();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const { data: notifications } = hooks.useEventNotifications();
-  const createWorkspaceState = hooks.useCreateWorkspaceState();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const [isNodeListDialogOpen, setIsNodeListDialogOpen] = useState(false);
 
@@ -92,7 +91,6 @@ const AppBar = () => {
           <Tooltip placement="right" title="Workspace list">
             <IconButton
               className="workspace-list item"
-              disabled={createWorkspaceState?.loading}
               onClick={() =>
                 isEmpty(workspaces) ? openIntro() : toggleWorkspaceList()
               }

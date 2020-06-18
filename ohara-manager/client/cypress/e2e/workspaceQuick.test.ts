@@ -32,11 +32,10 @@ describe('workspaceQuick', () => {
     const workspaceName = generate.serviceName({ prefix });
     cy.createWorkspace({ workspaceName });
 
+    cy.findByTestId('create-workspace').should('not.be.visible');
+
     // we have two workspace now
-    cy.findByTitle('Workspace list')
-      .children()
-      .should('not.be.disabled')
-      .click();
+    cy.findByTitle('Workspace list').children().click();
     cy.findByText(/^showing 2 workspaces$/i).should('exist');
   });
 });

@@ -19,11 +19,11 @@ import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 import { times } from 'lodash';
 
-import * as workerApi from 'api/workerApi';
-import { entity as workerEntity } from 'api/__mocks__/workerApi';
-import { fetchWorker, startWorker } from '../workers';
+import * as zookeeperApi from 'api/zookeeperApi';
+import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
+import { fetchZookeeper, startZookeeper } from '../zookeepers';
 
-jest.mock('api/workerApi');
+jest.mock('api/zookeeperApi');
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -34,81 +34,81 @@ const RESPONSES = {
   success: {
     status: 200,
     title: 'retry mock get data',
-    data: workerEntity,
+    data: zookeeperEntity,
   },
   successWithRunning: {
     status: 200,
     title: 'retry mock get data',
-    data: { ...workerEntity, state: 'RUNNING' },
+    data: { ...zookeeperEntity, state: 'RUNNING' },
   },
-  error: { status: -1, data: {}, title: 'mock get worker failed' },
+  error: { status: -1, data: {}, title: 'mock get zookeeper failed' },
 };
 
-it('get worker should be worked correctly', () => {
+it('get zookeeper should be worked correctly', () => {
   makeTestScheduler().run(({ expectObservable }) => {
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
 
     const expected = '- 499ms (v|)';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchZookeeper(params);
 
     expectObservable(output$).toBe(expected, {
-      v: workerEntity,
+      v: zookeeperEntity,
     });
   });
 });
 
-it('get worker should be worked correctly - Retry', () => {
+it('get zookeeper should be worked correctly - Retry', () => {
   makeTestScheduler().run(({ expectObservable }) => {
     jest.restoreAllMocks();
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyGet = jest.spyOn(zookeeperApi, 'get');
     times(3, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
     spyGet.mockReturnValueOnce(of(RESPONSES.success).pipe(delay(500)));
 
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
 
     const expected = '500ms (v|)';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchZookeeper(params);
 
     expectObservable(output$).toBe(expected, {
-      v: workerEntity,
+      v: zookeeperEntity,
     });
   });
 });
 
-it('get worker should be failed - Retry limit reached', () => {
+it('get zookeeper should be failed - Retry limit reached', () => {
   makeTestScheduler().run(({ expectObservable }) => {
     jest.restoreAllMocks();
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyGet = jest.spyOn(zookeeperApi, 'get');
     times(20, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
 
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
 
     const expected = '#';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchZookeeper(params);
 
     expectObservable(output$).toBe(expected, null, RESPONSES.error);
   });
 });
 
-it('start worker should run in two minutes', () => {
+it('start zookeeper should run in two minutes', () => {
   makeTestScheduler().run(({ expectObservable, flush }) => {
     jest.restoreAllMocks();
-    const spyStart = jest.spyOn(workerApi, 'start');
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyStart = jest.spyOn(zookeeperApi, 'start');
+    const spyGet = jest.spyOn(zookeeperApi, 'get');
     times(5, () => spyGet.mockReturnValueOnce(of(RESPONSES.success)));
     spyGet.mockReturnValueOnce(of(RESPONSES.successWithRunning));
 
     const params = {
-      group: workerEntity.group,
-      name: workerEntity.name,
+      group: zookeeperEntity.group,
+      name: zookeeperEntity.name,
     };
 
     const expected = '10s 10ms (v|)';
 
-    const output$ = startWorker(params, true);
+    const output$ = startZookeeper(params, true);
 
     expectObservable(output$).toBe(expected, {
       v: RESPONSES.successWithRunning.data,

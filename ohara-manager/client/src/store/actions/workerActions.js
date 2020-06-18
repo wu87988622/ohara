@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createRoutine } from 'redux-routines';
+import createRoutine from './createRoutine';
 
 export const fetchWorkers = createRoutine('FETCH_WORKERS');
 export const fetchWorker = createRoutine('FETCH_WORKER');

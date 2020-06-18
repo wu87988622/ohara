@@ -94,7 +94,16 @@ export const useCreateBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    (values) => dispatch(actions.createBroker.trigger({ ...values, group })),
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.createBroker.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };
@@ -112,7 +121,16 @@ export const useStartBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    (name) => dispatch(actions.startBroker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.startBroker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

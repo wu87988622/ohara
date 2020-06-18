@@ -17,4 +17,7 @@
 export * from './internal/deferApi';
 export * from './internal/retry';
 
+export * from './brokers';
 export * from './workers';
+export * from './workspaces';
+export * from './zookeepers';

@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
-import { merge } from 'lodash';
-import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip, from } from 'rxjs';
+import { defer, from, iif, of, throwError, zip } from 'rxjs';
 import {
   catchError,
+  concatMap,
   delay,
+  distinctUntilChanged,
   map,
+  mergeMap,
   retryWhen,
   startWith,
-  concatMap,
-  distinctUntilChanged,
-  mergeMap,
+  takeUntil,
 } from 'rxjs/operators';
+import { ofType } from 'redux-observable';
+import { normalize } from 'normalizr';
+import { merge } from 'lodash';
 
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as workerApi from 'api/workerApi';
+import { LOG_LEVEL } from 'const';
+import { startWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
 
 // Note: The caller SHOULD handle the error of this action
 export const startWorker$ = (params) => {
@@ -78,16 +80,27 @@ export default (action$) =>
     ofType(actions.startWorker.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      startWorker$(params).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) => {
+      const workerId = getId(values);
+      return startWorker(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.worker), {
+            workerId,
+          });
+          return actions.startWorker.success(normalizedData);
+        }),
+        startWith(actions.startWorker.request({ workerId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.startWorker.failure(
-              merge(err, { workerId: getId(params) }),
+              merge(err, { workerId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.startWorker.CANCEL))),
+      );
+    }),
   );

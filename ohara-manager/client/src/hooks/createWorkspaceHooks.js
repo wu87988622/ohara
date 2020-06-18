@@ -16,7 +16,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { isEqual as isDeepEqual, some } from 'lodash';
+import { some } from 'lodash';
 
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
@@ -29,19 +29,6 @@ export const useCreateWorkspaceMode = () =>
 
 export const useCreateWorkspaceStep = () =>
   useSelector((state) => state.ui.createWorkspace.step);
-
-export const useCreateWorkspaceProgress = () => {
-  const mapState = useCallback(
-    (state) => state.ui.createWorkspace.progress,
-    [],
-  );
-  return useSelector(mapState, isDeepEqual);
-};
-
-export const useCreateWorkspaceState = () => {
-  const mapState = useCallback((state) => state.ui.createWorkspace, []);
-  return useSelector(mapState, isDeepEqual);
-};
 
 export const useUniqueWorkspaceName = (prefix = 'workspace') => {
   const workspaces = hooks.useAllWorkspaces();
@@ -86,7 +73,16 @@ export const useSwitchCreateWorkspaceStepAction = () => {
 export const useCreateWorkspaceAction = () => {
   const dispatch = useDispatch();
   return useCallback(
-    (values) => dispatch(actions.createWorkspace.trigger(values)),
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.createWorkspace.trigger({
+            values,
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch],
   );
 };

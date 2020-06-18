@@ -94,7 +94,16 @@ export const useCreateWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    (values) => dispatch(actions.createWorker.trigger({ ...values, group })),
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.createWorker.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };
@@ -112,7 +121,16 @@ export const useStartWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    (name) => dispatch(actions.startWorker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.startWorker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

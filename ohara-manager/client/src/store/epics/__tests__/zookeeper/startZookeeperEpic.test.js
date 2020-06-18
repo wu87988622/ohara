@@ -41,17 +41,24 @@ beforeEach(() => {
 });
 
 it('start zookeeper should be worked correctly', () => {
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
     const expected = '--a 499ms v';
-    const subs = '    ^----------';
+    const subs = ['   ^----------', '--^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: {
+          values: zookeeperEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = startZookeeperEpic(action$);
@@ -83,6 +90,13 @@ it('start zookeeper should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).toHaveBeenCalled();
+    expect(mockResolve).toHaveBeenCalledWith({
+      ...zookeeperEntity,
+      state: 'RUNNING',
+    });
+    expect(mockReject).not.toHaveBeenCalled();
   });
 });
 
@@ -106,19 +120,25 @@ it('start zookeeper failed after reach retry limit', () => {
       data: { ...zookeeperEntity, state: SERVICE_STATE.RUNNING },
     }),
   );
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a             ';
-    // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 21999ms (vu)';
-    const subs = '    ^---------------';
+    // we failed after retry 10 times (10 * 2000ms = 20s)
+    const expected = '--a 19999ms (vu)';
+    const subs = ['   ^---------------', '--^ 19999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: {
+          values: zookeeperEntity,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = startZookeeperEpic(action$);
@@ -136,7 +156,7 @@ it('start zookeeper failed after reach retry limit', () => {
           zookeeperId: zkId,
           data: zookeeperEntity,
           meta: undefined,
-          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
+          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
         },
       },
       u: {
@@ -145,7 +165,7 @@ it('start zookeeper failed after reach retry limit', () => {
           zookeeperId: zkId,
           data: zookeeperEntity,
           meta: undefined,
-          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
+          title: `Try to start zookeeper: "${zookeeperEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
           type: LOG_LEVEL.error,
         },
       },
@@ -154,6 +174,9 @@ it('start zookeeper failed after reach retry limit', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).not.toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalled();
   });
 });
 
@@ -163,12 +186,12 @@ it('start zookeeper multiple times should be executed once', () => {
 
     const input = '   ^-a---a 1s a 10s ';
     const expected = '--a       499ms v';
-    const subs = '    ^----------------';
+    const subs = ['   ^----------------', '--^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
     });
     const output$ = startZookeeperEpic(action$);
@@ -217,16 +240,16 @@ it('start different zookeeper should be worked correctly', () => {
     };
     const input = '   ^-a--b           ';
     const expected = '--a--b 496ms y--z';
-    const subs = '    ^----------------';
+    const subs = ['   ^----------------', '--^ 499ms !', '-----^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.startZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
       b: {
         type: actions.startZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        payload: { values: anotherZookeeperEntity },
       },
     });
     const output$ = startZookeeperEpic(action$);

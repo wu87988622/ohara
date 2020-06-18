@@ -17,7 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { defer, from, of } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -25,10 +25,12 @@ import {
   mergeMap,
   startWith,
   switchMap,
+  takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL, GROUP } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
+import { LOG_LEVEL, GROUP } from 'const';
+import { createZookeeper } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -66,5 +68,36 @@ export default (action$) =>
     ofType(actions.createZookeeper.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((values) => createZookeeper$(values)),
+    mergeMap(({ values, resolve, reject }) => {
+      const zookeeperId = getId(values);
+      return createZookeeper(values).pipe(
+        switchMap((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.zookeeper), {
+            zookeeperId,
+          });
+          return of(
+            actions.updateWorkspace.trigger({
+              zookeeper: data,
+              // the workspace name of current object should be as same as the zookeeper name
+              name: values.name,
+              group: GROUP.WORKSPACE,
+            }),
+            actions.createZookeeper.success(normalizedData),
+          );
+        }),
+        startWith(actions.createZookeeper.request({ zookeeperId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.createZookeeper.failure(merge(err, { zookeeperId })),
+            actions.createEventLog.trigger({
+              ...err,
+              type: LOG_LEVEL.error,
+            }),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.createZookeeper.CANCEL))),
+      );
+    }),
   );

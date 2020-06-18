@@ -20,15 +20,17 @@ import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
 import {
   catchError,
-  map,
-  startWith,
   distinctUntilChanged,
+  map,
   mergeMap,
   switchMap,
+  startWith,
+  takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL, GROUP } from 'const';
 import * as workerApi from 'api/workerApi';
+import { LOG_LEVEL, GROUP } from 'const';
+import { createWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -66,5 +68,36 @@ export default (action$) =>
     ofType(actions.createWorker.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((values) => createWorker$(values)),
+    mergeMap(({ values, resolve, reject }) => {
+      const workerId = getId(values);
+      return createWorker(values).pipe(
+        switchMap((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.worker), {
+            workerId,
+          });
+          return from([
+            actions.updateWorkspace.trigger({
+              worker: data,
+              // the workspace name of current object should be as same as the worker name
+              name: values.name,
+              group: GROUP.WORKSPACE,
+            }),
+            actions.createWorker.success(normalizedData),
+          ]);
+        }),
+        startWith(actions.createWorker.request({ workerId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.createWorker.failure(merge(err, { workerId })),
+            actions.createEventLog.trigger({
+              ...err,
+              type: LOG_LEVEL.error,
+            }),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.createWorker.CANCEL))),
+      );
+    }),
   );

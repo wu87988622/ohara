@@ -81,7 +81,9 @@ const CreateWorkspaceForm = (props) => {
         freePorts: times(5, generate.port),
       },
     });
-    onSubmit(finalValues);
+
+    const { broker, worker, workspace, zookeeper } = finalValues;
+    onSubmit({ ...workspace, worker, broker, zookeeper });
   };
 
   return (

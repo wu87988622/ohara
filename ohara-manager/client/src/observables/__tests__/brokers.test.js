@@ -19,11 +19,11 @@ import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 import { times } from 'lodash';
 
-import * as workerApi from 'api/workerApi';
-import { entity as workerEntity } from 'api/__mocks__/workerApi';
-import { fetchWorker, startWorker } from '../workers';
+import * as brokerApi from 'api/brokerApi';
+import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
+import { fetchBroker, startBroker } from '../brokers';
 
-jest.mock('api/workerApi');
+jest.mock('api/brokerApi');
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -34,81 +34,81 @@ const RESPONSES = {
   success: {
     status: 200,
     title: 'retry mock get data',
-    data: workerEntity,
+    data: brokerEntity,
   },
   successWithRunning: {
     status: 200,
     title: 'retry mock get data',
-    data: { ...workerEntity, state: 'RUNNING' },
+    data: { ...brokerEntity, state: 'RUNNING' },
   },
-  error: { status: -1, data: {}, title: 'mock get worker failed' },
+  error: { status: -1, data: {}, title: 'mock get broker failed' },
 };
 
-it('get worker should be worked correctly', () => {
+it('get broker should be worked correctly', () => {
   makeTestScheduler().run(({ expectObservable }) => {
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: brokerEntity.group, name: brokerEntity.name };
 
     const expected = '- 499ms (v|)';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchBroker(params);
 
     expectObservable(output$).toBe(expected, {
-      v: workerEntity,
+      v: brokerEntity,
     });
   });
 });
 
-it('get worker should be worked correctly - Retry', () => {
+it('get broker should be worked correctly - Retry', () => {
   makeTestScheduler().run(({ expectObservable }) => {
     jest.restoreAllMocks();
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyGet = jest.spyOn(brokerApi, 'get');
     times(3, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
     spyGet.mockReturnValueOnce(of(RESPONSES.success).pipe(delay(500)));
 
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: brokerEntity.group, name: brokerEntity.name };
 
     const expected = '500ms (v|)';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchBroker(params);
 
     expectObservable(output$).toBe(expected, {
-      v: workerEntity,
+      v: brokerEntity,
     });
   });
 });
 
-it('get worker should be failed - Retry limit reached', () => {
+it('get broker should be failed - Retry limit reached', () => {
   makeTestScheduler().run(({ expectObservable }) => {
     jest.restoreAllMocks();
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyGet = jest.spyOn(brokerApi, 'get');
     times(20, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
 
-    const params = { group: workerEntity.group, name: workerEntity.name };
+    const params = { group: brokerEntity.group, name: brokerEntity.name };
 
     const expected = '#';
 
-    const output$ = fetchWorker(params);
+    const output$ = fetchBroker(params);
 
     expectObservable(output$).toBe(expected, null, RESPONSES.error);
   });
 });
 
-it('start worker should run in two minutes', () => {
+it('start broker should run in two minutes', () => {
   makeTestScheduler().run(({ expectObservable, flush }) => {
     jest.restoreAllMocks();
-    const spyStart = jest.spyOn(workerApi, 'start');
-    const spyGet = jest.spyOn(workerApi, 'get');
+    const spyStart = jest.spyOn(brokerApi, 'start');
+    const spyGet = jest.spyOn(brokerApi, 'get');
     times(5, () => spyGet.mockReturnValueOnce(of(RESPONSES.success)));
     spyGet.mockReturnValueOnce(of(RESPONSES.successWithRunning));
 
     const params = {
-      group: workerEntity.group,
-      name: workerEntity.name,
+      group: brokerEntity.group,
+      name: brokerEntity.name,
     };
 
     const expected = '10s 10ms (v|)';
 
-    const output$ = startWorker(params, true);
+    const output$ = startBroker(params, true);
 
     expectObservable(output$).toBe(expected, {
       v: RESPONSES.successWithRunning.data,

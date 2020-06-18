@@ -37,7 +37,7 @@ export interface RetryConfig {
  * false.
  */
 export function retry(
-  config: RetryConfig | number,
+  delayOrConfig: number | RetryConfig,
 ): <T>(source: Observable<T>) => Observable<T> {
   const {
     delay = 1000,
@@ -45,7 +45,10 @@ export function retry(
     maxDelay = Infinity,
     shouldRetry = () => true,
     delayStrategy = exponentialDelayStrategy,
-  } = typeof config === 'number' ? { delay: config } : config;
+  } =
+    typeof delayOrConfig === 'number'
+      ? { delay: delayOrConfig }
+      : delayOrConfig;
 
   return <T>(source: Observable<T>) =>
     defer(() => {

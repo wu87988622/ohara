@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import { omit } from 'lodash';
-import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { StateObservable } from 'redux-observable';
 
-import { FORM, LOG_LEVEL, GROUP } from 'const';
-import * as brokerApi from 'api/brokerApi';
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
-import { getId, getKey } from 'utils/object';
+import { getId } from 'utils/object';
 import createWorkspaceEpic from '../../workspace/createWorkspaceEpic';
 import { entity as zookeeperEntity } from 'api/__mocks__/zookeeperApi';
 import { entity as brokerEntity } from 'api/__mocks__/brokerApi';
@@ -36,9 +31,6 @@ jest.mock('api/brokerApi');
 jest.mock('api/workerApi');
 jest.mock('api/workspaceApi');
 
-const zkId = getId(zookeeperEntity);
-const bkId = getId(brokerEntity);
-const wkId = getId(workerEntity);
 const workspaceId = getId(workspaceEntity);
 
 const makeTestScheduler = () =>
@@ -52,28 +44,28 @@ beforeEach(() => {
 });
 
 it('create workspace should be worked correctly', () => {
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a                ';
-    const expected = `--a 2999ms b       \
-                      999ms c 1999ms (id)\
-                      996ms e 1999ms (jf)\
-                      996ms g 1999ms (kh)\
-                      996ms m  499ms n   \
-                      999ms o  499ms p   \
-                      999ms q  499ms r   \
-                      999ms (tuvwxyzl)`;
-    const subs = '    ^------------------';
+    const input = '   ^-a         ';
+    const expected = '--a 1999ms b';
+    const subs = ['   ^-----------', '--^ 1999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.createWorkspace.TRIGGER,
         payload: {
-          workspace: workspaceEntity,
-          zookeeper: zookeeperEntity,
-          broker: brokerEntity,
-          worker: workerEntity,
+          values: {
+            ...workspaceEntity,
+            zookeeper: zookeeperEntity,
+            broker: brokerEntity,
+            worker: workerEntity,
+          },
+          resolve: mockResolve,
+          reject: mockReject,
         },
       },
     });
@@ -83,357 +75,25 @@ it('create workspace should be worked correctly', () => {
     expectObservable(output$).toBe(expected, {
       a: {
         type: actions.createWorkspace.REQUEST,
+        payload: {
+          workspaceId,
+        },
       },
       b: {
         type: actions.createWorkspace.SUCCESS,
         payload: {
+          workspaceId,
           entities: {
             [ENTITY_TYPE.workspaces]: {
-              [workspaceId]: workspaceEntity,
+              [workspaceId]: {
+                ...workspaceEntity,
+                zookeeper: zookeeperEntity,
+                broker: brokerEntity,
+                worker: workerEntity,
+              },
             },
           },
           result: workspaceId,
-        },
-      },
-      c: {
-        type: actions.createZookeeper.REQUEST,
-        payload: { zookeeperId: zkId },
-      },
-      i: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: zookeeperEntity.name,
-          group: GROUP.WORKSPACE,
-          zookeeper: zookeeperEntity,
-        },
-      },
-      d: {
-        type: actions.createZookeeper.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.zookeepers]: {
-              [zkId]: zookeeperEntity,
-            },
-          },
-          zookeeperId: zkId,
-          result: zkId,
-        },
-      },
-      e: {
-        type: actions.createBroker.REQUEST,
-        payload: { brokerId: bkId },
-      },
-      j: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: brokerEntity.name,
-          group: GROUP.WORKSPACE,
-          broker: brokerEntity,
-        },
-      },
-      f: {
-        type: actions.createBroker.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.brokers]: {
-              [bkId]: brokerEntity,
-            },
-          },
-          brokerId: bkId,
-          result: bkId,
-        },
-      },
-      g: {
-        type: actions.createWorker.REQUEST,
-        payload: { workerId: wkId },
-      },
-      k: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: workerEntity.name,
-          group: GROUP.WORKSPACE,
-          worker: workerEntity,
-        },
-      },
-      h: {
-        type: actions.createWorker.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.workers]: {
-              [wkId]: workerEntity,
-            },
-          },
-          workerId: wkId,
-          result: wkId,
-        },
-      },
-      m: {
-        type: actions.startZookeeper.REQUEST,
-        payload: {
-          zookeeperId: zkId,
-        },
-      },
-      n: {
-        type: actions.startZookeeper.SUCCESS,
-        payload: {
-          zookeeperId: zkId,
-          entities: {
-            [ENTITY_TYPE.zookeepers]: {
-              [zkId]: {
-                ...zookeeperEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
-            },
-          },
-          result: zkId,
-        },
-      },
-      o: {
-        type: actions.startBroker.REQUEST,
-        payload: {
-          brokerId: bkId,
-        },
-      },
-      p: {
-        type: actions.startBroker.SUCCESS,
-        payload: {
-          brokerId: bkId,
-          entities: {
-            [ENTITY_TYPE.brokers]: {
-              [bkId]: {
-                ...brokerEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
-            },
-          },
-          result: bkId,
-        },
-      },
-      q: {
-        type: actions.startWorker.REQUEST,
-        payload: {
-          workerId: wkId,
-        },
-      },
-      r: {
-        type: actions.startWorker.SUCCESS,
-        payload: {
-          workerId: wkId,
-          entities: {
-            [ENTITY_TYPE.workers]: {
-              [wkId]: {
-                ...workerEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
-            },
-          },
-          result: wkId,
-        },
-      },
-      t: {
-        type: actions.createWorkspace.FULFILL,
-      },
-      u: {
-        type: '@@redux-form/RESET',
-        meta: { form: FORM.CREATE_WORKSPACE },
-      },
-      v: {
-        type: actions.switchCreateWorkspaceStep.TRIGGER,
-        payload: 0,
-      },
-      w: {
-        type: actions.closeCreateWorkspace.TRIGGER,
-      },
-      x: {
-        type: actions.closeIntro.TRIGGER,
-      },
-      y: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          title: 'Successfully created workspace workspace1.',
-          type: LOG_LEVEL.info,
-        },
-      },
-      z: {
-        type: actions.switchWorkspace.TRIGGER,
-        payload: getKey(workspaceEntity),
-      },
-      l: {
-        type: actions.fetchNodes.TRIGGER,
-      },
-    });
-
-    expectSubscriptions(action$.subscriptions).toBe(subs);
-
-    flush();
-  });
-});
-
-it('create workspace should be failure if one of the services start failed', () => {
-  const spyGet = jest.spyOn(brokerApi, 'get');
-  spyGet.mockReturnValue(
-    of({
-      status: 200,
-      title: 'retry mock get data',
-      data: { ...omit(brokerEntity, 'state') },
-    }),
-  );
-
-  makeTestScheduler().run((helpers) => {
-    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
-
-    const input = '   ^-a               ';
-    const expected = `--a 2999ms b       \
-                      999ms c 1999ms (id)\
-                      996ms e 1999ms (jf)\
-                      996ms g 1999ms (kh)\
-                      996ms m  499ms n   \
-                      999ms o 20999ms (xy)`;
-    const subs = '    ^------------------';
-
-    const action$ = hot(input, {
-      a: {
-        type: actions.createWorkspace.TRIGGER,
-        payload: {
-          workspace: workspaceEntity,
-          zookeeper: zookeeperEntity,
-          broker: brokerEntity,
-          worker: workerEntity,
-        },
-      },
-    });
-    const state$ = new StateObservable(hot('-'));
-    const output$ = createWorkspaceEpic(action$, state$);
-
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.createWorkspace.REQUEST,
-      },
-      b: {
-        type: actions.createWorkspace.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.workspaces]: {
-              [workspaceId]: workspaceEntity,
-            },
-          },
-          result: workspaceId,
-        },
-      },
-      c: {
-        type: actions.createZookeeper.REQUEST,
-        payload: { zookeeperId: zkId },
-      },
-      i: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: zookeeperEntity.name,
-          group: GROUP.WORKSPACE,
-          zookeeper: zookeeperEntity,
-        },
-      },
-      d: {
-        type: actions.createZookeeper.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.zookeepers]: {
-              [zkId]: zookeeperEntity,
-            },
-          },
-          zookeeperId: zkId,
-          result: zkId,
-        },
-      },
-      e: {
-        type: actions.createBroker.REQUEST,
-        payload: { brokerId: bkId },
-      },
-      j: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: brokerEntity.name,
-          group: GROUP.WORKSPACE,
-          broker: brokerEntity,
-        },
-      },
-      f: {
-        type: actions.createBroker.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.brokers]: {
-              [bkId]: brokerEntity,
-            },
-          },
-          brokerId: bkId,
-          result: bkId,
-        },
-      },
-      g: {
-        type: actions.createWorker.REQUEST,
-        payload: { workerId: wkId },
-      },
-      k: {
-        type: actions.updateWorkspace.TRIGGER,
-        payload: {
-          name: workerEntity.name,
-          group: GROUP.WORKSPACE,
-          worker: workerEntity,
-        },
-      },
-      h: {
-        type: actions.createWorker.SUCCESS,
-        payload: {
-          entities: {
-            [ENTITY_TYPE.workers]: {
-              [wkId]: workerEntity,
-            },
-          },
-          workerId: wkId,
-          result: wkId,
-        },
-      },
-      m: {
-        type: actions.startZookeeper.REQUEST,
-        payload: {
-          zookeeperId: zkId,
-        },
-      },
-      n: {
-        type: actions.startZookeeper.SUCCESS,
-        payload: {
-          zookeeperId: zkId,
-          entities: {
-            [ENTITY_TYPE.zookeepers]: {
-              [zkId]: {
-                ...zookeeperEntity,
-                state: SERVICE_STATE.RUNNING,
-              },
-            },
-          },
-          result: zkId,
-        },
-      },
-      o: {
-        type: actions.startBroker.REQUEST,
-        payload: {
-          brokerId: bkId,
-        },
-      },
-      x: {
-        type: actions.createWorkspace.FAILURE,
-        payload: {
-          data: brokerEntity,
-          meta: undefined,
-          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
-        },
-      },
-      y: {
-        type: actions.createEventLog.TRIGGER,
-        payload: {
-          data: brokerEntity,
-          meta: undefined,
-          title: `Try to start broker: "${brokerEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,
-          type: LOG_LEVEL.error,
         },
       },
     });
@@ -441,5 +101,8 @@ it('create workspace should be failure if one of the services start failed', () 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).toHaveBeenCalled();
+    expect(mockReject).not.toHaveBeenCalled();
   });
 });
