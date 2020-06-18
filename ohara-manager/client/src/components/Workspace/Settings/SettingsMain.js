@@ -21,7 +21,7 @@ import { isEmpty } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 import * as hooks from 'hooks';
-import { SETTINGS_COMPONENT_TYPES } from 'const';
+import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
 import { Wrapper } from './SettingsMainStyles';
 import RestartIndicator from './RestartIndicator';
 import SectionList from './SectionList';
@@ -41,9 +41,37 @@ const SettingsMain = ({
   const discardWorkspace = hooks.useDiscardWorkspaceChangedSettingsAction();
   const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
   const restartWorkspace = hooks.useRestartWorkspaceAction();
-  const restartConfirmMessage = hooks.useRestartConfirmMessage();
   const hasRunningServices = hooks.useHasRunningServices();
-  const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
+  const {
+    shouldBeRestartWorkspace,
+    shouldBeRestartWorker,
+    shouldBeRestartBroker,
+    shouldBeRestartZookeeper,
+  } = hooks.useShouldBeRestartWorkspace();
+
+  let kind = KIND.workspace;
+  let steps = [
+    'Stop Worker',
+    'Stop Broker',
+    'Stop Zookeeper',
+    'Start Zookeeper',
+    'Start Broker',
+    'Start Worker',
+  ];
+
+  if (
+    shouldBeRestartWorker &&
+    !shouldBeRestartBroker &&
+    !shouldBeRestartZookeeper
+  ) {
+    kind = KIND.worker;
+    steps = ['Stop Worker', 'Start Worker'];
+  } else if (shouldBeRestartBroker && !shouldBeRestartZookeeper) {
+    kind = KIND.broker;
+    steps = ['Stop Worker', 'Stop Broker', 'Start Broker', 'Start Worker'];
+  }
+
+  const restartConfirmMessage = hooks.useRestartConfirmMessage(kind);
 
   return (
     <Wrapper>
@@ -53,8 +81,8 @@ const SettingsMain = ({
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
           onRestart={() => {
-            openRestartWorkspace();
-            restartWorkspace();
+            openRestartWorkspace({ steps });
+            restartWorkspace(kind);
           }}
           restartConfirmMessage={restartConfirmMessage}
         />
