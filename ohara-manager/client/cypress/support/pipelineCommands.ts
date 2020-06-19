@@ -183,8 +183,10 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       cy.findAllByText(/^add$/i).filter(':visible').click();
     }
 
-    // wait a little time for the cell added
-    cy.wait(3000);
+    // wait for the cell added
+    cy.get('#outline').within(() => {
+      cy.findByText(name).should('exist');
+    });
 
     // close this panel
     cy.findByText(capitalize(kind)).click();

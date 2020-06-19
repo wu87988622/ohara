@@ -111,13 +111,16 @@ declare global {
   }
 }
 
+// if the Cypress.env is undefined and no node paramter specify
+// we generate random value for it
+let nodeHost =
+  Cypress.env('nodeHost') || generate.serviceName({ prefix: 'node' });
+let nodePort = Cypress.env('nodePort') || generate.port().toString();
+let nodeUser = Cypress.env('nodeUser') || generate.userName();
+let nodePass = Cypress.env('nodePass') || generate.password();
+
 const workspaceGroup = 'workspace';
 const workerGroup = 'worker';
-
-let nodeHost = Cypress.env('nodeHost');
-let nodePort = Cypress.env('nodePort');
-let nodeUser = Cypress.env('nodeUser');
-let nodePass = Cypress.env('nodePass');
 
 // Utility commands
 Cypress.Commands.add('createJar', (file: Cypress.FixtureRequest) => {
@@ -267,15 +270,25 @@ Cypress.Commands.add(
   },
 );
 
-Cypress.Commands.add('deleteAllServices', async () => {
-  await deleteAllServices();
+Cypress.Commands.add('deleteAllServices', () => {
+  cy.log(`Begin delete all services...`)
+    .then(async () => await deleteAllServices())
+    .then(() => cy.log(`Finish delete all services!`));
 });
 
 // Settings
 Cypress.Commands.add('switchSettingSection', (section: SETTING_SECTIONS) => {
-  cy.get('#navigator').within(() => {
-    cy.get('button').should('have.length', 1).click();
+  cy.get('body').then(($body) => {
+    // check whether we are in the homepage or not
+    if ($body.find('#navigator').length === 0) {
+      // force to visit the root path
+      cy.visit('/');
+    }
+    cy.get('#navigator').within(() => {
+      cy.get('button').should('have.length', 1).click();
+    });
   });
+
   // enter the settings dialog
   cy.findAllByRole('menu').filter(':visible').find('li').click();
 

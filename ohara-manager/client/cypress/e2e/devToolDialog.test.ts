@@ -35,9 +35,7 @@ describe('DevToolDialog - Topics tab', () => {
     cy.findByText(/^topics$/i).should('exist');
 
     // since there are no topics, we should not able to click dropdown list
-    cy.findByTestId('devtool-topic-list')
-      .find('input')
-      .should('not.be.visible');
+    cy.findByTestId('topic-list-select').find('input').should('not.be.visible');
   });
 
   it('with an exist workspace, topic list of devTool should work normally', () => {
@@ -102,7 +100,7 @@ describe('DevToolDialog - Topics tab', () => {
     // Check the status bar of no data
     cy.findByText(/^no topic data$/i).should('exist');
 
-    cy.findByTestId('devtool-topic-list').click();
+    cy.findByTestId('topic-list-select').click();
     cy.findAllByText(sharedTopicName).filter('li[role="option"]').click();
 
     // Check the topic data detail view

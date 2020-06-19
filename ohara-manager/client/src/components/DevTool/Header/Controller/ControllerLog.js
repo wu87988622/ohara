@@ -114,6 +114,7 @@ const ControllerLog = () => {
           onChange={(event) =>
             setLogQueryParams({ shabondiName: event.target.value })
           }
+          testId="log-cell-select"
           value={shabondiName}
         />
       )}
@@ -124,6 +125,7 @@ const ControllerLog = () => {
           onChange={(event) =>
             setLogQueryParams({ streamName: event.target.value })
           }
+          testId="log-cell-select"
           value={streamName}
         />
       )}
@@ -134,6 +136,7 @@ const ControllerLog = () => {
         onChange={(event) =>
           setLogQueryParams({ hostName: event.target.value })
         }
+        testId="log-hostname-select"
         value={hostName}
       />
       <Tooltip title="Fetch the data again">
@@ -196,6 +199,7 @@ const ControllerLog = () => {
               disabled={
                 isEmpty(logType) || timeGroup !== LOG_TIME_GROUP.customize
               }
+              id="start-date"
               InputLabelProps={{
                 shrink: true,
               }}
@@ -211,6 +215,7 @@ const ControllerLog = () => {
             <StyledTextField
               defaultValue={endTime || moment().format('YYYY-MM-DD[T]hh:mm')}
               disabled
+              id="end-date"
               InputLabelProps={{
                 shrink: true,
               }}

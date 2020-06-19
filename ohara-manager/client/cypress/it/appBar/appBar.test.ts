@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { LOG_SERVICES } from '../../../src/api/apiInterface/logInterface';
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 
@@ -89,21 +88,8 @@ describe('App Bar', () => {
         .find('button')
         // we only have two tabs (TOPICS and LOGS)
         .should('have.length', 2);
-      cy.findByTestId('devtool-topic-list').click();
+      cy.findByTestId('topic-list-select').click();
       cy.get('ul[role="listbox"]').should('not.exist');
-      // switch to logs tab
-      cy.findByRole('tablist').filter(':visible').find('button').eq(1).click();
-      cy.findByTestId('log-type-select').click();
-      cy.get('ul[role="listbox"]:visible')
-        .should('have.length', 1)
-        .find('li')
-        .should('have.length', Object.keys(LOG_SERVICES).length)
-        .each(($el) => {
-          expect(Object.keys(LOG_SERVICES)).contains($el.text());
-        })
-        // select the last element of list to close this dropdown list
-        .last()
-        .click();
 
       // node list should be empty
       cy.findByTitle(/node list/i).click();
@@ -185,115 +171,5 @@ describe('App Bar', () => {
       // the url should changed
       cy.location('pathname').should('equal', `/${name}`);
     });
-
-    it('should be able to delete event logs', () => {
-      // we should have create workspace event log
-      cy.findByTitle('Event logs').click();
-      cy.findByTestId('event-log-list').within(() => {
-        cy.findAllByText('Successfully created workspace workspace1.').should(
-          'exist',
-        );
-      });
-
-      // edit the event log setting
-      cy.findByTitle('Event logs settings').click();
-      // could not change the maximum number if checked unlimited
-      cy.get('input[type="checkbox"]:visible').check();
-      cy.findByPlaceholderText('The maximum amount of logs.').should(
-        'be.disabled',
-      );
-      cy.findAllByText(/^save$/i)
-        .filter(':visible')
-        .click();
-      cy.findByText('There are 2 currently').should('exist');
-
-      // change maximum number of event logs
-      cy.findByTitle('Event logs settings').click();
-      cy.get('input[type="checkbox"]:visible').uncheck();
-      // change maximum event log to 1
-      cy.findByPlaceholderText('The maximum amount of logs.').clear().type('1');
-
-      cy.findAllByText(/^save$/i)
-        .filter(':visible')
-        .click();
-      // the event log should be still visible
-      cy.findByTestId('event-log-list').within(() => {
-        cy.findAllByText(`Successfully created workspace ${name}.`).should(
-          'exist',
-        );
-      });
-
-      // click remove button if there are some logs
-      cy.findByTitle('Clear event logs')
-        .find('button')
-        .within(($el) => {
-          const isDisabled = $el.is(':disabled');
-          if (!isDisabled) {
-            cy.wrap($el).click();
-          }
-        });
-
-      // The event log message should be cleared by now
-      cy.findByText('No log').should('exist');
-    });
-
-    it('should be able to add a random node in node list', () => {
-      // click node list
-      cy.findByTitle(/node list/i).click();
-
-      // create a node
-      cy.findByTitle(/create node/i).click();
-      // cancel create node
-      cy.findByText(/^cancel$/i).click();
-      // Note: we replace this .click() by .trigger() in defaultCommands.ts
-      // since the cypress command click could not found the button
-      // open again
-      cy.findByTitle(/create node/i).click();
-      const hostname = generate.serviceName();
-      cy.get('input[name=hostname]').type(hostname);
-      cy.get('input[name=port]').type(generate.port().toString());
-      cy.get('input[name=user]').type(generate.userName());
-      cy.get('input[name=password]').type(generate.password());
-      cy.findByText(/^create$/i).click();
-
-      // check the node information
-      cy.findByTestId(`view-node-${hostname}`).click();
-      cy.findAllByText(/^hostname$/i)
-        .filter(':visible')
-        .siblings('td')
-        .contains(hostname)
-        .should('exist');
-
-      // press "ESC" back to node list
-      cy.get('body:visible').trigger('keydown', { keyCode: 27, which: 27 });
-
-      // update node user
-      const user = generate.userName();
-      cy.findByTestId(`edit-node-${hostname}`).click();
-      cy.get('input[name=user]').clear().type(user);
-      cy.findByText(/^save$/i).click();
-
-      // check the node information again
-      cy.findByTestId(`view-node-${hostname}`).click();
-      cy.findAllByText(/^user$/i)
-        .filter(':visible')
-        .siblings('td')
-        .contains(user)
-        .should('exist');
-
-      // press "ESC" back to node list
-      cy.get('body:visible').trigger('keydown', { keyCode: 27, which: 27 });
-
-      // delete the fake node we just added
-      cy.findByTestId(`delete-node-${hostname}`).click();
-      // confirm dialog
-      cy.findByTestId('confirm-button-DELETE').click();
-
-      // will auto back to node list, and the node list should be empty
-      cy.findByText(hostname).should('not.exist');
-    });
   });
-
-  //TODO: Add tests for devTool which contain in #5153
-  // - should contains nest object of topic data
 });

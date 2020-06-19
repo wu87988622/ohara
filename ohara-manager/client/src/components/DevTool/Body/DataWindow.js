@@ -118,13 +118,13 @@ const DataWindow = () => {
   switch (type) {
     case TAB.topic:
       return (
-        <WindowDiv>
+        <WindowDiv data-testid="data-window">
           <ViewTopic />
         </WindowDiv>
       );
     case TAB.log:
       return (
-        <WindowDiv>
+        <WindowDiv data-testid="data-window">
           <ViewLog />
         </WindowDiv>
       );

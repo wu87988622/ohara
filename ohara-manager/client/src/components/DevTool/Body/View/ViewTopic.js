@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { capitalize, get, isEmpty, isObjectLike } from 'lodash';
+import { capitalize, get, isEmpty, isObjectLike, toString } from 'lodash';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import ReactJson from 'react-json-view';
 
@@ -76,7 +76,7 @@ const ViewTopic = () => {
                       ? isEmpty(message.value[header])
                         ? null
                         : JSON.stringify(message.value[header])
-                      : message.value[header]}
+                      : toString(message.value[header])}
                   </StyledTableCell>
                 ) : (
                   <StyledTableCell

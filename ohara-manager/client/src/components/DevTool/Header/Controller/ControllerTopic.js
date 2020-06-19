@@ -67,7 +67,7 @@ const ControllerTopic = () => {
           prevName !== event.target.value &&
           setTopicQueryParams({ name: event.target.value })
         }
-        testId="devtool-topic-list"
+        testId="topic-list-select"
         value={name || ''}
       />
       <Tooltip title="Fetch the data again">
@@ -93,7 +93,7 @@ const ControllerTopic = () => {
           </IconButton>
         }
       >
-        <StyledSearchBody tab={TAB.topic}>
+        <StyledSearchBody data-testid="topic-query-popover" tab={TAB.topic}>
           <label>Rows per query</label>
           <TextField
             defaultValue={limit}
