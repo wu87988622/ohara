@@ -253,6 +253,8 @@ package object v0 {
       .definitions(definitions)
       // for each field, we should reject any empty string
       .rejectEmptyString()
+      // those fields are override at runtime
+      .ignoreKeys(RUNTIME_KEYS)
       .build
 
   /**
@@ -289,7 +291,7 @@ package object v0 {
       )
     )
 
-  private[this] val runtimeKeys = Set(
+  private[this] val RUNTIME_KEYS = Set(
     "aliveNodes",
     "lastModified",
     "state",
@@ -309,5 +311,5 @@ package object v0 {
     * @return filtered objs
     */
   private[v0] def extractSetting(obj: JsObject): JsObject =
-    JsObject(noJsNull(obj.fields + (SETTINGS_KEY -> JsObject(obj.fields.filterNot(e => runtimeKeys.contains(e._1))))))
+    JsObject(noJsNull(obj.fields + (SETTINGS_KEY -> JsObject(obj.fields.filterNot(e => RUNTIME_KEYS.contains(e._1))))))
 }

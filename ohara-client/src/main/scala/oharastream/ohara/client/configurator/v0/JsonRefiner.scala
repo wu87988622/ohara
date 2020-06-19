@@ -16,7 +16,6 @@
 
 package oharastream.ohara.client.configurator.v0
 
-import oharastream.ohara.common.setting.SettingDef
 import spray.json.{JsValue, RootJsonFormat}
 
 /**
@@ -30,11 +29,10 @@ import spray.json.{JsValue, RootJsonFormat}
   */
 trait JsonRefiner[T] extends RootJsonFormat[T] {
   /**
-    * create another format based on this and more rules.
-    * @param definitions definitions
+    * create another refiner builder based on this and more rules.
     * @return new format
     */
-  def more(definitions: Seq[SettingDef]): JsonRefiner[T]
+  def toBuilder: JsonRefinerBuilder[T]
 
   /**
     * serialize and deseriailze the object. The input may be NOT same to output since the format rules may change something

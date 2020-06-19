@@ -52,6 +52,11 @@ import scala.reflect.{ClassTag, classTag}
   * @tparam T scala object type
   */
 trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[JsonRefiner[T]] {
+  /**
+    * set the core format used to convert the refined json to scala object
+    * @param format akka json format
+    * @return this refiner builder
+    */
   def format(format: RootJsonFormat[T]): JsonRefinerBuilder[T]
 
   /**
@@ -74,17 +79,17 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
   def definition(definition: SettingDef): JsonRefinerBuilder[T] = {
     // the internal is not exposed to user so we skip it.
     // remove the value if the field is readonly
-    if (definition.permission() == Permission.READ_ONLY) valueConverter(definition.key(), _ => JsNull)
+    if (definition.permission() == Permission.READ_ONLY) ignoreKeys(Set(definition.key()))
     definition.regex().ifPresent(regex => stringRestriction(definition.key(), regex))
     if (!definition.internal()) {
-      if (definition.necessary() == Necessary.REQUIRED) requireKey(definition.key())
+      if (definition.necessary() == Necessary.REQUIRED) requireKeys(Set(definition.key()))
     }
 
     definition.valueType() match {
       case Type.BOOLEAN =>
         if (definition.hasDefault)
           nullToBoolean(definition.key(), definition.defaultBoolean)
-        if (!definition.internal()) requireJsonType[JsBoolean](definition.key())
+        if (!definition.internal()) requireJsonType[JsBoolean](definition.key(), _ => ())
       case Type.POSITIVE_SHORT =>
         if (definition.hasDefault)
           nullToShort(definition.key(), definition.defaultShort)
@@ -133,7 +138,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
                     throw DeserializationException(s"empty array is illegal", fieldNames = List(definition.key()))
               )
             case _ =>
-              requireJsonType[JsArray](definition.key())
+              requireJsonType[JsArray](definition.key(), _ => ())
           }
           // check deny list
           requireJsonType[JsArray](
@@ -155,7 +160,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
             definition.key(),
             Duration(definition.defaultDuration.toMillis, TimeUnit.MILLISECONDS).toString()
           )
-        if (!definition.internal()) requireType[Duration](definition.key())
+        if (!definition.internal()) requireType[Duration](definition.key(), _ => ())
       case Type.REMOTE_PORT =>
         if (definition.hasDefault)
           nullToInt(definition.key(), definition.defaultInt())
@@ -176,7 +181,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
         if (!definition.internal()) {
           // convert the value to complete Object key
           valueConverter(definition.key(), v => OBJECT_KEY_FORMAT.write(OBJECT_KEY_FORMAT.read(v)))
-          requireType[ObjectKey](definition.key())
+          requireType[ObjectKey](definition.key(), _ => ())
         }
       case Type.OBJECT_KEYS =>
         // we don't allow to set default value to array type.
@@ -203,7 +208,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
                     throw DeserializationException(s"empty keys is illegal", fieldNames = List(definition.key()))
               )
             case _ =>
-              requireType[Seq[ObjectKey]](definition.key())
+              requireType[Seq[ObjectKey]](definition.key(), _ => ())
           }
         }
       case Type.TAGS =>
@@ -224,7 +229,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
                     throw DeserializationException(s"empty tags is illegal", fieldNames = List(definition.key()))
               )
             case _ =>
-              requireJsonType[JsObject](definition.key())
+              requireJsonType[JsObject](definition.key(), _ => ())
           }
         }
       case Type.TABLE =>
@@ -245,7 +250,7 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
                     throw DeserializationException(s"empty table is illegal", fieldNames = List(definition.key()))
               )
             case _ =>
-              requireType[PropGroup](definition.key())
+              requireType[PropGroup](definition.key(), _ => ())
           }
         }
       case Type.STRING =>
@@ -258,10 +263,10 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
                 definition.prefix().orElse("") + CommonUtils.randomString(SettingDef.STRING_LENGTH_LIMIT)
               )
           )
-        if (!definition.internal()) requireJsonType[JsString](definition.key())
+        if (!definition.internal()) requireJsonType[JsString](definition.key(), _ => ())
       case _ @(Type.CLASS | Type.PASSWORD | Type.JDBC_TABLE) =>
         if (definition.hasDefault) nullToString(definition.key(), definition.defaultString)
-        if (!definition.internal()) requireJsonType[JsString](definition.key())
+        if (!definition.internal()) requireJsonType[JsString](definition.key(), _ => ())
     }
     this
   }
@@ -316,50 +321,30 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
   //-------------------------[more checks]-------------------------//
 
   /**
-    * require the key for input json. It produces exception if input json is lack of key.
-    *
-    * @param key required key
-    * @return this refiner
+    * ignore and remove the keys from following verification.
+    * This is useful when you want to remove user-defined fields from input.
+    * @param keys to remove
+    * @return this builder
     */
-  def requireKey(key: String): JsonRefinerBuilder[T] = requireKeys(Set(key))
-
-  /**
-    * require the keys for input json. It produces exception if input json is lack of those keys.
-    *
-    * @param keys required keys
-    * @return this refiner
-    */
-  def requireKeys(keys: Set[String]): JsonRefinerBuilder[T] = keysChecker { inputKeys =>
-    val nonexistentKeys = keys.diff(inputKeys)
-    if (nonexistentKeys.nonEmpty)
-      throw DeserializationException(
-        s"${nonexistentKeys.mkString(",")} are required!!!",
-        fieldNames = nonexistentKeys.toList
-      )
+  def ignoreKeys(keys: Set[String]): JsonRefinerBuilder[T] = {
+    keys.foreach(key => valueConverter(key, _ => JsNull))
+    this
   }
 
   /**
-    * require the sum length of passing keys' values should fit the length limit.
-    * The required keys should exist in request data.
-    * Note: We only accept string type.
+    * require the key for input json. It produces exception if input json is lack of key.
     *
-    * @param keys           to be checked keys
-    * @param sumLengthLimit sum length limit
+    * @param keys required key
     * @return this refiner
     */
-  def stringSumLengthLimit(keys: Set[String], sumLengthLimit: Int): JsonRefinerBuilder[T] =
-    // check the keys should exist in request
-    requireKeys(keys).valuesChecker(
-      keys,
-      fields => {
-        val sum = fields.values.map {
-          case s: JsString => s.value.length
-          case _           => throw DeserializationException(s"we only support length checking for string value")
-        }.sum
-        if (sum > sumLengthLimit)
-          throw DeserializationException(s"the length of $sum exceeds $sumLengthLimit", fieldNames = keys.toList)
-      }
-    )
+  def requireKeys(keys: Set[String]): JsonRefinerBuilder[T] = keysChecker { inputKeys =>
+    val diff = keys.diff(inputKeys)
+    if (diff.nonEmpty)
+      throw DeserializationException(
+        s"$diff are required!!!",
+        fieldNames = diff.toList
+      )
+  }
 
   /**
     * check whether target port is legal to connect. The legal range is (0, 65535].
@@ -407,16 +392,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
     *
-    * @param key key
-    * @tparam Json expected value type
-    * @return this refiner
-    */
-  private[this] def requireJsonType[Json <: JsValue: ClassTag](key: String): JsonRefinerBuilder[T] =
-    requireJsonType(key, (_: Json) => ())
-
-  /**
-    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
-    *
     * @param key     key
     * @param checker checker
     * @tparam Json expected value type
@@ -426,9 +401,10 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     key: String,
     checker: Json => Unit
   ): JsonRefinerBuilder[T] =
-    valueChecker(
-      key,
-      json => {
+    valuesChecker(
+      Set(CommonUtils.requireNonEmpty(key)),
+      vs => {
+        val json = vs.getOrElse(key, JsNull)
         if (!classTag[Json].runtimeClass.isInstance(json))
           throw DeserializationException(
             s"""the $key must be ${classTag[Json].runtimeClass.getSimpleName} type, but actual type is \"${json.getClass.getSimpleName}\"""",
@@ -441,16 +417,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
   /**
     * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
     *
-    * @param key key
-    * @tparam C expected value type
-    * @return this refiner
-    */
-  private[this] def requireType[C](key: String)(implicit format: RootJsonFormat[C]): JsonRefinerBuilder[T] =
-    requireType(key, (_: C) => ())
-
-  /**
-    * check the value of existent key. the value type MUST match the expected type. otherwise, the DeserializationException is thrown.
-    *
     * @param key     key
     * @param checker checker
     * @return this refiner
@@ -458,9 +424,13 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
   private[this] def requireType[C](key: String, checker: C => Unit)(
     implicit format: RootJsonFormat[C]
   ): JsonRefinerBuilder[T] =
-    valueChecker(
-      key,
-      json => checker(format.read(json))
+    valuesChecker(
+      Set(key),
+      vs =>
+        vs.get(key) match {
+          case Some(v) => checker(format.read(v))
+          case None    => // nothing
+        }
     )
 
   /**
@@ -470,21 +440,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     * @return this refiner
     */
   def rejectEmptyString(): JsonRefinerBuilder[T]
-
-  /**
-    * throw exception if the specific key of input json is associated to empty string.
-    * This method check only the specific key. By contrast, rejectEmptyString() checks values for all keys.
-    *
-    * @param key key
-    * @return this refiner
-    */
-  def rejectEmptyString(key: String): JsonRefinerBuilder[T] = valueChecker(
-    key, {
-      case JsString(s) if s.isEmpty =>
-        throw DeserializationException(s"""the value of \"$key\" can't be empty string!!!""", fieldNames = List(key))
-      case _ => // we don't care for other types
-    }
-  )
 
   /**
     * throw exception if the input json has empty array.
@@ -514,29 +469,20 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     (checkers: Seq[(String, JsArray) => Unit]) =>
       requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
 
-  def stringRestriction(key: String, regex: String): JsonRefinerBuilder[T] = valueChecker(
-    key,
-    (v: JsValue) => {
-      val s = v match {
-        case JsString(s) => s
-        case _           => v.toString
+  def stringRestriction(key: String, regex: String): JsonRefinerBuilder[T] = valuesChecker(
+    Set(key),
+    vs =>
+      vs.get(key) match {
+        case Some(v) =>
+          val s = v match {
+            case JsString(s) => s
+            case _           => v.toString
+          }
+          if (!s.matches(regex))
+            throw DeserializationException(s"""the value \"$s\" is not matched to $regex""", fieldNames = List(key))
+        case None => // nothing
       }
-      if (!s.matches(regex))
-        throw DeserializationException(s"""the value \"$s\" is not matched to $regex""", fieldNames = List(key))
-    }
   )
-
-  /**
-    * add your custom check for specific (key, value). the checker is executed only if the key exists.
-    *
-    * Noted: we recommend you to throw DeserializationException when the input value is illegal.
-    *
-    * @param key     key
-    * @param checker checker
-    * @return this refiner
-    */
-  def valueChecker(key: String, checker: JsValue => Unit): JsonRefinerBuilder[T] =
-    valuesChecker(Set(CommonUtils.requireNonEmpty(key)), vs => checker(vs.head._2))
 
   //-------------------------[more conversion]-------------------------//
 
@@ -563,6 +509,17 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     }
   )
 
+  /**
+    * add your custom check for a set of keys' values.
+    * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
+    * to do an "aggregation" check, like sum or length check.
+    *
+    * @param keys    keys
+    * @param checker checker
+    * @return this refiner
+    */
+  def valuesChecker(keys: Set[String], checker: Map[String, JsValue] => Unit): JsonRefinerBuilder[T]
+
   //-------------------------[protected methods]-------------------------//
 
   protected def keysChecker(checker: Set[String] => Unit): JsonRefinerBuilder[T]
@@ -575,17 +532,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     * @return this refiner
     */
   protected def nullToJsValue(key: String, defaultValue: () => JsValue): JsonRefinerBuilder[T]
-
-  /**
-    * add your custom check for a set of keys' values.
-    * Noted: We don't guarantee the order of each (key, value) pair since this method is intend
-    * to do an "aggregation" check, like sum or length check.
-    *
-    * @param keys    keys
-    * @param checker checker
-    * @return this refiner
-    */
-  protected def valuesChecker(keys: Set[String], checker: Map[String, JsValue] => Unit): JsonRefinerBuilder[T]
 
   protected def valueConverter(key: String, converter: JsValue => JsValue): JsonRefinerBuilder[T]
 }
@@ -652,7 +598,7 @@ object JsonRefinerBuilder {
       this
     }
 
-    override protected def valuesChecker(
+    override def valuesChecker(
       keys: Set[String],
       checkers: Map[String, JsValue] => Unit
     ): JsonRefinerBuilder[T] = {
@@ -723,11 +669,9 @@ object JsonRefinerBuilder {
       nullToAnotherValueOfKey.keys.foreach(CommonUtils.requireNonEmpty)
       nullToAnotherValueOfKey.values.foreach(CommonUtils.requireNonEmpty)
       new JsonRefiner[T] {
-        override def more(definitions: Seq[SettingDef]): JsonRefiner[T] =
+        override def toBuilder: JsonRefinerBuilder[T] =
           JsonRefinerBuilder[T]
             .format(this)
-            .definitions(definitions)
-            .build
 
         private[this] def checkGlobalCondition(key: String, value: JsValue): Unit = {
           def checkEmptyString(k: String, s: JsString): Unit =

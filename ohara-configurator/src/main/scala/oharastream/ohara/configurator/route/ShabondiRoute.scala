@@ -57,8 +57,8 @@ private[configurator] object ShabondiRoute {
       .references(creation.settings, creation.definitions)
       .check()
       .map { _ =>
-        val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT
-          .more(
+        val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT.toBuilder
+          .definitions(
             (creation.shabondiClass match {
               case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.sourceDefinitions
               case ShabondiApi.SHABONDI_SINK_CLASS_NAME   => ShabondiDefinitions.sinkDefinitions
@@ -68,6 +68,7 @@ private[configurator] object ShabondiRoute {
             // https://github.com/oharastream/ohara/issues/4506
               .filter(_.hasDefault)
           )
+          .build()
           .refine(creation)
 
         ShabondiClusterInfo(

@@ -476,6 +476,16 @@ class TestZookeeperRoute extends OharaTest {
   def testMaxHeap(): Unit =
     result(zookeeperApi.request.nodeNames(nodeNames).maxHeap(12345).create()).maxHeap shouldBe 12345
 
+  @Test
+  def userDefinedStateShouldBeRemove(): Unit =
+    result(
+      zookeeperApi.request
+        .nodeNames(nodeNames)
+        .initHeap(12345)
+        .setting("state", JsString("this is illegal field"))
+        .create()
+    ).state shouldBe None
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

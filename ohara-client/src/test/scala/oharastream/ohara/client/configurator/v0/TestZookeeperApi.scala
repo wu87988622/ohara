@@ -128,7 +128,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def parseCreation(): Unit = {
     val nodeName = "n1"
-    val creation = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = ZookeeperApi.CREATION_FORMAT.read(s"""
       |  {
       |    "nodeNames": ["$nodeName"]
       |  }
@@ -145,7 +145,7 @@ class TestZookeeperApi extends OharaTest {
 
     val name      = CommonUtils.randomString(10)
     val group     = CommonUtils.randomString(10)
-    val creation2 = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    val creation2 = ZookeeperApi.CREATION_FORMAT.read(s"""
       |  {
       |    "group": "$group",
       |    "name": "$name",
@@ -190,7 +190,7 @@ class TestZookeeperApi extends OharaTest {
   }
 
   @Test
-  def testDefaultName(): Unit = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+  def testDefaultName(): Unit = ZookeeperApi.CREATION_FORMAT.read(s"""
       |  {
       |    "nodeNames": ["n1"]
       |  }
@@ -199,7 +199,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def parseNameField(): Unit =
     intercept[DeserializationException] {
-      ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+      ZookeeperApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -211,7 +211,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseImageNameField(): Unit =
-    ZookeeperApi.CREATION_JSON_FORMAT
+    ZookeeperApi.CREATION_FORMAT
       .read(s"""
               |  {
               |    "nodeNames": [
@@ -225,7 +225,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def emptyNodeNamesShouldPassInUpdating(): Unit = {
-    ZookeeperApi.UPDATING_JSON_FORMAT.read(s"""
+    ZookeeperApi.UPDATING_FORMAT.read(s"""
                                            |  {
                                            |    "nodeNames": []
                                            |  }
@@ -235,7 +235,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def parseImageNameOnUpdate(): Unit =
     intercept[DeserializationException] {
-      ZookeeperApi.UPDATING_JSON_FORMAT.read(s"""
+      ZookeeperApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "imageName": ""
            |  }
@@ -244,7 +244,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "nodeNames": []
@@ -254,7 +254,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def parseNodeNamesOnUpdate(): Unit =
     intercept[DeserializationException] {
-      ZookeeperApi.UPDATING_JSON_FORMAT.read(s"""
+      ZookeeperApi.UPDATING_FORMAT.read(s"""
            |  {
            |    "nodeNames": ""
            |  }
@@ -263,7 +263,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseZeroClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": 0,
@@ -273,7 +273,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseNegativeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": -1,
@@ -283,7 +283,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseLargeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "clientPort": 999999,
@@ -293,7 +293,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseZeroElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": 0,
@@ -303,7 +303,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseNegativeElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": -1,
@@ -313,7 +313,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseLargeElectionPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "electionPort": 999999,
@@ -323,7 +323,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseZeroPeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": 0,
@@ -333,7 +333,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseNegativePeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": -1,
@@ -343,7 +343,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def parseLargePeerPort(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
          |  {
          |    "name": "name",
          |    "peerPort": 999999,
@@ -358,7 +358,7 @@ class TestZookeeperApi extends OharaTest {
     an[DeserializationException] should be thrownBy access.nodeName("start").updating
     an[DeserializationException] should be thrownBy access.nodeName("stop").updating
 
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
       |  {
       |    "nodeNames": ["start", "stop"]
       |  }
@@ -468,24 +468,24 @@ class TestZookeeperApi extends OharaTest {
   def checkClientPortDefinition(): Unit = ZookeeperApi.DEFINITIONS.find(_.key() == CLIENT_PORT_KEY) should not be None
 
   @Test
-  def testMaxHeap(): Unit = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                                      |  {
-                                                                      |    "nodeNames": ["node00"],
-                                                                      |    "xmx": 123
-                                                                      |  }
+  def testMaxHeap(): Unit = ZookeeperApi.CREATION_FORMAT.read(s"""
+                                                                |  {
+                                                                |    "nodeNames": ["node00"],
+                                                                |    "xmx": 123
+                                                                |  }
       """.stripMargin.parseJson).maxHeap shouldBe 123
 
   @Test
-  def testInitHeap(): Unit = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                                                |  {
-                                                                                |    "nodeNames": ["node00"],
-                                                                                |    "xms": 123
-                                                                                |  }
+  def testInitHeap(): Unit = ZookeeperApi.CREATION_FORMAT.read(s"""
+                                                                |  {
+                                                                |    "nodeNames": ["node00"],
+                                                                |    "xms": 123
+                                                                |  }
       """.stripMargin.parseJson).initHeap shouldBe 123
 
   @Test
   def testNegativeMaxHeap(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
                                                                                             |  {
                                                                                             |    "nodeNames": ["node00"],
                                                                                             |    "xmx": -123
@@ -494,7 +494,7 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testNegativeInitHeap(): Unit =
-    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_FORMAT.read(s"""
                                                                                             |  {
                                                                                             |    "nodeNames": ["node00"],
                                                                                             |    "xms": -123
@@ -527,14 +527,14 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testDataDir(): Unit = {
-    val creation = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                             |  {
-                                                             |    "nodeNames": ["node00"],
-                                                             |    "${ZookeeperApi.DATA_DIR_KEY}": {
-                                                             |      "group": "g",
-                                                             |      "name": "n"
-                                                             |    }
-                                                             |  }
+    val creation = ZookeeperApi.CREATION_FORMAT.read(s"""
+                                                       |  {
+                                                       |    "nodeNames": ["node00"],
+                                                       |    "${ZookeeperApi.DATA_DIR_KEY}": {
+                                                       |      "group": "g",
+                                                       |      "name": "n"
+                                                       |    }
+                                                       |  }
       """.stripMargin.parseJson)
 
     creation.volumeMaps.size shouldBe 1
@@ -544,14 +544,14 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testConnectionTimeout(): Unit = {
-    ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                              |  {
-                                              |    "nodeNames": ["node00"],
-                                              |    "${ZookeeperApi.DATA_DIR_KEY}": {
-                                              |      "group": "g",
-                                              |      "name": "n"
-                                              |    }
-                                              |  }
+    ZookeeperApi.CREATION_FORMAT.read(s"""
+                                        |  {
+                                        |    "nodeNames": ["node00"],
+                                        |    "${ZookeeperApi.DATA_DIR_KEY}": {
+                                        |      "group": "g",
+                                        |      "name": "n"
+                                        |    }
+                                        |  }
       """.stripMargin.parseJson).connectionTimeout.toMillis should not be 0
   }
 }

@@ -135,7 +135,7 @@ object ZookeeperApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
@@ -165,7 +165,7 @@ object ZookeeperApi {
         .map(d => Duration(d.toMillis, TimeUnit.MILLISECONDS))
   }
 
-  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
+  implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
         override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
@@ -238,7 +238,7 @@ object ZookeeperApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -246,7 +246,7 @@ object ZookeeperApi {
       */
     private[v0] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

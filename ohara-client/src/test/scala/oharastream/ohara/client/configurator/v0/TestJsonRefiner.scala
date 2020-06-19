@@ -532,36 +532,6 @@ class TestJsonRefiner extends OharaTest {
       .stringArray shouldBe Seq.empty
 
   @Test
-  def testRejectEmptyStringForSpecificKey(): Unit = {
-    // pass
-    JsonRefinerBuilder[SimpleData].format(format).rejectEmptyString("aa").build.read(s"""
-                      |{
-                      | "stringValue": "",
-                      | "group": "default",
-                      | "bindPort": 123,
-                      | "connectionPort": 111,
-                      | "stringArray": [],
-                      | "objects":{}
-                      |}
-                           """.stripMargin.parseJson)
-
-    an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
-      .format(format)
-      .rejectEmptyString("stringValue")
-      .build
-      .read(s"""
-                      |{
-                      | "stringValue": "",
-                      | "group": "default",
-                      | "bindPort": 123,
-                      | "connectionPort": 111,
-                      | "stringArray": [],
-                      | "objects":{}
-                      |}
-                           """.stripMargin.parseJson)
-  }
-
-  @Test
   def nullToEmptyObject(): Unit =
     JsonRefinerBuilder[SimpleData].format(format).nullToEmptyObject("objects").build.read(s"""
              |{
@@ -656,7 +626,7 @@ class TestJsonRefiner extends OharaTest {
     // make sure the normal format works well
     format.read(format.write(data))
 
-    val f = JsonRefinerBuilder[SimpleData].format(format).requireKey("a").requireKey("b").build
+    val f = JsonRefinerBuilder[SimpleData].format(format).requireKeys(Set("a", "b")).build
     an[DeserializationException] should be thrownBy f.read(format.write(data))
 
     an[DeserializationException] should be thrownBy f.read(
@@ -1464,7 +1434,7 @@ class TestJsonRefiner extends OharaTest {
   }
 
   @Test
-  def testMore(): Unit = {
+  def testToBuilder(): Unit = {
     val key = CommonUtils.randomString()
     val format = JsonRefinerBuilder[JsObject]
       .format(new RootJsonFormat[JsObject] {
@@ -1483,12 +1453,33 @@ class TestJsonRefiner extends OharaTest {
                    |  """.stripMargin.parseJson)
 
     val key2 = CommonUtils.randomString()
-    an[DeserializationException] should be thrownBy format
-      .more(Seq(SettingDef.builder().key(key2).build()))
+    an[DeserializationException] should be thrownBy format.toBuilder
+      .definitions(Seq(SettingDef.builder().key(key2).build()))
+      .build()
       .read(s"""
                |  {
                |    "$key": "a"
                |  }
                |  """.stripMargin.parseJson)
+  }
+
+  @Test
+  def testRemoveKey(): Unit = {
+    val key = CommonUtils.randomString()
+    val format = JsonRefinerBuilder[JsObject]
+      .format(new RootJsonFormat[JsObject] {
+        override def read(json: JsValue): JsObject = json.asJsObject
+
+        override def write(obj: JsObject): JsValue = obj
+      })
+      .ignoreKeys(Set(key))
+      .build
+
+    format.read(s"""
+                   |  {
+                   |    "c": "aa",
+                   |    "$key": "a"
+                   |  }
+                   |  """.stripMargin.parseJson).fields.get(key) shouldBe None
   }
 }

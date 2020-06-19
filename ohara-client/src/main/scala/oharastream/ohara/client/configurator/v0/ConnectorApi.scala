@@ -111,8 +111,9 @@ object ConnectorApi {
       })
       .definitions(DEFINITIONS)
       .rejectEmptyString()
-      .valueChecker(
-        COLUMNS_KEY, {
+      .valuesChecker(
+        Set(COLUMNS_KEY),
+        _(COLUMNS_KEY) match {
           case v: JsArray if v.elements.nonEmpty =>
             try {
               val columns = PropGroup.ofJson(v.toString()).toColumns.asScala
@@ -170,8 +171,9 @@ object ConnectorApi {
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
     .rejectEmptyString()
-    .valueChecker(
-      COLUMNS_KEY, {
+    .valuesChecker(
+      Set(COLUMNS_KEY),
+      _(COLUMNS_KEY) match {
         case v: JsArray => CREATION_FORMAT.check(COLUMNS_KEY, v)
         case _          => // do nothing
       }
