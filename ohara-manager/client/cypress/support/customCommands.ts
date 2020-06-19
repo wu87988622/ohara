@@ -107,6 +107,7 @@ declare global {
       deleteAllPipelines: (name?: string) => Chainable<null>;
       // Settings
       switchSettingSection: (section: SETTING_SECTIONS) => Chainable<null>;
+      createSharedTopic: (name?: string) => Chainable<null>;
     }
   }
 }
@@ -226,7 +227,11 @@ Cypress.Commands.add(
       .filter(':visible')
       .click();
 
+    // Ensure workspace is completely ready
     cy.findByTestId('create-workspace').should('not.be.visible');
+    cy.findByText('Successfully created workspace workspace1.').should(
+      'not.be.visible',
+    );
 
     cy.end();
   },
@@ -302,3 +307,40 @@ Cypress.Commands.add('switchSettingSection', (section: SETTING_SECTIONS) => {
     .should('be.visible')
     .click();
 });
+
+Cypress.Commands.add(
+  'createSharedTopic',
+  (name = generate.serviceName({ prefix: 'topic' })) => {
+    cy.switchSettingSection(SETTING_SECTIONS.topics);
+
+    // add shared topics
+    cy.findByTitle('Create Topic').should('be.enabled').click();
+
+    cy.findAllByRole('dialog')
+      .filter(':visible')
+      .within(() => {
+        cy.findAllByLabelText('Topic name', { exact: false })
+          .filter(':visible')
+          .type(name);
+        cy.findAllByLabelText('Partitions', { exact: false })
+          .filter(':visible')
+          .type('1');
+        cy.findAllByLabelText('Replication factor', { exact: false })
+          .filter(':visible')
+          .type('1');
+        cy.contains('button', /create/i).click();
+      });
+
+    cy.get('.shared-topic:visible').within(() => {
+      cy.findByText(name)
+        .should('exist')
+        .parent()
+        .findAllByText('RUNNING')
+        .should('exist');
+    });
+
+    cy.findByTestId('workspace-settings-dialog-close-button').click({
+      force: true,
+    });
+  },
+);

@@ -86,7 +86,7 @@ const ToolboxSearch = ({ searchData, setSearchResults, pipelineDispatch }) => {
 
   return (
     <StyledToolboxSearch>
-      <IconButton>
+      <IconButton data-testid="search-icon">
         <SearchIcon />
       </IconButton>
       <InputBase

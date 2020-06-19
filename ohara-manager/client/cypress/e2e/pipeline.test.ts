@@ -26,86 +26,6 @@ const ACTIONS = {
   config: 'config',
   remove: 'remove',
 };
-const sources = Object.values(SOURCES).sort();
-const sinks = Object.values(SINKS).sort();
-
-describe('ToolBox', () => {
-  before(async () => await deleteAllServices());
-
-  it('should create an empty pipeline', () => {
-    cy.createWorkspace({});
-    cy.createPipeline();
-  });
-
-  it('should work as it should', () => {
-    // Ensure Toolbox items are ready
-    cy.findByText('FtpSource').should('exist');
-
-    cy.visit('/');
-
-    cy.findAllByText(/^wo$/i).should('exist');
-
-    // check the toolbox
-    cy.findByText(/^toolbox$/i).should('exist');
-
-    cy.findByText(/^source$/i)
-      .should('exist')
-      .click();
-    Object.values(sources).forEach((clz) => {
-      const name = clz.slice(clz.lastIndexOf('.') + 1);
-      cy.findByText(name).should('exist');
-    });
-
-    cy.findByText(/^topic$/i)
-      .should('exist')
-      .click();
-
-    cy.findByText(/^stream$/i)
-      .should('exist')
-      .click();
-
-    cy.findByText(/^sink$/i)
-      .should('exist')
-      .click();
-    Object.values(sinks).forEach((clz) => {
-      const name = clz.slice(clz.lastIndexOf('.') + 1);
-      cy.findByText(name).should('exist');
-    });
-
-    // check the toolbox quick icon
-    cy.findByText(/^insert$/i)
-      .should('exist')
-      .siblings('div')
-      .first()
-      .within(() => {
-        cy.get('button').each((el) => cy.wrap(el).click());
-      });
-    //after all clicks, the sink connector list should be visible
-    cy.contains('span:visible', 'PerfSource').should('not.exist');
-    cy.contains('span:visible', 'ConsoleSink').should('exist');
-
-    // filter components in toolBox
-    cy.findAllByPlaceholderText('Search topic & connector...')
-      .filter(':visible')
-      .type('ftp');
-    cy.contains('span:visible', 'FtpSource').should('exist');
-    cy.contains('span:visible', 'FtpSink').should('exist');
-
-    cy.findAllByPlaceholderText('Search topic & connector...')
-      .filter(':visible')
-      .clear()
-      .type('console');
-    cy.contains('span:visible', 'FtpSource').should('not.exist');
-    cy.contains('span:visible', 'ConsoleSink').should('exist');
-
-    cy.findAllByPlaceholderText('Search topic & connector...')
-      .filter(':visible')
-      .clear()
-      .type('fake');
-    cy.contains('span:visible', 'FtpSource').should('not.exist');
-    cy.contains('span:visible', 'FtpSink').should('not.exist');
-  });
-});
 
 describe('Paper Element connections', () => {
   before(async () => await deleteAllServices());
@@ -273,10 +193,6 @@ describe('Paper Element connections', () => {
 
     // let the backend API makes effect
     cy.wait(5000);
-
-    // to get the actual data-testid
-    // we need to refresh the paper again
-    cy.reload();
 
     // 1. perf source -> topic1 -> stream -> topic2 -> hdfs sink
     cy.log(

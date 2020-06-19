@@ -157,12 +157,15 @@ const createTopicCell = (options) => {
       return this;
     },
     updateElement(cellData, options) {
-      const { $box } = this;
-      const { status } = cellData;
+      const { $box, model } = this;
+      const { status, id } = cellData;
       $box.find('.display-name').text(displayName);
       $box.find('.topic-status').attr('fill', statusColors[status]);
 
-      this.model.set('status', status, options);
+      model.set('status', status, options);
+
+      // ID, for e2e and it testing
+      $box.attr('data-testid', id);
       return this;
     },
     updatePosition() {

@@ -153,22 +153,34 @@ const Toolbar = (props) => {
     <StyledToolbar>
       <div className="toolbox-controls">
         <ButtonGroup size="small">
-          <Button onClick={() => onToolboxClick('source')}>
+          <Button
+            onClick={() => onToolboxClick('source')}
+            testId="insert-source-button"
+          >
             <Tooltip title="Open Toolbox source panel">
               <FlightTakeoffIcon color="action" />
             </Tooltip>
           </Button>
-          <Button onClick={() => onToolboxClick('topic')}>
+          <Button
+            onClick={() => onToolboxClick('topic')}
+            testId="insert-topic-button"
+          >
             <Tooltip title="Open Toolbox topic panel">
               <StorageIcon color="action" />
             </Tooltip>
           </Button>
-          <Button onClick={() => onToolboxClick('stream')}>
+          <Button
+            onClick={() => onToolboxClick('stream')}
+            testId="insert-stream-button"
+          >
             <Tooltip title="Open Toolbox stream panel">
               <WavesIcon color="action" />
             </Tooltip>
           </Button>
-          <Button onClick={() => onToolboxClick('sink')}>
+          <Button
+            onClick={() => onToolboxClick('sink')}
+            testId="insert-sink-button"
+          >
             <Tooltip title="Open Toolbox sink panel">
               <FlightLandIcon color="action" />
             </Tooltip>

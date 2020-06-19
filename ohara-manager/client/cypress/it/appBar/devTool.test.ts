@@ -66,7 +66,7 @@ describe('App Bar', () => {
         // the new added topic should exist and running
         .contains('td', 'RUNNING');
       // press back button to home page
-      cy.findByTestId('edit-workspace-dialog-close-button').click();
+      cy.findByTestId('workspace-settings-dialog-close-button').click();
 
       // drag the new add topic into paper
       cy.addElement(t1, KIND.topic);

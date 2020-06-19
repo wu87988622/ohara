@@ -74,7 +74,9 @@ const createConnectorCell = (options) => {
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
-      <div class="connector" data-testid=${id}>
+      <div class=${
+        kind === KIND.stream ? 'stream' : 'connector'
+      } data-testid=${id}>
         <div class="header">
           <div class="icon ${iconStatus}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">

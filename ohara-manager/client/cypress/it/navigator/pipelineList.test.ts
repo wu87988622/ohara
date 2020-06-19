@@ -114,7 +114,7 @@ describe('Navigator', () => {
       cy.get('#pipeline-list > li').eq(2).should('have.text', pipeline3);
     });
 
-    it('should set a default pipeline when the pipeline name from URL could not be met', () => {
+    it('should set a default pipeline when the pipeline name from URL could not be found', () => {
       const pipeline1 = 'pipeline1';
       const pipeline2 = 'pipeline2';
       cy.createPipeline(pipeline1);
@@ -186,13 +186,18 @@ describe('Navigator', () => {
 
       cy.findByTestId(dialog).should('be.visible');
 
-      cy.findByTestId(closeBtn).click();
+      cy.findByTestId(dialog).within(() => {
+        cy.findByTestId(closeBtn).click();
+      });
       cy.findByTestId(dialog).should('not.be.visible');
 
       cy.findByTestId(newBtn).click();
       cy.findByTestId(dialog).should('be.visible');
 
-      cy.findByText(/^cancel$/i).click();
+      cy.findByTestId(dialog).within(() => {
+        cy.findByText(/^cancel$/i).click();
+      });
+
       cy.findByTestId(dialog).should('not.be.visible');
     });
 

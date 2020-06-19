@@ -130,7 +130,7 @@ const Settings = () => {
       isPageComponent={isPageComponent}
       onClose={handleClose}
       open={isEditWorkspaceDialogOpen}
-      testId="edit-workspace-dialog"
+      testId="workspace-settings-dialog"
       title="Settings"
     >
       <Wrapper>

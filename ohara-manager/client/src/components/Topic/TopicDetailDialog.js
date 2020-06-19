@@ -50,11 +50,11 @@ const TopicDetailDialog = ({ isOpen, onClose, topic }) => {
 
   return (
     <Dialog
+      data-testid="view-topic-detail-dialog"
       maxWidth="md"
       onClose={onClose}
       open={isOpen}
       showActions={false}
-      testId="view-topic-detail-dialog"
       title="View topic"
     >
       <Wrapper>

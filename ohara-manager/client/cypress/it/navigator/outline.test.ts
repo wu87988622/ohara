@@ -23,6 +23,8 @@ import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 
 describe('Navigator', () => {
+  const sharedTopicName = generate.serviceName({ prefix: 'topic' });
+
   before(() => {
     const node: NodeRequest = {
       hostname: generate.serviceName(),
@@ -33,6 +35,8 @@ describe('Navigator', () => {
 
     cy.deleteAllServices();
     cy.createWorkspace({ node });
+    cy.uploadStreamJar();
+    cy.createSharedTopic(sharedTopicName);
   });
 
   context('Outline', () => {
@@ -46,35 +50,44 @@ describe('Navigator', () => {
     });
 
     it('should render all Paper elements in the list', () => {
-      const sources = Object.values(SOURCES).map((type) => ({
-        name: generate.serviceName({ prefix: 'source' }),
-        kind: KIND.source,
-        type,
-      }));
-
-      const sinks = Object.values(SINKS).map((type) => ({
-        name: generate.serviceName({ prefix: 'sink' }),
-        kind: KIND.sink,
-        type,
-      }));
-
-      const elements = [...sources, ...sinks];
-
-      // Scroll bar is not visible when Outline list is empty or not long enough
-      // to display it
-      cy.get('.ScrollbarsCustom-TrackY').should('not.be.visible');
+      const elements = [
+        {
+          name: generate.serviceName({ prefix: 'source' }),
+          kind: KIND.source,
+          type: SOURCES.jdbc,
+        },
+        {
+          name: generate.serviceName({ prefix: 'sink' }),
+          kind: KIND.sink,
+          type: SINKS.hdfs,
+        },
+        {
+          name: sharedTopicName,
+          kind: KIND.topic,
+          type: KIND.topic,
+        },
+        {
+          name: 'T1',
+          kind: KIND.topic,
+          type: KIND.topic,
+        },
+        {
+          name: generate.serviceName({ prefix: 'stream' }),
+          kind: KIND.stream,
+          type: KIND.stream,
+        },
+      ];
 
       elements.forEach(({ name, kind, type }) => {
         cy.addElement(name, kind, type);
       });
 
-      // While we're here, let's assert the scroll bar is properly displayed when
-      // there are too many items
-      cy.get('.ScrollbarsCustom-TrackY').should('be.visible');
-
       cy.get('#outline').within(() => {
+        cy.get('.list > li').should('have.length', elements.length);
         elements.forEach((element) => {
-          cy.findByText(element.name).should('exist');
+          cy.findByText(element.name)
+            .should('exist')
+            .and('have.class', element.kind);
         });
       });
     });

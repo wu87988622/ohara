@@ -206,11 +206,13 @@ const Toolbox = (props) => {
       <StyledToolbox
         className={`toolbox ${isToolboxOpen ? 'is-open' : ''}`}
         data-testid="toolbox-draggable"
+        id="toolbox"
       >
         <div className="toolbox-header" ref={toolboxHeaderRef}>
           <div className="title toolbox-title">
             <Typography variant="subtitle1">Toolbox</Typography>
             <IconButton
+              data-testid="close-button"
               onClick={() => pipelineDispatch({ type: 'closeToolbox' })}
             >
               <CloseIcon />

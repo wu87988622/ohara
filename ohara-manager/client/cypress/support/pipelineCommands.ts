@@ -18,11 +18,8 @@ import '@testing-library/cypress/add-commands';
 import { capitalize } from 'lodash';
 
 import { KIND, CELL_TYPES } from '../../src/const';
-import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
 import { hashByGroupAndName } from '../../src/utils/sha';
-
-const sources = Object.values(SOURCES).sort();
-const sinks = Object.values(SINKS).sort();
+import { SETTING_SECTIONS } from './customCommands';
 
 Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.log(`Creating pipeline: ${name}`);
@@ -100,15 +97,20 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
   const shiftWidth = 350;
   const shiftHeight = 110;
 
-  cy.get('body').then(($body) => {
-    let size = 0;
+  cy.get('#paper').then(($paper) => {
     cy.log(
       'calculate the size of elements(source, sink, stream, topic) in pipeline',
     );
-    if ($body.find('div.topic').length > 0)
-      size = size + $body.find('div.topic').length;
-    if ($body.find('div.connector').length > 0)
-      size = size + $body.find('div.connector').length;
+
+    let size = 0;
+
+    if ($paper.find('.topic').length > 0) {
+      size += $paper.find('.topic').length;
+    }
+
+    if ($paper.find('.connector, .stream').length > 0) {
+      size += $paper.find('.connector, .stream').length;
+    }
 
     cy.findByText(capitalize(kind)).should('exist').click();
 
@@ -122,15 +124,19 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
     cy.wait(2000);
 
     if (kind === KIND.source || kind === KIND.sink) {
-      const elementIndex =
-        kind === KIND.source
-          ? sources.indexOf(className)
-          : sinks.indexOf(className);
+      const displayName = className.split('.').pop();
 
       cy.findByTestId('toolbox-draggable')
-        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-        // the element index to be added
-        .eq(elementIndex)
+        .within(() => {
+          cy.findByText(displayName)
+            .should('exist')
+            .and('have.class', 'display-name')
+            .parent('.item')
+            .should('have.attr', 'data-testid')
+            .then((testId) => {
+              cy.get(`g[model-id="${testId}"]`);
+            });
+        })
         .dragAndDrop(x, y);
 
       // type the name and add
@@ -144,7 +150,8 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         cy.findByText(name).should('exist');
 
         let topics: string[] = [];
-        $body
+
+        $paper
           .find('#topic-list')
           .find('span.display-name')
           .each(function (_, element) {
@@ -155,10 +162,18 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
               topics.push(element.textContent);
             }
           });
+
         cy.findByTestId('toolbox-draggable')
-          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
-          // the element index to be added
-          .eq(topics.sort().indexOf(name) - 1)
+          .within(() => {
+            cy.findByText(name)
+              .should('exist')
+              .and('have.class', 'display-name')
+              .parent('.item')
+              .should('have.attr', 'data-testid')
+              .then((testId) => {
+                cy.get(`g[model-id="${testId}"]`);
+              });
+          })
           .dragAndDrop(x, y);
       } else {
         // create a pipeline-only topic
@@ -197,15 +212,15 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
 Cypress.Commands.add('getCell', (name) => {
   // open the cell menu
   cy.get('#paper').within(() => {
-    cy.findAllByText(name)
-      .filter(':visible')
+    cy.findByText(name)
       .should('exist')
       .parents(
         name.startsWith('topic') || name.startsWith('T')
-          ? 'div.topic'
-          : 'div.connector',
+          ? '.topic'
+          : name.startsWith('stream')
+          ? '.stream'
+          : '.connector',
       )
-      .first()
       .then((el) => {
         const testId = el[0].getAttribute('data-testid');
         return cy.get(`g[model-id="${testId}"]`);
@@ -221,8 +236,10 @@ Cypress.Commands.add('cellAction', (name, action) => {
       .should('exist')
       .parents(
         name.startsWith('topic') || name.startsWith('T')
-          ? 'div.topic'
-          : 'div.connector',
+          ? '.topic'
+          : name.startsWith('stream')
+          ? '.stream'
+          : '.connector',
       )
       .first()
       .within(() => {
@@ -233,12 +250,8 @@ Cypress.Commands.add('cellAction', (name, action) => {
 
 Cypress.Commands.add('uploadStreamJar', () => {
   cy.log('Uploading stream jar');
-  // click the settings dialog
-  cy.findByText('workspace1').click();
-  cy.contains('li', 'Settings').click();
+  cy.switchSettingSection(SETTING_SECTIONS.stream);
 
-  // click upload jars dialog
-  cy.findByText('Stream jars').click();
   // click upload plugins
   cy.findAllByTitle('Add File').first().click();
   cy.findAllByTitle('Upload File').filter(':visible');
@@ -282,6 +295,7 @@ Cypress.Commands.add('uploadStreamJar', () => {
   // click save button
   cy.findAllByText('Save').filter(':visible').click();
 
-  // click the arrow button back to Settings dialog
-  cy.findByTestId('edit-workspace-dialog-close-button').click();
+  cy.findByTestId('workspace-settings-dialog-close-button').click({
+    force: true,
+  });
 });

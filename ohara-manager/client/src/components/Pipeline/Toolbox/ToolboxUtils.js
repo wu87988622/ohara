@@ -80,6 +80,9 @@ export const createToolboxList = (params) => {
       this.listenTo(this.paper, 'scale translate', this.updateBox);
       $box.appendTo(this.paper.el);
 
+      // JointJS ID, for testing
+      $box.attr('data-testid', this.model.id);
+
       this.updateBox();
       return this;
     },

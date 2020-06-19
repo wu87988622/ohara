@@ -91,7 +91,7 @@ describe('RestartWorkspace', () => {
       .should('be.enabled')
       .click();
 
-    cy.findByTestId('edit-workspace-dialog-close-button').click({
+    cy.findByTestId('workspace-settings-dialog-close-button').click({
       force: true,
     });
 

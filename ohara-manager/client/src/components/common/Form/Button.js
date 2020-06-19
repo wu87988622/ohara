@@ -26,15 +26,13 @@ const Button = (props) => {
     variant = 'contained',
     size = 'medium',
     onClick,
-    testId,
     disabled = false,
     children,
-    ...rest
+    testId,
   } = props;
 
   return (
     <MuiButton
-      {...rest}
       className={className}
       color={color}
       component={component}

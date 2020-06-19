@@ -53,7 +53,7 @@ const ToolboxList = (props) => {
       ref={toolboxBodyRef}
       style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
     >
-      <ExpansionPanel expanded={expanded.source} square>
+      <ExpansionPanel expanded={expanded.source} id="source-panel" square>
         <ExpansionPanelSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
@@ -85,7 +85,7 @@ const ToolboxList = (props) => {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel expanded={expanded.topic} square>
+      <ExpansionPanel expanded={expanded.topic} id="topic-panel" square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
@@ -111,7 +111,7 @@ const ToolboxList = (props) => {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel expanded={expanded.stream} square>
+      <ExpansionPanel expanded={expanded.stream} id="stream-panel" square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
@@ -134,7 +134,7 @@ const ToolboxList = (props) => {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel expanded={expanded.sink} square>
+      <ExpansionPanel expanded={expanded.sink} id="sink-panel" square>
         <ExpansionPanelSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}

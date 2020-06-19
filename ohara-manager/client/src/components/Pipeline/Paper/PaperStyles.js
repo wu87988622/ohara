@@ -75,7 +75,8 @@ export const StyledPaper = styled.div(
       z-index: 2;
     }
 
-    .connector {
+    .connector,
+    .stream {
       background-color: white;
       position: absolute;
       border: 1px solid ${theme.palette.divider};
