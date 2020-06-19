@@ -125,14 +125,14 @@ trait BrokerCollie extends Collie {
                 .mainConfigFile(configPath)
                 .file(configPath)
                 .append("zookeeper.connect", zookeepers)
-                .append(BrokerApi.LOG_DIRS_DEFINITION.key(), creation.dataFolders)
-                .append(BrokerApi.NUMBER_OF_PARTITIONS_DEFINITION.key(), creation.numberOfPartitions)
+                .append(BrokerApi.LOG_DIRS_KEY, creation.dataFolders)
+                .append(BrokerApi.NUMBER_OF_PARTITIONS_KEY, creation.numberOfPartitions)
                 .append(
-                  BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION.key(),
+                  BrokerApi.NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY,
                   creation.numberOfReplications4OffsetsTopic
                 )
-                .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_DEFINITION.key(), creation.numberOfNetworkThreads)
-                .append(BrokerApi.NUMBER_OF_IO_THREADS_DEFINITION.key(), creation.numberOfIoThreads)
+                .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_KEY, creation.numberOfNetworkThreads)
+                .append(BrokerApi.NUMBER_OF_IO_THREADS_KEY, creation.numberOfIoThreads)
                 .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
                 .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
                 .done

@@ -23,15 +23,7 @@ import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, Por
 import oharastream.ohara.client.configurator.v0.NodeApi.Node
 import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
 import oharastream.ohara.client.configurator.v0.ZookeeperApi
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.{
-  CLIENT_PORT_DEFINITION,
-  Creation,
-  DATA_DIR_DEFINITION,
-  INIT_LIMIT_DEFINITION,
-  SYNC_LIMIT_DEFINITION,
-  TICK_TIME_DEFINITION,
-  CONNECTION_TIMEOUT_DEFINITION
-}
+import oharastream.ohara.client.configurator.v0.ZookeeperApi.Creation
 import oharastream.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -167,12 +159,12 @@ trait ZookeeperCollie extends Collie {
                   val arguments = ArgumentsBuilder()
                     .mainConfigFile(configPath)
                     .file(configPath)
-                    .append(CLIENT_PORT_DEFINITION.key(), creation.clientPort)
-                    .append(TICK_TIME_DEFINITION.key(), creation.tickTime)
-                    .append(INIT_LIMIT_DEFINITION.key(), creation.initLimit)
-                    .append(SYNC_LIMIT_DEFINITION.key(), creation.syncLimit)
-                    .append(DATA_DIR_DEFINITION.key(), creation.dataFolder)
-                    .append(CONNECTION_TIMEOUT_DEFINITION.key(), creation.connectionTimeout.toMillis.toString)
+                    .append("clientPort", creation.clientPort)
+                    .append(ZookeeperApi.TICK_TIME_KEY, creation.tickTime)
+                    .append(ZookeeperApi.INIT_LIMIT_KEY, creation.initLimit)
+                    .append(ZookeeperApi.SYNC_LIMIT_KEY, creation.syncLimit)
+                    .append(ZookeeperApi.DATA_DIR_KEY, creation.dataFolder)
+                    .append(ZookeeperApi.CONNECTION_TIMEOUT_KEY, creation.connectionTimeout.toMillis.toString)
                     .append(zkServers)
                     .done
                     .file(creation.idFile)

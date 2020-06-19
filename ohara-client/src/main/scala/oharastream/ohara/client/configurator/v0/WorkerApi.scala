@@ -27,7 +27,6 @@ import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
   val KIND: String = SettingDef.Reference.WORKER.name().toLowerCase
@@ -39,140 +38,114 @@ object WorkerApi {
     * the default docker image used to run containers of worker cluster
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/connect-worker:${VersionUtils.VERSION}"
+  val BROKER_CLUSTER_KEY_KEY     = "brokerClusterKey"
+  val PLUGIN_KEYS_KEY            = "pluginKeys"
 
-  //------------------------ The key name list in settings field ---------------------------------/
-  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
-  private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
-    val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    _DEFINITIONS += (settingDef.key() -> settingDef)
-    settingDef
-  }
-  val GROUP_DEFINITION: SettingDef         = createDef(groupDefinition)
-  val NAME_DEFINITION: SettingDef          = createDef(nameDefinition)
-  val IMAGE_NAME_DEFINITION: SettingDef    = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
-  val CLIENT_PORT_DEFINITION: SettingDef   = createDef(clientPortDefinition)
-  val JMX_PORT_DEFINITION: SettingDef      = createDef(jmxPortDefinition)
-  val NODE_NAMES_DEFINITION: SettingDef    = createDef(nodeDefinition)
-  val ROUTES_DEFINITION: SettingDef        = createDef(routesDefinition)
-  val TAGS_DEFINITION: SettingDef          = createDef(tagsDefinition)
-  val MAX_HEAP_DEFINITION: SettingDef      = createDef(maxHeapDefinition)
-  val INIT_HEAP_DEFINITION: SettingDef     = createDef(initHeapDefinition)
-  private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
-    _.key(BROKER_CLUSTER_KEY_KEY)
-      .documentation("broker cluster used to store data for this worker cluster")
-      .required(Type.OBJECT_KEY)
-      .reference(Reference.BROKER)
-      .build()
-  )
-  private[this] val PLUGIN_KEYS_KEY = "pluginKeys"
-  val PLUGIN_KEYS_DEFINITION: SettingDef = createDef(
-    _.key(PLUGIN_KEYS_KEY)
-      .documentation("the files containing your connectors")
-      .optional(Type.OBJECT_KEYS)
-      .reference(Reference.FILE)
-      .build()
-  )
-  private[this] val SHARED_JAR_KEYS_KEY = "sharedJarKeys"
-  val SHARED_JAR_KEYS_DEFINITION: SettingDef = createDef(
-    _.key(SHARED_JAR_KEYS_KEY)
-      .documentation("the shared jars")
-      .optional(Type.OBJECT_KEYS)
-      .reference(Reference.FILE)
-      .build()
-  )
-  private[this] val FREE_PORTS_KEY = "freePorts"
-  val FREE_PORTS_DEFINITION: SettingDef = createDef(
-    _.key(FREE_PORTS_KEY)
-      .documentation(
-        "the pre-binding ports for this worker cluster. If your connectors have to use socket, please bind the port in running worker cluster"
-      )
-      .optional(Type.ARRAY)
-      .build()
-  )
-  private[this] val GROUP_ID_KEY = "group.id"
-  val GROUP_ID_DEFINITION: SettingDef =
-    createDef(_.key(GROUP_ID_KEY).documentation("group ID of this worker cluster").stringWithRandomDefault().build())
-  //-------------[status topic]-------------//
-  private[this] val STATUS_TOPIC_NAME_KEY = "status.storage.topic"
-  val STATUS_TOPIC_NAME_DEFINITION: SettingDef = createDef(
-    _.key(STATUS_TOPIC_NAME_KEY)
-      .documentation("name of status topic which is used to store connector status")
-      .stringWithRandomDefault("connect.status")
-      .build()
-  )
-  private[this] val STATUS_TOPIC_PARTITIONS_KEY     = "status.storage.partitions"
-  private[this] val STATUS_TOPIC_PARTITIONS_DEFAULT = 1
-  val STATUS_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
-    _.key(STATUS_TOPIC_PARTITIONS_KEY)
-      .documentation("number of partitions for status topic")
-      .positiveNumber(STATUS_TOPIC_PARTITIONS_DEFAULT)
-      .build()
-  )
-  private[this] val STATUS_TOPIC_REPLICATIONS_KEY            = "status.storage.replication.factor"
-  private[this] val STATUS_TOPIC_REPLICATIONS_DEFAULT: Short = 1
-  val STATUS_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
-    _.key(STATUS_TOPIC_REPLICATIONS_KEY)
-      .documentation("number of replications for status topic")
-      .positiveNumber(STATUS_TOPIC_REPLICATIONS_DEFAULT)
-      .build()
-  )
+  val SHARED_JAR_KEYS_KEY = "sharedJarKeys"
+  val FREE_PORTS_KEY      = "freePorts"
+  val GROUP_ID_KEY        = "group.id"
 
-  //-------------[config topic]-------------//
-  private[this] val CONFIG_TOPIC_NAME_KEY = "config.storage.topic"
-  val CONFIG_TOPIC_NAME_DEFINITION: SettingDef = createDef(
-    _.key(CONFIG_TOPIC_NAME_KEY)
-      .documentation("name of config topic which is used to store connector config")
-      .stringWithRandomDefault("connect.config")
-      .build()
-  )
-  private[this] val CONFIG_TOPIC_PARTITIONS_KEY     = "config.storage.partitions"
-  private[this] val CONFIG_TOPIC_PARTITIONS_DEFAULT = 1
-  val CONFIG_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
-    _.key(CONFIG_TOPIC_PARTITIONS_KEY)
-      .documentation("number of partitions for config topic. this value MUST be 1")
-      .positiveNumber(CONFIG_TOPIC_PARTITIONS_DEFAULT)
-      .permission(SettingDef.Permission.READ_ONLY)
-      .build()
-  )
-  private[this] val CONFIG_TOPIC_REPLICATIONS_KEY            = "config.storage.replication.factor"
-  private[this] val CONFIG_TOPIC_REPLICATIONS_DEFAULT: Short = 1
-  val CONFIG_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
-    _.key(CONFIG_TOPIC_REPLICATIONS_KEY)
-      .documentation("number of replications for config topic")
-      .positiveNumber(CONFIG_TOPIC_REPLICATIONS_DEFAULT)
-      .build()
-  )
-  //-------------[offset topic]-------------//
-  private[this] val OFFSET_TOPIC_NAME_KEY = "offset.storage.topic"
-  val OFFSET_TOPIC_NAME_DEFINITION: SettingDef = createDef(
-    _.key(OFFSET_TOPIC_NAME_KEY)
-      .documentation("name of offset topic which is used to store connector data offset")
-      .stringWithRandomDefault("connect.offset")
-      .build()
-  )
-  private[this] val OFFSET_TOPIC_PARTITIONS_KEY     = "offset.storage.partitions"
-  private[this] val OFFSET_TOPIC_PARTITIONS_DEFAULT = 1
-  val OFFSET_TOPIC_PARTITIONS_DEFINITION: SettingDef = createDef(
-    _.key(OFFSET_TOPIC_PARTITIONS_KEY)
-      .documentation("number of partitions for offset topic")
-      .positiveNumber(OFFSET_TOPIC_PARTITIONS_DEFAULT)
-      .build()
-  )
-  private[this] val OFFSET_TOPIC_REPLICATIONS_KEY            = "offset.storage.replication.factor"
-  private[this] val OFFSET_TOPIC_REPLICATIONS_DEFAULT: Short = 1
-  val OFFSET_TOPIC_REPLICATIONS_DEFINITION: SettingDef = createDef(
-    _.key(OFFSET_TOPIC_REPLICATIONS_KEY)
-      .documentation("number of replications for offset topic")
-      .positiveNumber(OFFSET_TOPIC_REPLICATIONS_DEFAULT)
-      .build()
-  )
+  val STATUS_TOPIC_NAME_KEY         = "status.storage.topic"
+  val STATUS_TOPIC_PARTITIONS_KEY   = "status.storage.partitions"
+  val STATUS_TOPIC_REPLICATIONS_KEY = "status.storage.replication.factor"
 
-  /**
-    * all public configs
-    */
-  def DEFINITIONS: Seq[SettingDef] = _DEFINITIONS.values.toSeq
+  val CONFIG_TOPIC_NAME_KEY         = "config.storage.topic"
+  val CONFIG_TOPIC_PARTITIONS_KEY   = "config.storage.partitions"
+  val CONFIG_TOPIC_REPLICATIONS_KEY = "config.storage.replication.factor"
+
+  val OFFSET_TOPIC_NAME_KEY         = "offset.storage.topic"
+  val OFFSET_TOPIC_PARTITIONS_KEY   = "offset.storage.partitions"
+  val OFFSET_TOPIC_REPLICATIONS_KEY = "offset.storage.replication.factor"
+
+  val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
+    .addFollowupTo("core")
+    .group()
+    .name()
+    .imageName(IMAGE_NAME_DEFAULT)
+    .nodeNames()
+    .routes()
+    .tags()
+    .definition(
+      _.key(BROKER_CLUSTER_KEY_KEY)
+        .documentation("broker cluster used to store data for this worker cluster")
+        .required(Type.OBJECT_KEY)
+        .reference(Reference.BROKER)
+    )
+    .definition(
+      _.key(GROUP_ID_KEY)
+        .documentation("group ID of this worker cluster")
+        .stringWithRandomDefault()
+    )
+    .addFollowupTo("performance")
+    .definition(
+      _.key(STATUS_TOPIC_NAME_KEY)
+        .documentation("name of status topic which is used to store connector status")
+        .stringWithRandomDefault("connect.status")
+    )
+    .definition(
+      _.key(STATUS_TOPIC_PARTITIONS_KEY)
+        .documentation("number of partitions for status topic")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(STATUS_TOPIC_REPLICATIONS_KEY)
+        .documentation("number of replications for status topic")
+        .positiveNumber(1.asInstanceOf[Short])
+    )
+    .definition(
+      _.key(CONFIG_TOPIC_NAME_KEY)
+        .documentation("name of config topic which is used to store connector config")
+        .stringWithRandomDefault("connect.config")
+    )
+    .definition(
+      _.key(CONFIG_TOPIC_PARTITIONS_KEY)
+        .documentation("number of partitions for config topic. this value MUST be 1")
+        .positiveNumber(1)
+        .permission(SettingDef.Permission.READ_ONLY)
+    )
+    .definition(
+      _.key(CONFIG_TOPIC_REPLICATIONS_KEY)
+        .documentation("number of replications for config topic")
+        .positiveNumber(1.asInstanceOf[Short])
+    )
+    .definition(
+      _.key(OFFSET_TOPIC_NAME_KEY)
+        .documentation("name of offset topic which is used to store connector data offset")
+        .stringWithRandomDefault("connect.offset")
+    )
+    .definition(
+      _.key(OFFSET_TOPIC_PARTITIONS_KEY)
+        .documentation("number of partitions for offset topic")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(OFFSET_TOPIC_REPLICATIONS_KEY)
+        .documentation("number of replications for offset topic")
+        .positiveNumber(1.asInstanceOf[Short])
+    )
+    .initHeap()
+    .maxHeap()
+    .addFollowupTo("public")
+    .definition(
+      _.key(PLUGIN_KEYS_KEY)
+        .documentation("the files containing your connectors")
+        .optional(Type.OBJECT_KEYS)
+        .reference(Reference.FILE)
+    )
+    .definition(
+      _.key(SHARED_JAR_KEYS_KEY)
+        .documentation("the shared jars")
+        .optional(Type.OBJECT_KEYS)
+        .reference(Reference.FILE)
+    )
+    .definition(
+      _.key(FREE_PORTS_KEY)
+        .documentation("the pre-binding ports for this worker cluster.")
+        .optional(Type.ARRAY)
+    )
+    .clientPort()
+    .jmxPort()
+    .result
 
   final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreation {
     /**

@@ -26,7 +26,6 @@ import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
-import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperApi {
@@ -40,80 +39,65 @@ object ZookeeperApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/zookeeper:${VersionUtils.VERSION}"
 
-  //------------------------ The key name list in settings field ---------------------------------/
-  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
-  private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
-    val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    _DEFINITIONS += (settingDef.key() -> settingDef)
-    settingDef
-  }
-  val GROUP_DEFINITION: SettingDef       = createDef(groupDefinition)
-  val NAME_DEFINITION: SettingDef        = createDef(nameDefinition)
-  val IMAGE_NAME_DEFINITION: SettingDef  = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
-  val CLIENT_PORT_DEFINITION: SettingDef = createDef(clientPortDefinition)
-  val JMX_PORT_DEFINITION: SettingDef    = createDef(jmxPortDefinition)
-  val NODE_NAMES_DEFINITION: SettingDef  = createDef(nodeDefinition)
-  val ROUTES_DEFINITION: SettingDef      = createDef(routesDefinition)
-  val TAGS_DEFINITION: SettingDef        = createDef(tagsDefinition)
-  val MAX_HEAP_DEFINITION: SettingDef    = createDef(maxHeapDefinition)
-  val INIT_HEAP_DEFINITION: SettingDef   = createDef(initHeapDefinition)
-  private[this] val PEER_PORT_KEY        = "peerPort"
-  val PEER_PORT_DEFINITION: SettingDef =
-    createDef(
-      _.key(PEER_PORT_KEY).documentation("the port exposed to each quorum").bindingPortWithRandomDefault().build()
-    )
-  private[this] val ELECTION_PORT_KEY = "electionPort"
-  val ELECTION_PORT_DEFINITION: SettingDef =
-    createDef(
-      _.key(ELECTION_PORT_KEY).documentation("quorum leader election port").bindingPortWithRandomDefault().build()
-    )
-  // export these variables to collie for creating
-  private[this] val TICK_TIME_KEY          = "tickTime"
-  private[this] val TICK_TIME_DEFAULT: Int = 2000
-  val TICK_TIME_DEFINITION: SettingDef = createDef(
-    _.key(TICK_TIME_KEY)
-      .documentation("basic time unit in zookeeper")
-      .positiveNumber(TICK_TIME_DEFAULT)
-      .build()
-  )
-  private[this] val INIT_LIMIT_KEY          = "initLimit"
-  private[this] val INIT_LIMIT_DEFAULT: Int = 10
-  val INIT_LIMIT_DEFINITION: SettingDef = createDef(
-    _.key(INIT_LIMIT_KEY)
-      .documentation("timeout to connect to leader")
-      .positiveNumber(INIT_LIMIT_DEFAULT)
-      .build()
-  )
-  private[this] val SYNC_LIMIT_KEY          = "syncLimit"
-  private[this] val SYNC_LIMIT_DEFAULT: Int = 5
-  val SYNC_LIMIT_DEFINITION: SettingDef = createDef(
-    _.key(SYNC_LIMIT_KEY)
-      .documentation("the out-of-date of a sever from leader")
-      .positiveNumber(SYNC_LIMIT_DEFAULT)
-      .build()
-  )
-  private[this] val DATA_DIR_KEY = "dataDir"
-  val DATA_DIR_DEFINITION: SettingDef = createDef(
-    _.key(DATA_DIR_KEY)
-      .documentation("the volume used to store zookeeper data")
-      .optional(SettingDef.Type.OBJECT_KEY)
-      .reference(SettingDef.Reference.VOLUME)
-      .build()
-  )
+  val PEER_PORT_KEY          = "peerPort"
+  val ELECTION_PORT_KEY      = "electionPort"
+  val TICK_TIME_KEY          = "tickTime"
+  val INIT_LIMIT_KEY         = "initLimit"
+  val SYNC_LIMIT_KEY         = "syncLimit"
+  val DATA_DIR_KEY           = "dataDir"
+  val CONNECTION_TIMEOUT_KEY = "zookeeper.connection.timeout.ms"
 
-  private[this] val CONNECTION_TIMEOUT_KEY = "zookeeper.connection.timeout.ms"
-  val CONNECTION_TIMEOUT_DEFINITION: SettingDef = createDef(
-    _.key(CONNECTION_TIMEOUT_KEY)
-      .documentation("zookeeper connection timeout")
-      .optional(java.time.Duration.ofMillis(10 * 1000))
-      .build()
-  )
-
-  /**
-    * all public configs
-    */
-  def DEFINITIONS: Seq[SettingDef] = _DEFINITIONS.values.toSeq
+  val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
+    .addFollowupTo("core")
+    .group()
+    .name()
+    .imageName(IMAGE_NAME_DEFAULT)
+    .nodeNames()
+    .routes()
+    .tags()
+    .addFollowupTo("performance")
+    .definition(
+      _.key(INIT_LIMIT_KEY)
+        .documentation("timeout to connect to leader")
+        .positiveNumber(10)
+    )
+    .definition(
+      _.key(TICK_TIME_KEY)
+        .documentation("basic time unit in zookeeper")
+        .positiveNumber(2000)
+    )
+    .definition(
+      _.key(SYNC_LIMIT_KEY)
+        .documentation("the out-of-date of a sever from leader")
+        .positiveNumber(5)
+    )
+    .definition(
+      _.key(DATA_DIR_KEY)
+        .documentation("the volume used to store zookeeper data")
+        .optional(SettingDef.Type.OBJECT_KEY)
+        .reference(SettingDef.Reference.VOLUME)
+    )
+    .definition(
+      _.key(CONNECTION_TIMEOUT_KEY)
+        .documentation("zookeeper connection timeout")
+        .optional(java.time.Duration.ofMillis(10 * 1000))
+    )
+    .initHeap()
+    .maxHeap()
+    .addFollowupTo("public")
+    .definition(
+      _.key(PEER_PORT_KEY)
+        .documentation("the port exposed to each quorum")
+        .bindingPortWithRandomDefault()
+    )
+    .definition(
+      _.key(ELECTION_PORT_KEY)
+        .documentation("quorum leader election port")
+        .bindingPortWithRandomDefault()
+    )
+    .clientPort()
+    .jmxPort()
+    .result
 
   final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
     /**

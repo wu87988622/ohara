@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.common.setting.SettingDef.Type
 import oharastream.ohara.common.setting._
 import oharastream.ohara.common.util.CommonUtils
 import spray.json._
@@ -279,56 +278,6 @@ package object v0 {
       .rejectKeyword(STOP_COMMAND)
       .toRefiner
       .build
-
-  //------------------[quick builder for cluster services]------------------//
-  private[v0] def groupDefinition: SettingDef.Builder => SettingDef =
-    _.key(GROUP_KEY)
-      .documentation("group of this worker cluster")
-      .optional(GROUP_DEFAULT)
-      .permission(SettingDef.Permission.CREATE_ONLY)
-      .build()
-
-  private[v0] def nameDefinition: SettingDef.Builder => SettingDef =
-    _.key(NAME_KEY)
-      .documentation("name of this worker cluster")
-      .stringWithRandomDefault()
-      .permission(SettingDef.Permission.CREATE_ONLY)
-      .build()
-
-  private[v0] def imageNameDefinition(defaultImage: String): SettingDef.Builder => SettingDef =
-    _.key(IMAGE_NAME_KEY)
-      .optional(defaultImage)
-      .documentation("the docker image of this service")
-      .permission(SettingDef.Permission.CREATE_ONLY)
-      .build()
-
-  private[v0] def clientPortDefinition: SettingDef.Builder => SettingDef =
-    _.key(CLIENT_PORT_KEY).documentation("the port used to expose the service").bindingPortWithRandomDefault().build()
-
-  private[v0] def jmxPortDefinition: SettingDef.Builder => SettingDef =
-    _.key(JMX_PORT_KEY)
-      .documentation("the port used to expose the metrics of this cluster")
-      .bindingPortWithRandomDefault()
-      .build()
-
-  private[v0] def nodeDefinition: SettingDef.Builder => SettingDef =
-    _.key(NODE_NAMES_KEY)
-      .documentation("the nodes hosting this cluster")
-      .denyList(Set(START_COMMAND, STOP_COMMAND, PAUSE_COMMAND, RESUME_COMMAND).asJava)
-      .reference(SettingDef.Reference.NODE)
-      .build()
-
-  private[v0] def routesDefinition: SettingDef.Builder => SettingDef =
-    _.key(ROUTES_KEY).documentation("the extra routes to this service").optional(Type.TAGS).build()
-
-  private[v0] def tagsDefinition: SettingDef.Builder => SettingDef =
-    _.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build()
-
-  private[v0] def maxHeapDefinition: SettingDef.Builder => SettingDef =
-    _.key(MAX_HEAP_KEY).documentation("maximum memory allocation (in MB)").positiveNumber(1024L).build()
-
-  private[v0] def initHeapDefinition: SettingDef.Builder => SettingDef =
-    _.key(INIT_HEAP_KEY).documentation("initial heap size (in MB)").positiveNumber(1024L).build()
 
   private[v0] def flattenSettings(obj: JsObject): JsObject =
     JsObject(

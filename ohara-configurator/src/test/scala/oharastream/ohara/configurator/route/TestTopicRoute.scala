@@ -338,7 +338,7 @@ class TestTopicRoute extends OharaTest {
 
   @Test
   def testCustomConfigs(): Unit = {
-    val key   = TopicApi.SEGMENT_BYTES_DEFINITION.key()
+    val key   = TopicApi.SEGMENT_BYTES_KEY
     val value = 1024 * 1024
     val topicDesc = result(
       topicApi.request.setting(key, JsNumber(value)).brokerClusterKey(brokerClusterInfo.key).create()

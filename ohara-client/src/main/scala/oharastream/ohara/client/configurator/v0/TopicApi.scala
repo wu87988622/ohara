@@ -37,6 +37,11 @@ object TopicApi {
   val KIND: String = SettingDef.Reference.TOPIC.name().toLowerCase
   @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val TOPICS_PREFIX_PATH: String = "topics"
+  val BROKER_CLUSTER_KEY_KEY     = "brokerClusterKey"
+  val NUMBER_OF_PARTITIONS_KEY   = "numberOfPartitions"
+  val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
+  val SEGMENT_BYTES_KEY          = TopicConfig.SEGMENT_BYTES_CONFIG
+  val SEGMENT_MS_KEY             = TopicConfig.SEGMENT_MS_CONFIG
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -46,77 +51,42 @@ object TopicApi {
     * Furthermore, kafka forbids us to put required configs to custom configs. Hence, we have to mark the custom config
     * in order to filter the custom from settings (see Creation).
     */
-  private[this] val EXTRA_GROUP       = "extra"
-  private[this] val CORE_DEFINITIONS  = mutable.Map[String, SettingDef]()
-  private[this] val EXTRA_DEFINITIONS = mutable.Map[String, SettingDef]()
-  private[this] def createExtraDef(f: SettingDef.Builder => SettingDef): SettingDef = {
-    val settingDef = f(SettingDef.builder().orderInGroup(EXTRA_DEFINITIONS.size).group(EXTRA_GROUP))
-    assert(!CORE_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    assert(!EXTRA_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    EXTRA_DEFINITIONS += (settingDef.key() -> settingDef)
-    settingDef
-  }
-  private[this] def createCoreDef(f: SettingDef.Builder => SettingDef): SettingDef = {
-    val settingDef = f(SettingDef.builder().orderInGroup(CORE_DEFINITIONS.size).group("core"))
-    assert(!CORE_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    assert(!EXTRA_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    CORE_DEFINITIONS += (settingDef.key() -> settingDef)
-    settingDef
-  }
-  val GROUP_DEFINITION: SettingDef =
-    createCoreDef(_.key(GROUP_KEY).documentation("group of this worker cluster").optional(GROUP_DEFAULT).build())
-  val NAME_DEFINITION: SettingDef =
-    createCoreDef(_.key(NAME_KEY).documentation("name of this worker cluster").stringWithRandomDefault().build())
-  val TAGS_DEFINITION: SettingDef =
-    createCoreDef(_.key(TAGS_KEY).documentation("the tags to this cluster").optional(Type.TAGS).build())
-  private[this] val BROKER_CLUSTER_KEY_KEY = "brokerClusterKey"
-  val BROKER_CLUSTER_KEY_DEFINITION: SettingDef = createCoreDef(
-    _.key(BROKER_CLUSTER_KEY_KEY)
-      .documentation("broker cluster used to store data for this worker cluster")
-      .required(Type.OBJECT_KEY)
-      .reference(Reference.BROKER)
-      .build()
-  )
-  private[this] val NUMBER_OF_PARTITIONS_KEY          = "numberOfPartitions"
-  private[this] val NUMBER_OF_PARTITIONS_DEFAULT: Int = 1
-  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createCoreDef(
-    _.key(NUMBER_OF_PARTITIONS_KEY)
-      .documentation("the number of partitions")
-      .positiveNumber(NUMBER_OF_PARTITIONS_DEFAULT)
-      .build()
-  )
-  private[this] val NUMBER_OF_REPLICATIONS_KEY            = "numberOfReplications"
-  private[this] val NUMBER_OF_REPLICATIONS_DEFAULT: Short = 1
-  val NUMBER_OF_REPLICATIONS_DEFINITION: SettingDef = createCoreDef(
-    _.key(NUMBER_OF_REPLICATIONS_KEY)
-      .documentation("the number of replications")
-      .positiveNumber(NUMBER_OF_REPLICATIONS_DEFAULT)
-      .build()
-  )
+  private[this] val CONFIGS_GROUP = "configs"
 
-  private[this] val SEGMENT_BYTES_KEY           = TopicConfig.SEGMENT_BYTES_CONFIG
-  private[this] val SEGMENT_BYTES_DEFAULT: Long = 1 * 1024 * 1024 * 1024L
-  val SEGMENT_BYTES_DEFINITION: SettingDef = createExtraDef(
-    _.key(SEGMENT_BYTES_KEY)
-      .documentation(TopicConfig.SEGMENT_BYTES_DOC)
-      .positiveNumber(SEGMENT_BYTES_DEFAULT)
-      .build()
-  )
-
-  private[this] val SEGMENT_MS_KEY = TopicConfig.SEGMENT_MS_CONFIG
-  // ONE WEEK
-  private[this] val SEGMENT_MS_DEFAULT: Long = 7 * 24 * 60 * 60 * 1000L
-  val SEGMENT_MS_DEFINITION: SettingDef = createExtraDef(
-    _.key(SEGMENT_MS_KEY)
-      .documentation(TopicConfig.SEGMENT_MS_DOC)
-      .positiveNumber(SEGMENT_MS_DEFAULT)
-      .build()
-  )
-
-  /**
-    * list the custom configs of topic. It is useful to developers who long for controlling the topic totally.
-    */
-  def DEFINITIONS: Seq[SettingDef] = (CORE_DEFINITIONS.values ++ EXTRA_DEFINITIONS.values).toSeq
+  val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
+    .addFollowupTo("core")
+    .group()
+    .name()
+    .tags()
+    .definition(
+      _.key(BROKER_CLUSTER_KEY_KEY)
+        .documentation("broker cluster used to store data for this worker cluster")
+        .required(Type.OBJECT_KEY)
+        .reference(Reference.BROKER)
+    )
+    .addFollowupTo("performance")
+    .definition(
+      _.key(NUMBER_OF_PARTITIONS_KEY)
+        .documentation("the number of partitions")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(NUMBER_OF_REPLICATIONS_KEY)
+        .documentation("the number of replications")
+        .positiveNumber(1.asInstanceOf[Short])
+    )
+    .addFollowupTo(CONFIGS_GROUP)
+    .definition(
+      _.key(SEGMENT_BYTES_KEY)
+        .documentation(TopicConfig.SEGMENT_BYTES_DOC)
+        .positiveNumber(1L * 1024L * 1024L * 1024L)
+    )
+    .definition(
+      _.key(SEGMENT_MS_KEY)
+        .documentation(TopicConfig.SEGMENT_MS_DOC)
+        .positiveNumber(7L * 24L * 60L * 60L * 1000L)
+    )
+    .result
 
   final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
     def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
@@ -268,7 +238,7 @@ object TopicApi {
       */
     def configs: Map[String, JsValue] = noJsNull(settings).filter {
       case (key, _) =>
-        DEFINITIONS.filter(_.group() == EXTRA_GROUP).exists(_.key() == key)
+        DEFINITIONS.filter(_.group() == CONFIGS_GROUP).exists(_.key() == key)
     }
 
     override protected def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields

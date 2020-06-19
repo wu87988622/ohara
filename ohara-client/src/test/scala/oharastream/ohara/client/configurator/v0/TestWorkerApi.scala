@@ -481,21 +481,20 @@ class TestWorkerApi extends OharaTest {
     WorkerApi.CREATION_JSON_FORMAT
       .read(
         s"""
-                                                                                                   |  {
-                                                                                                   |    "nodeNames": [
-                                                                                                   |      "node"
-                                                                                                   |    ],
-                                                                                                   |    "brokerClusterKey": {
-                                                                                                   |      "group": "g",
-                                                                                                   |      "name": "n"
-                                                                                                   |    },
-                                                                                                   |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION
-             .key()}": 0
-                                                                                                   |  }
-                                                                                                   |  """.stripMargin.parseJson
+         |  {
+         |    "nodeNames": [
+         |      "node"
+         |    ],
+         |    "brokerClusterKey": {
+         |      "group": "g",
+         |      "name": "n"
+         |    },
+         |    "${CONFIG_TOPIC_PARTITIONS_KEY}": 0
+         |  }
+         |  """.stripMargin.parseJson
       )
-      .settings(CONFIG_TOPIC_PARTITIONS_DEFINITION.key())
-      .convertTo[Int] shouldBe CONFIG_TOPIC_PARTITIONS_DEFINITION.defaultInt()
+      .settings(CONFIG_TOPIC_PARTITIONS_KEY)
+      .convertTo[Int] shouldBe 1
 
   /**
     * CONFIG_TOPIC_PARTITIONS_DEFINITION is readonly so the value is immutable
@@ -505,21 +504,20 @@ class TestWorkerApi extends OharaTest {
     WorkerApi.CREATION_JSON_FORMAT
       .read(
         s"""
-                                                                                                       |  {
-                                                                                                       |    "nodeNames": [
-                                                                                                       |      "node"
-                                                                                                       |    ],
-                                                                                                       |    "brokerClusterKey": {
-                                                                                                       |      "group": "g",
-                                                                                                       |      "name": "n"
-                                                                                                       |    },
-                                                                                                       |    "${CONFIG_TOPIC_PARTITIONS_DEFINITION
-             .key()}": -1
-                                                                                                       |  }
-                                                                                                       |  """.stripMargin.parseJson
+                           |  {
+                           |    "nodeNames": [
+                           |      "node"
+                           |    ],
+                           |    "brokerClusterKey": {
+                           |      "group": "g",
+                           |      "name": "n"
+                           |    },
+                           |    "${CONFIG_TOPIC_PARTITIONS_KEY}": -1
+                           |  }
+                           |  """.stripMargin.parseJson
       )
-      .settings(CONFIG_TOPIC_PARTITIONS_DEFINITION.key())
-      .convertTo[Int] shouldBe CONFIG_TOPIC_PARTITIONS_DEFINITION.defaultInt()
+      .settings(CONFIG_TOPIC_PARTITIONS_KEY)
+      .convertTo[Int] shouldBe 1
 
   @Test
   def zeroNumberOfReplicationForConfigTopic(): Unit =
@@ -533,7 +531,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${CONFIG_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |    "${CONFIG_TOPIC_REPLICATIONS_KEY}": 0
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -550,7 +548,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${CONFIG_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |    "${CONFIG_TOPIC_REPLICATIONS_KEY}": -1
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -567,7 +565,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${OFFSET_TOPIC_PARTITIONS_DEFINITION.key()}": 0
+                                                    |    "${OFFSET_TOPIC_PARTITIONS_KEY}": 0
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -584,7 +582,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${OFFSET_TOPIC_PARTITIONS_DEFINITION.key()}": -1
+                                                    |    "${OFFSET_TOPIC_PARTITIONS_KEY}": -1
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -601,7 +599,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${OFFSET_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |    "${OFFSET_TOPIC_REPLICATIONS_KEY}": 0
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -618,7 +616,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${OFFSET_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |    "${OFFSET_TOPIC_REPLICATIONS_KEY}": -1
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -635,7 +633,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${STATUS_TOPIC_PARTITIONS_DEFINITION.key()}": 0
+                                                    |    "${STATUS_TOPIC_PARTITIONS_KEY}": 0
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -652,7 +650,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${STATUS_TOPIC_PARTITIONS_DEFINITION.key()}": -1
+                                                    |    "${STATUS_TOPIC_PARTITIONS_KEY}": -1
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -669,7 +667,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${STATUS_TOPIC_REPLICATIONS_DEFINITION.key()}": 0
+                                                    |    "${STATUS_TOPIC_REPLICATIONS_KEY}": 0
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -686,7 +684,7 @@ class TestWorkerApi extends OharaTest {
                                                     |      "group": "g",
                                                     |      "name": "n"
                                                     |    },
-                                                    |    "${STATUS_TOPIC_REPLICATIONS_DEFINITION.key()}": -1
+                                                    |    "${STATUS_TOPIC_REPLICATIONS_KEY}": -1
                                                     |  }
                                                     |  """.stripMargin.parseJson)
     }.getMessage should include("the number must be")
@@ -872,11 +870,11 @@ class TestWorkerApi extends OharaTest {
   @Test
   def testNegativeInitHeap(): Unit =
     an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
-                                                                                                                               |  {
-                                                                                                                               |    "brokerClusterKey": "bk",
-                                                                                                                               |    "nodeNames": ["node00"],
-                                                                                                                               |    "xms": -123
-                                                                                                                               |  }
+                                                                                         |  {
+                                                                                         |    "brokerClusterKey": "bk",
+                                                                                         |    "nodeNames": ["node00"],
+                                                                                         |    "xms": -123
+                                                                                         |  }
       """.stripMargin.parseJson)
 
   @Test

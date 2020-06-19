@@ -44,7 +44,7 @@ class TestTopicApi extends OharaTest {
   def brokerClusterKeyShouldBeRequired(): Unit =
     intercept[DeserializationException] {
       TopicApi.access.hostname(CommonUtils.randomString(10)).port(CommonUtils.availablePort()).request.creation
-    }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_DEFINITION.key())
+    }.getMessage should include(TopicApi.BROKER_CLUSTER_KEY_KEY)
 
   @Test
   def ignoreNameOnCreation(): Unit =
@@ -94,9 +94,9 @@ class TestTopicApi extends OharaTest {
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
-         | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
-         | "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": $numberOfPartitions,
-         | "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": $numberOfReplications
+         | "${BROKER_CLUSTER_KEY_KEY}": "$brokerClusterName",
+         | "${NUMBER_OF_PARTITIONS_KEY}": $numberOfPartitions,
+         | "${NUMBER_OF_REPLICATIONS_KEY}": $numberOfReplications
          |}
        """.stripMargin.parseJson)
 
@@ -116,15 +116,15 @@ class TestTopicApi extends OharaTest {
     val update               = TopicApi.UPDATING_FORMAT.read(s"""
       |{
       | "$NAME_KEY": "$name",
-      | "${BROKER_CLUSTER_KEY_DEFINITION.key()}": "$brokerClusterName",
-      | "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": $numberOfPartitions,
-      | "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": $numberOfReplications
+      | "${BROKER_CLUSTER_KEY_KEY}": "$brokerClusterName",
+      | "${NUMBER_OF_PARTITIONS_KEY}": $numberOfPartitions,
+      | "${NUMBER_OF_REPLICATIONS_KEY}": $numberOfReplications
       |}
        """.stripMargin.parseJson)
 
     update.brokerClusterKey.get.name() shouldBe brokerClusterName
-    update.settings(NUMBER_OF_PARTITIONS_DEFINITION.key()) shouldBe JsNumber(numberOfPartitions)
-    update.settings(NUMBER_OF_REPLICATIONS_DEFINITION.key()) shouldBe JsNumber(numberOfReplications)
+    update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
+    update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
 
     val update2 = TopicApi.UPDATING_FORMAT.read(s"""
          |{
@@ -132,8 +132,8 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
 
     update2.brokerClusterKey shouldBe None
-    update2.settings should not contain NUMBER_OF_PARTITIONS_DEFINITION.key()
-    update2.settings should not contain NUMBER_OF_REPLICATIONS_DEFINITION.key()
+    update2.settings should not contain NUMBER_OF_PARTITIONS_KEY
+    update2.settings should not contain NUMBER_OF_REPLICATIONS_KEY
   }
 
   @Test
@@ -157,13 +157,13 @@ class TestTopicApi extends OharaTest {
   def negativeReplicationsIsIllegalInCreation(): Unit =
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
-                                           |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
-                                           |      "group": "g",
-                                           |      "name": "n"
-                                           |    },
-                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": -1
-                                           |  }
+                                     |  {
+                                     |    "${BROKER_CLUSTER_KEY_KEY}": {
+                                     |      "group": "g",
+                                     |      "name": "n"
+                                     |    },
+                                     |    "${NUMBER_OF_REPLICATIONS_KEY}": -1
+                                     |  }
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
 
@@ -172,11 +172,11 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
+                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": -1
+                                           |    "${NUMBER_OF_PARTITIONS_KEY}": -1
                                            |  }
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
@@ -186,11 +186,11 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
+                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "${NUMBER_OF_REPLICATIONS_DEFINITION.key()}": 0
+                                           |    "${NUMBER_OF_REPLICATIONS_KEY}": 0
                                            |  }
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")
@@ -200,11 +200,11 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_DEFINITION.key()}": {
+                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
-                                           |    "${NUMBER_OF_PARTITIONS_DEFINITION.key()}": 0
+                                           |    "${NUMBER_OF_PARTITIONS_KEY}": 0
                                            |  }
        """.stripMargin.parseJson)
     }.getMessage should include("the number must")

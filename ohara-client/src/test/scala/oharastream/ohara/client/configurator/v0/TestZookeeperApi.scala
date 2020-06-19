@@ -213,13 +213,13 @@ class TestZookeeperApi extends OharaTest {
   def parseImageNameField(): Unit =
     ZookeeperApi.CREATION_JSON_FORMAT
       .read(s"""
-                                                        |  {
-                                                        |    "nodeNames": [
-                                                        |      "node"
-                                                        |    ],
-                                                        |    "imageName": "${ZookeeperApi.IMAGE_NAME_DEFAULT}"
-                                                        |  }
-                                                        |  """.stripMargin.parseJson)
+              |  {
+              |    "nodeNames": [
+              |      "node"
+              |    ],
+              |    "imageName": "${ZookeeperApi.IMAGE_NAME_DEFAULT}"
+              |  }
+              |  """.stripMargin.parseJson)
       .settings(IMAGE_NAME_KEY)
       .convertTo[String] shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
@@ -469,10 +469,10 @@ class TestZookeeperApi extends OharaTest {
 
   @Test
   def testMaxHeap(): Unit = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                                                |  {
-                                                                                |    "nodeNames": ["node00"],
-                                                                                |    "xmx": 123
-                                                                                |  }
+                                                                      |  {
+                                                                      |    "nodeNames": ["node00"],
+                                                                      |    "xmx": 123
+                                                                      |  }
       """.stripMargin.parseJson).maxHeap shouldBe 123
 
   @Test
@@ -486,19 +486,19 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def testNegativeMaxHeap(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                                                                                              |  {
-                                                                                                                              |    "nodeNames": ["node00"],
-                                                                                                                              |    "xmx": -123
-                                                                                                                              |  }
+                                                                                            |  {
+                                                                                            |    "nodeNames": ["node00"],
+                                                                                            |    "xmx": -123
+                                                                                            |  }
       """.stripMargin.parseJson)
 
   @Test
   def testNegativeInitHeap(): Unit =
     an[DeserializationException] should be thrownBy ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
-                                                                                                                              |  {
-                                                                                                                              |    "nodeNames": ["node00"],
-                                                                                                                              |    "xms": -123
-                                                                                                                              |  }
+                                                                                            |  {
+                                                                                            |    "nodeNames": ["node00"],
+                                                                                            |    "xms": -123
+                                                                                            |  }
       """.stripMargin.parseJson)
 
   @Test
@@ -530,7 +530,7 @@ class TestZookeeperApi extends OharaTest {
     val creation = ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
                                                              |  {
                                                              |    "nodeNames": ["node00"],
-                                                             |    "${ZookeeperApi.DATA_DIR_DEFINITION.key()}": {
+                                                             |    "${ZookeeperApi.DATA_DIR_KEY}": {
                                                              |      "group": "g",
                                                              |      "name": "n"
                                                              |    }
@@ -547,13 +547,11 @@ class TestZookeeperApi extends OharaTest {
     ZookeeperApi.CREATION_JSON_FORMAT.read(s"""
                                               |  {
                                               |    "nodeNames": ["node00"],
-                                              |    "${ZookeeperApi.DATA_DIR_DEFINITION.key()}": {
+                                              |    "${ZookeeperApi.DATA_DIR_KEY}": {
                                               |      "group": "g",
                                               |      "name": "n"
                                               |    }
                                               |  }
-      """.stripMargin.parseJson).connectionTimeout.toMillis shouldBe ZookeeperApi.CONNECTION_TIMEOUT_DEFINITION
-      .defaultDuration()
-      .toMillis
+      """.stripMargin.parseJson).connectionTimeout.toMillis should not be 0
   }
 }

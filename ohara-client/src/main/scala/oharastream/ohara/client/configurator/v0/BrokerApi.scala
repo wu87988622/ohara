@@ -27,7 +27,6 @@ import oharastream.ohara.common.util.{CommonUtils, VersionUtils}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerApi {
   val KIND: String = SettingDef.Reference.BROKER.name().toLowerCase
@@ -40,78 +39,65 @@ object BrokerApi {
     */
   val IMAGE_NAME_DEFAULT: String = s"oharastream/broker:${VersionUtils.VERSION}"
 
-  //------------------------ The key name list in settings field ---------------------------------/
-  private[this] val _DEFINITIONS = mutable.Map[String, SettingDef]()
-  private[this] def createDef(f: SettingDef.Builder => SettingDef): SettingDef = {
-    val settingDef = f(SettingDef.builder().orderInGroup(_DEFINITIONS.size).group("core"))
-    assert(!_DEFINITIONS.contains(settingDef.key()), s"duplicate key:${settingDef.key()} is illegal")
-    _DEFINITIONS += (settingDef.key() -> settingDef)
-    settingDef
-  }
-  val GROUP_DEFINITION: SettingDef                    = createDef(groupDefinition)
-  val NAME_DEFINITION: SettingDef                     = createDef(nameDefinition)
-  val IMAGE_NAME_DEFINITION: SettingDef               = createDef(imageNameDefinition(IMAGE_NAME_DEFAULT))
-  val CLIENT_PORT_DEFINITION: SettingDef              = createDef(clientPortDefinition)
-  val JMX_PORT_DEFINITION: SettingDef                 = createDef(jmxPortDefinition)
-  val NODE_NAMES_DEFINITION: SettingDef               = createDef(nodeDefinition)
-  val ROUTES_DEFINITION: SettingDef                   = createDef(routesDefinition)
-  val TAGS_DEFINITION: SettingDef                     = createDef(tagsDefinition)
-  val MAX_HEAP_DEFINITION: SettingDef                 = createDef(maxHeapDefinition)
-  val INIT_HEAP_DEFINITION: SettingDef                = createDef(initHeapDefinition)
-  private[this] val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
-  val ZOOKEEPER_CLUSTER_KEY_DEFINITION: SettingDef = createDef(
-    _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
-      .documentation("the zookeeper cluster used to manage broker nodes")
-      .required(Type.OBJECT_KEY)
-      .reference(Reference.ZOOKEEPER)
-      .build()
-  )
-  private[this] val LOG_DIRS_KEY: String = "log.dirs"
-  val LOG_DIRS_DEFINITION: SettingDef = createDef(
-    _.key(LOG_DIRS_KEY)
-      .documentation("the folder used to store data of broker")
-      // broker service can take multiples folders to speedup the I/O
-      .optional(SettingDef.Type.OBJECT_KEYS)
-      .reference(SettingDef.Reference.VOLUME)
-      .build()
-  )
-  private[this] val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
-  private[this] val NUMBER_OF_PARTITIONS_DEFAULT     = 1
-  val NUMBER_OF_PARTITIONS_DEFINITION: SettingDef = createDef(
-    _.key(NUMBER_OF_PARTITIONS_KEY)
-      .documentation("the number of partitions for all topics by default")
-      .positiveNumber(NUMBER_OF_PARTITIONS_DEFAULT)
-      .build()
-  )
-  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
-  private[this] val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT     = 1
-  val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFINITION: SettingDef = createDef(
-    _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
-      .documentation("the number of replications for internal offset topic")
-      .positiveNumber(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_DEFAULT)
-      .build()
-  )
-  private[this] val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
-  private[this] val NUMBER_OF_NETWORK_THREADS_DEFAULT     = 1
-  val NUMBER_OF_NETWORK_THREADS_DEFINITION: SettingDef = createDef(
-    _.key(NUMBER_OF_NETWORK_THREADS_KEY)
-      .documentation("the number of threads used to accept network requests")
-      .positiveNumber(NUMBER_OF_NETWORK_THREADS_DEFAULT)
-      .build()
-  )
-  private[this] val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
-  private[this] val NUMBER_OF_IO_THREADS_DEFAULT     = 1
-  val NUMBER_OF_IO_THREADS_DEFINITION: SettingDef = createDef(
-    _.key(NUMBER_OF_IO_THREADS_KEY)
-      .documentation("the number of threads used to process network requests")
-      .positiveNumber(NUMBER_OF_IO_THREADS_DEFAULT)
-      .build()
-  )
+  val ZOOKEEPER_CLUSTER_KEY_KEY: String = "zookeeperClusterKey"
 
-  /**
-    * all public configs
-    */
-  def DEFINITIONS: Seq[SettingDef] = _DEFINITIONS.values.toSeq
+  val LOG_DIRS_KEY: String             = "log.dirs"
+  val NUMBER_OF_PARTITIONS_KEY: String = "num.partitions"
+
+  val NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY: String = "offsets.topic.replication.factor"
+
+  val NUMBER_OF_NETWORK_THREADS_KEY: String = "num.network.threads"
+
+  val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
+
+  val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
+    .addFollowupTo("core")
+    .group()
+    .name()
+    .imageName(IMAGE_NAME_DEFAULT)
+    .nodeNames()
+    .routes()
+    .tags()
+    .definition(
+      _.key(ZOOKEEPER_CLUSTER_KEY_KEY)
+        .documentation("the zookeeper cluster used to manage broker nodes")
+        .required(Type.OBJECT_KEY)
+        .reference(Reference.ZOOKEEPER)
+    )
+    .addFollowupTo("performance")
+    .definition(
+      _.key(LOG_DIRS_KEY)
+        .documentation("the folder used to store data of broker")
+        // broker service can take multiples folders to speedup the I/O
+        .optional(SettingDef.Type.OBJECT_KEYS)
+        .reference(SettingDef.Reference.VOLUME)
+    )
+    .definition(
+      _.key(NUMBER_OF_PARTITIONS_KEY)
+        .documentation("the number of partitions for all topics by default")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY)
+        .documentation("the number of replications for internal offset topic")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(NUMBER_OF_NETWORK_THREADS_KEY)
+        .documentation("the number of threads used to accept network requests")
+        .positiveNumber(1)
+    )
+    .definition(
+      _.key(NUMBER_OF_IO_THREADS_KEY)
+        .documentation("the number of threads used to process network requests")
+        .positiveNumber(1)
+    )
+    .initHeap()
+    .maxHeap()
+    .addFollowupTo("public")
+    .clientPort()
+    .jmxPort()
+    .result
 
   val TOPIC_DEFINITION: TopicDefinition = TopicDefinition(TopicApi.DEFINITIONS)
 
