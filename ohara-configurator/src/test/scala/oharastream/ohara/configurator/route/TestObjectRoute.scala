@@ -18,8 +18,8 @@ package oharastream.ohara.configurator.route
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ObjectApi
-import oharastream.ohara.client.configurator.v0.ObjectApi.ObjectInfo
+import oharastream.ohara.client.configurator.ObjectApi
+import oharastream.ohara.client.configurator.ObjectApi.ObjectInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

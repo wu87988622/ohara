@@ -20,16 +20,16 @@ import java.util.Objects
 
 import oharastream.ohara.agent.Collie.ClusterCreator
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.MetricsApi.{Meter, Metrics}
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterRequest, ClusterState}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.MetricsApi.{Meter, Metrics}
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.VolumeApi.Volume
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.{ClusterInfo, ClusterRequest, ClusterState}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils

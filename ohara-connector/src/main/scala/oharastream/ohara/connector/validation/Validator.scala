@@ -18,7 +18,7 @@ package oharastream.ohara.connector.validation
 
 import java.util
 
-import oharastream.ohara.client.configurator.v0.InspectApi
+import oharastream.ohara.client.configurator.InspectApi
 import oharastream.ohara.common.util.VersionUtils
 import org.apache.kafka.common.config.ConfigDef
 import org.apache.kafka.common.config.ConfigDef.{Importance, Type}

@@ -19,7 +19,7 @@ package oharastream.ohara.configurator
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import java.util.concurrent.{ArrayBlockingQueue, Executors, LinkedBlockingDeque, TimeUnit}
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, TopicApi}
+import oharastream.ohara.client.configurator.{BrokerApi, TopicApi}
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.testing.WithBrokerWorker

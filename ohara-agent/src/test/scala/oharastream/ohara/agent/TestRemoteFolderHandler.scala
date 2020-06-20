@@ -18,7 +18,7 @@ package oharastream.ohara.agent
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.service.SshdServer

@@ -19,7 +19,7 @@ package oharastream.ohara.connector.jdbc.source
 import java.sql.Statement
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.Serializer

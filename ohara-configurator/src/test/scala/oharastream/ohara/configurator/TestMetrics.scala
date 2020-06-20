@@ -18,9 +18,9 @@ package oharastream.ohara.configurator
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ClusterState
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.{
+import oharastream.ohara.client.configurator.ClusterState
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.{
   BrokerApi,
   ConnectorApi,
   FileInfoApi,

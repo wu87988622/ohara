@@ -20,7 +20,7 @@ import java.io.File
 import java.util.concurrent.ExecutionException
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.{ClusterState, ZookeeperApi, _}
+import oharastream.ohara.client.configurator.{ClusterState, ZookeeperApi, _}
 import oharastream.ohara.common.data.{Row, Serializer}
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils

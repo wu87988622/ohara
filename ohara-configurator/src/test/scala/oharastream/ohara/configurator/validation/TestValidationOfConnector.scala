@@ -18,7 +18,7 @@ package oharastream.ohara.configurator.validation
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
+import oharastream.ohara.client.configurator.{ValidationApi, WorkerApi}
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.{Configurator, FallibleSink}

@@ -19,9 +19,9 @@ package oharastream.ohara.it.performance
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
-import oharastream.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
+import oharastream.ohara.client.configurator.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.{ConnectorApi, TopicApi}
 import oharastream.ohara.common.data.{Cell, Row, Serializer}
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

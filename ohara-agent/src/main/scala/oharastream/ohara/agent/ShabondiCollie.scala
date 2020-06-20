@@ -20,11 +20,11 @@ import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.ShabondiApi
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterCreation
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.ShabondiApi
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterCreation
 import oharastream.ohara.shabondi.common.ShabondiUtils
 import spray.json._
 

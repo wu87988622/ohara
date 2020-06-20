@@ -20,9 +20,9 @@ import akka.http.scaladsl.model.{ContentTypes, _}
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, pathPrefix, put, _}
 import oharastream.ohara.agent.WorkerCollie
-import oharastream.ohara.client.configurator.v0.ConnectorApi
-import oharastream.ohara.client.configurator.v0.ConnectorApi.Creation
-import oharastream.ohara.client.configurator.v0.ValidationApi._
+import oharastream.ohara.client.configurator.ConnectorApi
+import oharastream.ohara.client.configurator.ConnectorApi.Creation
+import oharastream.ohara.client.configurator.ValidationApi._
 import oharastream.ohara.configurator.store.DataStore
 
 import scala.concurrent.ExecutionContext

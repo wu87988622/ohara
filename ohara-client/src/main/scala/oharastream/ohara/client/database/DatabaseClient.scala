@@ -18,7 +18,7 @@ package oharastream.ohara.client.database
 
 import java.sql.{Connection, DriverManager, ResultSet}
 
-import oharastream.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbTable}
+import oharastream.ohara.client.configurator.InspectApi.{RdbColumn, RdbTable}
 import oharastream.ohara.client.database.DatabaseClient.TableQuery
 import oharastream.ohara.common.annotations.{Nullable, Optional}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

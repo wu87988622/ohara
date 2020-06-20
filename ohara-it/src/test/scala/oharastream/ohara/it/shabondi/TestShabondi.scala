@@ -17,9 +17,9 @@
 package oharastream.ohara.it.shabondi
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
-import oharastream.ohara.client.configurator.v0.{
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.{
   BrokerApi,
   ClusterInfo,
   ClusterState,

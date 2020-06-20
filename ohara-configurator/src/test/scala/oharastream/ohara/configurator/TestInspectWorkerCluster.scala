@@ -18,7 +18,7 @@ package oharastream.ohara.configurator
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.{InspectApi, WorkerApi}
+import oharastream.ohara.client.configurator.{InspectApi, WorkerApi}
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.testing.WithBrokerWorker
 import org.junit.{After, Test}

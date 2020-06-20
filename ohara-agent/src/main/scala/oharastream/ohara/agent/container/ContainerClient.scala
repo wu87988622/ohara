@@ -19,8 +19,8 @@ package oharastream.ohara.agent.container
 import java.util.Objects
 
 import oharastream.ohara.agent.container.ContainerClient.{ContainerCreator, VolumeCreator}
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Resource
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.NodeApi.Resource
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 

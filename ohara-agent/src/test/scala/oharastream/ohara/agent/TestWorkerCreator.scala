@@ -18,8 +18,8 @@ package oharastream.ohara.agent
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.WorkerApi
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.WorkerApi
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils

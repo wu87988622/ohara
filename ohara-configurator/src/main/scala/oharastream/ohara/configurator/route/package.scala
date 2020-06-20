@@ -21,12 +21,12 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import oharastream.ohara.agent._
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterCreation, ClusterInfo, ClusterUpdating, ErrorApi, JsonRefiner}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.{ClusterCreation, ClusterInfo, ClusterUpdating, ErrorApi, JsonRefiner}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
@@ -41,15 +41,15 @@ import scala.reflect.{ClassTag, classTag}
 package object route {
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
-  private[route] val NAME_KEY: String        = oharastream.ohara.client.configurator.v0.NAME_KEY
-  private[route] val GROUP_KEY: String       = oharastream.ohara.client.configurator.v0.GROUP_KEY
-  private[route] val GROUP_DEFAULT: String   = oharastream.ohara.client.configurator.v0.GROUP_DEFAULT
-  private[route] val TAGS_KEY: String        = oharastream.ohara.client.configurator.v0.TAGS_KEY
-  private[this] val FORCE_KEY: String        = oharastream.ohara.client.configurator.v0.FORCE_KEY
-  private[route] val START_COMMAND: String   = oharastream.ohara.client.configurator.v0.START_COMMAND
-  private[route] val STOP_COMMAND: String    = oharastream.ohara.client.configurator.v0.STOP_COMMAND
-  private[route] val PAUSE_COMMAND: String   = oharastream.ohara.client.configurator.v0.PAUSE_COMMAND
-  private[route] val RESUME_COMMAND: String  = oharastream.ohara.client.configurator.v0.RESUME_COMMAND
+  private[route] val NAME_KEY: String        = oharastream.ohara.client.configurator.NAME_KEY
+  private[route] val GROUP_KEY: String       = oharastream.ohara.client.configurator.GROUP_KEY
+  private[route] val GROUP_DEFAULT: String   = oharastream.ohara.client.configurator.GROUP_DEFAULT
+  private[route] val TAGS_KEY: String        = oharastream.ohara.client.configurator.TAGS_KEY
+  private[this] val FORCE_KEY: String        = oharastream.ohara.client.configurator.FORCE_KEY
+  private[route] val START_COMMAND: String   = oharastream.ohara.client.configurator.START_COMMAND
+  private[route] val STOP_COMMAND: String    = oharastream.ohara.client.configurator.STOP_COMMAND
+  private[route] val PAUSE_COMMAND: String   = oharastream.ohara.client.configurator.PAUSE_COMMAND
+  private[route] val RESUME_COMMAND: String  = oharastream.ohara.client.configurator.RESUME_COMMAND
 
   /**
     * this is a variety to basic route of all APIs to access ohara's "cluster" data.

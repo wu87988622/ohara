@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.{ValidationApi, WorkerApi}
+import oharastream.ohara.client.configurator.{ValidationApi, WorkerApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

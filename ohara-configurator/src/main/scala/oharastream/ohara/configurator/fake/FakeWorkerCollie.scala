@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{ClusterKind, DataCollie, NoSuchClusterException, WorkerCollie}
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
 

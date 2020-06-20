@@ -16,8 +16,8 @@
 
 package oharastream.ohara.agent
 
-import oharastream.ohara.client.configurator.v0.ClusterState
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.ClusterState
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
 import oharastream.ohara.common.setting.ObjectKey
 
 /**

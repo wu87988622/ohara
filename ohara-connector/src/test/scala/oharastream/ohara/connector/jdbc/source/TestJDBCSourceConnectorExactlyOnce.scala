@@ -20,7 +20,7 @@ import java.sql.{Statement, Timestamp}
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.client.kafka.WorkerJson.ConnectorCreationResponse

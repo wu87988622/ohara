@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.NoSuchClusterException
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.ClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.ClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import org.junit.rules.Timeout

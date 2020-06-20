@@ -24,11 +24,11 @@ import oharastream.ohara.agent._
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
 import oharastream.ohara.client.configurator.Data
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, NodeService, State}
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.NodeApi.{Node, NodeService, State}
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.{BrokerApi, ClusterState, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.setting.ObjectKey
@@ -106,9 +106,9 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
       val store             = getOrCreateStore()
-      val embeddedZkName    = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedzk")
-      val embeddedBrokerKey = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedbk")
-      val embeddedWorkerKey = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, "embeddedwk")
+      val embeddedZkName    = ObjectKey.of(oharastream.ohara.client.configurator.GROUP_DEFAULT, "embeddedzk")
+      val embeddedBrokerKey = ObjectKey.of(oharastream.ohara.client.configurator.GROUP_DEFAULT, "embeddedbk")
+      val embeddedWorkerKey = ObjectKey.of(oharastream.ohara.client.configurator.GROUP_DEFAULT, "embeddedwk")
       // we fake nodes for embedded bk and wk
       def nodes(s: String): Seq[String] = s.split(",").toIndexedSeq.map(_.split(":").head)
       import scala.concurrent.ExecutionContext.Implicits.global

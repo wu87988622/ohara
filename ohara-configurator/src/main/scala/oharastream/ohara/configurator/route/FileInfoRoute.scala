@@ -30,8 +30,8 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
 import oharastream.ohara.agent.ServiceCollie
-import oharastream.ohara.client.configurator.v0.FileInfoApi._
-import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefiner, JsonRefinerBuilder}
+import oharastream.ohara.client.configurator.FileInfoApi._
+import oharastream.ohara.client.configurator.{BasicCreation, JsonRefiner, JsonRefinerBuilder}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo

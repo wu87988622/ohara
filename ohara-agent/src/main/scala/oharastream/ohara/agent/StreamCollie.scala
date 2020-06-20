@@ -20,13 +20,13 @@ import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.StreamApi
-import oharastream.ohara.client.configurator.v0.StreamApi.Creation
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.StreamApi
+import oharastream.ohara.client.configurator.StreamApi.Creation
+import oharastream.ohara.client.configurator.VolumeApi.Volume
 import oharastream.ohara.stream.Stream
 import oharastream.ohara.stream.config.StreamSetting
 import spray.json.JsString

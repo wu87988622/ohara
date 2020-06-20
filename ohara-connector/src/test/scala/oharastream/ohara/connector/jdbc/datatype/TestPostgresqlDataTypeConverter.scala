@@ -18,7 +18,7 @@ package oharastream.ohara.connector.jdbc.datatype
 
 import java.sql.{ResultSet, Time, Timestamp}
 
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.connector.jdbc.util.DateTimeUtils
 import org.junit.Test

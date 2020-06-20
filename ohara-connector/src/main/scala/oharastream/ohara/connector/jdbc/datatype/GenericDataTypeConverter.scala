@@ -15,7 +15,7 @@
  */
 
 package oharastream.ohara.connector.jdbc.datatype
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 
 class GenericDataTypeConverter extends RDBDataTypeConverter {
   private[this] val TYPE_NAME_BOOLEAN: String     = "BOOLEAN"

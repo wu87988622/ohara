@@ -17,7 +17,7 @@
 package oharastream.ohara.it.performance
 
 import oharastream.ohara.agent.container.ContainerClient
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.it.{ContainerPlatform, IntegrationTest, ServiceKeyHolder}
 import org.junit.After

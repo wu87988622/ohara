@@ -18,9 +18,9 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ZookeeperCollie}
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi
-import oharastream.ohara.client.configurator.v0.ZookeeperApi._
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi
+import oharastream.ohara.client.configurator.ZookeeperApi._
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}

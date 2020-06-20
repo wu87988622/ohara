@@ -16,7 +16,7 @@
 
 package oharastream.ohara.it.client
 
-import oharastream.ohara.client.configurator.v0.NodeApi
+import oharastream.ohara.client.configurator.NodeApi
 import oharastream.ohara.it.category.ClientGroup
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import org.junit.Test

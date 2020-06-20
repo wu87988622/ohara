@@ -30,14 +30,14 @@ import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.HttpExecutor
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.InspectApi.K8sUrls
-import oharastream.ohara.client.configurator.v0.MetricsApi.Metrics
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.InspectApi.K8sUrls
+import oharastream.ohara.client.configurator.MetricsApi.Metrics
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable, ReleaseOnce, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode
@@ -203,7 +203,7 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
     * the version of APIs supported by Configurator.
     * We are not ready to support multiples version APIs so it is ok to make a constant string.
     */
-  private[this] val version = oharastream.ohara.client.configurator.v0.V0
+  private[this] val version = oharastream.ohara.client.configurator.V0
 
   private[this] implicit val advertisedInfo: AdvertisedInfo = new AdvertisedInfo(
     hostname = hostname,

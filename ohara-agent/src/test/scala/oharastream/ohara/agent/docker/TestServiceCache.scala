@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import oharastream.ohara.agent.docker.ServiceCache.RequestKey
 import oharastream.ohara.agent.{ClusterKind, ClusterStatus}
-import oharastream.ohara.client.configurator.v0.ClusterState
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.ClusterState
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils

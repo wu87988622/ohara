@@ -37,7 +37,7 @@ import akka.http.scaladsl.server.Directives.{
   _
 }
 import akka.http.scaladsl.server.Route
-import oharastream.ohara.client.configurator.v0.{BasicCreation, JsonRefiner}
+import oharastream.ohara.client.configurator.{BasicCreation, JsonRefiner}
 import oharastream.ohara.client.configurator.{Data, QueryRequest}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.ObjectKey
@@ -332,7 +332,7 @@ object RouteBuilder {
         case (name, subName) =>
           parameterMap { params =>
             val key =
-              objectKey(params.getOrElse(GROUP_KEY, oharastream.ohara.client.configurator.v0.GROUP_DEFAULT), name)
+              objectKey(params.getOrElse(GROUP_KEY, oharastream.ohara.client.configurator.GROUP_DEFAULT), name)
             routeOfSubPut(key, subName, params) ~ routeOfSubDelete(key, subName, params)
           }
       }

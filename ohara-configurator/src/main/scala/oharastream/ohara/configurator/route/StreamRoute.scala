@@ -18,8 +18,8 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent._
-import oharastream.ohara.client.configurator.v0.StreamApi
-import oharastream.ohara.client.configurator.v0.StreamApi._
+import oharastream.ohara.client.configurator.StreamApi
+import oharastream.ohara.client.configurator.StreamApi._
 import oharastream.ohara.common.setting.{ClassType, ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}

@@ -16,8 +16,8 @@
 
 package oharastream.ohara.it.performance
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
+import oharastream.ohara.client.configurator.TopicApi.TopicInfo
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.ftp.FtpSink

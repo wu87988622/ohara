@@ -18,7 +18,7 @@ package oharastream.ohara.it.client
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.LogApi
+import oharastream.ohara.client.configurator.LogApi
 import oharastream.ohara.it.{ContainerPlatform, WithRemoteConfigurator}
 import oharastream.ohara.it.category.ClientGroup
 import org.junit.Test

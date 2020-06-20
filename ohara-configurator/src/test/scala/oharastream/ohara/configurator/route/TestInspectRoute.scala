@@ -19,8 +19,8 @@ package oharastream.ohara.configurator.route
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbInfo}
-import oharastream.ohara.client.configurator.v0.{
+import oharastream.ohara.client.configurator.InspectApi.{RdbColumn, RdbInfo}
+import oharastream.ohara.client.configurator.{
   BrokerApi,
   InspectApi,
   ShabondiApi,

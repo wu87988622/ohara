@@ -18,8 +18,8 @@ package oharastream.ohara.agent
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.BrokerApi
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.BrokerApi
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils

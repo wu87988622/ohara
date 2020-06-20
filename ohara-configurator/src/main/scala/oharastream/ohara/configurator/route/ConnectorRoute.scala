@@ -19,9 +19,9 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.WorkerCollie
-import oharastream.ohara.client.configurator.v0.ConnectorApi
-import oharastream.ohara.client.configurator.v0.ConnectorApi._
-import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
+import oharastream.ohara.client.configurator.ConnectorApi
+import oharastream.ohara.client.configurator.ConnectorApi._
+import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._

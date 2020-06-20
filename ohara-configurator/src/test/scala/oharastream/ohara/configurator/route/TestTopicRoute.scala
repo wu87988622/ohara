@@ -16,9 +16,9 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.{Request, TopicInfo, TopicState}
-import oharastream.ohara.client.configurator.v0.{BrokerApi, TopicApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.TopicApi.{Request, TopicInfo, TopicState}
+import oharastream.ohara.client.configurator.{BrokerApi, TopicApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

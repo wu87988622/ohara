@@ -16,8 +16,8 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -342,7 +342,7 @@ class TestPipelineRoute extends OharaTest {
   @Test
   def testGroup(): Unit = {
     // default group
-    result(pipelineApi.request.create()).group shouldBe oharastream.ohara.client.configurator.v0.GROUP_DEFAULT
+    result(pipelineApi.request.create()).group shouldBe oharastream.ohara.client.configurator.GROUP_DEFAULT
 
     val group   = CommonUtils.randomString(10)
     val ftpInfo = result(pipelineApi.request.group(group).create())

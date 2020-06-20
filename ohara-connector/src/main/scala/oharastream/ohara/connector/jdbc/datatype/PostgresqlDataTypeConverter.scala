@@ -15,7 +15,7 @@
  */
 
 package oharastream.ohara.connector.jdbc.datatype
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 
 class PostgresqlDataTypeConverter extends RDBDataTypeConverter {
   private[this] val TYPE_NAME_INT2        = "INT2"

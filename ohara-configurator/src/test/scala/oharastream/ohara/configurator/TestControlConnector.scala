@@ -18,8 +18,8 @@ package oharastream.ohara.configurator
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
+import oharastream.ohara.client.configurator.ConnectorApi.State
+import oharastream.ohara.client.configurator.{BrokerApi, ConnectorApi, PipelineApi, TopicApi, WorkerApi}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.ftp.FtpSource

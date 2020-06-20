@@ -18,8 +18,8 @@ package oharastream.ohara.agent
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ZookeeperApi
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.util.CommonUtils

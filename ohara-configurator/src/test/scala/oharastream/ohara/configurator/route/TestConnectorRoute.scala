@@ -18,8 +18,8 @@ package oharastream.ohara.configurator.route
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.ConnectorApi.State
+import oharastream.ohara.client.configurator.{BrokerApi, ConnectorApi, TopicApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.data.{Column, DataType}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, TopicKey, WithDefinitions}

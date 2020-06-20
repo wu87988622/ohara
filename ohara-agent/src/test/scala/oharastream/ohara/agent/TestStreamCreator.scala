@@ -18,9 +18,9 @@ package oharastream.ohara.agent
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.StreamApi
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator.StreamApi
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils

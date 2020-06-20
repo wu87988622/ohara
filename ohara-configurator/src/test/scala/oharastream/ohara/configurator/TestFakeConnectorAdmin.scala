@@ -17,7 +17,7 @@
 package oharastream.ohara.configurator
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
+import oharastream.ohara.client.configurator.ConnectorApi.State
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.CommonUtils

@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{BrokerCollie, ClusterKind, DataCollie, NoSuchClusterException}
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.kafka.TopicAdmin
 

@@ -23,7 +23,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import oharastream.ohara.client.configurator.v0.ErrorApi
+import oharastream.ohara.client.configurator.ErrorApi
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import org.junit.{After, Test}

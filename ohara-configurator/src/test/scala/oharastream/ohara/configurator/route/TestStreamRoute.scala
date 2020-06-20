@@ -19,8 +19,8 @@ package oharastream.ohara.configurator.route
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey, WithDefinitions}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}

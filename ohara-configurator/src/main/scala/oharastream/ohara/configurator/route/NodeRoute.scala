@@ -19,8 +19,8 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.{ClusterKind, ServiceCollie}
-import oharastream.ohara.client.configurator.v0.NodeApi._
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, NodeApi}
+import oharastream.ohara.client.configurator.NodeApi._
+import oharastream.ohara.client.configurator.{ClusterInfo, NodeApi}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo

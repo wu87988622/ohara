@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit
 
 import akka.stream.StreamTcpException
 import oharastream.ohara.client.HttpExecutor
-import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.WorkerJson._
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.data.Column

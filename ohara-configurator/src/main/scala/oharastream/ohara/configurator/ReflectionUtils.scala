@@ -18,7 +18,7 @@ package oharastream.ohara.configurator
 
 import java.lang.reflect.Modifier
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
+import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
 import oharastream.ohara.common.setting.WithDefinitions
 import oharastream.ohara.kafka.connector.{RowSinkConnector, RowSourceConnector}
 import org.reflections.Reflections

@@ -22,13 +22,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import oharastream.ohara.agent._
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterState, NodeApi}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.VolumeApi.Volume
+import oharastream.ohara.client.configurator.{ClusterInfo, ClusterState, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils

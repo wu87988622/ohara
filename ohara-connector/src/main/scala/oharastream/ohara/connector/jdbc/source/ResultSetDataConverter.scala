@@ -18,7 +18,7 @@ package oharastream.ohara.connector.jdbc.source
 
 import java.sql.ResultSet
 
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.connector.jdbc.datatype.RDBDataTypeConverter
 import oharastream.ohara.connector.jdbc.util.ColumnInfo
 

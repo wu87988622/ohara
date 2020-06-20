@@ -18,8 +18,8 @@ package oharastream.ohara.configurator.fake
 
 import java.util.concurrent.ConcurrentHashMap
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
-import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
+import oharastream.ohara.client.configurator.ConnectorApi.State
+import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.client.kafka.ConnectorAdmin.{Creator, Validator}
 import oharastream.ohara.client.kafka.WorkerJson.{

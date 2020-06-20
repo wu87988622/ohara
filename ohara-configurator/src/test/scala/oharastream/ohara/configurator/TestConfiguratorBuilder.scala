@@ -24,7 +24,7 @@ import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.{Http, server}
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.agent.k8s.K8SClient
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator.Mode

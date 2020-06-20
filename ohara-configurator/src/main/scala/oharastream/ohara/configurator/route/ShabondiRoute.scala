@@ -18,7 +18,7 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.{ServiceCollie, ShabondiCollie}
-import oharastream.ohara.client.configurator.v0.ShabondiApi
+import oharastream.ohara.client.configurator.ShabondiApi
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._

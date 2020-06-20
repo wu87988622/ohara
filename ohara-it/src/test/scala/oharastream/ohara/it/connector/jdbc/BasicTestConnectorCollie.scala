@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ContainerApi, FileInfoApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.{BrokerApi, ContainerApi, FileInfoApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.data.Serializer

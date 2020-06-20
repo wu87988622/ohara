@@ -19,9 +19,9 @@ package oharastream.ohara.configurator.route
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

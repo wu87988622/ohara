@@ -19,11 +19,11 @@ import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.client.configurator.v0.ZookeeperApi
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.Creation
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.VolumeApi.Volume
+import oharastream.ohara.client.configurator.ZookeeperApi
+import oharastream.ohara.client.configurator.ZookeeperApi.Creation
 import oharastream.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}

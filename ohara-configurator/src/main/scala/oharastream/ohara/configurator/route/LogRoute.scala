@@ -26,13 +26,13 @@ import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.{NoSuchClusterException, ServiceCollie}
-import oharastream.ohara.client.configurator.v0.BrokerApi._
-import oharastream.ohara.client.configurator.v0.{BrokerApi, LogApi, ShabondiApi, StreamApi, WorkerApi, ZookeeperApi}
-import oharastream.ohara.client.configurator.v0.LogApi._
-import oharastream.ohara.client.configurator.v0.StreamApi._
-import oharastream.ohara.client.configurator.v0.WorkerApi._
-import oharastream.ohara.client.configurator.v0.ZookeeperApi._
-import oharastream.ohara.client.configurator.v0.ShabondiApi._
+import oharastream.ohara.client.configurator.BrokerApi._
+import oharastream.ohara.client.configurator.{BrokerApi, LogApi, ShabondiApi, StreamApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.LogApi._
+import oharastream.ohara.client.configurator.StreamApi._
+import oharastream.ohara.client.configurator.WorkerApi._
+import oharastream.ohara.client.configurator.ZookeeperApi._
+import oharastream.ohara.client.configurator.ShabondiApi._
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -104,7 +104,7 @@ object LogRoute {
   @nowarn("cat=deprecation")
   def apply(implicit collie: ServiceCollie, executionContext: ExecutionContext): server.Route =
     pathPrefix(LOG_PREFIX_PATH | LogApi.KIND) {
-      path(oharastream.ohara.client.configurator.v0.CONFIGURATOR_KIND) {
+      path(oharastream.ohara.client.configurator.CONFIGURATOR_KIND) {
         parameters(SINCE_SECONDS_KEY.as[Long].?) { sinceSeconds =>
           // the log folder is kept by ../conf/log4j.properties
           val folder   = new File("../logs")

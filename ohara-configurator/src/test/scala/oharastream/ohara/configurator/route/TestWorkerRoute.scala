@@ -18,7 +18,7 @@ package oharastream.ohara.configurator.route
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.{
+import oharastream.ohara.client.configurator.{
   BrokerApi,
   ClusterState,
   ConnectorApi,

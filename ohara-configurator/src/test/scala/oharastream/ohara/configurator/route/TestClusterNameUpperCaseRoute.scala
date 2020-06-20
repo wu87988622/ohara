@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0.{NodeApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.{NodeApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.configurator.Configurator

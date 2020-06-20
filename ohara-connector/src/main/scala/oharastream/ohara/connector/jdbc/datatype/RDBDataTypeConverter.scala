@@ -19,7 +19,7 @@ package oharastream.ohara.connector.jdbc.datatype
 import java.sql.{Date, ResultSet, Time, Timestamp}
 import java.util.Optional
 
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.connector.jdbc.util.DateTimeUtils
 
 trait RDBDataTypeConverter {

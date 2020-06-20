@@ -16,7 +16,7 @@
 
 package oharastream.ohara.client
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.{BrokerApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.VersionUtils
 import org.junit.Test

@@ -19,7 +19,7 @@ package oharastream.ohara.connector.jdbc.source
 import java.sql._
 import java.util.Calendar
 
-import oharastream.ohara.client.configurator.v0.InspectApi.{RdbColumn, RdbTable}
+import oharastream.ohara.client.configurator.InspectApi.{RdbColumn, RdbTable}
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.util.{Releasable, ReleaseOnce}
 import oharastream.ohara.connector.jdbc.datatype.{RDBDataTypeConverter, RDBDataTypeConverterFactory}

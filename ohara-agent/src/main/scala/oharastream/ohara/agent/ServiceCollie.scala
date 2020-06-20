@@ -24,10 +24,10 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName}
 import oharastream.ohara.agent.docker.ServiceCollieImpl
 import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
-import oharastream.ohara.client.configurator.v0.FileInfoApi.ClassInfo
-import oharastream.ohara.client.configurator.v0.InspectApi.FileContent
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
-import oharastream.ohara.client.configurator.v0.VolumeApi.VolumeState
+import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
+import oharastream.ohara.client.configurator.InspectApi.FileContent
+import oharastream.ohara.client.configurator.NodeApi.{Node, Resource}
+import oharastream.ohara.client.configurator.VolumeApi.VolumeState
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.setting.{ObjectKey, WithDefinitions}

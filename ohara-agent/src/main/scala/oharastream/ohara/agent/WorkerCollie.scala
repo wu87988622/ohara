@@ -19,13 +19,13 @@ import java.util.Objects
 
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.client.configurator.v0.WorkerApi
-import oharastream.ohara.client.configurator.v0.WorkerApi.{Creation, WorkerClusterInfo}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.VolumeApi.Volume
+import oharastream.ohara.client.configurator.WorkerApi
+import oharastream.ohara.client.configurator.WorkerApi.{Creation, WorkerClusterInfo}
 import oharastream.ohara.client.kafka.ConnectorAdmin
 
 import scala.concurrent.{ExecutionContext, Future}

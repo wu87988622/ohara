@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.fake.FakeK8SClient
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.rule.OharaTest
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._

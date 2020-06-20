@@ -16,7 +16,7 @@
 
 package oharastream.ohara.client.kafka
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
+import oharastream.ohara.client.configurator.ConnectorApi.State
 import oharastream.ohara.common.data._
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

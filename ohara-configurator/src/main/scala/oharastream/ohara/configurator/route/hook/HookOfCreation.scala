@@ -17,7 +17,7 @@
 package oharastream.ohara.configurator.route.hook
 
 import oharastream.ohara.client.configurator.Data
-import oharastream.ohara.client.configurator.v0.BasicCreation
+import oharastream.ohara.client.configurator.BasicCreation
 
 import scala.concurrent.Future
 

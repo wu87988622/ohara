@@ -23,8 +23,8 @@ import oharastream.ohara.agent.container.{ContainerClient, ContainerName, Contai
 import oharastream.ohara.agent.k8s.K8SClient.ContainerCreator
 import oharastream.ohara.agent.k8s.K8SJson._
 import oharastream.ohara.client.HttpExecutor
-import oharastream.ohara.client.configurator.v0.ContainerApi.{ContainerInfo, PortMapping}
-import oharastream.ohara.client.configurator.v0.NodeApi.Resource
+import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
+import oharastream.ohara.client.configurator.NodeApi.Resource
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.util.CommonUtils

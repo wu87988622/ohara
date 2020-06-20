@@ -53,7 +53,7 @@ trait ServiceKeyHolder extends Releasable {
     * @return a random key
     */
   def generateClusterKey(): ObjectKey = {
-    val key = ObjectKey.of(oharastream.ohara.client.configurator.v0.GROUP_DEFAULT, prefix + CommonUtils.randomString(7))
+    val key = ObjectKey.of(oharastream.ohara.client.configurator.GROUP_DEFAULT, prefix + CommonUtils.randomString(7))
     usedClusterKeys += key
     key
   }

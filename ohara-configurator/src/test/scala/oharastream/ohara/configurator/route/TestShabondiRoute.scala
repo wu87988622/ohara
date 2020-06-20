@@ -19,8 +19,8 @@ package oharastream.ohara.configurator.route
 import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, ClusterState, NodeApi, ShabondiApi, TopicApi}
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.{BrokerApi, ClusterState, NodeApi, ShabondiApi, TopicApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ClassType, ObjectKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

@@ -20,15 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, Resource}
-import oharastream.ohara.client.configurator.v0.{
-  BrokerApi,
-  ContainerApi,
-  ShabondiApi,
-  StreamApi,
-  WorkerApi,
-  ZookeeperApi
-}
+import oharastream.ohara.client.configurator.NodeApi.{Node, Resource}
+import oharastream.ohara.client.configurator.{BrokerApi, ContainerApi, ShabondiApi, StreamApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.util.CommonUtils
 
 import scala.jdk.CollectionConverters._

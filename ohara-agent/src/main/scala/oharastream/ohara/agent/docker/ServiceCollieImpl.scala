@@ -19,8 +19,8 @@ package oharastream.ohara.agent.docker
 import java.util.concurrent.ExecutorService
 
 import oharastream.ohara.agent.{ClusterKind, ClusterStatus, _}
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.Releasable
 

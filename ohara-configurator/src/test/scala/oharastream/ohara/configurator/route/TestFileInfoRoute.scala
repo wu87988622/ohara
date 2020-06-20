@@ -19,7 +19,7 @@ package oharastream.ohara.configurator.route
 import java.io.{File, FileOutputStream}
 import java.nio.file.Files
 
-import oharastream.ohara.client.configurator.v0.{BrokerApi, FileInfoApi, StreamApi, TopicApi, WorkerApi}
+import oharastream.ohara.client.configurator.{BrokerApi, FileInfoApi, StreamApi, TopicApi, WorkerApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -87,7 +87,7 @@ class TestFileInfoRoute extends OharaTest {
     val file     = tmpFile(CommonUtils.randomString(10).getBytes)
     val fileInfo = result(fileApi.request.file(file).name(name).upload())
     result(fileApi.list()).size shouldBe 1
-    fileInfo.group shouldBe oharastream.ohara.client.configurator.v0.GROUP_DEFAULT
+    fileInfo.group shouldBe oharastream.ohara.client.configurator.GROUP_DEFAULT
     fileInfo.name shouldBe name
     fileInfo.size shouldBe file.length()
   }

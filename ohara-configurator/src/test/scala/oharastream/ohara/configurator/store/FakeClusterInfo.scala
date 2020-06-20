@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.store
 
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, ClusterState}
+import oharastream.ohara.client.configurator.{ClusterInfo, ClusterState}
 import oharastream.ohara.common.util.CommonUtils
 import spray.json.JsValue
 

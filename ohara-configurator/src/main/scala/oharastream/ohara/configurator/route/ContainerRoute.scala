@@ -19,8 +19,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import oharastream.ohara.agent.ServiceCollie
-import oharastream.ohara.client.configurator.v0.ContainerApi
-import oharastream.ohara.client.configurator.v0.ContainerApi._
+import oharastream.ohara.client.configurator.ContainerApi
+import oharastream.ohara.client.configurator.ContainerApi._
 import oharastream.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 

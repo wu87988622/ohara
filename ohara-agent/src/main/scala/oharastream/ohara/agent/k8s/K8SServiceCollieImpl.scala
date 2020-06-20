@@ -17,7 +17,7 @@
 package oharastream.ohara.agent.k8s
 
 import oharastream.ohara.agent._
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 
 import scala.concurrent.{ExecutionContext, Future}
 

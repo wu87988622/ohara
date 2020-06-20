@@ -24,8 +24,8 @@ import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.DockerClient
 import oharastream.ohara.agent.k8s.K8SClient
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
-import oharastream.ohara.client.configurator.v0.{InspectApi, NodeApi}
+import oharastream.ohara.client.configurator.NodeApi.{Node, State}
+import oharastream.ohara.client.configurator.{InspectApi, NodeApi}
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
 import oharastream.ohara.configurator.Configurator
 import oharastream.ohara.it.ContainerPlatform.ResourceRef

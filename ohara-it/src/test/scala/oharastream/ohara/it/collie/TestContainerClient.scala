@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.DataCollie
 import oharastream.ohara.agent.docker.DockerClient
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
+import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.it.{ContainerPlatform, IntegrationTest}
 import org.junit.runner.RunWith

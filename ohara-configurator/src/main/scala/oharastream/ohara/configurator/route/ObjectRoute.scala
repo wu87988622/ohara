@@ -17,8 +17,8 @@
 package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
-import oharastream.ohara.client.configurator.v0.ObjectApi
-import oharastream.ohara.client.configurator.v0.ObjectApi.{Creation, OBJECTS_PREFIX_PATH, ObjectInfo, Updating}
+import oharastream.ohara.client.configurator.ObjectApi
+import oharastream.ohara.client.configurator.ObjectApi.{Creation, OBJECTS_PREFIX_PATH, ObjectInfo, Updating}
 import oharastream.ohara.common.setting.SettingDef
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.store.DataStore

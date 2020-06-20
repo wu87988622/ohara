@@ -16,7 +16,7 @@
 
 package oharastream.ohara.it.performance
 
-import oharastream.ohara.client.configurator.v0.{ConnectorApi, TopicApi}
+import oharastream.ohara.client.configurator.{ConnectorApi, TopicApi}
 import oharastream.ohara.common.setting.ConnectorKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.connector.ftp.FtpSource

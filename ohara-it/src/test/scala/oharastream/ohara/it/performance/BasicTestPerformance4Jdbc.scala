@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.LongAdder
 
 import oharastream.ohara.common.util.Releasable
 import org.junit.{After, Before}
-import oharastream.ohara.client.configurator.v0.FileInfoApi
-import oharastream.ohara.client.configurator.v0.InspectApi.RdbColumn
+import oharastream.ohara.client.configurator.FileInfoApi
+import oharastream.ohara.client.configurator.InspectApi.RdbColumn
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.data.Row
 import oharastream.ohara.common.setting.ObjectKey

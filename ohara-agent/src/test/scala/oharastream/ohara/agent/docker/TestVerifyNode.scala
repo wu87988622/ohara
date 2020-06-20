@@ -20,7 +20,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent.{DataCollie, ServiceCollie}
-import oharastream.ohara.client.configurator.v0.NodeApi.{Node, State}
+import oharastream.ohara.client.configurator.NodeApi.{Node, State}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.testing.service.SshdServer

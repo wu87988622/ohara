@@ -18,19 +18,19 @@ package oharastream.ohara.configurator.route
 
 import oharastream.ohara.agent.{BrokerCollie, ClusterStatus, Collie, ServiceCollie}
 import oharastream.ohara.client.configurator.Data
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import oharastream.ohara.client.configurator.v0.FileInfoApi.FileInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.ObjectApi.ObjectInfo
-import oharastream.ohara.client.configurator.v0.PipelineApi.Pipeline
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi.TopicInfo
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{ClusterInfo, OBJECT_KEY_FORMAT}
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
+import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.ObjectApi.ObjectInfo
+import oharastream.ohara.client.configurator.PipelineApi.Pipeline
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.TopicApi.TopicInfo
+import oharastream.ohara.client.configurator.VolumeApi.Volume
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.{ClusterInfo, OBJECT_KEY_FORMAT}
 import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.configurator.route.DataChecker.CheckList
 import oharastream.ohara.configurator.store.DataStore

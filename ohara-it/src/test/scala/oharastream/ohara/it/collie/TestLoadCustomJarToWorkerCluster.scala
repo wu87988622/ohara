@@ -20,7 +20,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.it.category.CollieGroup

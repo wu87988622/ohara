@@ -23,13 +23,13 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.{entity, _}
 import oharastream.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
-import oharastream.ohara.client.configurator.v0.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.v0.FileInfoApi.{ClassInfo, FileInfo}
-import oharastream.ohara.client.configurator.v0.InspectApi._
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.WorkerApi.WorkerClusterInfo
-import oharastream.ohara.client.configurator.v0.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.v0.{
+import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.FileInfoApi.{ClassInfo, FileInfo}
+import oharastream.ohara.client.configurator.InspectApi._
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
+import oharastream.ohara.client.configurator.{
   BrokerApi,
   ErrorApi,
   FileInfoApi,
@@ -250,7 +250,7 @@ private[configurator] object InspectRoute {
       }
     } ~ path(FileInfoApi.FILE_PREFIX_PATH | FileInfoApi.KIND) {
       FileInfoRoute.routeOfUploadingFile(urlMaker = _ => None, storeOption = None)
-    } ~ path(oharastream.ohara.client.configurator.v0.CONFIGURATOR_KIND) {
+    } ~ path(oharastream.ohara.client.configurator.CONFIGURATOR_KIND) {
       complete(
         ConfiguratorInfo(
           versionInfo = ConfiguratorVersion(

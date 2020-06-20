@@ -18,7 +18,7 @@ package oharastream.ohara.connector
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.ConnectorApi.State
+import oharastream.ohara.client.configurator.ConnectorApi.State
 import oharastream.ohara.client.filesystem.FileSystem
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.exception.NoSuchFileException

@@ -17,10 +17,10 @@
 package oharastream.ohara.agent.k8s
 
 import oharastream.ohara.agent.{ClusterStatus, Collie, DataCollie}
-import oharastream.ohara.client.configurator.v0.ClusterState
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.NodeApi.Node
-import oharastream.ohara.client.configurator.v0.VolumeApi.Volume
+import oharastream.ohara.client.configurator.ClusterState
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.NodeApi.Node
+import oharastream.ohara.client.configurator.VolumeApi.Volume
 
 import scala.concurrent.{ExecutionContext, Future}
 

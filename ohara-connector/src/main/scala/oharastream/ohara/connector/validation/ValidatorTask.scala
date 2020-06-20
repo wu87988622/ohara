@@ -19,8 +19,8 @@ package oharastream.ohara.connector.validation
 import java.util
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.v0.InspectApi.{RdbInfo, RdbQuery}
-import oharastream.ohara.client.configurator.v0.{ErrorApi, InspectApi}
+import oharastream.ohara.client.configurator.InspectApi.{RdbInfo, RdbQuery}
+import oharastream.ohara.client.configurator.{ErrorApi, InspectApi}
 import oharastream.ohara.client.database.DatabaseClient
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.util.VersionUtils

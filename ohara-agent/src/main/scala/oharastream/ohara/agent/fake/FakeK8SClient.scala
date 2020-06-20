@@ -18,8 +18,8 @@ package oharastream.ohara.agent.fake
 
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.k8s._
-import oharastream.ohara.client.configurator.v0.ContainerApi.ContainerInfo
-import oharastream.ohara.client.configurator.v0.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
+import oharastream.ohara.client.configurator.{BrokerApi, NodeApi, WorkerApi, ZookeeperApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 

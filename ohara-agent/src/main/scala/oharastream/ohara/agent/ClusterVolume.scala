@@ -16,7 +16,7 @@
 
 package oharastream.ohara.agent
 
-import oharastream.ohara.client.configurator.v0.VolumeApi.VolumeState
+import oharastream.ohara.client.configurator.VolumeApi.VolumeState
 import oharastream.ohara.common.setting.ObjectKey
 
 /**

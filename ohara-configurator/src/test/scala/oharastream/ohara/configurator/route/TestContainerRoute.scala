@@ -16,7 +16,7 @@
 
 package oharastream.ohara.configurator.route
 
-import oharastream.ohara.client.configurator.v0._
+import oharastream.ohara.client.configurator._
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.{CommonUtils, Releasable}

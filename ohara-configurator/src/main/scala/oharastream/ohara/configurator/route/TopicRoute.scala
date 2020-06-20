@@ -17,11 +17,11 @@
 package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.BrokerCollie
-import oharastream.ohara.client.configurator.v0.ConnectorApi.ConnectorInfo
-import oharastream.ohara.client.configurator.v0.ShabondiApi.ShabondiClusterInfo
-import oharastream.ohara.client.configurator.v0.StreamApi.StreamClusterInfo
-import oharastream.ohara.client.configurator.v0.TopicApi._
-import oharastream.ohara.client.configurator.v0.{ShabondiApi, TopicApi}
+import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
+import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
+import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.TopicApi._
+import oharastream.ohara.client.configurator.{ShabondiApi, TopicApi}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._
