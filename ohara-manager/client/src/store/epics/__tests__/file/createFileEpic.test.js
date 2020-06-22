@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
-import { LOG_LEVEL } from 'const';
 import * as fileApi from 'api/fileApi';
 import createFileEpic from '../../file/createFileEpic';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { entity as fileEntity } from 'api/__mocks__/fileApi';
+import { delay } from 'rxjs/operators';
+import { LOG_LEVEL } from 'const';
 
 jest.mock('api/fileApi');
 
@@ -38,8 +39,16 @@ it('create file should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
+    const expected = '-- 500ms a 1999ms u';
     const subs = '    ^-----------';
+
+    jest.spyOn(fileApi, 'getAll').mockReturnValue(
+      of({
+        status: 200,
+        title: 'Get file mock',
+        data: [],
+      }).pipe(delay(500)),
+    );
 
     const action$ = hot(input, {
       a: {
@@ -76,9 +85,9 @@ it('create multiple files should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
-    const subs = '    ^-------------';
+    const input = '   ^-ab                                ';
+    const expected = '-- 500ms a 1999ms u 499ms b 1999ms v';
+    const subs = '    ^-----------------------------------';
     const anotherFileEntity = { ...fileEntity, name: 'app.jar' };
 
     const action$ = hot(input, {
@@ -130,13 +139,20 @@ it('create multiple files should be worked correctly', () => {
   });
 });
 
-it('create same file within period should be created once only', () => {
+it('create same file within period should be rename', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
-    const subs = '    ^-------------';
+    jest.restoreAllMocks();
+
+    const input = '   ^-a                ';
+    const expected = '-- 500ms a 1999ms u';
+    const subs = '    ^------------------';
+    const anotherFileEntity = {
+      ...fileEntity,
+      name: 'ohara-it-stream1.jar',
+      file: new File([], 'ohara-it-stream1.jar'),
+    };
 
     const action$ = hot(input, {
       a: {
@@ -155,10 +171,10 @@ it('create same file within period should be created once only', () => {
         payload: {
           entities: {
             files: {
-              [fileId]: fileEntity,
+              [getId(anotherFileEntity)]: anotherFileEntity,
             },
           },
-          result: fileId,
+          result: getId(anotherFileEntity),
         },
       },
     });
@@ -181,9 +197,9 @@ it('throw exception of create file should also trigger event log action', () => 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-----|';
-    const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const input = '   ^-a-----------|';
+    const expected = '-- 500ms (aeu|)';
+    const subs = '    ^-------------!';
 
     const action$ = hot(input, {
       a: {

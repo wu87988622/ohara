@@ -31,6 +31,9 @@ export const entity = {
   tags: {},
   classInfos: [],
   group: 'default',
+  file: {
+    type: 'jar',
+  },
 };
 
 // simulate a promise request with a delay of 2s

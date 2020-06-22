@@ -18,13 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  mergeMap,
-  concatMap,
-} from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
@@ -38,7 +32,7 @@ export const updateWorkerAndWorkspace$ = (values) => {
     map((res) => res.data),
     map((data) => normalize(data, schema.worker)),
     map((normalizedData) => merge(normalizedData, { workerId })),
-    concatMap((normalizedData) =>
+    tap((normalizedData) =>
       from([
         actions.updateWorkspace.trigger({
           worker: normalizedData,
@@ -47,11 +41,12 @@ export const updateWorkerAndWorkspace$ = (values) => {
         actions.updateWorker.success(normalizedData),
       ]),
     ),
+    map((normalizedData) => actions.updateWorker.success(normalizedData)),
     startWith(actions.updateWorker.request({ workerId })),
   );
 };
 
-const updateWorker$ = (values) => {
+export const updateWorker$ = (values) => {
   const workerId = getId(values);
   return defer(() => workerApi.update(values)).pipe(
     map((res) => res.data),
@@ -59,12 +54,6 @@ const updateWorker$ = (values) => {
     map((normalizedData) => merge(normalizedData, { workerId })),
     map((normalizedData) => actions.updateWorker.success(normalizedData)),
     startWith(actions.updateWorker.request({ workerId })),
-    catchError((err) =>
-      from([
-        actions.updateWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -72,5 +61,16 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorker.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) => updateWorker$(values)),
+    mergeMap((values) =>
+      updateWorker$(values).pipe(
+        catchError((err) =>
+          from([
+            actions.updateWorker.failure(
+              merge(err, { workerId: getId(values) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

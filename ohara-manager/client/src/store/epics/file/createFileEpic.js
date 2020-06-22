@@ -22,29 +22,81 @@ import {
   map,
   startWith,
   distinctUntilChanged,
-  mergeMap,
+  concatMap,
 } from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL } from 'const';
+import { isEmpty } from 'lodash';
+
+const rename$ = (values) => {
+  const { name, group } = values;
+  const filenameExtension = name.split('.').pop();
+  const fileName = name.replace('.' + filenameExtension, '');
+  let index = 1;
+  let finalName;
+
+  const renameLoop = (files) => {
+    if (
+      isEmpty(
+        files.find(
+          (file) => file.name === fileName + index + '.' + filenameExtension,
+        ),
+      )
+    ) {
+      finalName = fileName + index + '.' + filenameExtension;
+      return;
+    }
+    index++;
+    renameLoop(files);
+  };
+
+  return defer(() => fileApi.getAll()).pipe(
+    map((res) => res.data),
+    map((files) => {
+      if (
+        isEmpty(
+          files.find((file) => file.name === name && file.group === group),
+        )
+      ) {
+        return values;
+      }
+      renameLoop(files);
+      return {
+        ...values,
+        name: finalName,
+        file: new File([values.file], finalName, {
+          type: values.file.type,
+        }),
+      };
+    }),
+  );
+};
 
 export default (action$) => {
   return action$.pipe(
     ofType(actions.createFile.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((values) =>
-      defer(() => fileApi.create(values)).pipe(
-        map((res) => normalize(res.data, schema.file)),
-        map((normalizedData) => actions.createFile.success(normalizedData)),
-        startWith(actions.createFile.request()),
-        catchError((err) =>
-          from([
-            actions.createFile.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
+    concatMap((values) =>
+      rename$(values).pipe(
+        concatMap((values) =>
+          defer(() => fileApi.create(values)).pipe(
+            map((res) => normalize(res.data, schema.file)),
+            map((normalizedData) => actions.createFile.success(normalizedData)),
+            startWith(actions.createFile.request()),
+            catchError((err) =>
+              from([
+                actions.createFile.failure(err),
+                actions.createEventLog.trigger({
+                  ...err,
+                  type: LOG_LEVEL.error,
+                }),
+              ]),
+            ),
+          ),
         ),
       ),
     ),
