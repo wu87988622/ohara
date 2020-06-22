@@ -160,7 +160,12 @@ const createTopicCell = (options) => {
       const { $box, model } = this;
       const { status, id } = cellData;
       $box.find('.display-name').text(displayName);
-      $box.find('.topic-status').attr('fill', statusColors[status]);
+
+      $box
+        .find('.topic-status')
+        .attr('fill', statusColors[status])
+        .removeClass()
+        .addClass(`topic-status ${status}`);
 
       model.set('status', status, options);
 

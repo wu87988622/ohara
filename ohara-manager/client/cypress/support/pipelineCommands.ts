@@ -31,9 +31,7 @@ Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
 Cypress.Commands.add('deletePipeline', (name) => {
   cy.log(`Deleting ${name}`);
 
-  cy.get('#pipeline-list').within(() => {
-    cy.findByText(name).click();
-  });
+  cy.get('#pipeline-list').within(() => cy.findByText(name).click());
 
   cy.get('.pipeline-controls').find('button').click();
   cy.findByText('Delete this pipeline').click();
@@ -209,6 +207,19 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
   });
 });
 
+Cypress.Commands.add('removeElement', (name) => {
+  cy.log(`Remove an element: ${name}`);
+
+  cy.getCell(name).trigger('mouseover');
+  cy.cellAction(name, 'remove').click();
+  cy.findByText(/^delete$/i).click();
+
+  cy.get('#paper').findByText(name).should('not.exist');
+
+  // Ensure API requests are finished
+  cy.wait(2000);
+});
+
 Cypress.Commands.add('getCell', (name) => {
   // open the cell menu
   cy.get('#paper').within(() => {
@@ -221,8 +232,8 @@ Cypress.Commands.add('getCell', (name) => {
           ? '.stream'
           : '.connector',
       )
-      .then((el) => {
-        const testId = el[0].getAttribute('data-testid');
+      .then(($el) => {
+        const testId = $el.attr('data-testid');
         return cy.get(`g[model-id="${testId}"]`);
       });
   });
@@ -242,9 +253,7 @@ Cypress.Commands.add('cellAction', (name, action) => {
           : '.connector',
       )
       .first()
-      .within(() => {
-        cy.get(`button.${action}:visible`);
-      });
+      .within(() => cy.get(`button.${action}:visible`));
   });
 });
 

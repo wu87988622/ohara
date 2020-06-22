@@ -70,10 +70,6 @@ describe('Paper Element connections', () => {
     // let the backend API makes effect
     cy.wait(5000);
 
-    // to get the actual data-testid
-    // we need to refresh the paper again
-    cy.reload();
-
     // 1. perf source -> ftp source
     cy.log(`Cannot create a link from perf source to ftp source`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');
@@ -274,10 +270,6 @@ describe('Topic Operations of Pipeline', () => {
 
     // let the backend API makes effect
     cy.wait(5000);
-
-    // to get the actual data-testid
-    // we need to refresh the paper again
-    cy.reload();
 
     cy.log(`Auto generate topic for perf source -> console sink`);
     cy.getCell(elements.perfSourceName).trigger('mouseover');

@@ -110,6 +110,9 @@ describe('ToolBox', () => {
   context('Toolbox panels', () => {
     it('should render all collapsed panels', () => {
       cy.get('#toolbox').within(() => {
+        // All panels are collapsed by default
+        cy.get('.toolbox-list:visible').should('have.length', 0);
+
         cy.get('.toolbox-body').children().should('have.length', 4);
         cy.findByText(/^source$/i).should('exist');
         cy.findByText(/^topic$/i).should('exist');
@@ -281,50 +284,6 @@ describe('ToolBox', () => {
           .parents('.item')
           .should('not.have.class', 'is-disabled');
       });
-    });
-  });
-
-  context('Toolbox interaction with Toolbar insert controls', () => {
-    it('can be toggled by Toolbar insert controller', () => {
-      cy.get('#toolbox').within(() => {
-        cy.findByTestId('close-button').click();
-      });
-
-      cy.get('#toolbox').should('not.be.visible');
-
-      cy.findByTestId('insert-source-button').click();
-      cy.get('#toolbox').should('be.visible');
-      cy.get('#source-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
-
-      cy.findByTestId('insert-topic-button').click();
-      cy.get('#topic-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
-
-      cy.findByTestId('insert-stream-button').click();
-      cy.get('#stream-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
-
-      cy.findByTestId('insert-sink-button').click();
-      cy.get('#sink-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
-    });
-
-    it('should toggle instead of opening the panel when click on an insert control more than once', () => {
-      // First click will open the panel
-      cy.findByTestId('insert-source-button').click();
-      cy.get('#source-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
-
-      // Second click will close the panel
-      cy.findByTestId('insert-source-button').click();
-      cy.get('#source-list').should('not.be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 0);
-
-      // Click on another control will close the current active one and open the one it targets
-      cy.findByTestId('insert-stream-button').click();
-      cy.get('#stream-list').should('be.visible');
-      cy.get('.toolbox-list:visible').should('have.length', 1);
     });
   });
 });

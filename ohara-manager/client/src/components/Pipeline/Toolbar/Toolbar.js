@@ -150,7 +150,7 @@ const Toolbar = (props) => {
       .filter((element) => element.kind !== KIND.topic).length > 0;
 
   return (
-    <StyledToolbar>
+    <StyledToolbar id="toolbar">
       <div className="toolbox-controls">
         <ButtonGroup size="small">
           <Button
@@ -194,6 +194,7 @@ const Toolbar = (props) => {
             <Button
               disabled={scale <= 0.25}
               onClick={() => handleZoom(scale, 'out')}
+              testId="zoom-out-button"
             >
               <Tooltip title="Zoom out">
                 <RemoveIcon color="action" />
@@ -203,6 +204,7 @@ const Toolbar = (props) => {
               color="default"
               onClick={handleZoomClick}
               size="small"
+              testId="zoom-display"
               variant="outlined"
             >
               {getZoomDisplayedValue(scale)}
@@ -210,6 +212,7 @@ const Toolbar = (props) => {
             <Button
               disabled={scale >= 1.5}
               onClick={() => handleZoom(scale, 'in')}
+              testId="zoom-in-button"
             >
               <Tooltip title="Zoom in">
                 <AddIcon color="action" />
@@ -220,6 +223,7 @@ const Toolbar = (props) => {
 
           <Menu
             anchorEl={zoomAnchorEl}
+            data-testid="zoom-dropdown"
             keepMounted
             onClose={handleZoomClose}
             open={Boolean(zoomAnchorEl)}
@@ -248,6 +252,7 @@ const Toolbar = (props) => {
                 setScale(newScale);
               }}
               size="small"
+              testId="fit-button"
               variant="outlined"
             >
               <FullscreenIcon color="action" />
@@ -263,6 +268,7 @@ const Toolbar = (props) => {
               disabled={!selectedCell}
               onClick={() => paperApi.center(selectedCell.id)}
               size="small"
+              testId="center-button"
               variant="outlined"
             >
               <FullscreenExitIcon color="action" />
@@ -278,6 +284,7 @@ const Toolbar = (props) => {
           endIcon={<ArrowDropDownIcon />}
           onClick={handlePipelineControlsClick}
           size="small"
+          testId="pipeline-controls-button"
           variant="outlined"
         >
           PIPELINE
@@ -286,6 +293,7 @@ const Toolbar = (props) => {
 
         <Menu
           anchorEl={pipelineAnchorEl}
+          data-testid="pipeline-controls-dropdown"
           keepMounted
           onClose={handlePipelineControlsClose}
           open={Boolean(pipelineAnchorEl)}
@@ -309,6 +317,7 @@ const Toolbar = (props) => {
               <Switch
                 checked={isMetricsOn}
                 color="primary"
+                data-testid="metrics-switch"
                 onChange={() => {
                   pipelineDispatch({ type: 'toggleMetricsButton' });
                   paperApi.toggleMetrics(!isMetricsOn);

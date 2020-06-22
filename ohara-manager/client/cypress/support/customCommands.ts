@@ -87,7 +87,7 @@ declare global {
         topicName?: string,
       ) => Chainable<void>;
       deleteAllServices: () => Chainable<null>;
-      // Drag & Drop
+      // Paper
       dragAndDrop: (
         shiftX: number,
         shiftY: number,
@@ -98,6 +98,7 @@ declare global {
         kind: string,
         className?: string,
       ) => Chainable<null>;
+      removeElement: (name: string) => Chainable<null>;
       getCell: (name: string) => Chainable<HTMLElement>;
       cellAction: (name: string, action: string) => Chainable<HTMLElement>;
       uploadStreamJar: () => Chainable<null>;
@@ -229,9 +230,9 @@ Cypress.Commands.add(
 
     // Ensure workspace is completely ready
     cy.findByTestId('create-workspace').should('not.be.visible');
-    cy.findByText('Successfully created workspace workspace1.').should(
-      'not.be.visible',
-    );
+    cy.findByText('Successfully created workspace workspace1.', {
+      timeout: 70000,
+    }).should('not.be.visible');
 
     cy.end();
   },
