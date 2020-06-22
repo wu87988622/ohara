@@ -26,26 +26,6 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateWorkerAndWorkspace$ = (values) => {
-  const workerId = getId(values);
-  return defer(() => workerApi.update(values)).pipe(
-    map((res) => res.data),
-    map((data) => normalize(data, schema.worker)),
-    map((normalizedData) => merge(normalizedData, { workerId })),
-    tap((normalizedData) =>
-      from([
-        actions.updateWorkspace.trigger({
-          worker: normalizedData,
-          ...values.workspaceKey,
-        }),
-        actions.updateWorker.success(normalizedData),
-      ]),
-    ),
-    map((normalizedData) => actions.updateWorker.success(normalizedData)),
-    startWith(actions.updateWorker.request({ workerId })),
-  );
-};
-
 export const updateWorker$ = (values) => {
   const workerId = getId(values);
   return defer(() => workerApi.update(values)).pipe(

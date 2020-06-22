@@ -26,27 +26,6 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-// Note: The caller SHOULD handle the error of this action
-export const updateZookeeperAndWorkspace$ = (values) => {
-  const zookeeperId = getId(values);
-  return defer(() => zookeeperApi.update(values)).pipe(
-    map((res) => res.data),
-    map((data) => normalize(data, schema.zookeeper)),
-    map((normalizedData) => merge(normalizedData, { zookeeperId })),
-    tap((normalizedData) =>
-      from([
-        actions.updateWorkspace.trigger({
-          zookeeper: normalizedData,
-          ...values.workspaceKey,
-        }),
-        actions.updateZookeeper.success(normalizedData),
-      ]),
-    ),
-    map((normalizedData) => actions.updateZookeeper.success(normalizedData)),
-    startWith(actions.updateZookeeper.request({ zookeeperId })),
-  );
-};
-
 export const updateZookeeper$ = (values) => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.update(values)).pipe(
