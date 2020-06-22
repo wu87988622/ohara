@@ -39,7 +39,7 @@ const NodeListDialog = (props) => {
   };
 
   const handleDelete = (nodeToDelete) => {
-    deleteNode(nodeToDelete?.hostname);
+    return deleteNode(nodeToDelete?.hostname);
   };
 
   const handleUpdate = (nodeToUpdate) => {

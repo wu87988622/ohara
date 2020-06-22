@@ -114,7 +114,17 @@ export const useFetchNodesAction = () => {
 
 export const useDeleteNodeAction = () => {
   const dispatch = useDispatch();
-  return function (values) {
-    dispatch(actions.deleteNode.trigger(values));
-  };
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteNode.trigger({
+            values,
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch],
+  );
 };

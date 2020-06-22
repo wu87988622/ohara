@@ -77,7 +77,7 @@ function WorkerNodesPage() {
     );
   };
 
-  const handleRemove = (nodeToRemove) => {
+  const handleDelete = (nodeToRemove) => {
     const shouldBeRemoved = some(
       workerNodesInWorkspace,
       (n) => n.hostname === nodeToRemove?.hostname,
@@ -114,7 +114,7 @@ function WorkerNodesPage() {
     <>
       <NodeTable
         nodes={workerNodesInWorkspace}
-        onRemove={handleRemove}
+        onDelete={handleDelete}
         options={{
           comparison: true,
           comparedNodes: nodesInWorker,

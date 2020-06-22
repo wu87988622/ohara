@@ -530,6 +530,9 @@ it('throw exception of fetch node list should also trigger event log action', ()
 
 // delete action
 it('delete node should be worked correctly', () => {
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
+
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
@@ -540,7 +543,11 @@ it('delete node should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteNode.TRIGGER,
-        payload: nodeEntity.hostname,
+        payload: {
+          values: nodeEntity.hostname,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = deleteNodeEpic(action$);
@@ -558,6 +565,9 @@ it('delete node should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).toHaveBeenCalled();
+    expect(mockReject).not.toHaveBeenCalled();
   });
 });
 
@@ -581,6 +591,8 @@ it('delete node failed after reach retry limit', () => {
       data: [],
     }),
   );
+  const mockResolve = jest.fn();
+  const mockReject = jest.fn();
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
@@ -593,7 +605,11 @@ it('delete node failed after reach retry limit', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteNode.TRIGGER,
-        payload: nodeEntity.hostname,
+        payload: {
+          values: nodeEntity.hostname,
+          resolve: mockResolve,
+          reject: mockReject,
+        },
       },
     });
     const output$ = deleteNodeEpic(action$);
@@ -624,6 +640,9 @@ it('delete node failed after reach retry limit', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(mockResolve).not.toHaveBeenCalled();
+    expect(mockReject).toHaveBeenCalled();
   });
 });
 
@@ -638,7 +657,9 @@ it('delete node multiple times should be executed once', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteNode.TRIGGER,
-        payload: nodeEntity.hostname,
+        payload: {
+          values: nodeEntity.hostname,
+        },
       },
     });
     const output$ = deleteNodeEpic(action$);
@@ -675,11 +696,15 @@ it('delete different node should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteNode.TRIGGER,
-        payload: nodeEntity.hostname,
+        payload: {
+          values: nodeEntity.hostname,
+        },
       },
       b: {
         type: actions.deleteNode.TRIGGER,
-        payload: anotherNodeEntity.hostname,
+        payload: {
+          values: anotherNodeEntity.hostname,
+        },
       },
     });
     const output$ = deleteNodeEpic(action$);

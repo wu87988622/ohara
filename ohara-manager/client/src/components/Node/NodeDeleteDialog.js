@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { isFunction } from 'lodash';
+import { isFunction, noop } from 'lodash';
 import { DeleteDialog } from 'components/common/Dialog';
 
 const defaultOptions = {
@@ -27,14 +27,35 @@ const defaultOptions = {
 
 function NodeDeleteDialog({ node, isOpen, onClose, onConfirm, ...restProps }) {
   const options = { ...defaultOptions, ...restProps.options };
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = () => {
+    setLoading(true);
+    const res = onConfirm(node);
+    if (res instanceof Promise) {
+      res
+        .then(() => {
+          setLoading(false);
+          onClose();
+        })
+        .catch(() => {
+          setLoading(false);
+          onClose();
+        });
+    } else {
+      setLoading(false);
+      onClose();
+    }
+  };
 
   return (
     <DeleteDialog
       content={
         isFunction(options?.content) ? options.content(node) : options?.content
       }
-      onClose={onClose}
-      onConfirm={() => onConfirm(node)}
+      isWorking={loading}
+      onClose={loading ? noop : onClose}
+      onConfirm={handleConfirm}
       open={isOpen}
       title={isFunction(options?.title) ? options.title(node) : options?.title}
     />

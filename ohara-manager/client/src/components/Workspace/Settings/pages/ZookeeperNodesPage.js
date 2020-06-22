@@ -77,7 +77,7 @@ function ZookeeperNodesPage() {
     );
   };
 
-  const handleRemove = (nodeToRemove) => {
+  const handleDelete = (nodeToRemove) => {
     const shouldBeRemoved = some(
       zookeeperNodesInWorkspace,
       (n) => n.hostname === nodeToRemove?.hostname,
@@ -114,7 +114,7 @@ function ZookeeperNodesPage() {
     <>
       <NodeTable
         nodes={zookeeperNodesInWorkspace}
-        onRemove={handleRemove}
+        onDelete={handleDelete}
         options={{
           comparison: true,
           comparedNodes: nodesInZookeeper,

@@ -19,7 +19,6 @@ import NodeDeleteDialog from './NodeDeleteDialog';
 import NodeDetailDialog from './NodeDetailDialog';
 import NodeEditorDialog from './NodeEditorDialog';
 import NodeInfoTable from './NodeInfoTable';
-import NodeRemoveDialog from './NodeRemoveDialog';
 import NodeSelectorDialog from './NodeSelectorDialog';
 import NodeServiceTable from './NodeServiceTable';
 import NodeTable from './NodeTable';
@@ -30,7 +29,6 @@ export {
   NodeDetailDialog,
   NodeEditorDialog,
   NodeInfoTable,
-  NodeRemoveDialog,
   NodeSelectorDialog,
   NodeServiceTable,
   NodeTable,

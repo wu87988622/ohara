@@ -45,7 +45,6 @@ import NodeCreateDialog from './NodeCreateDialog';
 import NodeDeleteDialog from './NodeDeleteDialog';
 import NodeDetailDialog from './NodeDetailDialog';
 import NodeEditorDialog from './NodeEditorDialog';
-import NodeRemoveDialog from './NodeRemoveDialog';
 import NodeStateChip from './NodeStateChip';
 
 const defaultOptions = {
@@ -60,7 +59,6 @@ const defaultOptions = {
   onEditorIconClick: null,
   onUndoIconClick: null,
   onRefreshIconClick: null,
-  onRemoveIconClick: null,
   selection: false,
   selectedNodes: [],
   disabledNodes: [],
@@ -87,7 +85,6 @@ function NodeTable(props) {
     onCreate,
     onDelete,
     onUpdate,
-    onRemove,
     onSelectionChange,
     title,
   } = props;
@@ -99,7 +96,6 @@ function NodeTable(props) {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditorDialogOpen, setIsEditorDialogOpen] = useState(false);
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
 
   const data = options?.comparison
     ? sortBy(unionBy(options?.comparedNodes, nodes, 'hostname'), ['hostname'])
@@ -167,28 +163,9 @@ function NodeTable(props) {
     }
   };
 
-  const handleRemoveIconClick = (node) => {
-    if (isFunction(options?.onRemoveIconClick)) {
-      options.onRemoveIconClick(node);
-    } else {
-      setIsRemoveDialogOpen(true);
-      setActiveNode(node);
-    }
-  };
-
-  const handleDeleteDialogConfirm = (nodeToDelete) => {
-    onDelete(nodeToDelete);
-    setIsDeleteDialogOpen(false);
-  };
-
   const handleEditorDialogConfirm = (nodeToUpdate) => {
     onUpdate(nodeToUpdate);
     setIsEditorDialogOpen(false);
-  };
-
-  const handleRemoveDialogConfirm = (nodeToRemove) => {
-    onRemove(nodeToRemove);
-    setIsRemoveDialogOpen(false);
   };
 
   const renderResourceColumns = () => {
@@ -270,24 +247,13 @@ function NodeTable(props) {
       const showUndoIcon = (node) =>
         (options?.comparison && willBeAdded(node)) || willBeRemoved(node);
 
-      const showRemoveIcon = (node) =>
-        options?.showRemoveIcon && !showUndoIcon(node);
-
       const disabledDeleteIcon = isFunction(options?.disabledDeleteIcon)
         ? options?.disabledDeleteIcon(node)
         : options?.disabledDeleteIcon;
 
-      const disabledRemoveIcon = isFunction(options?.disabledRemoveIcon)
-        ? options?.disabledRemoveIcon(node)
-        : options?.disabledRemoveIcon;
-
       const deleteTooltip = isFunction(options?.deleteTooltip)
         ? options?.deleteTooltip(node)
         : options?.deleteTooltip;
-
-      const removeTooltip = isFunction(options?.removeTooltip)
-        ? options?.removeTooltip(node)
-        : options?.removeTooltip;
 
       return (
         <Actions
@@ -312,13 +278,6 @@ function NodeTable(props) {
               onClick: handleDeleteIconClick,
               tooltip: deleteTooltip || 'Delete node',
               testid: `delete-node-${node.hostname}`,
-            },
-            {
-              disabled: disabledRemoveIcon,
-              hidden: !showRemoveIcon(node),
-              name: 'remove',
-              onClick: handleRemoveIconClick,
-              tooltip: removeTooltip || 'Remove node',
             },
             {
               hidden: !showUndoIcon(node),
@@ -416,7 +375,7 @@ function NodeTable(props) {
         isOpen={isDeleteDialogOpen}
         node={activeNode}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDeleteDialogConfirm}
+        onConfirm={onDelete}
       />
       <NodeDetailDialog
         isOpen={isDetailDialogOpen}
@@ -428,12 +387,6 @@ function NodeTable(props) {
         node={activeNode}
         onClose={() => setIsEditorDialogOpen(false)}
         onConfirm={handleEditorDialogConfirm}
-      />
-      <NodeRemoveDialog
-        isOpen={isRemoveDialogOpen}
-        node={activeNode}
-        onClose={() => setIsRemoveDialogOpen(false)}
-        onConfirm={handleRemoveDialogConfirm}
       />
     </>
   );
@@ -463,7 +416,6 @@ NodeTable.propTypes = {
   onCreate: PropTypes.func,
   onDelete: PropTypes.func,
   onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
   onSelectionChange: PropTypes.func,
   options: PropTypes.shape({
     comparison: PropTypes.bool,
@@ -486,7 +438,6 @@ NodeTable.propTypes = {
     onEditorIconClick: PropTypes.func,
     onUndoIconClick: PropTypes.func,
     onRefreshIconClick: PropTypes.func,
-    onRemoveIconClick: PropTypes.func,
     prompt: PropTypes.string,
     selection: PropTypes.bool,
     selectedNodes: PropTypes.array,
@@ -512,7 +463,6 @@ NodeTable.defaultProps = {
   onCreate: () => {},
   onDelete: () => {},
   onUpdate: () => {},
-  onRemove: () => {},
   onSelectionChange: () => {},
   options: defaultOptions,
   title: 'Nodes',

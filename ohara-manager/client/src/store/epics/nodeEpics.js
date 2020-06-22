@@ -126,14 +126,6 @@ const deleteNode$ = (hostname) =>
         ),
       ),
     ),
-    map(() => actions.deleteNode.success(hostname)),
-    startWith(actions.deleteNode.request()),
-    catchError((err) =>
-      from([
-        actions.deleteNode.failure(err),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 
 export const deleteNodeEpic = (action$) =>
@@ -141,7 +133,22 @@ export const deleteNodeEpic = (action$) =>
     ofType(actions.deleteNode.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((hostname) => deleteNode$(hostname)),
+    mergeMap(({ values, resolve, reject }) => {
+      return deleteNode$(values).pipe(
+        map(() => {
+          if (resolve) resolve();
+          return actions.deleteNode.success(values);
+        }),
+        startWith(actions.deleteNode.request()),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.deleteNode.failure(err),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]);
+        }),
+      );
+    }),
   );
 
 export default combineEpics(

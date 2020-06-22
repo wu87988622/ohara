@@ -82,5 +82,39 @@ describe('App Bar', () => {
       // will auto back to node list, and the node list should be empty
       cy.findByText(hostname).should('not.exist');
     });
+
+    it('should not able to remove an in use node', () => {
+      const node = {
+        hostname: generate.serviceName(),
+        port: generate.port(),
+        user: generate.userName(),
+        password: generate.password(),
+      };
+
+      // create workspace
+      cy.createWorkspace({ node });
+
+      // click node list
+      cy.findByTitle(/node list/i).click();
+      cy.findByTestId(`delete-node-${node.hostname}`).click();
+      cy.findAllByTestId('confirm-button-DELETE')
+        .filter(':visible')
+        .should('have.length', 1)
+        .click();
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // the button should be disable during removing
+          cy.get('button').should('be.disabled');
+        });
+
+      // we could not remove the node which is in use
+      cy.findByText(
+        `Try to remove node: "${node.hostname}" failed after retry 5 times.`,
+      ).should('exist');
+      cy.findByText(node.hostname).should('exist');
+    });
   });
 });

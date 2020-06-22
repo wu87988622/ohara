@@ -43,7 +43,7 @@ function WorkspaceNodesPage() {
     setIsSelectorDialogOpen(true);
   };
 
-  const handleRemove = (nodeToRemove) => {
+  const handleDelete = (nodeToRemove) => {
     const shouldBeRemoved = some(
       nodesInWorkspace,
       (n) => n.hostname === nodeToRemove?.hostname,
@@ -101,7 +101,7 @@ function WorkspaceNodesPage() {
     <>
       <NodeTable
         nodes={nodesInWorkspace}
-        onRemove={handleRemove}
+        onDelete={handleDelete}
         options={{
           customColumns: [
             {

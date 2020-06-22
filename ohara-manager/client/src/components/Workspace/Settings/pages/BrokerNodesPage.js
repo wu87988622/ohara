@@ -77,7 +77,7 @@ function BrokerNodesPage() {
     );
   };
 
-  const handleRemove = (nodeToRemove) => {
+  const handleDelete = (nodeToRemove) => {
     const shouldBeRemoved = some(
       brokerNodesInWorkspace,
       (n) => n.hostname === nodeToRemove?.hostname,
@@ -114,7 +114,7 @@ function BrokerNodesPage() {
     <>
       <NodeTable
         nodes={brokerNodesInWorkspace}
-        onRemove={handleRemove}
+        onDelete={handleDelete}
         options={{
           comparison: true,
           comparedNodes: nodesInBroker,
