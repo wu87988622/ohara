@@ -18,7 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';

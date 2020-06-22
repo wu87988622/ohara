@@ -18,7 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
