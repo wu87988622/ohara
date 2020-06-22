@@ -45,12 +45,12 @@ it('stop worker should be worked correctly', () => {
 
     const input = '   ^-a        ';
     const expected = '--a 499ms v';
-    const subs = '    ^----------';
+    const subs = ['   ^----------', '--^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.stopWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
     });
     const output$ = stopWorkerEpic(action$);
@@ -107,14 +107,14 @@ it('stop worker failed after reach retry limit', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a             ';
-    // we failed after retry 11 times (11 * 2000ms = 22s)
-    const expected = '--a 21999ms (vu)';
-    const subs = '    ^---------------';
+    // we failed after retry 10 times (10 * 2000ms = 20s)
+    const expected = '--a 19999ms (vu)';
+    const subs = ['   ^---------------', '--^ 19999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.stopWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
     });
     const output$ = stopWorkerEpic(action$);
@@ -132,7 +132,7 @@ it('stop worker failed after reach retry limit', () => {
           workerId: wkId,
           data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
           meta: undefined,
-          title: `Try to stop worker: "${workerEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
+          title: `Try to stop worker: "${workerEntity.name}" failed after retry 10 times. Expected state is nonexistent, Actual state: RUNNING`,
         },
       },
       u: {
@@ -141,7 +141,7 @@ it('stop worker failed after reach retry limit', () => {
           workerId: wkId,
           data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
           meta: undefined,
-          title: `Try to stop worker: "${workerEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,
+          title: `Try to stop worker: "${workerEntity.name}" failed after retry 10 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,
         },
       },
@@ -159,12 +159,12 @@ it('stop worker multiple times should be executed once', () => {
 
     const input = '   ^-a---a 1s a 10s ';
     const expected = '--a       499ms v';
-    const subs = '    ^----------------';
+    const subs = ['   ^----------------', '--^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.stopWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
     });
     const output$ = stopWorkerEpic(action$);
@@ -210,16 +210,16 @@ it('stop different worker should be worked correctly', () => {
     };
     const input = '   ^-a--b           ';
     const expected = '--a--b 496ms y--z';
-    const subs = '    ^----------------';
+    const subs = ['   ^----------------', '--^ 499ms !', '-----^ 499ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.stopWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: workerEntity },
       },
       b: {
         type: actions.stopWorker.TRIGGER,
-        payload: anotherWorkerEntity,
+        payload: { values: anotherWorkerEntity },
       },
     });
     const output$ = stopWorkerEpic(action$);

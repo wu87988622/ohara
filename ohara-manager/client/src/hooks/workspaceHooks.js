@@ -68,6 +68,24 @@ export const useUpdateWorkspaceAction = () => {
   );
 };
 
+export const useSimpleDeleteWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const group = hooks.useWorkspaceGroup();
+  return useCallback(
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.simpleDeleteWorkspace.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, group],
+  );
+};
+
 export const useDiscardWorkspaceChangedSettingsAction = () => {
   const broker = hooks.useBroker();
   const worker = hooks.useWorker();

@@ -139,7 +139,16 @@ export const useStopBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    (name) => dispatch(actions.stopBroker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopBroker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };
@@ -148,7 +157,16 @@ export const useDeleteBrokerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useBrokerGroup();
   return useCallback(
-    (name) => dispatch(actions.deleteBroker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteBroker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

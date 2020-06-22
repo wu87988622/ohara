@@ -20,28 +20,34 @@ import { min } from 'lodash';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 const Progress = (props) => {
-  const { activeIndex, activities } = props.state.context;
+  const { activeStep, error, steps } = props;
 
-  const steps = activities.filter((activity) => !activity.hidden).length;
-  const step = activeIndex;
+  const hasError = !!error;
 
-  const value = min([(step / steps) * 100, 100]);
+  const numberOfSegments = steps.filter((step) => !step.hidden).length;
 
-  const valueBuffer = value + (100 / steps) * 0.9;
+  const value = min([(activeStep / numberOfSegments) * 100, 100]);
+
+  const valueBuffer = value + (100 / numberOfSegments) * 0.9;
 
   return (
-    <LinearProgress value={value} valueBuffer={valueBuffer} variant="buffer" />
+    <LinearProgress
+      color={hasError ? 'secondary' : 'primary'}
+      value={value}
+      valueBuffer={valueBuffer}
+      variant="buffer"
+    />
   );
 };
 
 Progress.propTypes = {
-  state: PropTypes.shape({
-    context: PropTypes.shape({
-      activeIndex: PropTypes.number,
-      activities: PropTypes.array,
-      error: PropTypes.object,
-    }).isRequired,
-  }).isRequired,
+  activeStep: PropTypes.number.isRequired,
+  error: PropTypes.object,
+  steps: PropTypes.arrayOf(
+    PropTypes.shape({
+      hidden: PropTypes.bool,
+    }),
+  ).isRequired,
 };
 
 export default Progress;

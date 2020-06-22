@@ -61,3 +61,38 @@ export function startWorker(key: ObjectKey) {
     ),
   );
 }
+
+export function stopWorker(key: ObjectKey) {
+  return zip(
+    // attempt to stop at intervals
+    deferApi(() => workerApi.stop(key)),
+    // wait until the service is not running
+    deferApi(() => workerApi.get(key)).pipe(
+      map((res) => {
+        if (isServiceRunning(res)) throw res;
+        return res.data;
+      }),
+    ),
+  ).pipe(
+    map(([, data]) => data),
+    // retry every 2 seconds, up to 10 times
+    retryBackoff({
+      initialInterval: 2000,
+      maxRetries: 10,
+      maxInterval: 2000,
+    }),
+    catchError((error) =>
+      throwError({
+        data: error?.data,
+        meta: error?.meta,
+        title:
+          `Try to stop worker: "${key.name}" failed after retry 10 times. ` +
+          `Expected state is nonexistent, Actual state: ${error.data.state}`,
+      }),
+    ),
+  );
+}
+
+export function deleteWorker(key: ObjectKey) {
+  return deferApi(() => workerApi.remove(key));
+}

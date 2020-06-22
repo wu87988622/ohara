@@ -39,12 +39,12 @@ it('delete zookeeper should be worked correctly', () => {
 
     const input = '   ^-a        ';
     const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const subs = ['   ^----------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
     });
     const output$ = deleteZookeeperEpic(action$);
@@ -76,17 +76,17 @@ it('delete multiple zookeepers should be worked correctly', () => {
 
     const input = '   ^-ab         ';
     const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const subs = ['   ^------------', '--^ 999ms !', '---^ 999ms !'];
     const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
       b: {
         type: actions.deleteZookeeper.TRIGGER,
-        payload: anotherZookeeperEntity,
+        payload: { values: anotherZookeeperEntity },
       },
     });
     const output$ = deleteZookeeperEpic(action$);
@@ -130,12 +130,12 @@ it('delete same zookeeper within period should be created once only', () => {
 
     const input = '   ^-aa 10s a---';
     const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const subs = ['   ^------------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
     });
     const output$ = deleteZookeeperEpic(action$);
@@ -167,21 +167,21 @@ it('throw exception of delete zookeeper should also trigger event log action', (
     data: {},
     title: 'mock delete zookeeper failed',
   };
-  const spyCreate = jest
+  const spyDelete = jest
     .spyOn(zookeeperApi, 'remove')
-    .mockReturnValueOnce(throwError(error));
+    .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const subs = ['   ^-------!', '--(^!)'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: zookeeperEntity },
       },
     });
     const output$ = deleteZookeeperEpic(action$);
@@ -209,6 +209,6 @@ it('throw exception of delete zookeeper should also trigger event log action', (
 
     flush();
 
-    expect(spyCreate).toHaveBeenCalled();
+    expect(spyDelete).toHaveBeenCalled();
   });
 });

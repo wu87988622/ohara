@@ -28,6 +28,7 @@ export default function reducer(state = {}, action) {
         action.payload.entities?.[ENTITY_TYPE.workspaces],
       );
     case actions.deleteWorkspace.SUCCESS:
+    case actions.simpleDeleteWorkspace.SUCCESS:
       return omit(state, action.payload?.workspaceId);
     default:
       return entity(ENTITY_TYPE.workspaces)(state, action);

@@ -24,7 +24,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import { FORM } from 'const';
 import * as hooks from 'hooks';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
-import { FSMStepper } from 'components/common/Stepper';
+import Stepper from 'components/common/FSMStepper';
 import CreateWorkspaceForm from './CreateWorkspaceForm';
 
 export default () => {
@@ -38,6 +38,13 @@ export default () => {
   const startBroker = hooks.useStartBrokerAction();
   const startWorker = hooks.useStartWorkerAction();
   const startZookeeper = hooks.useStartZookeeperAction();
+  const stopBroker = hooks.useStopBrokerAction();
+  const stopWorker = hooks.useStopWorkerAction();
+  const stopZookeeper = hooks.useStopZookeeperAction();
+  const deleteBroker = hooks.useDeleteBrokerAction();
+  const deleteWorker = hooks.useDeleteWorkerAction();
+  const deleteZookeeper = hooks.useDeleteZookeeperAction();
+  const deleteWorkspace = hooks.useSimpleDeleteWorkspaceAction();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const refreshNodes = hooks.useFetchNodesAction();
   const eventLog = hooks.useEventLog();
@@ -45,38 +52,47 @@ export default () => {
   const switchFormStep = hooks.useSwitchCreateWorkspaceStepAction();
 
   const [submitting, setSubmitting] = useState(false);
-  const [activities, setActivities] = useState([]);
+  const [steps, setSteps] = useState([]);
 
   const handleSubmit = (values) => {
-    setActivities([
+    setSteps([
       {
         name: 'create workspace',
         action: () => createWorkspace(values),
+        revertAction: () => deleteWorkspace(values?.name),
       },
       {
         name: 'create zookeeper',
         action: () => createZookeeper(values?.zookeeper),
+        revertAction: () => deleteZookeeper(values?.zookeeper?.name),
+        delay: 1000,
       },
       {
         name: 'create broker',
         action: () => createBroker(values?.broker),
+        revertAction: () => deleteBroker(values?.broker?.name),
+        delay: 1000,
       },
       {
         name: 'create worker',
         action: () => createWorker(values?.worker),
+        revertAction: () => deleteWorker(values?.worker?.name),
+        delay: 1000,
       },
       {
         name: 'start zookeeper',
         action: () => startZookeeper(values?.zookeeper?.name),
-        delay: 100, // This is a simple example of delay
+        revertAction: () => stopZookeeper(values?.zookeeper?.name),
       },
       {
         name: 'start broker',
         action: () => startBroker(values?.broker?.name),
+        revertAction: () => stopBroker(values?.broker?.name),
       },
       {
         name: 'start worker',
         action: () => startWorker(values?.worker?.name),
+        revertAction: () => stopWorker(values?.worker?.name),
       },
       {
         name: 'finalize',
@@ -127,7 +143,7 @@ export default () => {
             {'Create Workspace'}
           </DialogTitle>
           <DialogContent>
-            <FSMStepper activities={activities} onClose={handleClose} />
+            <Stepper onClose={handleClose} revertible steps={steps} />
           </DialogContent>
         </Dialog>
       )}

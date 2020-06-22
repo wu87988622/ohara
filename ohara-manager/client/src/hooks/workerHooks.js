@@ -139,7 +139,16 @@ export const useStopWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    (name) => dispatch(actions.stopWorker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopWorker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };
@@ -148,7 +157,16 @@ export const useDeleteWorkerAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkerGroup();
   return useCallback(
-    (name) => dispatch(actions.deleteWorker.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteWorker.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

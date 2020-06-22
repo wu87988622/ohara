@@ -27,10 +27,12 @@ import {
   distinctUntilChanged,
   mergeMap,
   concatMap,
+  takeUntil,
 } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
+import { stopBroker } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
@@ -76,14 +78,25 @@ export default (action$) =>
     ofType(actions.stopBroker.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      stopBroker$(params).pipe(
-        catchError((err) =>
-          from([
-            actions.stopBroker.failure(merge(err, { brokerId: getId(params) })),
+    mergeMap(({ values, resolve, reject }) => {
+      const brokerId = getId(values);
+      return stopBroker(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.broker), {
+            brokerId,
+          });
+          return actions.stopBroker.success(normalizedData);
+        }),
+        startWith(actions.stopBroker.request({ brokerId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.stopBroker.failure(merge(err, { brokerId: getId(values) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.stopBroker.CANCEL))),
+      );
+    }),
   );

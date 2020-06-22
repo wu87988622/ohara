@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
-import FSMStepper from './FSMStepper';
+import styled, { css } from 'styled-components';
 
-export { FSMStepper };
+export default styled.div(
+  ({ theme }) => css`
+    margin-bottom: ${theme.spacing(3)}px;
+
+    .stepper {
+      padding: ${theme.spacing(3, 0)};
+    }
+  `,
+);

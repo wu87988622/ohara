@@ -15,6 +15,7 @@
  */
 
 import { map } from 'rxjs/operators';
+import { ObjectKey } from 'api/apiInterface/basicInterface';
 import * as workspaceApi from 'api/workspaceApi';
 import { deferApi } from './internal/deferApi';
 
@@ -22,4 +23,8 @@ export function createWorkspace(values: any) {
   return deferApi(() => workspaceApi.create(values)).pipe(
     map((res) => res.data),
   );
+}
+
+export function deleteWorkspace(key: ObjectKey) {
+  return deferApi(() => workspaceApi.remove(key));
 }

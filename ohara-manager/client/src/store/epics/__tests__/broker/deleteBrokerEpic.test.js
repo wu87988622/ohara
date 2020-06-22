@@ -39,12 +39,12 @@ it('delete broker should be worked correctly', () => {
 
     const input = '   ^-a        ';
     const expected = '--a 999ms u';
-    const subs = '    ^----------';
+    const subs = ['   ^----------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: brokerEntity },
       },
     });
     const output$ = deleteBrokerEpic(action$);
@@ -76,17 +76,17 @@ it('delete multiple brokers should be worked correctly', () => {
 
     const input = '   ^-ab         ';
     const expected = '--ab 998ms uv';
-    const subs = '    ^------------';
+    const subs = ['   ^------------', '--^ 999ms !', '---^ 999ms !'];
     const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: brokerEntity },
       },
       b: {
         type: actions.deleteBroker.TRIGGER,
-        payload: anotherBrokerEntity,
+        payload: { values: anotherBrokerEntity },
       },
     });
     const output$ = deleteBrokerEpic(action$);
@@ -130,12 +130,12 @@ it('delete same broker within period should be deleted once only', () => {
 
     const input = '   ^-aa 10s a---';
     const expected = '--a 999ms u--';
-    const subs = '    ^------------';
+    const subs = ['   ^------------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: brokerEntity },
       },
     });
     const output$ = deleteBrokerEpic(action$);
@@ -167,21 +167,21 @@ it('throw exception of delete broker should also trigger event log action', () =
     data: {},
     title: 'mock delete broker failed',
   };
-  const spyCreate = jest
+  const spyDelete = jest
     .spyOn(brokerApi, 'remove')
-    .mockReturnValueOnce(throwError(error));
+    .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
     const expected = '--(aeu)-|';
-    const subs = '    ^-------!';
+    const subs = ['   ^-------!', '--(^!)'];
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: brokerEntity },
       },
     });
     const output$ = deleteBrokerEpic(action$);
@@ -209,6 +209,6 @@ it('throw exception of delete broker should also trigger event log action', () =
 
     flush();
 
-    expect(spyCreate).toHaveBeenCalled();
+    expect(spyDelete).toHaveBeenCalled();
   });
 });

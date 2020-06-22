@@ -18,49 +18,55 @@ import { throwError } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import { LOG_LEVEL } from 'const';
-import * as workerApi from 'api/workerApi';
-import deleteWorkerEpic from '../../worker/deleteWorkerEpic';
-import { entity as workerEntity } from 'api/__mocks__/workerApi';
+import * as workspaceApi from 'api/workspaceApi';
+import simpleDeleteWorkspaceEpic from '../../workspace/simpleDeleteWorkspaceEpic';
+import { entity as workspaceEntity } from 'api/__mocks__/workspaceApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
-jest.mock('api/workerApi');
+jest.mock('api/workspaceApi');
 
-const wkId = getId(workerEntity);
+const wkId = getId(workspaceEntity);
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-it('delete worker should be worked correctly', () => {
+it('delete workspace should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 999ms u';
+    const expected = '--a 999ms (uxy)';
     const subs = ['   ^----------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteWorker.TRIGGER,
-        payload: { values: workerEntity },
+        type: actions.simpleDeleteWorkspace.TRIGGER,
+        payload: { values: workspaceEntity },
       },
     });
-    const output$ = deleteWorkerEpic(action$);
+    const output$ = simpleDeleteWorkspaceEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteWorker.REQUEST,
+        type: actions.simpleDeleteWorkspace.REQUEST,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
       },
       u: {
-        type: actions.deleteWorker.SUCCESS,
+        type: actions.simpleDeleteWorkspace.SUCCESS,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
+      },
+      x: {
+        type: actions.switchWorkspace.TRIGGER,
+      },
+      y: {
+        type: actions.fetchNodes.TRIGGER,
       },
     });
 
@@ -70,51 +76,65 @@ it('delete worker should be worked correctly', () => {
   });
 });
 
-it('delete multiple workers should be worked correctly', () => {
+it('delete multiple workspaces should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = ['   ^------------', '--^ 999ms !', '---^ 999ms !'];
-    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
+    const input = '   ^-a-----b         ';
+    const expected = '--a-----b 993ms (uxy)-(vxy)';
+
+    const subs = ['   ^------------', '--^ 999ms !', '--------^ 999ms !'];
+    const anotherWorkspaceEntity = {
+      ...workspaceEntity,
+      name: 'wk01',
+    };
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteWorker.TRIGGER,
-        payload: { values: workerEntity },
+        type: actions.simpleDeleteWorkspace.TRIGGER,
+        payload: {
+          values: workspaceEntity,
+        },
       },
       b: {
-        type: actions.deleteWorker.TRIGGER,
-        payload: { values: anotherWorkerEntity },
+        type: actions.simpleDeleteWorkspace.TRIGGER,
+        payload: {
+          values: anotherWorkspaceEntity,
+        },
       },
     });
-    const output$ = deleteWorkerEpic(action$);
+    const output$ = simpleDeleteWorkspaceEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteWorker.REQUEST,
+        type: actions.simpleDeleteWorkspace.REQUEST,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
       },
       u: {
-        type: actions.deleteWorker.SUCCESS,
+        type: actions.simpleDeleteWorkspace.SUCCESS,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
       },
       b: {
-        type: actions.deleteWorker.REQUEST,
+        type: actions.simpleDeleteWorkspace.REQUEST,
         payload: {
-          workerId: getId(anotherWorkerEntity),
+          workspaceId: getId(anotherWorkspaceEntity),
         },
       },
       v: {
-        type: actions.deleteWorker.SUCCESS,
+        type: actions.simpleDeleteWorkspace.SUCCESS,
         payload: {
-          workerId: getId(anotherWorkerEntity),
+          workspaceId: getId(anotherWorkspaceEntity),
         },
+      },
+      x: {
+        type: actions.switchWorkspace.TRIGGER,
+      },
+      y: {
+        type: actions.fetchNodes.TRIGGER,
       },
     });
 
@@ -124,34 +144,40 @@ it('delete multiple workers should be worked correctly', () => {
   });
 });
 
-it('delete same worker within period should be created once only', () => {
+it('delete same workspace within period should be created once only', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
+    const expected = '--a 999ms (uxy)';
     const subs = ['   ^------------', '--^ 999ms !'];
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteWorker.TRIGGER,
-        payload: { values: workerEntity },
+        type: actions.simpleDeleteWorkspace.TRIGGER,
+        payload: { values: workspaceEntity },
       },
     });
-    const output$ = deleteWorkerEpic(action$);
+    const output$ = simpleDeleteWorkspaceEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteWorker.REQUEST,
+        type: actions.simpleDeleteWorkspace.REQUEST,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
       },
       u: {
-        type: actions.deleteWorker.SUCCESS,
+        type: actions.simpleDeleteWorkspace.SUCCESS,
         payload: {
-          workerId: wkId,
+          workspaceId: wkId,
         },
+      },
+      x: {
+        type: actions.switchWorkspace.TRIGGER,
+      },
+      y: {
+        type: actions.fetchNodes.TRIGGER,
       },
     });
 
@@ -161,14 +187,14 @@ it('delete same worker within period should be created once only', () => {
   });
 });
 
-it('throw exception of delete worker should also trigger event log action', () => {
+it('throw exception of delete workspace should also trigger event log action', () => {
   const error = {
     status: -1,
     data: {},
-    title: 'mock delete worker failed',
+    title: 'mock delete workspace failed',
   };
   const spyDelete = jest
-    .spyOn(workerApi, 'remove')
+    .spyOn(workspaceApi, 'remove')
     .mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
@@ -180,26 +206,26 @@ it('throw exception of delete worker should also trigger event log action', () =
 
     const action$ = hot(input, {
       a: {
-        type: actions.deleteWorker.TRIGGER,
-        payload: { values: workerEntity },
+        type: actions.simpleDeleteWorkspace.TRIGGER,
+        payload: { values: workspaceEntity },
       },
     });
-    const output$ = deleteWorkerEpic(action$);
+    const output$ = simpleDeleteWorkspaceEpic(action$);
 
     expectObservable(output$).toBe(expected, {
       a: {
-        type: actions.deleteWorker.REQUEST,
-        payload: { workerId: wkId },
+        type: actions.simpleDeleteWorkspace.REQUEST,
+        payload: { workspaceId: wkId },
       },
       e: {
-        type: actions.deleteWorker.FAILURE,
-        payload: { ...error, workerId: wkId },
+        type: actions.simpleDeleteWorkspace.FAILURE,
+        payload: { ...error, workspaceId: wkId },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          workerId: wkId,
+          workspaceId: wkId,
           type: LOG_LEVEL.error,
         },
       },

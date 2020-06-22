@@ -27,10 +27,12 @@ import {
   concatMap,
   distinctUntilChanged,
   mergeMap,
+  takeUntil,
 } from 'rxjs/operators';
 
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
+import { stopZookeeper } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
@@ -76,16 +78,27 @@ export default (action$) =>
     ofType(actions.stopZookeeper.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      stopZookeeper$(params).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) => {
+      const zookeeperId = getId(values);
+      return stopZookeeper(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.zookeeper), {
+            zookeeperId,
+          });
+          return actions.stopZookeeper.success(normalizedData);
+        }),
+        startWith(actions.stopZookeeper.request({ zookeeperId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.stopZookeeper.failure(
-              merge(err, { zookeeperId: getId(params) }),
+              merge(err, { zookeeperId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.stopZookeeper.CANCEL))),
+      );
+    }),
   );

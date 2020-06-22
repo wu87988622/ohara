@@ -142,7 +142,16 @@ export const useStopZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    (name) => dispatch(actions.stopZookeeper.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopZookeeper.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };
@@ -151,7 +160,16 @@ export const useDeleteZookeeperAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useZookeeperGroup();
   return useCallback(
-    (name) => dispatch(actions.deleteZookeeper.trigger({ group, name })),
+    (name) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteZookeeper.trigger({
+            values: { group, name },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

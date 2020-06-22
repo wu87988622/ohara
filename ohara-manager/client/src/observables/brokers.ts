@@ -61,3 +61,38 @@ export function startBroker(key: ObjectKey) {
     ),
   );
 }
+
+export function stopBroker(key: ObjectKey) {
+  return zip(
+    // attempt to stop at intervals
+    deferApi(() => brokerApi.stop(key)),
+    // wait until the service is not running
+    deferApi(() => brokerApi.get(key)).pipe(
+      map((res) => {
+        if (isServiceRunning(res)) throw res;
+        return res.data;
+      }),
+    ),
+  ).pipe(
+    map(([, data]) => data),
+    // retry every 2 seconds, up to 10 times
+    retryBackoff({
+      initialInterval: 2000,
+      maxRetries: 10,
+      maxInterval: 2000,
+    }),
+    catchError((error) =>
+      throwError({
+        data: error?.data,
+        meta: error?.meta,
+        title:
+          `Try to stop broker: "${key.name}" failed after retry 10 times. ` +
+          `Expected state is nonexistent, Actual state: ${error.data.state}`,
+      }),
+    ),
+  );
+}
+
+export function deleteBroker(key: ObjectKey) {
+  return deferApi(() => brokerApi.remove(key));
+}

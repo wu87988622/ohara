@@ -16,52 +16,46 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  map,
-  startWith,
-  mergeMap,
   distinctUntilChanged,
+  map,
+  mergeMap,
+  startWith,
   takeUntil,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
-import { deleteBroker } from 'observables';
+import { LOG_LEVEL } from 'const';
+import { deleteWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
-
-// Note: The caller SHOULD handle the error of this action
-export const deleteBroker$ = (params) => {
-  const brokerId = getId(params);
-  return defer(() => brokerApi.remove(params)).pipe(
-    map(() => actions.deleteBroker.success({ brokerId })),
-    startWith(actions.deleteBroker.request({ brokerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(
-    ofType(actions.deleteBroker.TRIGGER),
+    ofType(actions.simpleDeleteWorkspace.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
     mergeMap(({ values, resolve, reject }) => {
-      const brokerId = getId(values);
-      return deleteBroker(values).pipe(
-        map(() => {
+      const workspaceId = getId(values);
+      return deleteWorkspace(values).pipe(
+        mergeMap(() => {
           if (resolve) resolve();
-          return actions.deleteBroker.success({ brokerId });
+          return from([
+            actions.simpleDeleteWorkspace.success({ workspaceId }),
+            actions.switchWorkspace(),
+            actions.fetchNodes(),
+          ]);
         }),
-        startWith(actions.deleteBroker.request({ brokerId })),
+        startWith(actions.simpleDeleteWorkspace.request({ workspaceId })),
         catchError((err) => {
           if (reject) reject(err);
           return from([
-            actions.deleteBroker.failure(merge(err, { brokerId })),
+            actions.simpleDeleteWorkspace.failure(merge(err, { workspaceId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),
-        takeUntil(action$.pipe(ofType(actions.deleteBroker.CANCEL))),
+        takeUntil(action$.pipe(ofType(actions.simpleDeleteWorkspace.CANCEL))),
       );
     }),
   );

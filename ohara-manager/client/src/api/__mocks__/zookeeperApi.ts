@@ -22,6 +22,7 @@ import {
   ClusterResponse,
   ServiceBody,
   SERVICE_STATE,
+  ClusterResponseList,
 } from 'api/apiInterface/clusterInterface';
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
 
@@ -76,6 +77,14 @@ export const get = (params: ObjectKey): Observable<ClusterResponse> =>
     title: 'mock get zookeeper data',
     data: { ...entity, ...runtimeData, ...params },
   }).pipe(delay(500));
+
+// this mock function is used for deleteWorkspaceEpic
+export const getAll = (): Observable<ClusterResponseList> =>
+  of({
+    status: 200,
+    title: 'mock get all zookeeper data',
+    data: [],
+  });
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: ServiceBody): Observable<ClusterResponse> =>

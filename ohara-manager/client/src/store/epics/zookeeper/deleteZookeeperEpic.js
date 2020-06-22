@@ -23,10 +23,12 @@ import {
   map,
   mergeMap,
   startWith,
+  takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
+import { deleteZookeeper } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
@@ -44,16 +46,22 @@ export default (action$) =>
     ofType(actions.deleteZookeeper.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      deleteZookeeper$(params).pipe(
-        catchError((err) =>
-          from([
-            actions.deleteZookeeper.failure(
-              merge(err, { zookeeperId: getId(params) }),
-            ),
+    mergeMap(({ values, resolve, reject }) => {
+      const zookeeperId = getId(values);
+      return deleteZookeeper(values).pipe(
+        map(() => {
+          if (resolve) resolve();
+          return actions.deleteZookeeper.success({ zookeeperId });
+        }),
+        startWith(actions.deleteZookeeper.request({ zookeeperId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.deleteZookeeper.failure(merge(err, { zookeeperId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.deleteZookeeper.CANCEL))),
+      );
+    }),
   );

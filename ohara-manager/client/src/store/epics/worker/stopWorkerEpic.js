@@ -27,10 +27,12 @@ import {
   concatMap,
   distinctUntilChanged,
   mergeMap,
+  takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
+import { stopWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -76,14 +78,25 @@ export default (action$) =>
     ofType(actions.stopWorker.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((params) =>
-      stopWorker$(params).pipe(
-        catchError((err) =>
-          from([
-            actions.stopWorker.failure(merge(err, { workerId: getId(params) })),
+    mergeMap(({ values, resolve, reject }) => {
+      const workerId = getId(values);
+      return stopWorker(values).pipe(
+        map((data) => {
+          if (resolve) resolve(data);
+          const normalizedData = merge(normalize(data, schema.worker), {
+            workerId,
+          });
+          return actions.stopWorker.success(normalizedData);
+        }),
+        startWith(actions.stopWorker.request({ workerId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
+            actions.stopWorker.failure(merge(err, { workerId: getId(values) })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+        takeUntil(action$.pipe(ofType(actions.stopWorker.CANCEL))),
+      );
+    }),
   );

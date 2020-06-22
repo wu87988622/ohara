@@ -47,6 +47,10 @@ export interface ObjectKey {
   group: string;
 }
 
+export interface ObjectData extends ObjectKey {
+  [k: string]: any;
+}
+
 interface Meter {
   name: string;
   value: number;

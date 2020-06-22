@@ -63,3 +63,38 @@ export function startZookeeper(key: ObjectKey) {
     ),
   );
 }
+
+export function stopZookeeper(key: ObjectKey) {
+  return zip(
+    // attempt to stop at intervals
+    deferApi(() => zookeeperApi.stop(key)),
+    // wait until the service is not running
+    deferApi(() => zookeeperApi.get(key)).pipe(
+      map((res) => {
+        if (isServiceRunning(res)) throw res;
+        return res.data;
+      }),
+    ),
+  ).pipe(
+    map(([, data]) => data),
+    // retry every 2 seconds, up to 10 times
+    retryBackoff({
+      initialInterval: 2000,
+      maxRetries: 10,
+      maxInterval: 2000,
+    }),
+    catchError((error) =>
+      throwError({
+        data: error?.data,
+        meta: error?.meta,
+        title:
+          `Try to stop zookeeper: "${key.name}" failed after retry 10 times. ` +
+          `Expected state is nonexistent, Actual state: ${error.data.state}`,
+      }),
+    ),
+  );
+}
+
+export function deleteZookeeper(key: ObjectKey) {
+  return deferApi(() => zookeeperApi.remove(key));
+}
