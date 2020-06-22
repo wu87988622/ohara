@@ -60,7 +60,3 @@ jobs:
         working-directory: /ohara
         run: |
           ./gradlew scaladoc
-      - name: doc
-        working-directory: /ohara/docs
-        run: |
-          make html
