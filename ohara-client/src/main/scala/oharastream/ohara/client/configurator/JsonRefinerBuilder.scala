@@ -434,14 +434,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     )
 
   /**
-    * reject the request having a key which is associated to empty string.
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    *
-    * @return this refiner
-    */
-  def rejectEmptyString(): JsonRefinerBuilder[T]
-
-  /**
     * throw exception if the input json has empty array.
     * Noted: this rule is applied to all key-value even if the pair is in nested object.
     *
@@ -455,7 +447,13 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     * @param key key
     * @return this refiner
     */
-  def rejectEmptyArray(key: String): JsonRefinerBuilder[T] = arrayRestriction(key).rejectEmpty().toRefiner
+  def rejectEmptyArray(key: String): JsonRefinerBuilder[T] =
+    requireJsonType[JsArray](
+      key,
+      (array: JsArray) =>
+        if (array.elements.isEmpty)
+          throw DeserializationException(s"""$key cannot be an empty array!!!""")
+    )
 
   /**
     * add the array restriction to specific value.
@@ -586,7 +584,6 @@ object JsonRefinerBuilder {
     private[this] var valuesCheckers: Map[Set[String], Map[String, JsValue] => Unit] = Map.empty
     private[this] var nullToJsValue: Map[String, () => JsValue]                      = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String]                   = Map.empty
-    private[this] var _rejectEmptyString: Boolean                                    = false
     private[this] var _rejectEmptyArray: Boolean                                     = false
 
     override def format(format: RootJsonFormat[T]): JsonRefinerBuilder[T] = {
@@ -636,11 +633,6 @@ object JsonRefinerBuilder {
       this
     }
 
-    override def rejectEmptyString(): JsonRefinerBuilder[T] = {
-      this._rejectEmptyString = true
-      this
-    }
-
     override def rejectEmptyArray(): JsonRefinerBuilder[T] = {
       this._rejectEmptyArray = true
       this
@@ -685,7 +677,7 @@ object JsonRefinerBuilder {
           }
 
           // 1) check empty string
-          if (_rejectEmptyString) checkJsValueForEmptyString(key, value)
+          checkJsValueForEmptyString(key, value)
 
           def checkEmptyArray(k: String, s: JsArray): Unit =
             if (s.elements.isEmpty)

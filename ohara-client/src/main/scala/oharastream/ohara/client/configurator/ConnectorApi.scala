@@ -109,7 +109,6 @@ object ConnectorApi {
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .definitions(DEFINITIONS)
-      .rejectEmptyString()
       .valuesChecker(
         Set(COLUMNS_KEY),
         _(COLUMNS_KEY) match {
@@ -169,7 +168,6 @@ object ConnectorApi {
       override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
-    .rejectEmptyString()
     .valuesChecker(
       Set(COLUMNS_KEY),
       _(COLUMNS_KEY) match {

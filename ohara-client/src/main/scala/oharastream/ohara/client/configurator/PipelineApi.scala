@@ -44,7 +44,6 @@ object PipelineApi {
     JsonRefinerBuilder[Endpoint]
       .format(jsonFormat3(Endpoint))
       .nullToString(GROUP_KEY, GROUP_DEFAULT)
-      .rejectEmptyString()
       .build
 
   final case class Updating(
@@ -53,7 +52,7 @@ object PipelineApi {
   )
 
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating].format(jsonFormat2(Updating)).rejectEmptyString().build
+    JsonRefinerBuilder[Updating].format(jsonFormat2(Updating)).build
 
   final case class Creation(
     override val group: String,
@@ -68,7 +67,6 @@ object PipelineApi {
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     rulesOfKey[Creation]
       .format(jsonFormat4(Creation))
-      .rejectEmptyString()
       .nullToEmptyObject(TAGS_KEY)
       .nullToEmptyArray("endpoints")
       .build

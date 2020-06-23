@@ -89,10 +89,9 @@ class TestJsonRefiner extends OharaTest {
   }
 
   @Test
-  def testRejectEmptyString(): Unit =
+  def testEmptyString(): Unit =
     an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
       .format(format)
-      .rejectEmptyString()
       .build
       .read("""
             |{
@@ -103,19 +102,6 @@ class TestJsonRefiner extends OharaTest {
             | "objects":{}
             |}
           """.stripMargin.parseJson)
-
-  @Test
-  def testWithoutRejectEmptyString(): Unit =
-    JsonRefinerBuilder[SimpleData].format(format).build.read("""
-            |{
-            | "stringValue": "",
-            | "group": "default",
-            | "bindPort": 123,
-            | "connectionPort": 12345,
-            | "stringArray": ["aa"],
-            | "objects":{}
-            |}
-          """.stripMargin.parseJson).stringValue shouldBe ""
 
   @Test
   def testConnectionPort(): Unit =
@@ -311,7 +297,7 @@ class TestJsonRefiner extends OharaTest {
 
   @Test
   def testNestedObjectForEmptyString(): Unit =
-    JsonRefinerBuilder[SimpleData2].format(format2).rejectEmptyString().build.read("""
+    JsonRefinerBuilder[SimpleData2].format(format2).build.read("""
             |{
             |  "data": {
             |    "stringValue": "abc",
@@ -339,7 +325,6 @@ class TestJsonRefiner extends OharaTest {
   def testNestedObjectForEmptyStringWithEmptyInFirstElement(): Unit =
     an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData2]
       .format(format2)
-      .rejectEmptyString()
       .build
       .read("""
             |{
@@ -368,7 +353,6 @@ class TestJsonRefiner extends OharaTest {
   def testNestedObjectForEmptyStringWithEmptyInSecondElement(): Unit =
     an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData2]
       .format(format2)
-      .rejectEmptyString()
       .build
       .read("""
             |{
@@ -569,7 +553,7 @@ class TestJsonRefiner extends OharaTest {
       .build
       .read(s"""
                     |{
-                    | "stringValue": "",
+                    | "stringValue": "aaa",
                     | "group": "default",
                     | "bindPort": 123,
                     | "connectionPort": 111,

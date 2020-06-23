@@ -143,7 +143,6 @@ package object configurator {
       }
     })
     .nullToString(GROUP_KEY, () => GROUP_DEFAULT)
-    .rejectEmptyString()
     .build
 
   private[configurator] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = new RootJsonFormat[TopicKey] {
@@ -253,7 +252,6 @@ package object configurator {
       .format(format)
       .definitions(definitions)
       // for each field, we should reject any empty string
-      .rejectEmptyString()
       // those fields are override at runtime
       .ignoreKeys(RUNTIME_KEYS)
       .build
@@ -270,7 +268,6 @@ package object configurator {
     JsonRefinerBuilder[T]
       .format(format)
       // for each field, we should reject any empty string
-      .rejectEmptyString()
       //-------------------------------------- "nodeNames" rules ---------------------------------//
       .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:

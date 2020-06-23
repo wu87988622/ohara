@@ -55,7 +55,7 @@ object NodeApi {
     tags: Option[Map[String, JsValue]]
   )
   implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").rejectEmptyString().build
+    JsonRefinerBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").build
 
   case class Creation(
     hostname: String,
@@ -75,7 +75,6 @@ object NodeApi {
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)
       .requireConnectionPort("port")
-      .rejectEmptyString()
       .stringRestriction("hostname", SettingDef.HOSTNAME_REGEX)
       .nullToEmptyObject(TAGS_KEY)
       .build
