@@ -38,11 +38,11 @@ object BrokerRoute {
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .zookeeperCluster(creation.zookeeperClusterKey)
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map { _ =>
         BrokerClusterInfo(
-          settings = creation.settings,
+          settings = creation.raw,
           aliveNodes = Set.empty,
           state = None,
           error = None,

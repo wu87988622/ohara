@@ -33,7 +33,7 @@ class TestZookeeperApi extends OharaTest {
   def testClone(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
-      settings = access.nodeNames(Set(CommonUtils.randomString())).creation.settings,
+      settings = access.nodeNames(Set(CommonUtils.randomString())).creation.raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -220,7 +220,7 @@ class TestZookeeperApi extends OharaTest {
               |    "imageName": "${ZookeeperApi.IMAGE_NAME_DEFAULT}"
               |  }
               |  """.stripMargin.parseJson)
-      .settings(IMAGE_NAME_KEY)
+      .raw(IMAGE_NAME_KEY)
       .convertTo[String] shouldBe ZookeeperApi.IMAGE_NAME_DEFAULT
 
   @Test
@@ -381,7 +381,7 @@ class TestZookeeperApi extends OharaTest {
     val name = CommonUtils.randomString(5)
     val res = ZookeeperApi.ZOOKEEPER_CLUSTER_INFO_FORMAT.write(
       ZookeeperClusterInfo(
-        settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.settings,
+        settings = ZookeeperApi.access.request.name(name).nodeNames(Set("n1")).creation.raw,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -412,7 +412,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def testDeadNodes(): Unit = {
     val cluster = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -426,7 +426,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def defaultValueShouldBeAppendedToResponse(): Unit = {
     val cluster = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -504,7 +504,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -516,7 +516,7 @@ class TestZookeeperApi extends OharaTest {
   @Test
   def testInfoJsonRepresentation(): Unit = {
     val cluster = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.settings,
+      settings = ZookeeperApi.access.request.nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,

@@ -60,7 +60,7 @@ private[configurator] object StreamRoute {
           )
         creation.toTopicKeys
       }
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map(_.fileInfos)
       .map { fileInfos =>
@@ -96,8 +96,8 @@ private[configurator] object StreamRoute {
                 .filter(_.hasDefault)
             )
             .build()
-            .refine(StreamApi.access.request.settings(creation.settings).className(className).creation)
-            .settings,
+            .refine(StreamApi.access.request.settings(creation.raw).className(className).creation)
+            .raw,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,

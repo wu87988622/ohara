@@ -35,7 +35,7 @@ class TestZookeeperCreator extends OharaTest {
       if (executionContext == null) throw new AssertionError()
       Future.successful(
         ZookeeperClusterInfo(
-          settings = ZookeeperApi.access.request.settings(creation.settings).creation.settings,
+          settings = ZookeeperApi.access.request.settings(creation.raw).creation.raw,
           aliveNodes = Set.empty,
           state = None,
           error = None,
@@ -120,7 +120,7 @@ class TestZookeeperCreator extends OharaTest {
   def testCopy(): Unit = {
     val nodeNames = Set(CommonUtils.randomString())
     val zookeeperClusterInfo = ZookeeperClusterInfo(
-      settings = ZookeeperApi.access.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).creation.settings,
+      settings = ZookeeperApi.access.request.name(CommonUtils.randomString(10)).nodeNames(nodeNames).creation.raw,
       aliveNodes = nodeNames,
       state = None,
       error = None,

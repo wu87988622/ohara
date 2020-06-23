@@ -129,11 +129,11 @@ private[configurator] object TopicRoute {
   )(implicit objectChecker: DataChecker, executionContext: ExecutionContext): Future[TopicInfo] =
     objectChecker.checkList
       .brokerCluster(creation.brokerClusterKey)
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map { _ =>
         TopicInfo(
-          settings = creation.settings,
+          settings = creation.raw,
           partitionInfos = Seq.empty,
           nodeMetrics = Map.empty,
           state = None,

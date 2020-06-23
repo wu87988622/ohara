@@ -148,7 +148,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .clientPort(port)
             .nodeName(host)
             .creation
-            .settings,
+            .raw,
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING),
@@ -167,7 +167,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
             .clientPort(port)
             .nodeName(host)
             .creation
-            .settings,
+            .raw,
           aliveNodes = Set(host),
           // In fake mode, we need to assign a state in creation for "GET" method to act like real case
           state = Some(ClusterState.RUNNING),
@@ -279,7 +279,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .map(
           creation =>
             ZookeeperClusterInfo(
-              settings = creation.settings,
+              settings = creation.raw,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING),
@@ -292,7 +292,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .map(
           creation =>
             BrokerClusterInfo(
-              settings = creation.settings,
+              settings = creation.raw,
               // TODO: we should check the supported arguments by the running broker images
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
@@ -306,7 +306,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         .map(
           creation =>
             WorkerClusterInfo(
-              settings = creation.settings,
+              settings = creation.raw,
               aliveNodes = creation.nodeNames,
               // In fake mode, we need to assign a state in creation for "GET" method to act like real case
               state = Some(ClusterState.RUNNING),

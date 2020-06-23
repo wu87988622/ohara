@@ -69,34 +69,34 @@ object ConnectorApi {
         State.forName(json.convertTo[String])
     }
 
-  final class Creation(val settings: Map[String, JsValue]) extends oharastream.ohara.client.configurator.BasicCreation {
+  final class Creation(val raw: Map[String, JsValue]) extends oharastream.ohara.client.configurator.BasicCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = noJsNull(settings).map {
+    def plain: Map[String, String] = noJsNull(raw).map {
       case (k, v) =>
         k -> (v match {
           case JsString(value) => value
           case _               => v.toString()
         })
     }
-    def className: String           = settings.className.get
-    def columns: Seq[Column]        = settings.columns.get
-    def numberOfTasks: Int          = settings.numberOfTasks.get
-    def workerClusterKey: ObjectKey = settings.workerClusterKey.get
-    def topicKeys: Set[TopicKey]    = settings.topicKeys.get
+    def className: String           = raw.className.get
+    def columns: Seq[Column]        = raw.columns.get
+    def numberOfTasks: Int          = raw.numberOfTasks.get
+    def workerClusterKey: ObjectKey = raw.workerClusterKey.get
+    def topicKeys: Set[TopicKey]    = raw.topicKeys.get
 
-    override def group: String = settings.group.get
+    override def group: String = raw.group.get
 
-    override def name: String = settings.name.get
+    override def name: String = raw.name.get
 
     override def key: ConnectorKey = ConnectorKey.of(group, name)
 
-    override def tags: Map[String, JsValue] = settings.tags.get
+    override def tags: Map[String, JsValue] = raw.tags.get
 
-    def partitionClass: String = settings.partitionerClass.get
+    def partitionClass: String = raw.partitionerClass.get
   }
 
   val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala.values.toSeq
@@ -105,7 +105,7 @@ object ConnectorApi {
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .definitions(DEFINITIONS)

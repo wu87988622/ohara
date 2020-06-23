@@ -39,7 +39,7 @@ class TestBrokerCreator extends OharaTest {
       if (executionContext == null) throw new AssertionError()
       Future.successful(
         BrokerClusterInfo(
-          settings = BrokerApi.access.request.settings(creation.settings).creation.settings,
+          settings = BrokerApi.access.request.settings(creation.raw).creation.raw,
           aliveNodes = creation.nodeNames,
           state = None,
           error = None,
@@ -131,7 +131,7 @@ class TestBrokerCreator extends OharaTest {
         .zookeeperClusterKey(zkKey)
         .nodeNames(nodeNames)
         .creation
-        .settings,
+        .raw,
       aliveNodes = nodeNames,
       state = None,
       error = None,

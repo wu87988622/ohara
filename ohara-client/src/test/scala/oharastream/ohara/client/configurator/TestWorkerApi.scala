@@ -38,7 +38,7 @@ class TestWorkerApi extends OharaTest {
         .nodeNames(Set(CommonUtils.randomString()))
         .brokerClusterKey(ObjectKey.of("g", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -493,7 +493,7 @@ class TestWorkerApi extends OharaTest {
          |  }
          |  """.stripMargin.parseJson
       )
-      .settings(CONFIG_TOPIC_PARTITIONS_KEY)
+      .raw(CONFIG_TOPIC_PARTITIONS_KEY)
       .convertTo[Int] shouldBe 1
 
   /**
@@ -516,7 +516,7 @@ class TestWorkerApi extends OharaTest {
                            |  }
                            |  """.stripMargin.parseJson
       )
-      .settings(CONFIG_TOPIC_PARTITIONS_KEY)
+      .raw(CONFIG_TOPIC_PARTITIONS_KEY)
       .convertTo[Int] shouldBe 1
 
   @Test
@@ -693,7 +693,7 @@ class TestWorkerApi extends OharaTest {
   def testDeadNodes(): Unit = {
     val cluster = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
+        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -758,7 +758,7 @@ class TestWorkerApi extends OharaTest {
     val res = WorkerApi.WORKER_CLUSTER_INFO_FORMAT.write(
       WorkerClusterInfo(
         settings =
-          accessApi.name(name).brokerClusterKey(ObjectKey.of("default", "bk1")).nodeNames(Set("n1")).creation.settings,
+          accessApi.name(name).brokerClusterKey(ObjectKey.of("default", "bk1")).nodeNames(Set("n1")).creation.raw,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -775,7 +775,7 @@ class TestWorkerApi extends OharaTest {
   def testConnectionProps(): Unit = {
     val cluster = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.nodeNames(Set("n0", "m1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
+        WorkerApi.access.request.nodeNames(Set("n0", "m1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.raw,
       aliveNodes = Set("nn"),
       state = None,
       error = None,
@@ -794,7 +794,7 @@ class TestWorkerApi extends OharaTest {
   def defaultValueShouldBeAppendedToResponse(): Unit = {
     val cluster = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.settings,
+        WorkerApi.access.request.nodeNames(Set("n0", "n1")).brokerClusterKey(ObjectKey.of("g", "n")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -881,7 +881,7 @@ class TestWorkerApi extends OharaTest {
   def settingsDisappearFromJson(): Unit = {
     val cluster = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -894,7 +894,7 @@ class TestWorkerApi extends OharaTest {
   def testInfoJsonRepresentation(): Unit = {
     val cluster = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.settings,
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).nodeNames(Set("n0", "n1")).creation.raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,

@@ -117,7 +117,7 @@ trait StreamCollie extends Collie {
                   )
 
                   val arguments =
-                    Seq(classOf[Stream].getName) ++ creation.settings
+                    Seq(classOf[Stream].getName) ++ creation.raw
                       .map {
                         case (k, v) =>
                           k -> (v match {

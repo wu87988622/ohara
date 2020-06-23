@@ -84,7 +84,7 @@ trait ShabondiCollie extends Collie {
                 )
 
                 val containerInfo = newContainerInfo(newNode, creation, env)
-                val arguments = creation.settings.map {
+                val arguments = creation.raw.map {
                   case (k, v) =>
                     val value = v match {
                       case JsString(s) => ShabondiUtils.escape(s)

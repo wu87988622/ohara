@@ -43,7 +43,7 @@ private[configurator] object ShabondiRoute {
         case SHABONDI_SINK_CLASS_NAME   => s"http://$nodeName:$clientPort/groups/" + "${groupName}"
       }
       val endpointItem = (ShabondiDefinitions.ENDPOINT_DEFINITION.key, JsString(value))
-      new ShabondiClusterCreation(creation.settings + endpointItem)
+      new ShabondiClusterCreation(creation.raw + endpointItem)
     }
   }
 
@@ -54,7 +54,7 @@ private[configurator] object ShabondiRoute {
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
       .brokerCluster(creation.brokerClusterKey)
-      .references(creation.settings, creation.definitions)
+      .references(creation.raw, creation.definitions)
       .check()
       .map { _ =>
         val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT.toBuilder
@@ -72,7 +72,7 @@ private[configurator] object ShabondiRoute {
           .refine(creation)
 
         ShabondiClusterInfo(
-          settings = updateEndpointSetting(refinedCreation).settings,
+          settings = updateEndpointSetting(refinedCreation).raw,
           aliveNodes = Set.empty,
           state = None,
           nodeMetrics = Map.empty,

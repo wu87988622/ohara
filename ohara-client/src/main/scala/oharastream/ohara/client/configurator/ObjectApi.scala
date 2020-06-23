@@ -30,19 +30,19 @@ object ObjectApi {
   @deprecated(message = s"replaced by $KIND", since = "0.11.0")
   val OBJECTS_PREFIX_PATH: String = "objects"
 
-  final class Creation(val settings: Map[String, JsValue]) extends BasicCreation {
+  final class Creation(val raw: Map[String, JsValue]) extends BasicCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
-    override def group: String = settings.group.get
+    override def group: String = raw.group.get
 
-    override def name: String = settings.name.get
+    override def name: String = raw.name.get
 
-    override def tags: Map[String, JsValue] = settings.tags.get
+    override def tags: Map[String, JsValue] = raw.tags.get
   }
   private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(obj.settings)
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
 
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })

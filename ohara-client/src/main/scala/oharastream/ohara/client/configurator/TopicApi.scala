@@ -111,22 +111,22 @@ object TopicApi {
       })
       .build
 
-  final class Creation private[TopicApi] (val settings: Map[String, JsValue])
+  final class Creation private[TopicApi] (val raw: Map[String, JsValue])
       extends oharastream.ohara.client.configurator.BasicCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     override def key: TopicKey = TopicKey.of(group, name)
 
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
+    def brokerClusterKey: ObjectKey = raw.brokerClusterKey.get
 
-    def numberOfPartitions: Int     = settings.numberOfPartitions.get
-    def numberOfReplications: Short = settings.numberOfReplications.get
+    def numberOfPartitions: Int     = raw.numberOfPartitions.get
+    def numberOfReplications: Short = raw.numberOfReplications.get
 
-    override def group: String = settings.group.get
+    override def group: String = raw.group.get
 
-    override def name: String = settings.name.get
+    override def name: String = raw.name.get
 
-    override def tags: Map[String, JsValue] = settings.tags.get
+    override def tags: Map[String, JsValue] = raw.tags.get
   }
 
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
@@ -134,7 +134,7 @@ object TopicApi {
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
-        override def write(obj: Creation): JsValue = JsObject(obj.settings)
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
       })
       // TODO: topic definitions may be changed by different Broker images so this check is dangerous
       .definitions(DEFINITIONS)

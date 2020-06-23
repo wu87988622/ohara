@@ -17,7 +17,6 @@
 package oharastream.ohara.client.configurator
 
 import oharastream.ohara.client.Enum
-import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.common.setting.SettingDef
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsString, JsValue, RootJsonFormat}
@@ -26,13 +25,15 @@ object VolumeApi {
   val KIND: String = SettingDef.Reference.VOLUME.name().toLowerCase
 
   final case class Creation(
-    group: String,
-    name: String,
+    override val group: String,
+    override val name: String,
     nodeNames: Set[String],
     path: String,
-    tags: Map[String, JsValue]
-  ) extends BasicCreation
-  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+    override val tags: Map[String, JsValue]
+  ) extends BasicCreation {
+    override def raw: Map[String, JsValue] = CREATION_FORMAT.write(this).asJsObject.fields
+  }
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(jsonFormat5(Creation))
       .rejectEmptyString()

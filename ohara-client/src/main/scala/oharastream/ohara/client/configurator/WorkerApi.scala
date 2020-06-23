@@ -147,27 +147,27 @@ object WorkerApi {
     .jmxPort()
     .result
 
-  final class Creation private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterCreation {
+  final class Creation private[WorkerApi] (val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
       * @param settings settings
       * @return update
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    def brokerClusterKey: ObjectKey                                             = settings.brokerClusterKey.get
-    def clientPort: Int                                                         = settings.clientPort.get
-    def groupId: String                                                         = settings.groupId.get
-    def statusTopicName: String                                                 = settings.statusTopicName.get
-    def statusTopicPartitions: Int                                              = settings.statusTopicPartitions.get
-    def statusTopicReplications: Short                                          = settings.statusTopicReplications.get
-    def configTopicName: String                                                 = settings.configTopicName.get
-    def configTopicReplications: Short                                          = settings.configTopicReplications.get
-    def offsetTopicName: String                                                 = settings.offsetTopicName.get
-    def offsetTopicPartitions: Int                                              = settings.offsetTopicPartitions.get
-    def offsetTopicReplications: Short                                          = settings.offsetTopicReplications.get
-    def pluginKeys: Set[ObjectKey]                                              = settings.pluginKeys.getOrElse(Set.empty)
-    def sharedJarKeys: Set[ObjectKey]                                           = settings.sharedJarKeys.getOrElse(Set.empty)
-    def freePorts: Set[Int]                                                     = settings.freePorts.get
+    def brokerClusterKey: ObjectKey                                             = raw.brokerClusterKey.get
+    def clientPort: Int                                                         = raw.clientPort.get
+    def groupId: String                                                         = raw.groupId.get
+    def statusTopicName: String                                                 = raw.statusTopicName.get
+    def statusTopicPartitions: Int                                              = raw.statusTopicPartitions.get
+    def statusTopicReplications: Short                                          = raw.statusTopicReplications.get
+    def configTopicName: String                                                 = raw.configTopicName.get
+    def configTopicReplications: Short                                          = raw.configTopicReplications.get
+    def offsetTopicName: String                                                 = raw.offsetTopicName.get
+    def offsetTopicPartitions: Int                                              = raw.offsetTopicPartitions.get
+    def offsetTopicReplications: Short                                          = raw.offsetTopicReplications.get
+    def pluginKeys: Set[ObjectKey]                                              = raw.pluginKeys.getOrElse(Set.empty)
+    def sharedJarKeys: Set[ObjectKey]                                           = raw.sharedJarKeys.getOrElse(Set.empty)
+    def freePorts: Set[Int]                                                     = raw.freePorts.get
 
     override def ports: Set[Int] = freePorts + clientPort + jmxPort
 
@@ -182,7 +182,7 @@ object WorkerApi {
   private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS

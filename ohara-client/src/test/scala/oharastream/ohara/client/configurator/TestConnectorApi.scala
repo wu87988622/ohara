@@ -71,10 +71,10 @@ class TestConnectorApi extends OharaTest {
     creation.numberOfTasks shouldBe 1
     creation.tags shouldBe tags
     // this key is deprecated so json converter will replace it by new one
-    creation.settings.contains("className") shouldBe false
-    creation.settings.contains("aaa") shouldBe false
-    creation.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CREATION_FORMAT.read(CREATION_FORMAT.write(creation)).settings shouldBe creation.settings
+    creation.raw.contains("className") shouldBe false
+    creation.raw.contains("aaa") shouldBe false
+    creation.raw(anotherKey).convertTo[String] shouldBe anotherValue
+    CREATION_FORMAT.read(CREATION_FORMAT.write(creation)).raw shouldBe creation.raw
 
     val group = CommonUtils.randomString(10)
     val name  = CommonUtils.randomString(10)
@@ -103,10 +103,10 @@ class TestConnectorApi extends OharaTest {
     creation.topicKeys shouldBe topicKeys
     creation2.numberOfTasks shouldBe 1
     // this key is deprecated so json converter will replace it by new one
-    creation2.settings.contains("className") shouldBe false
-    creation2.settings.contains("aaa") shouldBe false
-    creation2.settings(anotherKey).convertTo[String] shouldBe anotherValue
-    CREATION_FORMAT.read(CREATION_FORMAT.write(creation2)).settings shouldBe creation2.settings
+    creation2.raw.contains("className") shouldBe false
+    creation2.raw.contains("aaa") shouldBe false
+    creation2.raw(anotherKey).convertTo[String] shouldBe anotherValue
+    CREATION_FORMAT.read(CREATION_FORMAT.write(creation2)).raw shouldBe creation2.raw
   }
 
   @Test
@@ -155,7 +155,7 @@ class TestConnectorApi extends OharaTest {
         .workerClusterKey(ObjectKey.of("g", "m"))
         .topicKey(TopicKey.of("g", "n"))
         .creation
-        .settings,
+        .raw,
       state = None,
       aliveNodes = Set.empty,
       error = None,
@@ -196,7 +196,7 @@ class TestConnectorApi extends OharaTest {
       |    ]
       |  }
       | """.stripMargin.parseJson)
-    val column          = PropGroup.ofJson(creationRequest.settings("columns").toString()).toColumns.get(0)
+    val column          = PropGroup.ofJson(creationRequest.raw("columns").toString()).toColumns.get(0)
     column.order() shouldBe 1
     column.name() shouldBe "abc"
     column.newName() shouldBe "ccc"
@@ -676,7 +676,7 @@ class TestConnectorApi extends OharaTest {
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = ConnectorInfo(
-      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.raw,
       state = None,
       error = None,
       aliveNodes = Set.empty,
@@ -690,7 +690,7 @@ class TestConnectorApi extends OharaTest {
   @Test
   def testInfoJsonRepresentation(): Unit = {
     val cluster = ConnectorInfo(
-      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      settings = ConnectorApi.access.request.className("aa").workerClusterKey(ObjectKey.of("a", "b")).creation.raw,
       state = None,
       error = None,
       aliveNodes = Set.empty,

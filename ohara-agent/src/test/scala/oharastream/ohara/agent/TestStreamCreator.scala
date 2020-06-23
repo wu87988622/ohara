@@ -41,7 +41,7 @@ class TestStreamCreator extends OharaTest {
     if (executionContext == null) throw new AssertionError()
     Future.successful {
       StreamClusterInfo(
-        settings = creation.settings,
+        settings = creation.raw,
         aliveNodes = Set.empty,
         nodeMetrics = Map.empty,
         state = None,
@@ -145,7 +145,7 @@ class TestStreamCreator extends OharaTest {
         .fromTopicKey(topicKey())
         .toTopicKey(topicKey())
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,

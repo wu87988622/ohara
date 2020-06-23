@@ -212,7 +212,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = TopicInfo(
-      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.raw,
       partitionInfos = Seq.empty,
       state = None,
       nodeMetrics = Map.empty,
@@ -224,7 +224,7 @@ class TestTopicApi extends OharaTest {
   @Test
   def testInfoJsonRepresentation(): Unit = {
     val cluster = TopicInfo(
-      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.settings,
+      settings = TopicApi.access.request.brokerClusterKey(ObjectKey.of("a", "b")).creation.raw,
       partitionInfos = Seq.empty,
       state = None,
       nodeMetrics = Map.empty,

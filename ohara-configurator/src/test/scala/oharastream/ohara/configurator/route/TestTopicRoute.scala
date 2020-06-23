@@ -261,7 +261,7 @@ class TestTopicRoute extends OharaTest {
             .settings(topicInfo.settings)
             .numberOfPartitions(numberOfPartitions)
             .creation
-            .settings
+            .raw
         )
     )
   }
@@ -277,7 +277,7 @@ class TestTopicRoute extends OharaTest {
             .settings(topicInfo.settings)
             .numberOfReplications(numberOfReplications)
             .creation
-            .settings
+            .raw
         )
     )
   }

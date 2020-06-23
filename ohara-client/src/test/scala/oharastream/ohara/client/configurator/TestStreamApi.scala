@@ -59,7 +59,7 @@ class TestStreamApi extends OharaTest {
         .toTopicKey(topicKey(CommonUtils.randomString()))
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -228,7 +228,7 @@ class TestStreamApi extends OharaTest {
     creationJson.nodeNames should not be Set.empty
     creationJson.tags shouldBe Map.empty
 
-    creationApi.settings.keys.size shouldBe creationJson.settings.keys.size
+    creationApi.raw.keys.size shouldBe creationJson.raw.keys.size
   }
 
   @Test
@@ -448,7 +448,7 @@ class TestStreamApi extends OharaTest {
                                                   |    "to": []
                                                   |  }
                                                   |  """.stripMargin.parseJson)
-      .settings(IMAGE_NAME_KEY)
+      .raw(IMAGE_NAME_KEY)
       .convertTo[String] shouldBe StreamApi.IMAGE_NAME_DEFAULT
 
   @Test
@@ -811,7 +811,7 @@ class TestStreamApi extends OharaTest {
           .name(name)
           .nodeName(CommonUtils.randomString(10))
           .creation
-          .settings,
+          .raw,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -877,7 +877,7 @@ class TestStreamApi extends OharaTest {
         .toTopicKey(topicKey(CommonUtils.randomString()))
         .brokerClusterKey(ObjectKey.of("group", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -942,7 +942,7 @@ class TestStreamApi extends OharaTest {
         .brokerClusterKey(ObjectKey.of("a", "b"))
         .nodeNames(Set("n0", "n1"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -960,7 +960,7 @@ class TestStreamApi extends OharaTest {
         .brokerClusterKey(ObjectKey.of("a", "b"))
         .nodeNames(Set("n0", "n1"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,

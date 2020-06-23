@@ -35,11 +35,11 @@ object ZookeeperRoute {
   )(implicit objectChecker: DataChecker, executionContext: ExecutionContext): Future[ZookeeperClusterInfo] =
     objectChecker.checkList
       .nodeNames(creation.nodeNames)
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map { _ =>
         ZookeeperClusterInfo(
-          settings = creation.settings,
+          settings = creation.raw,
           aliveNodes = Set.empty,
           state = None,
           error = None,

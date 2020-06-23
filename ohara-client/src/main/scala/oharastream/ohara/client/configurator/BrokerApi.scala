@@ -101,7 +101,7 @@ object BrokerApi {
 
   val TOPIC_DEFINITION: TopicDefinition = TopicDefinition(TopicApi.DEFINITIONS)
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
+  final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
       * @param settings settings
@@ -110,10 +110,10 @@ object BrokerApi {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     override def ports: Set[Int]       = Set(clientPort, jmxPort)
-    def clientPort: Int                = settings.clientPort.get
-    def zookeeperClusterKey: ObjectKey = settings.zookeeperClusterKey.get
+    def clientPort: Int                = raw.clientPort.get
+    def zookeeperClusterKey: ObjectKey = raw.zookeeperClusterKey.get
     private[this] def logVolumeKeys: Set[ObjectKey] =
-      settings
+      raw
         .get(LOG_DIRS_KEY)
         .map(_.convertTo[Set[ObjectKey]])
         .getOrElse(Set.empty)
@@ -132,11 +132,11 @@ object BrokerApi {
             case (_, index) => logDir(index)
           }
           .mkString(",")
-    def numberOfPartitions: Int = settings.numberOfPartitions.get
+    def numberOfPartitions: Int = raw.numberOfPartitions.get
     def numberOfReplications4OffsetsTopic: Int =
-      settings.numberOfReplications4OffsetsTopic.get
-    def numberOfNetworkThreads: Int = settings.numberOfNetworkThreads.get
-    def numberOfIoThreads: Int      = settings.numberOfIoThreads.get
+      raw.numberOfReplications4OffsetsTopic.get
+    def numberOfNetworkThreads: Int = raw.numberOfNetworkThreads.get
+    def numberOfIoThreads: Int      = raw.numberOfIoThreads.get
 
     override def volumeMaps: Map[ObjectKey, String] =
       if (logVolumeKeys.isEmpty) Map.empty
@@ -152,7 +152,7 @@ object BrokerApi {
   private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS

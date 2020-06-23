@@ -42,13 +42,13 @@ object StreamApi {
     */
   final val IMAGE_NAME_DEFAULT: String = StreamDefUtils.IMAGE_NAME_DEFINITION.defaultString()
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
+  final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = noJsNull(settings).map {
+    def plain: Map[String, String] = noJsNull(raw).map {
       case (k, v) =>
         k -> (v match {
           case JsString(value) => value
@@ -56,18 +56,18 @@ object StreamApi {
         })
     }
 
-    def brokerClusterKey: ObjectKey = settings.brokerClusterKey.get
+    def brokerClusterKey: ObjectKey = raw.brokerClusterKey.get
 
-    def className: Option[String] = settings.className
+    def className: Option[String] = raw.className
 
     override def ports: Set[Int] = Set(jmxPort)
 
-    def jarKey: ObjectKey = settings.jarKey.get
+    def jarKey: ObjectKey = raw.jarKey.get
 
-    private[ohara] def connectionProps: String = settings.connectionProps.get
+    private[ohara] def connectionProps: String = raw.connectionProps.get
 
-    def fromTopicKeys: Set[TopicKey] = settings.fromTopicKeys.get
-    def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys.get
+    def fromTopicKeys: Set[TopicKey] = raw.fromTopicKeys.get
+    def toTopicKeys: Set[TopicKey]   = raw.toTopicKeys.get
 
     // TODO: we should allow stream developers to define volume and then use it
     // https://github.com/oharastream/ohara/issues/4621
@@ -76,7 +76,7 @@ object StreamApi {
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS

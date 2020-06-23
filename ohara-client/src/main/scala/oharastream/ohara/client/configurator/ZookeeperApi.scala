@@ -99,7 +99,7 @@ object ZookeeperApi {
     .jmxPort()
     .result
 
-  final class Creation(val settings: Map[String, JsValue]) extends ClusterCreation {
+  final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
       * @param settings settings
@@ -107,13 +107,13 @@ object ZookeeperApi {
       */
     private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
     override def ports: Set[Int]                                                = Set(clientPort, peerPort, electionPort, jmxPort)
-    def clientPort: Int                                                         = settings.clientPort.get
-    def peerPort: Int                                                           = settings.peerPort.get
-    def electionPort: Int                                                       = settings.electionPort.get
-    def tickTime: Int                                                           = settings.tickTime.get
-    def initLimit: Int                                                          = settings.initLimit.get
-    def syncLimit: Int                                                          = settings.syncLimit.get
-    def connectionTimeout: Duration                                             = settings.connectionTimeout.get
+    def clientPort: Int                                                         = raw.clientPort.get
+    def peerPort: Int                                                           = raw.peerPort.get
+    def electionPort: Int                                                       = raw.electionPort.get
+    def tickTime: Int                                                           = raw.tickTime.get
+    def initLimit: Int                                                          = raw.initLimit.get
+    def syncLimit: Int                                                          = raw.syncLimit.get
+    def connectionTimeout: Duration                                             = raw.connectionTimeout.get
     def dataFolder: String                                                      = "/tmp/zk_data"
 
     /**
@@ -124,7 +124,7 @@ object ZookeeperApi {
       Map(DATA_DIR_KEY -> dataFolder)
         .flatMap {
           case (key, localPath) =>
-            settings.get(key).map(_ -> localPath)
+            raw.get(key).map(_ -> localPath)
         }
         .map {
           case (js, localPath) =>
@@ -138,7 +138,7 @@ object ZookeeperApi {
   private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS

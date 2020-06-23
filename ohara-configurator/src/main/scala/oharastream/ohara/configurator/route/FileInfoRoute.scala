@@ -190,6 +190,7 @@ private[configurator] object FileInfoRoute {
     override def group: String              = throw new UnsupportedOperationException
     override def name: String               = throw new UnsupportedOperationException
     override def tags: Map[String, JsValue] = throw new UnsupportedOperationException
+    override def raw: Map[String, JsValue]  = throw new UnsupportedOperationException
   }
 
   private[this] implicit val FAKE_FORMAT: JsonRefiner[FakeCreation] = JsonRefinerBuilder[FakeCreation]

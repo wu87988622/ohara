@@ -184,7 +184,7 @@ class TestNodeApi extends OharaTest {
   @Test
   def testParseDefaultPortInCreation(): Unit = {
     val hostname = CommonUtils.randomString(10)
-    val creation = NodeApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = NodeApi.CREATION_FORMAT.read(s"""
                                                             |{
                                                             | "hostname": "$hostname",
                                                             | "user": "user",
@@ -201,7 +201,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testEmptyNameInCreation(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.CREATION_FORMAT.read("""
                                                                                            |{
                                                                                            | "hostname": "",
                                                                                            | "port": 123,
@@ -212,7 +212,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testNegativePortInCreation(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.CREATION_FORMAT.read("""
                                                                                              |{
                                                                                              | "hostname": "hostname",
                                                                                              | "port": -1,
@@ -223,7 +223,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testZeroPortInCreation(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.CREATION_FORMAT.read("""
                                                                                              |{
                                                                                              | "hostname": "hostname",
                                                                                              | "port": 0,
@@ -234,7 +234,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testEmptyUserInCreation(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.CREATION_FORMAT.read("""
                                                                                              |{
                                                                                              | "hostname": "hostname",
                                                                                              | "port": 123,
@@ -245,7 +245,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testEmptyPasswordInCreation(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.CREATION_FORMAT.read("""
                                                                                              |{
                                                                                              | "hostname": "hostname",
                                                                                              | "port": 123,
@@ -260,7 +260,7 @@ class TestNodeApi extends OharaTest {
     val port     = CommonUtils.availablePort()
     val user     = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
-    val creation = NodeApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = NodeApi.CREATION_FORMAT.read(s"""
                                                          |{
                                                          | "hostname": "$name",
                                                          | "port": $port,
@@ -276,7 +276,7 @@ class TestNodeApi extends OharaTest {
     creation.password shouldBe password
 
     val hostname  = CommonUtils.randomString(10)
-    val creation2 = NodeApi.CREATION_JSON_FORMAT.read(s"""
+    val creation2 = NodeApi.CREATION_FORMAT.read(s"""
                                                              |{
                                                              | "group": "${CommonUtils.randomString(10)}",
                                                              | "hostname": "$name",

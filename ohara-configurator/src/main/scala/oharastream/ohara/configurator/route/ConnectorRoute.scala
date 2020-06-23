@@ -48,7 +48,7 @@ private[configurator] object ConnectorRoute {
         * TODO: we should add custom definitions to checks
         * https://github.com/oharastream/ohara/issues/4506
         */
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map(_.workerClusterInfos.head)
       // if the worker cluster is running, we try to fetch definitions and add them to the settings for the ignored key-values.
@@ -78,7 +78,7 @@ private[configurator] object ConnectorRoute {
             )
             .build()
             .refine(creation)
-            .settings,
+            .raw,
           // we don't need to fetch connector from kafka since it has not existed in kafka.
           state = None,
           aliveNodes = Set.empty,

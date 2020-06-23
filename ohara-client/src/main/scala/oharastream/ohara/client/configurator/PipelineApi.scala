@@ -56,13 +56,15 @@ object PipelineApi {
     JsonRefinerBuilder[Updating].format(jsonFormat2(Updating)).rejectEmptyString().build
 
   final case class Creation(
-    group: String,
-    name: String,
+    override val group: String,
+    override val name: String,
     endpoints: Set[Endpoint],
-    tags: Map[String, JsValue]
-  ) extends oharastream.ohara.client.configurator.BasicCreation
+    override val tags: Map[String, JsValue]
+  ) extends oharastream.ohara.client.configurator.BasicCreation {
+    override def raw: Map[String, JsValue] = CREATION_FORMAT.write(this).asJsObject.fields
+  }
 
-  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     rulesOfKey[Creation]
       .format(jsonFormat4(Creation))
@@ -205,8 +207,8 @@ object PipelineApi {
 
       override private[configurator] def creation: Creation =
         // auto-complete the creation via our refiner
-        CREATION_JSON_FORMAT.read(
-          CREATION_JSON_FORMAT.write(
+        CREATION_FORMAT.read(
+          CREATION_FORMAT.write(
             Creation(
               group = CommonUtils.requireNonEmpty(group),
               name = if (CommonUtils.isEmpty(name)) CommonUtils.randomString(10) else name,

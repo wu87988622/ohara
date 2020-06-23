@@ -30,7 +30,7 @@ private[configurator] object ObjectRoute {
   private[this] def toObject(creation: Creation): Future[ObjectInfo] =
     Future.successful(
       ObjectInfo(
-        creation.settings,
+        creation.raw,
         // add the last timestamp manually since there is no explicit field in ObjectInfo
         CommonUtils.current()
       )

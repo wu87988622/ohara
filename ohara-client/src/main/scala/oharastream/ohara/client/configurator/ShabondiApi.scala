@@ -72,8 +72,8 @@ object ShabondiApi {
     override protected def raw: Map[String, JsValue] = SHABONDI_CLUSTER_INFO_JSON_FORMAT.write(this).asJsObject.fields
   }
 
-  final class ShabondiClusterCreation(val settings: Map[String, JsValue]) extends ClusterCreation {
-    private val updating         = new ShabondiClusterUpdating(noJsNull(settings))
+  final class ShabondiClusterCreation(val raw: Map[String, JsValue]) extends ClusterCreation {
+    private val updating         = new ShabondiClusterUpdating(noJsNull(raw))
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     def shabondiClass: String = updating.shabondiClass.get
@@ -119,7 +119,7 @@ object ShabondiApi {
   implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: JsonRefiner[ShabondiClusterCreation] =
     rulesOfCreation[ShabondiClusterCreation](
       new RootJsonFormat[ShabondiClusterCreation] {
-        override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): ShabondiClusterCreation = new ShabondiClusterCreation(json.asJsObject.fields)
       },
       ShabondiDefinitions.basicDefinitions

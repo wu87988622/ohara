@@ -62,12 +62,14 @@ object NodeApi {
     port: Int,
     user: String,
     password: String,
-    tags: Map[String, JsValue]
+    override val tags: Map[String, JsValue]
   ) extends oharastream.ohara.client.configurator.BasicCreation {
     override def group: String = GROUP_DEFAULT
     override def name: String  = hostname
+
+    override def raw: Map[String, JsValue] = CREATION_FORMAT.write(this).asJsObject.fields
   }
-  implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     JsonRefinerBuilder[Creation]
       .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
@@ -303,8 +305,8 @@ object NodeApi {
 
       override private[configurator] def creation: Creation =
         // auto-complete the creation via our refiner
-        CREATION_JSON_FORMAT.read(
-          CREATION_JSON_FORMAT.write(
+        CREATION_FORMAT.read(
+          CREATION_FORMAT.write(
             Creation(
               hostname = CommonUtils.requireNonEmpty(nodeName),
               user = CommonUtils.requireNonEmpty(user),

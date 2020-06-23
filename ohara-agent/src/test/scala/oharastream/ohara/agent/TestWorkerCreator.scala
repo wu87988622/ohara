@@ -35,7 +35,7 @@ class TestWorkerCreator extends OharaTest {
     if (executionContext == null) throw new AssertionError()
     Future.successful(
       WorkerClusterInfo(
-        settings = creation.settings,
+        settings = creation.raw,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -194,7 +194,7 @@ class TestWorkerCreator extends OharaTest {
     val nodeNames = Set(CommonUtils.randomString())
     val workerClusterInfo = WorkerClusterInfo(
       settings =
-        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("default", "bk")).nodeNames(nodeNames).creation.settings,
+        WorkerApi.access.request.brokerClusterKey(ObjectKey.of("default", "bk")).nodeNames(nodeNames).creation.raw,
       aliveNodes = nodeNames,
       state = None,
       error = None,

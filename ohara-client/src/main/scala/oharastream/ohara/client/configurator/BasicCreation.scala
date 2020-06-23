@@ -19,6 +19,8 @@ package oharastream.ohara.client.configurator
 import oharastream.ohara.common.setting.ObjectKey
 import spray.json.JsValue
 
+import spray.json.DefaultJsonProtocol._
+
 /**
   * this is a basic interface of request to create a normal object resource.
   * We separate this interface with basic Data since request payload does not mean to be a "store-able" data
@@ -26,12 +28,23 @@ import spray.json.JsValue
 trait BasicCreation {
   def key: ObjectKey = ObjectKey.of(group, name)
 
-  def group: String
+  /**
+    * @return object group
+    */
+  def group: String = noJsNull(raw)(GROUP_KEY).convertTo[String]
 
   /**
     * @return object name
     */
-  def name: String
+  def name: String = noJsNull(raw)(NAME_KEY).convertTo[String]
 
-  def tags: Map[String, JsValue]
+  /**
+    * @return user-defined fields
+    */
+  def tags: Map[String, JsValue] = noJsNull(raw)(TAGS_KEY).asJsObject.fields
+
+  /**
+    * @return the raw settings from request
+    */
+  def raw: Map[String, JsValue]
 }

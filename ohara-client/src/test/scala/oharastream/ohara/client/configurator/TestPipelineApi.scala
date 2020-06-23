@@ -66,7 +66,7 @@ class TestPipelineApi extends OharaTest {
 
   @Test
   def parseCreation(): Unit = {
-    val creation = CREATION_JSON_FORMAT.read(s"""
+    val creation = CREATION_FORMAT.read(s"""
                                                           |  {
                                                           |  }
                                                           |
@@ -77,7 +77,7 @@ class TestPipelineApi extends OharaTest {
 
     val group     = CommonUtils.randomString(10)
     val name      = CommonUtils.randomString(10)
-    val creation2 = CREATION_JSON_FORMAT.read(s"""
+    val creation2 = CREATION_FORMAT.read(s"""
         |  {
         |    "group": "$group",
         |    "name": "$name"
@@ -92,7 +92,7 @@ class TestPipelineApi extends OharaTest {
 
   @Test
   def emptyNameInCreation(): Unit =
-    an[DeserializationException] should be thrownBy CREATION_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy CREATION_FORMAT.read("""
       |  {
       |    "name": ""
       |  }

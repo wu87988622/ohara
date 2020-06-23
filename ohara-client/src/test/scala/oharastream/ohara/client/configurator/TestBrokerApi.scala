@@ -35,7 +35,7 @@ class TestBrokerApi extends OharaTest {
     val nodeNames = Set(CommonUtils.randomString())
     val brokerClusterInfo = BrokerClusterInfo(
       settings =
-        access.nodeNames(Set(CommonUtils.randomString())).zookeeperClusterKey(ObjectKey.of("g", "n")).creation.settings,
+        access.nodeNames(Set(CommonUtils.randomString())).zookeeperClusterKey(ObjectKey.of("g", "n")).creation.raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -261,7 +261,7 @@ class TestBrokerApi extends OharaTest {
                                                   |    "imageName": "${BrokerApi.IMAGE_NAME_DEFAULT}"
                                                   |  }
                                                   |  """.stripMargin.parseJson)
-      .settings(IMAGE_NAME_KEY)
+      .raw(IMAGE_NAME_KEY)
       .convertTo[String] shouldBe BrokerApi.IMAGE_NAME_DEFAULT
 
   @Test
@@ -574,7 +574,7 @@ class TestBrokerApi extends OharaTest {
           .nodeNames(Set("n1"))
           .zookeeperClusterKey(ObjectKey.of("g", "n"))
           .creation
-          .settings,
+          .raw,
         aliveNodes = Set.empty,
         state = None,
         error = None,
@@ -619,7 +619,7 @@ class TestBrokerApi extends OharaTest {
         .nodeNames(Set("n0", "n1"))
         .zookeeperClusterKey(ObjectKey.of("g", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -636,7 +636,7 @@ class TestBrokerApi extends OharaTest {
         .nodeNames(Set("n0", "m1"))
         .zookeeperClusterKey(ObjectKey.of("g", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("nn"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -658,7 +658,7 @@ class TestBrokerApi extends OharaTest {
         .nodeNames(Set("n0", "n1"))
         .zookeeperClusterKey(ObjectKey.of("g", "n"))
         .creation
-        .settings,
+        .raw,
       aliveNodes = Set("n0"),
       state = Some(ClusterState.RUNNING),
       error = None,
@@ -745,7 +745,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def settingsDisappearFromJson(): Unit = {
     val cluster = BrokerClusterInfo(
-      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.settings,
+      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,
@@ -757,7 +757,7 @@ class TestBrokerApi extends OharaTest {
   @Test
   def testInfoJsonRepresentation(): Unit = {
     val cluster = BrokerClusterInfo(
-      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.settings,
+      settings = BrokerApi.access.request.zookeeperClusterKey(ObjectKey.of("a", "b")).nodeName("aa").creation.raw,
       aliveNodes = Set.empty,
       state = None,
       error = None,

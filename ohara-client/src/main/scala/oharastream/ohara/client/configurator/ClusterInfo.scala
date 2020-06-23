@@ -100,15 +100,15 @@ trait ClusterInfo extends Data {
     */
   def newNodeNames(newNodeNames: Set[String]): ClusterInfo = this match {
     case c: ZookeeperClusterInfo =>
-      c.copy(settings = ZookeeperApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+      c.copy(settings = ZookeeperApi.access.request.settings(settings).nodeNames(newNodeNames).creation.raw)
     case c: BrokerClusterInfo =>
-      c.copy(settings = BrokerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+      c.copy(settings = BrokerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.raw)
     case c: WorkerClusterInfo =>
-      c.copy(settings = WorkerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+      c.copy(settings = WorkerApi.access.request.settings(settings).nodeNames(newNodeNames).creation.raw)
     case c: StreamClusterInfo =>
-      c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+      c.copy(settings = StreamApi.access.request.settings(settings).nodeNames(newNodeNames).creation.raw)
     case c: ShabondiClusterInfo =>
-      c.copy(settings = ShabondiApi.access.request.settings(settings).nodeNames(newNodeNames).creation.settings)
+      c.copy(settings = ShabondiApi.access.request.settings(settings).nodeNames(newNodeNames).creation.raw)
   }
 
   /**

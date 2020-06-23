@@ -37,12 +37,12 @@ object WorkerRoute {
       .brokerCluster(creation.brokerClusterKey)
       .files(creation.pluginKeys)
       .files(creation.sharedJarKeys)
-      .references(creation.settings, DEFINITIONS)
+      .references(creation.raw, DEFINITIONS)
       .check()
       .map(
         _ =>
           WorkerClusterInfo(
-            settings = creation.settings,
+            settings = creation.raw,
             aliveNodes = Set.empty,
             state = None,
             error = None,
