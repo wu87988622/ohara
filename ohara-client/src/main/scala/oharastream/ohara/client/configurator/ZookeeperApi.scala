@@ -176,7 +176,7 @@ object ZookeeperApi {
   final case class ZookeeperClusterInfo private[ZookeeperApi] (
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
-    lastModified: Long,
+    override val lastModified: Long,
     state: Option[ClusterState],
     error: Option[String]
   ) extends ClusterInfo {
@@ -196,7 +196,7 @@ object ZookeeperApi {
     def syncLimit: Int                                                            = settings.syncLimit
     def dataDir: String                                                           = settings.dataFolder
 
-    override protected def raw: Map[String, JsValue] = ZOOKEEPER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = ZOOKEEPER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 import java.util.Objects
 
 import oharastream.ohara.client.Enum
-import oharastream.ohara.client.configurator.{Data, QueryRequest}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.data.Column
 import oharastream.ohara.common.setting._
@@ -27,9 +26,9 @@ import oharastream.ohara.kafka.connector.json._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, JsArray, JsObject, JsString, JsValue, RootJsonFormat, _}
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 object ConnectorApi {
   val KIND: String = SettingDef.Reference.CONNECTOR.name().toLowerCase
@@ -45,8 +44,6 @@ object ConnectorApi {
   private[configurator] val COLUMNS_KEY: String = ConnectorDefUtils.COLUMNS_DEFINITION.key()
   @VisibleForTesting
   private[configurator] val CONNECTOR_KEY_KEY: String = ConnectorDefUtils.CONNECTOR_KEY_DEFINITION.key()
-  private[this] val GROUP_KEY: String                 = ConnectorDefUtils.CONNECTOR_GROUP_DEFINITION.key()
-  private[this] val NAME_KEY: String                  = ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key()
   private[this] val PARTITIONER_CLASS_KEY: String     = ConnectorDefUtils.PARTITIONER_CLASS_DEFINITION.key()
 
   /**
@@ -70,7 +67,7 @@ object ConnectorApi {
     }
 
   final class Creation(val raw: Map[String, JsValue]) extends oharastream.ohara.client.configurator.BasicCreation {
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    override def key: ConnectorKey = ConnectorKey.of(group, name)
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -82,21 +79,14 @@ object ConnectorApi {
           case _               => v.toString()
         })
     }
-    def className: String           = raw.className.get
-    def columns: Seq[Column]        = raw.columns.get
-    def numberOfTasks: Int          = raw.numberOfTasks.get
-    def workerClusterKey: ObjectKey = raw.workerClusterKey.get
-    def topicKeys: Set[TopicKey]    = raw.topicKeys.get
 
-    override def group: String = raw.group.get
-
-    override def name: String = raw.name.get
-
-    override def key: ConnectorKey = ConnectorKey.of(group, name)
-
-    override def tags: Map[String, JsValue] = raw.tags.get
-
-    def partitionClass: String = raw.partitionerClass.get
+    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    def className: String                                                       = raw.className.get
+    def columns: Seq[Column]                                                    = raw.columns.get
+    def numberOfTasks: Int                                                      = raw.numberOfTasks.get
+    def workerClusterKey: ObjectKey                                             = raw.workerClusterKey.get
+    def topicKeys: Set[TopicKey]                                                = raw.topicKeys.get
+    def partitionClass: String                                                  = raw.partitionerClass.get
   }
 
   val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala.values.toSeq
@@ -145,9 +135,7 @@ object ConnectorApi {
       .build
 
   final class Updating(val settings: Map[String, JsValue]) {
-    private[ConnectorApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-    private[ConnectorApi] def name: Option[String]  = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-    def className: Option[String]                   = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
+    def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
       noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
@@ -192,33 +180,25 @@ object ConnectorApi {
     error: Option[String],
     tasksStatus: Seq[Status],
     nodeMetrics: Map[String, Metrics],
-    lastModified: Long
+    override val lastModified: Long
   ) extends Data
       with Metricsable {
+    override def key: ConnectorKey         = settings.key
+    override def kind: String              = KIND
+    override def raw: Map[String, JsValue] = CONNECTOR_INFO_FORMAT.write(this).asJsObject.fields
+
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
-
-    override def key: ConnectorKey = settings.key
-
-    override def group: String = settings.group
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = settings.plain
-
-    override def name: String = settings.name
-    override def kind: String = KIND
-    def className: String     = settings.className
-
-    def columns: Seq[Column]                = settings.columns
-    def numberOfTasks: Int                  = settings.numberOfTasks
-    def workerClusterKey: ObjectKey         = settings.workerClusterKey
-    def topicKeys: Set[TopicKey]            = settings.topicKeys
-    override def tags: Map[String, JsValue] = settings.tags
-
-    override protected def raw: Map[String, JsValue] = CONNECTOR_INFO_FORMAT.write(this).asJsObject.fields
-
-    def partitionClass: String = settings.partitionClass
+    def plain: Map[String, String]  = settings.plain
+    def className: String           = settings.className
+    def columns: Seq[Column]        = settings.columns
+    def numberOfTasks: Int          = settings.numberOfTasks
+    def workerClusterKey: ObjectKey = settings.workerClusterKey
+    def topicKeys: Set[TopicKey]    = settings.topicKeys
+    def partitionClass: String      = settings.partitionClass
   }
 
   implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =
@@ -366,7 +346,13 @@ object ConnectorApi {
       override def create()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] = post(creation)
 
       override def update()(implicit executionContext: ExecutionContext): Future[ConnectorInfo] =
-        put(ConnectorKey.of(updating.group.getOrElse(GROUP_DEFAULT), updating.name.get), updating)
+        put(
+          ConnectorKey.of(
+            settings.get(GROUP_KEY).map(_.convertTo[String]).getOrElse(GROUP_DEFAULT),
+            settings(NAME_KEY).convertTo[String]
+          ),
+          updating
+        )
     }
   }
 

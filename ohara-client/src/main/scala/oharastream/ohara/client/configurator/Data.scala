@@ -19,25 +19,48 @@ package oharastream.ohara.client.configurator
 import oharastream.ohara.common.setting.ObjectKey
 import spray.json.{JsValue, _}
 
+import spray.json.DefaultJsonProtocol._
+
 /**
   * This is the basic type which can be stored by configurator.
   * All members are declared as "def" since not all subclasses intend to represent all members in restful APIs.
   */
 trait Data {
-  def group: String
-  def name: String
-
   /**
     * a helper method used to generate the key of this data.
     * @return key
     */
   def key: ObjectKey = ObjectKey.of(group, name)
 
-  def lastModified: Long
-  def kind: String
-  def tags: Map[String, JsValue]
+  /**
+    * @return object group
+    */
+  def group: String = noJsNull(raw)(GROUP_KEY).convertTo[String]
 
-  protected def raw: Map[String, JsValue]
+  /**
+    * @return object name
+    */
+  def name: String = noJsNull(raw)(NAME_KEY).convertTo[String]
+
+  /**
+    * @return a unique string to describe the kind of this object
+    */
+  def kind: String
+
+  /**
+    * @return user-defined fields
+    */
+  def tags: Map[String, JsValue] = noJsNull(raw)(TAGS_KEY).asJsObject.fields
+
+  /**
+    * @return last time in ms to modify this object
+    */
+  def lastModified: Long = noJsNull(raw)(LAST_MODIFIED_KEY).convertTo[Long]
+
+  /**
+    * @return the raw settings from request
+    */
+  def raw: Map[String, JsValue]
 
   /**
     * by default, the query compare only "name", "group", "tags" and lastModified.

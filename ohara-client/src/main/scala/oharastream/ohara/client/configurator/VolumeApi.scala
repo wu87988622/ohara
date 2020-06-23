@@ -56,18 +56,18 @@ object VolumeApi {
   }
 
   final case class Volume(
-    group: String,
-    name: String,
+    override val group: String,
+    override val name: String,
     nodeNames: Set[String],
     path: String,
     state: Option[VolumeState],
     error: Option[String],
-    tags: Map[String, JsValue],
-    lastModified: Long
+    override val tags: Map[String, JsValue],
+    override val lastModified: Long
   ) extends Data {
     override def kind: String = KIND
 
-    override protected def raw: Map[String, JsValue] = VOLUME_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = VOLUME_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val VOLUME_JSON_FORMAT: RootJsonFormat[Volume] =

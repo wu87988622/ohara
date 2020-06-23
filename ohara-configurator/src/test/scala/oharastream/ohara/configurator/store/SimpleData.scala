@@ -19,8 +19,13 @@ package oharastream.ohara.configurator.store
 import oharastream.ohara.client.configurator.Data
 import spray.json.JsValue
 
-case class SimpleData(group: String, name: String, lastModified: Long, kind: String) extends Data {
+case class SimpleData(
+  override val group: String,
+  override val name: String,
+  override val lastModified: Long,
+  kind: String
+) extends Data {
   override def tags: Map[String, JsValue] = Map.empty
 
-  override protected def raw: Map[String, JsValue] = Map.empty
+  override def raw: Map[String, JsValue] = Map.empty
 }

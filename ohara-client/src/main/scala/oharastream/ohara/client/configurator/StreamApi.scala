@@ -125,7 +125,7 @@ object StreamApi {
     state: Option[ClusterState],
     error: Option[String],
     nodeMetrics: Map[String, Metrics],
-    lastModified: Long
+    override val lastModified: Long
   ) extends ClusterInfo
       with Metricsable {
     /**
@@ -150,7 +150,7 @@ object StreamApi {
     def toTopicKeys: Set[TopicKey]   = settings.toTopicKeys
     def connectionProps: String      = settings.connectionProps
 
-    override protected def raw: Map[String, JsValue] = STREAM_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = STREAM_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: JsonRefiner[StreamClusterInfo] =

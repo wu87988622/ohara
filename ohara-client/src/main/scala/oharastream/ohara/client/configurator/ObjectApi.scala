@@ -69,17 +69,7 @@ object ObjectApi {
   }
 
   final class ObjectInfo private[configurator] (val settings: Map[String, JsValue]) extends Data with Serializable {
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-
-    override def group: String = settings.group
-
-    override def name: String = settings.name
-
-    override def lastModified: Long = settings(LAST_MODIFIED_KEY).convertTo[Long]
-
     override def kind: String = KIND
-
-    override def tags: Map[String, JsValue] = settings.tags
 
     override def equals(obj: Any): Boolean = obj match {
       case other: ObjectInfo => other.settings == settings
@@ -90,7 +80,7 @@ object ObjectApi {
 
     override def toString: String = settings.toString()
 
-    override protected def raw: Map[String, JsValue] = settings
+    override def raw: Map[String, JsValue] = settings
   }
 
   object ObjectInfo {

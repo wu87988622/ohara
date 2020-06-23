@@ -220,7 +220,7 @@ object WorkerApi {
   final case class WorkerClusterInfo private[ohara] (
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
-    lastModified: Long,
+    override val lastModified: Long,
     state: Option[ClusterState],
     error: Option[String]
   ) extends ClusterInfo {
@@ -259,7 +259,7 @@ object WorkerApi {
 
     override def kind: String = KIND
 
-    override protected def raw: Map[String, JsValue] = WORKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = WORKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

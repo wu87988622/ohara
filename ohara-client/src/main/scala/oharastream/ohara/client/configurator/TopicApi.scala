@@ -208,7 +208,7 @@ object TopicApi {
     partitionInfos: Seq[PartitionInfo],
     nodeMetrics: Map[String, Metrics],
     state: Option[TopicState],
-    lastModified: Long
+    override val lastModified: Long
   ) extends Data
       with Metricsable {
     private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(settings)
@@ -221,12 +221,6 @@ object TopicApi {
       * @return topic name for kafka
       */
     def topicNameOnKafka: String = key.topicNameOnKafka
-
-    override def group: String = settings.group
-
-    override def name: String = settings.name
-
-    override def tags: Map[String, JsValue] = settings.tags
 
     def brokerClusterKey: ObjectKey = settings.brokerClusterKey
     def numberOfPartitions: Int     = settings.numberOfPartitions
@@ -241,7 +235,7 @@ object TopicApi {
         DEFINITIONS.filter(_.group() == CONFIGS_GROUP).exists(_.key() == key)
     }
 
-    override protected def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {

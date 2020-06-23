@@ -54,7 +54,7 @@ object ShabondiApi {
     state: Option[ClusterState],
     error: Option[String],
     nodeMetrics: Map[String, Metrics],
-    lastModified: Long
+    override val lastModified: Long
   ) extends ClusterInfo
       with Metricsable {
     private[this] implicit def creation(settings: Map[String, JsValue]): ShabondiClusterCreation =
@@ -69,7 +69,7 @@ object ShabondiApi {
     def sourceToTopics: Set[TopicKey] = settings.sourceToTopics
     def sinkFromTopics: Set[TopicKey] = settings.sinkFromTopics
 
-    override protected def raw: Map[String, JsValue] = SHABONDI_CLUSTER_INFO_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = SHABONDI_CLUSTER_INFO_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   final class ShabondiClusterCreation(val raw: Map[String, JsValue]) extends ClusterCreation {

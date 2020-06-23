@@ -191,7 +191,7 @@ object BrokerApi {
   final case class BrokerClusterInfo private[BrokerApi] (
     settings: Map[String, JsValue],
     aliveNodes: Set[String],
-    lastModified: Long,
+    override val lastModified: Long,
     state: Option[ClusterState],
     error: Option[String]
   ) extends ClusterInfo {
@@ -221,7 +221,7 @@ object BrokerApi {
     def numberOfNetworkThreads: Int            = settings.numberOfNetworkThreads
     def numberOfIoThreads: Int                 = settings.numberOfIoThreads
 
-    override protected def raw: Map[String, JsValue] = BROKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = BROKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   /**

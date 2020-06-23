@@ -90,14 +90,14 @@ object FileInfoApi {
     * @param lastModified last modified time
     */
   final class FileInfo(
-    val group: String,
-    val name: String,
+    override val group: String,
+    override val name: String,
     val url: Option[URL],
-    val lastModified: Long,
+    override val lastModified: Long,
     val bytes: Array[Byte],
     val size: Int,
     val classInfos: Seq[ClassInfo],
-    val tags: Map[String, JsValue]
+    override val tags: Map[String, JsValue]
   ) extends Data
       with Serializable {
     def this(
@@ -129,7 +129,7 @@ object FileInfoApi {
 
     override def kind: String = KIND
 
-    override protected def raw: Map[String, JsValue] = FILE_INFO_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = FILE_INFO_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   private[this] val URL_KEY         = "url"

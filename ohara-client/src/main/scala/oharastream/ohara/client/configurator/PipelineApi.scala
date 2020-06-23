@@ -97,17 +97,17 @@ object PipelineApi {
   }
 
   final case class Pipeline(
-    group: String,
-    name: String,
+    override val group: String,
+    override val name: String,
     endpoints: Set[Endpoint],
     objects: Set[ObjectAbstract],
     jarKeys: Set[ObjectKey],
-    lastModified: Long,
-    tags: Map[String, JsValue]
+    override val lastModified: Long,
+    override val tags: Map[String, JsValue]
   ) extends Data {
     override def kind: String = KIND
 
-    override protected def raw: Map[String, JsValue] = PIPELINE_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = PIPELINE_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)

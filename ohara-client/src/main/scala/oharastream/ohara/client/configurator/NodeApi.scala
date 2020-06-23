@@ -157,15 +157,15 @@ object NodeApi {
     services: Seq[NodeService],
     state: State,
     error: Option[String],
-    lastModified: Long,
+    override val lastModified: Long,
     resources: Seq[Resource],
-    tags: Map[String, JsValue]
+    override val tags: Map[String, JsValue]
   ) extends Data {
     // Node does not support to define group
-    override def group: String                       = GROUP_DEFAULT
-    override def name: String                        = hostname
-    override def kind: String                        = KIND
-    override protected def raw: Map[String, JsValue] = NODE_JSON_FORMAT.write(this).asJsObject.fields
+    override def group: String             = GROUP_DEFAULT
+    override def name: String              = hostname
+    override def kind: String              = KIND
+    override def raw: Map[String, JsValue] = NODE_JSON_FORMAT.write(this).asJsObject.fields
   }
 
   object Node {

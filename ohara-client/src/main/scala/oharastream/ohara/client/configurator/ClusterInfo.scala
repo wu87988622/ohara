@@ -16,13 +16,11 @@
 
 package oharastream.ohara.client.configurator
 
-import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
 import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.common.setting.ObjectKey
 import spray.json.DefaultJsonProtocol._
 import spray.json.JsValue
 
@@ -35,15 +33,6 @@ trait ClusterInfo extends Data {
     * @return the settings to set up this cluster. This is the raw data of settings.
     */
   def settings: Map[String, JsValue]
-
-  override def group: String = noJsNull(settings)(GROUP_KEY).convertTo[String]
-
-  override def name: String = noJsNull(settings)(NAME_KEY).convertTo[String]
-
-  /**
-    * override the key to avoid conflict of double inheritance.
-    */
-  override def key: ObjectKey = ObjectKey.of(group, name)
 
   /**
     * @return docker image name used to build container for this cluster
@@ -120,6 +109,4 @@ trait ClusterInfo extends Data {
     * @return size (in MB) of max heap
     */
   def maxHeap: Int = noJsNull(settings)(MAX_HEAP_KEY).convertTo[Int]
-
-  def tags: Map[String, JsValue] = noJsNull(settings)(TAGS_KEY).asJsObject.fields
 }
