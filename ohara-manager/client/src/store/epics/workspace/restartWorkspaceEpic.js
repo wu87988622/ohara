@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isEmpty } from 'lodash';
+import { isEmpty, pickBy, identity } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, defer, from, merge, empty } from 'rxjs';
 import {
@@ -38,9 +38,10 @@ import * as topicApi from 'api/topicApi';
 import * as brokerApi from 'api/brokerApi';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as workspaceApi from 'api/workspaceApi';
-import { updateWorkerAndWorkspace$ } from '../worker/updateWorkerEpic';
-import { updateBrokerAndWorkspace$ } from '../broker/updateBrokerEpic';
-import { updateZookeeperAndWorkspace$ } from '../zookeeper/updateZookeeperEpic';
+import { updateWorker$ } from '../worker/updateWorkerEpic';
+import { updateBroker$ } from '../broker/updateBrokerEpic';
+import { updateZookeeper$ } from '../zookeeper/updateZookeeperEpic';
+import { updateWorkspace$ } from '../workspace/updateWorkspaceEpic';
 import { stopWorker$ } from '../worker/stopWorkerEpic';
 import { stopTopic$ } from '../topic/stopTopicEpic';
 import { stopBroker$ } from '../broker/stopBrokerEpic';
@@ -186,10 +187,9 @@ export default (action$, state$) =>
           ),
         ),
 
-        updateWorkerAndWorkspace$({
-          workspaceKey,
-          ...workerKey,
+        updateWorker$({
           ...workerSettings,
+          tags: { ...workerSettings },
         }).pipe(
           endWith(
             actions.createLogProgress.trigger({
@@ -297,10 +297,9 @@ export default (action$, state$) =>
             async () => await isServiceRunning$(brokerApi.get(brokerKey)),
           ),
         ),
-        updateBrokerAndWorkspace$({
-          workspaceKey,
-          ...brokerKey,
+        updateBroker$({
           ...brokerSettings,
+          tags: { ...brokerSettings },
         }).pipe(
           endWith(
             actions.createLogProgress.trigger({
@@ -374,10 +373,9 @@ export default (action$, state$) =>
             async () => await isServiceRunning$(zookeeperApi.get(zookeeperKey)),
           ),
         ),
-        updateZookeeperAndWorkspace$({
-          workspaceKey,
-          ...zookeeperKey,
+        updateZookeeper$({
           ...zookeeperSettings,
+          tags: { ...zookeeperSettings },
         }).pipe(
           endWith(
             actions.createLogProgress.trigger({
@@ -543,6 +541,18 @@ export default (action$, state$) =>
           takeWhile(() => isTarget(KIND.worker)),
           takeWhile(
             async () => await isServiceRunning$(workerApi.get(workerKey)),
+          ),
+        ),
+
+        updateWorkspace$(
+          pickBy(
+            {
+              worker: { ...workerSettings },
+              broker: { ...brokerSettings },
+              zookeeper: { ...zookeeperSettings },
+              ...workspaceKey,
+            },
+            identity,
           ),
         ),
 

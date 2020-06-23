@@ -18,13 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  mergeMap,
-  concatMap,
-} from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
@@ -32,27 +26,7 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-// Note: The caller SHOULD handle the error of this action
-export const updateBrokerAndWorkspace$ = (values) => {
-  const brokerId = getId(values);
-  return defer(() => brokerApi.update(values)).pipe(
-    map((res) => res.data),
-    map((data) => normalize(data, schema.broker)),
-    map((normalizedData) => merge(normalizedData, { brokerId })),
-    concatMap((normalizedData) =>
-      from([
-        actions.updateWorkspace.trigger({
-          broker: normalizedData,
-          ...values.workspaceKey,
-        }),
-        actions.updateBroker.success(normalizedData),
-      ]),
-    ),
-    startWith(actions.updateBroker.request({ brokerId })),
-  );
-};
-
-const updateBroker$ = (values) => {
+export const updateBroker$ = (values) => {
   const brokerId = getId(values);
   return defer(() => brokerApi.update(values)).pipe(
     map((res) => res.data),
@@ -60,12 +34,6 @@ const updateBroker$ = (values) => {
     map((normalizedData) => merge(normalizedData, { brokerId })),
     map((normalizedData) => actions.updateBroker.success(normalizedData)),
     startWith(actions.updateBroker.request({ brokerId })),
-    catchError((err) =>
-      from([
-        actions.updateBroker.failure(merge(err, { brokerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -73,5 +41,16 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateBroker.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) => updateBroker$(values)),
+    mergeMap((values) =>
+      updateBroker$(values).pipe(
+        catchError((err) =>
+          from([
+            actions.updateBroker.failure(
+              merge(err, { brokerId: getId(values) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );

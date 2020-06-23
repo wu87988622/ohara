@@ -26,7 +26,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-const updateWorkspace$ = (values) => {
+export const updateWorkspace$ = (values) => {
   const workspaceId = getId(values);
   return defer(() => workspaceApi.update(values)).pipe(
     map((res) => res.data),
@@ -34,12 +34,6 @@ const updateWorkspace$ = (values) => {
     map((normalizedData) => merge(normalizedData, { workspaceId })),
     map((normalizedData) => actions.updateWorkspace.success(normalizedData)),
     startWith(actions.updateWorkspace.request({ workspaceId })),
-    catchError((err) =>
-      from([
-        actions.updateWorkspace.failure(merge(err, { workspaceId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
   );
 };
 
@@ -47,5 +41,16 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorkspace.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) => updateWorkspace$(values)),
+    mergeMap((values) =>
+      updateWorkspace$(values).pipe(
+        catchError((err) =>
+          from([
+            actions.updateWorkspace.failure(
+              merge(err, { workspaceId: getId(values) }),
+            ),
+            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+          ]),
+        ),
+      ),
+    ),
   );
