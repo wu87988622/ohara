@@ -81,7 +81,12 @@ const finalize$ = (options) =>
         options.onSuccess();
       }
     }),
-    map(() => actions.initializeApp.trigger({})),
+    concatMap(() =>
+      from([
+        actions.closeDeleteWorkspace.trigger(),
+        actions.initializeApp.trigger({}),
+      ]),
+    ),
   );
 
 export default (action$, state$) =>

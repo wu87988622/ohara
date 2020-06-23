@@ -318,7 +318,7 @@ export const useConfig = ({
           componentProps: {
             children: restartConfirmMessage(),
             title: 'Are you absolutely sure?',
-            confirmText: 'Restart',
+            confirmText: 'RESTART',
             onConfirm: openRestartWorkspaceProgressDialog,
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
@@ -337,7 +337,7 @@ export const useConfig = ({
             ),
             title: 'Are you absolutely sure?',
             confirmDisabled: !isDeleteEnabled,
-            confirmText: 'Delete',
+            confirmText: 'DELETE',
             maxWidth: 'sm',
             onConfirm: openDeleteProgressDialog,
           },

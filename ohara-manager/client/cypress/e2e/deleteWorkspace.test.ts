@@ -36,7 +36,7 @@ describe('DeleteWorkspace', () => {
     cy.findByText('Delete this workspace').click();
     cy.findByPlaceholderText('workspace1').type('workspace1');
 
-    cy.findByText('Delete').click();
+    cy.findByText('DELETE').click();
 
     cy.findAllByText('workspace1').should('not.exist');
     cy.location().should((location) => {
@@ -57,7 +57,7 @@ describe('DeleteWorkspace', () => {
     cy.findByText('Delete this workspace').click();
     cy.findByPlaceholderText('workspace1').type('workspace1');
 
-    cy.findByText('Delete').click();
+    cy.findByText('DELETE').click();
 
     // wait a few milliseconds
     cy.wait(500);
@@ -72,7 +72,7 @@ describe('DeleteWorkspace', () => {
     cy.findByText('Delete this workspace').click();
     cy.findByPlaceholderText('workspace1').type('workspace1');
 
-    cy.findByText('Delete').click();
+    cy.findByText('DELETE').click();
 
     cy.findAllByText('workspace1').should('not.exist');
     cy.location().should((location) => {
@@ -96,7 +96,7 @@ describe('DeleteWorkspace', () => {
     cy.findByText('Delete this workspace').click();
     cy.findByPlaceholderText('workspace1').type('workspace1');
 
-    cy.findByText('Delete').click();
+    cy.findByText('DELETE').click();
 
     cy.findAllByText('workspace1').should('not.exist');
     cy.location().should((location) => {

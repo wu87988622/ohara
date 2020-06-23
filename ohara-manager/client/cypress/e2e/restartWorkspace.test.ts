@@ -82,7 +82,7 @@ describe('RestartWorkspace', () => {
 
     // click the restart workspace button
     cy.findByText('Restart this workspace').click();
-    cy.findAllByText('Restart').filter(':visible').click();
+    cy.findAllByText('RESTART').filter(':visible').click();
 
     // wait and click button back to homepage
     cy.findAllByText('CLOSE')

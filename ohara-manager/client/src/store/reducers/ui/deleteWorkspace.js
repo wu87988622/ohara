@@ -54,6 +54,8 @@ export default function reducer(state = initialState, action) {
           log: [],
         },
       };
+    case actions.closeDeleteWorkspace.TRIGGER:
+      return initialState;
     case actions.pauseDeleteWorkspace.TRIGGER:
       return {
         ...state,

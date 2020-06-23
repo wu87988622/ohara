@@ -107,7 +107,10 @@ declare global {
       deletePipeline: (name: string) => Chainable<null>;
       deleteAllPipelines: (name?: string) => Chainable<null>;
       // Settings
-      switchSettingSection: (section: SETTING_SECTIONS) => Chainable<null>;
+      switchSettingSection: (
+        section: SETTING_SECTIONS,
+        listItem?: string,
+      ) => Chainable<null>;
       createSharedTopic: (name?: string) => Chainable<null>;
     }
   }
@@ -283,31 +286,47 @@ Cypress.Commands.add('deleteAllServices', () => {
 });
 
 // Settings
-Cypress.Commands.add('switchSettingSection', (section: SETTING_SECTIONS) => {
-  cy.get('body').then(($body) => {
-    // check whether we are in the homepage or not
-    if ($body.find('#navigator').length === 0) {
-      // force to visit the root path
-      cy.visit('/');
-    }
-    cy.get('#navigator').within(() => {
-      cy.get('button').should('have.length', 1).click();
+Cypress.Commands.add(
+  'switchSettingSection',
+  (section: SETTING_SECTIONS, listItem?: string) => {
+    cy.get('body').then(($body) => {
+      // check whether we are in the homepage or not
+      if ($body.find('#navigator').length === 0) {
+        // force to visit the root path
+        cy.visit('/');
+      }
+      cy.get('#navigator').within(() => {
+        cy.get('button').should('have.length', 1).click();
+      });
     });
-  });
 
-  // enter the settings dialog
-  cy.findAllByRole('menu').filter(':visible').find('li').click();
+    // enter the settings dialog
+    cy.findAllByRole('menu').filter(':visible').find('li').click();
 
-  cy.contains('h2', section)
-    .parent('section')
-    .find('ul')
-    .should('have.length', 1)
-    // We need to "offset" the element we just scrolled from the header of Settings
-    // which has 64px height
-    .scrollIntoView({ offset: { top: -64, left: 0 } })
-    .should('be.visible')
-    .click();
-});
+    if (listItem) {
+      cy.contains('h2', section)
+        .parent('section')
+        .find('ul')
+        .contains('li', listItem)
+        .should('have.length', 1)
+        // We need to "offset" the element we just scrolled from the header of Settings
+        // which has 64px height
+        .scrollIntoView({ offset: { top: -64, left: 0 } })
+        .should('be.visible')
+        .click();
+    } else {
+      cy.contains('h2', section)
+        .parent('section')
+        .find('ul')
+        .should('have.length', 1)
+        // We need to "offset" the element we just scrolled from the header of Settings
+        // which has 64px height
+        .scrollIntoView({ offset: { top: -64, left: 0 } })
+        .should('be.visible')
+        .click();
+    }
+  },
+);
 
 Cypress.Commands.add(
   'createSharedTopic',

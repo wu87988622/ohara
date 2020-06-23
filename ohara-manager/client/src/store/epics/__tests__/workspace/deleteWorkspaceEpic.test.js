@@ -89,10 +89,10 @@ it('delete workspace when worker is running should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '---^-a           ';
+    const input = '---^-a            ';
     const stateInput = '--v';
     // Expect stop worker
-    const expected = `--a 499ms (bz)`;
+    const expected = `--a 499ms (byz)`;
     const subs = ['^-', '--^ 499ms !'];
 
     const state$ = new StateObservable(
@@ -137,6 +137,9 @@ it('delete workspace when worker is running should be worked correctly', () => {
           workerId,
         },
       },
+      y: {
+        type: actions.closeDeleteWorkspace.TRIGGER,
+      },
       z: {
         type: actions.initializeApp.TRIGGER,
         payload: {},
@@ -156,7 +159,7 @@ it('delete workspace and some components when worker is running should be worked
     const input = '---^-a           ';
     const stateInput = '--v';
     // Expect delete all components first, then stop worker
-    const expected = `--a 999ms (bcd) 995ms (efg) 995ms (hij) 495ms (klm) 495ms (nz)`;
+    const expected = `--a 999ms (bcd) 995ms (efg) 995ms (hij) 495ms (klm) 495ms (nyz)`;
     const subs = ['^-', '--^ 3999ms !'];
 
     const state$ = new StateObservable(
@@ -248,6 +251,9 @@ it('delete workspace and some components when worker is running should be worked
           workerId,
         },
       },
+      y: {
+        type: actions.closeDeleteWorkspace.TRIGGER,
+      },
       z: {
         type: actions.initializeApp.TRIGGER,
         payload: {},
@@ -267,7 +273,7 @@ it('delete workspace when broker is running should be worked correctly', () => {
     const input = '---^-a           ';
     const stateInput = '--v';
     // Expect stop broker and remove object of worker
-    const expected = `--a 499ms (bm) 996ms (nz)`;
+    const expected = `--a 499ms (bm) 996ms (nyz)`;
     const subs = ['^-', '--^ 1499ms !'];
 
     const state$ = new StateObservable(
@@ -323,6 +329,9 @@ it('delete workspace when broker is running should be worked correctly', () => {
         type: actions.deleteWorker.SUCCESS,
         payload: { workerId },
       },
+      y: {
+        type: actions.closeDeleteWorkspace.TRIGGER,
+      },
       z: {
         type: actions.initializeApp.TRIGGER,
         payload: {},
@@ -342,7 +351,7 @@ it('delete workspace when zookeeper is running should be worked correctly', () =
     const input = '---^-a           ';
     const stateInput = '--v';
     // Expect stop zookeeper and remove object of worker and broker
-    const expected = `--a 499ms (bm) 996ms (no) 996ms (pz)`;
+    const expected = `--a 499ms (bm) 996ms (no) 996ms (pyz)`;
     const subs = ['^-', '--^ 2499ms !'];
 
     const state$ = new StateObservable(
@@ -406,6 +415,9 @@ it('delete workspace when zookeeper is running should be worked correctly', () =
         type: actions.deleteBroker.SUCCESS,
         payload: { brokerId },
       },
+      y: {
+        type: actions.closeDeleteWorkspace.TRIGGER,
+      },
       z: {
         type: actions.initializeApp.TRIGGER,
         payload: {},
@@ -425,7 +437,7 @@ it('delete workspace when all services are stopped should be worked correctly', 
     const input = '---^-a           ';
     const stateInput = '--v';
     // Expect remove object of service only
-    const expected = `--m 999ms (no) 996ms (pq) 996ms (rz)`;
+    const expected = `--m 999ms (no) 996ms (pq) 996ms (ryz)`;
     const subs = ['^-', '--^ 2999ms !'];
 
     const state$ = new StateObservable(
@@ -481,6 +493,9 @@ it('delete workspace when all services are stopped should be worked correctly', 
       r: {
         type: actions.deleteZookeeper.SUCCESS,
         payload: { zookeeperId },
+      },
+      y: {
+        type: actions.closeDeleteWorkspace.TRIGGER,
       },
       z: {
         type: actions.initializeApp.TRIGGER,
