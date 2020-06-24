@@ -87,7 +87,17 @@ declare global {
         topicName?: string,
       ) => Chainable<void>;
       deleteAllServices: () => Chainable<null>;
+      /**
+       * get the &lt;td /&gt; element by required parameters.
+       * <p> if the columnValue was absent, the result will be the first matched DOM element.
+       */
+      getTableCellByColumn: (
+        $table: JQuery<HTMLTableElement>,
+        columnName: string,
+        columnValue?: string,
+      ) => Chainable<JQuery<HTMLElement | HTMLElement[]>>;
       // Paper
+      // Drag & Drop
       dragAndDrop: (
         shiftX: number,
         shiftY: number,
@@ -281,13 +291,42 @@ Cypress.Commands.add('deleteAllServices', () => {
     .then(() => cy.log(`Finish delete all services!`));
 });
 
+Cypress.Commands.add(
+  'getTableCellByColumn',
+  // this action should be a parent command
+  { prevSubject: false },
+  (
+    $table: JQuery<HTMLTableElement>,
+    columnName: string,
+    columnValue?: string,
+  ) => {
+    const header = $table.find('thead tr').find(`th:contains("${columnName}")`);
+    const index = $table.find('thead tr th').index(header);
+
+    const finalElement = columnValue
+      ? $table.has(`tbody tr td:contains("${columnValue}")`).length === 0
+        ? null
+        : $table.find(`tbody tr td:contains("${columnValue}")`)
+      : $table
+          .find('tbody tr')
+          .map(function (_, element) {
+            return Cypress.$(element).find('td').eq(index);
+          })
+          .get()
+          .shift();
+    return cy.wrap(finalElement);
+  },
+);
+
 // Settings
 Cypress.Commands.add(
   'switchSettingSection',
   (section: SETTING_SECTIONS, listItem?: string) => {
     cy.get('body').then(($body) => {
       // check whether we are in the homepage or not
-      if ($body.find('#navigator').length === 0) {
+      if (
+        $body.find('div[data-testid="workspace-settings-dialog"]').length > 0
+      ) {
         // force to visit the root path
         cy.visit('/');
       }
@@ -305,22 +344,21 @@ Cypress.Commands.add(
         .find('ul')
         .contains('li', listItem)
         .should('have.length', 1)
-        // We need to "offset" the element we just scrolled from the header of Settings
-        // which has 64px height
-        .scrollIntoView({ offset: { top: -64, left: 0 } })
-        .should('be.visible')
-        .click();
+        .as('section');
     } else {
       cy.contains('h2', section)
         .parent('section')
         .find('ul')
         .should('have.length', 1)
-        // We need to "offset" the element we just scrolled from the header of Settings
-        // which has 64px height
-        .scrollIntoView({ offset: { top: -64, left: 0 } })
-        .should('be.visible')
-        .click();
+        .as('section');
     }
+
+    cy.get('@section')
+      // We need to "offset" the element we just scrolled from the header of Settings
+      // which has 64px height
+      .scrollIntoView({ offset: { top: -64, left: 0 } })
+      .should('be.visible')
+      .click();
   },
 );
 
@@ -347,13 +385,14 @@ Cypress.Commands.add(
         cy.contains('button', /create/i).click();
       });
 
-    cy.get('.shared-topic:visible').within(() => {
-      cy.findByText(name)
-        .should('exist')
-        .parent()
-        .findAllByText('RUNNING')
-        .should('exist');
-    });
+    cy.get('.shared-topic:visible')
+      .find('table')
+      .within(($table) => {
+        cy.getTableCellByColumn($table, 'Name', name).should('exist');
+        cy.getTableCellByColumn($table, 'State')
+          .invoke('html')
+          .should('equal', 'RUNNING');
+      });
 
     cy.findByTestId('workspace-settings-dialog-close-button').click({
       force: true,

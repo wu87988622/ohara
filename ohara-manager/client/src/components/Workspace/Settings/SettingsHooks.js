@@ -292,7 +292,7 @@ export const useConfig = ({
           componentProps: {
             children: restartConfirmMessage(KIND.worker),
             title: 'Are you absolutely sure?',
-            confirmText: 'Restart',
+            confirmText: 'RESTART',
             onConfirm: openRestartWorkerProgressDialog,
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
@@ -305,7 +305,7 @@ export const useConfig = ({
           componentProps: {
             children: restartConfirmMessage(KIND.broker),
             title: 'Are you absolutely sure?',
-            confirmText: 'Restart',
+            confirmText: 'RESTART',
             onConfirm: openRestartBrokerProgressDialog,
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,

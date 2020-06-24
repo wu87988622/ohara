@@ -72,7 +72,7 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
   return (
     <Dialog
       confirmDisabled={confirmDisabled}
-      confirmText="Save"
+      confirmText="SAVE"
       confirmTooltip={confirmTooltip}
       maxWidth="md"
       onClose={handleCancel}

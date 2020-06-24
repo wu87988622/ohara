@@ -29,9 +29,10 @@ describe('Navigator', () => {
   // generate topics
   const t1 = generate.serviceName({ prefix: 't1' });
   const t2 = generate.serviceName({ prefix: 't2' });
-
   // generate setting fillings
   const setting = generate.word();
+  // generate fake hostname
+  const hostname = generate.serviceName();
 
   before(() => {
     cy.deleteAllServices();
@@ -138,13 +139,15 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          // assert topic name
-          cy.contains('td', 'Name')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', t1);
-          // this topic should be shared
-          cy.contains('td', 'Type').siblings('td').contains('span', 'Shared');
+          cy.get('table')
+            // we should only have 1 table (information) in fake mode
+            .first()
+            .within(($table) => {
+              // assert topic name
+              cy.getTableCellByColumn($table, 'Name', t1).should('exist');
+              // this topic should be shared
+              cy.getTableCellByColumn($table, 'Type', 'Shared').should('exist');
+            });
         })
         // press "ESC" again back to topic list
         .trigger('keydown', { keyCode: 27, which: 27 });
@@ -432,31 +435,40 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          // assert each field
-          cy.contains('td', 'Hostname')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.hostname);
-          cy.contains('td', 'Port')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.port.toString());
-          cy.contains('td', 'User')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.user);
-          cy.contains('td', 'Password')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.password);
-
-          // assert zookeeper should exist in services
-          cy.contains('td', 'zookeeper')
-            .siblings('td')
+          cy.get('table')
             .first()
-            .invoke('html')
-            // the name of zookeeper should be as same as "workspace"
-            .should('equal', 'workspace1');
+            .within(($table) => {
+              // assert each field
+              cy.getTableCellByColumn($table, 'Hostname', node.hostname).should(
+                'exist',
+              );
+              cy.getTableCellByColumn(
+                $table,
+                'Port',
+                node.port.toString(),
+              ).should('exist');
+              cy.getTableCellByColumn($table, 'User', node.user).should(
+                'exist',
+              );
+              cy.getTableCellByColumn($table, 'Password', node.password).should(
+                'exist',
+              );
+            });
+
+          cy.get('table')
+            .last<HTMLTableElement>()
+            .within(($table) => {
+              // assert zookeeper should exist in services list
+              // the name of zookeeper should be as same as "workspace"
+              cy.getTableCellByColumn($table, 'Name', 'workspace1').should(
+                'exist',
+              );
+
+              // assert zookeeper should exist in services type
+              cy.getTableCellByColumn($table, 'Type', 'zookeeper').should(
+                'exist',
+              );
+            });
         });
     });
   });
@@ -480,31 +492,38 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          // assert each field
-          cy.contains('td', 'Hostname')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.hostname);
-          cy.contains('td', 'Port')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.port.toString());
-          cy.contains('td', 'User')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.user);
-          cy.contains('td', 'Password')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.password);
-
-          // assert broker should exist in services
-          cy.contains('td', 'worker')
-            .siblings('td')
+          cy.get('table')
             .first()
-            .invoke('html')
-            // the name of broker should be as same as "workspace"
-            .should('equal', 'workspace1');
+            .within(($table) => {
+              // assert each field
+              cy.getTableCellByColumn($table, 'Hostname', node.hostname).should(
+                'exist',
+              );
+              cy.getTableCellByColumn(
+                $table,
+                'Port',
+                node.port.toString(),
+              ).should('exist');
+              cy.getTableCellByColumn($table, 'User', node.user).should(
+                'exist',
+              );
+              cy.getTableCellByColumn($table, 'Password', node.password).should(
+                'exist',
+              );
+            });
+
+          cy.get('table')
+            .last<HTMLTableElement>()
+            .within(($table) => {
+              // assert broker should exist in services list
+              // the name of broker should be as same as "workspace"
+              cy.getTableCellByColumn($table, 'Name', 'workspace1').should(
+                'exist',
+              );
+
+              // assert broker should exist in services type
+              cy.getTableCellByColumn($table, 'Type', 'broker').should('exist');
+            });
         });
     });
   });
@@ -528,31 +547,38 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          // assert each field
-          cy.contains('td', 'Hostname')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.hostname);
-          cy.contains('td', 'Port')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.port.toString());
-          cy.contains('td', 'User')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.user);
-          cy.contains('td', 'Password')
-            .siblings('td')
-            .invoke('html')
-            .should('equal', node.password);
-
-          // assert worker should exist in services
-          cy.contains('td', 'worker')
-            .siblings('td')
+          cy.get('table')
             .first()
-            .invoke('html')
-            // the name of worker should be as same as "workspace"
-            .should('equal', 'workspace1');
+            .within(($table) => {
+              // assert each field
+              cy.getTableCellByColumn($table, 'Hostname', node.hostname).should(
+                'exist',
+              );
+              cy.getTableCellByColumn(
+                $table,
+                'Port',
+                node.port.toString(),
+              ).should('exist');
+              cy.getTableCellByColumn($table, 'User', node.user).should(
+                'exist',
+              );
+              cy.getTableCellByColumn($table, 'Password', node.password).should(
+                'exist',
+              );
+            });
+
+          cy.get('table')
+            .last<HTMLTableElement>()
+            .within(($table) => {
+              // assert worker should exist in services list
+              // the name of worker should be as same as "workspace"
+              cy.getTableCellByColumn($table, 'Name', 'workspace1').should(
+                'exist',
+              );
+
+              // assert worker should exist in services type
+              cy.getTableCellByColumn($table, 'Type', 'worker').should('exist');
+            });
         });
     });
   });
@@ -584,6 +610,7 @@ describe('Navigator', () => {
         SETTING_SECTIONS.dangerZone,
         'Delete this workspace',
       );
+
       cy.findAllByRole('dialog')
         .filter(':visible')
         .should('have.length', 1)
@@ -609,6 +636,7 @@ describe('Navigator', () => {
         .within(() => {
           cy.findByText('RESTART').click();
         });
+
       cy.findAllByRole('dialog')
         .filter(':visible')
         .should('have.length', 1)
@@ -617,6 +645,294 @@ describe('Navigator', () => {
         });
 
       cy.location('pathname').should('equal', '/workspace1');
+    });
+
+    context('Danger Zone', () => {
+      it('should able to add node into workspace', () => {
+        // click node list
+        cy.findByTitle(/node list/i).click();
+        // create a node
+        cy.findByTitle(/create node/i).click();
+        cy.get('input[name=hostname]').type(hostname);
+        cy.get('input[name=port]').type(generate.port().toString());
+        cy.get('input[name=user]').type(generate.userName());
+        cy.get('input[name=password]').type(generate.password());
+        cy.findByText(/^create$/i).click();
+        cy.findByTestId('fullscreen-dialog-close-button').click();
+
+        // add new added node into workspace
+        cy.switchSettingSection(SETTING_SECTIONS.nodes);
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add Node').click();
+        });
+
+        // re-open select node
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => cy.findByText('CANCEL').click());
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add Node').click();
+        });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              // checked the new added hostname
+              cy.getTableCellByColumn($table, 'Hostname', hostname)
+                .should('exist')
+                .siblings('td')
+                .first()
+                .find('input[type="checkbox"]')
+                .click();
+            });
+
+            cy.findByText('SAVE').click();
+          });
+
+        cy.get('div.section-page-content').within(() => {
+          cy.findByText(hostname)
+            .should('exist')
+            .siblings('td')
+            // the "Used" column
+            .eq(3)
+            .invoke('html')
+            // there is no service assign to this node yet
+            .should('be.empty');
+        });
+      });
+
+      it('should show an restart indicator after adding node to zookeeper', () => {
+        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add Node').click();
+        });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              // assert the Services should be 0
+              cy.getTableCellByColumn($table, 'Services', '0').should('exist');
+              // checked the new added hostname
+              cy.getTableCellByColumn($table, 'Name', hostname)
+                .should('exist')
+                .siblings('td')
+                .first()
+                .find('input[type="checkbox"]')
+                .click();
+            });
+
+            cy.findByText('SAVE').click();
+          });
+
+        cy.get('div.section-page-content').within(() => {
+          // undo added node
+          cy.findByText(hostname)
+            .siblings('td')
+            .last()
+            .within(() => cy.findByTitle('Undo add node').click());
+          cy.findByText(hostname).should('not.exist');
+        });
+
+        // adding node again
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add Node').click();
+        });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              // assert the Services should be 0
+              cy.getTableCellByColumn($table, 'Services', '0').should('exist');
+              // checked the new added hostname
+              cy.getTableCellByColumn($table, 'Name', hostname)
+                .should('exist')
+                .siblings('td')
+                .first()
+                .find('input[type="checkbox"]')
+                .click();
+            });
+
+            cy.findByText('SAVE').click();
+          });
+
+        cy.get('div.section-page-header').within(() => {
+          // back to Settings dialog
+          cy.get('button').click();
+        });
+
+        // the zookeeper section should have 1 change warning
+        cy.contains('h2', SETTING_SECTIONS.zookeeper)
+          .parent('section')
+          .find('ul')
+          .contains('span', '1');
+
+        // click the discard button in indicator
+        cy.findAllByRole('alert')
+          .scrollIntoView()
+          .should('have.length', 1)
+          .within(() => {
+            cy.contains('button', /discard/i).click();
+          });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // discard the "discard" changes
+            cy.contains('button', 'CANCEL').click();
+          });
+
+        // click the discard button in indicator again
+        cy.findAllByRole('alert')
+          .scrollIntoView()
+          .should('have.length', 1)
+          .within(() => {
+            cy.contains('button', /discard/i).click();
+          });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // discard the changes
+            cy.contains('button', 'DISCARD').click();
+          });
+
+        // the zookeeper section should not have warnings
+        cy.findAllByRole('alert').should('not.exist');
+        cy.contains('h2', SETTING_SECTIONS.zookeeper)
+          .parent('section')
+          .find('ul')
+          .contains('span', '1')
+          .should('not.exist');
+      });
+
+      it('should able to restart from indicator after adding node to zookeeper', () => {
+        // add node to zookeeper
+        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add Node').click();
+        });
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              // checked the new added hostname
+              cy.getTableCellByColumn($table, 'Name', hostname)
+                .should('exist')
+                .siblings('td')
+                .first()
+                .find('input[type="checkbox"]')
+                .click();
+            });
+            cy.findByText('SAVE').click();
+          });
+        cy.get('div.section-page-header').within(() => {
+          // back to Settings dialog
+          cy.get('button').click();
+        });
+
+        // click the restart button in indicator
+        cy.findAllByRole('alert')
+          .scrollIntoView()
+          .should('have.length', 1)
+          .within(() => {
+            cy.contains('button', /restart/i).click();
+          });
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // cancel the "restart" changes
+            cy.contains('button', 'CANCEL').click();
+          });
+
+        // click the restart button in indicator again
+        cy.findAllByRole('alert')
+          .scrollIntoView()
+          .should('have.length', 1)
+          .within(() => {
+            cy.contains('button', /restart/i).click();
+          });
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // confirm the "restart" changes
+            cy.contains('button', 'RESTART').click();
+          });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // expand the log process
+            cy.get('div.FlexIconButtonDiv').find('button').click();
+            cy.get('div.StyledCard').should('exist');
+
+            cy.findByText('Stop worker success', { exact: false });
+            cy.findByText('Stop broker success', { exact: false });
+            cy.findByText('Stop zookeeper success', { exact: false });
+            cy.findByText('Start zookeeper success', { exact: false });
+            cy.findByText('Start broker success', { exact: false });
+            cy.findByText('Start worker success', { exact: false });
+
+            cy.get('div.FlexFooterDiv')
+              .contains('button', 'CLOSE')
+              .should('be.enabled')
+              .click();
+          });
+
+        // the indicator should be disappear
+        cy.findAllByRole('alert').should('not.exist');
+        cy.findByText('Successfully Restart workspace workspace1.').should(
+          'not.exist',
+        );
+        cy.findByTestId('workspace-settings-dialog-close-button').click();
+
+        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+        cy.get('div.section-page-content').within(() => {
+          cy.get('table').within(($table) => {
+            // assert the Services should be 1 now
+            cy.getTableCellByColumn($table, 'Services', '1').should('exist');
+          });
+        });
+      });
+
+      it('should able to restart worker by directly click button', () => {
+        cy.switchSettingSection(
+          SETTING_SECTIONS.dangerZone,
+          'Restart this worker',
+        );
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.findByText('CANCEL').click();
+          });
+
+        // re-click again
+        cy.switchSettingSection(
+          SETTING_SECTIONS.dangerZone,
+          'Restart this worker',
+        );
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.findByText('RESTART').click();
+          });
+      });
     });
   });
 });
