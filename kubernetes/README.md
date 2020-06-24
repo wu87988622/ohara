@@ -1,3 +1,3 @@
 # Kubernetes
 
-About Kubernetes installation, please refer: https://ohara.readthedocs.io/en/latest/user_guide.html#kubernetes
+About Kubernetes installation, please refer: https://oharastream.github.io/en/docs/master/user_guide/#k8s

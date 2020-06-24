@@ -1,32 +1,32 @@
 [![Build Status](https://github.com/oharastream/ohara/workflows/PostCommit/badge.svg)](https://github.com/oharastream/ohara/actions?query=workflow%3APostCommit)
-[![Documentation Status](https://readthedocs.org/projects/ohara/badge/?version=latest)](https://ohara.readthedocs.io/en/latest/?badge=latest)
 [![Github Assets](https://img.shields.io/badge/download-assets-brightgreen.svg)](https://github.com/oharastream/ohara/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # Ohara
 
-![pipeline-screenshot](images/pipeline_screenshot.jpg)
+![pipeline-screenshot](https://raw.githubusercontent.com/oharastream/ohara-docs/master/assets/images/pipeline_screenshot.jpg)
 
-Ohara is an scalable streaming platform, that allows users to easily organized their input, output, and streaming applications with an clean and comprehensive GUI.
+Ohara is a scalable streaming platform, that allows users to easily organized their input, output, and streaming applications with a clean and comprehensive GUI.
 
-The streaming application ([Stream](https://ohara.readthedocs.io/en/latest/custom_stream.html)) contains the business logic defined by the user. By combining the applications with the default FTP, JDBC, HDFS, or [custom](https://ohara.readthedocs.io/en/latest/custom_connector.html) connectors, an user can construct a scalable pipeline with full control.
+The streaming application ([Stream](https://oharastream.github.io/en/docs/master/custom_stream/)) contains the business logic defined by the user. By combining the applications with the default FTP, JDBC, HDFS, or [custom connectors](https://oharastream.github.io/en/docs/master/custom_connector/), a user can construct a scalable pipeline with full control.
 
 Ohara provides an architecture to scale, so the users can focus on their business logic and their main applications.
 
-**Try this [Quickstart VM](https://ohara-quickstart.readthedocs.io) to empower your business now!**
+**Try this [Quickstart VM](https://oharastream.github.io/en/docs/master/quickstart/quickstartvm/) to empower your business now!**
 
 ----
 
-### [Ohara Documentation](https://ohara.readthedocs.io)
+### [Ohara Documentation](https://oharstream.github.io)
 
+Looking for the document of v0.10.x ? Please goto [here](https://ohara.readthedocs.io/en/0.10.x/).
 
-### [中文使用者社群](https://www.facebook.com/groups/oharastream)
+**[Facebook 中文使用者社群](https://www.facebook.com/groups/oharastream)**
 
 ----
 
 ## Contributing
 
-Ohara is a completely open source project. If you're interested in contributing, you can start from the [contrubting guide](https://ohara.readthedocs.io/en/latest/contributing.html). Also, take a look at our [issue tracker](https://github.com/oharastream/ohara/issues), the [good first issues](https://github.com/oharastream/ohara/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) would be a good place to start with.
+Ohara is a completely open source project. If you're interested in contributing, you can start from the [contrubting guide](https://oharastream.github.io/en/docs/master/contributing/). Also, take a look at our [issue tracker](https://github.com/oharastream/ohara/issues), the [good first issues](https://github.com/oharastream/ohara/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) would be a good place to start with.
 
 ----
 

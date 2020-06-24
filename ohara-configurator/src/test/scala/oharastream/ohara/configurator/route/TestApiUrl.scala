@@ -31,6 +31,6 @@ class TestApiUrl extends OharaTest {
     val command = "curl --silent --url %s".format(oharastream.ohara.configurator.route.apiUrl)
     log.info("fetch html: {}", command)
 
-    (command.!!) should include("""<p class="caption"><span class="caption-text">REST APIs</span></p>""")
+    (command.!!) should include("""<h1>Ohara REST Interface</h1>""")
   }
 }

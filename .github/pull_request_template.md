@@ -1,5 +1,5 @@
 ### Checklist
-- [ ] [Review Contribution Guidelines](https://ohara.readthedocs.io/en/latest/contributing.html)
+- [ ] [Review Contribution Guidelines](https://oharastream.github.io/en/docs/master/contributing/)
 - [ ] Add Reviewers (see [Authors](https://github.com/oharastream/ohara#ohara-team))
 - [ ] Add Assignees (of course, you are the assignee by default!)
 - [ ] DON'T set a Milestone

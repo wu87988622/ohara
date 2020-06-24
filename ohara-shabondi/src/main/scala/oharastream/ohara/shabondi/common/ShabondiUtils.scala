@@ -56,8 +56,5 @@ object ShabondiUtils {
     args.foreach { case (k, v) => log.info(s"    $k=$v") }
   }
 
-  def apiUrl: String = {
-    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
-    s"https://ohara.readthedocs.io/en/$docVersion/shabondi.html"
-  }
+  def apiUrl: String = s"https://oharastream.github.io/en/docs/${VersionUtils.BRANCH}/shabondi/"
 }

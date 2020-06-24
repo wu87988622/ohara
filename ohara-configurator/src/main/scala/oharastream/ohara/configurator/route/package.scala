@@ -202,10 +202,7 @@ package object route {
     * the url to official APIs documentation.
     * @return url string
     */
-  def apiUrl: String = {
-    val docVersion = if (VersionUtils.BRANCH == "master") "latest" else VersionUtils.BRANCH
-    s"https://ohara.readthedocs.io/en/$docVersion/rest/index.html"
-  }
+  def apiUrl: String = s"https://oharastream.github.io/en/docs/${VersionUtils.BRANCH}/rest-api/"
 
   private[this] def errorWithOfficialApis(inputPath: String): ErrorApi.Error = ErrorApi.Error(
     code = s"Unsupported API: $inputPath",
