@@ -15,11 +15,13 @@
  */
 
 import React from 'react';
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 
 import { FullScreenDialog } from 'components/common/Dialog';
 import { NodeTable } from 'components/Node';
 import * as hooks from 'hooks';
+import { KIND } from 'const';
 
 const NodeListDialog = (props) => {
   const { isOpen, nodes, onClose } = props;
@@ -46,6 +48,12 @@ const NodeListDialog = (props) => {
     updateNode(nodeToUpdate);
   };
 
+  const hasUsedServicesInNode = (node) =>
+    !_(node.services)
+      .filter((service) => service.name !== KIND.configurator)
+      .flatMap((service) => service.clusterKeys)
+      .isEmpty();
+
   return (
     <FullScreenDialog onClose={onClose} open={isOpen} title="All nodes">
       <NodeTable
@@ -55,6 +63,13 @@ const NodeListDialog = (props) => {
         onUpdate={handleUpdate}
         options={{
           onRefreshIconClick: fetchNodes,
+          disabledDeleteIcon: hasUsedServicesInNode,
+          deleteTooltip: (node) => {
+            return hasUsedServicesInNode(node)
+              ? 'Cannot remove a node which has services running in it'
+              : // use default toolTip otherwise
+                undefined;
+          },
           selection: false,
           showCreateIcon: true,
           showDeleteIcon: true,

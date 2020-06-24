@@ -31,8 +31,8 @@ Cypress.Commands.overwrite('get', (originFn, subject, options) => {
 Cypress.Commands.overwrite('click', (originFn, subject, options) => {
   // we only wait a few seconds for simple command instead of using defaultCommandTimeout
   const customOptions = {
-    ...options,
     timeout: SINGLE_COMMAND_TIMEOUT,
+    ...options,
   };
   // The API of testing library "findByTitle" or "getByTitle" will try to query the element which has the "title=" attribute.
   // However, cypress click() command is a synthetic event (https://dev.to/gabbersepp/doing-native-clicks-with-cypress-io-and-open-file-dialog-18n6)

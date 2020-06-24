@@ -96,25 +96,13 @@ describe('App Bar', () => {
 
       // click node list
       cy.findByTitle(/node list/i).click();
-      cy.findByTestId(`delete-node-${node.hostname}`).click();
-      cy.findAllByTestId('confirm-button-DELETE')
-        .filter(':visible')
-        .should('have.length', 1)
-        .click();
 
-      cy.findAllByRole('dialog')
-        .filter(':visible')
-        .should('have.length', 1)
-        .within(() => {
-          // the button should be disable during removing
-          cy.get('button').should('be.disabled');
-        });
-
-      // we could not remove the node which is in use
-      cy.findByText(
-        `Try to remove node: "${node.hostname}" failed after retry 5 times.`,
+      // Since the node we use for creating services
+      // it could not be removed
+      cy.findByTestId(`delete-node-${node.hostname}`).should('not.be.visible');
+      cy.findByTitle(
+        'Cannot remove a node which has services running in it',
       ).should('exist');
-      cy.findByText(node.hostname).should('exist');
     });
   });
 });

@@ -231,11 +231,7 @@ Cypress.Commands.add(
       .filter(':visible')
       .click();
 
-    // Ensure workspace is completely ready
     cy.findByTestId('create-workspace').should('not.be.visible');
-    cy.findByText('Successfully created workspace workspace1.', {
-      timeout: 70000,
-    }).should('not.be.visible');
 
     cy.end();
   },
