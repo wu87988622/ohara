@@ -189,7 +189,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def parseCreation(): Unit = {
     val nodeName = CommonUtils.randomString()
-    val creation = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "nodeNames": ["$nodeName"],
       |    "brokerClusterKey": {
@@ -212,7 +212,7 @@ class TestWorkerApi extends OharaTest {
 
     val name      = CommonUtils.randomString(10)
     val group     = CommonUtils.randomString(10)
-    val creation2 = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    val creation2 = WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "$name",
       |    "group": "$group",
@@ -269,7 +269,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseEmptyNodeNames(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "asdasd",
       |    "brokerClusterKey": {
@@ -283,7 +283,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def parseNodeNamesOnUpdate(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "brokerClusterKey": {
            |      "group": "g",
@@ -295,7 +295,7 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the value of \"nodeNames\" can't be empty string")
   @Test
   def parseZeroClientPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "clientPort": 0,
@@ -309,7 +309,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseNegativeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "clientPort": -1,
@@ -323,7 +323,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseLargeClientPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "clientPort": 999999,
@@ -338,7 +338,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def parseClientPortOnUpdate(): Unit = {
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -353,7 +353,7 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -368,7 +368,7 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -385,7 +385,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseZeroJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "jmxPort": 0,
@@ -399,7 +399,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseNegativeJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "jmxPort": -1,
@@ -413,7 +413,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def parseLargeJmxPort(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
       |  {
       |    "name": "name",
       |    "jmxPort": 999999,
@@ -428,7 +428,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def parseJmxPortOnCreation(): Unit = {
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -443,7 +443,7 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -458,7 +458,7 @@ class TestWorkerApi extends OharaTest {
     }.getMessage should include("the number must be")
 
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
            |  {
            |    "nodeNames": [
            |      "node"
@@ -478,7 +478,7 @@ class TestWorkerApi extends OharaTest {
     */
   @Test
   def zeroNumberOfPartitionsForConfigTopic(): Unit =
-    WorkerApi.CREATION_JSON_FORMAT
+    WorkerApi.CREATION_FORMAT
       .read(
         s"""
          |  {
@@ -501,7 +501,7 @@ class TestWorkerApi extends OharaTest {
     */
   @Test
   def negativeNumberOfPartitionsForConfigTopic(): Unit =
-    WorkerApi.CREATION_JSON_FORMAT
+    WorkerApi.CREATION_FORMAT
       .read(
         s"""
                            |  {
@@ -522,7 +522,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def zeroNumberOfReplicationForConfigTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -539,7 +539,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def negativeNumberOfReplicationForConfigTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -556,7 +556,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def zeroNumberOfPartitionsForOffsetTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -573,7 +573,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def negativeNumberOfPartitionsForOffsetTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -590,7 +590,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def zeroNumberOfReplicationForOffsetTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -607,7 +607,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def negativeNumberOfReplicationForOffsetTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -624,7 +624,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def zeroNumberOfPartitionsForStatusTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -641,7 +641,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def negativeNumberOfPartitionsForStatusTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -658,7 +658,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def zeroNumberOfReplicationForStatusTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -675,7 +675,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def negativeNumberOfReplicationForStatusTopic(): Unit =
     intercept[DeserializationException] {
-      WorkerApi.CREATION_JSON_FORMAT.read(s"""
+      WorkerApi.CREATION_FORMAT.read(s"""
                                                     |  {
                                                     |    "nodeNames": [
                                                     |      "node"
@@ -724,7 +724,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def stringArrayToPluginKeys(): Unit = {
     val key      = CommonUtils.randomString()
-    val updating = WorkerApi.UPDATING_JSON_FORMAT.read(s"""
+    val updating = WorkerApi.UPDATING_FORMAT.read(s"""
                                                   |  {
                                                   |    "pluginKeys": ["$key"]
                                                   |  }
@@ -735,7 +735,7 @@ class TestWorkerApi extends OharaTest {
   @Test
   def stringArrayToSharedJarKeys(): Unit = {
     val key      = CommonUtils.randomString()
-    val updating = WorkerApi.UPDATING_JSON_FORMAT.read(s"""
+    val updating = WorkerApi.UPDATING_FORMAT.read(s"""
                                                                  |  {
                                                                  |    "sharedJarKeys": ["$key"]
                                                                  |  }
@@ -745,7 +745,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def emptyNodeNamesShouldPassInUpdating(): Unit = {
-    WorkerApi.UPDATING_JSON_FORMAT.read(s"""
+    WorkerApi.UPDATING_FORMAT.read(s"""
                                            |  {
                                            |    "nodeNames": []
                                            |  }
@@ -840,7 +840,7 @@ class TestWorkerApi extends OharaTest {
     WorkerApi.DEFINITIONS.find(_.key() == GROUP_KEY).get.permission() shouldBe Permission.CREATE_ONLY
 
   @Test
-  def testMaxHeap(): Unit = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+  def testMaxHeap(): Unit = WorkerApi.CREATION_FORMAT.read(s"""
                                                                                 |  {
                                                                                 |    "brokerClusterKey": "bk",
                                                                                 |    "nodeNames": ["node00"],
@@ -849,7 +849,7 @@ class TestWorkerApi extends OharaTest {
       """.stripMargin.parseJson).maxHeap shouldBe 123
 
   @Test
-  def testInitHeap(): Unit = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+  def testInitHeap(): Unit = WorkerApi.CREATION_FORMAT.read(s"""
                                                                                  |  {
                                                                                  |    "brokerClusterKey": "bk",
                                                                                  |    "nodeNames": ["node00"],
@@ -859,7 +859,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def testNegativeMaxHeap(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
                                                                                                                               |  {
                                                                                                                               |    "brokerClusterKey": "bk",
                                                                                                                               |    "nodeNames": ["node00"],
@@ -869,7 +869,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def testNegativeInitHeap(): Unit =
-    an[DeserializationException] should be thrownBy WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
                                                                                          |  {
                                                                                          |    "brokerClusterKey": "bk",
                                                                                          |    "nodeNames": ["node00"],
@@ -905,7 +905,7 @@ class TestWorkerApi extends OharaTest {
 
   @Test
   def testDataDir(): Unit = {
-    val creation = WorkerApi.CREATION_JSON_FORMAT.read(s"""
+    val creation = WorkerApi.CREATION_FORMAT.read(s"""
                                                           |  {
                                                           |    "brokerClusterKey": "bk",
                                                           |    "nodeNames": ["node00"]

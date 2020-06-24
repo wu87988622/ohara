@@ -24,7 +24,7 @@ import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.client.configurator.ShabondiApi
-import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterCreation
+import oharastream.ohara.client.configurator.ShabondiApi.Creation
 import oharastream.ohara.shabondi.common.ShabondiUtils
 import spray.json._
 
@@ -131,7 +131,7 @@ trait ShabondiCollie extends Collie {
       }
     }
 
-  private def newContainerInfo(node: Node, creation: ShabondiClusterCreation, env: Map[String, String]): ContainerInfo =
+  private def newContainerInfo(node: Node, creation: Creation, env: Map[String, String]): ContainerInfo =
     ContainerInfo(
       nodeName = node.name,
       id = Collie.UNKNOWN,
@@ -164,6 +164,6 @@ object ShabondiCollie {
       creation = creation
     )
 
-    protected def doCreate(executionContext: ExecutionContext, creation: ShabondiClusterCreation): Future[Unit]
+    protected def doCreate(executionContext: ExecutionContext, creation: Creation): Future[Unit]
   }
 }

@@ -57,8 +57,8 @@ object ShabondiApi {
     override val lastModified: Long
   ) extends ClusterInfo
       with Metricsable {
-    private[this] implicit def creation(settings: Map[String, JsValue]): ShabondiClusterCreation =
-      new ShabondiClusterCreation(settings)
+    private[this] implicit def creation(settings: Map[String, JsValue]): Creation =
+      new Creation(settings)
     override def kind: String       = KIND
     override def ports: Set[Int]    = settings.ports
     def shabondiClass: String       = settings.shabondiClass
@@ -69,11 +69,11 @@ object ShabondiApi {
     def sourceToTopics: Set[TopicKey] = settings.sourceToTopics
     def sinkFromTopics: Set[TopicKey] = settings.sinkFromTopics
 
-    override def raw: Map[String, JsValue] = SHABONDI_CLUSTER_INFO_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = SHABONDI_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }
 
-  final class ShabondiClusterCreation(val raw: Map[String, JsValue]) extends ClusterCreation {
-    private val updating         = new ShabondiClusterUpdating(noJsNull(raw))
+  final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
+    private val updating         = new Updating(noJsNull(raw))
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     def shabondiClass: String = updating.shabondiClass.get
@@ -94,20 +94,20 @@ object ShabondiApi {
     def sinkFromTopics: Set[TopicKey] = updating.sinkFromTopics.getOrElse(null)
   }
 
-  final class ShabondiClusterUpdating(val settings: Map[String, JsValue]) extends ClusterUpdating {
+  final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
     import ShabondiDefinitions._
-    def shabondiClass: Option[String] = noJsNull(settings).get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
-    def clientPort: Option[Int]       = noJsNull(settings).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
-    def endpoint: Option[String]      = noJsNull(settings).get(ENDPOINT_DEFINITION.key).map(_.convertTo[String])
+    def shabondiClass: Option[String] = noJsNull(raw).get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
+    def clientPort: Option[Int]       = noJsNull(raw).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
+    def endpoint: Option[String]      = noJsNull(raw).get(ENDPOINT_DEFINITION.key).map(_.convertTo[String])
     def brokerClusterKey: Option[ObjectKey] =
-      noJsNull(settings).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
+      noJsNull(raw).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
     def sourceToTopics: Option[Set[TopicKey]] =
-      noJsNull(settings).get(SOURCE_TO_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
+      noJsNull(raw).get(SOURCE_TO_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
     def sinkFromTopics: Option[Set[TopicKey]] =
-      noJsNull(settings).get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
+      noJsNull(raw).get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
   }
 
-  implicit val SHABONDI_CLUSTER_INFO_JSON_FORMAT: JsonRefiner[ShabondiClusterInfo] =
+  implicit val SHABONDI_CLUSTER_INFO_FORMAT: JsonRefiner[ShabondiClusterInfo] =
     JsonRefinerBuilder[ShabondiClusterInfo]
       .format(new RootJsonFormat[ShabondiClusterInfo] {
         private[this] val format                              = jsonFormat6(ShabondiClusterInfo)
@@ -116,20 +116,20 @@ object ShabondiApi {
       })
       .build
 
-  implicit val SHABONDI_CLUSTER_CREATION_JSON_FORMAT: JsonRefiner[ShabondiClusterCreation] =
-    rulesOfCreation[ShabondiClusterCreation](
-      new RootJsonFormat[ShabondiClusterCreation] {
-        override def write(obj: ShabondiClusterCreation): JsValue = JsObject(noJsNull(obj.raw))
-        override def read(json: JsValue): ShabondiClusterCreation = new ShabondiClusterCreation(json.asJsObject.fields)
+  implicit val SHABONDI_CLUSTER_CREATION_FORMAT: JsonRefiner[Creation] =
+    rulesOfCreation[Creation](
+      new RootJsonFormat[Creation] {
+        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       ShabondiDefinitions.basicDefinitions
     )
 
-  implicit val SHABONDI_CLUSTER_UPDATING_JSON_FORMAT: JsonRefiner[ShabondiClusterUpdating] =
-    rulesOfUpdating[ShabondiClusterUpdating](
-      new RootJsonFormat[ShabondiClusterUpdating] {
-        override def write(obj: ShabondiClusterUpdating): JsValue = JsObject(noJsNull(obj.settings))
-        override def read(json: JsValue): ShabondiClusterUpdating = new ShabondiClusterUpdating(json.asJsObject.fields)
+  implicit val SHABONDI_CLUSTER_UPDATING_FORMAT: JsonRefiner[Updating] =
+    rulesOfUpdating[Updating](
+      new RootJsonFormat[Updating] {
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
 
@@ -165,18 +165,18 @@ object ShabondiApi {
       setting(SINK_POLL_TIMEOUT_DEFINITION.key, JsString(duration.toMillis.toString + " milliseconds"))
     }
 
-    def creation: ShabondiClusterCreation = {
-      val jsValue = SHABONDI_CLUSTER_CREATION_JSON_FORMAT.write(new ShabondiClusterCreation(noJsNull(settings.toMap)))
-      SHABONDI_CLUSTER_CREATION_JSON_FORMAT.read(jsValue)
+    def creation: Creation = {
+      val jsValue = SHABONDI_CLUSTER_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap)))
+      SHABONDI_CLUSTER_CREATION_FORMAT.read(jsValue)
     }
 
     /**
       * for testing only
       * @return the payload of update
       */
-    private[configurator] final def updating: ShabondiClusterUpdating = {
-      val jsValue = SHABONDI_CLUSTER_UPDATING_JSON_FORMAT.write(new ShabondiClusterUpdating(noJsNull(settings.toMap)))
-      SHABONDI_CLUSTER_UPDATING_JSON_FORMAT.read(jsValue)
+    private[configurator] final def updating: Updating = {
+      val jsValue = SHABONDI_CLUSTER_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap)))
+      SHABONDI_CLUSTER_UPDATING_FORMAT.read(jsValue)
     }
   }
 
@@ -185,8 +185,7 @@ object ShabondiApi {
     def update()(implicit executionContext: ExecutionContext): Future[ShabondiClusterInfo]
   }
 
-  final class Access private[ShabondiApi]
-      extends ClusterAccess[ShabondiClusterCreation, ShabondiClusterUpdating, ShabondiClusterInfo](KIND) {
+  final class Access private[ShabondiApi] extends ClusterAccess[Creation, Updating, ShabondiClusterInfo](KIND) {
     override def query: Query[ShabondiClusterInfo] = new Query[ShabondiClusterInfo] {
       override protected def doExecute(
         request: QueryRequest

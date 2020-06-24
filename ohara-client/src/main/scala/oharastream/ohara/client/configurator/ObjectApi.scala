@@ -31,7 +31,7 @@ object ObjectApi {
   val OBJECTS_PREFIX_PATH: String = "objects"
 
   final class Creation(val raw: Map[String, JsValue]) extends BasicCreation {
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
 
     override def group: String = raw.group.get
 
@@ -39,7 +39,7 @@ object ObjectApi {
 
     override def tags: Map[String, JsValue] = raw.tags.get
   }
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(obj.raw)
@@ -49,23 +49,16 @@ object ObjectApi {
       .nullToEmptyObject(TAGS_KEY)
       .build
 
-  final class Updating(val settings: Map[String, JsValue]) {
+  final class Updating(val raw: Map[String, JsValue]) extends BasicUpdating {
     // We use the update parser to get the name and group
-    private[ObjectApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-
-    private[ObjectApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
-
-    def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map {
-      case s: JsObject => s.fields
-      case other: JsValue =>
-        throw new IllegalArgumentException(s"the type of tags should be JsObject, actual type is ${other.getClass}")
-    }
+    private[ObjectApi] def name: Option[String]  = noJsNull(raw).get(NAME_KEY).map(_.convertTo[String])
+    private[ObjectApi] def group: Option[String] = noJsNull(raw).get(GROUP_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
     override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
 
-    override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+    override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
   }
 
   final class ObjectInfo private[configurator] (val settings: Map[String, JsValue]) extends Data with Serializable {
@@ -88,7 +81,7 @@ object ObjectApi {
       new ObjectInfo(settings + (LAST_MODIFIED_KEY -> JsNumber(lastModified)))
   }
 
-  implicit val OBJECT_JSON_FORMAT: RootJsonFormat[ObjectInfo] = new RootJsonFormat[ObjectInfo] {
+  implicit val OBJECT_FORMAT: RootJsonFormat[ObjectInfo] = new RootJsonFormat[ObjectInfo] {
     override def write(obj: ObjectInfo): JsValue = JsObject(obj.settings)
     override def read(json: JsValue): ObjectInfo = new ObjectInfo(json.asJsObject.fields)
   }
@@ -111,10 +104,10 @@ object ObjectApi {
     }
 
     def creation: Creation =
-      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(settings.toMap)))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     def updating: Updating =
-      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(settings.toMap)))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
 
     /**
       * generate the POST request

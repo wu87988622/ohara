@@ -123,8 +123,8 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
 
     update.brokerClusterKey.get.name() shouldBe brokerClusterName
-    update.settings(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
-    update.settings(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
+    update.raw(NUMBER_OF_PARTITIONS_KEY) shouldBe JsNumber(numberOfPartitions)
+    update.raw(NUMBER_OF_REPLICATIONS_KEY) shouldBe JsNumber(numberOfReplications)
 
     val update2 = TopicApi.UPDATING_FORMAT.read(s"""
          |{
@@ -132,8 +132,8 @@ class TestTopicApi extends OharaTest {
        """.stripMargin.parseJson)
 
     update2.brokerClusterKey shouldBe None
-    update2.settings should not contain NUMBER_OF_PARTITIONS_KEY
-    update2.settings should not contain NUMBER_OF_REPLICATIONS_KEY
+    update2.raw should not contain NUMBER_OF_PARTITIONS_KEY
+    update2.raw should not contain NUMBER_OF_REPLICATIONS_KEY
   }
 
   @Test

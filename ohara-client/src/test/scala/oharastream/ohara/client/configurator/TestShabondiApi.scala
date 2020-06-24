@@ -26,7 +26,7 @@ import spray.json._
 class TestShabondiApi extends OharaTest {
   @Test
   def testSourceDefinitions(): Unit =
-    ShabondiApi.SHABONDI_CLUSTER_CREATION_JSON_FORMAT
+    ShabondiApi.SHABONDI_CLUSTER_CREATION_FORMAT
       .read(s"""
                 |  {
                 |    "group": "g",
@@ -44,7 +44,7 @@ class TestShabondiApi extends OharaTest {
 
   @Test
   def testSinkDefinitions(): Unit =
-    ShabondiApi.SHABONDI_CLUSTER_CREATION_JSON_FORMAT
+    ShabondiApi.SHABONDI_CLUSTER_CREATION_FORMAT
       .read(s"""
                 |  {
                 |    "group": "g",

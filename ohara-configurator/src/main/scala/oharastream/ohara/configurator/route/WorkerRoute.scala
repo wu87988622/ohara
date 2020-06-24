@@ -62,7 +62,7 @@ object WorkerRoute {
   ): HookOfUpdating[Updating, WorkerClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[WorkerClusterInfo]) =>
       previousOption match {
-        case None => creationToClusterInfo(WorkerApi.access.request.settings(updating.settings).key(key).creation)
+        case None => creationToClusterInfo(WorkerApi.access.request.settings(updating.raw).key(key).creation)
         case Some(previous) =>
           objectChecker.checkList.workerCluster(key, DataCondition.STOPPED).check().flatMap { _ =>
             // 1) fill the previous settings (if exists)
@@ -71,7 +71,7 @@ object WorkerRoute {
             creationToClusterInfo(
               WorkerApi.access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, WorkerApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.raw, WorkerApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

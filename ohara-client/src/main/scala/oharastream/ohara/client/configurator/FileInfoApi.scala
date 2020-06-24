@@ -50,7 +50,9 @@ object FileInfoApi {
     */
   def toTags(string: String): Map[String, JsValue] = string.parseJson.asJsObject.fields
 
-  case class Updating(tags: Option[Map[String, JsValue]])
+  case class Updating(override val tags: Option[Map[String, JsValue]]) extends BasicUpdating {
+    override def raw: Map[String, JsValue] = UPDATING_FORMAT.write(this).asJsObject.fields
+  }
   final implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = jsonFormat1(Updating)
 
   private[this] implicit val CLASS_TYPE_FORMAT: RootJsonFormat[ClassType] = new RootJsonFormat[ClassType] {
@@ -129,14 +131,14 @@ object FileInfoApi {
 
     override def kind: String = KIND
 
-    override def raw: Map[String, JsValue] = FILE_INFO_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = FILE_INFO_FORMAT.write(this).asJsObject.fields
   }
 
   private[this] val URL_KEY         = "url"
   private[this] val CLASS_INFOS_KEY = "classInfos"
   private[this] val SIZE_KEY        = "size"
 
-  implicit val FILE_INFO_JSON_FORMAT: RootJsonFormat[FileInfo] = new RootJsonFormat[FileInfo] {
+  implicit val FILE_INFO_FORMAT: RootJsonFormat[FileInfo] = new RootJsonFormat[FileInfo] {
     override def read(json: JsValue): FileInfo = {
       val fields = noJsNull(json)
       def value(key: String): JsValue =

@@ -65,7 +65,7 @@ object BrokerRoute {
         case None =>
           creationToClusterInfo(
             BrokerApi.access.request
-              .settings(updating.settings)
+              .settings(updating.raw)
               // the key is not in update's settings so we have to add it to settings
               .key(key)
               .creation
@@ -78,7 +78,7 @@ object BrokerRoute {
             creationToClusterInfo(
               BrokerApi.access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, BrokerApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.raw, BrokerApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

@@ -88,32 +88,30 @@ object TopicApi {
     )
     .result
 
-  final class Updating private[TopicApi] (val settings: Map[String, JsValue]) {
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+  final class Updating private[TopicApi] (val raw: Map[String, JsValue]) extends BasicUpdating {
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(raw).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
     private[TopicApi] def numberOfPartitions: Option[Int] =
-      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
     private[TopicApi] def numberOfReplications: Option[Short] =
-      noJsNull(settings).get(NUMBER_OF_REPLICATIONS_KEY).map(_.convertTo[Short])
+      noJsNull(raw).get(NUMBER_OF_REPLICATIONS_KEY).map(_.convertTo[Short])
 
-    private[TopicApi] def group: Option[String] = noJsNull(settings).get(GROUP_KEY).map(_.convertTo[String])
+    private[TopicApi] def group: Option[String] = noJsNull(raw).get(GROUP_KEY).map(_.convertTo[String])
 
-    private[TopicApi] def name: Option[String] = noJsNull(settings).get(NAME_KEY).map(_.convertTo[String])
-
-    private[TopicApi] def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
+    private[TopicApi] def name: Option[String] = noJsNull(raw).get(NAME_KEY).map(_.convertTo[String])
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefinerBuilder[Updating]
       .format(new RootJsonFormat[Updating] {
         override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
-        override def write(obj: Updating): JsValue = JsObject(obj.settings)
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
       })
       .build
 
   final class Creation private[TopicApi] (val raw: Map[String, JsValue])
       extends oharastream.ohara.client.configurator.BasicCreation {
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
 
     override def key: TopicKey = TopicKey.of(group, name)
 

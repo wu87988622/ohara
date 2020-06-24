@@ -52,9 +52,11 @@ object NodeApi {
     port: Option[Int],
     user: Option[String],
     password: Option[String],
-    tags: Option[Map[String, JsValue]]
-  )
-  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+    override val tags: Option[Map[String, JsValue]]
+  ) extends BasicUpdating {
+    override def raw: Map[String, JsValue] = UPDATING_FORMAT.write(this).asJsObject.fields
+  }
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefinerBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").build
 
   case class Creation(
@@ -80,7 +82,7 @@ object NodeApi {
       .build
 
   case class NodeService(name: String, clusterKeys: Seq[ObjectKey])
-  implicit val NODE_SERVICE_JSON_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
+  implicit val NODE_SERVICE_FORMAT: RootJsonFormat[NodeService] = jsonFormat2(NodeService)
 
   case class Resource(name: String, value: Double, unit: String, used: Option[Double])
   object Resource {
@@ -133,14 +135,14 @@ object NodeApi {
           used = used
         )
   }
-  implicit val RESOURCE_JSON_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource.apply)
+  implicit val RESOURCE_FORMAT: RootJsonFormat[Resource] = jsonFormat4(Resource.apply)
 
   sealed abstract class State
   object State extends oharastream.ohara.client.Enum[State] {
     case object AVAILABLE   extends State
     case object UNAVAILABLE extends State
   }
-  implicit val STATE_JSON_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
+  implicit val STATE_FORMAT: RootJsonFormat[State] = new RootJsonFormat[State] {
     override def write(obj: State): JsValue = JsString(obj.toString)
 
     override def read(json: JsValue): State = State.forName(json.convertTo[String])
@@ -165,7 +167,7 @@ object NodeApi {
     override def group: String             = GROUP_DEFAULT
     override def name: String              = hostname
     override def kind: String              = KIND
-    override def raw: Map[String, JsValue] = NODE_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = NODE_FORMAT.write(this).asJsObject.fields
   }
 
   object Node {
@@ -195,7 +197,7 @@ object NodeApi {
     )
   }
 
-  implicit val NODE_JSON_FORMAT: RootJsonFormat[Node] = jsonFormat10(Node.apply)
+  implicit val NODE_FORMAT: RootJsonFormat[Node] = jsonFormat10(Node.apply)
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -318,8 +320,8 @@ object NodeApi {
 
       override private[configurator] def updating: Updating =
         // auto-complete the updating via our refiner
-        UPDATING_JSON_FORMAT.read(
-          UPDATING_JSON_FORMAT.write(
+        UPDATING_FORMAT.read(
+          UPDATING_FORMAT.write(
             Updating(
               port = port.map(CommonUtils.requireConnectionPort),
               user = Option(user).map(CommonUtils.requireNonEmpty),

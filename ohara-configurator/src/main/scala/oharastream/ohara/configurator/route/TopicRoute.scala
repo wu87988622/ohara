@@ -156,7 +156,7 @@ private[configurator] object TopicRoute {
         case None =>
           creationToTopicInfo(
             access.request
-              .settings(keepEditableFields(updating.settings, TopicApi.DEFINITIONS))
+              .settings(keepEditableFields(updating.raw, TopicApi.DEFINITIONS))
               // the key is not in update's settings so we have to add it to settings
               .name(key.name)
               .group(key.group)
@@ -174,7 +174,7 @@ private[configurator] object TopicRoute {
               creationToTopicInfo(
                 access.request
                   .settings(previous.settings)
-                  .settings(updating.settings)
+                  .settings(updating.raw)
                   // the key is not in update's settings so we have to add it to settings
                   .name(key.name)
                   .group(key.group)

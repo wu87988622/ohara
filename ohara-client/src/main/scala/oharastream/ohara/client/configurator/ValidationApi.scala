@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object ValidationApi {
   val VALIDATION_KIND: String = "validate"
 
-  private[this] implicit val SETTING_INFO_JSON_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
+  private[this] implicit val SETTING_INFO_FORMAT: RootJsonFormat[SettingInfo] = new RootJsonFormat[SettingInfo] {
     override def write(obj: SettingInfo): JsValue = obj.toJsonString.parseJson
 
     override def read(json: JsValue): SettingInfo = SettingInfo.ofJson(json.toString())

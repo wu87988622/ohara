@@ -104,10 +104,10 @@ object BrokerApi {
   final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
-      * @param settings settings
+      *
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
 
     override def ports: Set[Int]       = Set(clientPort, jmxPort)
     def clientPort: Int                = raw.clientPort.get
@@ -149,7 +149,7 @@ object BrokerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
@@ -158,34 +158,34 @@ object BrokerApi {
       DEFINITIONS
     )
 
-  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
-    def clientPort: Option[Int] = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+  final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
+    def clientPort: Option[Int] = noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
 
     def zookeeperClusterKey: Option[ObjectKey] =
-      noJsNull(settings).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+      noJsNull(raw).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
 
     def numberOfPartitions: Option[Int] =
-      noJsNull(settings).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
     def numberOfReplications4OffsetsTopic: Option[Int] =
-      noJsNull(settings).get(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY).map(_.convertTo[Int])
 
     def numberOfNetworkThreads: Option[Int] =
-      noJsNull(settings).get(NUMBER_OF_NETWORK_THREADS_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(NUMBER_OF_NETWORK_THREADS_KEY).map(_.convertTo[Int])
 
     def numberOfIoThreads: Option[Int] =
-      noJsNull(settings).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
   }
 
-  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
+  implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](new RootJsonFormat[Updating] {
-      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
 
   final case class TopicDefinition(settingDefinitions: Seq[SettingDef])
 
-  implicit val TOPIC_DEFINITION_JSON_FORMAT: JsonRefiner[TopicDefinition] =
+  implicit val TOPIC_DEFINITION_FORMAT: JsonRefiner[TopicDefinition] =
     JsonRefinerBuilder[TopicDefinition].format(jsonFormat1(TopicDefinition)).build
 
   final case class BrokerClusterInfo private[BrokerApi] (
@@ -197,12 +197,12 @@ object BrokerApi {
   ) extends ClusterInfo {
     /**
       * reuse the parser from Creation.
-      * @param settings settings
+      *
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = KIND
-    override def ports: Set[Int]                                                  = Set(clientPort, jmxPort)
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    override def kind: String                                                = KIND
+    override def ports: Set[Int]                                             = Set(clientPort, jmxPort)
 
     /**
       * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
@@ -261,7 +261,7 @@ object BrokerApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
@@ -269,7 +269,7 @@ object BrokerApi {
       */
     private[configurator] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

@@ -56,13 +56,13 @@ object InspectApi {
 
   //-------------[FILE]-------------//
   final case class ConfiguratorVersion(version: String, branch: String, user: String, revision: String, date: String)
-  implicit val CONFIGURATOR_VERSION_JSON_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
+  implicit val CONFIGURATOR_VERSION_FORMAT: RootJsonFormat[ConfiguratorVersion] = jsonFormat5(ConfiguratorVersion)
 
   final case class K8sUrls(coordinatorUrl: String, metricsUrl: Option[String])
   implicit val K8S_URL_FORMAT: RootJsonFormat[K8sUrls] = jsonFormat2(K8sUrls)
   final case class ConfiguratorInfo(versionInfo: ConfiguratorVersion, mode: String, k8sUrls: Option[K8sUrls])
 
-  implicit val CONFIGURATOR_INFO_JSON_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat3(ConfiguratorInfo)
+  implicit val CONFIGURATOR_INFO_FORMAT: RootJsonFormat[ConfiguratorInfo] = jsonFormat3(ConfiguratorInfo)
 
   case class ServiceDefinition(imageName: String, settingDefinitions: Seq[SettingDef], classInfos: Seq[ClassInfo])
 
@@ -91,14 +91,14 @@ object InspectApi {
   }
 
   final case class RdbColumn(name: String, dataType: String, pk: Boolean)
-  implicit val RDB_COLUMN_JSON_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
+  implicit val RDB_COLUMN_FORMAT: RootJsonFormat[RdbColumn] = jsonFormat3(RdbColumn)
   final case class RdbTable(
     catalogPattern: Option[String],
     schemaPattern: Option[String],
     name: String,
     columns: Seq[RdbColumn]
   )
-  implicit val RDB_TABLE_JSON_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
+  implicit val RDB_TABLE_FORMAT: RootJsonFormat[RdbTable] = jsonFormat4(RdbTable)
 
   final case class RdbQuery(
     url: String,
@@ -109,11 +109,11 @@ object InspectApi {
     schemaPattern: Option[String],
     tableName: Option[String]
   )
-  implicit val RDB_QUERY_JSON_FORMAT: JsonRefiner[RdbQuery] =
+  implicit val RDB_QUERY_FORMAT: JsonRefiner[RdbQuery] =
     JsonRefinerBuilder[RdbQuery].format(jsonFormat7(RdbQuery)).build
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
-  implicit val RDB_INFO_JSON_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
+  implicit val RDB_INFO_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
 
   final case class Message(
     partition: Int,
@@ -123,10 +123,10 @@ object InspectApi {
     value: Option[JsValue],
     error: Option[String]
   )
-  implicit val MESSAGE_JSON_FORMAT: RootJsonFormat[Message] = jsonFormat6(Message)
+  implicit val MESSAGE_FORMAT: RootJsonFormat[Message] = jsonFormat6(Message)
 
   final case class TopicData(messages: Seq[Message])
-  implicit val TOPIC_DATA_JSON_FORMAT: RootJsonFormat[TopicData] = jsonFormat1(TopicData)
+  implicit val TOPIC_DATA_FORMAT: RootJsonFormat[TopicData] = jsonFormat1(TopicData)
 
   /**
     * used to generate the payload and url for POST/PUT request.

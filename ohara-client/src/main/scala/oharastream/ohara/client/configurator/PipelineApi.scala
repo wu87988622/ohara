@@ -40,7 +40,7 @@ object PipelineApi {
   final case class Endpoint(group: String, name: String, kind: String) {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
-  implicit val ENDPOINT_JSON_FORMAT: JsonRefiner[Endpoint] =
+  implicit val ENDPOINT_FORMAT: JsonRefiner[Endpoint] =
     JsonRefinerBuilder[Endpoint]
       .format(jsonFormat3(Endpoint))
       .nullToString(GROUP_KEY, GROUP_DEFAULT)
@@ -48,10 +48,12 @@ object PipelineApi {
 
   final case class Updating(
     endpoints: Option[Set[Endpoint]],
-    tags: Option[Map[String, JsValue]]
-  )
+    override val tags: Option[Map[String, JsValue]]
+  ) extends BasicUpdating {
+    override def raw: Map[String, JsValue] = UPDATING_FORMAT.write(this).asJsObject.fields
+  }
 
-  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefinerBuilder[Updating].format(jsonFormat2(Updating)).build
 
   final case class Creation(
@@ -90,7 +92,7 @@ object PipelineApi {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
 
-  implicit val OBJECT_ABSTRACT_JSON_FORMAT: RootJsonFormat[ObjectAbstract] = new RootJsonFormat[ObjectAbstract] {
+  implicit val OBJECT_ABSTRACT_FORMAT: RootJsonFormat[ObjectAbstract] = new RootJsonFormat[ObjectAbstract] {
     private[this] val format                         = jsonFormat9(ObjectAbstract)
     override def read(json: JsValue): ObjectAbstract = format.read(json)
     override def write(obj: ObjectAbstract): JsValue = format.write(obj)
@@ -107,10 +109,10 @@ object PipelineApi {
   ) extends Data {
     override def kind: String = KIND
 
-    override def raw: Map[String, JsValue] = PIPELINE_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = PIPELINE_FORMAT.write(this).asJsObject.fields
   }
 
-  implicit val PIPELINE_JSON_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
+  implicit val PIPELINE_FORMAT: RootJsonFormat[Pipeline] = jsonFormat7(Pipeline)
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -218,8 +220,8 @@ object PipelineApi {
 
       override private[configurator] def updating: Updating =
         // auto-complete the updating via our refiner
-        UPDATING_JSON_FORMAT.read(
-          UPDATING_JSON_FORMAT.write(
+        UPDATING_FORMAT.read(
+          UPDATING_FORMAT.write(
             Updating(
               endpoints = Option(endpoints),
               tags = Option(tags)

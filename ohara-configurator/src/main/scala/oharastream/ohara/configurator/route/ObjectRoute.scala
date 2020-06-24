@@ -45,9 +45,9 @@ private[configurator] object ObjectRoute {
       .hookOfUpdating(
         (key, updating, previousOption) =>
           toObject(previousOption match {
-            case None => new Creation(updating.settings)
+            case None => new Creation(updating.raw)
             case Some(previous) =>
-              ObjectApi.access.request.key(key).settings(previous.settings).settings(updating.settings).creation
+              ObjectApi.access.request.key(key).settings(previous.settings).settings(updating.raw).creation
           })
       )
       .hookOfGet(Future.successful(_))

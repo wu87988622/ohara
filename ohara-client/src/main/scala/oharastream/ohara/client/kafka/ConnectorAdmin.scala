@@ -415,7 +415,7 @@ object ConnectorAdmin {
     * This is a bridge between java and scala.
     * ConfigInfos is serialized to json by jackson so we can implement the RootJsonFormat easily.
     */
-  private[this] implicit val CONFIG_INFOS_JSON_FORMAT: RootJsonFormat[ConfigInfos] = new RootJsonFormat[ConfigInfos] {
+  private[this] implicit val CONFIG_INFOS_FORMAT: RootJsonFormat[ConfigInfos] = new RootJsonFormat[ConfigInfos] {
     import spray.json._
     override def write(obj: ConfigInfos): JsValue = KafkaJsonUtils.toString(obj).parseJson
 

@@ -40,9 +40,11 @@ object VolumeApi {
       .nullToEmptyObject(TAGS_KEY)
       .build
 
-  final case class Updating(tags: Option[Map[String, JsValue]])
+  final case class Updating(override val tags: Option[Map[String, JsValue]]) extends BasicUpdating {
+    override def raw: Map[String, JsValue] = UPDATING_FORMAT.write(this).asJsObject.fields
+  }
 
-  implicit val UPDATING_JSON_FORMAT: RootJsonFormat[Updating] =
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
     JsonRefinerBuilder[Updating].format(jsonFormat1(Updating)).build
 
   abstract sealed class VolumeState(val name: String) extends Serializable
@@ -67,10 +69,10 @@ object VolumeApi {
   ) extends Data {
     override def kind: String = KIND
 
-    override def raw: Map[String, JsValue] = VOLUME_JSON_FORMAT.write(this).asJsObject.fields
+    override def raw: Map[String, JsValue] = VOLUME_FORMAT.write(this).asJsObject.fields
   }
 
-  implicit val VOLUME_JSON_FORMAT: RootJsonFormat[Volume] =
+  implicit val VOLUME_FORMAT: RootJsonFormat[Volume] =
     rulesOfKey[Volume]
       .format(jsonFormat8(Volume))
       .rejectEmptyArray("nodeNames")

@@ -176,7 +176,7 @@ class TestInspectApi extends OharaTest {
     val schemaPattern     = CommonUtils.randomString()
     val tableName         = CommonUtils.randomString()
 
-    val query = InspectApi.RDB_QUERY_JSON_FORMAT.read(s"""
+    val query = InspectApi.RDB_QUERY_FORMAT.read(s"""
          |{
          |  "url": "$url",
          |  "user": "$user",
@@ -266,5 +266,5 @@ class TestInspectApi extends OharaTest {
      """.stripMargin.parseJson)
 
   private[this] def parseInvalidJson(json: JsValue): Unit =
-    an[DeserializationException] should be thrownBy InspectApi.RDB_QUERY_JSON_FORMAT.read(json)
+    an[DeserializationException] should be thrownBy InspectApi.RDB_QUERY_FORMAT.read(json)
 }

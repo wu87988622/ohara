@@ -31,7 +31,7 @@ object WorkerJson {
   /**
     * this custom format is necessary since some keys in json are keywords in scala also...
     */
-  private[kafka] implicit val KAFKA_PLUGIN_JSON_FORMAT: RootJsonFormat[KafkaPlugin] = new RootJsonFormat[KafkaPlugin] {
+  private[kafka] implicit val KAFKA_PLUGIN_FORMAT: RootJsonFormat[KafkaPlugin] = new RootJsonFormat[KafkaPlugin] {
     private[this] val classKey: String   = "class"
     private[this] val typeKey: String    = "type"
     private[this] val versionKey: String = "version"
@@ -48,7 +48,7 @@ object WorkerJson {
     )
   }
   final case class KafkaConnectorTaskId(connector: String, task: Int)
-  private[kafka] implicit val KAFKA_CONNECTOR_TASK_ID_JSON_FORMAT: RootJsonFormat[KafkaConnectorTaskId] = jsonFormat2(
+  private[kafka] implicit val KAFKA_CONNECTOR_TASK_ID_FORMAT: RootJsonFormat[KafkaConnectorTaskId] = jsonFormat2(
     KafkaConnectorTaskId
   )
 
@@ -58,7 +58,7 @@ object WorkerJson {
     tasks: Seq[KafkaConnectorTaskId]
   )
 
-  private[kafka] implicit val CONNECTOR_CREATION_RESPONSE_JSON_FORMAT: RootJsonFormat[ConnectorCreationResponse] =
+  private[kafka] implicit val CONNECTOR_CREATION_RESPONSE_FORMAT: RootJsonFormat[ConnectorCreationResponse] =
     jsonFormat3(ConnectorCreationResponse)
   final case class KafkaConnectorStatus(state: String, worker_id: String, trace: Option[String]) {
     def workerHostname: String = {
@@ -66,7 +66,7 @@ object WorkerJson {
       if (splitIndex < 0) worker_id else worker_id.substring(0, splitIndex)
     }
   }
-  private[kafka] implicit val KAFKA_CONNECTOR_STATUS_JSON_FORMAT: RootJsonFormat[KafkaConnectorStatus] = jsonFormat3(
+  private[kafka] implicit val KAFKA_CONNECTOR_STATUS_FORMAT: RootJsonFormat[KafkaConnectorStatus] = jsonFormat3(
     KafkaConnectorStatus
   )
   final case class KafkaTaskStatus(id: Int, state: String, worker_id: String, trace: Option[String]) {
@@ -75,16 +75,16 @@ object WorkerJson {
       if (splitIndex < 0) worker_id else worker_id.substring(0, splitIndex)
     }
   }
-  private[kafka] implicit val KAFKA_TASK_STATUS_JSON_FORMAT: RootJsonFormat[KafkaTaskStatus] = jsonFormat4(
+  private[kafka] implicit val KAFKA_TASK_STATUS_FORMAT: RootJsonFormat[KafkaTaskStatus] = jsonFormat4(
     KafkaTaskStatus
   )
   final case class KafkaConnectorInfo(connector: KafkaConnectorStatus, tasks: Seq[KafkaTaskStatus])
-  private[kafka] implicit val KAFKA_CONNECTOR_INFO_JSON_FORMAT: RootJsonFormat[KafkaConnectorInfo] = jsonFormat2(
+  private[kafka] implicit val KAFKA_CONNECTOR_INFO_FORMAT: RootJsonFormat[KafkaConnectorInfo] = jsonFormat2(
     KafkaConnectorInfo
   )
 
   final case class KafkaError(error_code: Int, message: String) extends HttpExecutor.Error
-  private[kafka] implicit val KAFKA_ERROR_RESPONSE_JSON_FORMAT: RootJsonFormat[KafkaError] = jsonFormat2(KafkaError)
+  private[kafka] implicit val KAFKA_ERROR_RESPONSE_FORMAT: RootJsonFormat[KafkaError] = jsonFormat2(KafkaError)
 
   final case class KafkaConnectorConfig(
     tasksMax: Int,
@@ -158,13 +158,13 @@ object WorkerJson {
       )
     }
 
-  private[kafka] implicit val CREATION_JSON_FORMAT: RootJsonFormat[Creation] = new RootJsonFormat[Creation] {
+  private[kafka] implicit val CREATION_FORMAT: RootJsonFormat[Creation] = new RootJsonFormat[Creation] {
     import spray.json._
     override def write(obj: Creation): JsValue = obj.toJsonString.parseJson
     override def read(json: JsValue): Creation = Creation.ofJson(json.toString())
   }
 
-  private[kafka] implicit val KAFKA_VALIDATION_JSON_FORMAT: RootJsonFormat[Validation] =
+  private[kafka] implicit val KAFKA_VALIDATION_FORMAT: RootJsonFormat[Validation] =
     new RootJsonFormat[Validation] {
       import spray.json._
       override def write(obj: Validation): JsValue = obj.toJsonString.parseJson

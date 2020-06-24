@@ -75,7 +75,7 @@ trait Data {
   /**
     * there are many objects containing "settings", and it is filterable so we separate the related code for reusing.
     *
-    * @param settings settings
+    *
     * @param key key
     * @param value string of json representation. Noted the string of json string is pure "string" (no quote)
     * @return true if the key-value is matched. Otherwise, false

@@ -134,7 +134,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testNegativePortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.UPDATING_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.UPDATING_FORMAT.read("""
                                                                                            |{
                                                                                            | "port": -1
                                                                                            |}
@@ -142,7 +142,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testZeroPortInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.UPDATING_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.UPDATING_FORMAT.read("""
                                                                                            |{
                                                                                            | "port": 0
                                                                                            |}
@@ -150,7 +150,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testEmptyUserInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.UPDATING_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.UPDATING_FORMAT.read("""
                                                                                          |{
                                                                                          | "user": ""
                                                                                          |}
@@ -158,7 +158,7 @@ class TestNodeApi extends OharaTest {
 
   @Test
   def testEmptyPasswordInUpdate(): Unit =
-    an[DeserializationException] should be thrownBy NodeApi.UPDATING_JSON_FORMAT.read("""
+    an[DeserializationException] should be thrownBy NodeApi.UPDATING_FORMAT.read("""
                                                                                            |{
                                                                                            | "password": ""
                                                                                            |}
@@ -169,7 +169,7 @@ class TestNodeApi extends OharaTest {
     val port     = CommonUtils.availablePort()
     val user     = CommonUtils.randomString(10)
     val password = CommonUtils.randomString(10)
-    val update   = NodeApi.UPDATING_JSON_FORMAT.read(s"""
+    val update   = NodeApi.UPDATING_FORMAT.read(s"""
                                                        |{
                                                        | "port": $port,
                                                        | "user": "$user",

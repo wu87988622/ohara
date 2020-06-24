@@ -102,19 +102,19 @@ object ZookeeperApi {
   final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
-      * @param settings settings
+      *
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    override def ports: Set[Int]                                                = Set(clientPort, peerPort, electionPort, jmxPort)
-    def clientPort: Int                                                         = raw.clientPort.get
-    def peerPort: Int                                                           = raw.peerPort.get
-    def electionPort: Int                                                       = raw.electionPort.get
-    def tickTime: Int                                                           = raw.tickTime.get
-    def initLimit: Int                                                          = raw.initLimit.get
-    def syncLimit: Int                                                          = raw.syncLimit.get
-    def connectionTimeout: Duration                                             = raw.connectionTimeout.get
-    def dataFolder: String                                                      = "/tmp/zk_data"
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    override def ports: Set[Int]                                           = Set(clientPort, peerPort, electionPort, jmxPort)
+    def clientPort: Int                                                    = raw.clientPort.get
+    def peerPort: Int                                                      = raw.peerPort.get
+    def electionPort: Int                                                  = raw.electionPort.get
+    def tickTime: Int                                                      = raw.tickTime.get
+    def initLimit: Int                                                     = raw.initLimit.get
+    def syncLimit: Int                                                     = raw.syncLimit.get
+    def connectionTimeout: Duration                                        = raw.connectionTimeout.get
+    def dataFolder: String                                                 = "/tmp/zk_data"
 
     /**
       * @return the file containing zk quorum id. Noted that id file must be in data folder (see above)
@@ -144,21 +144,21 @@ object ZookeeperApi {
       DEFINITIONS
     )
 
-  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
+  final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
     def clientPort: Option[Int] =
-      noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
     def peerPort: Option[Int] =
-      noJsNull(settings).get(PEER_PORT_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(PEER_PORT_KEY).map(_.convertTo[Int])
     def electionPort: Option[Int] =
-      noJsNull(settings).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
     def tickTime: Option[Int] =
-      noJsNull(settings).get(TICK_TIME_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(TICK_TIME_KEY).map(_.convertTo[Int])
     def initLimit: Option[Int] =
-      noJsNull(settings).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
     def syncLimit: Option[Int] =
-      noJsNull(settings).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
     def connectionTimeout: Option[Duration] =
-      noJsNull(settings)
+      noJsNull(raw)
         .get(CONNECTION_TIMEOUT_KEY)
         .map(_.convertTo[String])
         .map(CommonUtils.toDuration)
@@ -168,7 +168,7 @@ object ZookeeperApi {
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -182,19 +182,19 @@ object ZookeeperApi {
   ) extends ClusterInfo {
     /**
       * reuse the parser from Creation.
-      * @param settings settings
+      *
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = KIND
-    override def ports: Set[Int]                                                  = Set(clientPort, peerPort, electionPort, jmxPort)
-    def clientPort: Int                                                           = settings.clientPort
-    def peerPort: Int                                                             = settings.peerPort
-    def electionPort: Int                                                         = settings.electionPort
-    def tickTime: Int                                                             = settings.tickTime
-    def initLimit: Int                                                            = settings.initLimit
-    def syncLimit: Int                                                            = settings.syncLimit
-    def dataDir: String                                                           = settings.dataFolder
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    override def kind: String                                                = KIND
+    override def ports: Set[Int]                                             = Set(clientPort, peerPort, electionPort, jmxPort)
+    def clientPort: Int                                                      = settings.clientPort
+    def peerPort: Int                                                        = settings.peerPort
+    def electionPort: Int                                                    = settings.electionPort
+    def tickTime: Int                                                        = settings.tickTime
+    def initLimit: Int                                                       = settings.initLimit
+    def syncLimit: Int                                                       = settings.syncLimit
+    def dataDir: String                                                      = settings.dataFolder
 
     override def raw: Map[String, JsValue] = ZOOKEEPER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
   }

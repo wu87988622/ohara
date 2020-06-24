@@ -26,10 +26,10 @@ object K8SJson {
   implicit val ENVINFO_JSON_FORM: RootJsonFormat[EnvVar] = jsonFormat2(EnvVar)
 
   final case class ContainerPort(hostPort: Int, containerPort: Int)
-  implicit val PORTINFO_JSON_FORMAT: RootJsonFormat[ContainerPort] = jsonFormat2(ContainerPort)
+  implicit val PORTINFO_FORMAT: RootJsonFormat[ContainerPort] = jsonFormat2(ContainerPort)
 
   final case class VolumeMount(name: String, mountPath: String)
-  implicit val VOLUME_MOUNT_JSON_FORMAT: RootJsonFormat[VolumeMount] = jsonFormat2(VolumeMount)
+  implicit val VOLUME_MOUNT_FORMAT: RootJsonFormat[VolumeMount] = jsonFormat2(VolumeMount)
 
   implicit val IMAGE_PULL_POLICY_FORMAT: RootJsonFormat[ImagePullPolicy] = new RootJsonFormat[ImagePullPolicy] {
     override def read(json: JsValue): ImagePullPolicy = ImagePullPolicy.forName(json.convertTo[String])
@@ -47,9 +47,9 @@ object K8SJson {
     command: Option[Seq[String]],
     args: Option[Seq[String]]
   )
-  implicit val CONTAINER_JSON_FORMAT: RootJsonFormat[Container] = jsonFormat8(Container)
+  implicit val CONTAINER_FORMAT: RootJsonFormat[Container] = jsonFormat8(Container)
 
-  implicit val RESTART_POLICY_JSON_FORMAT: RootJsonFormat[RestartPolicy] = new RootJsonFormat[RestartPolicy] {
+  implicit val RESTART_POLICY_FORMAT: RootJsonFormat[RestartPolicy] = new RootJsonFormat[RestartPolicy] {
     override def read(json: JsValue): RestartPolicy = RestartPolicy.forName(json.convertTo[String])
 
     override def write(obj: RestartPolicy): JsValue = JsString(obj.toString)
@@ -75,15 +75,15 @@ object K8SJson {
     }
 
   final case class MountPersistentVolumeClaim(claimName: String)
-  implicit val MOUNTPERSISTENTVOLUMECLAIM_JSON_FORMAT: RootJsonFormat[MountPersistentVolumeClaim] = jsonFormat1(
+  implicit val MOUNTPERSISTENTVOLUMECLAIM_FORMAT: RootJsonFormat[MountPersistentVolumeClaim] = jsonFormat1(
     MountPersistentVolumeClaim
   )
 
   final case class K8SVolume(name: String, persistentVolumeClaim: Option[MountPersistentVolumeClaim])
-  implicit val K8SVOLUME_JSON_FORMAT: RootJsonFormat[K8SVolume] = jsonFormat2(K8SVolume)
+  implicit val K8SVOLUME_FORMAT: RootJsonFormat[K8SVolume] = jsonFormat2(K8SVolume)
 
   final case class SecurityContext(runAsUser: String, runAsGroup: String, fsGroup: String)
-  implicit val SECURITYCONTEXT_JSON_FORMAT: RootJsonFormat[SecurityContext] = jsonFormat3(SecurityContext)
+  implicit val SECURITYCONTEXT_FORMAT: RootJsonFormat[SecurityContext] = jsonFormat3(SecurityContext)
 
   final case class PodSpec(
     nodeSelector: Option[NodeSelector],
@@ -95,7 +95,7 @@ object K8SJson {
     restartPolicy: Option[RestartPolicy],
     volumes: Option[Seq[K8SVolume]]
   )
-  implicit val SPEC_JSON_FORMAT: RootJsonFormat[PodSpec] = jsonFormat8(PodSpec)
+  implicit val SPEC_FORMAT: RootJsonFormat[PodSpec] = jsonFormat8(PodSpec)
 
   final case class Metadata(
     uid: Option[String],
@@ -103,16 +103,16 @@ object K8SJson {
     labels: Option[Map[String, String]],
     creationTimestamp: Option[String]
   )
-  implicit val METADATA_JSON_FORMAT: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
+  implicit val METADATA_FORMAT: RootJsonFormat[Metadata] = jsonFormat4(Metadata)
 
   final case class Status(phase: String, hostIP: Option[String])
-  implicit val STATUS_JSON_FORMAT: RootJsonFormat[Status] = jsonFormat2(Status)
+  implicit val STATUS_FORMAT: RootJsonFormat[Status] = jsonFormat2(Status)
 
   final case class Pod(metadata: Metadata, spec: Option[PodSpec], status: Option[Status])
-  implicit val ITEMS_JSON_FORMAT: RootJsonFormat[Pod] = jsonFormat3(Pod)
+  implicit val ITEMS_FORMAT: RootJsonFormat[Pod] = jsonFormat3(Pod)
 
   final case class PodList(items: Seq[Pod])
-  implicit val PODINFO_JSON_FORMAT: RootJsonFormat[PodList] = jsonFormat1(PodList)
+  implicit val PODINFO_FORMAT: RootJsonFormat[PodList] = jsonFormat1(PodList)
 
   //for show node information
 
@@ -137,7 +137,7 @@ object K8SJson {
   implicit val NODE_IMAGENAMES_FORMAT: RootJsonFormat[ImageNames] = jsonFormat1(ImageNames)
 
   final case class Condition(conditionType: String, status: String, message: String)
-  implicit val CONDITION_JSON_FORMAT: RootJsonFormat[Condition] =
+  implicit val CONDITION_FORMAT: RootJsonFormat[Condition] =
     new RootJsonFormat[Condition] {
       override def read(json: JsValue): Condition =
         json.asJsObject.getFields("type", "status", "message") match {
@@ -155,7 +155,7 @@ object K8SJson {
     }
 
   final case class Allocatable(cpu: Option[String], memory: Option[String])
-  implicit val ALLOCATABLE_JSON_FORMAT: RootJsonFormat[Allocatable] = jsonFormat2(Allocatable)
+  implicit val ALLOCATABLE_FORMAT: RootJsonFormat[Allocatable] = jsonFormat2(Allocatable)
 
   final case class NodeStatus(
     allocatable: Option[Allocatable],
@@ -163,39 +163,39 @@ object K8SJson {
     images: Seq[ImageNames],
     conditions: Seq[Condition]
   )
-  implicit val NODESTATUS_JSON_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat4(NodeStatus)
+  implicit val NODESTATUS_FORMAT: RootJsonFormat[NodeStatus] = jsonFormat4(NodeStatus)
 
   final case class NodeMetaData(name: String)
-  implicit val NODEMETADATA_JSON_FORMAT: RootJsonFormat[NodeMetaData] = jsonFormat1(NodeMetaData)
+  implicit val NODEMETADATA_FORMAT: RootJsonFormat[NodeMetaData] = jsonFormat1(NodeMetaData)
 
   final case class NodeItems(status: NodeStatus, metadata: NodeMetaData)
-  implicit val NODEITEMS_JSON_FORMAT: RootJsonFormat[NodeItems] = jsonFormat2(NodeItems)
+  implicit val NODEITEMS_FORMAT: RootJsonFormat[NodeItems] = jsonFormat2(NodeItems)
 
   final case class NodeInfo(items: Seq[NodeItems])
-  implicit val NODEINFO_JSON_FORMAT: RootJsonFormat[NodeInfo] = jsonFormat1(NodeInfo)
+  implicit val NODEINFO_FORMAT: RootJsonFormat[NodeInfo] = jsonFormat1(NodeInfo)
 
   //for node metrics
   final case class MetricsMetadata(name: String)
-  implicit val METRICSMETADATA_JSON_FORMAT: RootJsonFormat[MetricsMetadata] = jsonFormat1(MetricsMetadata)
+  implicit val METRICSMETADATA_FORMAT: RootJsonFormat[MetricsMetadata] = jsonFormat1(MetricsMetadata)
 
   final case class MetricsUsage(cpu: String, memory: String)
-  implicit val METRICSUSAGE_JSON_FORMAT: RootJsonFormat[MetricsUsage] = jsonFormat2(MetricsUsage)
+  implicit val METRICSUSAGE_FORMAT: RootJsonFormat[MetricsUsage] = jsonFormat2(MetricsUsage)
 
   final case class MetricsItem(metadata: MetricsMetadata, usage: MetricsUsage)
-  implicit val METRICSITEM_JSON_FORMAT: RootJsonFormat[MetricsItem] = jsonFormat2(MetricsItem)
+  implicit val METRICSITEM_FORMAT: RootJsonFormat[MetricsItem] = jsonFormat2(MetricsItem)
 
   final case class Metrics(items: Seq[MetricsItem])
-  implicit val METRICS_JSON_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
+  implicit val METRICS_FORMAT: RootJsonFormat[Metrics] = jsonFormat1(Metrics)
 
   //for create persistent volume
   final case class PVMetadata(name: String)
-  implicit val PVMETADATA_JSON_FORMAT: RootJsonFormat[PVMetadata] = jsonFormat1(PVMetadata)
+  implicit val PVMETADATA_FORMAT: RootJsonFormat[PVMetadata] = jsonFormat1(PVMetadata)
 
   final case class PVCapacity(storage: String)
-  implicit val PVCAPACITY_JSON_FORMAT: RootJsonFormat[PVCapacity] = jsonFormat1(PVCapacity)
+  implicit val PVCAPACITY_FORMAT: RootJsonFormat[PVCapacity] = jsonFormat1(PVCapacity)
 
   final case class PVHostPath(path: String, hostPathType: String)
-  implicit val PVHOSTPATH_JSON_FORMAT: RootJsonFormat[PVHostPath] =
+  implicit val PVHOSTPATH_FORMAT: RootJsonFormat[PVHostPath] =
     new RootJsonFormat[PVHostPath] {
       override def read(json: JsValue): PVHostPath = json.asJsObject.getFields("path", "type") match {
         case Seq(JsString(path), JsString(hostPathType)) =>
@@ -211,20 +211,20 @@ object K8SJson {
     }
 
   final case class PVMatchExpression(key: String, operator: String, values: Seq[String])
-  implicit val PVMATCHEXPRESSION_JSON_FORMAT: RootJsonFormat[PVMatchExpression] = jsonFormat3(
+  implicit val PVMATCHEXPRESSION_FORMAT: RootJsonFormat[PVMatchExpression] = jsonFormat3(
     PVMatchExpression
   )
 
   final case class PVNodeSelectorTerm(matchExpressions: Seq[PVMatchExpression])
-  implicit val PVNODESELECTORTERM_JSON_FORMAT: RootJsonFormat[PVNodeSelectorTerm] = jsonFormat1(
+  implicit val PVNODESELECTORTERM_FORMAT: RootJsonFormat[PVNodeSelectorTerm] = jsonFormat1(
     PVNodeSelectorTerm
   )
 
   final case class PVRequired(nodeSelectorTerms: Seq[PVNodeSelectorTerm])
-  implicit val PVNODESELECTORTERMS_JSON_FORMAT: RootJsonFormat[PVRequired] = jsonFormat1(PVRequired)
+  implicit val PVNODESELECTORTERMS_FORMAT: RootJsonFormat[PVRequired] = jsonFormat1(PVRequired)
 
   final case class PVNodeAffinity(required: PVRequired)
-  implicit val PVREQUIRED_JSON_FORMAT: RootJsonFormat[PVNodeAffinity] = jsonFormat1(PVNodeAffinity)
+  implicit val PVREQUIRED_FORMAT: RootJsonFormat[PVNodeAffinity] = jsonFormat1(PVNodeAffinity)
 
   final case class PVSpec(
     capacity: PVCapacity,
@@ -234,26 +234,26 @@ object K8SJson {
     hostPath: PVHostPath,
     nodeAffinity: PVNodeAffinity
   )
-  implicit val PVSPEC_JSON_FORMAT: RootJsonFormat[PVSpec] = jsonFormat6(PVSpec)
+  implicit val PVSPEC_FORMAT: RootJsonFormat[PVSpec] = jsonFormat6(PVSpec)
 
   final case class PersistentVolume(metadata: PVMetadata, spec: PVSpec)
-  implicit val PERSISTENTVOLUME_JSON_FORMAT: RootJsonFormat[PersistentVolume] = jsonFormat2(PersistentVolume)
+  implicit val PERSISTENTVOLUME_FORMAT: RootJsonFormat[PersistentVolume] = jsonFormat2(PersistentVolume)
 
   // for create persistent volume claim
   final case class PVCRequests(storage: String)
-  implicit val PVCREQUEST_JSON_FORMAT: RootJsonFormat[PVCRequests] = jsonFormat1(PVCRequests)
+  implicit val PVCREQUEST_FORMAT: RootJsonFormat[PVCRequests] = jsonFormat1(PVCRequests)
 
   final case class PVCResources(requests: PVCRequests)
-  implicit val PVCRESOURCES_JSON_FORMAT: RootJsonFormat[PVCResources] = jsonFormat1(PVCResources)
+  implicit val PVCRESOURCES_FORMAT: RootJsonFormat[PVCResources] = jsonFormat1(PVCResources)
 
   final case class PVCSpec(storageClassName: String, accessModes: Seq[String], resources: PVCResources)
-  implicit val PVCSPEC_JSON_FORMAT: RootJsonFormat[PVCSpec] = jsonFormat3(PVCSpec)
+  implicit val PVCSPEC_FORMAT: RootJsonFormat[PVCSpec] = jsonFormat3(PVCSpec)
 
   final case class PVCMetadata(name: String)
-  implicit val PVCMETADATA_JSON_FORMAT: RootJsonFormat[PVCMetadata] = jsonFormat1(PVCMetadata)
+  implicit val PVCMETADATA_FORMAT: RootJsonFormat[PVCMetadata] = jsonFormat1(PVCMetadata)
 
   final case class PersistentVolumeClaim(metadata: PVCMetadata, spec: PVCSpec)
-  implicit val PERSISTENTVOLUMECLAIM_JSON_FORMAT: RootJsonFormat[PersistentVolumeClaim] = jsonFormat2(
+  implicit val PERSISTENTVOLUMECLAIM_FORMAT: RootJsonFormat[PersistentVolumeClaim] = jsonFormat2(
     PersistentVolumeClaim
   )
 
@@ -264,15 +264,15 @@ object K8SJson {
     volumeMode: String,
     nodeAffinity: Option[PVNodeAffinity]
   )
-  implicit val PVSPECINFO_JSON_FORMAT: RootJsonFormat[PVSpecInfo] = jsonFormat4(PVSpecInfo)
+  implicit val PVSPECINFO_FORMAT: RootJsonFormat[PVSpecInfo] = jsonFormat4(PVSpecInfo)
 
   final case class PersistentVolumeItem(metadata: PVMetadata, spec: PVSpecInfo)
-  implicit val PERSISTENTVOLUMEITEM_JSON_FORMAT: RootJsonFormat[PersistentVolumeItem] = jsonFormat2(
+  implicit val PERSISTENTVOLUMEITEM_FORMAT: RootJsonFormat[PersistentVolumeItem] = jsonFormat2(
     PersistentVolumeItem
   )
 
   final case class PersistentVolumeInfo(items: Seq[PersistentVolumeItem])
-  implicit val PERSISTENTVOLUMEINFO_JSON_FORMAT: RootJsonFormat[PersistentVolumeInfo] = jsonFormat1(
+  implicit val PERSISTENTVOLUMEINFO_FORMAT: RootJsonFormat[PersistentVolumeInfo] = jsonFormat1(
     PersistentVolumeInfo
   )
 

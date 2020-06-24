@@ -380,7 +380,7 @@ private[configurator] object InspectRoute {
       .topicKey(InspectApi.INTERNAL_TOPIC_KEY)
       .settings(
         Map(
-          InspectApi.SETTINGS_KEY -> JsObject(InspectApi.RDB_QUERY_JSON_FORMAT.write(request).asJsObject.fields.filter {
+          InspectApi.SETTINGS_KEY -> JsObject(InspectApi.RDB_QUERY_FORMAT.write(request).asJsObject.fields.filter {
             case (_, value) =>
               value match {
                 case JsNull => false

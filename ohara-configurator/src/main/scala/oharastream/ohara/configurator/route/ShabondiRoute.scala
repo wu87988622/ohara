@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ShabondiRoute {
   import ShabondiApi._
 
-  private def updateEndpointSetting(creation: ShabondiClusterCreation): ShabondiClusterCreation = {
+  private def updateEndpointSetting(creation: Creation): Creation = {
     if (creation.nodeNames.isEmpty) {
       creation
     } else {
@@ -43,11 +43,11 @@ private[configurator] object ShabondiRoute {
         case SHABONDI_SINK_CLASS_NAME   => s"http://$nodeName:$clientPort/groups/" + "${groupName}"
       }
       val endpointItem = (ShabondiDefinitions.ENDPOINT_DEFINITION.key, JsString(value))
-      new ShabondiClusterCreation(creation.raw + endpointItem)
+      new Creation(creation.raw + endpointItem)
     }
   }
 
-  private[this] def creationToClusterInfo(creation: ShabondiClusterCreation)(
+  private[this] def creationToClusterInfo(creation: Creation)(
     implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): Future[ShabondiClusterInfo] = {
@@ -57,7 +57,7 @@ private[configurator] object ShabondiRoute {
       .references(creation.raw, creation.definitions)
       .check()
       .map { _ =>
-        val refinedCreation = SHABONDI_CLUSTER_CREATION_JSON_FORMAT.toBuilder
+        val refinedCreation = SHABONDI_CLUSTER_CREATION_FORMAT.toBuilder
           .definitions(
             (creation.shabondiClass match {
               case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME => ShabondiDefinitions.sourceDefinitions
@@ -85,18 +85,18 @@ private[configurator] object ShabondiRoute {
   private[this] def hookOfCreation(
     implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
-  ): HookOfCreation[ShabondiClusterCreation, ShabondiClusterInfo] =
+  ): HookOfCreation[Creation, ShabondiClusterInfo] =
     creationToClusterInfo(_)
 
   private[this] def hookOfUpdating(
     implicit objectChecker: DataChecker,
     executionContext: ExecutionContext
-  ): HookOfUpdating[ShabondiClusterUpdating, ShabondiClusterInfo] =
-    (key: ObjectKey, updating: ShabondiClusterUpdating, previousOption: Option[ShabondiClusterInfo]) =>
+  ): HookOfUpdating[Updating, ShabondiClusterInfo] =
+    (key: ObjectKey, updating: Updating, previousOption: Option[ShabondiClusterInfo]) =>
       previousOption match {
         case None =>
           val creation = ShabondiApi.access.request
-            .settings(updating.settings)
+            .settings(updating.raw)
             .key(key)
             .creation
           creationToClusterInfo(creation)
@@ -109,9 +109,9 @@ private[configurator] object ShabondiRoute {
                 .settings {
                   previous.shabondiClass match {
                     case ShabondiApi.SHABONDI_SOURCE_CLASS_NAME =>
-                      keepEditableFields(updating.settings, ShabondiApi.SOURCE_ALL_DEFINITIONS)
+                      keepEditableFields(updating.raw, ShabondiApi.SOURCE_ALL_DEFINITIONS)
                     case ShabondiApi.SHABONDI_SINK_CLASS_NAME =>
-                      keepEditableFields(updating.settings, ShabondiApi.SINK_ALL_DEFINITIONS)
+                      keepEditableFields(updating.raw, ShabondiApi.SINK_ALL_DEFINITIONS)
                   }
                 }
                 .key(key)
@@ -179,7 +179,7 @@ private[configurator] object ShabondiRoute {
     meterCache: MetricsCache,
     executionContext: ExecutionContext
   ): server.Route = {
-    clusterRoute[ShabondiClusterInfo, ShabondiClusterCreation, ShabondiClusterUpdating](
+    clusterRoute[ShabondiClusterInfo, Creation, Updating](
       root = SHABONDI_PREFIX_PATH,
       prefixOfSingular = SettingDef.Reference.SHABONDI.name().toLowerCase,
       hookOfCreation = hookOfCreation,

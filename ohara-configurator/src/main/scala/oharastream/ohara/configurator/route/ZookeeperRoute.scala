@@ -59,7 +59,7 @@ object ZookeeperRoute {
   ): HookOfUpdating[Updating, ZookeeperClusterInfo] =
     (key: ObjectKey, updating: Updating, previousOption: Option[ZookeeperClusterInfo]) =>
       previousOption match {
-        case None => creationToClusterInfo(access.request.settings(updating.settings).key(key).creation)
+        case None => creationToClusterInfo(access.request.settings(updating.raw).key(key).creation)
         case Some(previous) =>
           objectChecker.checkList.zookeeperCluster(key, DataCondition.STOPPED).check().flatMap { _ =>
             creationToClusterInfo(
@@ -68,7 +68,7 @@ object ZookeeperRoute {
               // 3) fill the ignored settings by creation
               access.request
                 .settings(previous.settings)
-                .settings(keepEditableFields(updating.settings, ZookeeperApi.DEFINITIONS))
+                .settings(keepEditableFields(updating.raw, ZookeeperApi.DEFINITIONS))
                 // the key is not in update's settings so we have to add it to settings
                 .key(key)
                 .creation

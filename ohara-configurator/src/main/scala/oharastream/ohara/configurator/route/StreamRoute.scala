@@ -121,7 +121,7 @@ private[configurator] object StreamRoute {
         case None =>
           creationToClusterInfo(
             access.request
-              .settings(updating.settings)
+              .settings(updating.raw)
               // the key is not in update's settings so we have to add it to settings
               .key(key)
               .creation
@@ -138,7 +138,7 @@ private[configurator] object StreamRoute {
               creationToClusterInfo(
                 access.request
                   .settings(previous.settings)
-                  .settings(keepEditableFields(updating.settings, StreamApi.DEFINITIONS))
+                  .settings(keepEditableFields(updating.raw, StreamApi.DEFINITIONS))
                   // the key is not in update's settings so we have to add it to settings
                   .key(key)
                   .creation

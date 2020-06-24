@@ -80,13 +80,13 @@ object ConnectorApi {
         })
     }
 
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    def className: String                                                       = raw.className.get
-    def columns: Seq[Column]                                                    = raw.columns.get
-    def numberOfTasks: Int                                                      = raw.numberOfTasks.get
-    def workerClusterKey: ObjectKey                                             = raw.workerClusterKey.get
-    def topicKeys: Set[TopicKey]                                                = raw.topicKeys.get
-    def partitionClass: String                                                  = raw.partitionerClass.get
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    def className: String                                                  = raw.className.get
+    def columns: Seq[Column]                                               = raw.columns.get
+    def numberOfTasks: Int                                                 = raw.numberOfTasks.get
+    def workerClusterKey: ObjectKey                                        = raw.workerClusterKey.get
+    def topicKeys: Set[TopicKey]                                           = raw.topicKeys.get
+    def partitionClass: String                                             = raw.partitionerClass.get
   }
 
   val DEFINITIONS: Seq[SettingDef] = ConnectorDefUtils.DEFAULT.asScala.values.toSeq

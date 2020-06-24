@@ -150,24 +150,24 @@ object WorkerApi {
   final class Creation private[WorkerApi] (val raw: Map[String, JsValue]) extends ClusterCreation {
     /**
       * reuse the parser from Update.
-      * @param settings settings
+      *
       * @return update
       */
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
-    def brokerClusterKey: ObjectKey                                             = raw.brokerClusterKey.get
-    def clientPort: Int                                                         = raw.clientPort.get
-    def groupId: String                                                         = raw.groupId.get
-    def statusTopicName: String                                                 = raw.statusTopicName.get
-    def statusTopicPartitions: Int                                              = raw.statusTopicPartitions.get
-    def statusTopicReplications: Short                                          = raw.statusTopicReplications.get
-    def configTopicName: String                                                 = raw.configTopicName.get
-    def configTopicReplications: Short                                          = raw.configTopicReplications.get
-    def offsetTopicName: String                                                 = raw.offsetTopicName.get
-    def offsetTopicPartitions: Int                                              = raw.offsetTopicPartitions.get
-    def offsetTopicReplications: Short                                          = raw.offsetTopicReplications.get
-    def pluginKeys: Set[ObjectKey]                                              = raw.pluginKeys.getOrElse(Set.empty)
-    def sharedJarKeys: Set[ObjectKey]                                           = raw.sharedJarKeys.getOrElse(Set.empty)
-    def freePorts: Set[Int]                                                     = raw.freePorts.get
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    def brokerClusterKey: ObjectKey                                        = raw.brokerClusterKey.get
+    def clientPort: Int                                                    = raw.clientPort.get
+    def groupId: String                                                    = raw.groupId.get
+    def statusTopicName: String                                            = raw.statusTopicName.get
+    def statusTopicPartitions: Int                                         = raw.statusTopicPartitions.get
+    def statusTopicReplications: Short                                     = raw.statusTopicReplications.get
+    def configTopicName: String                                            = raw.configTopicName.get
+    def configTopicReplications: Short                                     = raw.configTopicReplications.get
+    def offsetTopicName: String                                            = raw.offsetTopicName.get
+    def offsetTopicPartitions: Int                                         = raw.offsetTopicPartitions.get
+    def offsetTopicReplications: Short                                     = raw.offsetTopicReplications.get
+    def pluginKeys: Set[ObjectKey]                                         = raw.pluginKeys.getOrElse(Set.empty)
+    def sharedJarKeys: Set[ObjectKey]                                      = raw.sharedJarKeys.getOrElse(Set.empty)
+    def freePorts: Set[Int]                                                = raw.freePorts.get
 
     override def ports: Set[Int] = freePorts + clientPort + jmxPort
 
@@ -179,7 +179,7 @@ object WorkerApi {
   /**
     * exposed to configurator
     */
-  private[ohara] implicit val CREATION_JSON_FORMAT: JsonRefiner[Creation] =
+  private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
         override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
@@ -188,31 +188,31 @@ object WorkerApi {
       DEFINITIONS
     )
 
-  final class Updating private[WorkerApi] (val settings: Map[String, JsValue]) extends ClusterUpdating {
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(settings).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
-    def clientPort: Option[Int]             = noJsNull(settings).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def groupId: Option[String]             = noJsNull(settings).get(GROUP_ID_KEY).map(_.convertTo[String])
-    def statusTopicName: Option[String]     = noJsNull(settings).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
-    def statusTopicPartitions: Option[Int]  = noJsNull(settings).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
+  final class Updating private[WorkerApi] (val raw: Map[String, JsValue]) extends ClusterUpdating {
+    def brokerClusterKey: Option[ObjectKey] = noJsNull(raw).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def clientPort: Option[Int]             = noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def groupId: Option[String]             = noJsNull(raw).get(GROUP_ID_KEY).map(_.convertTo[String])
+    def statusTopicName: Option[String]     = noJsNull(raw).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
+    def statusTopicPartitions: Option[Int]  = noJsNull(raw).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def statusTopicReplications: Option[Short] =
-      noJsNull(settings).get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def configTopicName: Option[String] = noJsNull(settings).get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String])
+      noJsNull(raw).get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def configTopicName: Option[String] = noJsNull(raw).get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String])
     def configTopicReplications: Option[Short] =
-      noJsNull(settings).get(CONFIG_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def offsetTopicName: Option[String]    = noJsNull(settings).get(OFFSET_TOPIC_NAME_KEY).map(_.convertTo[String])
-    def offsetTopicPartitions: Option[Int] = noJsNull(settings).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
+      noJsNull(raw).get(CONFIG_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def offsetTopicName: Option[String]    = noJsNull(raw).get(OFFSET_TOPIC_NAME_KEY).map(_.convertTo[String])
+    def offsetTopicPartitions: Option[Int] = noJsNull(raw).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def offsetTopicReplications: Option[Short] =
-      noJsNull(settings).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def pluginKeys: Option[Set[ObjectKey]] = noJsNull(settings).get(PLUGIN_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+      noJsNull(raw).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def pluginKeys: Option[Set[ObjectKey]] = noJsNull(raw).get(PLUGIN_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def sharedJarKeys: Option[Set[ObjectKey]] =
-      noJsNull(settings).get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+      noJsNull(raw).get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def freePorts: Option[Set[Int]] =
-      noJsNull(settings).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
+      noJsNull(raw).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
   }
-  implicit val UPDATING_JSON_FORMAT: JsonRefiner[Updating] =
+  implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -226,25 +226,25 @@ object WorkerApi {
   ) extends ClusterInfo {
     /**
       * reuse the parser from Creation.
-      * @param settings settings
+      *
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    def brokerClusterKey: ObjectKey                                               = settings.brokerClusterKey
-    def clientPort: Int                                                           = settings.clientPort
-    def groupId: String                                                           = settings.groupId
-    def statusTopicName: String                                                   = settings.statusTopicName
-    def statusTopicPartitions: Int                                                = settings.statusTopicPartitions
-    def statusTopicReplications: Short                                            = settings.statusTopicReplications
-    def configTopicName: String                                                   = settings.configTopicName
-    def configTopicPartitions: Int                                                = 1
-    def configTopicReplications: Short                                            = settings.configTopicReplications
-    def offsetTopicName: String                                                   = settings.offsetTopicName
-    def offsetTopicPartitions: Int                                                = settings.offsetTopicPartitions
-    def offsetTopicReplications: Short                                            = settings.offsetTopicReplications
-    def pluginKeys: Set[ObjectKey]                                                = settings.pluginKeys
-    def sharedJarKeys: Set[ObjectKey]                                             = settings.sharedJarKeys
-    def freePorts: Set[Int]                                                       = settings.freePorts
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    def brokerClusterKey: ObjectKey                                          = settings.brokerClusterKey
+    def clientPort: Int                                                      = settings.clientPort
+    def groupId: String                                                      = settings.groupId
+    def statusTopicName: String                                              = settings.statusTopicName
+    def statusTopicPartitions: Int                                           = settings.statusTopicPartitions
+    def statusTopicReplications: Short                                       = settings.statusTopicReplications
+    def configTopicName: String                                              = settings.configTopicName
+    def configTopicPartitions: Int                                           = 1
+    def configTopicReplications: Short                                       = settings.configTopicReplications
+    def offsetTopicName: String                                              = settings.offsetTopicName
+    def offsetTopicPartitions: Int                                           = settings.offsetTopicPartitions
+    def offsetTopicReplications: Short                                       = settings.offsetTopicReplications
+    def pluginKeys: Set[ObjectKey]                                           = settings.pluginKeys
+    def sharedJarKeys: Set[ObjectKey]                                        = settings.sharedJarKeys
+    def freePorts: Set[Int]                                                  = settings.freePorts
 
     /**
       * the node names is not equal to "running" nodes. The connection props may reference to invalid nodes and the error
@@ -344,14 +344,14 @@ object WorkerApi {
       * @return the payload of creation
       */
     final def creation: Creation =
-      CREATION_JSON_FORMAT.read(CREATION_JSON_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
 
     /**
       * for testing only
       * @return the payload of update
       */
     private[configurator] final def updating: Updating =
-      UPDATING_JSON_FORMAT.read(UPDATING_JSON_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
   }
 
   /**

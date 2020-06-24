@@ -187,13 +187,13 @@ package object configurator {
   /**
     * exposed to configurator
     */
-  implicit val SETTING_DEFINITION_JSON_FORMAT: RootJsonFormat[SettingDef] =
+  implicit val SETTING_DEFINITION_FORMAT: RootJsonFormat[SettingDef] =
     new RootJsonFormat[SettingDef] {
       override def read(json: JsValue): SettingDef = SettingDef.ofJson(json.toString())
       override def write(obj: SettingDef): JsValue = obj.toJsonString.parseJson
     }
 
-  private[configurator] implicit val DURATION_JSON_FORMAT: RootJsonFormat[Duration] =
+  private[configurator] implicit val DURATION_FORMAT: RootJsonFormat[Duration] =
     new RootJsonFormat[Duration] {
       override def read(json: JsValue): Duration = json match {
         case JsString(s) =>

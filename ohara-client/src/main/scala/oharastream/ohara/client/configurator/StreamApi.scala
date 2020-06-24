@@ -43,7 +43,7 @@ object StreamApi {
   final val IMAGE_NAME_DEFAULT: String = StreamDefUtils.IMAGE_NAME_DEFINITION.defaultString()
 
   final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
-    private[this] implicit def update(settings: Map[String, JsValue]): Updating = new Updating(noJsNull(settings))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
@@ -82,29 +82,29 @@ object StreamApi {
       DEFINITIONS
     )
 
-  final class Updating(val settings: Map[String, JsValue]) extends ClusterUpdating {
+  final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
     def brokerClusterKey: Option[ObjectKey] =
-      noJsNull(settings).get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
+      noJsNull(raw).get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
 
     def className: Option[String] =
-      noJsNull(settings).get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
+      noJsNull(raw).get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def jarKey: Option[ObjectKey] =
-      noJsNull(settings).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
+      noJsNull(raw).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
 
     private[StreamApi] def connectionProps: Option[String] =
-      noJsNull(settings).get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
+      noJsNull(raw).get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
 
     def fromTopicKeys: Option[Set[TopicKey]] =
-      noJsNull(settings).get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
+      noJsNull(raw).get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
     def toTopicKeys: Option[Set[TopicKey]] =
-      noJsNull(settings).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
+      noJsNull(raw).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -130,13 +130,13 @@ object StreamApi {
       with Metricsable {
     /**
       * reuse the parser from Creation.
-      * @param settings settings
+      *
       * @return creation
       */
-    private[this] implicit def creation(settings: Map[String, JsValue]): Creation = new Creation(noJsNull(settings))
-    override def kind: String                                                     = KIND
-    override def ports: Set[Int]                                                  = settings.ports
-    def className: String                                                         = settings.className.get
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    override def kind: String                                                = KIND
+    override def ports: Set[Int]                                             = settings.ports
+    def className: String                                                    = settings.className.get
 
     /**
       * Return the key of explicit value. Otherwise, return the key of jar info.

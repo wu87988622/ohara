@@ -28,7 +28,7 @@ object ContainerApi {
   val CONTAINER_PREFIX_PATH: String = "containers"
 
   final case class PortMapping(hostIp: String, hostPort: Int, containerPort: Int)
-  implicit val PORT_MAPPING_JSON_FORMAT: RootJsonFormat[PortMapping] = jsonFormat3(PortMapping)
+  implicit val PORT_MAPPING_FORMAT: RootJsonFormat[PortMapping] = jsonFormat3(PortMapping)
 
   final case class ContainerInfo(
     nodeName: String,
@@ -43,10 +43,10 @@ object ContainerApi {
     hostname: String
   )
 
-  implicit val CONTAINER_INFO_JSON_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat10(ContainerInfo)
+  implicit val CONTAINER_INFO_FORMAT: RootJsonFormat[ContainerInfo] = jsonFormat10(ContainerInfo)
 
   final case class ContainerGroup(clusterKey: ObjectKey, clusterType: String, containers: Seq[ContainerInfo])
-  implicit val CONTAINER_GROUP_JSON_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
+  implicit val CONTAINER_GROUP_FORMAT: RootJsonFormat[ContainerGroup] = jsonFormat3(ContainerGroup)
 
   class Access private[configurator] extends BasicAccess(KIND) {
     def get(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Seq[ContainerGroup]] =

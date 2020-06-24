@@ -75,7 +75,7 @@ class TestFileInfoApi extends OharaTest {
       tags = Map("a" -> JsString("b"))
     )
 
-    val copy = FileInfoApi.FILE_INFO_JSON_FORMAT.read(FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo))
+    val copy = FileInfoApi.FILE_INFO_FORMAT.read(FileInfoApi.FILE_INFO_FORMAT.write(fileInfo))
     copy.group shouldBe fileInfo.group
     copy.name shouldBe fileInfo.name
     copy.lastModified shouldBe fileInfo.lastModified
@@ -95,6 +95,6 @@ class TestFileInfoApi extends OharaTest {
       classInfos = Seq.empty,
       tags = Map("a" -> JsString("b"))
     )
-    FileInfoApi.FILE_INFO_JSON_FORMAT.write(fileInfo).asJsObject.fields should not contain "url"
+    FileInfoApi.FILE_INFO_FORMAT.write(fileInfo).asJsObject.fields should not contain "url"
   }
 }

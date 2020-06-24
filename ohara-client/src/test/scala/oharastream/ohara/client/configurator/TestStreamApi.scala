@@ -615,11 +615,11 @@ class TestStreamApi extends OharaTest {
   def testDefaultUpdate(): Unit = {
     val name = CommonUtils.randomString(10)
     val data = accessRequest.name(name).updating
-    data.settings.contains(StreamDefUtils.IMAGE_NAME_DEFINITION.key()) shouldBe false
-    data.settings.contains(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()) shouldBe false
-    data.settings.contains(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()) shouldBe false
-    data.settings.contains(StreamDefUtils.JMX_PORT_DEFINITION.key()) shouldBe false
-    data.settings.contains(StreamDefUtils.NODE_NAMES_DEFINITION.key()) shouldBe false
+    data.raw.contains(StreamDefUtils.IMAGE_NAME_DEFINITION.key()) shouldBe false
+    data.raw.contains(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()) shouldBe false
+    data.raw.contains(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()) shouldBe false
+    data.raw.contains(StreamDefUtils.JMX_PORT_DEFINITION.key()) shouldBe false
+    data.raw.contains(StreamDefUtils.NODE_NAMES_DEFINITION.key()) shouldBe false
   }
 
   @Test
