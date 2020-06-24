@@ -157,6 +157,13 @@ private[store] class RocksDataStore(folder: String, dataSerializer: Serializer[D
         .toList
     )
 
+  override def remove(data: Data)(implicit executor: ExecutionContext): Future[Boolean] =
+    Future.successful(
+      _get(getOrCreateHandler(data.getClass), data.key)
+        .map(_ => db.delete(getOrCreateHandler(data.getClass), toBytes(data.key)))
+        .isDefined
+    )
+
   override def remove[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[Boolean] =
     get[T](key).map { obj =>
       if (obj.isDefined) db.delete(getOrCreateHandler[T], toBytes(key))

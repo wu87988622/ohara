@@ -226,7 +226,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>
         val nodeNames = (0 to 2).map(_ => CommonUtils.randomString(5)).toSet
-        val creation  = ZookeeperApi.access.request.name(s"$zkClusterNamePrefix$index").nodeNames(nodeNames).creation
+        val creation = ZookeeperApi.access.request
+          .group(CommonUtils.randomString(5))
+          .name(s"$zkClusterNamePrefix$index")
+          .nodeNames(nodeNames)
+          .creation
         collie.zookeeperCollie.addCluster(
           creation.key,
           ClusterKind.ZOOKEEPER,
@@ -241,6 +245,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       val bkCreations = zkCreations.zipWithIndex.map {
         case (zkCreation, index) =>
           val creation = BrokerApi.access.request
+            .group(CommonUtils.randomString(5))
             .name(s"$bkClusterNamePrefix$index")
             .zookeeperClusterKey(zkCreation.key)
             .nodeNames(zkCreation.nodeNames)
@@ -259,6 +264,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
         val bkCreation = bkCreations((Math.random() % bkCreations.size).asInstanceOf[Int])
         val creation =
           WorkerApi.access.request
+            .group(CommonUtils.randomString(5))
             .name(s"$wkClusterNamePrefix$index")
             .brokerClusterKey(bkCreation.key)
             .nodeNames(bkCreation.nodeNames)

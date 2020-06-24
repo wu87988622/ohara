@@ -69,6 +69,16 @@ trait DataStore extends Releasable {
   def raws(key: ObjectKey)(implicit executor: ExecutionContext): Future[Seq[Data]]
 
   /**
+    * delete an object matching following conditions.
+    * 1) type is equal to data type
+    * 2) key is equal to data key
+    * @param data used to indicate the object to delete
+    * @param executor thread pool
+    * @return true if it does remove something. Otherwise, false
+    */
+  def remove(data: Data)(implicit executor: ExecutionContext): Future[Boolean]
+
+  /**
     * Remove a "specified" sublcass from ohara data mapping the name. If the data mapping to the name is not the specified
     * type, an exception will be thrown.
     *

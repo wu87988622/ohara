@@ -54,7 +54,6 @@ class TestNodeRoute extends OharaTest {
     nodes.isEmpty shouldBe false
     nodes.foreach(_.services.size should not be 0)
     nodes.foreach(_.services.flatMap(_.clusterKeys).size should not be 0)
-    nodes.flatMap(_.services.flatMap(_.clusterKeys)).foreach(_.group() shouldBe GROUP_DEFAULT)
   }
 
   @Test

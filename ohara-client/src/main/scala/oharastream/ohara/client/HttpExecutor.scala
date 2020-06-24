@@ -50,9 +50,10 @@ private[client] trait HttpExecutor {
   def delete[E <: HttpExecutor.Error](
     url: String
   )(implicit rm0: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit]
-  def delete[Res, E <: HttpExecutor.Error](
-    url: String
-  )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res]
+  def delete[Req, E <: HttpExecutor.Error](
+    url: String,
+    request: Req
+  )(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit]
   //-------------------------------------------------[POST]-------------------------------------------------//
   def post[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
     implicit rm0: RootJsonFormat[Res],
@@ -186,10 +187,15 @@ private[ohara] object HttpExecutor {
       url: String
     )(implicit rm0: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
       Http().singleRequest(HttpRequest(HttpMethods.DELETE, url)).flatMap(unmarshal[E])
-    override def delete[Res, E <: HttpExecutor.Error](
-      url: String
-    )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
-      Http().singleRequest(HttpRequest(HttpMethods.DELETE, url)).flatMap(unmarshal[Res, E])
+    override def delete[Req, E <: HttpExecutor.Error](
+      url: String,
+      request: Req
+    )(implicit rm0: RootJsonFormat[Req], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Unit] =
+      Marshal(request)
+        .to[RequestEntity]
+        .flatMap(
+          entity => Http().singleRequest(HttpRequest(HttpMethods.DELETE, url, entity = entity)).flatMap(unmarshal[E])
+        )
     //-------------------------------------------------[POST]-------------------------------------------------//
     override def post[Req, Res, E <: HttpExecutor.Error](url: String, request: Req)(
       implicit rm0: RootJsonFormat[Res],
@@ -197,9 +203,11 @@ private[ohara] object HttpExecutor {
       rm2: RootJsonFormat[E],
       executionContext: ExecutionContext
     ): Future[Res] =
-      Marshal(request).to[RequestEntity].flatMap { entity =>
-        Http().singleRequest(HttpRequest(HttpMethods.POST, url, entity = entity)).flatMap(unmarshal[Res, E])
-      }
+      Marshal(request)
+        .to[RequestEntity]
+        .flatMap(
+          entity => Http().singleRequest(HttpRequest(HttpMethods.POST, url, entity = entity)).flatMap(unmarshal[Res, E])
+        )
     override def post[Res, E <: HttpExecutor.Error](
       url: String
     )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =
@@ -211,9 +219,11 @@ private[ohara] object HttpExecutor {
       rm2: RootJsonFormat[E],
       executionContext: ExecutionContext
     ): Future[Res] =
-      Marshal(request).to[RequestEntity].flatMap { entity =>
-        Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res, E])
-      }
+      Marshal(request)
+        .to[RequestEntity]
+        .flatMap(
+          entity => Http().singleRequest(HttpRequest(HttpMethods.PUT, url, entity = entity)).flatMap(unmarshal[Res, E])
+        )
     override def put[Res, E <: HttpExecutor.Error](
       url: String
     )(implicit rm0: RootJsonFormat[Res], rm1: RootJsonFormat[E], executionContext: ExecutionContext): Future[Res] =

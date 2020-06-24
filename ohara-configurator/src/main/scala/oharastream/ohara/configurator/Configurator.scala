@@ -44,6 +44,7 @@ import oharastream.ohara.configurator.Configurator.Mode
 import oharastream.ohara.configurator.route._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import spray.json.DeserializationException
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -236,7 +237,24 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         ObjectRoute.apply,
         ContainerRoute.apply
       ).reduce[server.Route]((a, b) => a ~ b)
-    )
+    ) ~ pathPrefix(PrivateApi.PREFIX) {
+      delete {
+        import PrivateApi._
+        entity(as[Deletion]) { deletion =>
+          complete(
+            store
+              .raws()
+              .map(
+                _.filter(d => deletion.groups.contains(d.group))
+                  .filter(d => deletion.kinds.contains(d.kind))
+                  .map(store.remove)
+              )
+              .flatMap(Future.sequence(_))
+              .map(_ => StatusCodes.NoContent)
+          )
+        }
+      }
+    }
 
   private[this] def finalRoute: server.Route =
     path(Remaining)(routeToOfficialUrl)
