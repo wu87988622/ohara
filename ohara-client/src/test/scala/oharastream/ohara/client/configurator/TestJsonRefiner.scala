@@ -377,22 +377,6 @@ class TestJsonRefiner extends OharaTest {
           """.stripMargin.parseJson)
 
   @Test
-  def testRejectEmptyArray(): Unit =
-    an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
-      .format(format)
-      .rejectEmptyArray()
-      .build
-      .read("""
-            |{
-            | "stringValue": "abc",
-            | "bindPort": 9999,
-            | "connectionPort": 123,
-            | "stringArray": [],
-            | "objects":{}
-            |}
-          """.stripMargin.parseJson)
-
-  @Test
   def testRejectEmptyArrayForSpecificKey(): Unit = {
     an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
       .format(format)
@@ -547,9 +531,7 @@ class TestJsonRefiner extends OharaTest {
     // pass
     JsonRefinerBuilder[SimpleData]
       .format(format)
-      .arrayRestriction("stringArray")
-      .rejectKeyword("start")
-      .toRefiner
+      .rejectKeywordsFromArray("stringArray", Set("start"))
       .build
       .read(s"""
                     |{
@@ -560,13 +542,11 @@ class TestJsonRefiner extends OharaTest {
                     | "stringArray": ["ss", "tt"],
                     | "objects":{}
                     |}
-                           """.stripMargin.parseJson)
+                 """.stripMargin.parseJson)
 
     an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
       .format(format)
-      .arrayRestriction("stringArray")
-      .rejectKeyword("stop")
-      .toRefiner
+      .rejectKeywordsFromArray("stringArray", Set("stop"))
       .build
       .read(s"""
                |{
@@ -576,24 +556,7 @@ class TestJsonRefiner extends OharaTest {
                | "stringArray": ["stop", "abc"],
                | "objects":{}
                |}
-                           """.stripMargin.parseJson)
-
-    an[DeserializationException] should be thrownBy JsonRefinerBuilder[SimpleData]
-      .format(format)
-      .arrayRestriction("stringArray")
-      .rejectKeyword("stop")
-      .rejectEmpty()
-      .toRefiner
-      .build
-      .read(s"""
-               |{
-               | "stringValue": "start",
-               | "bindPort": 123,
-               | "connectionPort": 111,
-               | "stringArray": [],
-               | "objects":{}
-               |}
-                           """.stripMargin.parseJson)
+             """.stripMargin.parseJson)
   }
 
   @Test

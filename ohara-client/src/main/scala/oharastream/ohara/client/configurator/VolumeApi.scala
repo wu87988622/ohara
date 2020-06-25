@@ -36,7 +36,6 @@ object VolumeApi {
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfKey[Creation]
       .format(jsonFormat5(Creation))
-      .rejectEmptyArray()
       .nullToEmptyObject(TAGS_KEY)
       .build
 

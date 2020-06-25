@@ -19,7 +19,6 @@ package oharastream.ohara.client.configurator
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.JsonRefinerBuilder.ArrayRestriction
 import oharastream.ohara.common.setting.SettingDef.{Necessary, Permission, Type}
 import oharastream.ohara.common.setting.{ObjectKey, PropGroup, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
@@ -36,8 +35,8 @@ import spray.json.{
   RootJsonFormat
 }
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
+import scala.jdk.CollectionConverters._
 import scala.reflect.{ClassTag, classTag}
 
 /**
@@ -434,14 +433,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     )
 
   /**
-    * throw exception if the input json has empty array.
-    * Noted: this rule is applied to all key-value even if the pair is in nested object.
-    *
-    * @return this refiner
-    */
-  def rejectEmptyArray(): JsonRefinerBuilder[T]
-
-  /**
     * throw exception if the specific key of input json is associated to empty array.
     *
     * @param key key
@@ -456,16 +447,23 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
     )
 
   /**
-    * add the array restriction to specific value.
-    * It throws exception if the specific key of input json violates any restriction.
-    * Noted: the empty restriction make the checker to reject all input values.
-    *
-    * @param key key
+    * This method includes following rules.
+    * 1) the value type must be array
+    * 2) the elements in value must NOT exist in denyList.
+    * @param key field key
+    * @param denyList illegal word to this field
     * @return this refiner
     */
-  def arrayRestriction(key: String): ArrayRestriction[T] =
-    (checkers: Seq[(String, JsArray) => Unit]) =>
-      requireJsonType[JsArray](key, (jsArray: JsArray) => checkers.foreach(_.apply(key, jsArray)))
+  def rejectKeywordsFromArray(key: String, denyList: Set[String]): JsonRefinerBuilder[T] =
+    requireJsonType[JsArray](
+      key,
+      jsArray => {
+        val input   = jsArray.elements.filter(_.isInstanceOf[JsString]).map(_.convertTo[String])
+        val illegal = denyList.filter(input.contains)
+        if (illegal.nonEmpty)
+          throw DeserializationException(s"$illegal are illegal for key: $key", fieldNames = List(key))
+      }
+    )
 
   def stringRestriction(key: String, regex: String): JsonRefinerBuilder[T] = valuesChecker(
     Set(key),
@@ -535,48 +533,6 @@ trait JsonRefinerBuilder[T] extends oharastream.ohara.common.pattern.Builder[Jso
 }
 
 object JsonRefinerBuilder {
-  trait ArrayRestriction[T] {
-    private[this] var checkers: Seq[(String, JsArray) => Unit] = Seq.empty
-
-    /**
-      * throw exception if the value of this key equals to specific keyword
-      * @param keyword the checked keyword
-      * @return this refiner
-      */
-    def rejectKeyword(keyword: String): ArrayRestriction[T] =
-      addChecker(
-        (key, arr) =>
-          if (arr.elements.exists(_.asInstanceOf[JsString].value == keyword))
-            throw DeserializationException(s"""the \"$keyword\" is a illegal word to $key!!!""")
-      )
-
-    /**
-      * throw exception if this key is empty array.
-      * @return this refiner
-      */
-    def rejectEmpty(): ArrayRestriction[T] =
-      addChecker(
-        (key, arr) =>
-          if (arr.elements.isEmpty)
-            throw DeserializationException(s"""$key cannot be an empty array!!!""")
-      )
-
-    /**
-      * Complete this restriction and add it to refiner.
-      */
-    def toRefiner: JsonRefinerBuilder[T] =
-      if (checkers.isEmpty)
-        throw new IllegalArgumentException("Don't use Array Restriction if you hate to add any restriction")
-      else addToJsonRefiner(checkers)
-
-    private[this] def addChecker(checker: (String, JsArray) => Unit): ArrayRestriction[T] = {
-      this.checkers :+= checker
-      this
-    }
-
-    protected def addToJsonRefiner(checkers: Seq[(String, JsArray) => Unit]): JsonRefinerBuilder[T]
-  }
-
   def apply[T]: JsonRefinerBuilder[T] = new JsonRefinerBuilder[T] {
     private[this] var format: RootJsonFormat[T]                                      = _
     private[this] var valueConverters: Map[String, JsValue => JsValue]               = Map.empty
@@ -584,7 +540,6 @@ object JsonRefinerBuilder {
     private[this] var valuesCheckers: Map[Set[String], Map[String, JsValue] => Unit] = Map.empty
     private[this] var nullToJsValue: Map[String, () => JsValue]                      = Map.empty
     private[this] var nullToAnotherValueOfKey: Map[String, String]                   = Map.empty
-    private[this] var _rejectEmptyArray: Boolean                                     = false
 
     override def format(format: RootJsonFormat[T]): JsonRefinerBuilder[T] = {
       this.format = Objects.requireNonNull(format)
@@ -633,11 +588,6 @@ object JsonRefinerBuilder {
       this
     }
 
-    override def rejectEmptyArray(): JsonRefinerBuilder[T] = {
-      this._rejectEmptyArray = true
-      this
-    }
-
     override def nullToAnotherValueOfKey(key: String, anotherKey: String): JsonRefinerBuilder[T] = {
       if (nullToAnotherValueOfKey.contains(CommonUtils.requireNonEmpty(key)))
         throw new IllegalArgumentException(s"""the \"$key\" has been associated to another key:\"$anotherKey\"""")
@@ -669,6 +619,7 @@ object JsonRefinerBuilder {
           def checkEmptyString(k: String, s: JsString): Unit =
             if (s.value.isEmpty)
               throw DeserializationException(s"""the value of \"$k\" can't be empty string!!!""", fieldNames = List(k))
+
           def checkJsValueForEmptyString(k: String, v: JsValue): Unit = v match {
             case s: JsString => checkEmptyString(k, s)
             case s: JsArray  => s.elements.foreach(v => checkJsValueForEmptyString(k, v))
@@ -678,23 +629,6 @@ object JsonRefinerBuilder {
 
           // 1) check empty string
           checkJsValueForEmptyString(key, value)
-
-          def checkEmptyArray(k: String, s: JsArray): Unit =
-            if (s.elements.isEmpty)
-              throw DeserializationException(
-                s"""the value of \"$k\" MUST be NOT empty array!!!""",
-                fieldNames = List(k)
-              )
-
-          def checkJsValueForEmptyArray(k: String, v: JsValue): Unit = v match {
-            case s: JsArray => checkEmptyArray(k, s)
-            case s: JsObject =>
-              s.fields.foreach(pair => checkJsValueForEmptyArray(pair._1, pair._2))
-            case _ => // nothing
-          }
-
-          // 2) check empty array
-          if (_rejectEmptyArray) checkJsValueForEmptyArray(key, value)
         }
 
         override def read(json: JsValue): T = json match {

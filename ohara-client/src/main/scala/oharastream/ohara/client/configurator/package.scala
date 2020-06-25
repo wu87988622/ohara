@@ -267,16 +267,11 @@ package object configurator {
   private[configurator] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): JsonRefiner[T] =
     JsonRefinerBuilder[T]
       .format(format)
-      // for each field, we should reject any empty string
-      //-------------------------------------- "nodeNames" rules ---------------------------------//
-      .arrayRestriction(NODE_NAMES_KEY)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
       // xxx/cluster/{name}/[start|stop]
       // the "actions" keywords must be avoided in nodeNames parameter
-      .rejectKeyword(START_COMMAND)
-      .rejectKeyword(STOP_COMMAND)
-      .toRefiner
+      .rejectKeywordsFromArray(NODE_NAMES_KEY, Set(START_COMMAND, STOP_COMMAND))
       .build
 
   private[configurator] def flattenSettings(obj: JsObject): JsObject =
