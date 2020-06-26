@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 
 import java.util.Objects
 
-import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.ClusterAccess.Query
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.SettingDef.{Reference, Type}
@@ -153,7 +152,7 @@ object WorkerApi {
       *
       * @return update
       */
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
     def brokerClusterKey: ObjectKey                                        = raw.brokerClusterKey.get
     def clientPort: Int                                                    = raw.clientPort.get
     def groupId: String                                                    = raw.groupId.get
@@ -182,37 +181,37 @@ object WorkerApi {
   private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS
     )
 
   final class Updating private[WorkerApi] (val raw: Map[String, JsValue]) extends ClusterUpdating {
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(raw).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
-    def clientPort: Option[Int]             = noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def groupId: Option[String]             = noJsNull(raw).get(GROUP_ID_KEY).map(_.convertTo[String])
-    def statusTopicName: Option[String]     = noJsNull(raw).get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
-    def statusTopicPartitions: Option[Int]  = noJsNull(raw).get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
+    def brokerClusterKey: Option[ObjectKey] = raw.get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def clientPort: Option[Int]             = raw.get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def groupId: Option[String]             = raw.get(GROUP_ID_KEY).map(_.convertTo[String])
+    def statusTopicName: Option[String]     = raw.get(STATUS_TOPIC_NAME_KEY).map(_.convertTo[String])
+    def statusTopicPartitions: Option[Int]  = raw.get(STATUS_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def statusTopicReplications: Option[Short] =
-      noJsNull(raw).get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def configTopicName: Option[String] = noJsNull(raw).get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String])
+      raw.get(STATUS_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def configTopicName: Option[String] = raw.get(CONFIG_TOPIC_NAME_KEY).map(_.convertTo[String])
     def configTopicReplications: Option[Short] =
-      noJsNull(raw).get(CONFIG_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def offsetTopicName: Option[String]    = noJsNull(raw).get(OFFSET_TOPIC_NAME_KEY).map(_.convertTo[String])
-    def offsetTopicPartitions: Option[Int] = noJsNull(raw).get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
+      raw.get(CONFIG_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def offsetTopicName: Option[String]    = raw.get(OFFSET_TOPIC_NAME_KEY).map(_.convertTo[String])
+    def offsetTopicPartitions: Option[Int] = raw.get(OFFSET_TOPIC_PARTITIONS_KEY).map(_.convertTo[Int])
     def offsetTopicReplications: Option[Short] =
-      noJsNull(raw).get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
-    def pluginKeys: Option[Set[ObjectKey]] = noJsNull(raw).get(PLUGIN_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+      raw.get(OFFSET_TOPIC_REPLICATIONS_KEY).map(_.convertTo[Short])
+    def pluginKeys: Option[Set[ObjectKey]] = raw.get(PLUGIN_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def sharedJarKeys: Option[Set[ObjectKey]] =
-      noJsNull(raw).get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
+      raw.get(SHARED_JAR_KEYS_KEY).map(_.convertTo[Set[ObjectKey]])
     def freePorts: Option[Set[Int]] =
-      noJsNull(raw).get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
+      raw.get(FREE_PORTS_KEY).map(_.convertTo[Set[Int]])
   }
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -229,7 +228,7 @@ object WorkerApi {
       *
       * @return creation
       */
-    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(raw)
     def brokerClusterKey: ObjectKey                                          = settings.brokerClusterKey
     def clientPort: Int                                                      = settings.clientPort
     def groupId: String                                                      = settings.groupId
@@ -266,13 +265,11 @@ object WorkerApi {
     * exposed to configurator
     */
   private[ohara] implicit val WORKER_CLUSTER_INFO_FORMAT: JsonRefiner[WorkerClusterInfo] =
-    JsonRefinerBuilder[WorkerClusterInfo]
-      .format(new RootJsonFormat[WorkerClusterInfo] {
-        private[this] val format                            = jsonFormat5(WorkerClusterInfo)
-        override def read(json: JsValue): WorkerClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: WorkerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[WorkerClusterInfo] {
+      private[this] val format                            = jsonFormat5(WorkerClusterInfo)
+      override def read(json: JsValue): WorkerClusterInfo = format.read(extractSetting(json.asJsObject))
+      override def write(obj: WorkerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+    })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -344,14 +341,14 @@ object WorkerApi {
       * @return the payload of creation
       */
     final def creation: Creation =
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     /**
       * for testing only
       * @return the payload of update
       */
     private[configurator] final def updating: Updating =
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
   }
 
   /**

@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 import java.util.Objects
 
 import oharastream.ohara.client.Enum
-import oharastream.ohara.client.configurator.{Data, QueryRequest}
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.SettingDef.{Reference, Type}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef, TopicKey}
@@ -89,29 +88,27 @@ object TopicApi {
     .result
 
   final class Updating private[TopicApi] (val raw: Map[String, JsValue]) extends BasicUpdating {
-    def brokerClusterKey: Option[ObjectKey] = noJsNull(raw).get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def brokerClusterKey: Option[ObjectKey] = raw.get(BROKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
     private[TopicApi] def numberOfPartitions: Option[Int] =
-      noJsNull(raw).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+      raw.get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
     private[TopicApi] def numberOfReplications: Option[Short] =
-      noJsNull(raw).get(NUMBER_OF_REPLICATIONS_KEY).map(_.convertTo[Short])
+      raw.get(NUMBER_OF_REPLICATIONS_KEY).map(_.convertTo[Short])
 
-    private[TopicApi] def group: Option[String] = noJsNull(raw).get(GROUP_KEY).map(_.convertTo[String])
+    private[TopicApi] def group: Option[String] = raw.get(GROUP_KEY).map(_.convertTo[String])
 
-    private[TopicApi] def name: Option[String] = noJsNull(raw).get(NAME_KEY).map(_.convertTo[String])
+    private[TopicApi] def name: Option[String] = raw.get(NAME_KEY).map(_.convertTo[String])
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating]
-      .format(new RootJsonFormat[Updating] {
-        override def read(json: JsValue): Updating = new Updating(noJsNull(json.asJsObject.fields))
-        override def write(obj: Updating): JsValue = JsObject(obj.raw)
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[Updating] {
+      override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
+      override def write(obj: Updating): JsValue = JsObject(obj.raw)
+    })
 
   final class Creation private[TopicApi] (val raw: Map[String, JsValue])
       extends oharastream.ohara.client.configurator.BasicCreation {
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
 
     override def key: TopicKey = TopicKey.of(group, name)
 
@@ -131,7 +128,7 @@ object TopicApi {
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
-        override def read(json: JsValue): Creation = new Creation(noJsNull(json.asJsObject.fields))
+        override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
         override def write(obj: Creation): JsValue = JsObject(obj.raw)
       })
       // TODO: topic definitions may be changed by different Broker images so this check is dangerous
@@ -228,7 +225,7 @@ object TopicApi {
     /**
       * @return the custom configs. the core configs are not included
       */
-    def configs: Map[String, JsValue] = noJsNull(settings).filter {
+    def configs: Map[String, JsValue] = settings.filter {
       case (key, _) =>
         DEFINITIONS.filter(_.group() == CONFIGS_GROUP).exists(_.key() == key)
     }
@@ -236,11 +233,11 @@ object TopicApi {
     override def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields
   }
 
-  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = new RootJsonFormat[TopicInfo] {
+  implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = JsonRefiner(new RootJsonFormat[TopicInfo] {
     private[this] val format                    = jsonFormat5(TopicInfo)
     override def read(json: JsValue): TopicInfo = format.read(extractSetting(json.asJsObject))
     override def write(obj: TopicInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-  }
+  })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -296,12 +293,12 @@ object TopicApi {
     final def creation: Creation =
       // rewrite the creation via format since the format will auto-complete the creation
       // this make the creaion is consistent to creation sent to server
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     private[configurator] final def updating: Updating =
       // rewrite the update via format since the format will auto-complete the creation
       // this make the update is consistent to creation sent to server
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
 
     /**
       * generate the POST request

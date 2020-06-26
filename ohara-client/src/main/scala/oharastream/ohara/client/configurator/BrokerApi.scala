@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 
 import java.util.Objects
 
-import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.ClusterAccess.Query
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.SettingDef.{Reference, Type}
@@ -107,7 +106,7 @@ object BrokerApi {
       *
       * @return update
       */
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
 
     override def ports: Set[Int]       = Set(clientPort, jmxPort)
     def clientPort: Int                = raw.clientPort.get
@@ -152,34 +151,34 @@ object BrokerApi {
   private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS
     )
 
   final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
-    def clientPort: Option[Int] = noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def clientPort: Option[Int] = raw.get(CLIENT_PORT_KEY).map(_.convertTo[Int])
 
     def zookeeperClusterKey: Option[ObjectKey] =
-      noJsNull(raw).get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+      raw.get(ZOOKEEPER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
 
     def numberOfPartitions: Option[Int] =
-      noJsNull(raw).get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
+      raw.get(NUMBER_OF_PARTITIONS_KEY).map(_.convertTo[Int])
 
     def numberOfReplications4OffsetsTopic: Option[Int] =
-      noJsNull(raw).get(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY).map(_.convertTo[Int])
+      raw.get(NUMBER_OF_REPLICATIONS_4_OFFSETS_TOPIC_KEY).map(_.convertTo[Int])
 
     def numberOfNetworkThreads: Option[Int] =
-      noJsNull(raw).get(NUMBER_OF_NETWORK_THREADS_KEY).map(_.convertTo[Int])
+      raw.get(NUMBER_OF_NETWORK_THREADS_KEY).map(_.convertTo[Int])
 
     def numberOfIoThreads: Option[Int] =
-      noJsNull(raw).get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
+      raw.get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
   }
 
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](new RootJsonFormat[Updating] {
-      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+      override def write(obj: Updating): JsValue = JsObject(obj.raw)
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
 
@@ -200,7 +199,7 @@ object BrokerApi {
       *
       * @return creation
       */
-    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(raw)
     override def kind: String                                                = KIND
     override def ports: Set[Int]                                             = Set(clientPort, jmxPort)
 
@@ -228,13 +227,11 @@ object BrokerApi {
     * exposed to configurator
     */
   private[ohara] implicit val BROKER_CLUSTER_INFO_FORMAT: RootJsonFormat[BrokerClusterInfo] =
-    JsonRefinerBuilder[BrokerClusterInfo]
-      .format(new RootJsonFormat[BrokerClusterInfo] {
-        private[this] val format                            = jsonFormat5(BrokerClusterInfo)
-        override def read(json: JsValue): BrokerClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: BrokerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[BrokerClusterInfo] {
+      private[this] val format                            = jsonFormat5(BrokerClusterInfo)
+      override def read(json: JsValue): BrokerClusterInfo = format.read(extractSetting(json.asJsObject))
+      override def write(obj: BrokerClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+    })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -261,7 +258,7 @@ object BrokerApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     /**
       * for testing only
@@ -269,7 +266,7 @@ object BrokerApi {
       */
     private[configurator] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
   }
 
   /**

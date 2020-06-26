@@ -73,7 +73,7 @@ object ShabondiApi {
   }
 
   final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
-    private val updating         = new Updating(noJsNull(raw))
+    private val updating         = new Updating(raw)
     override def ports: Set[Int] = Set(clientPort, jmxPort)
 
     def shabondiClass: String = updating.shabondiClass.get
@@ -96,30 +96,28 @@ object ShabondiApi {
 
   final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
     import ShabondiDefinitions._
-    def shabondiClass: Option[String] = noJsNull(raw).get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
-    def clientPort: Option[Int]       = noJsNull(raw).get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
-    def endpoint: Option[String]      = noJsNull(raw).get(ENDPOINT_DEFINITION.key).map(_.convertTo[String])
+    def shabondiClass: Option[String] = raw.get(SHABONDI_CLASS_DEFINITION.key).map(_.convertTo[String])
+    def clientPort: Option[Int]       = raw.get(CLIENT_PORT_DEFINITION.key).map(_.convertTo[Int])
+    def endpoint: Option[String]      = raw.get(ENDPOINT_DEFINITION.key).map(_.convertTo[String])
     def brokerClusterKey: Option[ObjectKey] =
-      noJsNull(raw).get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
+      raw.get(BROKER_CLUSTER_KEY_DEFINITION.key).map(_.convertTo[ObjectKey])
     def sourceToTopics: Option[Set[TopicKey]] =
-      noJsNull(raw).get(SOURCE_TO_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
+      raw.get(SOURCE_TO_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
     def sinkFromTopics: Option[Set[TopicKey]] =
-      noJsNull(raw).get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
+      raw.get(SINK_FROM_TOPICS_DEFINITION.key).map(_.convertTo[Set[TopicKey]])
   }
 
   implicit val SHABONDI_CLUSTER_INFO_FORMAT: JsonRefiner[ShabondiClusterInfo] =
-    JsonRefinerBuilder[ShabondiClusterInfo]
-      .format(new RootJsonFormat[ShabondiClusterInfo] {
-        private[this] val format                              = jsonFormat6(ShabondiClusterInfo)
-        override def write(obj: ShabondiClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-        override def read(json: JsValue): ShabondiClusterInfo = format.read(extractSetting(json.asJsObject))
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[ShabondiClusterInfo] {
+      private[this] val format                              = jsonFormat6(ShabondiClusterInfo)
+      override def write(obj: ShabondiClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+      override def read(json: JsValue): ShabondiClusterInfo = format.read(extractSetting(json.asJsObject))
+    })
 
   implicit val SHABONDI_CLUSTER_CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       ShabondiDefinitions.basicDefinitions
@@ -128,7 +126,7 @@ object ShabondiApi {
   implicit val SHABONDI_CLUSTER_UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -166,7 +164,7 @@ object ShabondiApi {
     }
 
     def creation: Creation = {
-      val jsValue = SHABONDI_CLUSTER_CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap)))
+      val jsValue = SHABONDI_CLUSTER_CREATION_FORMAT.write(new Creation(settings.toMap))
       SHABONDI_CLUSTER_CREATION_FORMAT.read(jsValue)
     }
 
@@ -175,7 +173,7 @@ object ShabondiApi {
       * @return the payload of update
       */
     private[configurator] final def updating: Updating = {
-      val jsValue = SHABONDI_CLUSTER_UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap)))
+      val jsValue = SHABONDI_CLUSTER_UPDATING_FORMAT.write(new Updating(settings.toMap))
       SHABONDI_CLUSTER_UPDATING_FORMAT.read(jsValue)
     }
   }

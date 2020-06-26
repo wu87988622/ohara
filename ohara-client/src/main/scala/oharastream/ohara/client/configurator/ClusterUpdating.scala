@@ -22,16 +22,16 @@ import spray.json.JsString
   * this is a basic interface of cluster request to update a normal object resource.
   */
 trait ClusterUpdating extends BasicUpdating {
-  def imageName: Option[String] = noJsNull(raw).get(IMAGE_NAME_KEY).map(_.convertTo[String])
+  def imageName: Option[String] = raw.get(IMAGE_NAME_KEY).map(_.convertTo[String])
 
-  def nodeNames: Option[Set[String]] = noJsNull(raw).get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
+  def nodeNames: Option[Set[String]] = raw.get(NODE_NAMES_KEY).map(_.convertTo[Seq[String]].toSet)
 
   def routes: Option[Map[String, String]] =
-    noJsNull(raw)
+    raw
       .get(ROUTES_KEY)
       .map(_.asJsObject.fields.filter(_._2.isInstanceOf[JsString]).map {
         case (k, v) => k -> v.convertTo[String]
       })
 
-  def jmxPort: Option[Int] = noJsNull(raw).get(JMX_PORT_KEY).map(_.convertTo[Int])
+  def jmxPort: Option[Int] = raw.get(JMX_PORT_KEY).map(_.convertTo[Int])
 }

@@ -31,17 +31,17 @@ trait BasicCreation {
   /**
     * @return object group
     */
-  def group: String = noJsNull(raw)(GROUP_KEY).convertTo[String]
+  def group: String = raw(GROUP_KEY).convertTo[String]
 
   /**
     * @return object name
     */
-  def name: String = noJsNull(raw)(NAME_KEY).convertTo[String]
+  def name: String = raw(NAME_KEY).convertTo[String]
 
   /**
     * @return user-defined fields
     */
-  def tags: Map[String, JsValue] = noJsNull(raw)(TAGS_KEY).asJsObject.fields
+  def tags: Map[String, JsValue] = raw(TAGS_KEY).asJsObject.fields
 
   /**
     * @return the raw settings from request

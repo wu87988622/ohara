@@ -16,7 +16,6 @@
 
 package oharastream.ohara.client.configurator
 
-import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import spray.json.DefaultJsonProtocol._
 import spray.json.{JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
@@ -31,7 +30,7 @@ object ObjectApi {
   val OBJECTS_PREFIX_PATH: String = "objects"
 
   final class Creation(val raw: Map[String, JsValue]) extends BasicCreation {
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
 
     override def group: String = raw.group.get
 
@@ -51,15 +50,15 @@ object ObjectApi {
 
   final class Updating(val raw: Map[String, JsValue]) extends BasicUpdating {
     // We use the update parser to get the name and group
-    private[ObjectApi] def name: Option[String]  = noJsNull(raw).get(NAME_KEY).map(_.convertTo[String])
-    private[ObjectApi] def group: Option[String] = noJsNull(raw).get(GROUP_KEY).map(_.convertTo[String])
+    private[ObjectApi] def name: Option[String]  = raw.get(NAME_KEY).map(_.convertTo[String])
+    private[ObjectApi] def group: Option[String] = raw.get(GROUP_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = new RootJsonFormat[Updating] {
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner(new RootJsonFormat[Updating] {
     override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
 
-    override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
-  }
+    override def write(obj: Updating): JsValue = JsObject(obj.raw)
+  })
 
   final class ObjectInfo private[configurator] (val settings: Map[String, JsValue]) extends Data with Serializable {
     override def kind: String = KIND
@@ -81,10 +80,10 @@ object ObjectApi {
       new ObjectInfo(settings + (LAST_MODIFIED_KEY -> JsNumber(lastModified)))
   }
 
-  implicit val OBJECT_FORMAT: RootJsonFormat[ObjectInfo] = new RootJsonFormat[ObjectInfo] {
+  implicit val OBJECT_FORMAT: RootJsonFormat[ObjectInfo] = JsonRefiner(new RootJsonFormat[ObjectInfo] {
     override def write(obj: ObjectInfo): JsValue = JsObject(obj.settings)
     override def read(json: JsValue): ObjectInfo = new ObjectInfo(json.asJsObject.fields)
-  }
+  })
 
   trait Request {
     private[this] val settings: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()

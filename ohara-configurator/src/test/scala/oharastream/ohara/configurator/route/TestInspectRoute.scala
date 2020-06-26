@@ -172,6 +172,7 @@ class TestInspectRoute extends OharaTest {
     fileInfo.sourceClassInfos.size shouldBe 0
     fileInfo.sinkClassInfos.size shouldBe 0
     fileInfo.streamClassInfos.size shouldBe 1
+    fileInfo.url shouldBe Option.empty
   }
 
   @Test
@@ -186,6 +187,7 @@ class TestInspectRoute extends OharaTest {
     fileInfo.sinkClassInfos.size should not be 0
     fileInfo.sinkClassInfos.foreach(d => d.settingDefinitions should not be Seq.empty)
     fileInfo.streamClassInfos.size shouldBe 0
+    fileInfo.url shouldBe Option.empty
   }
 
   @Test

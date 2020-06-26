@@ -631,16 +631,23 @@ object JsonRefinerBuilder {
           checkJsValueForEmptyString(key, value)
         }
 
+        /**
+          * remove the null field since we all hate null :)
+          * @param json json object
+          * @return fields without null
+          */
+        private[this] def noNull(json: JsValue): Map[String, JsValue] = json.asJsObject.fields.filter {
+          case (_, value) =>
+            value match {
+              case JsNull => false
+              case _      => true
+            }
+        }
+
         override def read(json: JsValue): T = json match {
           // we refine only the complicated json object
           case _: JsObject =>
-            var fields = json.asJsObject.fields.filter {
-              case (_, value) =>
-                value match {
-                  case JsNull => false
-                  case _      => true
-                }
-            }
+            var fields = noNull(json)
 
             // 1) convert the value to another type
             fields = (fields ++ valueConverters
@@ -681,7 +688,7 @@ object JsonRefinerBuilder {
             format.read(JsObject(fields))
           case _ => format.read(json)
         }
-        override def write(obj: T): JsValue = format.write(obj)
+        override def write(obj: T): JsValue = JsObject(noNull(format.write(obj)))
 
         override def check(fields: Map[String, JsValue]): Map[String, JsValue] = {
           // 1) check global condition

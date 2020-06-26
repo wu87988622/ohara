@@ -20,7 +20,9 @@ import java.io.File
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.FileInfoApi.{ClassInfo, FileInfo}
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest, MediaTypes, Multipart, RequestEntity}
+import oharastream.ohara.client.configurator.FileInfoApi.{ClassInfo, FIELD_NAME, FileInfo}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.setting.{ClassType, ObjectKey, SettingDef, TopicKey}
 import oharastream.ohara.common.util.CommonUtils
@@ -301,9 +303,19 @@ object InspectApi {
         this
       }
 
-      override def query()(implicit executionContext: ExecutionContext): Future[FileInfo] = {
-        FileInfoApi.access.hostname(hostname).port(port).request.file(file).upload()
-      }
+      override def query()(implicit executionContext: ExecutionContext): Future[FileInfo] =
+        Marshal(
+          Multipart.FormData(
+            // add file
+            Multipart.FormData.BodyPart(
+              FIELD_NAME,
+              HttpEntity.fromFile(MediaTypes.`application/octet-stream`, file),
+              Map("filename" -> file.getName)
+            )
+          )
+        ).to[RequestEntity]
+          .map(e => HttpRequest(HttpMethods.POST, uri = s"$url/${FileInfoApi.KIND}", entity = e))
+          .flatMap(exec.request[FileInfo, ErrorApi.Error])
     }
   }
 

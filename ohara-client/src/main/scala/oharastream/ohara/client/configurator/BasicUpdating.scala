@@ -26,7 +26,7 @@ trait BasicUpdating {
   /**
     * @return user-defined fields
     */
-  def tags: Option[Map[String, JsValue]] = noJsNull(raw).get(TAGS_KEY).map(_.asJsObject.fields)
+  def tags: Option[Map[String, JsValue]] = raw.get(TAGS_KEY).map(_.asJsObject.fields)
 
   /**
     * @return the raw settings from request

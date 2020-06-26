@@ -55,3 +55,15 @@ trait JsonRefiner[T] extends RootJsonFormat[T] {
     */
   def check(fields: Map[String, JsValue]): Map[String, JsValue]
 }
+
+object JsonRefiner {
+  /**
+    * wrap spray format to ohara format. It includes default rules from ohara format.
+    * 1) reject empty string
+    * 2) remove null field
+    * @param format spray format
+    * @tparam T data type
+    * @return ohara format
+    */
+  def apply[T](format: RootJsonFormat[T]): JsonRefiner[T] = JsonRefinerBuilder[T].format(format).build()
+}

@@ -138,9 +138,9 @@ object FileInfoApi {
   private[this] val CLASS_INFOS_KEY = "classInfos"
   private[this] val SIZE_KEY        = "size"
 
-  implicit val FILE_INFO_FORMAT: RootJsonFormat[FileInfo] = new RootJsonFormat[FileInfo] {
+  implicit val FILE_INFO_FORMAT: RootJsonFormat[FileInfo] = JsonRefiner(new RootJsonFormat[FileInfo] {
     override def read(json: JsValue): FileInfo = {
-      val fields = noJsNull(json)
+      val fields = json.asJsObject.fields
       def value(key: String): JsValue =
         fields.getOrElse(key, throw DeserializationException(s"key is required", fieldNames = List(key)))
       def string(key: String): String = value(key) match {
@@ -186,19 +186,18 @@ object FileInfoApi {
       */
     override def write(obj: FileInfo): JsValue =
       JsObject(
-        noJsNull(
-          Map(
-            GROUP_KEY         -> JsString(obj.group),
-            NAME_KEY          -> JsString(obj.name),
-            URL_KEY           -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
-            SIZE_KEY          -> JsNumber(obj.size),
-            LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
-            CLASS_INFOS_KEY   -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
-            TAGS_KEY          -> JsObject(obj.tags)
-          )
+        Map(
+          GROUP_KEY -> JsString(obj.group),
+          NAME_KEY  -> JsString(obj.name),
+          // the null is removed by json refiner
+          URL_KEY           -> obj.url.map(_.toString).map(JsString(_)).getOrElse(JsNull),
+          SIZE_KEY          -> JsNumber(obj.size),
+          LAST_MODIFIED_KEY -> JsNumber(obj.lastModified),
+          CLASS_INFOS_KEY   -> JsArray(obj.classInfos.map(CLASS_INFO_FORMAT.write).toVector),
+          TAGS_KEY          -> JsObject(obj.tags)
         )
       )
-  }
+  })
 
   sealed trait Request {
     private[this] var group: String              = GROUP_DEFAULT

@@ -18,7 +18,6 @@ package oharastream.ohara.client.configurator
 
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.client.configurator.QueryRequest
 import oharastream.ohara.client.configurator.ClusterAccess.Query
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
@@ -105,7 +104,7 @@ object ZookeeperApi {
       *
       * @return update
       */
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
     override def ports: Set[Int]                                           = Set(clientPort, peerPort, electionPort, jmxPort)
     def clientPort: Int                                                    = raw.clientPort.get
     def peerPort: Int                                                      = raw.peerPort.get
@@ -138,27 +137,21 @@ object ZookeeperApi {
   private[ohara] implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS
     )
 
   final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
-    def clientPort: Option[Int] =
-      noJsNull(raw).get(CLIENT_PORT_KEY).map(_.convertTo[Int])
-    def peerPort: Option[Int] =
-      noJsNull(raw).get(PEER_PORT_KEY).map(_.convertTo[Int])
-    def electionPort: Option[Int] =
-      noJsNull(raw).get(ELECTION_PORT_KEY).map(_.convertTo[Int])
-    def tickTime: Option[Int] =
-      noJsNull(raw).get(TICK_TIME_KEY).map(_.convertTo[Int])
-    def initLimit: Option[Int] =
-      noJsNull(raw).get(INIT_LIMIT_KEY).map(_.convertTo[Int])
-    def syncLimit: Option[Int] =
-      noJsNull(raw).get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
+    def clientPort: Option[Int]   = raw.get(CLIENT_PORT_KEY).map(_.convertTo[Int])
+    def peerPort: Option[Int]     = raw.get(PEER_PORT_KEY).map(_.convertTo[Int])
+    def electionPort: Option[Int] = raw.get(ELECTION_PORT_KEY).map(_.convertTo[Int])
+    def tickTime: Option[Int]     = raw.get(TICK_TIME_KEY).map(_.convertTo[Int])
+    def initLimit: Option[Int]    = raw.get(INIT_LIMIT_KEY).map(_.convertTo[Int])
+    def syncLimit: Option[Int]    = raw.get(SYNC_LIMIT_KEY).map(_.convertTo[Int])
     def connectionTimeout: Option[Duration] =
-      noJsNull(raw)
+      raw
         .get(CONNECTION_TIMEOUT_KEY)
         .map(_.convertTo[String])
         .map(CommonUtils.toDuration)
@@ -168,7 +161,7 @@ object ZookeeperApi {
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -185,7 +178,7 @@ object ZookeeperApi {
       *
       * @return creation
       */
-    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(raw)
     override def kind: String                                                = KIND
     override def ports: Set[Int]                                             = Set(clientPort, peerPort, electionPort, jmxPort)
     def clientPort: Int                                                      = settings.clientPort
@@ -203,13 +196,11 @@ object ZookeeperApi {
     * exposed to configurator
     */
   private[ohara] implicit val ZOOKEEPER_CLUSTER_INFO_FORMAT: JsonRefiner[ZookeeperClusterInfo] =
-    JsonRefinerBuilder[ZookeeperClusterInfo]
-      .format(new RootJsonFormat[ZookeeperClusterInfo] {
-        private[this] val format                               = jsonFormat5(ZookeeperClusterInfo)
-        override def read(json: JsValue): ZookeeperClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: ZookeeperClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[ZookeeperClusterInfo] {
+      private[this] val format                               = jsonFormat5(ZookeeperClusterInfo)
+      override def read(json: JsValue): ZookeeperClusterInfo = format.read(extractSetting(json.asJsObject))
+      override def write(obj: ZookeeperClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+    })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -238,7 +229,7 @@ object ZookeeperApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     /**
       * for testing only
@@ -246,7 +237,7 @@ object ZookeeperApi {
       */
     private[configurator] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
   }
 
   /**

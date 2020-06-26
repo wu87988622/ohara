@@ -43,12 +43,12 @@ object StreamApi {
   final val IMAGE_NAME_DEFAULT: String = StreamDefUtils.IMAGE_NAME_DEFINITION.defaultString()
 
   final class Creation(val raw: Map[String, JsValue]) extends ClusterCreation {
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
 
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = noJsNull(raw).map {
+    def plain: Map[String, String] = raw.map {
       case (k, v) =>
         k -> (v match {
           case JsString(value) => value
@@ -76,7 +76,7 @@ object StreamApi {
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
     rulesOfCreation[Creation](
       new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       },
       DEFINITIONS
@@ -84,27 +84,27 @@ object StreamApi {
 
   final class Updating(val raw: Map[String, JsValue]) extends ClusterUpdating {
     def brokerClusterKey: Option[ObjectKey] =
-      noJsNull(raw).get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
+      raw.get(StreamDefUtils.BROKER_CLUSTER_KEY_DEFINITION.key()).map(_.convertTo[ObjectKey])
 
     def className: Option[String] =
-      noJsNull(raw).get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
+      raw.get(StreamDefUtils.CLASS_NAME_DEFINITION.key()).map(_.convertTo[String])
 
     def jarKey: Option[ObjectKey] =
-      noJsNull(raw).get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
+      raw.get(StreamDefUtils.JAR_KEY_DEFINITION.key()).map(OBJECT_KEY_FORMAT.read)
 
     private[StreamApi] def connectionProps: Option[String] =
-      noJsNull(raw).get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
+      raw.get(StreamDefUtils.BROKER_DEFINITION.key()).map(_.convertTo[String])
 
     def fromTopicKeys: Option[Set[TopicKey]] =
-      noJsNull(raw).get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
+      raw.get(StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
 
     def toTopicKeys: Option[Set[TopicKey]] =
-      noJsNull(raw).get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
+      raw.get(StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key()).map(_.convertTo[Set[TopicKey]])
   }
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
     rulesOfUpdating[Updating](
       new RootJsonFormat[Updating] {
-        override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
       }
     )
@@ -133,7 +133,7 @@ object StreamApi {
       *
       * @return creation
       */
-    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(noJsNull(raw))
+    private[this] implicit def creation(raw: Map[String, JsValue]): Creation = new Creation(raw)
     override def kind: String                                                = KIND
     override def ports: Set[Int]                                             = settings.ports
     def className: String                                                    = settings.className.get
@@ -154,13 +154,11 @@ object StreamApi {
   }
 
   private[ohara] implicit val STREAM_CLUSTER_INFO_FORMAT: JsonRefiner[StreamClusterInfo] =
-    JsonRefinerBuilder[StreamClusterInfo]
-      .format(new RootJsonFormat[StreamClusterInfo] {
-        private[this] val format                            = jsonFormat6(StreamClusterInfo)
-        override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
-        override def write(obj: StreamClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-      })
-      .build
+    JsonRefiner(new RootJsonFormat[StreamClusterInfo] {
+      private[this] val format                            = jsonFormat6(StreamClusterInfo)
+      override def read(json: JsValue): StreamClusterInfo = format.read(extractSetting(json.asJsObject))
+      override def write(obj: StreamClusterInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+    })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -213,7 +211,7 @@ object StreamApi {
       */
     final def creation: Creation =
       // auto-complete the creation via our refiner
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     /**
       * for testing only
@@ -222,7 +220,7 @@ object StreamApi {
     @VisibleForTesting
     private[configurator] final def updating: Updating =
       // auto-complete the update via our refiner
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
   }
 
   /**

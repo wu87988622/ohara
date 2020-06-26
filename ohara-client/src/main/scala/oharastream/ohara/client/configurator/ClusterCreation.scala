@@ -27,12 +27,12 @@ trait ClusterCreation extends BasicCreation {
   /**
     * @return nodes to run this cluster
     */
-  def nodeNames: Set[String] = noJsNull(raw)(NODE_NAMES_KEY).convertTo[Set[String]]
+  def nodeNames: Set[String] = raw(NODE_NAMES_KEY).convertTo[Set[String]]
 
   /**
     * @return image used to build cluster
     */
-  def imageName: String = noJsNull(raw)(IMAGE_NAME_KEY).convertTo[String]
+  def imageName: String = raw(IMAGE_NAME_KEY).convertTo[String]
 
   /**
     * @return ports used by this cluster
@@ -43,16 +43,16 @@ trait ClusterCreation extends BasicCreation {
     * the port used to expose the jmx service
     * @return jmx port
     */
-  def jmxPort: Int = noJsNull(raw)(JMX_PORT_KEY).convertTo[Int]
+  def jmxPort: Int = raw(JMX_PORT_KEY).convertTo[Int]
 
   def routes: Map[String, String] =
-    noJsNull(raw)(ROUTES_KEY).asJsObject.fields.filter(_._2.isInstanceOf[JsString]).map {
+    raw(ROUTES_KEY).asJsObject.fields.filter(_._2.isInstanceOf[JsString]).map {
       case (k, v) => k -> v.convertTo[String]
     }
 
-  def maxHeap: Long = noJsNull(raw)(MAX_HEAP_KEY).convertTo[Long]
+  def maxHeap: Long = raw(MAX_HEAP_KEY).convertTo[Long]
 
-  def initHeap: Long = noJsNull(raw)(INIT_HEAP_KEY).convertTo[Long]
+  def initHeap: Long = raw(INIT_HEAP_KEY).convertTo[Long]
 
   /**
     * @return the volume object key and related container path. For example, "{"group":"a", "name": "b"}" -> "/tmp/aaa" means the

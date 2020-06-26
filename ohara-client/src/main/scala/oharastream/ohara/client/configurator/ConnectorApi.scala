@@ -72,7 +72,7 @@ object ConnectorApi {
     /**
       * Convert all json value to plain string. It keeps the json format but all stuff are in string.
       */
-    def plain: Map[String, String] = noJsNull(raw).map {
+    def plain: Map[String, String] = raw.map {
       case (k, v) =>
         k -> (v match {
           case JsString(value) => value
@@ -80,7 +80,7 @@ object ConnectorApi {
         })
     }
 
-    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(noJsNull(raw))
+    private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
     def className: String                                                  = raw.className.get
     def columns: Seq[Column]                                               = raw.columns.get
     def numberOfTasks: Int                                                 = raw.numberOfTasks.get
@@ -95,7 +95,7 @@ object ConnectorApi {
     // this object is open to user define the (group, name) in UI, we need to handle the key rules
     limitsOfKey[Creation]
       .format(new RootJsonFormat[Creation] {
-        override def write(obj: Creation): JsValue = JsObject(noJsNull(obj.raw))
+        override def write(obj: Creation): JsValue = JsObject(obj.raw)
         override def read(json: JsValue): Creation = new Creation(json.asJsObject.fields)
       })
       .definitions(DEFINITIONS)
@@ -135,25 +135,25 @@ object ConnectorApi {
       .build
 
   final class Updating(val settings: Map[String, JsValue]) {
-    def className: Option[String] = noJsNull(settings).get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
+    def className: Option[String] = settings.get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
-      noJsNull(settings).get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
-    def numberOfTasks: Option[Int] = noJsNull(settings).get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
+      settings.get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
+    def numberOfTasks: Option[Int] = settings.get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
 
-    def workerClusterKey: Option[ObjectKey] = noJsNull(settings).get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def workerClusterKey: Option[ObjectKey] = settings.get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
 
     def topicKeys: Option[Set[TopicKey]] =
-      noJsNull(settings).get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
+      settings.get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
 
-    def tags: Option[Map[String, JsValue]] = noJsNull(settings).get(TAGS_KEY).map(_.asJsObject.fields)
+    def tags: Option[Map[String, JsValue]] = settings.get(TAGS_KEY).map(_.asJsObject.fields)
 
-    def partitionerClass: Option[String] = noJsNull(settings).get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
+    def partitionerClass: Option[String] = settings.get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefinerBuilder[Updating]
     .format(new RootJsonFormat[Updating] {
-      override def write(obj: Updating): JsValue = JsObject(noJsNull(obj.settings))
+      override def write(obj: Updating): JsValue = JsObject(obj.settings)
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
     .valuesChecker(
@@ -201,12 +201,11 @@ object ConnectorApi {
     def partitionClass: String      = settings.partitionClass
   }
 
-  implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] =
-    new RootJsonFormat[ConnectorInfo] {
-      private[this] val format                        = jsonFormat7(ConnectorInfo)
-      override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
-      override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
-    }
+  implicit val CONNECTOR_INFO_FORMAT: RootJsonFormat[ConnectorInfo] = JsonRefiner(new RootJsonFormat[ConnectorInfo] {
+    private[this] val format                        = jsonFormat7(ConnectorInfo)
+    override def read(json: JsValue): ConnectorInfo = format.read(extractSetting(json.asJsObject))
+    override def write(obj: ConnectorInfo): JsValue = flattenSettings(format.write(obj).asJsObject)
+  })
 
   /**
     * used to generate the payload and url for POST/PUT request.
@@ -272,10 +271,10 @@ object ConnectorApi {
       * @return creation object
       */
     final def creation: Creation =
-      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(noJsNull(settings.toMap))))
+      CREATION_FORMAT.read(CREATION_FORMAT.write(new Creation(settings.toMap)))
 
     private[configurator] final def updating: Updating =
-      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(noJsNull(settings.toMap))))
+      UPDATING_FORMAT.read(UPDATING_FORMAT.write(new Updating(settings.toMap)))
   }
 
   /**

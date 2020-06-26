@@ -37,7 +37,7 @@ trait ClusterInfo extends Data {
   /**
     * @return docker image name used to build container for this cluster
     */
-  def imageName: String = noJsNull(settings)(IMAGE_NAME_KEY).convertTo[String]
+  def imageName: String = settings(IMAGE_NAME_KEY).convertTo[String]
 
   /**
     * All services hosted by ohara should use some ports, which are used to communicate.
@@ -50,12 +50,12 @@ trait ClusterInfo extends Data {
     * the port used to expose the jmx service
     * @return jmx port
     */
-  def jmxPort: Int = noJsNull(settings)(JMX_PORT_KEY).convertTo[Int]
+  def jmxPort: Int = settings(JMX_PORT_KEY).convertTo[Int]
 
   /**
     * @return nodes running this cluster
     */
-  def nodeNames: Set[String] = noJsNull(settings)(NODE_NAMES_KEY).convertTo[Set[String]]
+  def nodeNames: Set[String] = settings(NODE_NAMES_KEY).convertTo[Set[String]]
 
   /**
     * @return the state of this cluster. None means the cluster is not running
@@ -103,10 +103,10 @@ trait ClusterInfo extends Data {
   /**
     * @return size (in MB) of init heap
     */
-  def initHeap: Int = noJsNull(settings)(INIT_HEAP_KEY).convertTo[Int]
+  def initHeap: Int = settings(INIT_HEAP_KEY).convertTo[Int]
 
   /**
     * @return size (in MB) of max heap
     */
-  def maxHeap: Int = noJsNull(settings)(MAX_HEAP_KEY).convertTo[Int]
+  def maxHeap: Int = settings(MAX_HEAP_KEY).convertTo[Int]
 }

@@ -35,12 +35,12 @@ trait Data {
   /**
     * @return object group
     */
-  def group: String = noJsNull(raw)(GROUP_KEY).convertTo[String]
+  def group: String = raw(GROUP_KEY).convertTo[String]
 
   /**
     * @return object name
     */
-  def name: String = noJsNull(raw)(NAME_KEY).convertTo[String]
+  def name: String = raw(NAME_KEY).convertTo[String]
 
   /**
     * @return a unique string to describe the kind of this object
@@ -50,12 +50,12 @@ trait Data {
   /**
     * @return user-defined fields
     */
-  def tags: Map[String, JsValue] = noJsNull(raw)(TAGS_KEY).asJsObject.fields
+  def tags: Map[String, JsValue] = raw(TAGS_KEY).asJsObject.fields
 
   /**
     * @return last time in ms to modify this object
     */
-  def lastModified: Long = noJsNull(raw)(LAST_MODIFIED_KEY).convertTo[Long]
+  def lastModified: Long = raw(LAST_MODIFIED_KEY).convertTo[Long]
 
   /**
     * @return the raw settings from request
