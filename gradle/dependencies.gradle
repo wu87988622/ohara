@@ -19,7 +19,7 @@ ext {
   libs = [:]
 }
 def defaultScalaMinor = '2.13'
-def defaultScalaVersion = '2.13.2'
+def defaultScalaVersion = '2.13.3'
 versions["hadoop"] = project.hasProperty('hadoop.version') ? project.properties['hadoop.version'] : "2.7.0"
 versions["kafka"] = project.hasProperty('kafka.version') ? project.properties['kafka.version'] : "2.5.0"
 versions["postgresql"] = project.hasProperty('postgresql.version') ? project.properties['postgresql.version'] : "9.1-901-1.jdbc4"

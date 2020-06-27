@@ -864,7 +864,7 @@ object DataChecker {
               )
             }
             .flatMap { report =>
-              checkNodes.map { passed =>
+              checkNodes().map { passed =>
                 compareKeys("node", passed, requiredNodes.toSet)
                 report.copy(nodes = passed)
               }

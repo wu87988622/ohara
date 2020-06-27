@@ -22,7 +22,7 @@ LABEL stage=$STAGE
 
 ARG BRANCH="master"
 ARG COMMIT=$BRANCH
-ARG SCALA_VERSION=2.13.2
+ARG SCALA_VERSION=2.13.3
 ARG REPO="https://github.com/oharastream/ohara.git"
 ARG BEFORE_BUILD=""
 WORKDIR /testpatch/ohara

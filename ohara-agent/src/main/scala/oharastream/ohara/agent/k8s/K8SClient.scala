@@ -307,7 +307,7 @@ object K8SClient {
               CommonUtils.requireNonEmpty(domainName)
               CommonUtils.requireNonEmpty(labelName)
               implicit val pool: ExecutionContext = executionContext
-              nodeNameIPInfo
+              nodeNameIPInfo()
                 .map { ipInfo =>
                   PodSpec(
                     nodeSelector = Some(NodeSelector(nodeName)),

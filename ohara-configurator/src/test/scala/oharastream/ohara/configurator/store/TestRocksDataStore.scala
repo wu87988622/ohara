@@ -85,13 +85,13 @@ class TestRocksDataStore extends OharaTest {
 
   @Test
   def testMultiPut(): Unit = {
-    store.size shouldBe 0
+    store.size() shouldBe 0
     result(store.addIfAbsent(createData()))
-    store.size shouldBe 1
+    store.size() shouldBe 1
     result(store.addIfAbsent(createData()))
-    store.size shouldBe 2
+    store.size() shouldBe 2
     result(store.addIfAbsent(createData()))
-    store.size shouldBe 3
+    store.size() shouldBe 3
   }
 
   @Test
@@ -100,7 +100,7 @@ class TestRocksDataStore extends OharaTest {
     result(store.addIfAbsent(value)) shouldBe value
     result(store.get[SimpleData](value.key)) shouldBe Some(value)
     result(store.remove[SimpleData](value.key)) shouldBe true
-    store.size shouldBe 0
+    store.size() shouldBe 0
   }
 
   @Test
@@ -108,12 +108,12 @@ class TestRocksDataStore extends OharaTest {
     val value0 = createData()
     val value1 = createData(value0.name)
     result(store.addIfAbsent(value0)) shouldBe value0
-    store.size shouldBe 1
+    store.size() shouldBe 1
     an[IllegalStateException] should be thrownBy result(store.addIfAbsent(value1))
-    store.size shouldBe 1
+    store.size() shouldBe 1
     result(store.addIfAbsent(createData()))
-    store.size shouldBe 2
-    result(store.raws()).size shouldBe store.size
+    store.size() shouldBe 2
+    result(store.raws()).size shouldBe store.size()
   }
 
   @Test
@@ -130,19 +130,19 @@ class TestRocksDataStore extends OharaTest {
     val value0 = createData()
     val value1 = value0.copy(kind = CommonUtils.randomString())
     result(store.addIfAbsent(value0)) shouldBe value0
-    store.size shouldBe 1
+    store.size() shouldBe 1
     result(store.addIfPresent[SimpleData](value0.key, (v: SimpleData) => {
       v shouldBe value0
       value1
     })) shouldBe value1
-    store.size shouldBe 1
+    store.size() shouldBe 1
 
     val value2 = value0.copy(kind = CommonUtils.randomString())
     result(store.addIfPresent[SimpleData](value0.key, (v: SimpleData) => {
       v shouldBe value1
       value2
     })) shouldBe value2
-    store.size shouldBe 1
+    store.size() shouldBe 1
   }
 
   @Test
@@ -183,7 +183,7 @@ class TestRocksDataStore extends OharaTest {
     result(store.addIfAbsent(createData("abcd")))
     result(store.addIfAbsent(createData("xyz")))
 
-    store.size shouldBe 2
+    store.size() shouldBe 2
   }
 
   @Test
@@ -193,14 +193,14 @@ class TestRocksDataStore extends OharaTest {
 
     result(store.addIfAbsent(data1))
     result(store.addIfAbsent(data2))
-    store.size shouldBe 2
+    store.size() shouldBe 2
 
     result(store.remove(ObjectKey.of(random(), random()))) shouldBe false
     result(store.remove[SimpleData](ObjectKey.of(random(), random()))) shouldBe false
     result(store.remove[ConnectorInfo](ObjectKey.of(random(), random()))) shouldBe false
 
     result(store.remove[SimpleData](ObjectKey.of(data1.group, data1.name))) shouldBe true
-    store.size shouldBe 1
+    store.size() shouldBe 1
   }
 
   @Test
@@ -208,7 +208,7 @@ class TestRocksDataStore extends OharaTest {
     val data1 = createData("abcd")
 
     result(store.addIfAbsent(data1))
-    store.size shouldBe 1
+    store.size() shouldBe 1
 
     result(store.remove(ObjectKey.of(data1.group, data1.name))) shouldBe false
     result(store.remove[SimpleData](ObjectKey.of(data1.group, "1234"))) shouldBe false

@@ -59,7 +59,7 @@ trait DataCollie {
     * @return all data associated to type
     */
   def values[T <: Data: ClassTag](keys: Set[ObjectKey])(implicit executor: ExecutionContext): Future[Seq[T]] =
-    values[T].map { ds =>
+    values[T]().map { ds =>
       keys.foreach { key =>
         if (!ds.exists(_.key == key)) throw new NoSuchElementException(s"$key does not exist")
       }

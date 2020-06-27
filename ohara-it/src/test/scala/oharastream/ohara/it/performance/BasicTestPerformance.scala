@@ -19,6 +19,7 @@ package oharastream.ohara.it.performance
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{Executors, TimeUnit}
 
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.TopicApi.TopicInfo
 import oharastream.ohara.client.configurator.{ConnectorApi, TopicApi}
@@ -26,7 +27,6 @@ import oharastream.ohara.common.data.{Cell, Row, Serializer}
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import oharastream.ohara.kafka.Producer
-import com.typesafe.scalalogging.Logger
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions
 import org.junit.rules.Timeout
 import org.junit.{After, Rule}
@@ -35,7 +35,6 @@ import spray.json.JsValue
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.util.control.Breaks.break
 
 /**
   * the basic infra to test performance for ohara components.
@@ -130,13 +129,14 @@ abstract class BasicTestPerformance extends WithPerformanceRemoteWorkers {
     inputDataThread = {
       val pool = Executors.newSingleThreadExecutor()
       pool.execute(() => {
-        while (!Thread.currentThread().isInterrupted) {
+        var done = false
+        while (!done && !Thread.currentThread().isInterrupted) {
           try {
             input(timeoutOfInputData)
           } catch {
             case interruptedException: InterruptedException =>
               log.error("interrupted exception", interruptedException)
-              break
+              done = true
             case e: Throwable => throw e
           }
         }

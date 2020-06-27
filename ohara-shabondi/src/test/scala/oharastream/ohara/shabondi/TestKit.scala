@@ -69,7 +69,7 @@ private[shabondi] object KafkaSupport {
       while (!cancelledFuture.isCompleted && rowIterator.hasNext) {
         producer
           .sender()
-          .key(rowIterator.next)
+          .key(rowIterator.next())
           .topicKey(topicKey)
           .send
           .toScala

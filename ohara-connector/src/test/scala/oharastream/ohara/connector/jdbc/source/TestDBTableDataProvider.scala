@@ -28,7 +28,6 @@ import oharastream.ohara.testing.service.Database
 import org.junit.{After, Before, Test}
 import org.scalatest.matchers.should.Matchers._
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 
 class TestDBTableDataProvider extends OharaTest {
@@ -132,16 +131,23 @@ class TestDBTableDataProvider extends OharaTest {
     Releasable.close(db)
   }
 
-  private[this] def jdbcConfig(): JDBCSourceConnectorConfig = {
-    val map: Map[String, String] =
-      Map(
-        DB_URL                -> db.url,
-        DB_USERNAME           -> db.user,
-        DB_PASSWORD           -> db.password,
-        DB_TABLENAME          -> tableName,
-        DB_SCHEMA_PATTERN     -> "schema1",
-        TIMESTAMP_COLUMN_NAME -> timestampColumnName
+  private[this] def jdbcConfig: JDBCSourceConnectorConfig =
+    JDBCSourceConnectorConfig(
+      TaskSetting.of(
+        java.util.Map.of(
+          DB_URL,
+          db.url,
+          DB_USERNAME,
+          db.user,
+          DB_PASSWORD,
+          db.password,
+          DB_TABLENAME,
+          tableName,
+          DB_SCHEMA_PATTERN,
+          "schema1",
+          TIMESTAMP_COLUMN_NAME,
+          timestampColumnName
+        )
       )
-    JDBCSourceConnectorConfig(TaskSetting.of(map.asJava))
-  }
+    )
 }
