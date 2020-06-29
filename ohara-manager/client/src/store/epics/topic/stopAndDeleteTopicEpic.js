@@ -16,7 +16,7 @@
 
 import { get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
+import { from, throwError } from 'rxjs';
 import { catchError, map, mergeMap, concatAll, tap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
@@ -39,7 +39,19 @@ export default (action$) =>
         });
       }
       return from([
-        stopTopic$(params),
+        stopTopic$(params).pipe(
+          catchError((err) => {
+            if (paperApi) {
+              paperApi.updateElement(params.id, {
+                status: CELL_STATUS.running,
+              });
+            }
+            if (typeof promise?.reject === 'function') {
+              promise.reject(err);
+            }
+            return throwError(err);
+          }),
+        ),
         deleteTopic$(params).pipe(
           tap((action) => {
             if (action.type === actions.deleteTopic.SUCCESS) {
@@ -51,18 +63,22 @@ export default (action$) =>
               }
             }
           }),
+          catchError((err) => {
+            if (paperApi) {
+              paperApi.updateElement(params.id, {
+                status: CELL_STATUS.stopped,
+              });
+            }
+            if (typeof promise?.reject === 'function') {
+              promise.reject(err);
+            }
+
+            return throwError(err);
+          }),
         ),
       ]).pipe(
         concatAll(),
         catchError((err) => {
-          if (paperApi) {
-            paperApi.updateElement(params.id, {
-              status: CELL_STATUS.running,
-            });
-          }
-          if (typeof promise?.reject === 'function') {
-            promise.reject(err);
-          }
           return from([
             actions.stopAndDeleteTopic.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

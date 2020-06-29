@@ -16,7 +16,7 @@
 
 import { get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, from } from 'rxjs';
+import { of, from, throwError } from 'rxjs';
 import { catchError, map, concatAll, mergeMap, tap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
@@ -47,6 +47,16 @@ export default (action$) =>
               }
             }
           }),
+          catchError((err) => {
+            if (paperApi) {
+              paperApi.removeElement(params.id);
+            }
+            if (typeof promise?.reject === 'function') {
+              promise.reject(err);
+            }
+
+            return throwError(err);
+          }),
         ),
         startTopic$(params).pipe(
           tap((action) => {
@@ -56,18 +66,22 @@ export default (action$) =>
               });
             }
           }),
+          catchError((err) => {
+            if (paperApi) {
+              paperApi.updateElement(params.id, {
+                status: CELL_STATUS.stopped,
+              });
+            }
+            if (typeof promise?.reject === 'function') {
+              promise.reject(err);
+            }
+
+            return throwError(err);
+          }),
         ),
       ).pipe(
         concatAll(),
         catchError((err) => {
-          if (paperApi) {
-            paperApi.updateElement(params.id, {
-              status: CELL_STATUS.stopped,
-            });
-          }
-          if (typeof promise?.reject === 'function') {
-            promise.reject(err);
-          }
           return from([
             actions.createAndStartTopic.failure(err),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

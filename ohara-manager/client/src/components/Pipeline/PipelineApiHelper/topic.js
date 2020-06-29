@@ -15,7 +15,6 @@
  */
 
 import * as hooks from 'hooks';
-import { CELL_STATUS } from 'const';
 
 const topic = () => {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
@@ -47,10 +46,6 @@ const topic = () => {
     const { id, name, isShared } = params;
 
     if (isShared) return paperApi.removeElement(id);
-
-    paperApi.updateElement(id, {
-      status: CELL_STATUS.pending,
-    });
 
     stopAndDeleteTopic(
       {

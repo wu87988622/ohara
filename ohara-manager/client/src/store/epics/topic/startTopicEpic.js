@@ -43,7 +43,7 @@ export const startTopic$ = (params) => {
     defer(() => topicApi.get(params)).pipe(
       map((res) => {
         if (!res.data.state || res.data.state !== 'RUNNING') throw res;
-        else return res.data;
+        return res.data;
       }),
     ),
   ).pipe(
@@ -57,7 +57,7 @@ export const startTopic$ = (params) => {
               meta: value?.meta,
               title:
                 `Try to start topic: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state: RUNNING, Actual state: ${value.data.state}`,
+                `Expected state: RUNNING, Actual state: ${value.data?.state}`,
             }),
             of(value).pipe(delay(2000)),
           ),
