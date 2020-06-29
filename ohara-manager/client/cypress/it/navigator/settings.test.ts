@@ -894,9 +894,9 @@ describe('Navigator', () => {
 
         // the indicator should be disappear
         cy.findAllByRole('alert').should('not.exist');
-        cy.findByText('Successfully Restart workspace workspace1.').should(
-          'not.exist',
-        );
+        cy.findByText('Successfully Restart workspace workspace1.', {
+          timeout: 7000,
+        }).should('not.exist');
         cy.findByTestId('workspace-settings-dialog-close-button').click();
 
         cy.switchSettingSection(SETTING_SECTIONS.zookeeper);

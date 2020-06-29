@@ -42,7 +42,11 @@ const MetricsPanel = (props) => {
 
   return (
     <Wrapper>
-      <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
+      <ExpansionPanel
+        data-testid="metrics-panel"
+        defaultExpanded={true}
+        expanded={isExpanded}
+      >
         <ExpansionPanelSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() => setIsExpanded((prevState) => !prevState)}

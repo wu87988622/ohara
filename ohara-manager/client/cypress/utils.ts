@@ -30,6 +30,8 @@ import * as streamApi from '../src/api/streamApi';
 import * as shabondiApi from '../src/api/shabondiApi';
 import * as pipelineApi from '../src/api/pipelineApi';
 import * as objectApi from '../src/api/objectApi';
+import * as inspectApi from '../src/api/inspectApi';
+import { KIND } from '../src/const';
 import { wait, waitForRunning, waitForStopped } from './waitUtils';
 import { API, RESOURCE } from '../src/api/utils/apiUtils';
 import {
@@ -318,6 +320,34 @@ export const deleteAllServices = async () => {
     pipelineRes,
     objectRes,
   };
+};
+
+export const fetchServices = (kind: KIND) => {
+  if (kind === KIND.source || kind === KIND.sink) {
+    return connectorApi.getAll().then((res) => res.data);
+  } else if (kind === KIND.stream) {
+    return streamApi.getAll().then((res) => res.data);
+  } else if (kind === KIND.topic) {
+    return topicApi.getAll().then((res) => res.data);
+  } else if (kind === KIND.shabondi) {
+    return shabondiApi.getAll().then((res) => res.data);
+  } else {
+    throw new Error(`Unknown kind of ${kind}`);
+  }
+};
+
+export const fetchServiceInfo = (kind: KIND, objectKey: ObjectKey) => {
+  if (kind === KIND.source || kind === KIND.sink) {
+    return inspectApi.getWorkerInfo(objectKey).then((res) => res.data);
+  } else if (kind === KIND.stream) {
+    return inspectApi.getStreamsInfo(objectKey).then((res) => res.data);
+  } else if (kind === KIND.topic) {
+    return inspectApi.getBrokerInfo(objectKey).then((res) => res.data);
+  } else if (kind === KIND.shabondi) {
+    return inspectApi.getShabondiInfo(objectKey).then((res) => res.data);
+  } else {
+    throw new Error(`Unknown kind of ${kind}`);
+  }
 };
 
 export const assertSettingsByDefinitions = (

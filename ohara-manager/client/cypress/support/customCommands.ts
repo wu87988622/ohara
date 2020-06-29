@@ -34,6 +34,7 @@ import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
 import { deleteAllServices } from '../utils';
+import { ObjectKey } from '../../src/api/apiInterface/basicInterface';
 
 interface FixtureResponse {
   name: string;
@@ -242,7 +243,6 @@ Cypress.Commands.add(
       .click();
 
     cy.findByTestId('create-workspace').should('not.be.visible');
-
     cy.end();
   },
 );

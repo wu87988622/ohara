@@ -45,7 +45,11 @@ const NodePanel = (props) => {
   if (tasksStatus.length === 0) return null;
   return (
     <>
-      <ExpansionPanel defaultExpanded={true} expanded={isExpanded}>
+      <ExpansionPanel
+        data-testid="nodes-panel"
+        defaultExpanded={true}
+        expanded={isExpanded}
+      >
         <ExpansionPanelSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() => setIsExpanded((prevState) => !prevState)}

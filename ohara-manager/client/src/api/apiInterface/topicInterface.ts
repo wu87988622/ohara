@@ -29,7 +29,7 @@ interface PartitionInfo {
   beginningOffset: number;
   endOffset: number;
 }
-interface TopicData {
+export interface TopicData {
   state?: 'RUNNING';
   partitionInfos: PartitionInfo[];
   nodeMetrics: {

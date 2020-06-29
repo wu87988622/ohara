@@ -42,6 +42,7 @@ const SnackBar = (props) => {
         horizontal: 'right',
       }}
       autoHideDuration={5000}
+      data-testid="snackbar"
       onClose={handleClose}
       open={props.isOpen}
       TransitionComponent={Fade}

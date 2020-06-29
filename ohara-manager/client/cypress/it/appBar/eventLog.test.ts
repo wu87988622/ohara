@@ -22,11 +22,12 @@ describe('App Bar', () => {
   before(() => {
     cy.deleteAllServices();
     cy.createWorkspace({});
-    // Sine we want to do assertion about the event log
-    // make sure event log action is already finished
-    cy.findByText('Successfully created workspace workspace1.', {
-      timeout: 70000,
-    }).should('not.be.visible');
+
+    // Wait until event log is properly logged
+    cy.findByTestId('snackbar')
+      .as('snackbar')
+      .findByText(/Successfully created workspace/, { timeout: 7000 })
+      .should('not.exist');
   });
 
   beforeEach(() => {
@@ -37,11 +38,11 @@ describe('App Bar', () => {
   context('Event Log', () => {
     it('should be able to delete event logs', () => {
       cy.createWorkspace({ workspaceName: wkName });
-      // Sine we want to do assertion about the event log
-      // make sure event log action is already finished
-      cy.findByText('Successfully created workspace workspace1.', {
-        timeout: 70000,
-      }).should('not.be.visible');
+
+      // Wait until event log is properly logged
+      cy.findByTestId('snackbar')
+        .findByText(/Successfully created workspace/, { timeout: 7000 })
+        .should('not.exist');
 
       // we should have create workspace event log
       cy.findByTitle('Event logs').click();

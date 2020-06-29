@@ -63,7 +63,7 @@ const PipelinePropertyView = (props) => {
   if (!settings?.settingDefinitions) return null;
 
   return (
-    <Wrapper square variant="outlined">
+    <Wrapper id="property-view" square variant="outlined">
       <div className="title-wrapper">
         <div className="title-info">
           <div

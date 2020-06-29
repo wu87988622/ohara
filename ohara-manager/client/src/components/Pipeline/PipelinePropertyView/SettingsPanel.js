@@ -38,8 +38,6 @@ const SettingsPanel = (props) => {
       .filter((def) => def.internal)
       .map((def) => def.key)
       .concat([
-        'brokerClusterKey',
-        'workerClusterKey',
         'settings',
         'stagingSettings',
         'settingDefinitions',
@@ -126,7 +124,12 @@ const SettingsPanel = (props) => {
   };
 
   return (
-    <ExpansionPanel defaultExpanded={true} expanded={isSettingsExpanded} square>
+    <ExpansionPanel
+      data-testid="settings-panel"
+      defaultExpanded={true}
+      expanded={isSettingsExpanded}
+      square
+    >
       <ExpansionPanelSummary
         expandIcon={<ExpandMoreIcon />}
         onClick={() => setIsSettingsExpanded((prevState) => !prevState)}

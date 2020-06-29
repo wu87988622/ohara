@@ -45,7 +45,7 @@ interface Status {
   error?: string;
   coordinator: boolean;
 }
-interface Data {
+export interface Data {
   state?: State;
   aliveNodes: string[];
   error?: string;

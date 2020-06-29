@@ -37,7 +37,7 @@ describe('Toolbar', () => {
     cy.deleteAllServices();
     cy.createWorkspace({ node });
 
-    // A stream is needed for our test to ensure the Toolbox stream list are visible
+    // A stream is needed for our test to ensure the Toolbox stream list is visible
     cy.uploadStreamJar();
   });
 
