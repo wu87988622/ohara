@@ -287,7 +287,7 @@ abstract class ServiceCollie extends Releasable {
     */
   final def removeVolumes(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] =
     containerClient
-      .volumes()
+      .volumes(volumeName(key))
       .map(
         _.filter(
           v =>
