@@ -18,12 +18,11 @@
 // unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
 import { hashByGroupAndName } from '../../src/utils/sha';
-import { deleteAllServices } from '../utils';
 
 const nodeHost = Cypress.env('nodeHost');
 
 describe('Workspace Settings', () => {
-  before(() => deleteAllServices());
+  before(() => cy.deleteAllServices());
 
   it('topics operations of Settings', () => {
     cy.createWorkspace({});
@@ -45,9 +44,7 @@ describe('Workspace Settings', () => {
     cy.findAllByLabelText('Replication factor', { exact: false })
       .filter(':visible')
       .type('1');
-    cy.findAllByText(/^create$/i)
-      .filter(':visible')
-      .click();
+    cy.findAllByText('CREATE').filter(':visible').click();
     // the new added topic should exist
     cy.findByText(sharedTopicName).should('exist');
     cy.contains('td', 'RUNNING').should('exist');

@@ -187,16 +187,14 @@ Cypress.Commands.add(
           cy.get('input[name=port]').type(nodePort);
           cy.get('input[name=user]').type(nodeUser);
           cy.get('input[name=password]').type(nodePass);
-          cy.findByText(/^create$/i).click();
+          cy.findByText('CREATE').click();
         }
         cy.findByText(nodeHost)
           .siblings('td')
           .find('input[type="checkbox"]')
           .click();
-        cy.findByText(/^save$/i).click();
-        cy.findAllByText(/^next$/i)
-          .filter(':visible')
-          .click();
+        cy.findByText('SAVE').click();
+        cy.findAllByText('NEXT').filter(':visible').click();
       });
       cy.end();
     });
@@ -214,9 +212,7 @@ Cypress.Commands.add(
         cy.findByTestId('close-intro-button').click();
       }
       cy.findByTitle('Create a new workspace').click();
-      cy.findByText(/^quick create$/i)
-        .should('exist')
-        .click();
+      cy.findByText('QUICK CREATE').should('exist').click();
     });
 
     // Step1: workspace name
@@ -226,9 +222,7 @@ Cypress.Commands.add(
         .clear()
         .type(workspaceName);
     }
-    cy.findAllByText(/^next$/i)
-      .filter(':visible')
-      .click();
+    cy.findAllByText('NEXT').filter(':visible').click();
 
     // Step2: select nodes
     // we wait a little time for the "click button" to be rendered
@@ -238,9 +232,7 @@ Cypress.Commands.add(
 
     // Step3: create workspace
     cy.wait(1000);
-    cy.findAllByText(/^submit$/i)
-      .filter(':visible')
-      .click();
+    cy.findAllByText('SUBMIT').filter(':visible').click();
 
     cy.findByTestId('create-workspace').should('not.be.visible');
     cy.end();
@@ -382,7 +374,7 @@ Cypress.Commands.add(
         cy.findAllByLabelText('Replication factor', { exact: false })
           .filter(':visible')
           .type('1');
-        cy.contains('button', /create/i).click();
+        cy.contains('button', 'CREATE').click();
       });
 
     cy.get('.shared-topic:visible')

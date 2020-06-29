@@ -18,10 +18,9 @@
 // unless you have a solution to resolve TypeScript + Coverage
 import { KIND } from '../../src/const';
 import * as generate from '../../src/utils/generate';
-import { deleteAllServices } from '../utils';
 
 describe('DevToolDialog - Topics tab', () => {
-  beforeEach(async () => await deleteAllServices());
+  beforeEach(() => cy.deleteAllServices());
 
   it('we should have empty topic list initially', () => {
     // Close the quickstart dialog
@@ -32,7 +31,7 @@ describe('DevToolDialog - Topics tab', () => {
     cy.findByTitle('Create a new workspace').should('be.visible');
 
     cy.findByTitle('Developer Tools').click();
-    cy.findByText(/^topics$/i).should('exist');
+    cy.findByText('TOPICS').should('exist');
 
     // since there are no topics, we should not able to click dropdown list
     cy.findByTestId('topic-list-select').find('input').should('not.be.visible');
@@ -60,9 +59,7 @@ describe('DevToolDialog - Topics tab', () => {
     cy.findAllByLabelText('Replication factor', { exact: false })
       .filter(':visible')
       .type('1');
-    cy.findAllByText(/^create$/i)
-      .filter(':visible')
-      .click();
+    cy.findAllByText('CREATE').filter(':visible').click();
     // the new added topic should exist
     cy.findByText(sharedTopicName).should('exist');
     cy.contains('td', 'RUNNING')
@@ -78,7 +75,7 @@ describe('DevToolDialog - Topics tab', () => {
       .click();
     cy.findByText(/^add a new pipeline$/i).should('exist');
     cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
-    cy.findByText(/^add$/i).click();
+    cy.findByText('ADD').click();
 
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
@@ -121,10 +118,7 @@ describe('DevToolDialog - Topics tab', () => {
 
     // query button
     cy.findByTitle('Query with different parameters').click();
-    cy.findByText(/^query$/i)
-      .click()
-      .get('table')
-      .should('exist');
+    cy.findByText('QUERY').click().get('table').should('exist');
     cy.findByText(/^rows per query$/i)
       .parent()
       .find('input[type=number]')
@@ -136,15 +130,12 @@ describe('DevToolDialog - Topics tab', () => {
     cy.window().its('open').should('be.called');
 
     // verify the switching tab operations work normally
-    cy.findByText(/^logs$/i).click();
+    cy.findByText('LOGS').click();
     cy.findByTestId('log-type-select').click();
     cy.findByText(/^worker$/i).click();
     cy.findByTestId('view-log-list').should('exist');
     // switch back again should be ok
-    cy.findAllByText(/^topics$/i)
-      .parents('button')
-      .first()
-      .click();
+    cy.findAllByText('TOPICS').parents('button').first().click();
     cy.findByTestId('view-topic-table').should('exist');
 
     // close button
@@ -153,7 +144,7 @@ describe('DevToolDialog - Topics tab', () => {
 });
 
 describe('DevToolDialog - Logs tab', () => {
-  beforeEach(async () => await deleteAllServices());
+  beforeEach(() => cy.deleteAllServices());
 
   it('with an exist workspace, configurator log of devTool should work normally', () => {
     const workspaceName = generate.serviceName({ length: 10 });
@@ -171,7 +162,7 @@ describe('DevToolDialog - Logs tab', () => {
 
     // Check the log tab exist
     cy.findByTitle('Developer Tools').click();
-    cy.findByText(/^logs$/i).click();
+    cy.findByText('LOGS').click();
 
     // Check the status bar of no data
     cy.findByText(/^no log data$/i).should('exist');

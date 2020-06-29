@@ -17,7 +17,6 @@
 // Note: Do not change the usage of absolute path
 // unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
-import { deleteAllServices } from '../utils';
 
 // It's uppercase in AppBar
 const workspaceNameInAppBar = Cypress.env('servicePrefix')
@@ -25,7 +24,7 @@ const workspaceNameInAppBar = Cypress.env('servicePrefix')
   .toUpperCase();
 
 describe('Root route', () => {
-  before(async () => await deleteAllServices());
+  before(() => cy.deleteAllServices());
 
   it('should display root route', () => {
     cy.visit('/')
@@ -40,7 +39,7 @@ describe('Root route', () => {
 });
 
 describe('Redirect route', () => {
-  before(async () => await deleteAllServices());
+  before(() => cy.deleteAllServices());
 
   it('should redirect to default workspace and pipeline', () => {
     const workspaceName = generate.serviceName({
@@ -71,7 +70,7 @@ describe('Redirect route', () => {
 
     cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
-    cy.findByText(/^add$/i).click();
+    cy.findByText('ADD').click();
 
     cy.location().should((location) => {
       expect(location.pathname).to.be.eq(`/${workspaceName}/pipeline1`);

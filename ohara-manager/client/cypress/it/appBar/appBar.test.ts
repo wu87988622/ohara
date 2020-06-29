@@ -46,7 +46,7 @@ describe('App Bar', () => {
         .filter(':visible')
         .should('have.length', 1)
         // the intro dialog should have "quick create" button
-        .contains('button', /quick create/i);
+        .contains('button', 'QUICK CREATE');
 
       // the close button should have a test-id on it
       cy.findByTestId('close-intro-button');
@@ -126,9 +126,7 @@ describe('App Bar', () => {
       // change the settings to unlimited
       cy.findByTitle('Event logs settings').click();
       cy.get('input[type="checkbox"]:visible').check();
-      cy.findAllByText(/^save$/i)
-        .filter(':visible')
-        .click();
+      cy.findAllByText('SAVE').filter(':visible').click();
       cy.findByText('There is only 1 currently').should('exist');
 
       // create workspace with random name

@@ -76,7 +76,7 @@ const EventLogSettings = (props) => {
                     onClick={handleSubmit}
                     variant="contained"
                   >
-                    Save
+                    SAVE
                   </Button>
                 </Grid>
               </Grid>

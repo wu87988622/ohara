@@ -17,12 +17,11 @@
 // Note: Do not change the usage of absolute path
 // unless you have a solution to resolve TypeScript + Coverage
 import * as generate from '../../src/utils/generate';
-import { deleteAllServices } from '../utils';
 
 const prefix = Cypress.env('servicePrefix');
 
 describe('DeleteWorkspace', () => {
-  beforeEach(async () => await deleteAllServices());
+  beforeEach(() => cy.deleteAllServices());
 
   it('delete a workspace normally should be worked', () => {
     // create workspace

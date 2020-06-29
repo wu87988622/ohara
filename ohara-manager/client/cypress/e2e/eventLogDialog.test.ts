@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-// Note: Do not change the usage of absolute path
-// unless you have a solution to resolve TypeScript + Coverage
-import { deleteAllServices } from '../utils';
-
 describe('EventLogDialog', () => {
-  before(async () => await deleteAllServices());
+  before(() => cy.deleteAllServices());
 
   it('event log should be empty after removed', () => {
     // Close the intro dialog
@@ -62,9 +58,7 @@ describe('EventLogDialog', () => {
       .should('exist')
       .clear()
       .type('10');
-    cy.findAllByText(/^save$/i)
-      .filter(':visible')
-      .click();
+    cy.findAllByText('SAVE').filter(':visible').click();
 
     // Add new pipeline
     cy.findByText(/^pipelines$/i)
@@ -75,7 +69,7 @@ describe('EventLogDialog', () => {
 
     cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
-    cy.findByText(/^add$/i).click();
+    cy.findByText('ADD').click();
 
     // the workspace event log should be still existed after create pipeline
     cy.findByTestId('event-log-list').within(() => {

@@ -165,8 +165,8 @@ describe('Navigator', () => {
         cy.findByTestId('close-button').should('exist');
 
         // Actions
-        cy.findByText(/^add$/i).parent('button').should('be.disabled');
-        cy.findByText(/^cancel$/i).should('exist');
+        cy.findByText('ADD').parent('button').should('be.disabled');
+        cy.findByText('CANCEL').should('exist');
 
         // Form
         cy.findByText(/^pipeline name$/i).should('exist');
@@ -195,7 +195,7 @@ describe('Navigator', () => {
       cy.findByTestId(dialog).should('be.visible');
 
       cy.findByTestId(dialog).within(() => {
-        cy.findByText(/^cancel$/i).click();
+        cy.findByText('CANCEL').click();
       });
 
       cy.findByTestId(dialog).should('not.be.visible');
@@ -223,28 +223,25 @@ describe('Navigator', () => {
       // Too long
       cy.get('@input').type(invalidLongName).blur();
       cy.findByText(TooLongError).should('exist');
-      cy.findByText(/^add$/i).parent('button').should('be.disabled');
+      cy.findByText('ADD').parent('button').should('be.disabled');
 
       // Invalid character
       cy.get('@input').clear().type(invalidName).blur();
       cy.findByText(invalidCharError).should('exist');
-      cy.findByText(/^add$/i).parent('button').should('be.disabled');
+      cy.findByText('ADD').parent('button').should('be.disabled');
 
       // Too short
       cy.get('@input').clear().type(invalidShortName).blur();
       cy.findByText(TooShortError).should('exist');
-      cy.findByText(/^add$/i).parent('button').should('be.disabled');
+      cy.findByText('ADD').parent('button').should('be.disabled');
 
       cy.get('@input').clear().blur();
       cy.findByText(requireFieldError).should('exist');
-      cy.findByText(/^add$/i).parent('button').should('be.disabled');
+      cy.findByText('ADD').parent('button').should('be.disabled');
 
       // valid name, we should able to create a new pipeline with it
       cy.get('@input').clear().type(validName);
-      cy.findByText(/^add$/i)
-        .parent('button')
-        .should('not.be.disabled')
-        .click();
+      cy.findByText('ADD').parent('button').should('not.be.disabled').click();
 
       cy.findByText(validName).should('exist');
     });

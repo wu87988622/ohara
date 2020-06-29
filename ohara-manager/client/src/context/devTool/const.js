@@ -15,6 +15,6 @@
  */
 
 export const TAB = {
-  topic: 'topics',
-  log: 'logs',
+  topic: 'TOPICS',
+  log: 'LOGS',
 };

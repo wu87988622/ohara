@@ -44,7 +44,7 @@ const SetupNodesForm = (props) => {
           type="submit"
           variant="contained"
         >
-          Next
+          NEXT
         </Button>
       </div>
     </form>

@@ -19,7 +19,6 @@
 import { KIND, CELL_TYPES } from '../../src/const';
 import * as generate from '../../src/utils/generate';
 import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
-import { deleteAllServices } from '../utils';
 
 const ACTIONS = {
   link: 'link',
@@ -28,7 +27,7 @@ const ACTIONS = {
 };
 
 describe('Paper Element connections', () => {
-  before(async () => await deleteAllServices());
+  before(() => cy.deleteAllServices());
 
   it('tests of connector and topic links in pipeline', () => {
     cy.createWorkspace({});
@@ -137,15 +136,15 @@ describe('Paper Element connections', () => {
     cy.log(`force delete pipeline-only topic`);
     cy.getCell(elements.pipelineOnlyTopicName1).trigger('mouseover');
     cy.cellAction(elements.pipelineOnlyTopicName1, ACTIONS.remove).click();
-    cy.findByText(/^delete$/i).should('exist');
-    cy.contains('span:visible', /cancel/i).click();
+    cy.findByText('DELETE').should('exist');
+    cy.contains('span:visible', 'CANCEL').click();
     cy.findAllByText(elements.pipelineOnlyTopicName1).should('exist');
 
     // delete all elements
     Object.values(elements).forEach((element) => {
       cy.getCell(element).trigger('mouseover');
       cy.cellAction(element, ACTIONS.remove).click();
-      cy.findByText(/^delete$/i).click();
+      cy.findByText('DELETE').click();
       cy.findAllByText(element).filter(':visible').should('not.exist');
       cy.wait(2000);
     });
@@ -228,7 +227,7 @@ describe('Paper Element connections', () => {
 });
 
 describe('Topic Operations of Pipeline', () => {
-  before(async () => await deleteAllServices());
+  before(() => cy.deleteAllServices());
   it('connect two elements of pipeline should auto generate pipeline-only topic', () => {
     cy.createWorkspace({});
     cy.createPipeline();

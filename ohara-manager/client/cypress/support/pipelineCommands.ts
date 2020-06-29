@@ -25,7 +25,7 @@ Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.log(`Creating pipeline: ${name}`);
   cy.get('.new-pipeline-button').click();
   cy.findByTestId('new-pipeline-dialog').find('input').type(name);
-  cy.findByText(/^add$/i).click();
+  cy.findByText('ADD').click();
 });
 
 Cypress.Commands.add('deletePipeline', (name) => {
@@ -35,9 +35,7 @@ Cypress.Commands.add('deletePipeline', (name) => {
 
   cy.get('.pipeline-controls').find('button').click();
   cy.findByText('Delete this pipeline').click();
-  cy.findByText(/^delete$/i)
-    .filter(':visible')
-    .click();
+  cy.findByText('DELETE').filter(':visible').click();
 
   cy.findByText(name).should('not.exist');
 });
@@ -141,7 +139,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
         name,
       );
-      cy.findAllByText(/^add$/i).filter(':visible').click();
+      cy.findAllByText('ADD').filter(':visible').click();
     } else if (kind === KIND.topic) {
       // Share topic
       if (!name.startsWith('T')) {
@@ -193,7 +191,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       cy.findByLabelText(`${capitalize(kind)} name`, { exact: false }).type(
         name,
       );
-      cy.findAllByText(/^add$/i).filter(':visible').click();
+      cy.findAllByText('ADD').filter(':visible').click();
     }
 
     // wait for the cell added
@@ -212,7 +210,7 @@ Cypress.Commands.add('removeElement', (name) => {
 
   cy.getCell(name).trigger('mouseover');
   cy.cellAction(name, 'remove').click();
-  cy.findByText(/^delete$/i).click();
+  cy.findByText('DELETE').click();
 
   cy.get('#paper').findByText(name).should('not.exist');
 
@@ -302,7 +300,7 @@ Cypress.Commands.add('uploadStreamJar', () => {
     .check();
 
   // click save button
-  cy.findAllByText('Save').filter(':visible').click();
+  cy.findAllByText('SAVE').filter(':visible').click();
 
   cy.findByTestId('workspace-settings-dialog-close-button').click({
     force: true,

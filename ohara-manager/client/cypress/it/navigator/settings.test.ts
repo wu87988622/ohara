@@ -129,7 +129,7 @@ describe('Navigator', () => {
           cy.findAllByLabelText('Replication factor', { exact: false })
             .filter(':visible')
             .type('1');
-          cy.contains('button', /create/i).click();
+          cy.contains('button', 'CREATE').click();
         });
 
       // the new added topic should exist and running
@@ -158,13 +158,13 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          cy.contains('button', /cancel/i).click();
+          cy.contains('button', 'CANCEL').click();
         });
       cy.findByTitle('Delete topic').click();
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          cy.contains('button', /delete/i).click();
+          cy.contains('button', 'DELETE').click();
         });
       // the topic should not exist
       cy.findByText(t1).should('not.exist');
@@ -187,7 +187,7 @@ describe('Navigator', () => {
           cy.findAllByLabelText('Replication factor', { exact: false })
             .filter(':visible')
             .type('1');
-          cy.contains('button', /create/i).click();
+          cy.contains('button', 'CREATE').click();
         });
       cy.findByTitle('Create Topic').should('be.enabled').click();
       cy.findAllByRole('dialog')
@@ -202,7 +202,7 @@ describe('Navigator', () => {
           cy.findAllByLabelText('Replication factor', { exact: false })
             .filter(':visible')
             .type('1');
-          cy.contains('button', /create/i).click();
+          cy.contains('button', 'CREATE').click();
         });
       // should able to filter topics by name
       cy.get('div.shared-topic').within(() => {
@@ -222,7 +222,7 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          cy.contains('button', /delete/i).click();
+          cy.contains('button', 'DELETE').click();
         });
 
       // the t2 topic should not exist
@@ -232,7 +232,7 @@ describe('Navigator', () => {
       cy.findAllByRole('dialog')
         .filter(':visible')
         .within(() => {
-          cy.contains('button', /delete/i).click();
+          cy.contains('button', 'DELETE').click();
         });
 
       // the t1 topic should not exist
@@ -279,7 +279,7 @@ describe('Navigator', () => {
           cy.findByText(
             'Replication factor should be less than or equal to 1 broker as there is only 1 available in the current workspace',
           ).should('exist');
-          cy.contains('button', /cancel/i).click();
+          cy.contains('button', 'CANCEL').click();
         });
     });
   });
@@ -297,22 +297,22 @@ describe('Navigator', () => {
     it('should able to add setting fillings', () => {
       cy.switchSettingSection(SETTING_SECTIONS.autofill);
 
-      cy.contains('button', /add autofill/i).click();
+      cy.contains('button', 'ADD AUTOFILL').click();
 
       // add a setting filling
       cy.get('input[name="displayName"]').type(setting);
 
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[0].key"]').type('completed');
       cy.findByText('completed.folder').click();
       cy.get('input[name="settings[0].value"]').type('fake');
 
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[1].key"]').type('ftp.p');
       cy.findByText('ftp.port').click();
       cy.get('input[name="settings[1].value"]').type('22');
 
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[2].key"]').type('error');
       cy.findByText('error.folder').click();
 
@@ -323,26 +323,26 @@ describe('Navigator', () => {
         .click();
 
       // click save button
-      cy.contains('button', /save/i).click();
+      cy.contains('button', 'SAVE').click();
       cy.findByText(setting).should('exist');
 
       // edit this setting
       cy.findAllByTitle('Edit the autofill').filter(':visible').click();
       // could change name and add new key
       cy.get('input[name="displayName"]').clear().type('foo');
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[2].key"]').type('ftp.ho');
       cy.findByText('ftp.hostname').click();
 
       // click save button
-      cy.contains('button', /save/i).click();
+      cy.contains('button', 'SAVE').click();
       // the origin setting name should not exist
       cy.findByText(setting).should('not.exist');
 
       // copy this setting
       cy.findAllByTitle('Copy the autofill').filter(':visible').click();
       cy.get('input[name="displayName"]').clear().type(setting);
-      cy.contains('button', /save/i).click();
+      cy.contains('button', 'SAVE').click();
 
       // we have two settings now
       cy.get('div.section-page-content').within(() => {
@@ -354,9 +354,7 @@ describe('Navigator', () => {
         .filter(':visible')
         .each(($el) => {
           cy.wrap($el).click();
-          cy.contains('button', /delete/i)
-            .filter(':visible')
-            .click();
+          cy.contains('button', 'DELETE').filter(':visible').click();
         });
     });
 
@@ -364,15 +362,15 @@ describe('Navigator', () => {
       cy.switchSettingSection(SETTING_SECTIONS.autofill);
 
       // add a setting filling
-      cy.contains('button', /add autofill/i).click();
+      cy.contains('button', 'ADD AUTOFILL').click();
       cy.get('input[name="displayName"]').type(setting);
 
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[0].key"]').type('completed');
       cy.findByText('completed.folder').click();
       cy.get('input[name="settings[0].value"]').type('fake');
 
-      cy.contains('button', /add key/i).click();
+      cy.contains('button', 'ADD KEY').click();
       cy.get('input[name="settings[1].key"]').type('completed');
       cy.findByText('completed.folder').click();
       // key could not duplicated
@@ -385,18 +383,18 @@ describe('Navigator', () => {
         .click();
 
       // click save button
-      cy.contains('button', /save/i).click();
+      cy.contains('button', 'SAVE').click();
       cy.findByText(setting).should('exist');
 
       // add a same name setting filling
-      cy.contains('button', /add autofill/i).click();
+      cy.contains('button', 'ADD AUTOFILL').click();
       cy.get('input[name="displayName"]').type(setting).blur();
       cy.findByText(
         `Name '${setting}' already existed. Please use a different name`,
       ).should('exist');
 
       // click cancel button
-      cy.contains('button', /cancel/i).click();
+      cy.contains('button', 'CANCEL').click();
 
       // remove setting
       cy.findAllByTitle('Delete the autofill')
@@ -404,14 +402,10 @@ describe('Navigator', () => {
         .each(($el) => {
           cy.wrap($el).click();
           // click cancel deletion
-          cy.contains('button', /cancel/i)
-            .filter(':visible')
-            .click();
+          cy.contains('button', 'CANCEL').filter(':visible').click();
           // remove setting again
           cy.wrap($el).click();
-          cy.contains('button', /delete/i)
-            .filter(':visible')
-            .click();
+          cy.contains('button', 'DELETE').filter(':visible').click();
         });
     });
   });
@@ -657,7 +651,7 @@ describe('Navigator', () => {
         cy.get('input[name=port]').type(generate.port().toString());
         cy.get('input[name=user]').type(generate.userName());
         cy.get('input[name=password]').type(generate.password());
-        cy.findByText(/^create$/i).click();
+        cy.findByText('CREATE').click();
         cy.findByTestId('fullscreen-dialog-close-button').click();
 
         // add new added node into workspace
@@ -779,7 +773,7 @@ describe('Navigator', () => {
           .scrollIntoView()
           .should('have.length', 1)
           .within(() => {
-            cy.contains('button', /discard/i).click();
+            cy.contains('button', 'DISCARD').click();
           });
 
         cy.findAllByRole('dialog')
@@ -795,7 +789,7 @@ describe('Navigator', () => {
           .scrollIntoView()
           .should('have.length', 1)
           .within(() => {
-            cy.contains('button', /discard/i).click();
+            cy.contains('button', 'DISCARD').click();
           });
 
         cy.findAllByRole('dialog')
@@ -846,7 +840,7 @@ describe('Navigator', () => {
           .scrollIntoView()
           .should('have.length', 1)
           .within(() => {
-            cy.contains('button', /restart/i).click();
+            cy.contains('button', 'RESTART').click();
           });
         cy.findAllByRole('dialog')
           .filter(':visible')
@@ -861,7 +855,7 @@ describe('Navigator', () => {
           .scrollIntoView()
           .should('have.length', 1)
           .within(() => {
-            cy.contains('button', /restart/i).click();
+            cy.contains('button', 'RESTART').click();
           });
         cy.findAllByRole('dialog')
           .filter(':visible')
@@ -892,12 +886,13 @@ describe('Navigator', () => {
               .click();
           });
 
-        // the indicator should be disappear
-        cy.findAllByRole('alert').should('not.exist');
-        cy.findByText('Successfully Restart workspace workspace1.', {
-          timeout: 7000,
-        }).should('not.exist');
-        cy.findByTestId('workspace-settings-dialog-close-button').click();
+        // close the snackbar
+        cy.findByTestId('snackbar').find('button:visible').click();
+
+        // close the settings dialog
+        cy.findByTestId('workspace-settings-dialog-close-button')
+          .should('be.visible')
+          .click();
 
         cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
         cy.get('div.section-page-content').within(() => {

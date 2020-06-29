@@ -337,7 +337,7 @@ const Toolbar = (props) => {
 
       <DeleteDialog
         confirmDisabled={runningServices.length > 0}
-        confirmText={pipelineError ? 'Retry' : 'Delete'}
+        confirmText={pipelineError ? 'RETRY' : 'DELETE'}
         content={deleteDialogContent}
         isWorking={isDeleting}
         maxWidth="xs"

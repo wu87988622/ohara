@@ -17,10 +17,9 @@
 // Note: Do not change the usage of absolute path
 // unless you have a solution to resolve TypeScript + Coverage
 import { hashByGroupAndName } from '../../src/utils/sha';
-import { deleteAllServices } from '../utils';
 
 describe('RestartWorkspace', () => {
-  beforeEach(async () => await deleteAllServices());
+  beforeEach(() => cy.deleteAllServices());
 
   it('restart a workspace normally should be worked', () => {
     // create workspace
@@ -71,7 +70,7 @@ describe('RestartWorkspace', () => {
       .check();
 
     // click save button
-    cy.findAllByText('Save').filter(':visible').click();
+    cy.findAllByText('SAVE').filter(':visible').click();
 
     // click the arrow button back to Settings dialog
     cy.findAllByText('Worker plugins and shared jars')
@@ -104,7 +103,7 @@ describe('RestartWorkspace', () => {
 
     cy.findByTestId('new-pipeline-dialog').find('input').type('pipeline1');
 
-    cy.findByText(/^add$/i).click();
+    cy.findByText('ADD').click();
 
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');

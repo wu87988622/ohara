@@ -71,13 +71,13 @@ function RestartIndicator({
                 onClick={() => setIsDiscardConfirmDialogOpen(true)}
                 size="small"
               >
-                discard
+                DISCARD
               </Button>
               <Button
                 onClick={() => setIsRestartConfirmDialogOpen(true)}
                 size="small"
               >
-                restart
+                RESTART
               </Button>
             </>
           }

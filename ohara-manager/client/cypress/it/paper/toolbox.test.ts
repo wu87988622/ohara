@@ -274,7 +274,7 @@ describe('ToolBox', () => {
       cy.getCell(sharedTopicName).trigger('mouseover');
       cy.cellAction(sharedTopicName, 'remove').click();
       cy.findByTestId('delete-dialog').within(() =>
-        cy.findByText(/^delete$/i).click(),
+        cy.findByText('DELETE').click(),
       );
 
       // Available again since it's removed from Paper

@@ -59,7 +59,7 @@ describe('App Bar', () => {
           cy.findAllByLabelText('Replication factor', { exact: false })
             .filter(':visible')
             .type('1');
-          cy.contains('button', /create/i).click();
+          cy.contains('button', 'CREATE').click();
         });
       cy.findByText(t1)
         .parent('tr')
@@ -182,7 +182,7 @@ describe('App Bar', () => {
     });
 
     it('open new window for topic data', () => {
-      cy.visit(`/view?type=topics&topicName=${t1}&topicLimit=10`);
+      cy.visit(`/view?type=TOPICS&topicName=${t1}&topicLimit=10`);
       cy.findByTestId('data-window').children().should('be.visible');
     });
 
@@ -290,24 +290,18 @@ describe('App Bar', () => {
           .click();
 
         cy.findByLabelText('Start date').then(($statEl) => {
-          cy.findByLabelText('End date').then(($endEl) => {
-            cy.get('@statusBar')
-              .find('div')
-              .invoke('html')
-              .should(
-                'equal',
-                `Customize from ${$statEl
-                  .val()
-                  ?.toString()
-                  .replace('T', ' ')
-                  .replace(/-/g, '/')} to ${$endEl
-                  .val()
-                  ?.toString()
-                  .replace('T', ' ')
-                  .replace(/-/g, '/')}`,
-              )
-              .should('exist');
-          });
+          cy.get('@statusBar')
+            .find('div')
+            .invoke('html')
+            .should(
+              'include',
+              `Customize from ${$statEl
+                .val()
+                ?.toString()
+                .split('T')[0]
+                .replace(/-/g, '/')}`,
+            )
+            .should('exist');
         });
       });
       cy.findByTestId('log-query-popover').trigger('keydown', {
@@ -322,7 +316,7 @@ describe('App Bar', () => {
 
     it('open new window for log data', () => {
       cy.visit(
-        `/view?type=logs&logType=configurator`
+        `/view?type=LOGS&logType=configurator`
           .concat(`&hostname=${hostname}`)
           .concat(`&timeGroup=latest&timeRange=10`),
       );

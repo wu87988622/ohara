@@ -52,7 +52,7 @@ const WorkspaceFileSelectorDialog = React.forwardRef((props, ref) => {
   return (
     <Dialog
       confirmDisabled={saveable}
-      confirmText="Save"
+      confirmText="SAVE"
       maxWidth="md"
       onClose={handleCancel}
       onConfirm={handleConfirm}

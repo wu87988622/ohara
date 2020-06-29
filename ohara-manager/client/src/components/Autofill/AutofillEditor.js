@@ -117,7 +117,7 @@ const AutofillEditor = (props) => {
         return (
           <Dialog
             confirmDisabled={submitting || pristine || invalid}
-            confirmText="Save"
+            confirmText="SAVE"
             maxWidth="sm"
             onClose={() => {
               onClose();
@@ -180,7 +180,7 @@ const AutofillEditor = (props) => {
                   startIcon={<AddIcon />}
                   variant="outlined"
                 >
-                  Add Key
+                  ADD KEY
                 </Button>
               </Tooltip>
             </Wrapper>

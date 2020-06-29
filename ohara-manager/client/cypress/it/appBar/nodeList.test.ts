@@ -34,7 +34,7 @@ describe('App Bar', () => {
       // create a node
       cy.findByTitle(/create node/i).click();
       // cancel create node
-      cy.findByText(/^cancel$/i).click();
+      cy.findByText('CANCEL').click();
       // Note: we replace this .click() by .trigger() in defaultCommands.ts
       // since the cypress command click could not found the button
       // open again
@@ -44,7 +44,7 @@ describe('App Bar', () => {
       cy.get('input[name=port]').type(generate.port().toString());
       cy.get('input[name=user]').type(generate.userName());
       cy.get('input[name=password]').type(generate.password());
-      cy.findByText(/^create$/i).click();
+      cy.findByText('CREATE').click();
 
       // check the node information
       cy.findByTestId(`view-node-${hostname}`).click();
@@ -61,7 +61,7 @@ describe('App Bar', () => {
       const user = generate.userName();
       cy.findByTestId(`edit-node-${hostname}`).click();
       cy.get('input[name=user]').clear().type(user);
-      cy.findByText(/^save$/i).click();
+      cy.findByText('SAVE').click();
 
       // check the node information again
       cy.findByTestId(`view-node-${hostname}`).click();
@@ -96,7 +96,6 @@ describe('App Bar', () => {
 
       // click node list
       cy.findByTitle(/node list/i).click();
-
       // Since the node we use for creating services
       // it could not be removed
       cy.findByTestId(`delete-node-${node.hostname}`).should('not.be.visible');

@@ -74,7 +74,7 @@ const SetupWorkspaceForm = (props) => {
           type="submit"
           variant="contained"
         >
-          Next
+          NEXT
         </Button>
       </div>
     </form>

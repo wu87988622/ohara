@@ -121,7 +121,7 @@ const AutofillList = () => {
           startIcon={<AddIcon />}
           variant="outlined"
         >
-          Add Autofill
+          ADD AUTOFILL
         </Button>
       </Tooltip>
       <AutofillEditor
