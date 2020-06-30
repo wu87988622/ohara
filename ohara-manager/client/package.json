@@ -148,7 +148,8 @@
   ],
   "nyc": {
     "reporter": [
-      "html"
+      "html",
+      "json-summary"
     ]
   }
 }
