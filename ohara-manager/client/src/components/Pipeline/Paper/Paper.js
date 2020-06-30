@@ -239,14 +239,15 @@ const Paper = React.forwardRef((props, ref) => {
 
     paper.on('element:mouseenter', (elementView) => {
       // Make sure all menus are hidden, this prevents a bug where two connectors
-      // are hovered
+      // are hovered and covered each other
       findElementViews().forEach(paperUtils.hideMenu);
 
       const hasHalfWayLink = graph
         .getLinks()
         .some((link) => !link.get('target').id);
 
-      // Don't display the menu if the element is being connected
+      // Don't display the menu if the element is being connected, this prevents
+      // users from accidentally click on these action buttons
       if (!hasHalfWayLink) {
         return paperUtils.showMenu(elementView);
       }
@@ -361,6 +362,7 @@ const Paper = React.forwardRef((props, ref) => {
 
       elementView
         .active()
+        .hover()
         .showElement('menu')
         .hideElement('metrics')
         .hideElement('status')
@@ -369,6 +371,7 @@ const Paper = React.forwardRef((props, ref) => {
       const sourceLink = graph
         .getLinks()
         .find((link) => !link.get('target').id);
+
       if (sourceLink) {
         const result = paperUtils.createConnection({
           sourceLink,
