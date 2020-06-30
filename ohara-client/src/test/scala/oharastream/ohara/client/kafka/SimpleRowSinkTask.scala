@@ -27,12 +27,12 @@ import oharastream.ohara.kafka.connector.{RowSinkRecord, RowSinkTask, TaskSettin
 import scala.jdk.CollectionConverters._
 
 class SimpleRowSinkTask extends RowSinkTask {
-  private[this] var outputTopic: TopicKey                = _
+  private[this] var outputTopics: Set[TopicKey]          = _
   private[this] var producer: Producer[Row, Array[Byte]] = _
   override protected def run(settings: TaskSetting): Unit = {
-    outputTopic = topicKey(settings, OUTPUT)
+    outputTopics = TopicKey.toTopicKeys(settings.stringValue(SimpleRowSinkConnector.OUTPUT)).asScala.toSet
     producer = Producer.builder
-      .connectionProps(settings.stringValue(BROKER))
+      .connectionProps(settings.stringValue(SimpleRowSinkConnector.BROKER))
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)
       .build()
@@ -41,5 +41,9 @@ class SimpleRowSinkTask extends RowSinkTask {
   override protected def terminate(): Unit = Releasable.close(producer)
 
   override protected def putRecords(records: util.List[RowSinkRecord]): Unit =
-    records.asScala.foreach(r => producer.sender().key(r.row()).topicKey(outputTopic).send())
+    outputTopics.foreach(
+      outputTopic =>
+        records.asScala
+          .foreach(r => producer.sender().key(r.row()).topicKey(outputTopic).send())
+    )
 }

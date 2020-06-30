@@ -21,6 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 import oharastream.ohara.common.data.{Row, Serializer}
+import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.Releasable
 import oharastream.ohara.kafka.Consumer
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
@@ -37,9 +38,9 @@ class SimpleRowSourceTask extends RowSourceTask {
     this.settings = settings
     this.consumer = Consumer
       .builder()
-      .connectionProps(settings.stringValue(BROKER))
+      .connectionProps(settings.stringValue(SimpleRowSourceConnector.BROKER))
       .groupId(settings.name)
-      .topicKey(topicKey(settings, INPUT))
+      .topicKeys(java.util.Set.copyOf(TopicKey.toTopicKeys(settings.stringValue(SimpleRowSourceConnector.INPUT))))
       .offsetFromBegin()
       .keySerializer(Serializer.ROW)
       .valueSerializer(Serializer.BYTES)

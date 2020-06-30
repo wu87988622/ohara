@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
 import oharastream.ohara.common.setting.*;
@@ -292,11 +291,10 @@ public class TaskSetting {
     return stringValue(ConnectorDefUtils.CONNECTOR_NAME_DEFINITION.key());
   }
 
+  /** @return topic keys associated to "topicKeys" */
   public Set<TopicKey> topicKeys() {
-    return ObjectKey.toObjectKeys(stringValue(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()))
-        .stream()
-        .map(key -> TopicKey.of(key.group(), key.name()))
-        .collect(Collectors.toUnmodifiableSet());
+    return Set.copyOf(
+        TopicKey.toTopicKeys(stringValue(ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key())));
   }
 
   public List<Column> columns() {

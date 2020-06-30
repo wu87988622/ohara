@@ -35,3 +35,8 @@ class SimpleRowSourceConnector extends RowSourceConnector {
 
   override protected def terminate(): Unit = {}
 }
+
+object SimpleRowSourceConnector {
+  val BROKER = "simple.row.connector.broker"
+  val INPUT  = "simple.row.connector.input"
+}

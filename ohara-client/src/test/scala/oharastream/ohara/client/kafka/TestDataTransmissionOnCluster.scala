@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.kafka
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.ConnectorApi.State
 import oharastream.ohara.common.data._
 import oharastream.ohara.common.setting.{ConnectorKey, TopicKey}
@@ -26,6 +28,8 @@ import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.jdk.CollectionConverters._
 class TestDataTransmissionOnCluster extends WithBrokerWorker {
   private[this] val topicAdmin     = TopicAdmin.of(testUtil().brokersConnProps)
@@ -33,6 +37,10 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
   private[this] val row            = Row.of(Cell.of("cf0", 10), Cell.of("cf1", 11))
   private[this] val schema         = Seq(Column.builder().name("cf").dataType(DataType.BOOLEAN).order(1).build())
   private[this] val numberOfRows   = 20
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
+
+  private[this] def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(300))
 
   @After
   def tearDown(): Unit = Releasable.close(topicAdmin)
@@ -156,7 +164,12 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKey(srcKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> TopicKey.toJsonString(targetKey)))
+        .settings(
+          Map(
+            SimpleRowSinkConnector.BROKER -> testUtil.brokersConnProps,
+            SimpleRowSinkConnector.OUTPUT -> TopicKey.toJsonString(java.util.List.of(targetKey))
+          )
+        )
         .create()
     )
 
@@ -197,7 +210,12 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKey(targetKey)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, INPUT -> TopicKey.toJsonString(srcKey)))
+        .settings(
+          Map(
+            SimpleRowSourceConnector.BROKER -> testUtil.brokersConnProps,
+            SimpleRowSourceConnector.INPUT  -> TopicKey.toJsonString(java.util.List.of(srcKey))
+          )
+        )
         .create()
     )
 
@@ -271,7 +289,12 @@ class TestDataTransmissionOnCluster extends WithBrokerWorker {
         .topicKeys(topicKeys)
         .numberOfTasks(1)
         .columns(schema)
-        .settings(Map(BROKER -> testUtil.brokersConnProps, OUTPUT -> TopicKey.toJsonString(outputTopic)))
+        .settings(
+          Map(
+            SimpleRowSinkConnector.BROKER -> testUtil.brokersConnProps,
+            SimpleRowSinkConnector.OUTPUT -> TopicKey.toJsonString(java.util.List.of(outputTopic))
+          )
+        )
         .create()
     )
 

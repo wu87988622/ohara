@@ -19,7 +19,6 @@ package oharastream.ohara.common.setting;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.io.Serializable;
 import oharastream.ohara.common.json.JsonUtils;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.util.CommonUtils;
@@ -72,18 +71,6 @@ public class TestTopicKey extends OharaTest {
     TopicKey key = TopicKey.of(group, name);
     Assert.assertTrue(key.toString().contains(group));
     Assert.assertTrue(key.toString().contains(name));
-  }
-
-  @Test
-  public void testSerialization() {
-    Assert.assertTrue(
-        TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))
-            instanceof Serializable);
-    Assert.assertTrue(
-        TopicKey.toTopicKey(
-                TopicKey.toJsonString(
-                    TopicKey.of(CommonUtils.randomString(5), CommonUtils.randomString(5))))
-            instanceof Serializable);
   }
 
   @Test

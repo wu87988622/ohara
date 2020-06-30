@@ -16,6 +16,8 @@
 
 package oharastream.ohara.client.kafka
 
+import java.util.concurrent.TimeUnit
+
 import oharastream.ohara.client.configurator.ConnectorApi.State
 import oharastream.ohara.common.data.Serializer
 import oharastream.ohara.common.setting.{ConnectorKey, SettingDef, TopicKey, WithDefinitions}
@@ -27,9 +29,19 @@ import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.jdk.CollectionConverters._
 class TestConnectorAdmin extends With3Brokers3Workers {
   private[this] val connectorAdmin = ConnectorAdmin(testUtil().workersConnProps())
+
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
+
+  private[this] def assertExist(connectorAdmin: ConnectorAdmin, connectorKey: ConnectorKey): Boolean =
+    CommonUtils.await(() => result(connectorAdmin.exist(connectorKey)) == true, java.time.Duration.ofSeconds(30))
+
+  private[this] def await(f: () => Boolean): Unit = CommonUtils.await(() => f(), java.time.Duration.ofSeconds(300))
+
   @Test
   def testExist(): Unit = {
     val topicKey     = TopicKey.of(CommonUtils.randomString(10), CommonUtils.randomString(10))
@@ -98,7 +110,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
         // try to receive some data from topic
         var rows = consumer.poll(java.time.Duration.ofSeconds(10), 1)
         rows.size should not be 0
-        rows.asScala.foreach(_.key.get shouldBe ROW)
+        rows.asScala.foreach(_.key.get shouldBe MyConnectorTask.ROW)
         // pause connector
         result(connectorAdmin.pause(connectorKey))
 
@@ -106,7 +118,7 @@ class TestConnectorAdmin extends With3Brokers3Workers {
 
         // try to receive all data from topic...10 seconds should be enough in this case
         rows = consumer.poll(java.time.Duration.ofSeconds(10), Int.MaxValue)
-        rows.asScala.foreach(_.key.get shouldBe ROW)
+        rows.asScala.foreach(_.key.get shouldBe MyConnectorTask.ROW)
 
         // connector is paused so there is no data
         rows = consumer.poll(java.time.Duration.ofSeconds(20), 1)

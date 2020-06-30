@@ -55,9 +55,10 @@ public class TestSumExample extends WithBroker {
     settings.putIfAbsent(StreamDefUtils.NAME_DEFINITION.key(), "TestSumExample");
     settings.putIfAbsent(
         StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-        "[" + TopicKey.toJsonString(fromTopic) + "]");
+        TopicKey.toJsonString(java.util.List.of(fromTopic)));
     settings.putIfAbsent(
-        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(), "[" + TopicKey.toJsonString(toTopic) + "]");
+        StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
+        TopicKey.toJsonString(java.util.List.of(toTopic)));
     StreamTestUtils.createTopic(client, fromTopic, partitions, replications);
     StreamTestUtils.createTopic(client, toTopic, partitions, replications);
     // prepare data

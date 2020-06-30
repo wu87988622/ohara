@@ -30,7 +30,7 @@ import oharastream.ohara.kafka.connector.json.Creation
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
@@ -39,6 +39,8 @@ import scala.jdk.CollectionConverters._
   * https://github.com/oharastream/ohara/issues/873.
   */
 class Test873 extends OharaTest {
+  private[this] def result[T](f: Future[T]): T = Await.result(f, Duration(60, TimeUnit.SECONDS))
+
   @Test
   def testCreateConnector(): Unit = {
     val className = CommonUtils.randomString()

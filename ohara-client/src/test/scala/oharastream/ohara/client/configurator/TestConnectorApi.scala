@@ -27,10 +27,10 @@ import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsArray, JsString, _}
+import spray.json.{JsString, _}
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 class TestConnectorApi extends OharaTest {
   @Test
@@ -56,7 +56,7 @@ class TestConnectorApi extends OharaTest {
        |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
-       |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
+       |  "topicKeys": ${TopicKey.toJsonString(topicKeys.asJava)},
        |  "tags": ${JsObject(tags)},
        |  "$anotherKey": "$anotherValue"
        |}
@@ -91,7 +91,7 @@ class TestConnectorApi extends OharaTest {
        |  "workerClusterKey": ${JsString(workerClusterName).toString()},
        |  "connector.class": ${JsString(className).toString()},
        |  "$COLUMNS_KEY": ${PropGroup.ofColumn(column).toJsonString},
-       |  "topicKeys": ${JsArray(topicKeys.map(TopicKey.toJsonString).map(_.parseJson).toVector).toString()},
+       |  "topicKeys": ${TopicKey.toJsonString(topicKeys.asJava)},
        |  "numberOfTasks": ${JsNumber(numberOfTasks).toString()},
        |  "$anotherKey": "$anotherValue"
        |}""".stripMargin.parseJson)

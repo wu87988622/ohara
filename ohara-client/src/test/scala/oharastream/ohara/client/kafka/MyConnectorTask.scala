@@ -18,6 +18,7 @@ package oharastream.ohara.client.kafka
 
 import java.util
 
+import oharastream.ohara.common.data.{Cell, Row}
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
 
@@ -35,7 +36,11 @@ class MyConnectorTask extends RowSourceTask {
     val current = System.currentTimeMillis()
     if (current - lastSent >= 1000) {
       lastSent = current
-      java.util.List.of(RowSourceRecord.builder().topicKey(topicKey).row(ROW).build())
+      java.util.List.of(RowSourceRecord.builder().topicKey(topicKey).row(MyConnectorTask.ROW).build())
     } else java.util.List.of()
   }
+}
+
+object MyConnectorTask {
+  val ROW: Row = Row.of(Cell.of("f0", 13), Cell.of("f1", false))
 }

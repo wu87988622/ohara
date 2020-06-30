@@ -132,7 +132,8 @@ package object configurator {
     .build
 
   private[configurator] implicit val TOPIC_KEY_FORMAT: RootJsonFormat[TopicKey] = new RootJsonFormat[TopicKey] {
-    override def write(obj: TopicKey): JsValue = TopicKey.toJsonString(obj).parseJson
+    override def write(obj: TopicKey): JsValue =
+      TopicKey.toJsonString(java.util.List.of(obj)).parseJson.asInstanceOf[JsArray].elements.head
     override def read(json: JsValue): TopicKey = {
       // reuse the rules of ObjectKey
       val key = OBJECT_KEY_FORMAT.read(json)

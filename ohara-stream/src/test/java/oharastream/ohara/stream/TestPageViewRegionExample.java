@@ -113,9 +113,9 @@ public class TestPageViewRegionExample extends WithBroker {
           StreamDefUtils.BROKER_DEFINITION.key(),
           client.connectionProps(),
           StreamDefUtils.FROM_TOPIC_KEYS_DEFINITION.key(),
-          "[" + TopicKey.toJsonString(fromTopic) + "]",
+          TopicKey.toJsonString(java.util.List.of(fromTopic)),
           StreamDefUtils.TO_TOPIC_KEYS_DEFINITION.key(),
-          "[" + TopicKey.toJsonString(toTopic) + "]",
+          TopicKey.toJsonString(java.util.List.of(toTopic)),
           PageViewRegionExample.joinTopicKey,
           joinTableTopic.topicNameOnKafka());
 

@@ -57,24 +57,8 @@ public interface TopicKey extends ObjectKey {
     return TopicKey.of(key.group(), key.name());
   }
 
-  static String toJsonString(TopicKey key) {
-    return ObjectKey.toJsonString(key);
-  }
-
   static String toJsonString(Collection<? extends TopicKey> key) {
     return ObjectKey.toJsonString(key);
-  }
-
-  /**
-   * parse input json and then generate a TopicKey instance.
-   *
-   * @see ObjectKey#toObjectKey(String)
-   * @param json json representation
-   * @return a serializable instance
-   */
-  static TopicKey toTopicKey(String json) {
-    ObjectKey key = ObjectKey.toObjectKey(json);
-    return TopicKey.of(key.group(), key.name());
   }
 
   /**
