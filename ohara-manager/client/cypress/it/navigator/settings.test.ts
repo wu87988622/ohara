@@ -16,6 +16,7 @@
 
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import * as generate from '../../../src/utils/generate';
+import { hashByGroupAndName } from '../../../src/utils/sha';
 import { SETTING_SECTIONS } from '../../support/customCommands';
 
 describe('Navigator', () => {
@@ -33,6 +34,35 @@ describe('Navigator', () => {
   const setting = generate.word();
   // generate fake hostname
   const hostname = generate.serviceName();
+
+  // we use the default workspace name and group for file tags
+  const workspaceKey = {
+    name: 'workspace1',
+    group: 'workspace',
+  };
+  const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
+
+  // create files
+  const source = {
+    fixturePath: 'jars',
+    name: 'ohara-it-source.jar',
+    group: fileGroup,
+  };
+  const sink = {
+    fixturePath: 'jars',
+    name: 'ohara-it-sink.jar',
+    group: fileGroup,
+  };
+  const stream = {
+    fixturePath: 'jars',
+    name: 'ohara-it-stream.jar',
+    group: fileGroup,
+  };
+  const fakeJar = {
+    name: 'fake.jar',
+    group: fileGroup,
+  };
+  const files = [source, sink, stream];
 
   before(() => {
     cy.deleteAllServices();
@@ -639,6 +669,359 @@ describe('Navigator', () => {
         });
 
       cy.location('pathname').should('equal', '/workspace1');
+    });
+
+    context('Files Settings', () => {
+      it('should able to add and remove files', () => {
+        cy.switchSettingSection(SETTING_SECTIONS.files);
+
+        cy.get('div.section-page-content').within(() => {
+          // upload the files by custom command "createJar"
+          files.forEach((file) => {
+            cy.get('input[type="file"]').then((element) => {
+              cy.createJar(file).then((params) => {
+                (element[0] as HTMLInputElement).files = params.fileList;
+                cy.wrap(element).trigger('change', { force: true });
+              });
+            });
+          });
+
+          // after upload file, click the upload file again
+          cy.wait(1000);
+          cy.findByTitle('Upload File').click();
+
+          cy.findByText(source.name).should('exist');
+          cy.findByText(sink.name).should('exist');
+          cy.findByText(stream.name).should('exist');
+
+          // check the source file could be removed
+          cy.get('table').within(($table) => {
+            cy.getTableCellByColumn($table, 'Name', source.name)
+              .siblings('td')
+              .last()
+              .within((el$) => {
+                el$.find('div[title="Delete file"]').click();
+              });
+          });
+        });
+        // confirm dialog
+        cy.findByTestId('confirm-button-DELETE').click();
+
+        // after removed, the file should not be existed
+        cy.get('div.section-page-content').within(() => {
+          cy.get('table').within(($table) => {
+            cy.getTableCellByColumn($table, 'Name', source.name).should(
+              'not.exist',
+            );
+          });
+
+          //filter
+          cy.findAllByPlaceholderText('Search')
+            .filter(':visible')
+            .type(stream.name);
+          cy.findByText(stream.name).should('exist');
+          cy.findByText(sink.name).should('not.exist');
+
+          // view the classNames of stream file
+          cy.get('table').within(($table) => {
+            cy.getTableCellByColumn($table, 'Name', stream.name)
+              .siblings('td')
+              .last()
+              .within((el$) => {
+                el$.find('div[title="View file"]').click();
+              });
+          });
+        });
+        // assert the class detail of stream
+        cy.findAllByText('DumbStream', { exact: false }).should('exist');
+      });
+
+      it('should able to select file in stream jars', () => {
+        cy.switchSettingSection(SETTING_SECTIONS.stream);
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add File').click();
+        });
+
+        // select the stream jar we just added
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', stream.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+            cy.findByText('SAVE').click();
+          });
+
+        // the selected jar should appear
+        cy.get('div.section-page-content').within(() => {
+          cy.findByText(stream.name).should('exist');
+          cy.get('table').within(($table) => {
+            cy.getTableCellByColumn($table, 'Name', stream.name).should(
+              'exist',
+            );
+            cy.getTableCellByColumn($table, 'Valid')
+              .should('exist')
+              // the upload jar should be valid
+              .find('svg[severity="success"]')
+              .should('exist');
+          });
+        });
+
+        // upload a fake jar
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add File').click();
+        });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('input[type="file"]').then((element) => {
+              const file = new File([], fakeJar.name);
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              const fileList = dataTransfer.files;
+              (element[0] as HTMLInputElement).files = fileList;
+              cy.wrap(element).trigger('change', { force: true });
+            });
+          });
+        // after upload file, click the upload file again
+        cy.wait(1000);
+        cy.findByTitle('Upload File').click();
+
+        // select the fake jar and de-select stream jar
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', stream.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .uncheck();
+              cy.getTableCellByColumn($table, 'Name', fakeJar.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+            cy.findByText('SAVE').click();
+          });
+
+        // the selected jar should appear
+        cy.get('div.section-page-content').within(() => {
+          cy.findByText(fakeJar.name).should('exist');
+          cy.get('table').within(($table) => {
+            cy.getTableCellByColumn($table, 'Name', fakeJar.name).should(
+              'exist',
+            );
+            cy.getTableCellByColumn($table, 'Valid')
+              .should('exist')
+              // the upload fake jar should not be valid
+              .find('svg[severity="warning"]')
+              .should('exist');
+          });
+        });
+
+        // after select the fake jar as stream
+        // we could not remove it from file list
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add File').click();
+        });
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn(
+                $table,
+                'Used',
+                undefined,
+                (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
+              )
+                .invoke('html')
+                .should('equal', '<div>Stream</div>');
+
+              cy.getTableCellByColumn(
+                $table,
+                'Actions',
+                undefined,
+                (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
+              ).within(() => {
+                cy.findByTitle('Cannot delete files that are in use').should(
+                  'exist',
+                );
+              });
+            });
+          });
+
+        // delete stream file
+        cy.get('table').within(($table) => {
+          cy.getTableCellByColumn(
+            $table,
+            'Actions',
+            undefined,
+            (row) => row.has(`td:contains("${stream.name}")`).length > 0,
+          ).within(() => {
+            cy.findByTitle('Delete file').click();
+          });
+        });
+        cy.findByTestId('confirm-button-DELETE').click();
+        // Since the file list table will be altered by redux state
+        // we need to wait for a period for changes applied
+        cy.wait(500);
+        cy.findByText(stream.name).should('not.exist');
+
+        // close file list and de-select fake jar as stream
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.findByText('CANCEL').click();
+          });
+        cy.findByTitle('Remove file').click();
+        cy.findAllByText('REMOVE').filter(':visible').click();
+        cy.findByText(fakeJar.name).should('not.exist');
+
+        // after de-select the fake jar
+        // we could remove it from file list
+        cy.get('div.section-page-content').within(() => {
+          cy.findByTitle('Add File').click();
+        });
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn(
+                $table,
+                'Used',
+                undefined,
+                (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
+              )
+                .invoke('html')
+                .should('be.empty');
+            });
+          });
+
+        // delete fake file
+        cy.get('table').within(($table) => {
+          cy.getTableCellByColumn(
+            $table,
+            'Actions',
+            undefined,
+            (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
+          ).within(() => {
+            cy.findByTitle('Delete file').click();
+          });
+        });
+        cy.findByTestId('confirm-button-DELETE').click();
+        // Since the file list table will be altered by redux state
+        // we need to wait for a period for changes applied
+        cy.wait(500);
+        cy.findByText(fakeJar.name).should('not.exist');
+      });
+
+      it('should able to select file in worker plugins', () => {
+        cy.switchSettingSection(
+          SETTING_SECTIONS.worker,
+          'Worker plugins and shared jars',
+        );
+
+        cy.get('div.plugins').findByTitle('Add File').click();
+
+        // select the sink jar
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', sink.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+            cy.findByText('SAVE').click();
+          });
+        cy.findByText(sink.name).should('exist');
+
+        // add the same file to shared jars
+        cy.get('div.shared-jars').findByTitle('Add File').click();
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.get('table').within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', sink.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+            cy.findByText('SAVE').click();
+          });
+
+        // we have uploaded two jars into worker
+        cy.findAllByText(sink.name).should('have.length', 2);
+
+        // undo uploaded jar into shared jars
+        cy.get('div.shared-jars').findByTitle('Undo add file').click();
+        cy.findAllByText(sink.name).should('have.length', 1);
+
+        cy.get('div.section-page-header').within(() => {
+          // back to Settings dialog
+          cy.get('button').click();
+        });
+
+        // the worker section should have 1 change warning
+        cy.contains('h2', SETTING_SECTIONS.worker)
+          .parent('section')
+          .find('ul')
+          .contains('span', '1');
+
+        // restart worker
+        cy.switchSettingSection(
+          SETTING_SECTIONS.dangerZone,
+          'Restart this worker',
+        );
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            cy.findByText('RESTART').click();
+          });
+
+        cy.findAllByRole('dialog')
+          .filter(':visible')
+          .should('have.length', 1)
+          .within(() => {
+            // expand the log process
+            cy.get('div.FlexIconButtonDiv').find('button').click();
+            cy.get('div.StyledCard').should('exist');
+
+            cy.findByText('Stop worker success', { exact: false });
+            cy.findByText('Start worker success', { exact: false });
+
+            cy.get('div.FlexFooterDiv')
+              .contains('button', 'CLOSE')
+              .should('be.enabled')
+              .click();
+          });
+        // close the snackbar
+        cy.findByTestId('snackbar').find('button:visible').click();
+
+        // close the settings dialog
+        cy.findByTestId('workspace-settings-dialog-close-button')
+          .should('be.visible')
+          .click();
+      });
     });
 
     context('Danger Zone', () => {

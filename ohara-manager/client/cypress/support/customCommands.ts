@@ -34,7 +34,6 @@ import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
 import { deleteAllServices } from '../utils';
-import { ObjectKey } from '../../src/api/apiInterface/basicInterface';
 
 interface FixtureResponse {
   name: string;
@@ -89,13 +88,26 @@ declare global {
       ) => Chainable<void>;
       deleteAllServices: () => Chainable<null>;
       /**
-       * get the &lt;td /&gt; element by required parameters.
-       * <p> if the columnValue was absent, the result will be the first matched DOM element.
+       * Get the _&lt;td /&gt;_ elements by required parameters.
+       * <p> This function has the following combination:
+       *
+       * <p> 1. `columnName`: filter all _&lt;td /&gt;_ elements of specific column.
+       *
+       * <p> 2. `columnName + columnValue`: filter the _&lt;td /&gt;_ element of specific column and value.
+       *
+       * <p> 3. `columnName + rowFilter`: filter the _&lt;td /&gt;_ element of specific column in specific rows.
+       *
+       * <p> 4. `columnName + columnValue + rowFilter`: filter the _&lt;td /&gt;_ element of specific column in specific rows.
+       *
+       * @param {string} columnName the filtered header of table cell
+       * @param {string} columnValue the filtered value of table cell
+       * @param {Function} rowFilter given a function to filter the result of elements
        */
       getTableCellByColumn: (
         $table: JQuery<HTMLTableElement>,
         columnName: string,
         columnValue?: string,
+        rowFilter?: (row: JQuery<HTMLTableElement>) => boolean,
       ) => Chainable<JQuery<HTMLElement | HTMLElement[]>>;
       // Paper
       // Drag & Drop
@@ -291,19 +303,26 @@ Cypress.Commands.add(
     $table: JQuery<HTMLTableElement>,
     columnName: string,
     columnValue?: string,
+    rowFilter?: (row: JQuery<HTMLTableElement>) => boolean,
   ) => {
     const header = $table.find('thead tr').find(`th:contains("${columnName}")`);
     const index = $table.find('thead tr th').index(header);
 
+    let tableRows = null;
+    if (rowFilter) {
+      tableRows = $table
+        .find('tbody tr')
+        .filter((_, element) => rowFilter(Cypress.$(element)));
+    } else {
+      tableRows = $table.find('tbody tr');
+    }
+
     const finalElement = columnValue
-      ? $table.has(`tbody tr td:contains("${columnValue}")`).length === 0
+      ? tableRows.has(`td:contains("${columnValue}")`).length === 0
         ? null
-        : $table.find(`tbody tr td:contains("${columnValue}")`)
-      : $table
-          .find('tbody tr')
-          .map(function (_, element) {
-            return Cypress.$(element).find('td').eq(index);
-          })
+        : tableRows.find(`td:contains("${columnValue}")`)
+      : tableRows
+          .map((_, element) => Cypress.$(element).find('td').eq(index))
           .get()
           .shift();
     return cy.wrap(finalElement);
