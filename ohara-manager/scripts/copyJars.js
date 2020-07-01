@@ -35,4 +35,6 @@ const copyJars = () => {
   });
 };
 
+copyJars();
+
 module.exports = copyJars;

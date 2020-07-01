@@ -57,11 +57,21 @@ task setup {
   }
 }
 
+task report {
+  if(!project.hasProperty('skipManager')) {
+    doLast {
+      exec {
+        commandLine toOsCommand('yarn', 'report:combined')
+      }
+    }
+  }
+}
+
 task test {
   if(!project.hasProperty('skipManager')) {
     doLast {
       exec {
-        commandLine toOsCommand('yarn', 'test')
+        commandLine toOsCommand('yarn', 'test:unit:ci')
       }
     }
   }

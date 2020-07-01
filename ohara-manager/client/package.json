@@ -10,17 +10,23 @@
     "start": "react-scripts start",
     "start:ci": "react-scripts -r @cypress/instrument-cra start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "test:watch": "yarn test",
-    "test:report": "cross-env CI=true yarn test --reporters=default --reporters=jest-junit",
-    "test:coverage": "yarn test --coverage --watchAll=false --coverageDirectory=coverage",
-    "test:coverage:check": "nyc report --compact false --reporter=text --check-coverage",
+    "test:unit": "react-scripts test --env=jsdom",
+    "pretest:unit:ci": "rm -rf coverage/ut || true",
+    "test:unit:ci": "cross-env CI=true yarn test:unit --coverage --watchAll=false --reporters=default --reporters=jest-junit --coverageDirectory=coverage/ut --collectCoverageFrom=\"src/{!(components|context),}{*,/**}\"",
     "test:api:open": "cross-env CYPRESS_CONFIG_FILE=api cypress open",
+    "pretest:api:run": "rm -rf coverage/api .nyc_output || true",
     "test:api:run": "cross-env CYPRESS_CONFIG_FILE=api cypress run",
+    "posttest:api:run": "nyc report --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/api",
     "test:it:open": "cross-env CYPRESS_CONFIG_FILE=it cypress open",
+    "pretest:it:run": "rm -rf coverage/it .nyc_output || true",
     "test:it:run": "cross-env CYPRESS_CONFIG_FILE=it cypress run",
+    "posttest:it:run": "nyc report --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/it",
     "test:e2e:open": "cross-env CYPRESS_CONFIG_FILE=e2e cypress open",
     "test:e2e:run": "cross-env CYPRESS_CONFIG_FILE=e2e cypress run",
+    "test:coverage:check": "nyc report --compact false --reporter=text --check-coverage",
+    "prereport:combined": "cp coverage/ut/coverage-final.json coverage/coverage_ut.json && cp coverage/api/coverage-final.json coverage/coverage_api.json && cp coverage/it/coverage-final.json coverage/coverage_it.json || true",
+    "report:combined": "nyc report --reporter=html --reporter=json-summary --temp-dir coverage || true",
+    "postreport:combined": "rm -rf coverage/coverage_*.json",
     "lint": "eslint --max-warnings 0 src cypress",
     "lint:ci": "cross-env CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit"
@@ -147,9 +153,6 @@
     "not op_mini all"
   ],
   "nyc": {
-    "reporter": [
-      "html",
-      "json-summary"
-    ]
+    "reporter": []
   }
 }
