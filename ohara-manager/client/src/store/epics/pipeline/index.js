@@ -17,6 +17,7 @@
 import { combineEpics } from 'redux-observable';
 import createPipelineEpic from './createPipelineEpic';
 import deletePipelineEpic from './deletePipelineEpic';
+import deletePipelinesEpic from './deletePipelinesEpic';
 import updatePipelineMetricsEpic from './updatePipelineMetricsEpic';
 import switchPipelineEpic from './switchPipelineEpic';
 import updatePipelineEpic from './updatePipelineEpic';
@@ -24,6 +25,7 @@ import updatePipelineEpic from './updatePipelineEpic';
 export default combineEpics(
   createPipelineEpic,
   deletePipelineEpic,
+  deletePipelinesEpic,
   updatePipelineMetricsEpic,
   switchPipelineEpic,
   updatePipelineEpic,

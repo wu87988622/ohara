@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import { LOG_LEVEL } from 'const';
@@ -22,9 +23,11 @@ import stopWorkerEpic from '../../worker/stopWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { of } from 'rxjs';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
+jest.mock('api/connectorApi');
+jest.mock('api/pipelineApi');
+jest.mock('api/streamApi');
 jest.mock('api/workerApi');
 
 const wkId = getId(workerEntity);
@@ -34,9 +37,14 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
+let spyStopWorker;
+let spyGetWorker;
+
 beforeEach(() => {
   // ensure the mock data is as expected before each test
   jest.restoreAllMocks();
+  spyStopWorker = jest.spyOn(workerApi, 'stop');
+  spyGetWorker = jest.spyOn(workerApi, 'get');
 });
 
 it('stop worker should be worked correctly', () => {
@@ -79,14 +87,16 @@ it('stop worker should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyStopWorker).toHaveBeenCalledTimes(1);
+    expect(spyGetWorker).toHaveBeenCalledTimes(1);
   });
 });
 
 it('stop worker failed after reach retry limit', () => {
   // mock a 20 times "failed stopped" results
-  const spyGet = jest.spyOn(workerApi, 'get');
   for (let i = 0; i < 20; i++) {
-    spyGet.mockReturnValueOnce(
+    spyGetWorker.mockReturnValueOnce(
       of({
         status: 200,
         title: 'retry mock get data',
@@ -95,7 +105,7 @@ it('stop worker failed after reach retry limit', () => {
     );
   }
   // get result finally
-  spyGet.mockReturnValueOnce(
+  spyGetWorker.mockReturnValueOnce(
     of({
       status: 200,
       title: 'retry mock get data',
@@ -106,10 +116,13 @@ it('stop worker failed after reach retry limit', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a             ';
+    const input = '   ^-a                   ';
     // we failed after retry 10 times (10 * 2000ms = 20s)
     const expected = '--a 19999ms (vu)';
-    const subs = ['   ^---------------', '--^ 19999ms !'];
+    const subs = [
+      '               ^---------------------',
+      '               --^ 19999ms !   ',
+    ];
 
     const action$ = hot(input, {
       a: {
@@ -150,6 +163,9 @@ it('stop worker failed after reach retry limit', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyStopWorker).toHaveBeenCalledTimes(11);
+    expect(spyGetWorker).toHaveBeenCalledTimes(11);
   });
 });
 
@@ -158,8 +174,11 @@ it('stop worker multiple times should be executed once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
-    const subs = ['   ^----------------', '--^ 499ms !'];
+    const expected = '--a 499ms v      ';
+    const subs = [
+      '               ^----------------',
+      '               --^ 499ms !      ',
+    ];
 
     const action$ = hot(input, {
       a: {
@@ -193,6 +212,9 @@ it('stop worker multiple times should be executed once', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyStopWorker).toHaveBeenCalledTimes(1);
+    expect(spyGetWorker).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -204,13 +226,14 @@ it('stop different worker should be worked correctly', () => {
       ...workerEntity,
       name: 'anotherwk',
       group: 'default',
-      xms: 1111,
-      xmx: 2222,
-      clientPort: 3333,
     };
-    const input = '   ^-a--b           ';
+    const input = '   ^-a--b                 ';
     const expected = '--a--b 496ms y--z';
-    const subs = ['   ^----------------', '--^ 499ms !', '-----^ 499ms !'];
+    const subs = [
+      '               ^----------------------',
+      '               --^ 499ms !            ',
+      '               -----^ 499ms !         ',
+    ];
 
     const action$ = hot(input, {
       a: {
@@ -219,7 +242,9 @@ it('stop different worker should be worked correctly', () => {
       },
       b: {
         type: actions.stopWorker.TRIGGER,
-        payload: { values: anotherWorkerEntity },
+        payload: {
+          values: anotherWorkerEntity,
+        },
       },
     });
     const output$ = stopWorkerEpic(action$);

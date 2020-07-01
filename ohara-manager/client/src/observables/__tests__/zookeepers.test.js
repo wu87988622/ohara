@@ -15,7 +15,6 @@
  */
 
 import { of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 import { times } from 'lodash';
 
@@ -49,25 +48,6 @@ it('get zookeeper should be worked correctly', () => {
     const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
 
     const expected = '- 499ms (v|)';
-
-    const output$ = fetchZookeeper(params);
-
-    expectObservable(output$).toBe(expected, {
-      v: zookeeperEntity,
-    });
-  });
-});
-
-it('get zookeeper should be worked correctly - Retry', () => {
-  makeTestScheduler().run(({ expectObservable }) => {
-    jest.restoreAllMocks();
-    const spyGet = jest.spyOn(zookeeperApi, 'get');
-    times(3, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
-    spyGet.mockReturnValueOnce(of(RESPONSES.success).pipe(delay(500)));
-
-    const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
-
-    const expected = '500ms (v|)';
 
     const output$ = fetchZookeeper(params);
 

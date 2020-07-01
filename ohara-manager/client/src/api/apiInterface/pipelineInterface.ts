@@ -36,7 +36,7 @@ interface ObjectAbstract {
     [k: string]: any;
   };
 }
-interface Pipeline {
+export interface Pipeline {
   name: string;
   group: string;
   endpoints: EndPoint[];

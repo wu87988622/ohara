@@ -42,6 +42,12 @@ export const entity = {
   nodeMetrics: {},
 };
 
+export const entities = [
+  entity,
+  { ...entity, name: 'topic1' },
+  { ...entity, name: 'topic2' },
+];
+
 let runtimeData: ClusterData = {
   aliveNodes: [],
   lastModified: 0,

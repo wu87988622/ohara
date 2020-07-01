@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
+import { defer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
 import * as workspaceApi from 'api/workspaceApi';
-import { deferApi } from './internal/deferApi';
 
 export function createWorkspace(values: any) {
-  return deferApi(() => workspaceApi.create(values)).pipe(
-    map((res) => res.data),
-  );
+  return defer(() => workspaceApi.create(values)).pipe(map((res) => res.data));
 }
 
 export function deleteWorkspace(key: ObjectKey) {
-  return deferApi(() => workspaceApi.remove(key));
+  return defer(() => workspaceApi.remove(key));
+}
+
+export function fetchWorkspaces() {
+  return defer(() => workspaceApi.getAll()).pipe(map((res) => res.data));
 }

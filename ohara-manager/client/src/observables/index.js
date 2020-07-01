@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-export * from './internal/deferApi';
 export * from './internal/retry';
 
 export * from './brokers';
+export * from './connectors';
+export * from './files';
+export * from './pipelines';
+export * from './shabondis';
+export * from './streams';
+export * from './topics';
 export * from './workers';
 export * from './workspaces';
 export * from './zookeepers';

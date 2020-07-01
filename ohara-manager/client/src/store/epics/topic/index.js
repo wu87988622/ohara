@@ -18,9 +18,11 @@ import { combineEpics } from 'redux-observable';
 import fetchTopicsEpic from './fetchTopicsEpic';
 import createTopicEpic from './createTopicEpic';
 import deleteTopicEpic from './deleteTopicEpic';
+import deleteTopicsEpic from './deleteTopicsEpic';
 import updateTopicEpic from './updateTopicEpic';
 import startTopicEpic from './startTopicEpic';
 import stopTopicEpic from './stopTopicEpic';
+import stopTopicsEpic from './stopTopicsEpic';
 import createAndStartTopicEpic from './createAndStartTopicEpic';
 import stopAndDeleteTopicEpic from './stopAndDeleteTopicEpic';
 
@@ -28,9 +30,11 @@ export default combineEpics(
   fetchTopicsEpic,
   createTopicEpic,
   deleteTopicEpic,
+  deleteTopicsEpic,
   updateTopicEpic,
   startTopicEpic,
   stopTopicEpic,
+  stopTopicsEpic,
   createAndStartTopicEpic,
   stopAndDeleteTopicEpic,
 );

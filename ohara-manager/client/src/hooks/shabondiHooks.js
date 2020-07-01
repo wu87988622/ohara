@@ -107,6 +107,26 @@ export const useStopShabondiAction = () => {
     );
 };
 
+export const useStopShabondisAction = () => {
+  const dispatch = useDispatch();
+  const workspaceGroup = hooks.useWorkspaceGroup();
+  return useCallback(
+    (workspaceName) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopShabondis.trigger({
+            values: {
+              workspaceKey: { name: workspaceName, group: workspaceGroup },
+            },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceGroup],
+  );
+};
+
 export const useDeleteShabondiAction = () => {
   const dispatch = useDispatch();
   const group = useShabondiGroup();
@@ -117,6 +137,24 @@ export const useDeleteShabondiAction = () => {
         options,
       }),
     );
+};
+
+export const useDeleteShabondisInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteShabondis.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
 };
 
 export const useFetchShabondisAction = () => {

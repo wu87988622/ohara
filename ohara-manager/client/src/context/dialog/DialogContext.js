@@ -94,12 +94,6 @@ const createUseDialogActions = (name) => () => {
   };
 };
 
-const useEditWorkspaceDialog = createUseDialogActions(
-  dialogNames.EDIT_WORKSPACE_DIALOG,
-);
-const useWorkspaceSettingsDialog = createUseDialogActions(
-  dialogNames.WORKSPACE_SETTINGS_DIALOG,
-);
 const useAddTopicDialog = createUseDialogActions(dialogNames.ADD_TOPIC_DIALOG);
 const useViewTopicDialog = createUseDialogActions(
   dialogNames.VIEW_TOPIC_DIALOG,
@@ -126,9 +120,7 @@ const useAddPluginDialog = createUseDialogActions(
 export {
   DialogProvider,
   // Workspace
-  useEditWorkspaceDialog,
   useListWorkspacesDialog,
-  useWorkspaceSettingsDialog,
   // Topic
   useAddTopicDialog,
   useViewTopicDialog,

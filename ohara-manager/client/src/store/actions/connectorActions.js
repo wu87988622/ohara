@@ -22,7 +22,9 @@ export const createConnector = createRoutine('CREATE_CONNECTOR');
 export const updateConnector = createRoutine('UPDATE_CONNECTOR');
 export const startConnector = createRoutine('START_CONNECTOR');
 export const stopConnector = createRoutine('STOP_CONNECTOR');
+export const stopConnectors = createRoutine('STOP_CONNECTORS');
 export const deleteConnector = createRoutine('DELETE_CONNECTOR');
+export const deleteConnectors = createRoutine('DELETE_CONNECTORS');
 export const updateConnectorLink = createRoutine('UPDATE_CONNECTOR_LINK');
 export const removeConnectorSourceLink = createRoutine(
   'REMOVE_CONNECTOR_SOURCE_LINK',

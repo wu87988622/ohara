@@ -107,6 +107,23 @@ export const useStopConnectorAction = () => {
     );
 };
 
+export const useStopConnectorsAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    (workerKey) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopConnectors.trigger({
+            values: { workerKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch],
+  );
+};
+
 export const useDeleteConnectorAction = () => {
   const dispatch = useDispatch();
   const group = useConnectorGroup();
@@ -117,6 +134,24 @@ export const useDeleteConnectorAction = () => {
         options,
       }),
     );
+};
+
+export const useDeleteConnectorsInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteConnectors.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
 };
 
 export const useFetchConnectorsAction = () => {

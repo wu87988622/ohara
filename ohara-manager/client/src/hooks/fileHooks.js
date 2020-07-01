@@ -65,6 +65,24 @@ export const useDeleteFileAction = () => {
   );
 };
 
+export const useDeleteFilesInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteFiles.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
+};
+
 export const useFiles = () => {
   const group = useFileGroup();
   const isLoaded = useIsFileLoaded();

@@ -18,7 +18,9 @@ import { combineEpics } from 'redux-observable';
 import createConnectorEpic from './createConnectorEpic';
 import startConnectorEpic from './startConnectorEpic';
 import stopConnectorEpic from './stopConnectorEpic';
+import stopConnectorsEpic from './stopConnectorsEpic';
 import deleteConnectorEpic from './deleteConnectorEpic';
+import deleteConnectorsEpic from './deleteConnectorsEpic';
 import updateConnectorEpic from './updateConnectorEpic';
 import updateLinkConnectorEpic from './updateLinkConnectorEpic';
 import removeSourceLinkEpic from './removeSourceLinkEpic';
@@ -28,11 +30,13 @@ import fetchConnectorsEpic from './fetchConnectorsEpic';
 export default combineEpics(
   createConnectorEpic,
   deleteConnectorEpic,
+  deleteConnectorsEpic,
   fetchConnectorsEpic,
   removeSourceLinkEpic,
   removeSinkLinkEpic,
   startConnectorEpic,
   stopConnectorEpic,
+  stopConnectorsEpic,
   updateConnectorEpic,
   updateLinkConnectorEpic,
 );

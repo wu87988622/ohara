@@ -28,6 +28,7 @@ import logProgress from './logProgress';
 import node from './node';
 import pipeline from './pipeline';
 import restartWorkspace from './restartWorkspace';
+import settings from './settings';
 import shabondi from './shabondi';
 import stream from './stream';
 import snackbar from './snackbar';
@@ -50,6 +51,7 @@ export default combineReducers({
   node,
   pipeline,
   restartWorkspace,
+  settings,
   shabondi,
   stream,
   snackbar,

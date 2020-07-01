@@ -17,7 +17,6 @@
 import React from 'react';
 
 import { TopicTable } from 'components/Topic';
-import * as context from 'context';
 import * as hooks from 'hooks';
 
 function SharedTopicTable() {
@@ -26,7 +25,7 @@ function SharedTopicTable() {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const handleCreate = (topicToCreate) => {
     return createAndStartTopic({
@@ -44,7 +43,7 @@ function SharedTopicTable() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettingsDialog();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

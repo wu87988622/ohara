@@ -33,7 +33,7 @@ import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import { deleteWorker } from 'observables';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import { getId, getKey } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
 export const deleteWorker$ = (params) => {
@@ -78,7 +78,9 @@ export default (action$) =>
     distinctUntilChanged(),
     mergeMap(({ values, resolve, reject }) => {
       const workerId = getId(values);
-      return deleteWorker(values).pipe(
+      const workerKey = getKey(values);
+
+      return deleteWorker(workerKey).pipe(
         map(() => {
           if (resolve) resolve();
           return actions.deleteWorker.success({ workerId });

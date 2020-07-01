@@ -27,6 +27,7 @@ export * from './logProgressHooks';
 export * from './nodeHooks';
 export * from './pipelineHooks';
 export * from './restartWorkspaceHooks';
+export * from './settingsHooks';
 export * from './shabondiHooks';
 export * from './streamHooks';
 export * from './reduxFormHooks';

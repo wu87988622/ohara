@@ -33,6 +33,14 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
+let spyDeleteWorker;
+
+beforeEach(() => {
+  // ensure the mock data is as expected before each test
+  jest.restoreAllMocks();
+  spyDeleteWorker = jest.spyOn(workerApi, 'remove');
+});
+
 it('delete worker should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
@@ -67,6 +75,8 @@ it('delete worker should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyDeleteWorker).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -76,8 +86,15 @@ it('delete multiple workers should be worked correctly', () => {
 
     const input = '   ^-ab         ';
     const expected = '--ab 998ms uv';
-    const subs = ['   ^------------', '--^ 999ms !', '---^ 999ms !'];
-    const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
+    const subs = [
+      '               ^------------',
+      '               --^ 999ms !',
+      '               ---^ 999ms !',
+    ];
+    const anotherWorkerEntity = {
+      ...workerEntity,
+      name: 'wk01',
+    };
 
     const action$ = hot(input, {
       a: {
@@ -86,7 +103,9 @@ it('delete multiple workers should be worked correctly', () => {
       },
       b: {
         type: actions.deleteWorker.TRIGGER,
-        payload: { values: anotherWorkerEntity },
+        payload: {
+          values: anotherWorkerEntity,
+        },
       },
     });
     const output$ = deleteWorkerEpic(action$);
@@ -121,6 +140,8 @@ it('delete multiple workers should be worked correctly', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyDeleteWorker).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -158,6 +179,8 @@ it('delete same worker within period should be created once only', () => {
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
+
+    expect(spyDeleteWorker).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -167,14 +190,14 @@ it('throw exception of delete worker should also trigger event log action', () =
     data: {},
     title: 'mock delete worker failed',
   };
-  const spyDelete = jest
-    .spyOn(workerApi, 'remove')
-    .mockReturnValue(throwError(error));
+
+  spyDeleteWorker.mockReturnValue(throwError(error));
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----|';
+    // we need 500 ms to get all connectors and 1000ms to delete all connectors
     const expected = '--(aeu)-|';
     const subs = ['   ^-------!', '--(^!)'];
 
@@ -193,7 +216,10 @@ it('throw exception of delete worker should also trigger event log action', () =
       },
       e: {
         type: actions.deleteWorker.FAILURE,
-        payload: { ...error, workerId: wkId },
+        payload: {
+          ...error,
+          workerId: wkId,
+        },
       },
       u: {
         type: actions.createEventLog.TRIGGER,
@@ -209,6 +235,6 @@ it('throw exception of delete worker should also trigger event log action', () =
 
     flush();
 
-    expect(spyDelete).toHaveBeenCalled();
+    expect(spyDeleteWorker).toHaveBeenCalledTimes(1);
   });
 });

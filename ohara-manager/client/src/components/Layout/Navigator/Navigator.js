@@ -24,7 +24,6 @@ import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import Typography from '@material-ui/core/Typography';
 
-import * as context from 'context';
 import * as hooks from 'hooks';
 import PipelineList from './PipelineList';
 import Outline from './Outline';
@@ -38,14 +37,14 @@ const Navigator = ({ pipelineApi }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const currentWorkspace = hooks.useWorkspace();
-  const { open: openEditWorkspaceDialog } = context.useEditWorkspaceDialog();
+  const openSettings = hooks.useOpenSettingsAction();
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuItemClick = (pageName) => () => {
-    openEditWorkspaceDialog(pageName);
+    openSettings({ pageName });
     setAnchorEl(null);
   };
 

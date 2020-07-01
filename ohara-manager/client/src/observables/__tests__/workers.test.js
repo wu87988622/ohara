@@ -15,7 +15,6 @@
  */
 
 import { of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 import { times } from 'lodash';
 
@@ -49,25 +48,6 @@ it('get worker should be worked correctly', () => {
     const params = { group: workerEntity.group, name: workerEntity.name };
 
     const expected = '- 499ms (v|)';
-
-    const output$ = fetchWorker(params);
-
-    expectObservable(output$).toBe(expected, {
-      v: workerEntity,
-    });
-  });
-});
-
-it('get worker should be worked correctly - Retry', () => {
-  makeTestScheduler().run(({ expectObservable }) => {
-    jest.restoreAllMocks();
-    const spyGet = jest.spyOn(workerApi, 'get');
-    times(3, () => spyGet.mockReturnValueOnce(throwError(RESPONSES.error)));
-    spyGet.mockReturnValueOnce(of(RESPONSES.success).pipe(delay(500)));
-
-    const params = { group: workerEntity.group, name: workerEntity.name };
-
-    const expected = '500ms (v|)';
 
     const output$ = fetchWorker(params);
 

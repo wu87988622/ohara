@@ -135,6 +135,24 @@ export const useDeletePipelineAction = () => {
   );
 };
 
+export const useDeletePipelinesInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deletePipelines.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
+};
+
 export const useSetSelectedCellAction = () => {
   const dispatch = useDispatch();
   return useCallback(

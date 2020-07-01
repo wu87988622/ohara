@@ -18,7 +18,9 @@ import { combineEpics } from 'redux-observable';
 import createShabondiEpic from './createShabondiEpic';
 import startShabondiEpic from './startShabondiEpic';
 import stopShabondiEpic from './stopShabondiEpic';
+import stopShabondisEpic from './stopShabondisEpic';
 import deleteShabondiEpic from './deleteShabondiEpic';
+import deleteShabondisEpic from './deleteShabondisEpic';
 import updateShabondiEpic from './updateShabondiEpic';
 import updateLinkShabondiEpic from './updateLinkShabondiEpic';
 import removeShabondiSourceLinkEpic from './removeShabondiSourceLinkEpic';
@@ -28,11 +30,13 @@ import fetchShabondisEpic from './fetchShabondisEpic';
 export default combineEpics(
   createShabondiEpic,
   deleteShabondiEpic,
+  deleteShabondisEpic,
   fetchShabondisEpic,
   removeShabondiSourceLinkEpic,
   removeShabondiSinkLinkEpic,
   startShabondiEpic,
   stopShabondiEpic,
+  stopShabondisEpic,
   updateShabondiEpic,
   updateLinkShabondiEpic,
 );

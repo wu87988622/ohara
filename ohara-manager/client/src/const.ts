@@ -125,3 +125,10 @@ export enum ACTIONS {
   START_BROKER = 'START_BROKER',
   START_ZOOKEEPER = 'START_ZOOKEEPER',
 }
+
+// retry every 2 seconds, up to 10 times
+export const RETRY_CONFIG = {
+  initialInterval: 2000, // 2 seconds
+  maxRetries: 10,
+  maxInterval: 2000, // 2 seconds interval between each retry
+};

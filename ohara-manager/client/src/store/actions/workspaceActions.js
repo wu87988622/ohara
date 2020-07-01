@@ -22,4 +22,3 @@ export const fetchWorkspaces = createRoutine('FETCH_WORKSPACES');
 export const updateWorkspace = createRoutine('UPDATE_WORKSPACE');
 export const switchWorkspace = createRoutine('SWITCH_WORKSPACE');
 export const restartWorkspace = createRoutine('RESTART_WORKSPACE');
-export const simpleDeleteWorkspace = createRoutine('SIMPLE_DELETE_WORKSPACE');

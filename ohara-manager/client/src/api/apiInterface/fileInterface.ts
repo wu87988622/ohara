@@ -24,7 +24,7 @@ export interface FileRequest {
   tags?: object;
 }
 
-interface Data {
+export interface Data {
   name: string;
   group: string;
   url?: string;

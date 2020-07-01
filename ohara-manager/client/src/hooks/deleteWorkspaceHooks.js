@@ -18,9 +18,7 @@ import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as actions from 'store/actions';
-import * as hooks from 'hooks';
 import * as selectors from 'store/selectors';
-import { getKey } from 'utils/object';
 
 export const useOpenDeleteWorkspaceDialogAction = () => {
   const dispatch = useDispatch();
@@ -58,51 +56,5 @@ export const useRollbackDeleteWorkspaceAction = () => {
   return useCallback(
     () => dispatch(actions.rollbackDeleteWorkspace.trigger()),
     [dispatch],
-  );
-};
-
-export const useDeleteWorkspaceAction = () => {
-  const dispatch = useDispatch();
-
-  // Streams, shabondis and connectors are all using the same group
-  const group = hooks.useConnectorGroup();
-
-  const zookeeperKey = getKey(hooks.useZookeeper());
-  const brokerKey = getKey(hooks.useBroker());
-  const workerKey = getKey(hooks.useWorker());
-  const workspaceKey = getKey(hooks.useWorkspace());
-  const pipelineKeys = hooks.usePipelines().map(getKey);
-  const files = hooks.useFiles();
-  const connectorKeys = useSelector((state) =>
-    selectors.getConnectorByGroup(state, { group }),
-  ).map(getKey);
-  const shabondiKeys = useSelector((state) =>
-    selectors.getShabondisByGroup(state, { group }),
-  ).map(getKey);
-  const streamKeys = useSelector((state) =>
-    selectors.getStreamByGroup(state, { group }),
-  ).map(getKey);
-
-  const values = {
-    zookeeperKey,
-    brokerKey,
-    workerKey,
-    workspaceKey,
-    pipelineKeys,
-    connectorKeys,
-    shabondiKeys,
-    streamKeys,
-    files,
-  };
-
-  return useCallback(
-    (options) =>
-      dispatch(
-        actions.deleteWorkspace.trigger({
-          values,
-          options,
-        }),
-      ),
-    [dispatch, values],
   );
 };

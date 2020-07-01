@@ -34,7 +34,6 @@ import WarningIcon from '@material-ui/icons/Warning';
 import { IconWrapper } from 'components/common/Icon';
 import { FileTable, FileRemoveDialog } from 'components/File';
 import { KIND } from 'const';
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
 import WorkspaceFileSelectorDialog from '../common/WorkspaceFileSelectorDialog';
@@ -45,7 +44,7 @@ function StreamJarsPage() {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const pipelines = hooks.usePipelines();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -141,7 +140,7 @@ function StreamJarsPage() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettingsDialog();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

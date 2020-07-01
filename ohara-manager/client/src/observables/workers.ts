@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-import { throwError, zip } from 'rxjs';
+import { defer, throwError, zip } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as workerApi from 'api/workerApi';
-import { deferApi } from './internal/deferApi';
+import { RETRY_CONFIG } from 'const';
 import { isServiceRunning } from './utils';
 
 export function createWorker(values: any) {
-  return deferApi(() => workerApi.create(values)).pipe(map((res) => res.data));
+  return defer(() => workerApi.create(values)).pipe(map((res) => res.data));
 }
 
 export function fetchWorker(values: ObjectKey) {
-  return deferApi(() => workerApi.get(values)).pipe(map((res) => res.data));
+  return defer(() => workerApi.get(values)).pipe(map((res) => res.data));
 }
 
 export function startWorker(key: ObjectKey) {
   return zip(
     // attempt to start at intervals
-    deferApi(() => workerApi.start(key)),
+    defer(() => workerApi.start(key)),
     // wait until the service is running
-    deferApi(() => workerApi.get(key)).pipe(
+    defer(() => workerApi.get(key)).pipe(
       map((res) => {
         if (!isServiceRunning(res)) throw res;
         return res.data;
@@ -45,17 +45,13 @@ export function startWorker(key: ObjectKey) {
   ).pipe(
     map(([, data]) => data),
     // retry every 2 seconds, up to 10 times
-    retryBackoff({
-      initialInterval: 2000,
-      maxRetries: 10,
-      maxInterval: 2000,
-    }),
+    retryBackoff(RETRY_CONFIG),
     catchError((error) =>
       throwError({
         data: error?.data,
         meta: error?.meta,
         title:
-          `Try to start worker: "${key.name}" failed after retry 10 times. ` +
+          `Try to start worker: "${key.name}" failed after retry ${RETRY_CONFIG.maxRetries} times. ` +
           `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${error.data.state}`,
       }),
     ),
@@ -65,11 +61,11 @@ export function startWorker(key: ObjectKey) {
 export function stopWorker(key: ObjectKey) {
   return zip(
     // attempt to stop at intervals
-    deferApi(() => workerApi.stop(key)),
+    defer(() => workerApi.stop(key)),
     // wait until the service is not running
-    deferApi(() => workerApi.get(key)).pipe(
+    defer(() => workerApi.get(key)).pipe(
       map((res) => {
-        if (isServiceRunning(res)) throw res;
+        if (res.data?.state) throw res;
         return res.data;
       }),
     ),
@@ -77,16 +73,21 @@ export function stopWorker(key: ObjectKey) {
     map(([, data]) => data),
     // retry every 2 seconds, up to 10 times
     retryBackoff({
-      initialInterval: 2000,
-      maxRetries: 10,
-      maxInterval: 2000,
+      ...RETRY_CONFIG,
+      shouldRetry: (error) => {
+        const errorCode = error?.data?.error?.code;
+        if (errorCode?.match(/NoSuchElementException$/)) {
+          return false;
+        }
+        return true;
+      },
     }),
     catchError((error) =>
       throwError({
         data: error?.data,
         meta: error?.meta,
         title:
-          `Try to stop worker: "${key.name}" failed after retry 10 times. ` +
+          `Try to stop worker: "${key.name}" failed after retry ${RETRY_CONFIG.maxRetries} times. ` +
           `Expected state is nonexistent, Actual state: ${error.data.state}`,
       }),
     ),
@@ -94,5 +95,5 @@ export function stopWorker(key: ObjectKey) {
 }
 
 export function deleteWorker(key: ObjectKey) {
-  return deferApi(() => workerApi.remove(key));
+  return defer(() => workerApi.remove(key));
 }

@@ -27,7 +27,7 @@ import AddIcon from '@material-ui/icons/Add';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { times } from 'lodash';
 
-import * as context from 'context';
+import * as hooks from 'hooks';
 import ToolboxRedirectButton from './ToolboxRedirectButton';
 
 const ToolboxList = (props) => {
@@ -40,10 +40,10 @@ const ToolboxList = (props) => {
     pipelineDispatch,
     expanded,
   } = props;
-  const { open } = context.useWorkspaceSettingsDialog();
+  const openSettings = hooks.useOpenSettingsAction();
 
   const handleRedirect = (pageName) => {
-    open(pageName);
+    openSettings({ pageName });
   };
 
   return (

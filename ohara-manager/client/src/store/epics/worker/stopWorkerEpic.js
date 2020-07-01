@@ -20,13 +20,14 @@ import { ofType } from 'redux-observable';
 import { defer, of, iif, throwError, zip, from } from 'rxjs';
 import {
   catchError,
+  concatMap,
   delay,
+  distinctUntilChanged,
   map,
+  mergeMap,
   retryWhen,
   startWith,
-  concatMap,
-  distinctUntilChanged,
-  mergeMap,
+  tap,
   takeUntil,
 } from 'rxjs/operators';
 
@@ -35,7 +36,7 @@ import * as workerApi from 'api/workerApi';
 import { stopWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { getId } from 'utils/object';
+import { getId, getKey } from 'utils/object';
 
 // Note: The caller SHOULD handle the error of this action
 export const stopWorker$ = (params) => {
@@ -80,14 +81,19 @@ export default (action$) =>
     distinctUntilChanged(),
     mergeMap(({ values, resolve, reject }) => {
       const workerId = getId(values);
-      return stopWorker(values).pipe(
-        map((data) => {
+      const workerKey = getKey(values);
+
+      return stopWorker(workerKey).pipe(
+        tap((data) => {
           if (resolve) resolve(data);
-          const normalizedData = merge(normalize(data, schema.worker), {
-            workerId,
-          });
-          return actions.stopWorker.success(normalizedData);
+          return data;
         }),
+        map((data) =>
+          merge(normalize(data, schema.worker), {
+            workerId,
+          }),
+        ),
+        map((normalizedData) => actions.stopWorker.success(normalizedData)),
         startWith(actions.stopWorker.request({ workerId })),
         catchError((err) => {
           if (reject) reject(err);

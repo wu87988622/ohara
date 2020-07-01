@@ -18,6 +18,7 @@ import { createRoutine } from 'redux-routines';
 
 export const createPipeline = createRoutine('CREATE_PIPELINE');
 export const deletePipeline = createRoutine('DELETE_PIPELINE');
+export const deletePipelines = createRoutine('DELETE_PIPELINES');
 export const fetchPipeline = createRoutine('FETCH_PIPELINE');
 export const fetchPipelines = createRoutine('FETCH_PIPELINES');
 export const updatePipeline = createRoutine('UPDATE_PIPELINE');

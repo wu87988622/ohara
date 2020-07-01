@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
@@ -23,39 +24,41 @@ import {
   map,
   mergeMap,
   startWith,
+  tap,
   takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
-import { deleteWorkspace } from 'observables';
+import { fetchAndDeleteFiles } from 'observables';
 import * as actions from 'store/actions';
-import { getId } from 'utils/object';
+import * as schema from 'store/schema';
 
 export default (action$) =>
   action$.pipe(
-    ofType(actions.simpleDeleteWorkspace.TRIGGER),
+    ofType(actions.deleteFiles.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
     mergeMap(({ values, resolve, reject }) => {
-      const workspaceId = getId(values);
-      return deleteWorkspace(values).pipe(
-        mergeMap(() => {
-          if (resolve) resolve();
-          return from([
-            actions.simpleDeleteWorkspace.success({ workspaceId }),
-            actions.switchWorkspace(),
-            actions.fetchNodes(),
-          ]);
+      const { workspaceKey } = values;
+      return fetchAndDeleteFiles(workspaceKey).pipe(
+        tap((data) => {
+          if (resolve) resolve(data);
+          return data;
         }),
-        startWith(actions.simpleDeleteWorkspace.request({ workspaceId })),
+        map((data) => normalize(data, [schema.topic])),
+        map((normalizedData) => actions.deleteFiles.success(normalizedData)),
+        startWith(actions.deleteFiles.request()),
         catchError((err) => {
           if (reject) reject(err);
           return from([
-            actions.simpleDeleteWorkspace.failure(merge(err, { workspaceId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
+            actions.deleteFiles.failure(merge(err)),
+            actions.createEventLog.trigger({
+              ...err,
+              type: LOG_LEVEL.error,
+            }),
           ]);
         }),
-        takeUntil(action$.pipe(ofType(actions.simpleDeleteWorkspace.CANCEL))),
+        takeUntil(action$.pipe(ofType(actions.deleteFiles.CANCEL))),
       );
     }),
   );

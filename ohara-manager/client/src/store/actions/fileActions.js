@@ -19,3 +19,4 @@ import { createRoutine } from 'redux-routines';
 export const fetchFiles = createRoutine('FETCH_FILES');
 export const createFile = createRoutine('CREATE_FILE');
 export const deleteFile = createRoutine('DELETE_FILE');
+export const deleteFiles = createRoutine('DELETE_FILES');

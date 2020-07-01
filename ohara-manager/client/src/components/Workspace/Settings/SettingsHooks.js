@@ -69,7 +69,7 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
 */
 
 export const useConfig = ({
-  openDeleteProgressDialog,
+  deleteWorkspace,
   hasRunningServices,
   restartConfirmMessage,
   openRestartWorkerProgressDialog,
@@ -339,7 +339,7 @@ export const useConfig = ({
             confirmDisabled: !isDeleteEnabled,
             confirmText: 'DELETE',
             maxWidth: 'sm',
-            onConfirm: openDeleteProgressDialog,
+            onConfirm: deleteWorkspace,
           },
         },
       ],

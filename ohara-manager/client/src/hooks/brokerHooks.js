@@ -31,6 +31,15 @@ export const useBrokerName = () => {
   return brokerName;
 };
 
+export const useBrokerKey = () => {
+  const group = useBrokerGroup();
+  const name = useBrokerName();
+  return {
+    name,
+    group,
+  };
+};
+
 export const useBrokerId = () => {
   const group = hooks.useBrokerGroup();
   const name = hooks.useBrokerName();

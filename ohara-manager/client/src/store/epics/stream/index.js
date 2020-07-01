@@ -19,8 +19,10 @@ import createStreamEpic from './createStreamEpic';
 import fetchStreamsEpic from './fetchStreamsEpic';
 import updateStreamEpic from './updateStreamEpic';
 import deleteStreamEpic from './deleteStreamEpic';
+import deleteStreamsEpic from './deleteStreamsEpic';
 import startStreamEpic from './startStreamEpic';
 import stopStreamEpic from './stopStreamEpic';
+import stopStreamsEpic from './stopStreamsEpic';
 import stopAndDeleteStreamEpic from './stopAndDeleteStreamEpic';
 import removeStreamToLinkEpic from './removeStreamToLinkEpic';
 import removeStreamFromLinkEpic from './removeStreamFromLinkEpic';
@@ -31,8 +33,10 @@ export default combineEpics(
   fetchStreamsEpic,
   updateStreamEpic,
   deleteStreamEpic,
+  deleteStreamsEpic,
   startStreamEpic,
   stopStreamEpic,
+  stopStreamsEpic,
   stopAndDeleteStreamEpic,
   removeStreamToLinkEpic,
   removeStreamFromLinkEpic,

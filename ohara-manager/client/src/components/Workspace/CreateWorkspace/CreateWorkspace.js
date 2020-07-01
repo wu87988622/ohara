@@ -44,7 +44,7 @@ export default () => {
   const deleteBroker = hooks.useDeleteBrokerAction();
   const deleteWorker = hooks.useDeleteWorkerAction();
   const deleteZookeeper = hooks.useDeleteZookeeperAction();
-  const deleteWorkspace = hooks.useSimpleDeleteWorkspaceAction();
+  const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const refreshNodes = hooks.useFetchNodesAction();
   const eventLog = hooks.useEventLog();
@@ -65,19 +65,16 @@ export default () => {
         name: 'create zookeeper',
         action: () => createZookeeper(values?.zookeeper),
         revertAction: () => deleteZookeeper(values?.zookeeper?.name),
-        delay: 1000,
       },
       {
         name: 'create broker',
         action: () => createBroker(values?.broker),
         revertAction: () => deleteBroker(values?.broker?.name),
-        delay: 1000,
       },
       {
         name: 'create worker',
         action: () => createWorker(values?.worker),
         revertAction: () => deleteWorker(values?.worker?.name),
-        delay: 1000,
       },
       {
         name: 'start zookeeper',
@@ -113,7 +110,6 @@ export default () => {
             resolve();
           });
         },
-        hidden: true,
       },
     ]);
     setSubmitting(true);

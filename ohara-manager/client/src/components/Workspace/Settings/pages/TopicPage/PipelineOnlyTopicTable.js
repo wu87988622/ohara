@@ -17,18 +17,17 @@
 import React from 'react';
 
 import { TopicTable } from 'components/Topic';
-import * as context from 'context';
 import * as hooks from 'hooks';
 
 function PipelineOnlyTopicTable() {
   const broker = hooks.useBroker();
   const topics = hooks.useTopicsInWorkspace(false);
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettingsDialog();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

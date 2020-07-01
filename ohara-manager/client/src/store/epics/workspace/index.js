@@ -17,16 +17,16 @@
 import { combineEpics } from 'redux-observable';
 import createWorkspaceEpic from './createWorkspaceEpic';
 import deleteWorkspaceEpic from './deleteWorkspaceEpic';
+import fetchWorkspacesEpic from './fetchWorkspacesEpic';
 import restartWorkspaceEpic from './restartWorkspaceEpic';
 import switchWorkspaceEpic from './switchWorkspaceEpic';
 import updateWorkspaceEpic from './updateWorkspaceEpic';
-import simpleDeleteWorkspaceEpic from './simpleDeleteWorkspaceEpic';
 
 export default combineEpics(
   createWorkspaceEpic,
   deleteWorkspaceEpic,
+  fetchWorkspacesEpic,
   restartWorkspaceEpic,
   switchWorkspaceEpic,
   updateWorkspaceEpic,
-  simpleDeleteWorkspaceEpic,
 );

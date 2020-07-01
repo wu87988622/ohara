@@ -27,6 +27,7 @@ export * from './logProgressAction';
 export * from './nodeActions';
 export * from './pipelineActions';
 export * from './restartWorkspaceActions';
+export * from './settingsActions';
 export * from './shabondiActions';
 export * from './streamActions';
 export * from './snackbarActions';

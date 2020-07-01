@@ -30,7 +30,6 @@ import Link from '@material-ui/core/Link';
 import Tooltip from '@material-ui/core/Tooltip';
 
 import { FileTable, FileRemoveDialog } from 'components/File';
-import * as context from 'context';
 import * as hooks from 'hooks';
 import { getKey } from 'utils/object';
 import WorkspaceFileSelectorDialog from '../../common/WorkspaceFileSelectorDialog';
@@ -42,7 +41,7 @@ function SharedJarTable() {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const pipelines = hooks.usePipelines();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const { close: closeSettingsDialog } = context.useEditWorkspaceDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -162,7 +161,7 @@ function SharedJarTable() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettingsDialog();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

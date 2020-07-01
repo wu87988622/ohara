@@ -15,7 +15,7 @@
  */
 
 import { merge, isEmpty } from 'lodash';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import * as hooks from 'hooks';
@@ -34,10 +34,11 @@ export const useIsStreamLoading = () => {
 };
 
 export const useStreamGroup = () => {
-  const usePipelineGroup = hooks.usePipelineGroup();
-  const pipelineName = hooks.usePipelineName();
-  if (usePipelineGroup && pipelineName)
-    return hashByGroupAndName(usePipelineGroup, pipelineName);
+  const group = hooks.usePipelineGroup();
+  const name = hooks.usePipelineName();
+  return useMemo(() => {
+    if (group && name) return hashByGroupAndName(group, name);
+  }, [group, name]);
 };
 
 export const useCreateStreamAction = () => {
@@ -89,6 +90,24 @@ export const useDeleteStreamAction = () => {
   );
 };
 
+export const useDeleteStreamsInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteStreams.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
+};
+
 export const useStartStreamAction = () => {
   const dispatch = useDispatch();
   const group = useStreamGroup();
@@ -113,6 +132,26 @@ export const useStopStreamAction = () => {
   );
 };
 
+export const useStopStreamsAction = () => {
+  const dispatch = useDispatch();
+  const workspaceGroup = hooks.useWorkspaceGroup();
+  return useCallback(
+    (workspaceName) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopStreams.trigger({
+            values: {
+              workspaceKey: { name: workspaceName, group: workspaceGroup },
+            },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceGroup],
+  );
+};
+
 export const useStreams = () => {
   const group = useStreamGroup();
   const fetchStreams = useFetchStreamsAction();
@@ -126,6 +165,7 @@ export const useStreams = () => {
   }, [fetchStreams, isAppReady, isStreamLoaded, isStreamLoading]);
 
   return useSelector((state) => {
+    if (!group) return [];
     const streams = selectors.getStreamByGroup(state, { group });
     const results = streams.map((stream) => {
       const { stream__class: className, jarKey } = stream;

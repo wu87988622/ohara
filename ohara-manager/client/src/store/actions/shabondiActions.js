@@ -21,7 +21,9 @@ export const createShabondi = createRoutine('CREATE_SHABONDI');
 export const updateShabondi = createRoutine('UPDATE_SHABONDI');
 export const startShabondi = createRoutine('START_SHABONDI');
 export const stopShabondi = createRoutine('STOP_SHABONDI');
+export const stopShabondis = createRoutine('STOP_SHABONDIS');
 export const deleteShabondi = createRoutine('DELETE_SHABONDI');
+export const deleteShabondis = createRoutine('DELETE_SHABONDIS');
 export const updateShabondiLink = createRoutine('UPDATE_SHABONDI_LINK');
 export const removeShabondiSourceLink = createRoutine(
   'REMOVE_SHABONDI_SOURCE_LINK',
