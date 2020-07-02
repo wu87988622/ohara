@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { toUpper } from 'lodash';
 
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
@@ -24,14 +25,14 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import RefreshIcon from '@material-ui/icons/Refresh';
 
 const Controller = (props) => {
-  const { revertible, state, send } = props;
+  const { revertible, revertText: textOfRevertButton, state, send } = props;
 
   const isIdle = state.matches('idle');
   const isForward = !!state?.context?.forward;
   const hasError = !!state?.context?.error;
 
   const showRetryButton = isIdle && hasError;
-  const showRevertButton = revertible && isIdle && hasError && isForward;
+  const showRevertButton = isIdle && hasError && isForward;
 
   return (
     <>
@@ -42,31 +43,31 @@ const Controller = (props) => {
         justify="center"
         spacing={2}
       >
-        {showRevertButton && (
+        {revertible && (
           <Grid item>
             <Button
               color="primary"
               data-testid="stepper-revert-button"
+              disabled={!showRevertButton}
               onClick={() => send('REVERT')}
               startIcon={<ArrowBackIcon />}
             >
-              ROLLBACK
+              {toUpper(textOfRevertButton)}
             </Button>
           </Grid>
         )}
 
-        {showRetryButton && (
-          <Grid item>
-            <Button
-              color="primary"
-              data-testid="stepper-retry-button"
-              onClick={() => send('RETRY')}
-              startIcon={<RefreshIcon />}
-            >
-              RETRY
-            </Button>
-          </Grid>
-        )}
+        <Grid item>
+          <Button
+            color="primary"
+            data-testid="stepper-retry-button"
+            disabled={!showRetryButton}
+            onClick={() => send('RETRY')}
+            startIcon={<RefreshIcon />}
+          >
+            RETRY
+          </Button>
+        </Grid>
       </Grid>
     </>
   );
@@ -83,11 +84,13 @@ Controller.propTypes = {
     matches: PropTypes.func,
   }).isRequired,
   revertible: PropTypes.bool,
+  revertText: PropTypes.string,
   send: PropTypes.func.isRequired,
 };
 
 Controller.defaultProps = {
   revertible: false,
+  revertText: 'Rollback',
 };
 
 export default Controller;

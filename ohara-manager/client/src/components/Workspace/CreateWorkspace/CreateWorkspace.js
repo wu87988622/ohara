@@ -131,7 +131,7 @@ export default () => {
         <Dialog
           data-testid="create-workspace"
           fullWidth={submitting}
-          maxWidth={'md'}
+          maxWidth={'sm'}
           onClose={handleClose}
           open={submitting}
         >
@@ -139,7 +139,12 @@ export default () => {
             {'Create Workspace'}
           </DialogTitle>
           <DialogContent>
-            <Stepper onClose={handleClose} revertible steps={steps} />
+            <Stepper
+              onClose={handleClose}
+              revertible
+              revertText="Cancel"
+              steps={steps}
+            />
           </DialogContent>
         </Dialog>
       )}

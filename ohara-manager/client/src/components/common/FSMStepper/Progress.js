@@ -16,38 +16,52 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { min } from 'lodash';
+import { min, max } from 'lodash';
+import Box from '@material-ui/core/Box';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Typography from '@material-ui/core/Typography';
 
-const Progress = (props) => {
-  const { activeStep, error, steps } = props;
+// Valid value is 0 to 100
+const getValidValue = (value) => {
+  return min([max([0, value]), 100]);
+};
 
-  const hasError = !!error;
+const Progress = ({ state }) => {
+  const { activeStep, forward = true, error, steps } = state.context;
 
-  const numberOfSegments = steps.filter((step) => !step.hidden).length;
+  const isFinish = state.matches('finish');
+  const isRevert = !forward;
 
-  const value = min([(activeStep / numberOfSegments) * 100, 100]);
-
-  const valueBuffer = value + (100 / numberOfSegments) * 0.9;
+  const color = !error ? 'primary' : 'secondary';
+  const value = getValidValue(
+    ((isRevert ? activeStep + 1 : activeStep) / steps.length) * 100,
+  );
+  const variant = !isFinish && isRevert ? 'query' : 'determinate';
 
   return (
-    <LinearProgress
-      color={hasError ? 'secondary' : 'primary'}
-      value={value}
-      valueBuffer={valueBuffer}
-      variant="buffer"
-    />
+    <Box alignItems="center" display="flex">
+      <Box mr={1} width="100%">
+        <LinearProgress color={color} value={value} variant={variant} />
+      </Box>
+      <Box minWidth={35}>
+        <Typography color="textSecondary" variant="body2">{`${Math.round(
+          value,
+        )}%`}</Typography>
+      </Box>
+    </Box>
   );
 };
 
 Progress.propTypes = {
-  activeStep: PropTypes.number.isRequired,
-  error: PropTypes.object,
-  steps: PropTypes.arrayOf(
-    PropTypes.shape({
-      hidden: PropTypes.bool,
-    }),
-  ).isRequired,
+  state: PropTypes.shape({
+    context: PropTypes.shape({
+      activeStep: PropTypes.number.isRequired,
+      error: PropTypes.object,
+      forward: PropTypes.bool,
+      steps: PropTypes.array.isRequired,
+    }).isRequired,
+    matches: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default Progress;

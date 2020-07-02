@@ -16,6 +16,9 @@
 
 import { Machine, assign } from 'xstate';
 
+import { LOG_TYPES, STEP_STAGES, EVENTS } from './const';
+import { createLog } from './utils';
+
 const config = {
   id: 'stepper',
   initial: 'auto',
@@ -24,17 +27,37 @@ const config = {
     steps: [],
     forward: true,
     error: null,
+    logs: [],
   },
   states: {
     idle: {
       on: {
         REVERT: {
           target: 'auto',
-          actions: assign({ error: null, forward: (ctx) => !ctx.forward }),
+          actions: [
+            'log',
+            assign({
+              error: null,
+              forward: (ctx) => !ctx.forward,
+              logs: (ctx) => [
+                ...ctx.logs,
+                createLog({ title: EVENTS.REVERT, type: LOG_TYPES.EVENT }),
+              ],
+            }),
+          ],
         },
         RETRY: {
           target: '#stepper.auto.loading',
-          actions: assign({ error: null }),
+          actions: [
+            'log',
+            assign({
+              error: null,
+              logs: (ctx) => [
+                ...ctx.logs,
+                createLog({ title: EVENTS.RETRY, type: LOG_TYPES.EVENT }),
+              ],
+            }),
+          ],
         },
       },
     },
@@ -70,13 +93,7 @@ const config = {
       },
     },
     finish: {
-      on: {
-        CLOSE: '',
-        REVERT: {
-          target: 'auto',
-          actions: assign({ forward: (ctx) => !ctx.forward }),
-        },
-      },
+      type: 'final',
     },
   },
 };
@@ -88,9 +105,37 @@ const actions = {
       return forward ? activeStep + 1 : activeStep - 1;
     },
   }),
-  fireActionSuccess: () => {}, // TODO: May need to update some context
-  fireActionFailure: assign((ctx, evt) => {
-    ctx.error = evt;
+  fireActionSuccess: assign({
+    logs: (ctx) => {
+      const step = ctx.steps[ctx.activeStep];
+      return [
+        ...ctx.logs,
+        createLog({
+          title: step.name,
+          type: LOG_TYPES.STEP,
+          stepStage: STEP_STAGES.SUCCESS,
+          isRevert: !ctx.forward,
+        }),
+      ];
+    },
+  }),
+  fireActionFailure: assign({
+    error: (ctx, evt) => {
+      return evt;
+    },
+    logs: (ctx, evt) => {
+      const step = ctx.steps[ctx.activeStep];
+      return [
+        ...ctx.logs,
+        createLog({
+          title: step.name,
+          type: LOG_TYPES.STEP,
+          stepStage: STEP_STAGES.FAILURE,
+          payload: evt.data,
+          isRevert: !ctx.forward,
+        }),
+      ];
+    },
   }),
 };
 

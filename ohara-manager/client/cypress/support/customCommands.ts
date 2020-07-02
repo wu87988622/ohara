@@ -246,6 +246,8 @@ Cypress.Commands.add(
     cy.wait(1000);
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
+    cy.findByTestId('create-workspace').should('be.visible');
+    cy.findByTestId('stepper-close-button').should('be.visible').click();
     cy.findByTestId('create-workspace').should('not.be.visible');
     cy.end();
   },
