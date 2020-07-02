@@ -26,13 +26,12 @@ import oharastream.ohara.agent.docker.DockerClient.{ContainerCreator, Inspector}
 import oharastream.ohara.agent.{Agent, DataCollie}
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.{Node, Resource}
-import oharastream.ohara.client.configurator.VolumeApi.Volume
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 /**
   * An interface used to control remote node's docker service.
@@ -162,7 +161,7 @@ object DockerClient {
         nodeName: String,
         hostname: String,
         imageName: String,
-        volumeMaps: Map[Volume, String],
+        volumeMaps: Map[String, String],
         name: String,
         command: Option[String],
         arguments: Seq[String],
@@ -195,7 +194,7 @@ object DockerClient {
                 .mkString(" "),
               volumeMaps
                 .map {
-                  case (key: Volume, value: String) => s"""-v \"${key.name}:${value}\""""
+                  case (volumePath, localPath) => s"""-v \"$volumePath:$localPath\""""
                 }
                 .mkString(" "),
               // add label so we can distinguish the containers from others

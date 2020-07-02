@@ -21,7 +21,6 @@ import java.util.Objects
 import oharastream.ohara.agent.container.ContainerClient.{ContainerCreator, VolumeCreator}
 import oharastream.ohara.client.configurator.ContainerApi.ContainerInfo
 import oharastream.ohara.client.configurator.NodeApi.Resource
-import oharastream.ohara.client.configurator.VolumeApi.Volume
 import oharastream.ohara.common.annotations.Optional
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
 
@@ -210,7 +209,7 @@ object ContainerClient {
     private[this] var hostname: String                            = CommonUtils.randomString()
     private[this] implicit var executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
     private[this] var imageName: String                           = _
-    private[this] var volumeMaps: Map[Volume, String]             = Map.empty
+    private[this] var volumeMaps: Map[String, String]             = Map.empty
     private[this] var name: String                                = CommonUtils.randomString()
     private[this] var command: Option[String]                     = None
     private[this] var arguments: Seq[String]                      = Seq.empty
@@ -249,11 +248,11 @@ object ContainerClient {
     /**
       * set volume name and mapping container path
       *
-      * @param volumeMaps volume name, container path
+      * @param volumeMaps volumn name -> local path
       * @return this builder
       */
     @Optional("default is empty")
-    def volumeMaps(volumeMaps: Map[Volume, String]): ContainerCreator.this.type = {
+    def volumeMaps(volumeMaps: Map[String, String]): ContainerCreator.this.type = {
       this.volumeMaps = volumeMaps
       this
     }
@@ -345,11 +344,15 @@ object ContainerClient {
       executionContext = Objects.requireNonNull(executionContext)
     )
 
+    /**
+      *
+      * @param volumeMaps volume name -> local path
+      */
     protected def doCreate(
       nodeName: String,
       hostname: String,
       imageName: String,
-      volumeMaps: Map[Volume, String],
+      volumeMaps: Map[String, String],
       name: String,
       command: Option[String],
       arguments: Seq[String],

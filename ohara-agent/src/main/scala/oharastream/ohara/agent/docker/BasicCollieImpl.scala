@@ -110,7 +110,7 @@ private abstract class BasicCollieImpl(
       .arguments(arguments)
       .nodeName(node.hostname)
       .threadPool(executionContext)
-      .volumeMaps(volumeMaps)
+      .volumeMaps(volumeMaps.map(e => e._1.key.toPlain -> e._2))
       .create()
 
   override protected def postCreate(

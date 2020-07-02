@@ -25,7 +25,6 @@ import oharastream.ohara.agent.k8s.K8SJson._
 import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.Resource
-import oharastream.ohara.client.configurator.VolumeApi.Volume
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.util.CommonUtils
@@ -294,7 +293,7 @@ object K8SClient {
               nodeName: String,
               hostname: String,
               imageName: String,
-              volumeMaps: Map[Volume, String],
+              volumeMaps: Map[String, String],
               name: String,
               command: Option[String],
               arguments: Seq[String],
@@ -321,7 +320,7 @@ object K8SClient {
                         volumeMounts =
                           if (volumeMaps.isEmpty) None
                           else
-                            Some(volumeMaps.map(v => VolumeMount(v._1.name, v._2)).toSeq),
+                            Some(volumeMaps.map(v => VolumeMount(v._1, v._2)).toSeq),
                         env = if (envs.isEmpty) None else Some(envs.map(x => EnvVar(x._1, Some(x._2))).toSeq),
                         ports = if (ports.isEmpty) None else Some(ports.map(x => ContainerPort(x._1, x._2)).toSeq),
                         imagePullPolicy = Some(imagePullPolicy),
@@ -335,7 +334,9 @@ object K8SClient {
                       if (volumeMaps.isEmpty) None
                       else
                         Some(
-                          volumeMaps.map(v => K8SVolume(v._1.name, Some(MountPersistentVolumeClaim(v._1.name)))).toSeq
+                          volumeMaps
+                            .map(v => K8SVolume(v._1, Some(MountPersistentVolumeClaim(v._1))))
+                            .toSeq
                         )
                   )
                 }

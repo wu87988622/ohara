@@ -91,7 +91,7 @@ private[this] abstract class K8SBasicCollieImpl(val dataCollie: DataCollie, val 
       .name(containerInfo.name)
       .threadPool(executionContext)
       .arguments(arguments)
-      .volumeMaps(volumeMaps)
+      .volumeMaps(volumeMaps.map(e => e._1.key.toPlain -> e._2))
       .create()
 
   override protected def postCreate(
