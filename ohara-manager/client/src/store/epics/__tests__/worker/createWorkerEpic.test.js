@@ -43,8 +43,8 @@ it('create worker should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    const expected = '--a 1999ms (bu)';
-    const subs = ['   ^--------------', '--^ 1999ms !'];
+    const expected = '--a 99ms (bu)';
+    const subs = ['   ^--------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -101,11 +101,11 @@ it('create multiple workers should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b                ';
-    const expected = '--a---b 1995ms (xu)(yv)';
+    const expected = '--a---b 95ms (xu)(yv)';
     const subs = [
       '               ^----                  ',
-      '               --^---- 1995ms !       ',
-      '               ------^---- 1995ms !   ',
+      '               --^---- 95ms !       ',
+      '               ------^---- 95ms !   ',
     ];
     const anotherWorkerEntity = { ...workerEntity, name: 'wk01' };
 
@@ -186,8 +186,8 @@ it('create same worker within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a       ';
-    const expected = '--a 1999ms (bu)--';
-    const subs = ['    ^---------------', '--^ 1999ms !'];
+    const expected = '--a 99ms (bu)--';
+    const subs = ['    ^---------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {

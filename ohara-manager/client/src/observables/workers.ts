@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { defer, throwError, zip } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { defer, of, throwError } from 'rxjs';
+import { catchError, map, concatAll, last } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
@@ -31,11 +31,10 @@ export function fetchWorker(values: ObjectKey) {
   return defer(() => workerApi.get(values)).pipe(map((res) => res.data));
 }
 
+// Attempt to start at intervals and wait until the service is not running
 export function startWorker(key: ObjectKey) {
-  return zip(
-    // attempt to start at intervals
+  return of(
     defer(() => workerApi.start(key)),
-    // wait until the service is running
     defer(() => workerApi.get(key)).pipe(
       map((res) => {
         if (!isServiceRunning(res)) throw res;
@@ -43,8 +42,8 @@ export function startWorker(key: ObjectKey) {
       }),
     ),
   ).pipe(
-    map(([, data]) => data),
-    // retry every 2 seconds, up to 10 times
+    concatAll(),
+    last(),
     retryBackoff(RETRY_CONFIG),
     catchError((error) =>
       throwError({
@@ -58,11 +57,10 @@ export function startWorker(key: ObjectKey) {
   );
 }
 
+// Attempt to stop at intervals and wait until the service is not running
 export function stopWorker(key: ObjectKey) {
-  return zip(
-    // attempt to stop at intervals
+  return of(
     defer(() => workerApi.stop(key)),
-    // wait until the service is not running
     defer(() => workerApi.get(key)).pipe(
       map((res) => {
         if (res.data?.state) throw res;
@@ -70,18 +68,9 @@ export function stopWorker(key: ObjectKey) {
       }),
     ),
   ).pipe(
-    map(([, data]) => data),
-    // retry every 2 seconds, up to 10 times
-    retryBackoff({
-      ...RETRY_CONFIG,
-      shouldRetry: (error) => {
-        const errorCode = error?.data?.error?.code;
-        if (errorCode?.match(/NoSuchElementException$/)) {
-          return false;
-        }
-        return true;
-      },
-    }),
+    concatAll(),
+    last(),
+    retryBackoff(RETRY_CONFIG),
     catchError((error) =>
       throwError({
         data: error?.data,
