@@ -24,6 +24,12 @@ import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
 
 // action hooks
+export const useInitEventLogsAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(() => dispatch(actions.initEventLogs.trigger()), [
+    dispatch,
+  ]);
+};
 export const useFetchEventLogsAction = () => {
   const dispatch = useDispatch();
   return useCallback(() => dispatch(actions.fetchEventLogs.trigger()), [

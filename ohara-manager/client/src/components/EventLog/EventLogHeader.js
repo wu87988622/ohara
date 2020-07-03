@@ -37,6 +37,7 @@ import EventLogSettings from './EventLogSettings';
 
 const EventLogHeader = ({ onFilter }) => {
   const clearEventLogs = hooks.useClearEventLogsAction();
+  const initEventLogs = hooks.useInitEventLogsAction();
   const { data: logs } = hooks.useEventLogs();
   const { close } = useEventLogDialog();
   const settingsPopoverRef = useRef(null);
@@ -79,7 +80,13 @@ const EventLogHeader = ({ onFilter }) => {
             />
           </Popover>
           <Tooltip title="Close event logs">
-            <IconButton color="default" onClick={close}>
+            <IconButton
+              color="default"
+              onClick={() => {
+                close();
+                initEventLogs();
+              }}
+            >
               <CloseIcon />
             </IconButton>
           </Tooltip>

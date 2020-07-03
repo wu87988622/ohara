@@ -49,6 +49,9 @@ it('update notification should be executed correctly', () => {
         },
       },
     },
+    ui: {
+      eventLog: { isOpen: false },
+    },
   };
 
   makeTestScheduler().run((helpers) => {
@@ -63,13 +66,13 @@ it('update notification should be executed correctly', () => {
     const state$ = new StateObservable(hot('v', { v: stateValues }));
     const action$ = hot(input, {
       a: {
-        type: actions.createEventLog.SUCCESS,
+        type: actions.updateNotifications.TRIGGER,
         payload: {
           type: LOG_LEVEL.warning,
         },
       },
       b: {
-        type: actions.createEventLog.SUCCESS,
+        type: actions.updateNotifications.TRIGGER,
         payload: {
           type: LOG_LEVEL.error,
         },
@@ -125,6 +128,9 @@ it('empty payload for update notification should be executed correctly', () => {
         },
       },
     },
+    ui: {
+      eventLog: { isOpen: false },
+    },
   };
 
   makeTestScheduler().run((helpers) => {
@@ -139,7 +145,7 @@ it('empty payload for update notification should be executed correctly', () => {
     const state$ = new StateObservable(hot('v', { v: stateValues }));
     const action$ = hot(input, {
       a: {
-        type: actions.createEventLog.SUCCESS,
+        type: actions.updateNotifications.TRIGGER,
       },
       b: {
         type: actions.updateNotifications.TRIGGER,

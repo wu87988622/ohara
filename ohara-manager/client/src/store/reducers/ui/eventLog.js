@@ -17,6 +17,7 @@
 import * as actions from 'store/actions';
 
 const initialState = {
+  isOpen: false,
   isFetching: false,
   lastUpdated: null,
   error: null,
@@ -24,9 +25,12 @@ const initialState = {
 
 export default function reducer(state = initialState, action) {
   switch (action.type) {
+    case actions.initEventLogs.TRIGGER:
+      return initialState;
     case actions.fetchEventLogs.TRIGGER:
       return {
         ...state,
+        isOpen: true,
         isFetching: true,
       };
     case actions.fetchEventLogs.SUCCESS:

@@ -40,9 +40,9 @@ it('create event log should be executed correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a---|';
-    const expected = '--(ab)|';
-    const subs = '    ^-----!';
+    const input = '   ^-a----|';
+    const expected = '--(abc)|';
+    const subs = '    ^------!';
 
     const action$ = hot(input, {
       a: {
@@ -71,6 +71,16 @@ it('create event log should be executed correctly', () => {
         type: actions.showMessage.TRIGGER,
         payload: 'mock create event',
       },
+      c: {
+        type: actions.updateNotifications.TRIGGER,
+        payload: {
+          key: now.getTime().toString(),
+          type: LOG_LEVEL.info,
+          title: 'mock create event',
+          createAt: now,
+          payload: { bar: 'foo' },
+        },
+      },
     });
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
@@ -90,9 +100,9 @@ it('create multiple event logs should be executed correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a----a    2s     b---|';
-    const expected = '--(au)-(au) 1997ms (bv)|';
-    const subs = '    ^------- 2s ----!';
+    const input = '   ^-a----a    2s      b----|';
+    const expected = '--(aut)(aut) 1996ms (bvs)|';
+    const subs = '    ^-------    2s      -----!';
 
     const action$ = hot(input, {
       a: {
@@ -129,8 +139,28 @@ it('create multiple event logs should be executed correctly', () => {
         type: actions.showMessage.TRIGGER,
         payload: 'mock create event',
       },
+      t: {
+        type: actions.updateNotifications.TRIGGER,
+        payload: {
+          key: now.getTime().toString(),
+          type: LOG_LEVEL.info,
+          title: 'mock create event',
+          createAt: now,
+          payload: { bar: 'foo' },
+        },
+      },
       b: {
         type: actions.createEventLog.SUCCESS,
+        payload: {
+          key: now.getTime().toString(),
+          type: LOG_LEVEL.error,
+          title: 'mock create error log!',
+          createAt: now,
+          payload: { baz: 'hello' },
+        },
+      },
+      s: {
+        type: actions.updateNotifications.TRIGGER,
         payload: {
           key: now.getTime().toString(),
           type: LOG_LEVEL.error,

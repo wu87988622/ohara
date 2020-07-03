@@ -15,8 +15,10 @@
  */
 
 import * as generate from '../../../src/utils/generate';
+import { hashByGroupAndName } from '../../../src/utils/sha';
 
 describe('App Bar', () => {
+  // fake workspace
   const wkName = generate.serviceName();
 
   before(() => {
@@ -85,6 +87,63 @@ describe('App Bar', () => {
 
       // The event log message should be cleared by now
       cy.findByText('No log').should('exist');
+    });
+
+    it('should show the notifications when creating a pipeline failed', () => {
+      cy.visit('/workspace1');
+
+      // create a pipeline by native api
+      cy.request('POST', 'api/pipelines', {
+        name: 'p1',
+        // group is the hash value of "workspace1 + workspace"
+        group: hashByGroupAndName('workspace', 'workspace1'),
+      });
+
+      cy.createPipeline('p1');
+      cy.findByTitle('Event logs').within(() => {
+        //This is the notification; should have one error
+        cy.contains('span', 1).should('exist');
+      });
+
+      cy.createPipeline('p1');
+      cy.findByTitle('Event logs').within(() => {
+        //This is the notification; should have two errors
+        cy.contains('span', 2).should('exist');
+      });
+
+      // open event log will clear the notifications
+      cy.findByTitle('Event logs').click();
+      cy.findByTitle('Event logs').within(() => {
+        cy.contains('span', 2).should('not.exist');
+      });
+
+      // the notification should be gone after opened event log
+      cy.createPipeline('p1');
+      cy.findByTitle('Event logs').within(() => {
+        cy.get('span.MuiBadge-badge').should('not.be.visible');
+      });
+
+      // close the event log by clicking close button
+      cy.findByTitle('Close event logs').click();
+      cy.createPipeline('p1');
+      cy.findByTitle('Event logs').within(() => {
+        //We will have one notification now
+        cy.contains('span', 1).should('exist');
+      });
+
+      // open event log will clear the notifications
+      cy.findByTitle('Event logs').click();
+      cy.findByTitle('Event logs').within(() => {
+        cy.get('span.MuiBadge-badge').should('not.be.visible');
+      });
+
+      // open dev tool button will close event log too
+      cy.findByTitle('Developer Tools').click();
+      cy.createPipeline('p1');
+      cy.findByTitle('Event logs').within(() => {
+        //We will have one notification now
+        cy.contains('span', 1).should('exist');
+      });
     });
   });
 });

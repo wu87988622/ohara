@@ -17,7 +17,7 @@
 import { min, isEmpty } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of } from 'rxjs';
-import { map, catchError, concatMap } from 'rxjs/operators';
+import { map, catchError, concatMap, filter } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
@@ -48,8 +48,9 @@ const increaseNotification$ = (entity, state$) => {
 
 export default (action$, state$) =>
   action$.pipe(
-    // we listen the create event epic
-    ofType(actions.createEventLog.SUCCESS, actions.updateNotifications.TRIGGER),
+    ofType(actions.updateNotifications.TRIGGER),
+    // update notifications if and only if isOpen=false
+    filter(() => !state$.value.ui.eventLog.isOpen),
     map((action) => action.payload),
     concatMap((entity) =>
       increaseNotification$(entity, state$).pipe(

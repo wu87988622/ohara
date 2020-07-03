@@ -47,11 +47,13 @@ const AppBar = () => {
   const {
     toggle: toggleEventLog,
     close: closeEventLog,
+    isOpen: isEventLogOpen,
   } = context.useEventLogDialog();
   const { data: configuratorInfo } = context.useConfiguratorState();
   const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const { data: notifications } = hooks.useEventNotifications();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
+  const initEventLogs = hooks.useInitEventLogsAction();
   const [isNodeListDialogOpen, setIsNodeListDialogOpen] = useState(false);
 
   return (
@@ -105,6 +107,9 @@ const AppBar = () => {
               onClick={() => {
                 toggleEventLog();
                 closeDevTool();
+                // during clicking action, the event log dialog is still "opened"
+                // we should assert isOpen=true(which will close dialog later) and trigger the initEventLogs
+                if (isEventLogOpen) initEventLogs();
               }}
             >
               <Badge
@@ -122,6 +127,9 @@ const AppBar = () => {
               onClick={() => {
                 toggleDevTool();
                 closeEventLog();
+                // We should initial event logs when clicking the devTool button
+                // since it will trigger close event log whether devTool opens or not
+                initEventLogs();
               }}
             >
               <DeveloperModeIcon />

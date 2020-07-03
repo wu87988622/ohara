@@ -672,7 +672,7 @@ describe('Navigator', () => {
     });
   });
 
-  context.only('Files Settings', () => {
+  context('Files Settings', () => {
     it('should able to add and remove files', () => {
       cy.switchSettingSection(SETTING_SECTIONS.files);
 

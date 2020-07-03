@@ -20,6 +20,7 @@ export const fetchEventLogs = createRoutine('FETCH_EVENT_LOGS');
 export const createEventLog = createRoutine('CREATE_EVENT_LOG');
 export const deleteEventLogs = createRoutine('DELETE_EVENT_LOGS');
 export const clearEventLogs = createRoutine('CLEAR_EVENT_LOGS');
+export const initEventLogs = createRoutine('INIT_EVENT_LOGS');
 
 export const updateSettings = createRoutine('UPDATE_SETTINGS');
 

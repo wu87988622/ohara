@@ -51,6 +51,8 @@ export default (action$) =>
             actions.createEventLog.success(entity),
             // Trigger snackbar also
             actions.showMessage.trigger(entity.title),
+            // update notification
+            actions.updateNotifications.trigger(entity),
           ]),
         ),
         catchError((res) => of(actions.createEventLog.failure(res))),
