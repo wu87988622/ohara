@@ -16,7 +16,6 @@
 
 export * from './brokerSelector';
 export * from './connectorSelector';
-export * from './deleteWorkspaceSelector';
 export * from './devToolSelector';
 export * from './eventLogSelector';
 export * from './fileSelector';

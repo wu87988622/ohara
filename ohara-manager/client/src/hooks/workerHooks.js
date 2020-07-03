@@ -110,10 +110,12 @@ export const useCreateWorkerAction = () => {
 
 export const useUpdateWorkerAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useWorkerGroup();
   return useCallback(
-    (values) => dispatch(actions.updateWorker.trigger({ ...values, group })),
-    [dispatch, group],
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(actions.updateWorker.trigger({ values, resolve, reject })),
+      ),
+    [dispatch],
   );
 };
 

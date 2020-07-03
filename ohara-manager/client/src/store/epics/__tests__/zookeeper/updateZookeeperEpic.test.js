@@ -44,7 +44,7 @@ it('update zookeeper should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, jmxPort: 999 },
+        payload: { values: { ...zookeeperEntity, jmxPort: 999 } },
       },
     });
     const output$ = updateZookeeperEpic(action$);
@@ -87,15 +87,15 @@ it('update zookeeper multiple times should got latest result', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: { ...zookeeperEntity } },
       },
       b: {
         type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, nodeNames: ['n1', 'n2'] },
+        payload: { values: { ...zookeeperEntity, nodeNames: ['n1', 'n2'] } },
       },
       c: {
         type: actions.updateZookeeper.TRIGGER,
-        payload: { ...zookeeperEntity, clientPort: 1234 },
+        payload: { values: { ...zookeeperEntity, clientPort: 1234 } },
       },
     });
     const output$ = updateZookeeperEpic(action$);
@@ -189,7 +189,7 @@ it('throw exception of update zookeeper should also trigger event log action', (
     const action$ = hot(input, {
       a: {
         type: actions.updateZookeeper.TRIGGER,
-        payload: zookeeperEntity,
+        payload: { values: { ...zookeeperEntity } },
       },
     });
     const output$ = updateZookeeperEpic(action$);

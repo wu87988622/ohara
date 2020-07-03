@@ -18,7 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
@@ -26,11 +26,14 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateWorker$ = (values) => {
+export const updateWorker$ = (values, resolve) => {
   const workerId = getId(values);
   return defer(() => workerApi.update(values)).pipe(
     map((res) => res.data),
     map((data) => normalize(data, schema.worker)),
+    tap((data) => {
+      if (resolve) resolve(data);
+    }),
     map((normalizedData) => merge(normalizedData, { workerId })),
     map((normalizedData) => actions.updateWorker.success(normalizedData)),
     startWith(actions.updateWorker.request({ workerId })),
@@ -41,16 +44,17 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorker.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) =>
-      updateWorker$(values).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) =>
+      updateWorker$(values, resolve).pipe(
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.updateWorker.failure(
               merge(err, { workerId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+          ]);
+        }),
       ),
     ),
   );

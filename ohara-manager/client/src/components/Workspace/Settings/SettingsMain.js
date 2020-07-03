@@ -32,6 +32,9 @@ const SettingsMain = ({
   handleChange,
   selectedComponent,
   handleClose,
+  restartWorkspace,
+  targetIsBroker,
+  targetIsWorker,
 }) => {
   const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
@@ -39,8 +42,6 @@ const SettingsMain = ({
   });
 
   const discardWorkspace = hooks.useDiscardWorkspaceChangedSettingsAction();
-  const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
-  const restartWorkspace = hooks.useRestartWorkspaceAction();
   const hasRunningServices = hooks.useHasRunningServices();
   const {
     shouldBeRestartWorkspace,
@@ -48,27 +49,17 @@ const SettingsMain = ({
     shouldBeRestartBroker,
     shouldBeRestartZookeeper,
   } = hooks.useShouldBeRestartWorkspace();
-
   let kind = KIND.workspace;
-  let steps = [
-    'Stop Worker',
-    'Stop Broker',
-    'Stop Zookeeper',
-    'Start Zookeeper',
-    'Start Broker',
-    'Start Worker',
-  ];
-
   if (
     shouldBeRestartWorker &&
     !shouldBeRestartBroker &&
     !shouldBeRestartZookeeper
   ) {
     kind = KIND.worker;
-    steps = ['Stop Worker', 'Start Worker'];
+    targetIsWorker();
   } else if (shouldBeRestartBroker && !shouldBeRestartZookeeper) {
     kind = KIND.broker;
-    steps = ['Stop Worker', 'Stop Broker', 'Start Broker', 'Start Worker'];
+    targetIsBroker();
   }
 
   const restartConfirmMessage = hooks.useRestartConfirmMessage(kind);
@@ -80,10 +71,7 @@ const SettingsMain = ({
           hasRunningServices={hasRunningServices}
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
-          onRestart={() => {
-            openRestartWorkspace({ steps });
-            restartWorkspace(kind);
-          }}
+          onRestart={restartWorkspace}
           restartConfirmMessage={restartConfirmMessage}
         />
         {sections.map((section) => {
@@ -139,6 +127,9 @@ SettingsMain.propTypes = {
     name: PropTypes.string,
     type: PropTypes.string,
   }),
+  restartWorkspace: PropTypes.func.isRequired,
+  targetIsBroker: PropTypes.func.isRequired,
+  targetIsWorker: PropTypes.func.isRequired,
 };
 
 SettingsMain.defaultProps = {

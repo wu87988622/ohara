@@ -19,7 +19,6 @@ import app from './app';
 import brokers from './brokers';
 import connector from './connector';
 import createWorkspace from './createWorkspace';
-import deleteWorkspace from './deleteWorkspace';
 import devTool from './devTool';
 import eventLog from './eventLog';
 import file from './file';
@@ -27,7 +26,6 @@ import intro from './intro';
 import logProgress from './logProgress';
 import node from './node';
 import pipeline from './pipeline';
-import restartWorkspace from './restartWorkspace';
 import settings from './settings';
 import shabondi from './shabondi';
 import stream from './stream';
@@ -42,7 +40,6 @@ export default combineReducers({
   brokers,
   connector,
   createWorkspace,
-  deleteWorkspace,
   devTool,
   eventLog,
   file,
@@ -50,7 +47,6 @@ export default combineReducers({
   logProgress,
   node,
   pipeline,
-  restartWorkspace,
   settings,
   shabondi,
   stream,

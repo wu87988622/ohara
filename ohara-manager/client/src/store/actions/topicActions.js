@@ -22,6 +22,7 @@ export const updateTopic = createRoutine('UPDATE_TOPIC');
 export const deleteTopic = createRoutine('DELETE_TOPIC');
 export const deleteTopics = createRoutine('DELETE_TOPICS');
 export const startTopic = createRoutine('START_TOPIC');
+export const startTopics = createRoutine('START_TOPICS');
 export const stopTopic = createRoutine('STOP_TOPIC');
 export const stopTopics = createRoutine('STOP_TOPICS');
 

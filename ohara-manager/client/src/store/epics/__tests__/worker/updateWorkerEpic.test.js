@@ -44,7 +44,7 @@ it('update worker should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, jmxPort: 999 },
+        payload: { values: { ...workerEntity, jmxPort: 999 } },
       },
     });
     const output$ = updateWorkerEpic(action$);
@@ -87,15 +87,15 @@ it('update worker multiple times should got latest result', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: { ...workerEntity } },
       },
       b: {
         type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, nodeNames: ['n1', 'n2'] },
+        payload: { values: { ...workerEntity, nodeNames: ['n1', 'n2'] } },
       },
       c: {
         type: actions.updateWorker.TRIGGER,
-        payload: { ...workerEntity, clientPort: 1234 },
+        payload: { values: { ...workerEntity, clientPort: 1234 } },
       },
     });
     const output$ = updateWorkerEpic(action$);
@@ -189,7 +189,7 @@ it('throw exception of update worker should also trigger event log action', () =
     const action$ = hot(input, {
       a: {
         type: actions.updateWorker.TRIGGER,
-        payload: workerEntity,
+        payload: { values: { ...workerEntity } },
       },
     });
     const output$ = updateWorkerEpic(action$);

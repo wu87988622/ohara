@@ -16,95 +16,10 @@
 
 import React, { useCallback } from 'react';
 import Typography from '@material-ui/core/Typography';
-import { useDispatch, useSelector } from 'react-redux';
 
-import * as actions from 'store/actions';
 import * as hooks from 'hooks';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { getKey } from 'utils/object';
 import { KIND } from 'const';
-
-export const useOpenRestartWorkspaceDialogAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(
-    (steps) => dispatch(actions.openRestartWorkspace.trigger(steps)),
-    [dispatch],
-  );
-};
-
-export const useCloseRestartWorkspaceDialogAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(() => {
-    dispatch(actions.closeRestartWorkspace.trigger());
-    dispatch(actions.clearLogProgress.trigger());
-  }, [dispatch]);
-};
-
-export const useAutoCloseRestartWorkspaceDialogAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(
-    () => dispatch(actions.autoCloseRestartWorkspace.trigger()),
-    [dispatch],
-  );
-};
-
-export const useRestartWorkspace = () =>
-  useSelector((state) => state.ui.restartWorkspace);
-
-export const usePauseRestartWorkspaceAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.pauseRestartWorkspace.trigger()), [
-    dispatch,
-  ]);
-};
-
-export const useResumeRestartWorkspaceAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(() => dispatch(actions.resumeRestartWorkspace.trigger()), [
-    dispatch,
-  ]);
-};
-
-export const useRollbackRestartWorkspaceAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(
-    () => dispatch(actions.rollbackRestartWorkspace.trigger()),
-    [dispatch],
-  );
-};
-
-export const useRestartWorkspaceAction = () => {
-  const dispatch = useDispatch();
-  const workspace = hooks.useWorkspace();
-  const zookeeperKey = getKey(hooks.useZookeeper());
-  const brokerKey = getKey(hooks.useBroker());
-  const workerKey = getKey(hooks.useWorker());
-  const workspaceKey = getKey(hooks.useWorkspace());
-  const tmpWorker = hooks.useWorker();
-  const tmpBroker = hooks.useBroker();
-  const tmpZookeeper = hooks.useZookeeper();
-  const topics = hooks.useTopicsInWorkspace();
-
-  const values = {
-    workspaceKey,
-    zookeeperKey,
-    brokerKey,
-    workerKey,
-    workerSettings: workspace.worker,
-    brokerSettings: workspace.broker,
-    zookeeperSettings: workspace.zookeeper,
-    tmpWorker,
-    tmpBroker,
-    tmpZookeeper,
-    topics,
-    targetService: KIND.worker,
-  };
-
-  return useCallback(
-    (option) => dispatch(actions.restartWorkspace.trigger({ values, option })),
-    [dispatch, values],
-  );
-};
 
 export const useHasRunningServices = () => {
   const connectors = hooks.useConnectors();

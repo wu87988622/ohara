@@ -108,6 +108,24 @@ export const useStartTopicAction = () => {
   );
 };
 
+export const useStartTopicsInWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  const workspaceKey = hooks.useWorkspaceKey();
+  return useCallback(
+    () =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.startTopics.trigger({
+            values: { workspaceKey },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, workspaceKey],
+  );
+};
+
 export const useStopTopicsInWorkspaceAction = () => {
   const dispatch = useDispatch();
   const workspaceKey = hooks.useWorkspaceKey();
