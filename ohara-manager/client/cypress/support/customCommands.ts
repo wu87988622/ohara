@@ -216,15 +216,16 @@ Cypress.Commands.add(
 
     // Since we will redirect the url
     // need to wait a little time for url applying
-    cy.wait(2000);
+    cy.wait(1000);
 
     cy.location().then((location) => {
       if (location.pathname === '/') {
-        // first time in homepage, close the helper quickMode dialog
-        cy.findByTestId('close-intro-button').click();
+        // first time in homepage, click quick create directly
+        cy.findByText('QUICK CREATE').should('exist').click();
+      } else {
+        cy.findByTitle('Create a new workspace').click();
+        cy.findByText('QUICK CREATE').should('exist').click();
       }
-      cy.findByTitle('Create a new workspace').click();
-      cy.findByText('QUICK CREATE').should('exist').click();
     });
 
     // Step1: workspace name
@@ -307,6 +308,9 @@ Cypress.Commands.add(
     columnValue?: string,
     rowFilter?: (row: JQuery<HTMLTableElement>) => boolean,
   ) => {
+    cy.log(
+      `Find column['${columnName}'] with value['${columnValue}'] from table`,
+    );
     const header = $table.find('thead tr').find(`th:contains("${columnName}")`);
     const index = $table.find('thead tr th').index(header);
 

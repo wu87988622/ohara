@@ -37,7 +37,7 @@ const SetupNodesForm = (props) => {
         />
       </Paper>
       <div className="buttons">
-        <Button onClick={previousStep}>Back</Button>
+        <Button onClick={previousStep}>BACK</Button>
         <Button
           color="primary"
           disabled={invalid || pristine || submitting}

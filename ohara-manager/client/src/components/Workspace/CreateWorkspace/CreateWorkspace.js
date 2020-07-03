@@ -16,7 +16,6 @@
 
 import React, { useState } from 'react';
 import { capitalize } from 'lodash';
-import { reset } from 'redux-form';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -50,6 +49,7 @@ export default () => {
   const eventLog = hooks.useEventLog();
   const closeIntroDialog = hooks.useCloseIntroAction();
   const switchFormStep = hooks.useSwitchCreateWorkspaceStepAction();
+  const resetForm = hooks.useReduxFormResetAction();
 
   const [submitting, setSubmitting] = useState(false);
   const [steps, setSteps] = useState([]);
@@ -98,7 +98,7 @@ export default () => {
             // Log a success message to Event Log
             eventLog.info(`Successfully created workspace ${values?.name}.`);
             // Clear form data
-            reset(FORM.CREATE_WORKSPACE);
+            resetForm(FORM.CREATE_WORKSPACE);
             // Back to the first page of the form
             switchFormStep(0);
             // Close all dialogs

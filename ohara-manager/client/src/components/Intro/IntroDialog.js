@@ -27,7 +27,6 @@ import Slide from '@material-ui/core/Slide';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
-import { FORM } from 'const';
 import DrabblePaper from 'components/common/Dialog/DrabblePaper';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import * as hooks from 'hooks';
@@ -85,7 +84,6 @@ const MuiDialog = ({ quickModeText }) => {
   const isIntroDialogOpen = hooks.useIsIntroOpen();
   const closeIntroDialog = hooks.useCloseIntroAction();
   const openWorkspaceDialog = hooks.useOpenCreateWorkspaceDialogAction();
-  const resetForm = hooks.useReduxFormResetAction();
 
   return (
     <Dialog
@@ -123,15 +121,7 @@ const MuiDialog = ({ quickModeText }) => {
           autoFocus
           className="quick-mode-button"
           color="primary"
-          onClick={() => {
-            openWorkspaceDialog();
-            // We need to reset the form before each time create a new service
-            // in order to solve the following scenario
-            // 1. create "workspace1" using default name
-            // 2. delete "workspace1"
-            // 3. QUICK CREATE workspace, and the name will use "workspace2" by default
-            resetForm(FORM.CREATE_WORKSPACE);
-          }}
+          onClick={openWorkspaceDialog}
           variant="contained"
         >
           {quickModeText}

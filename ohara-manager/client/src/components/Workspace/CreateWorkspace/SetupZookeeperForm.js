@@ -28,7 +28,7 @@ const SetupZookeeperForm = (props) => {
     <form onSubmit={handleSubmit}>
       <Paper className="fields"></Paper>
       <div className="buttons">
-        <Button onClick={previousStep}>Back</Button>
+        <Button onClick={previousStep}>BACK</Button>
         <Button color="primary" onClick={handleSubmit} variant="contained">
           NEXT
         </Button>

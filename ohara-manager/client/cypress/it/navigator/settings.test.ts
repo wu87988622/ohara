@@ -670,32 +670,35 @@ describe('Navigator', () => {
 
       cy.location('pathname').should('equal', '/workspace1');
     });
+  });
 
-    context('Files Settings', () => {
-      it('should able to add and remove files', () => {
-        cy.switchSettingSection(SETTING_SECTIONS.files);
+  context.only('Files Settings', () => {
+    it('should able to add and remove files', () => {
+      cy.switchSettingSection(SETTING_SECTIONS.files);
 
-        cy.get('div.section-page-content').within(() => {
-          // upload the files by custom command "createJar"
-          files.forEach((file) => {
-            cy.get('input[type="file"]').then((element) => {
-              cy.createJar(file).then((params) => {
-                (element[0] as HTMLInputElement).files = params.fileList;
-                cy.wrap(element).trigger('change', { force: true });
-              });
+      cy.get('div.section-page-content').within(() => {
+        // upload the files by custom command "createJar"
+        files.forEach((file) => {
+          cy.get('input[type="file"]').then((element) => {
+            cy.createJar(file).then((params) => {
+              (element[0] as HTMLInputElement).files = params.fileList;
+              cy.wrap(element).trigger('change', { force: true });
             });
           });
+        });
 
-          // after upload file, click the upload file again
-          cy.wait(1000);
-          cy.findByTitle('Upload File').click();
+        // after upload file, click the upload file again
+        cy.wait(1000);
+        cy.findByTitle('Upload File').click();
 
-          cy.findByText(source.name).should('exist');
-          cy.findByText(sink.name).should('exist');
-          cy.findByText(stream.name).should('exist');
+        cy.findByText(source.name).should('exist');
+        cy.findByText(sink.name).should('exist');
+        cy.findByText(stream.name).should('exist');
 
-          // check the source file could be removed
-          cy.get('table').within(($table) => {
+        // check the source file could be removed
+        cy.get('table')
+          .should('have.length', 1)
+          .within(($table) => {
             cy.getTableCellByColumn($table, 'Name', source.name)
               .siblings('td')
               .last()
@@ -703,27 +706,31 @@ describe('Navigator', () => {
                 el$.find('div[title="Delete file"]').click();
               });
           });
-        });
-        // confirm dialog
-        cy.findByTestId('confirm-button-DELETE').click();
+      });
+      // confirm dialog
+      cy.findByTestId('confirm-button-DELETE').click();
 
-        // after removed, the file should not be existed
-        cy.get('div.section-page-content').within(() => {
-          cy.get('table').within(($table) => {
+      // after removed, the file should not be existed
+      cy.get('div.section-page-content').within(() => {
+        cy.get('table')
+          .should('have.length', 1)
+          .within(($table) => {
             cy.getTableCellByColumn($table, 'Name', source.name).should(
               'not.exist',
             );
           });
 
-          //filter
-          cy.findAllByPlaceholderText('Search')
-            .filter(':visible')
-            .type(stream.name);
-          cy.findByText(stream.name).should('exist');
-          cy.findByText(sink.name).should('not.exist');
+        //filter
+        cy.findAllByPlaceholderText('Search')
+          .filter(':visible')
+          .type(stream.name);
+        cy.findByText(stream.name).should('exist');
+        cy.findByText(sink.name).should('not.exist');
 
-          // view the classNames of stream file
-          cy.get('table').within(($table) => {
+        // view the classNames of stream file
+        cy.get('table')
+          .should('have.length', 1)
+          .within(($table) => {
             cy.getTableCellByColumn($table, 'Name', stream.name)
               .siblings('td')
               .last()
@@ -731,36 +738,42 @@ describe('Navigator', () => {
                 el$.find('div[title="View file"]').click();
               });
           });
-        });
-        // assert the class detail of stream
-        cy.findAllByText('DumbStream', { exact: false }).should('exist');
+      });
+      // assert the class detail of stream
+      cy.findAllByText('DumbStream', { exact: false }).should('exist');
+    });
+
+    it('should able to select file in stream jars', () => {
+      cy.switchSettingSection(SETTING_SECTIONS.stream);
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add File').click();
       });
 
-      it('should able to select file in stream jars', () => {
-        cy.switchSettingSection(SETTING_SECTIONS.stream);
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add File').click();
-        });
-
-        // select the stream jar we just added
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      // select the stream jar we just added
+      cy.contains('h3', 'Select file').filter(':visible').should('exist');
+      cy.findByText(stream.name).should('exist');
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               cy.getTableCellByColumn($table, 'Name', stream.name)
                 .siblings('td')
                 .first()
                 .find('[type="checkbox"]')
                 .check();
             });
-            cy.findByText('SAVE').click();
-          });
+          cy.findByText('SAVE').click();
+        });
 
-        // the selected jar should appear
-        cy.get('div.section-page-content').within(() => {
-          cy.findByText(stream.name).should('exist');
-          cy.get('table').within(($table) => {
+      // the selected jar should appear
+      cy.get('div.section-page-content').within(() => {
+        cy.findByText(stream.name).should('exist');
+        cy.get('table')
+          .should('have.length', 1)
+          .within(($table) => {
             cy.getTableCellByColumn($table, 'Name', stream.name).should(
               'exist',
             );
@@ -770,36 +783,38 @@ describe('Navigator', () => {
               .find('svg[severity="success"]')
               .should('exist');
           });
-        });
+      });
 
-        // upload a fake jar
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add File').click();
-        });
+      // upload a fake jar
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add File').click();
+      });
 
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('input[type="file"]').then((element) => {
-              const file = new File([], fakeJar.name);
-              const dataTransfer = new DataTransfer();
-              dataTransfer.items.add(file);
-              const fileList = dataTransfer.files;
-              (element[0] as HTMLInputElement).files = fileList;
-              cy.wrap(element).trigger('change', { force: true });
-            });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('input[type="file"]').then((element) => {
+            const file = new File([], fakeJar.name);
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            const fileList = dataTransfer.files;
+            (element[0] as HTMLInputElement).files = fileList;
+            cy.wrap(element).trigger('change', { force: true });
           });
-        // after upload file, click the upload file again
-        cy.wait(1000);
-        cy.findByTitle('Upload File').click();
+        });
+      // after upload file, click the upload file again
+      cy.wait(1000);
+      cy.findByTitle('Upload File').click();
 
-        // select the fake jar and de-select stream jar
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      // select the fake jar and de-select stream jar
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               cy.getTableCellByColumn($table, 'Name', stream.name)
                 .siblings('td')
                 .first()
@@ -811,13 +826,15 @@ describe('Navigator', () => {
                 .find('[type="checkbox"]')
                 .check();
             });
-            cy.findByText('SAVE').click();
-          });
+          cy.findByText('SAVE').click();
+        });
 
-        // the selected jar should appear
-        cy.get('div.section-page-content').within(() => {
-          cy.findByText(fakeJar.name).should('exist');
-          cy.get('table').within(($table) => {
+      // the selected jar should appear
+      cy.get('div.section-page-content').within(() => {
+        cy.findByText(fakeJar.name).should('exist');
+        cy.get('table')
+          .should('have.length', 1)
+          .within(($table) => {
             cy.getTableCellByColumn($table, 'Name', fakeJar.name).should(
               'exist',
             );
@@ -827,18 +844,20 @@ describe('Navigator', () => {
               .find('svg[severity="warning"]')
               .should('exist');
           });
-        });
+      });
 
-        // after select the fake jar as stream
-        // we could not remove it from file list
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add File').click();
-        });
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      // after select the fake jar as stream
+      // we could not remove it from file list
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add File').click();
+      });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               cy.getTableCellByColumn(
                 $table,
                 'Used',
@@ -848,6 +867,7 @@ describe('Navigator', () => {
                 .invoke('html')
                 .should('equal', '<div>Stream</div>');
 
+              // used jar could not be removed
               cy.getTableCellByColumn(
                 $table,
                 'Actions',
@@ -858,47 +878,48 @@ describe('Navigator', () => {
                   'exist',
                 );
               });
+
+              // delete stream file
+              cy.getTableCellByColumn(
+                $table,
+                'Actions',
+                undefined,
+                (row) => row.has(`td:contains("${stream.name}")`).length > 0,
+              ).within(() => {
+                cy.findByTitle('Delete file').click();
+              });
             });
-          });
-
-        // delete stream file
-        cy.get('table').within(($table) => {
-          cy.getTableCellByColumn(
-            $table,
-            'Actions',
-            undefined,
-            (row) => row.has(`td:contains("${stream.name}")`).length > 0,
-          ).within(() => {
-            cy.findByTitle('Delete file').click();
-          });
         });
-        cy.findByTestId('confirm-button-DELETE').click();
-        // Since the file list table will be altered by redux state
-        // we need to wait for a period for changes applied
-        cy.wait(500);
-        cy.findByText(stream.name).should('not.exist');
 
-        // close file list and de-select fake jar as stream
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.findByText('CANCEL').click();
-          });
-        cy.findByTitle('Remove file').click();
-        cy.findAllByText('REMOVE').filter(':visible').click();
-        cy.findByText(fakeJar.name).should('not.exist');
+      cy.findByTestId('confirm-button-DELETE').click();
+      // Since the file list table will be altered by redux state
+      // we need to wait for a period for changes applied
+      cy.wait(500);
+      cy.findByText(stream.name).should('not.exist');
 
-        // after de-select the fake jar
-        // we could remove it from file list
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add File').click();
+      // close file list and de-select fake jar as stream
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.findByText('CANCEL').click();
         });
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      cy.findByTitle('Remove file').click();
+      cy.findAllByText('REMOVE').filter(':visible').click();
+      cy.findByText(fakeJar.name).should('not.exist');
+
+      // after de-select the fake jar
+      // we could remove it from file list
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add File').click();
+      });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               cy.getTableCellByColumn(
                 $table,
                 'Used',
@@ -907,156 +928,162 @@ describe('Navigator', () => {
               )
                 .invoke('html')
                 .should('be.empty');
+
+              // delete fake file
+              cy.getTableCellByColumn(
+                $table,
+                'Actions',
+                undefined,
+                (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
+              ).within(() => {
+                cy.findByTitle('Delete file').click();
+              });
             });
-          });
-
-        // delete fake file
-        cy.get('table').within(($table) => {
-          cy.getTableCellByColumn(
-            $table,
-            'Actions',
-            undefined,
-            (row) => row.has(`td:contains("${fakeJar.name}")`).length > 0,
-          ).within(() => {
-            cy.findByTitle('Delete file').click();
-          });
-        });
-        cy.findByTestId('confirm-button-DELETE').click();
-        // Since the file list table will be altered by redux state
-        // we need to wait for a period for changes applied
-        cy.wait(500);
-        cy.findByText(fakeJar.name).should('not.exist');
-      });
-
-      it('should able to select file in worker plugins', () => {
-        cy.switchSettingSection(
-          SETTING_SECTIONS.worker,
-          'Worker plugins and shared jars',
-        );
-
-        cy.get('div.plugins').findByTitle('Add File').click();
-
-        // select the sink jar
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
-              cy.getTableCellByColumn($table, 'Name', sink.name)
-                .siblings('td')
-                .first()
-                .find('[type="checkbox"]')
-                .check();
-            });
-            cy.findByText('SAVE').click();
-          });
-        cy.findByText(sink.name).should('exist');
-
-        // add the same file to shared jars
-        cy.get('div.shared-jars').findByTitle('Add File').click();
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
-              cy.getTableCellByColumn($table, 'Name', sink.name)
-                .siblings('td')
-                .first()
-                .find('[type="checkbox"]')
-                .check();
-            });
-            cy.findByText('SAVE').click();
-          });
-
-        // we have uploaded two jars into worker
-        cy.findAllByText(sink.name).should('have.length', 2);
-
-        // undo uploaded jar into shared jars
-        cy.get('div.shared-jars').findByTitle('Undo add file').click();
-        cy.findAllByText(sink.name).should('have.length', 1);
-
-        cy.get('div.section-page-header').within(() => {
-          // back to Settings dialog
-          cy.get('button').click();
         });
 
-        // the worker section should have 1 change warning
-        cy.contains('h2', SETTING_SECTIONS.worker)
-          .parent('section')
-          .find('ul')
-          .contains('span', '1');
-
-        // restart worker
-        cy.switchSettingSection(
-          SETTING_SECTIONS.dangerZone,
-          'Restart this worker',
-        );
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.findByText('RESTART').click();
-          });
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // expand the log process
-            cy.get('div.FlexIconButtonDiv').find('button').click();
-            cy.get('div.StyledCard').should('exist');
-
-            cy.findByText('Stop worker success', { exact: false });
-            cy.findByText('Start worker success', { exact: false });
-
-            cy.get('div.FlexFooterDiv')
-              .contains('button', 'CLOSE')
-              .should('be.enabled')
-              .click();
-          });
-        // close the snackbar
-        cy.findByTestId('snackbar').find('button:visible').click();
-
-        // close the settings dialog
-        cy.findByTestId('workspace-settings-dialog-close-button')
-          .should('be.visible')
-          .click();
-      });
+      cy.findByTestId('confirm-button-DELETE').click();
+      // Since the file list table will be altered by redux state
+      // we need to wait for a period for changes applied
+      cy.wait(500);
+      cy.findByText(fakeJar.name).should('not.exist');
     });
 
-    context('Danger Zone', () => {
-      it('should able to add node into workspace', () => {
-        // click node list
-        cy.findByTitle(/node list/i).click();
-        // create a node
-        cy.findByTitle(/create node/i).click();
-        cy.get('input[name=hostname]').type(hostname);
-        cy.get('input[name=port]').type(generate.port().toString());
-        cy.get('input[name=user]').type(generate.userName());
-        cy.get('input[name=password]').type(generate.password());
-        cy.findByText('CREATE').click();
-        cy.findByTestId('fullscreen-dialog-close-button').click();
+    it('should able to select file in worker plugins', () => {
+      cy.switchSettingSection(
+        SETTING_SECTIONS.worker,
+        'Worker plugins and shared jars',
+      );
 
-        // add new added node into workspace
-        cy.switchSettingSection(SETTING_SECTIONS.nodes);
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add Node').click();
+      cy.get('div.plugins').findByTitle('Add File').click();
+
+      // select the sink jar
+      cy.findByText(sink.name).should('exist');
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', sink.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+          cy.findByText('SAVE').click();
+        });
+      cy.findByText(sink.name).should('exist');
+
+      // add the same file to shared jars
+      cy.get('div.shared-jars').findByTitle('Add File').click();
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
+              cy.getTableCellByColumn($table, 'Name', sink.name)
+                .siblings('td')
+                .first()
+                .find('[type="checkbox"]')
+                .check();
+            });
+          cy.findByText('SAVE').click();
         });
 
-        // re-open select node
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => cy.findByText('CANCEL').click());
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add Node').click();
+      // we have uploaded two jars into worker
+      cy.findAllByText(sink.name).should('have.length', 2);
+
+      // undo uploaded jar into shared jars
+      cy.get('div.shared-jars').findByTitle('Undo add file').click();
+      cy.findAllByText(sink.name).should('have.length', 1);
+
+      cy.get('div.section-page-header').within(() => {
+        // back to Settings dialog
+        cy.get('button').click();
+      });
+
+      // the worker section should have 1 change warning
+      cy.contains('h2', SETTING_SECTIONS.worker)
+        .parent('section')
+        .find('ul')
+        .contains('span', '1');
+
+      // restart worker
+      cy.switchSettingSection(
+        SETTING_SECTIONS.dangerZone,
+        'Restart this worker',
+      );
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.findByText('RESTART').click();
         });
 
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // expand the log process
+          cy.get('div.FlexIconButtonDiv').find('button').click();
+          cy.get('div.StyledCard').should('exist');
+
+          cy.findByText('Stop worker success', { exact: false });
+          cy.findByText('Start worker success', { exact: false });
+
+          cy.get('div.FlexFooterDiv')
+            .contains('button', 'CLOSE')
+            .should('be.enabled')
+            .click();
+        });
+      // close the snackbar
+      cy.findByTestId('snackbar').find('button:visible').click();
+
+      // close the settings dialog
+      cy.findByTestId('workspace-settings-dialog-close-button')
+        .should('be.visible')
+        .click();
+    });
+  });
+
+  context('Danger Zone', () => {
+    it('should able to add node into workspace', () => {
+      // click node list
+      cy.findByTitle(/node list/i).click();
+      // create a node
+      cy.findByTitle(/create node/i).click();
+      cy.get('input[name=hostname]').type(hostname);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByTestId('fullscreen-dialog-close-button').click();
+
+      // add new added node into workspace
+      cy.switchSettingSection(SETTING_SECTIONS.nodes);
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add Node').click();
+      });
+
+      // re-open select node
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => cy.findByText('CANCEL').click());
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add Node').click();
+      });
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               // checked the new added hostname
               cy.getTableCellByColumn($table, 'Hostname', hostname)
                 .should('exist')
@@ -1066,33 +1093,35 @@ describe('Navigator', () => {
                 .click();
             });
 
-            cy.findByText('SAVE').click();
-          });
-
-        cy.get('div.section-page-content').within(() => {
-          cy.findByText(hostname)
-            .should('exist')
-            .siblings('td')
-            // the "Used" column
-            .eq(3)
-            .invoke('html')
-            // there is no service assign to this node yet
-            .should('be.empty');
+          cy.findByText('SAVE').click();
         });
+
+      cy.get('div.section-page-content').within(() => {
+        cy.findByText(hostname)
+          .should('exist')
+          .siblings('td')
+          // the "Used" column
+          .eq(3)
+          .invoke('html')
+          // there is no service assign to this node yet
+          .should('be.empty');
+      });
+    });
+
+    it('should show an restart indicator after adding node to zookeeper', () => {
+      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add Node').click();
       });
 
-      it('should show an restart indicator after adding node to zookeeper', () => {
-        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
-
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add Node').click();
-        });
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               // assert the Services should be 0
               cy.getTableCellByColumn($table, 'Services', '0').should('exist');
               // checked the new added hostname
@@ -1104,28 +1133,30 @@ describe('Navigator', () => {
                 .click();
             });
 
-            cy.findByText('SAVE').click();
-          });
-
-        cy.get('div.section-page-content').within(() => {
-          // undo added node
-          cy.findByText(hostname)
-            .siblings('td')
-            .last()
-            .within(() => cy.findByTitle('Undo add node').click());
-          cy.findByText(hostname).should('not.exist');
+          cy.findByText('SAVE').click();
         });
 
-        // adding node again
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add Node').click();
-        });
+      cy.get('div.section-page-content').within(() => {
+        // undo added node
+        cy.findByText(hostname)
+          .siblings('td')
+          .last()
+          .within(() => cy.findByTitle('Undo add node').click());
+        cy.findByText(hostname).should('not.exist');
+      });
 
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+      // adding node again
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add Node').click();
+      });
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               // assert the Services should be 0
               cy.getTableCellByColumn($table, 'Services', '0').should('exist');
               // checked the new added hostname
@@ -1137,72 +1168,74 @@ describe('Navigator', () => {
                 .click();
             });
 
-            cy.findByText('SAVE').click();
-          });
-
-        cy.get('div.section-page-header').within(() => {
-          // back to Settings dialog
-          cy.get('button').click();
+          cy.findByText('SAVE').click();
         });
 
-        // the zookeeper section should have 1 change warning
-        cy.contains('h2', SETTING_SECTIONS.zookeeper)
-          .parent('section')
-          .find('ul')
-          .contains('span', '1');
-
-        // click the discard button in indicator
-        cy.findAllByRole('alert')
-          .scrollIntoView()
-          .should('have.length', 1)
-          .within(() => {
-            cy.contains('button', 'DISCARD').click();
-          });
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // discard the "discard" changes
-            cy.contains('button', 'CANCEL').click();
-          });
-
-        // click the discard button in indicator again
-        cy.findAllByRole('alert')
-          .scrollIntoView()
-          .should('have.length', 1)
-          .within(() => {
-            cy.contains('button', 'DISCARD').click();
-          });
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // discard the changes
-            cy.contains('button', 'DISCARD').click();
-          });
-
-        // the zookeeper section should not have warnings
-        cy.findAllByRole('alert').should('not.exist');
-        cy.contains('h2', SETTING_SECTIONS.zookeeper)
-          .parent('section')
-          .find('ul')
-          .contains('span', '1')
-          .should('not.exist');
+      cy.get('div.section-page-header').within(() => {
+        // back to Settings dialog
+        cy.get('button').click();
       });
 
-      it('should able to restart from indicator after adding node to zookeeper', () => {
-        // add node to zookeeper
-        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
-        cy.get('div.section-page-content').within(() => {
-          cy.findByTitle('Add Node').click();
+      // the zookeeper section should have 1 change warning
+      cy.contains('h2', SETTING_SECTIONS.zookeeper)
+        .parent('section')
+        .find('ul')
+        .contains('span', '1');
+
+      // click the discard button in indicator
+      cy.findAllByRole('alert')
+        .scrollIntoView()
+        .should('have.length', 1)
+        .within(() => {
+          cy.contains('button', 'DISCARD').click();
         });
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.get('table').within(($table) => {
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // discard the "discard" changes
+          cy.contains('button', 'CANCEL').click();
+        });
+
+      // click the discard button in indicator again
+      cy.findAllByRole('alert')
+        .scrollIntoView()
+        .should('have.length', 1)
+        .within(() => {
+          cy.contains('button', 'DISCARD').click();
+        });
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // discard the changes
+          cy.contains('button', 'DISCARD').click();
+        });
+
+      // the zookeeper section should not have warnings
+      cy.findAllByRole('alert').should('not.exist');
+      cy.contains('h2', SETTING_SECTIONS.zookeeper)
+        .parent('section')
+        .find('ul')
+        .contains('span', '1')
+        .should('not.exist');
+    });
+
+    it('should able to restart from indicator after adding node to zookeeper', () => {
+      // add node to zookeeper
+      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.get('div.section-page-content').within(() => {
+        cy.findByTitle('Add Node').click();
+      });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.get('table')
+            .should('have.length', 1)
+            .within(($table) => {
               // checked the new added hostname
               cy.getTableCellByColumn($table, 'Name', hostname)
                 .should('exist')
@@ -1211,106 +1244,107 @@ describe('Navigator', () => {
                 .find('input[type="checkbox"]')
                 .click();
             });
-            cy.findByText('SAVE').click();
-          });
-        cy.get('div.section-page-header').within(() => {
-          // back to Settings dialog
-          cy.get('button').click();
+          cy.findByText('SAVE').click();
+        });
+      cy.get('div.section-page-header').within(() => {
+        // back to Settings dialog
+        cy.get('button').click();
+      });
+
+      // click the restart button in indicator
+      cy.findAllByRole('alert')
+        .scrollIntoView()
+        .should('have.length', 1)
+        .within(() => {
+          cy.contains('button', 'RESTART').click();
+        });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // cancel the "restart" changes
+          cy.contains('button', 'CANCEL').click();
         });
 
-        // click the restart button in indicator
-        cy.findAllByRole('alert')
-          .scrollIntoView()
+      // click the restart button in indicator again
+      cy.findAllByRole('alert')
+        .scrollIntoView()
+        .should('have.length', 1)
+        .within(() => {
+          cy.contains('button', 'RESTART').click();
+        });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // confirm the "restart" changes
+          cy.contains('button', 'RESTART').click();
+        });
+
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          // expand the log process
+          cy.get('div.FlexIconButtonDiv').find('button').click();
+          cy.get('div.StyledCard').should('exist');
+
+          cy.findByText('Stop worker success', { exact: false });
+          cy.findByText('Stop broker success', { exact: false });
+          cy.findByText('Stop zookeeper success', { exact: false });
+          cy.findByText('Start zookeeper success', { exact: false });
+          cy.findByText('Start broker success', { exact: false });
+          cy.findByText('Start worker success', { exact: false });
+
+          cy.get('div.FlexFooterDiv')
+            .contains('button', 'CLOSE')
+            .should('be.enabled')
+            .click();
+        });
+
+      // close the snackbar
+      cy.findByTestId('snackbar').find('button:visible').click();
+
+      // close the settings dialog
+      cy.findByTestId('workspace-settings-dialog-close-button')
+        .should('be.visible')
+        .click();
+
+      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.get('div.section-page-content').within(() => {
+        cy.get('table')
           .should('have.length', 1)
-          .within(() => {
-            cy.contains('button', 'RESTART').click();
-          });
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // cancel the "restart" changes
-            cy.contains('button', 'CANCEL').click();
-          });
-
-        // click the restart button in indicator again
-        cy.findAllByRole('alert')
-          .scrollIntoView()
-          .should('have.length', 1)
-          .within(() => {
-            cy.contains('button', 'RESTART').click();
-          });
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // confirm the "restart" changes
-            cy.contains('button', 'RESTART').click();
-          });
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            // expand the log process
-            cy.get('div.FlexIconButtonDiv').find('button').click();
-            cy.get('div.StyledCard').should('exist');
-
-            cy.findByText('Stop worker success', { exact: false });
-            cy.findByText('Stop broker success', { exact: false });
-            cy.findByText('Stop zookeeper success', { exact: false });
-            cy.findByText('Start zookeeper success', { exact: false });
-            cy.findByText('Start broker success', { exact: false });
-            cy.findByText('Start worker success', { exact: false });
-
-            cy.get('div.FlexFooterDiv')
-              .contains('button', 'CLOSE')
-              .should('be.enabled')
-              .click();
-          });
-
-        // close the snackbar
-        cy.findByTestId('snackbar').find('button:visible').click();
-
-        // close the settings dialog
-        cy.findByTestId('workspace-settings-dialog-close-button')
-          .should('be.visible')
-          .click();
-
-        cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
-        cy.get('div.section-page-content').within(() => {
-          cy.get('table').within(($table) => {
+          .within(($table) => {
             // assert the Services should be 1 now
             cy.getTableCellByColumn($table, 'Services', '1').should('exist');
           });
+      });
+    });
+
+    it('should able to restart worker by directly click button', () => {
+      cy.switchSettingSection(
+        SETTING_SECTIONS.dangerZone,
+        'Restart this worker',
+      );
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.findByText('CANCEL').click();
         });
-      });
 
-      it('should able to restart worker by directly click button', () => {
-        cy.switchSettingSection(
-          SETTING_SECTIONS.dangerZone,
-          'Restart this worker',
-        );
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.findByText('CANCEL').click();
-          });
+      // re-click again
+      cy.switchSettingSection(
+        SETTING_SECTIONS.dangerZone,
+        'Restart this worker',
+      );
 
-        // re-click again
-        cy.switchSettingSection(
-          SETTING_SECTIONS.dangerZone,
-          'Restart this worker',
-        );
-
-        cy.findAllByRole('dialog')
-          .filter(':visible')
-          .should('have.length', 1)
-          .within(() => {
-            cy.findByText('RESTART').click();
-          });
-      });
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.findByText('RESTART').click();
+        });
     });
   });
 });
