@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import cx from 'classnames';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import StopIcon from '@material-ui/icons/Stop';
 import BuildIcon from '@material-ui/icons/Build';
@@ -72,11 +73,14 @@ const createConnectorCell = (options) => {
   const displayClassName = className.split('.').pop();
   const iconStatus = CELL_STATUS[status.toLowerCase()] || CELL_STATUS.stopped;
 
+  const elementClassName = cx('paper-element', {
+    stream: kind === KIND.stream,
+    connector: kind !== KIND.stream,
+  });
+
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
-      <div class=${
-        kind === KIND.stream ? 'stream' : 'connector'
-      } data-testid=${id}>
+      <div class="${elementClassName}" data-testid=${id}>
         <div class="header">
           <div class="icon ${iconStatus}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">

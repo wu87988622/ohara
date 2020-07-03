@@ -18,7 +18,6 @@ import * as generate from '../../../src/utils/generate';
 import { hashByGroupAndName } from '../../../src/utils/sha';
 
 describe('App Bar', () => {
-  // fake workspace
   const wkName = generate.serviceName();
 
   before(() => {

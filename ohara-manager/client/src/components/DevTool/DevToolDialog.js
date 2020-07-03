@@ -34,7 +34,7 @@ const DevToolDialog = () => {
   }
 
   return (
-    <StyledDevTool>
+    <StyledDevTool id="dev-tool">
       <Header />
       <Body />
       <div className="status-bar">

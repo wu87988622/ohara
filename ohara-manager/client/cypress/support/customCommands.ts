@@ -127,6 +127,8 @@ declare global {
       uploadStreamJar: () => Chainable<null>;
       // Pipeline
       createPipeline: (name?: string) => Chainable<null>;
+      startPipeline: (name: string) => Chainable<null>;
+      stopPipeline: (name: string) => Chainable<null>;
       deletePipeline: (name: string) => Chainable<null>;
       deleteAllPipelines: (name?: string) => Chainable<null>;
       // Settings

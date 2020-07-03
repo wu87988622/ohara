@@ -184,7 +184,7 @@ const PipelinePropertyDialog = (props) => {
       <StyleTitle disableTypography>
         <Typography variant="h4">{title}</Typography>
         {onClose && (
-          <StyleIconButton onClick={onClose}>
+          <StyleIconButton data-testid="close-button" onClick={onClose}>
             <CloseIcon />
           </StyleIconButton>
         )}
@@ -200,7 +200,13 @@ const PipelinePropertyDialog = (props) => {
   };
 
   return (
-    <Dialog fullWidth maxWidth={maxWidth} onClose={onClose} open={isOpen}>
+    <Dialog
+      data-testid="property-dialog"
+      fullWidth
+      maxWidth={maxWidth}
+      onClose={onClose}
+      open={isOpen}
+    >
       <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
         <LeftBody>
@@ -228,6 +234,7 @@ const PipelinePropertyDialog = (props) => {
               if (defs.length > 0) {
                 return (
                   <StyleExpansionPanel
+                    data-testid="group-panel"
                     expanded={
                       expanded === title || (index === 0 && expanded === null)
                     }
@@ -291,7 +298,7 @@ const PipelinePropertyDialog = (props) => {
           color="primary"
           onClick={() => formRef.current.submit()}
         >
-          Save changes
+          SAVE CHANGES
         </Button>
       </StyleMuiDialogActions>
     </Dialog>

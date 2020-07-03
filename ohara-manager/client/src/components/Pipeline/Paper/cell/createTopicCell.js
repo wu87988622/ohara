@@ -71,7 +71,7 @@ const createTopicCell = (options) => {
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
-      <div class="topic" data-testid=${id}>
+      <div class="paper-element topic" data-testid=${id}>
         ${isShared ? sharedIcon : pipelineOnlyIcon}
         <div class="display-name">${displayName}</div>
         <div class="menu">

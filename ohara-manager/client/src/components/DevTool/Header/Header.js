@@ -30,6 +30,7 @@ import { TAB } from 'context/devTool/const';
 import { usePrevious } from 'utils/hooks';
 import { ControllerLog, ControllerTopic } from './Controller';
 import { StyledHeader } from './HeaderStyles';
+import { isShabondi } from 'components/Pipeline/PipelineUtils';
 
 const Header = () => {
   const { tabName, setTabName } = context.useDevTool();
@@ -50,7 +51,11 @@ const Header = () => {
     if (!isOpen || (prevSelectedCell === selectedCell && prevTab === tabName))
       return;
 
-    const getService = (kind) => {
+    const getService = (kind, className) => {
+      // Shabondis are included in the source and sink but with a different mechanism
+      // just like stream, so we need to handle it differently
+      if (isShabondi(className)) return KIND.shabondi;
+
       if (kind === KIND.source || kind === KIND.sink) return KIND.worker;
       if (kind === KIND.topic) return KIND.broker;
       if (kind === KIND.stream) return KIND.stream;
@@ -58,6 +63,7 @@ const Header = () => {
     };
 
     const kind = get(selectedCell, CELL_PROPS.kind, '');
+    const className = get(selectedCell, CELL_PROPS.className, '');
 
     if (kind === KIND.topic) {
       if (tabName === TAB.log) {
@@ -70,9 +76,9 @@ const Header = () => {
     } else if (!isEmpty(kind)) {
       // the selected cell is a source, sink, or stream
       setTabName(TAB.log);
-      const service = getService(kind);
+      const service = getService(kind, className);
       setLogQueryParams({ logType: service });
-      if (kind === KIND.shabondi) {
+      if (isShabondi(className)) {
         setLogQueryParams({
           shabondiName: get(selectedCell, CELL_PROPS.displayName, ''),
         });

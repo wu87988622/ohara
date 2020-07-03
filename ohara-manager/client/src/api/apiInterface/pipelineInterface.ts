@@ -21,7 +21,8 @@ interface EndPoint {
   group: string;
   kind: string;
 }
-interface ObjectAbstract {
+
+export interface ObjectAbstract {
   group: string;
   name: string;
   kind: string;

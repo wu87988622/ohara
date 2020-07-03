@@ -17,7 +17,7 @@
 import '@testing-library/cypress/add-commands';
 import { capitalize } from 'lodash';
 
-import { KIND, CELL_TYPES } from '../../src/const';
+import { KIND, CELL_TYPES, CELL_STATUS } from '../../src/const';
 import { hashByGroupAndName } from '../../src/utils/sha';
 import { SETTING_SECTIONS } from './customCommands';
 
@@ -28,10 +28,55 @@ Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.findByText('ADD').click();
 });
 
+Cypress.Commands.add('startPipeline', (name) => {
+  cy.log(`Starting ${name}`);
+  cy.get('#pipeline-list').findByText(name).click();
+
+  cy.findByTestId('pipeline-controls-button').should('exist').click();
+
+  cy.findByTestId('pipeline-controls-dropdown').within(() => {
+    cy.findByText('Start all components').then(($el) => {
+      if (!$el.hasClass('Mui-disabled')) {
+        cy.wrap($el).click();
+      }
+    });
+  });
+});
+
+Cypress.Commands.add('stopPipeline', (name) => {
+  cy.log(`Stopping ${name}`);
+
+  cy.get('#pipeline-list').findByText(name).click();
+
+  cy.get('#paper').then(($paper) => {
+    // Topics are not included in the comparison as they will always be running in the UI
+    const noneTopicEls = $paper
+      .find('.paper-element')
+      .filter((_, el) => !el.classList.contains(KIND.topic));
+
+    const runningElements = noneTopicEls.find('.running');
+
+    // // If there's no running els, we don't need to stop the pipeline
+    if (noneTopicEls.length === 0 || runningElements.length === 0) return;
+
+    cy.get('.pipeline-controls').find('button').click();
+    cy.findByText('Stop all components').click();
+
+    cy.wrap(noneTopicEls).should(($els) => {
+      // Ensure all els are not running
+      $els.each((_, el) => {
+        expect(Cypress.$(el).find('.icon')).not.to.have.class(
+          CELL_STATUS.running,
+        );
+      });
+    });
+  });
+});
+
 Cypress.Commands.add('deletePipeline', (name) => {
   cy.log(`Deleting ${name}`);
 
-  cy.get('#pipeline-list').within(() => cy.findByText(name).click());
+  cy.get('#pipeline-list').findByText(name).click();
 
   cy.get('.pipeline-controls').find('button').click();
   cy.findByText('Delete this pipeline').click();
@@ -45,17 +90,15 @@ Cypress.Commands.add('deleteAllPipelines', () => {
   cy.log(`Deleting all pipelines`);
 
   cy.get('#pipeline-list').then(($list) => {
-    if ($list.find('> li').length === 0) {
-      return;
-    }
+    if ($list.find('> li').length === 0) return;
 
-    cy.get('#pipeline-list > li').as('items');
-
-    cy.get('@items').each(($el) => {
-      cy.deletePipeline($el.text());
+    cy.get('#pipeline-list > li').each(($el) => {
+      const pipelineName = $el.text();
+      cy.stopPipeline(pipelineName); // Stop all services before deleting
+      cy.deletePipeline(pipelineName);
     });
 
-    cy.get('@items').should('have.length', 0);
+    cy.get('#pipeline-list > li').should('have.length', 0);
   });
 });
 
@@ -84,7 +127,11 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('addElement', (name, kind, className) => {
-  cy.log(`add element: ${name} of ${kind} with className ${className}`);
+  cy.log(
+    `add element: ${name} of ${kind}` + className
+      ? `with className ${className}`
+      : '',
+  );
 
   // Drag and drop an element only works on Paper, so we need to avoid dropping
   // thing in other elements
@@ -100,12 +147,8 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
 
     let size = 0;
 
-    if ($paper.find('.topic').length > 0) {
-      size += $paper.find('.topic').length;
-    }
-
-    if ($paper.find('.connector, .stream').length > 0) {
-      size += $paper.find('.connector, .stream').length;
+    if ($paper.find('.paper-element').length > 0) {
+      size += $paper.find('.paper-element').length;
     }
 
     cy.findByText(capitalize(kind)).should('exist').click();
@@ -150,7 +193,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
         $paper
           .find('#topic-list')
           .find('span.display-name')
-          .each(function (_, element) {
+          .each((_, element) => {
             if (element.textContent) {
               if (element.textContent === 'Pipeline Only')
                 // make sure the "pipeline only" topic is in first order
@@ -206,11 +249,11 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
 });
 
 Cypress.Commands.add('removeElement', (name) => {
-  cy.log(`Remove an element: ${name}`);
+  cy.log(`Removing an element: ${name}`);
 
   cy.getCell(name).trigger('mouseover');
   cy.cellAction(name, 'remove').click();
-  cy.findByText('DELETE').click();
+  cy.findByTestId('delete-dialog').findByText('DELETE').click();
 
   cy.get('#paper').findByText(name).should('not.exist');
 

@@ -187,7 +187,7 @@ const Paper = React.forwardRef((props, ref) => {
             markup: [
               {
                 tagName: 'circle',
-                selector: 'button',
+                selector: 'delete-paper-link-button',
                 attributes: {
                   r: 8,
                   fill: 'grey',

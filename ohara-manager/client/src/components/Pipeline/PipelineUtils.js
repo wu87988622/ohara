@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PACKAGE_ROOT, KIND } from 'const';
+import { PACKAGE_ROOT, KIND } from '../../const';
 
 export const getPipelineOnlyTopicDisplayNames = (topicCells) => {
   const topicIndex = topicCells
