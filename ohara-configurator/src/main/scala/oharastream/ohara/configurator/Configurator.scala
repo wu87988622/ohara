@@ -25,10 +25,8 @@ import akka.http.scaladsl.server.Directives.{handleRejections, path, _}
 import akka.http.scaladsl.server.{ExceptionHandler, MalformedRequestContentRejection, RejectionHandler}
 import akka.http.scaladsl.{Http, server}
 import com.typesafe.scalalogging.Logger
-import oharastream.ohara.agent._
-import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.ServiceCollieImpl
-import oharastream.ohara.agent.k8s.K8SClient
+import oharastream.ohara.agent.{k8s, _}
 import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.InspectApi.K8sUrls
@@ -55,9 +53,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   */
 class Configurator private[configurator] (val hostname: String, val port: Int)(
   implicit val store: DataStore,
-  val dataCollie: DataCollie,
-  val serviceCollie: ServiceCollie,
-  val containerClient: ContainerClient
+  val serviceCollie: ServiceCollie
 ) extends ReleaseOnce {
   private[this] val log = Logger(classOf[Configurator])
 
@@ -222,10 +218,19 @@ class Configurator private[configurator] (val hostname: String, val port: Int)(
         PipelineRoute.apply,
         ValidationRoute.apply,
         ConnectorRoute.apply,
-        InspectRoute.apply(mode, containerClient match {
-          case c: K8SClient => Some(K8sUrls(c.coordinatorUrl, c.metricsUrl))
-          case _            => None
-        }),
+        InspectRoute.apply(
+          mode,
+          serviceCollie match {
+            case s: oharastream.ohara.agent.k8s.K8SServiceCollieImpl =>
+              Some(
+                K8sUrls(
+                  s.containerClient.asInstanceOf[k8s.K8SClient].coordinatorUrl,
+                  s.containerClient.asInstanceOf[k8s.K8SClient].metricsUrl
+                )
+              )
+            case _ => None
+          }
+        ),
         StreamRoute.apply,
         ShabondiRoute.apply,
         NodeRoute.apply,
@@ -338,7 +343,7 @@ object Configurator {
         case Array(PORT_KEY, value)                => configuratorBuilder.port(value.toInt)
         case Array(K8S_NAMESPACE_KEY, value)       => configuratorBuilder.k8sNamespace(value)
         case Array(K8S_METRICS_SERVICE_KEY, value) => configuratorBuilder.k8sMetricsServerURL(value)
-        case Array(K8S_KEY, value)                 => configuratorBuilder.k8sApiServer(value)
+        case Array(K8S_KEY, value)                 => configuratorBuilder.k8sServer(value)
         case Array(FAKE_KEY, value) =>
           if (value.toBoolean) configuratorBuilder.fake()
         case _ =>
@@ -368,7 +373,7 @@ object Configurator {
         s"start a configurator built on hostname:${GLOBAL_CONFIGURATOR.hostname} and port:${GLOBAL_CONFIGURATOR.port}"
       )
       LOG.info("VersionUtils info: " + VersionUtils.jsonString())
-      LOG.info("enter ctrl+c to terminate the configurator")
+      LOG.info("enter ctrl+c to terminate this configurator")
 
       while (!GLOBAL_CONFIGURATOR_SHOULD_CLOSE) TimeUnit.SECONDS.sleep(2)
     } finally {

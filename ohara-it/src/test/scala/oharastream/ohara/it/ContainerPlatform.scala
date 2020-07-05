@@ -20,7 +20,7 @@ import java.net.URL
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 
-import oharastream.ohara.agent.DataCollie
+import oharastream.ohara.agent.{DataCollie, RemoteFolderHandler}
 import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.docker.DockerClient
 import oharastream.ohara.agent.k8s.K8SClient
@@ -81,21 +81,21 @@ object ContainerPlatform {
       sys.env.get(ContainerPlatform.DOCKER_NODES_KEY)
     ).flatten match {
       case Seq(coordinatorUrl, plainNodes) =>
-        def createClient(): K8SClient = {
-          val metricsUrl = sys.env.get(ContainerPlatform.K8S_METRICS_SERVER_URL_KEY).orNull
+        val nodes = parserNode(plainNodes)
+        def createClient(): K8SClient =
           K8SClient.builder
-            .apiServerURL(coordinatorUrl)
+            .serverURL(coordinatorUrl)
             .namespace(sys.env.getOrElse(K8S_NAMESPACE_KEY, "default"))
-            .metricsApiServerURL(metricsUrl)
+            .metricsServerURL(sys.env.get(ContainerPlatform.K8S_METRICS_SERVER_URL_KEY).orNull)
+            .remoteFolderHandler(RemoteFolderHandler(DataCollie(nodes)))
             .build()
-        }
         val containerClient = createClient()
         try Some(
           ContainerPlatform.builder
           // the coordinator node is NOT able to run pods by default
             .coordinatorName(new URL(coordinatorUrl).getHost)
             .mode("K8S")
-            .nodes(parserNode(plainNodes))
+            .nodes(nodes)
             .clientCreator(() => createClient())
             .arguments(
               Seq(
@@ -188,8 +188,9 @@ object ContainerPlatform {
         case Configurator.Mode.K8S =>
           () =>
             K8SClient.builder
-              .apiServerURL(info.k8sUrls.get.coordinatorUrl)
-              .metricsApiServerURL(info.k8sUrls.get.metricsUrl.orNull)
+              .serverURL(info.k8sUrls.get.coordinatorUrl)
+              .metricsServerURL(info.k8sUrls.get.metricsUrl.orNull)
+              .remoteFolderHandler(RemoteFolderHandler(DataCollie(nodes)))
               .build()
         case Configurator.Mode.DOCKER =>
           () => DockerClient(DataCollie(nodes))

@@ -23,7 +23,6 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.{Http, server}
 import oharastream.ohara.agent.ServiceCollie
-import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.util.{CommonUtils, Releasable, VersionUtils}
@@ -101,77 +100,6 @@ class TestConfiguratorBuilder extends OharaTest {
       .build()
 
   @Test
-  def reassignK8sClient(): Unit =
-    an[IllegalArgumentException] should be thrownBy Configurator.builder
-      .k8sClient(Mockito.mock(classOf[K8SClient]))
-      .k8sClient(Mockito.mock(classOf[K8SClient]))
-      .build()
-
-  @Test
-  def testK8SClientNamespaceDefault(): Unit = {
-    val namespace  = "default"
-    val podName    = "pod1"
-    val logMessage = "start pods ......."
-    val apiServer  = k8sServer(namespace, podName, logMessage)
-    try {
-      val configurator: Configurator = Configurator.builder.k8sApiServer(apiServer.url).build()
-      Await
-        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
-        .head
-        ._2 shouldBe logMessage
-    } finally apiServer.close()
-  }
-
-  @Test
-  def testK8SClientNamespaceAssign(): Unit = {
-    val namespace  = "ohara"
-    val podName    = "pod1"
-    val logMessage = "start pods ......."
-    val apiServer  = k8sServer(namespace, podName, logMessage)
-    try {
-      val configurator: Configurator = Configurator.builder.k8sNamespace(namespace).k8sApiServer(apiServer.url).build()
-      Await
-        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
-        .head
-        ._2 shouldBe logMessage
-    } finally apiServer.close()
-  }
-
-  @Test
-  def testK8SClientNamespaceNone(): Unit = {
-    val namespace  = "default"
-    val podName    = "pod1"
-    val logMessage = "start pods ......."
-    val apiServer  = k8sServer(namespace, podName, logMessage)
-    try {
-      val k8sClient                  = K8SClient.builder.apiServerURL(apiServer.url).build()
-      val configurator: Configurator = Configurator.builder.k8sClient(k8sClient).build()
-      Await
-        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
-        .head
-        ._2 shouldBe logMessage
-    } finally apiServer.close()
-  }
-
-  @Test
-  def testK8SClientNamespace(): Unit = {
-    val namespace  = "ohara"
-    val podName    = "pod1"
-    val logMessage = "start pods ......."
-    val apiServer  = k8sServer(namespace, podName, logMessage)
-    try {
-      val k8sClient: K8SClient = K8SClient.builder.apiServerURL(apiServer.url).namespace(namespace).build()
-
-      val configurator: Configurator =
-        Configurator.builder.k8sClient(k8sClient).build()
-      Await
-        .result(configurator.containerClient.log(podName, None), Duration(10, TimeUnit.SECONDS))
-        .head
-        ._2 shouldBe logMessage
-    } finally apiServer.close()
-  }
-
-  @Test
   def reassignServiceCollie(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator.builder
       .serviceCollie(Mockito.mock(classOf[ServiceCollie]))
@@ -208,12 +136,6 @@ class TestConfiguratorBuilder extends OharaTest {
       .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(10)).getCanonicalPath)
       .build()
 
-  @Test
-  def assigningK8sBeforeHomeFolderShouldNotCauseException(): Unit =
-    Configurator.builder
-      .k8sClient(Mockito.mock(classOf[K8SClient]))
-      .homeFolder(CommonUtils.createTempFolder(CommonUtils.randomString(5)).getAbsolutePath)
-
   private[this] def toServer(route: server.Route): SimpleServer = {
     implicit val system: ActorSystem = ActorSystem("my-system")
     val server                       = Await.result(Http().bindAndHandle(route, "localhost", 0), Duration(30, TimeUnit.SECONDS))
@@ -232,7 +154,7 @@ class TestConfiguratorBuilder extends OharaTest {
   def testBuild(): Unit = {
     val apiServer           = k8sServer("default", "pod", "log")
     val configuratorBuilder = Configurator.builder
-    val configurator        = configuratorBuilder.k8sApiServer(apiServer.url).k8sNamespace("default").build()
+    val configurator        = configuratorBuilder.k8sServer(apiServer.url).k8sNamespace("default").build()
     configurator.mode shouldBe Mode.K8S
   }
 

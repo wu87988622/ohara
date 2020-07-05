@@ -25,12 +25,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TestConfiguratorMain extends OharaTest {
   @Test
-  def illegalK8sUrl(): Unit =
-    intercept[IllegalArgumentException] {
-      Configurator.main(Array[String](Configurator.K8S_KEY, s"http://localhost:${CommonUtils.availablePort()}"))
-    }.getMessage should include("unable to access")
-
-  @Test
   def emptyK8sArgument(): Unit =
     an[IllegalArgumentException] should be thrownBy Configurator.main(Array[String](Configurator.K8S_KEY, ""))
 

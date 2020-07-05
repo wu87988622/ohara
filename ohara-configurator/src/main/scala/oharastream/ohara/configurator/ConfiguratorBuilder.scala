@@ -18,17 +18,14 @@ package oharastream.ohara.configurator
 
 import java.io.File
 import java.util.Objects
-import java.util.concurrent.TimeUnit
 
 import oharastream.ohara.agent._
-import oharastream.ohara.agent.docker.ServiceCollieImpl
-import oharastream.ohara.agent.k8s.{K8SClient, K8SServiceCollieImpl}
-import oharastream.ohara.client.configurator.Data
+import oharastream.ohara.agent.k8s.K8SClient
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.NodeApi.{Node, NodeService, State}
 import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
-import oharastream.ohara.client.configurator.{BrokerApi, ClusterState, NodeApi, WorkerApi, ZookeeperApi}
+import oharastream.ohara.client.configurator.{BrokerApi, ClusterState, Data, NodeApi, WorkerApi, ZookeeperApi}
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
 import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.setting.ObjectKey
@@ -37,19 +34,15 @@ import oharastream.ohara.configurator.fake._
 import oharastream.ohara.configurator.store.DataStore
 import org.rocksdb.RocksDBException
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
-  private[this] var hostname: String             = _
-  private[this] var port: Int                    = -1
-  private[this] var homeFolder: String           = _
-  private[this] var store: DataStore             = _
-  private[this] var serviceCollie: ServiceCollie = _
-  private[this] var k8sApiServer: String         = _
-  private[this] var k8sClient: K8SClient         = _
-  private[this] var metricsServiceURL: String    = _
-  private[this] var k8sNamespace: String         = _
+  private[this] var hostname: String                    = _
+  private[this] var port: Int                           = -1
+  private[this] var homeFolder: String                  = _
+  private[this] var store: DataStore                    = _
+  private[this] var serviceCollie: ServiceCollie        = _
+  private[this] var k8sClientBuilder: K8SClient.Builder = _
 
   @Optional("default is random folder")
   def homeFolder(homeFolder: String): ConfiguratorBuilder = doOrReleaseObjects {
@@ -103,7 +96,6 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   @VisibleForTesting
   private[configurator] def fake(bkConnectionProps: String, wkConnectionProps: String): ConfiguratorBuilder =
     doOrReleaseObjects {
-      if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
       val store             = getOrCreateStore()
       val embeddedZkName    = ObjectKey.of(oharastream.ohara.client.configurator.GROUP_DEFAULT, "embeddedzk")
@@ -136,7 +128,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
           )
         }
         .foreach(r => store.addIfAbsent(r))
-      val collie = new FakeServiceCollie(createCollie(), bkConnectionProps, wkConnectionProps)
+      val collie = new FakeServiceCollie(createDataCollie(), bkConnectionProps, wkConnectionProps)
       val bkCluster = {
         val pair = bkConnectionProps.split(",")
         val host = pair.map(_.split(":").head).head
@@ -212,8 +204,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     wkClusterNamePrefix: String = "fakewkcluster"
   ): ConfiguratorBuilder =
     doOrReleaseObjects {
-      if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
       if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
+      if (this.k8sClientBuilder != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClientBuilder"))
       if (numberOfBrokerCluster < 0)
         throw new IllegalArgumentException(s"numberOfBrokerCluster:$numberOfBrokerCluster should be positive")
       if (numberOfWorkerCluster < 0)
@@ -221,7 +213,7 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
       if (numberOfBrokerCluster <= 0 && numberOfWorkerCluster > 0)
         throw new IllegalArgumentException(s"you must initialize bk cluster before you initialize wk cluster")
       val store  = getOrCreateStore()
-      val collie = new FakeServiceCollie(createCollie())
+      val collie = new FakeServiceCollie(createDataCollie())
 
       import scala.concurrent.ExecutionContext.Implicits.global
       val zkCreations = (0 until numberOfBrokerCluster).map { index =>
@@ -340,19 +332,11 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     this
   }
 
-  /**
-    * Set a k8s client to enable container collie to use k8s platform. If you don't set it, the default implementation apply the ssh connection
-    * to control containers on remote nodes.
-    * @param k8sClient k8s client
-    * @return this builder
-    */
-  @Optional("default is null")
-  def k8sClient(k8sClient: K8SClient): ConfiguratorBuilder = doOrReleaseObjects {
-    if (this.k8sClient != null) throw new IllegalArgumentException(alreadyExistMessage("k8sClient"))
-    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
-    this.k8sClient = Objects.requireNonNull(k8sClient)
-    this
-  }
+  private[this] def getOrCreateK8sClientBuilder(): K8SClient.Builder =
+    if (k8sClientBuilder == null) {
+      k8sClientBuilder = K8SClient.builder
+      k8sClientBuilder
+    } else k8sClientBuilder
 
   /**
     * Set a k8s namespace to use k8s platform
@@ -361,7 +345,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     */
   @Optional("default value is default")
   private[configurator] def k8sNamespace(namespace: String): ConfiguratorBuilder = {
-    this.k8sNamespace = namespace
+    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
+    getOrCreateK8sClientBuilder().namespace(namespace)
     this
   }
 
@@ -372,7 +357,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     */
   @Optional("default value is null")
   private[configurator] def k8sMetricsServerURL(metricsServiceURL: String): ConfiguratorBuilder = {
-    this.metricsServiceURL = metricsServiceURL
+    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
+    getOrCreateK8sClientBuilder().metricsServerURL(metricsServiceURL)
     this
   }
 
@@ -381,12 +367,13 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     * @return this builder
     */
   @Optional("default value is null")
-  private[configurator] def k8sApiServer(k8sApiServer: String): ConfiguratorBuilder = {
-    this.k8sApiServer = k8sApiServer
+  private[configurator] def k8sServer(serverURL: String): ConfiguratorBuilder = {
+    if (this.serviceCollie != null) throw new IllegalArgumentException(alreadyExistMessage("serviceCollie"))
+    getOrCreateK8sClientBuilder().serverURL(serverURL)
     this
   }
 
-  private[configurator] def createCollie(): DataCollie = {
+  private[configurator] def createDataCollie(): DataCollie = {
     val store = getOrCreateStore()
     new DataCollie {
       override def value[T <: Data: ClassTag](key: ObjectKey)(implicit executor: ExecutionContext): Future[T] =
@@ -396,40 +383,13 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     }
   }
 
-  override def build(): Configurator = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    if (this.k8sApiServer != null) {
-      val client = K8SClient.builder
-        .apiServerURL(this.k8sApiServer)
-        .namespace(k8sNamespace)
-        .metricsApiServerURL(metricsServiceURL)
-        .build()
-
-      try if (Await.result(client.nodeNameIPInfo(), Duration(30, TimeUnit.SECONDS)).isEmpty)
-        throw new IllegalArgumentException("your k8s clusters is empty!!!")
-      catch {
-        case e: Throwable =>
-          throw new IllegalArgumentException(s"unable to access k8s cluster:${this.k8sApiServer}", e)
-      }
-      this.k8sClient(client)
-    }
-
+  override def build(): Configurator =
     doOrReleaseObjects(
       new Configurator(hostname = getOrCreateHostname(), port = getOrCreatePort())(
         store = getOrCreateStore(),
-        dataCollie = createCollie(),
-        serviceCollie = getOrCreateCollie(),
-        containerClient = serviceCollie match {
-          case s: K8SServiceCollieImpl => s.containerClient
-          case s: ServiceCollieImpl    => s.containerClient
-          case s: FakeServiceCollie    => s.containerClient
-        }
+        serviceCollie = getOrCreateCollie()
       )
     )
-  }
-
-  private[this] def folder(prefix: String): String =
-    new File(CommonUtils.requireNonEmpty(getOrCreateHomeFolder()), prefix).getCanonicalPath
 
   private[this] def getOrCreateHostname(): String = {
     if (hostname == null) hostname = CommonUtils.hostname()
@@ -448,7 +408,8 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
 
   private[this] def getOrCreateStore(): DataStore =
     if (store == null) try {
-      store = DataStore.builder.persistentFolder(folder("store")).build()
+      val folder = new File(CommonUtils.requireNonEmpty(getOrCreateHomeFolder()), "store").getCanonicalPath
+      store = DataStore.builder.persistentFolder(folder).build()
       store
     } catch {
       case e: RocksDBException =>
@@ -465,8 +426,12 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
   private[this] def getOrCreateCollie(): ServiceCollie =
     if (serviceCollie == null) {
       this.serviceCollie =
-        if (k8sClient == null) ServiceCollie.dockerModeBuilder.dataCollie(createCollie()).build
-        else ServiceCollie.k8sModeBuilder.dataCollie(createCollie()).k8sClient(k8sClient).build()
+        if (k8sClientBuilder == null) ServiceCollie.dockerModeBuilder.dataCollie(createDataCollie()).build
+        else
+          ServiceCollie.k8sModeBuilder
+            .dataCollie(createDataCollie())
+            .k8sClient(k8sClientBuilder.remoteFolderHandler(RemoteFolderHandler(createDataCollie())).build())
+            .build()
       serviceCollie
     } else serviceCollie
 
@@ -497,6 +462,5 @@ class ConfiguratorBuilder private[configurator] extends Builder[Configurator] {
     store = null
     Releasable.close(serviceCollie)
     serviceCollie = null
-    k8sClient = null
   }
 }

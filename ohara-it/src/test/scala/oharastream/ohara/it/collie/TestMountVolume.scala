@@ -18,9 +18,8 @@ package oharastream.ohara.it.collie
 
 import java.time.Duration
 
+import oharastream.ohara.agent.ArgumentsBuilder
 import oharastream.ohara.agent.docker.ContainerState
-import oharastream.ohara.agent.{ArgumentsBuilder, DataCollie, RemoteFolderHandler}
-import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.client.configurator.VolumeApi.Volume
 import oharastream.ohara.client.configurator.{BrokerApi, ZookeeperApi}
 import oharastream.ohara.common.data.Serializer
@@ -31,7 +30,7 @@ import oharastream.ohara.kafka.{Consumer, Producer}
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
-import org.junit.{After, AssumptionViolatedException, Test}
+import org.junit.{After, Test}
 import org.scalatest.matchers.should.Matchers._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -41,16 +40,11 @@ import scala.jdk.CollectionConverters._
 @RunWith(value = classOf[Parameterized])
 class TestMountVolume(platform: ContainerPlatform) extends IntegrationTest {
   private[this] val containerClient = platform.setupContainerClient()
-  private[this] val nodes: Seq[Node] = ContainerPlatform.dockerNodes.getOrElse(
-    throw new AssumptionViolatedException(s"${ContainerPlatform.DOCKER_NODES_KEY} the key is not exists")
-  )
 
   @Test
   def test(): Unit = {
     val zkNodePath      = s"/tmp/zk-${CommonUtils.randomString(5)}"
     val bkNodePath      = s"/tmp/bk-${CommonUtils.randomString(5)}"
-    val dataCollie      = DataCollie(nodes)
-    val remoteFolder    = RemoteFolderHandler.builder().dataCollie(dataCollie).build
     val zkContainerName = s"zookeeper-${CommonUtils.randomString(5)}"
     val bkContainerName = s"broker-${CommonUtils.randomString(5)}"
     val zkNodeName      = s"${platform.nodeNames.head}"
@@ -77,9 +71,6 @@ class TestMountVolume(platform: ContainerPlatform) extends IntegrationTest {
       lastModified = CommonUtils.current()
     )
     try {
-      result(remoteFolder.create(zkNodeName, zkNodePath))
-      result(remoteFolder.create(bkNodeName, bkNodePath))
-
       val zkClientPort = CommonUtils.availablePort()
       val bkClientPort = CommonUtils.availablePort()
       // Create zookeeper volume
@@ -129,8 +120,6 @@ class TestMountVolume(platform: ContainerPlatform) extends IntegrationTest {
       Releasable.close(() => result(containerClient.forceRemove(zkContainerName)))
       Releasable.close(() => result(containerClient.removeVolumes(bkVolume.key.toPlain)))
       Releasable.close(() => result(containerClient.removeVolumes(zkVolume.key.toPlain)))
-      Releasable.close(() => result(remoteFolder.delete(bkNodeName, bkNodePath)))
-      Releasable.close(() => result(remoteFolder.delete(zkNodeName, zkNodePath)))
     }
   }
 

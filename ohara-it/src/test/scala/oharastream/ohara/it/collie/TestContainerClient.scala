@@ -72,6 +72,7 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
         await(() => !result(containerClient.volumes()).exists(_.name == volumeName))
       }
     }
+    val path  = s"/tmp/${CommonUtils.randomString(10)}"
     val names = Seq(CommonUtils.randomString(), CommonUtils.randomString())
     checkVolumeExists(names)
     try {
@@ -81,12 +82,12 @@ class TestContainerClient(platform: ContainerPlatform) extends IntegrationTest {
             containerClient.volumeCreator
               .name(name)
               .nodeName(platform.nodeNames.head)
-              .path("/tmp")
+              .path(path)
               .create()
           )
       )
       names.foreach { name =>
-        result(containerClient.volumes(name)).head.path shouldBe "/tmp"
+        result(containerClient.volumes(name)).head.path shouldBe path
         result(containerClient.volumes(name)).head.name shouldBe name
         result(containerClient.volumes(name)).head.nodeName shouldBe platform.nodeNames.head
       }

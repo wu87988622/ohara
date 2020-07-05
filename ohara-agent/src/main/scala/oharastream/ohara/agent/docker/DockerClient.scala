@@ -23,7 +23,7 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.container.ContainerClient.VolumeCreator
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.docker.DockerClient.{ContainerCreator, Inspector}
-import oharastream.ohara.agent.{Agent, DataCollie}
+import oharastream.ohara.agent.{Agent, DataCollie, RemoteFolderHandler}
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.{Node, Resource}
 import oharastream.ohara.common.util.{CommonUtils, Releasable}
@@ -123,7 +123,10 @@ object DockerClient {
   private[this] val LABEL_VALUE = "docker"
 
   //-----------------------------[constructor]-----------------------------//
-  def apply(dataCollie: DataCollie): DockerClient = new DockerClient {
+  def apply(dataCollie: DataCollie): DockerClient =
+    apply(dataCollie = dataCollie, remoteFolderHandler = RemoteFolderHandler(dataCollie))
+
+  def apply(dataCollie: DataCollie, remoteFolderHandler: RemoteFolderHandler): DockerClient = new DockerClient {
     private[this] val agentCache = new ConcurrentHashMap[Node, Agent]()
 
     private[this] def agent(hostname: String)(implicit executionContext: ExecutionContext): Future[Agent] =
@@ -420,15 +423,20 @@ object DockerClient {
     override def volumeCreator: VolumeCreator =
       (nodeName: String, name: String, path: String, executionContext: ExecutionContext) => {
         implicit val pool: ExecutionContext = executionContext
-        agent(nodeName)
-          .map(
-            _.execute(
-              s"docker volume create --name $name" +
-                s" --label $LABEL_KEY=$LABEL_VALUE --label $PATH_KEY=$path" +
-                s" --opt type=none --opt device=$path --opt o=bind"
-            )
+        remoteFolderHandler
+          .create(nodeName, path)
+          .flatMap(
+            _ =>
+              agent(nodeName)
+                .map(
+                  _.execute(
+                    s"docker volume create --name $name" +
+                      s" --label $LABEL_KEY=$LABEL_VALUE --label $PATH_KEY=$path" +
+                      s" --opt type=none --opt device=$path --opt o=bind"
+                  )
+                )
+                .map(_ => ())
           )
-          .map(_ => ())
       }
 
     override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] =
@@ -465,6 +473,7 @@ object DockerClient {
             volume =>
               agent(volume.nodeName)
                 .map(_.execute(s"docker volume rm ${volume.name}"))
+                .flatMap(_ => remoteFolderHandler.delete(volume.nodeName, volume.path))
           )
         )
         .map(_ => ())

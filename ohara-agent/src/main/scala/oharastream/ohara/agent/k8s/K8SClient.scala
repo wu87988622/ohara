@@ -18,6 +18,7 @@ package oharastream.ohara.agent.k8s
 
 import java.util.Objects
 
+import oharastream.ohara.agent.RemoteFolderHandler
 import oharastream.ohara.agent.container.ContainerClient.VolumeCreator
 import oharastream.ohara.agent.container.{ContainerClient, ContainerName, ContainerVolume}
 import oharastream.ohara.agent.k8s.K8SClient.ContainerCreator
@@ -26,7 +27,6 @@ import oharastream.ohara.client.HttpExecutor
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.Resource
 import oharastream.ohara.common.annotations.{Optional, VisibleForTesting}
-import oharastream.ohara.common.pattern.Builder
 import oharastream.ohara.common.util.CommonUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,43 +53,54 @@ object K8SClient {
   @VisibleForTesting
   private[k8s] val NAMESPACE_DEFAULT_VALUE = "default"
 
-  def builder: K8SClientBuilder = new K8SClientBuilder()
+  def builder: Builder = new Builder()
 
-  private[K8SClient] class K8SClientBuilder extends Builder[K8SClient] {
-    private[this] var k8sApiServerURL: String        = _
-    private[this] var k8sMetricsApiServerURL: String = _
-    private[this] var k8sNamespace: String           = NAMESPACE_DEFAULT_VALUE
+  class Builder private[K8SClient] extends oharastream.ohara.common.pattern.Builder[K8SClient] {
+    private[this] var serverURL: String                        = _
+    private[this] var metricsServerURL: String                 = _
+    private[this] var namespace: String                        = NAMESPACE_DEFAULT_VALUE
+    private[this] var remoteFolderHandler: RemoteFolderHandler = _
 
     /**
       * You must set the Kubernetes API server url, default value is null
-      * @param k8sApiServerURL Kubernetes API Server URL
+      * @param serverURL Kubernetes API Server URL
       * @return K8SClientBuilder object
       */
-    def apiServerURL(k8sApiServerURL: String): K8SClientBuilder = {
-      this.k8sApiServerURL = CommonUtils.requireNonEmpty(k8sApiServerURL)
+    def serverURL(serverURL: String): Builder = {
+      this.serverURL = CommonUtils.requireNonEmpty(serverURL)
       this
     }
 
     /**
       * You can set other namespace name for Kubrnetes, default value is default
-      * @param k8sNamespace Kubenretes namespace name
+      * @param namespace Kubenretes namespace name
       * @return K8SClientBuilder object
       */
     @Optional("default value is default")
-    def namespace(k8sNamespace: String): K8SClientBuilder = {
-      if (CommonUtils.isEmpty(k8sNamespace)) this.k8sNamespace = NAMESPACE_DEFAULT_VALUE
-      else this.k8sNamespace = k8sNamespace
+    def namespace(namespace: String): Builder = {
+      if (CommonUtils.isEmpty(namespace)) this.namespace = NAMESPACE_DEFAULT_VALUE
+      else this.namespace = namespace
       this
     }
 
     /**
       * Set K8S metrics server URL
-      * @param k8sMetricsApiServerURL for set Kubernetes metrics api server url, default value is null
+      * @param metricsApiServerURL for set Kubernetes metrics api server url, default value is null
       * @return K8SClientBuilder object
       */
     @Optional("default value is null")
-    def metricsApiServerURL(k8sMetricsApiServerURL: String): K8SClientBuilder = {
-      this.k8sMetricsApiServerURL = k8sMetricsApiServerURL
+    def metricsServerURL(metricsServerURL: String): Builder = {
+      this.metricsServerURL = metricsServerURL
+      this
+    }
+
+    /**
+      * @param remoteFolderHandler used to control remote folder
+      * @return this builder
+      */
+    @Optional("default value is null")
+    def remoteFolderHandler(remoteFolderHandler: RemoteFolderHandler): Builder = {
+      this.remoteFolderHandler = remoteFolderHandler
       this
     }
 
@@ -98,15 +109,15 @@ object K8SClient {
       * @return K8SClient object
       */
     def build(): K8SClient = {
-      CommonUtils.requireNonEmpty(k8sApiServerURL)
-      CommonUtils.requireNonEmpty(k8sNamespace)
+      CommonUtils.requireNonEmpty(serverURL)
+      CommonUtils.requireNonEmpty(namespace)
 
       new K8SClient() {
-        override def coordinatorUrl: String     = k8sApiServerURL
-        override def metricsUrl: Option[String] = Option(k8sMetricsApiServerURL)
+        override def coordinatorUrl: String     = serverURL
+        override def metricsUrl: Option[String] = Option(metricsServerURL)
         override def containers()(implicit executionContext: ExecutionContext): Future[Seq[ContainerInfo]] =
           httpExecutor
-            .get[PodList, ErrorResponse](s"$k8sApiServerURL/namespaces/$k8sNamespace/pods")
+            .get[PodList, ErrorResponse](s"$serverURL/namespaces/$namespace/pods")
             .map(
               podList =>
                 podList.items
@@ -145,7 +156,7 @@ object K8SClient {
             }.toMap)
 
         override def checkNode(nodeName: String)(implicit executionContext: ExecutionContext): Future[Report] =
-          httpExecutor.get[NodeInfo, ErrorResponse](s"$k8sApiServerURL/nodes").map { r =>
+          httpExecutor.get[NodeInfo, ErrorResponse](s"$serverURL/nodes").map { r =>
             val filterNode: Seq[NodeItems]        = r.items.filter(x => x.metadata.name.equals(nodeName))
             val isK8SNode: Boolean                = filterNode.size == 1
             var statusInfo: Option[K8SStatusInfo] = None
@@ -180,9 +191,9 @@ object K8SClient {
                     .getOnlyMessage(
                       sinceSeconds
                         .map(
-                          seconds => s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log?sinceSeconds=$seconds"
+                          seconds => s"$serverURL/namespaces/$namespace/pods/$name/log?sinceSeconds=$seconds"
                         )
-                        .getOrElse(s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/$name/log")
+                        .getOrElse(s"$serverURL/namespaces/$namespace/pods/$name/log")
                     )
                     .map(
                       msg =>
@@ -194,7 +205,7 @@ object K8SClient {
 
         override def nodeNameIPInfo()(implicit executionContext: ExecutionContext): Future[Seq[HostAliases]] =
           httpExecutor
-            .get[NodeInfo, ErrorResponse](s"$k8sApiServerURL/nodes")
+            .get[NodeInfo, ErrorResponse](s"$serverURL/nodes")
             .map(
               nodeInfo =>
                 nodeInfo.items.map(item => {
@@ -207,11 +218,11 @@ object K8SClient {
             )
 
         override def resources()(implicit executionContext: ExecutionContext): Future[Map[String, Seq[Resource]]] = {
-          if (k8sMetricsApiServerURL == null) Future.successful(Map.empty)
+          if (metricsServerURL == null) Future.successful(Map.empty)
           else {
             // Get K8S metrics
             val nodeResourceUsage: Future[Map[String, K8SJson.MetricsUsage]] = httpExecutor
-              .get[Metrics, ErrorResponse](s"$k8sMetricsApiServerURL/metrics.k8s.io/v1beta1/nodes")
+              .get[Metrics, ErrorResponse](s"$metricsServerURL/metrics.k8s.io/v1beta1/nodes")
               .map(metrics => {
                 metrics.items
                   .flatMap(nodeMetricsInfo => {
@@ -225,7 +236,7 @@ object K8SClient {
 
             // Get K8S Node info
             httpExecutor
-              .get[NodeInfo, ErrorResponse](s"$k8sApiServerURL/nodes")
+              .get[NodeInfo, ErrorResponse](s"$serverURL/nodes")
               .map(
                 nodeInfo =>
                   nodeInfo.items
@@ -261,7 +272,7 @@ object K8SClient {
 
         override def nodes()(implicit executionContext: ExecutionContext): Future[Seq[K8SNodeReport]] = {
           httpExecutor
-            .get[NodeInfo, ErrorResponse](s"$k8sApiServerURL/nodes")
+            .get[NodeInfo, ErrorResponse](s"$serverURL/nodes")
             .map(
               nodeInfo =>
                 nodeInfo.items.map(
@@ -344,7 +355,7 @@ object K8SClient {
                   podSpec =>
                     httpExecutor
                       .post[Pod, Pod, ErrorResponse](
-                        s"$k8sApiServerURL/namespaces/$k8sNamespace/pods",
+                        s"$serverURL/namespaces/$namespace/pods",
                         Pod(Metadata(None, name, Some(Map(LABEL_KEY -> LABEL_VALUE)), None), Some(podSpec), None)
                       )
                 )
@@ -362,7 +373,7 @@ object K8SClient {
                 container =>
                   httpExecutor
                     .delete[ErrorResponse](
-                      s"$k8sApiServerURL/namespaces/$k8sNamespace/pods/${container.name}${isForceRemovePod}"
+                      s"$serverURL/namespaces/$namespace/pods/${container.name}${isForceRemovePod}"
                     )
               )
             )
@@ -376,63 +387,76 @@ object K8SClient {
         override def volumeCreator: VolumeCreator =
           (nodeName: String, volumeName: String, path: String, executionContext: ExecutionContext) => {
             implicit val pool: ExecutionContext = executionContext
-            httpExecutor
-              .post[PersistentVolume, PersistentVolume, ErrorResponse](
-                s"$k8sApiServerURL/persistentvolumes",
-                PersistentVolume(
-                  PVMetadata(volumeName),
-                  PVSpec(
-                    capacity = PVCapacity("500Gi"),
-                    accessModes = Seq("ReadWriteOnce"),
-                    persistentVolumeReclaimPolicy = "Retain",
-                    storageClassName = volumeName,
-                    hostPath = PVHostPath(path, "DirectoryOrCreate"),
-                    nodeAffinity = PVNodeAffinity(
-                      PVRequired(
-                        Seq(
-                          PVNodeSelectorTerm(
-                            Seq(PVMatchExpression("kubernetes.io/hostname", "In", Seq(nodeName)))
+            def doCreate() =
+              httpExecutor
+                .post[PersistentVolume, PersistentVolume, ErrorResponse](
+                  s"$serverURL/persistentvolumes",
+                  PersistentVolume(
+                    PVMetadata(volumeName),
+                    PVSpec(
+                      capacity = PVCapacity("500Gi"),
+                      accessModes = Seq("ReadWriteOnce"),
+                      persistentVolumeReclaimPolicy = "Retain",
+                      storageClassName = volumeName,
+                      hostPath = PVHostPath(path, "DirectoryOrCreate"),
+                      nodeAffinity = PVNodeAffinity(
+                        PVRequired(
+                          Seq(
+                            PVNodeSelectorTerm(
+                              Seq(PVMatchExpression("kubernetes.io/hostname", "In", Seq(nodeName)))
+                            )
                           )
                         )
                       )
                     )
                   )
                 )
-              )
-              .flatMap { _ =>
-                httpExecutor
-                  .post[PersistentVolumeClaim, PersistentVolumeClaim, ErrorResponse](
-                    s"$k8sApiServerURL/namespaces/${k8sNamespace}/persistentvolumeclaims",
-                    PersistentVolumeClaim(
-                      PVCMetadata(volumeName),
-                      PVCSpec(
-                        storageClassName = volumeName,
-                        accessModes = Seq("ReadWriteOnce"),
-                        resources = PVCResources(PVCRequests("500Gi"))
+                .flatMap { _ =>
+                  httpExecutor
+                    .post[PersistentVolumeClaim, PersistentVolumeClaim, ErrorResponse](
+                      s"$serverURL/namespaces/${namespace}/persistentvolumeclaims",
+                      PersistentVolumeClaim(
+                        PVCMetadata(volumeName),
+                        PVCSpec(
+                          storageClassName = volumeName,
+                          accessModes = Seq("ReadWriteOnce"),
+                          resources = PVCResources(PVCRequests("500Gi"))
+                        )
                       )
                     )
-                  )
-              }
+                }
+
+            if (remoteFolderHandler == null)
+              throw new IllegalArgumentException("you have to define remoteFolderHandler")
+            remoteFolderHandler
+              .create(nodeName, path)
+              .flatMap(_ => doCreate())
               .map(_ => ())
           }
 
         override def removeVolumes(name: String)(implicit executionContext: ExecutionContext): Future[Unit] = {
-          httpExecutor
-            .delete[ErrorResponse](
-              s"$k8sApiServerURL/namespaces/$k8sNamespace/persistentvolumeclaims/${name}?gracePeriodSeconds=0"
-            )
-            .flatMap { _ =>
-              httpExecutor
-                .delete[ErrorResponse](
-                  s"$k8sApiServerURL/persistentvolumes/${name}?gracePeriodSeconds=0"
-                )
-            }
+          def doRemove() =
+            httpExecutor
+              .delete[ErrorResponse](
+                s"$serverURL/namespaces/$namespace/persistentvolumeclaims/$name?gracePeriodSeconds=0"
+              )
+              .flatMap { _ =>
+                httpExecutor
+                  .delete[ErrorResponse](
+                    s"$serverURL/persistentvolumes/$name?gracePeriodSeconds=0"
+                  )
+              }
+
+          if (remoteFolderHandler == null) throw new IllegalArgumentException("you have to define remoteFolderHandler")
+          volumes(name)
+            .flatMap(vs => Future.sequence(vs.map(v => remoteFolderHandler.delete(v.nodeName, v.path))))
+            .flatMap(_ => doRemove())
             .map(_ => ())
         }
 
         override def volumes()(implicit executionContext: ExecutionContext): Future[Seq[ContainerVolume]] = {
           httpExecutor
-            .get[PersistentVolumeInfo, ErrorResponse](s"$k8sApiServerURL/persistentvolumes")
+            .get[PersistentVolumeInfo, ErrorResponse](s"$serverURL/persistentvolumes")
             .map(_.items)
             .map { items =>
               items.map { item =>

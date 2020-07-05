@@ -42,7 +42,7 @@ class TestRemoteFolderHandler extends OharaTest {
       )
     )
   )
-  private[this] val folderHandler = RemoteFolderHandler.builder().dataCollie(dataCollie).build()
+  private[this] val folderHandler = RemoteFolderHandler(dataCollie)
 
   @Test
   def testFolderNotExists(): Unit =
