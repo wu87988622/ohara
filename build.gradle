@@ -119,6 +119,12 @@ static def isJavaModule(String moduleName) {
           moduleName == 'ohara-stream'
 }
 
+tasks.register("build") {
+  group = 'Build'
+  description = 'Assembles and tests this project.'
+  dependsOn licenseTest
+}
+
 subprojects {
   // -------------------------------------------------[repositories]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
