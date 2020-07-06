@@ -200,6 +200,7 @@ export const enableDragAndDrop = (params) => {
     setCellInfo,
     setIsOpen: openAddConnectorDialog,
     paperApi,
+    eventLog,
   } = params;
 
   // Falsy values are graphs that are not ready to render: source and sink as the
@@ -292,7 +293,7 @@ export const enableDragAndDrop = (params) => {
 
           // These info will be used when creating a cell
           const params = {
-            name,
+            name: isTopic && !isShared ? generate.serviceName() : name,
             position: { x: newX, y: newY },
             kind,
             className,
@@ -306,26 +307,32 @@ export const enableDragAndDrop = (params) => {
           }));
 
           if (isTopic) {
-            if (isShared) {
-              paperApi.addElement({
-                ...params,
-                displayName: name,
-              });
+            const isTaken = paperApi
+              .getCells()
+              .filter((cell) => cell.type !== CELL_TYPES.LINK)
+              .find((element) => element.name === name);
+
+            if (isTaken) {
+              eventLog.warning(
+                `The name "${name}" is already taken, use another name for your shared topic instead!`,
+              );
             } else {
-              paperApi.addElement({
+              const pipelineOnlyDisplayName = getPipelineOnlyTopicDisplayNames(
+                paperApi.getCells('topic'),
+              );
+
+              const topicParams = {
                 ...params,
-                name: generate.serviceName(),
-                displayName: getPipelineOnlyTopicDisplayNames(
-                  paperApi.getCells('topic'),
-                ),
-              });
+                displayName: isShared ? name : pipelineOnlyDisplayName,
+              };
+
+              paperApi.addElement(topicParams);
             }
           } else {
             openAddConnectorDialog(true);
 
-            // A temporary cell which gives users a better idea of
-            // where the graph will be added at. It will be removed
-            // once the real graph is added
+            // Add a temporary cell which gives users a better idea of where the graph
+            // will be added at. It will be removed once the real graph is added
             paperApi.addElement(
               {
                 ...params,
@@ -336,6 +343,7 @@ export const enableDragAndDrop = (params) => {
             );
           }
         }
+
         // Clean up
         $('#paper').off('mousemove.fly').off('mouseup.fly');
         flyingShape.remove();

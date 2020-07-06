@@ -41,6 +41,7 @@ const Toolbox = (props) => {
   } = props;
 
   const currentWorker = hooks.useWorker();
+  const eventLog = hooks.useEventLog();
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState(null);
   const [cellInfo, setCellInfo] = React.useState({
@@ -179,11 +180,12 @@ const Toolbox = (props) => {
         setCellInfo,
         setIsOpen,
         paperApi,
+        eventLog,
       });
     };
 
     renderToolbox();
-  }, [connectors, paperApi, searchResults]);
+  }, [connectors, eventLog, paperApi, searchResults]);
 
   const handleScroll = () => {
     const scrollTop = toolboxBodyRef.current.scrollTop;

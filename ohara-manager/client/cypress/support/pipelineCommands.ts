@@ -151,6 +151,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       size += $paper.find('.paper-element').length;
     }
 
+    // Open Toolbox panel
     cy.findByText(capitalize(kind)).should('exist').click();
 
     // re-render the cell position to maximize the available space

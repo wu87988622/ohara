@@ -20,7 +20,7 @@ import {
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import { KIND } from '../../../src/const';
+import { KIND, CELL_TYPES } from '../../../src/const';
 
 const sources = Object.values(SOURCES).sort((a, b) => a.localeCompare(b));
 const sinks = Object.values(SINKS).sort((a, b) => a.localeCompare(b));
@@ -284,6 +284,54 @@ describe('ToolBox', () => {
           .parents('.item')
           .should('not.have.class', 'is-disabled');
       });
+    });
+
+    it('should not add an element if the element is over Toolbox', () => {
+      // Open topic panel
+      cy.findByText(Cypress._.capitalize(KIND.topic)).should('exist').click();
+
+      // Add a pipeline-only topic
+      cy.findByTestId('toolbox-draggable')
+        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
+        // the only "draggable" cell is pipeline-only topic
+        .first()
+        .dragAndDrop(30, 450);
+
+      // No topic is added
+      cy.get('#paper .paper-element').should('have.length', 0);
+    });
+
+    it('should fail to add a shared topic into Paper if the name is already taken', () => {
+      const name = 'taken';
+
+      // Create a topic with the name
+      cy.createSharedTopic(name);
+
+      // Add a sink into Paper with the same name
+      cy.addElement(name, KIND.sink, SINKS.shabondi);
+
+      // Then, add the topic
+      cy.findByText(Cypress._.capitalize(KIND.topic)).should('exist').click();
+
+      // Add topic
+      cy.findByTestId('toolbox-draggable')
+        .within(() => {
+          cy.findByText(name)
+            .should('exist')
+            .and('have.class', 'display-name')
+            .parent('.item')
+            .should('have.attr', 'data-testid')
+            .then((testId) => cy.get(`g[model-id="${testId}"]`));
+        })
+        .dragAndDrop(800, 500); // just a position to place the topic
+
+      // A warning should display
+      cy.findByText(
+        `The name "${name}" is already taken, use another name for your shared topic instead!`,
+      ).should('exist');
+
+      // Should only have an element in the Paper
+      cy.get('#paper .paper-element').should('have.length', 1);
     });
   });
 });
