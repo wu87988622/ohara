@@ -20,13 +20,13 @@ const waitOn = require('wait-on');
 
 /* eslint-disable no-console */
 
-exports.checkClientBuildDir = () => {
+exports.checkClientBuildDir = (testMode) => {
   if (!fs.existsSync('./client/build')) {
     console.log(
       chalk.red(
         `Couldn't find the build directory, please run ${chalk.blue(
           'yarn setup',
-        )} to build the static files that are needed in the End-to-End test`,
+        )} to build the static files that are needed in the ${testMode.toUpperCase()} test`,
       ),
     );
 

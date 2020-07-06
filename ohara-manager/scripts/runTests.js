@@ -186,7 +186,7 @@ const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
 
 // Do not run the test if the build dir is not present
 // as this will cause the script to fail silently
-if (!utils.checkClientBuildDir()) {
+if (!utils.checkClientBuildDir(testMode)) {
   process.exit(1);
 }
 
