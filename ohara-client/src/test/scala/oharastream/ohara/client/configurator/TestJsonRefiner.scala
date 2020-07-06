@@ -29,15 +29,15 @@ class TestJsonRefiner extends OharaTest {
   private[this] val format2: RootJsonFormat[SimpleData2]        = jsonFormat2(SimpleData2)
 
   @Test
-  def nullFormat(): Unit = an[NullPointerException] should be thrownBy JsonRefinerBuilder[SimpleData].format(null)
+  def nullFormat(): Unit = an[NullPointerException] should be thrownBy JsonRefiner.builder[SimpleData].format(null)
 
   @Test
   def emptyConnectionPort(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefinerBuilder[SimpleData].requireConnectionPort("")
+    an[IllegalArgumentException] should be thrownBy JsonRefiner.builder[SimpleData].requireConnectionPort("")
 
   @Test
   def emptyToNullToEmptyArray(): Unit =
-    an[IllegalArgumentException] should be thrownBy JsonRefinerBuilder[SimpleData].nullToEmptyArray("")
+    an[IllegalArgumentException] should be thrownBy JsonRefiner.builder[SimpleData].nullToEmptyArray("")
 
   @Test
   def testDuplicateKeyForFromAnotherKey(): Unit = {

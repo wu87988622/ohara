@@ -185,7 +185,7 @@ object BrokerApi {
   final case class TopicDefinition(settingDefinitions: Seq[SettingDef])
 
   implicit val TOPIC_DEFINITION_FORMAT: JsonRefiner[TopicDefinition] =
-    JsonRefinerBuilder[TopicDefinition].format(jsonFormat1(TopicDefinition)).build
+    JsonRefiner.builder[TopicDefinition].format(jsonFormat1(TopicDefinition)).build
 
   final case class BrokerClusterInfo private[BrokerApi] (
     settings: Map[String, JsValue],

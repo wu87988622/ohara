@@ -729,4 +729,26 @@ class TestConnectorApi extends OharaTest {
       creation.columns.head.newName() shouldBe newName
     }
   }
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromCreation(): Unit =
+    ConnectorApi.CREATION_FORMAT.read(s"""
+                                         |{
+                                         |  "workerClusterKey": "wk00",
+                                         |  "connector.class": "myClass",
+                                         |  "topicKeys": ["tp00"],
+                                         |  "state": "RUNNING"
+                                         |}
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromUpdating(): Unit =
+    ConnectorApi.UPDATING_FORMAT.read(s"""
+                                         |  {
+                                         |  "workerClusterKey": "wk00",
+                                         |  "connector.class": "myClass",
+                                         |  "topicKeys": ["tp00"],
+                                         |  "state": "RUNNING"
+                                         |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
 }

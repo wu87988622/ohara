@@ -101,7 +101,8 @@ package object configurator {
   val CONFIGURATOR_KIND: String = "configurator"
 
   // accessable to ohara-configurator module
-  private[ohara] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefinerBuilder[ObjectKey]
+  private[ohara] implicit val OBJECT_KEY_FORMAT: RootJsonFormat[ObjectKey] = JsonRefiner
+    .builder[ObjectKey]
     .format(new RootJsonFormat[ObjectKey] {
       override def write(obj: ObjectKey): JsValue = ObjectKey.toJsonString(obj).parseJson
 
@@ -217,7 +218,8 @@ package object configurator {
     * @return refiner
     */
   private[configurator] def limitsOfKey[T]: JsonRefinerBuilder[T] =
-    JsonRefinerBuilder[T]
+    JsonRefiner
+      .builder[T]
       .stringRestriction(GROUP_KEY, SettingDef.GROUP_STRING_REGEX)
       .stringRestriction(NAME_KEY, SettingDef.NAME_STRING_REGEX)
 
@@ -252,13 +254,15 @@ package object configurator {
     * @return json refiner object
     */
   private[configurator] def rulesOfUpdating[T <: ClusterUpdating](format: RootJsonFormat[T]): JsonRefiner[T] =
-    JsonRefinerBuilder[T]
+    JsonRefiner
+      .builder[T]
       .format(format)
       // we use the same sub-path for "node" and "actions" urls:
       // xxx/cluster/{name}/{node}
       // xxx/cluster/{name}/[start|stop]
       // the "actions" keywords must be avoided in nodeNames parameter
       .rejectKeywordsFromArray(NODE_NAMES_KEY, Set(START_COMMAND, STOP_COMMAND))
+      .ignoreKeys(RUNTIME_KEYS)
       .build
 
   private[configurator] def flattenSettings(obj: JsObject): JsObject =
@@ -269,7 +273,7 @@ package object configurator {
         - SETTINGS_KEY
     )
 
-  private[this] val RUNTIME_KEYS = Set(
+  val RUNTIME_KEYS = Set(
     "aliveNodes",
     "lastModified",
     "state",

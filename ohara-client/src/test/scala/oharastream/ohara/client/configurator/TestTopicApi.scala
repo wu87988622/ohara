@@ -94,7 +94,7 @@ class TestTopicApi extends OharaTest {
          |{
          | "$GROUP_KEY": "$group",
          | "$NAME_KEY": "$name",
-         | "${BROKER_CLUSTER_KEY_KEY}": "$brokerClusterName",
+         | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
          | "${NUMBER_OF_PARTITIONS_KEY}": $numberOfPartitions,
          | "${NUMBER_OF_REPLICATIONS_KEY}": $numberOfReplications
          |}
@@ -116,7 +116,7 @@ class TestTopicApi extends OharaTest {
     val update               = TopicApi.UPDATING_FORMAT.read(s"""
       |{
       | "$NAME_KEY": "$name",
-      | "${BROKER_CLUSTER_KEY_KEY}": "$brokerClusterName",
+      | "$BROKER_CLUSTER_KEY_KEY": "$brokerClusterName",
       | "${NUMBER_OF_PARTITIONS_KEY}": $numberOfPartitions,
       | "${NUMBER_OF_REPLICATIONS_KEY}": $numberOfReplications
       |}
@@ -158,7 +158,7 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                      |  {
-                                     |    "${BROKER_CLUSTER_KEY_KEY}": {
+                                     |    "$BROKER_CLUSTER_KEY_KEY": {
                                      |      "group": "g",
                                      |      "name": "n"
                                      |    },
@@ -172,7 +172,7 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
@@ -186,7 +186,7 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
@@ -200,7 +200,7 @@ class TestTopicApi extends OharaTest {
     intercept[DeserializationException] {
       TopicApi.CREATION_FORMAT.read(s"""
                                            |  {
-                                           |    "${BROKER_CLUSTER_KEY_KEY}": {
+                                           |    "$BROKER_CLUSTER_KEY_KEY": {
                                            |      "group": "g",
                                            |      "name": "n"
                                            |    },
@@ -232,4 +232,28 @@ class TestTopicApi extends OharaTest {
     )
     TopicApi.TOPIC_INFO_FORMAT.read(TopicApi.TOPIC_INFO_FORMAT.write(cluster)) shouldBe cluster
   }
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromCreation(): Unit =
+    TopicApi.CREATION_FORMAT.read(s"""
+                                     |  {
+                                     |    "$BROKER_CLUSTER_KEY_KEY": {
+                                     |      "group": "g",
+                                     |      "name": "n"
+                                     |    },
+                                     |    "state": "RUNNING"
+                                     |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromUpdating(): Unit =
+    TopicApi.UPDATING_FORMAT.read(s"""
+                                     |  {
+                                     |    "$BROKER_CLUSTER_KEY_KEY": {
+                                     |      "group": "g",
+                                     |      "name": "n"
+                                     |    },
+                                     |    "state": "RUNNING"
+                                     |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
 }

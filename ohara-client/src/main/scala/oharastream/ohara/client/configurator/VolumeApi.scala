@@ -55,7 +55,8 @@ object VolumeApi {
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating]
+    JsonRefiner
+      .builder[Updating]
       .format(jsonFormat3(Updating))
       .rejectEmptyArray(NODE_NAMES_KEY)
       .build

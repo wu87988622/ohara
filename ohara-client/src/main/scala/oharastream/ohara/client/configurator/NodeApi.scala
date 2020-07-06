@@ -57,7 +57,7 @@ object NodeApi {
     override def raw: Map[String, JsValue] = UPDATING_FORMAT.write(this).asJsObject.fields
   }
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").build
+    JsonRefiner.builder[Updating].format(jsonFormat4(Updating)).requireConnectionPort("port").build
 
   case class Creation(
     hostname: String,
@@ -72,7 +72,8 @@ object NodeApi {
     override def raw: Map[String, JsValue] = CREATION_FORMAT.write(this).asJsObject.fields
   }
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
-    JsonRefinerBuilder[Creation]
+    JsonRefiner
+      .builder[Creation]
       .format(jsonFormat5(Creation))
       // default implementation of node is ssh, we use "default ssh port" here
       .nullToInt("port", 22)

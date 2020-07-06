@@ -29,15 +29,15 @@ import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.util.ByteString
+import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.ServiceCollie
 import oharastream.ohara.client.configurator.FileInfoApi._
-import oharastream.ohara.client.configurator.{BasicCreation, JsonRefiner, JsonRefinerBuilder}
+import oharastream.ohara.client.configurator.{BasicCreation, JsonRefiner}
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfUpdating}
 import oharastream.ohara.configurator.store.DataStore
-import com.typesafe.scalalogging.Logger
 import spray.json._
 
 import scala.annotation.nowarn
@@ -193,7 +193,8 @@ private[configurator] object FileInfoRoute {
     override def raw: Map[String, JsValue]  = throw new UnsupportedOperationException
   }
 
-  private[this] implicit val FAKE_FORMAT: JsonRefiner[FakeCreation] = JsonRefinerBuilder[FakeCreation]
+  private[this] implicit val FAKE_FORMAT: JsonRefiner[FakeCreation] = JsonRefiner
+    .builder[FakeCreation]
     .format(new RootJsonFormat[FakeCreation] {
       override def read(json: JsValue): FakeCreation = throw new UnsupportedOperationException
       override def write(obj: FakeCreation): JsValue = throw new UnsupportedOperationException

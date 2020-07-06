@@ -132,28 +132,28 @@ object ConnectorApi {
           case _ => // do nothing
         }
       )
+      .ignoreKeys(RUNTIME_KEYS)
       .build
 
-  final class Updating(val settings: Map[String, JsValue]) {
-    def className: Option[String] = settings.get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
+  final class Updating(val raw: Map[String, JsValue]) extends BasicUpdating {
+    def className: Option[String] = raw.get(CONNECTOR_CLASS_KEY).map(_.convertTo[String])
 
     def columns: Option[Seq[Column]] =
-      settings.get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
-    def numberOfTasks: Option[Int] = settings.get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
+      raw.get(COLUMNS_KEY).map(s => PropGroup.ofJson(s.toString).toColumns.asScala.toSeq)
+    def numberOfTasks: Option[Int] = raw.get(NUMBER_OF_TASKS_KEY).map(_.convertTo[Int])
 
-    def workerClusterKey: Option[ObjectKey] = settings.get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
+    def workerClusterKey: Option[ObjectKey] = raw.get(WORKER_CLUSTER_KEY_KEY).map(_.convertTo[ObjectKey])
 
     def topicKeys: Option[Set[TopicKey]] =
-      settings.get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
+      raw.get(TOPIC_KEYS_KEY).map(_.convertTo[Set[TopicKey]])
 
-    def tags: Option[Map[String, JsValue]] = settings.get(TAGS_KEY).map(_.asJsObject.fields)
-
-    def partitionerClass: Option[String] = settings.get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
+    def partitionerClass: Option[String] = raw.get(PARTITIONER_CLASS_KEY).map(_.convertTo[String])
   }
 
-  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefinerBuilder[Updating]
+  implicit val UPDATING_FORMAT: RootJsonFormat[Updating] = JsonRefiner
+    .builder[Updating]
     .format(new RootJsonFormat[Updating] {
-      override def write(obj: Updating): JsValue = JsObject(obj.settings)
+      override def write(obj: Updating): JsValue = JsObject(obj.raw)
       override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
     })
     .valuesChecker(
@@ -163,6 +163,7 @@ object ConnectorApi {
         case _          => // do nothing
       }
     )
+    .ignoreKeys(RUNTIME_KEYS)
     .build
 
   import MetricsApi._

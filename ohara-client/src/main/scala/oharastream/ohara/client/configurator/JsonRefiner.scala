@@ -58,6 +58,13 @@ trait JsonRefiner[T] extends RootJsonFormat[T] {
 
 object JsonRefiner {
   /**
+    * create a builder to construct json refiner
+    * @tparam T scala object to carry json data
+    * @return builder
+    */
+  def builder[T]: JsonRefinerBuilder[T] = JsonRefinerBuilder[T]
+
+  /**
     * wrap spray format to ohara format. It includes default rules from ohara format.
     * 1) reject empty string
     * 2) remove null field
@@ -65,5 +72,5 @@ object JsonRefiner {
     * @tparam T data type
     * @return ohara format
     */
-  def apply[T](format: RootJsonFormat[T]): JsonRefiner[T] = JsonRefinerBuilder[T].format(format).build()
+  def apply[T](format: RootJsonFormat[T]): JsonRefiner[T] = JsonRefiner.builder[T].format(format).build()
 }

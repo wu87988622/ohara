@@ -1000,4 +1000,34 @@ class TestStreamApi extends OharaTest {
       """.stripMargin.parseJson)
     creation.volumeMaps.size shouldBe 0
   }
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromCreation(): Unit =
+    StreamApi.CREATION_FORMAT.read(s"""
+                                      |  {
+                                      |    "jarKey": ${fakeJar.toJson},
+                                      |    "from": [
+                                      |    ],
+                                      |    "to": [
+                                      |    ],
+                                      |    "brokerClusterKey": "bk",
+                                      |    "nodeNames": ["node00"],
+                                      |    "state": "RUNNING"
+                                      |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromUpdating(): Unit =
+    StreamApi.UPDATING_FORMAT.read(s"""
+                                      |  {
+                                      |    "jarKey": ${fakeJar.toJson},
+                                      |    "from": [
+                                      |    ],
+                                      |    "to": [
+                                      |    ],
+                                      |    "brokerClusterKey": "bk",
+                                      |    "nodeNames": ["node00"],
+                                      |    "state": "RUNNING"
+                                      |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
 }

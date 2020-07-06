@@ -41,7 +41,8 @@ object PipelineApi {
     def key: ObjectKey = ObjectKey.of(group, name)
   }
   implicit val ENDPOINT_FORMAT: JsonRefiner[Endpoint] =
-    JsonRefinerBuilder[Endpoint]
+    JsonRefiner
+      .builder[Endpoint]
       .format(jsonFormat3(Endpoint))
       .nullToString(GROUP_KEY, GROUP_DEFAULT)
       .build
@@ -54,7 +55,7 @@ object PipelineApi {
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefinerBuilder[Updating].format(jsonFormat2(Updating)).build
+    JsonRefiner.builder[Updating].format(jsonFormat2(Updating)).build
 
   final case class Creation(
     override val group: String,

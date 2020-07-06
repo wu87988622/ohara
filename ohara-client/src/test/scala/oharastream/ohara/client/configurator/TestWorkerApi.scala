@@ -860,11 +860,11 @@ class TestWorkerApi extends OharaTest {
   @Test
   def testNegativeMaxHeap(): Unit =
     an[DeserializationException] should be thrownBy WorkerApi.CREATION_FORMAT.read(s"""
-                                                                                                                              |  {
-                                                                                                                              |    "brokerClusterKey": "bk",
-                                                                                                                              |    "nodeNames": ["node00"],
-                                                                                                                              |    "xmx": -123
-                                                                                                                              |  }
+                                                                                    |  {
+                                                                                    |    "brokerClusterKey": "bk",
+                                                                                    |    "nodeNames": ["node00"],
+                                                                                    |    "xmx": -123
+                                                                                    |  }
       """.stripMargin.parseJson)
 
   @Test
@@ -913,4 +913,23 @@ class TestWorkerApi extends OharaTest {
       """.stripMargin.parseJson)
     creation.volumeMaps.size shouldBe 0
   }
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromCreation(): Unit =
+    WorkerApi.CREATION_FORMAT.read(s"""
+                                     |  {
+                                     |    "nodeNames": ["node00"],
+                                     |    "brokerClusterKey": "bk",
+                                     |    "state": "RUNNING"
+                                     |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromUpdating(): Unit =
+    WorkerApi.UPDATING_FORMAT.read(s"""
+                                     |  {
+                                     |    "brokerClusterKey": "bk",
+                                     |    "state": "RUNNING"
+                                     |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
 }

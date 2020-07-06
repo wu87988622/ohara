@@ -543,7 +543,7 @@ class TestZookeeperApi extends OharaTest {
   }
 
   @Test
-  def testConnectionTimeout(): Unit = {
+  def testConnectionTimeout(): Unit =
     ZookeeperApi.CREATION_FORMAT.read(s"""
                                         |  {
                                         |    "nodeNames": ["node00"],
@@ -553,5 +553,30 @@ class TestZookeeperApi extends OharaTest {
                                         |    }
                                         |  }
       """.stripMargin.parseJson).connectionTimeout.toMillis should not be 0
-  }
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromCreation(): Unit =
+    ZookeeperApi.CREATION_FORMAT.read(s"""
+                                         |  {
+                                         |    "nodeNames": ["node00"],
+                                         |    "${ZookeeperApi.DATA_DIR_KEY}": {
+                                         |      "group": "g",
+                                         |      "name": "n"
+                                         |    },
+                                         |    "state": "RUNNING"
+                                         |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def userDefinedStateShouldBeRemoveFromUpdating(): Unit =
+    ZookeeperApi.UPDATING_FORMAT.read(s"""
+                                         |  {
+                                         |    "nodeNames": ["node00"],
+                                         |    "${ZookeeperApi.DATA_DIR_KEY}": {
+                                         |      "group": "g",
+                                         |      "name": "n"
+                                         |    },
+                                         |    "state": "RUNNING"
+                                         |  }
+      """.stripMargin.parseJson).raw.get("state") shouldBe None
 }

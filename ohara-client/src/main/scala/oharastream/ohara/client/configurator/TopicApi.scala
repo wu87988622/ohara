@@ -101,10 +101,14 @@ object TopicApi {
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
-    JsonRefiner(new RootJsonFormat[Updating] {
-      override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
-      override def write(obj: Updating): JsValue = JsObject(obj.raw)
-    })
+    JsonRefiner
+      .builder[Updating]
+      .format(new RootJsonFormat[Updating] {
+        override def read(json: JsValue): Updating = new Updating(json.asJsObject.fields)
+        override def write(obj: Updating): JsValue = JsObject(obj.raw)
+      })
+      .ignoreKeys(RUNTIME_KEYS)
+      .build()
 
   final class Creation private[TopicApi] (val raw: Map[String, JsValue])
       extends oharastream.ohara.client.configurator.BasicCreation {
@@ -133,6 +137,7 @@ object TopicApi {
       })
       // TODO: topic definitions may be changed by different Broker images so this check is dangerous
       .definitions(DEFINITIONS)
+      .ignoreKeys(RUNTIME_KEYS)
       .build
 
   import MetricsApi._

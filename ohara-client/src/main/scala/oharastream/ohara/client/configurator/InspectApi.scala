@@ -112,7 +112,7 @@ object InspectApi {
     tableName: Option[String]
   )
   implicit val RDB_QUERY_FORMAT: JsonRefiner[RdbQuery] =
-    JsonRefinerBuilder[RdbQuery].format(jsonFormat7(RdbQuery)).build
+    JsonRefiner.builder[RdbQuery].format(jsonFormat7(RdbQuery)).build
 
   final case class RdbInfo(name: String, tables: Seq[RdbTable])
   implicit val RDB_INFO_FORMAT: RootJsonFormat[RdbInfo] = jsonFormat2(RdbInfo)
