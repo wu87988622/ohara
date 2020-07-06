@@ -199,4 +199,65 @@ describe('App Bar', () => {
       });
     });
   });
+
+  context('Redirect routes', () => {
+    it('should redirect to default workspace and pipeline', () => {
+      // We have two workspaces now
+      // it should redirect to one of them by default
+      cy.location('pathname')
+        .should('not.equal', '/')
+        .then((workspaceUrl) => {
+          // not exist workspace will redirect to default workspace
+          cy.visit('/fakeworkspacehaha');
+
+          cy.location('pathname').should('equal', `${workspaceUrl}`);
+
+          // create pipeline
+          cy.createPipeline('pp');
+          cy.location('pathname').should('equal', `${workspaceUrl}/pp`);
+
+          // not exist workspace will redirect to default workspace with pipeline
+          cy.visit('/fakeworkspacehaha');
+          cy.location('pathname').should('equal', `${workspaceUrl}/pp`);
+
+          // not exist pipeline will redirect to default workspace
+          cy.visit(`${workspaceUrl}/foobar`);
+          cy.location('pathname').should('equal', `${workspaceUrl}/pp`);
+
+          // not exist workspace and pipeline will redirect to default workspace with pipeline
+          cy.visit(`/fakeworkspacehaha/foobar`);
+          cy.location('pathname').should('equal', `${workspaceUrl}/pp`);
+        });
+    });
+  });
+
+  context('Not implement page', () => {
+    it('should display not implement page', () => {
+      cy.visit('/501-page-not-implemented', {
+        onBeforeLoad(win) {
+          cy.stub(win, 'open').as('openStub');
+        },
+      })
+        .contains('501')
+        .should('exist');
+
+      cy.findByText('SEE AVAILABLE RELEASES').click();
+      cy.get('@openStub')
+        .invoke('calledWith', 'https://github.com/oharastream/ohara/releases')
+        .should('be.true');
+    });
+  });
+
+  context('Not found page', () => {
+    it('should display not found page', () => {
+      cy.deleteAllServices();
+
+      cy.visit('/jladkf/safkj/ksjdl/jlkfsd/kjlfds')
+        .contains('404')
+        .should('exist');
+
+      cy.findByText('BACK TO HOME').click();
+      cy.location('pathname').should('equal', '/');
+    });
+  });
 });

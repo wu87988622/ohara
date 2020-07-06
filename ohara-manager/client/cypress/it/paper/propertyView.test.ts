@@ -365,4 +365,6 @@ describe('Property view', () => {
       });
     });
   });
+
+  it('should not update topic field before successfully creating topic in paper', () => {});
 });

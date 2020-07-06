@@ -93,7 +93,7 @@ const NotFoundPage = () => {
               }
               variant="outlined"
             >
-              See available releases
+              SEE AVAILABLE RELEASES
             </Button>
           </>
         ) : (
