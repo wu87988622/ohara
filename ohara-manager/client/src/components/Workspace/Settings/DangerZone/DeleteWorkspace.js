@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
+import { isEmpty } from 'lodash';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -43,6 +44,8 @@ const DeleteWorkspace = (props) => {
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const deleteZookeeper = hooks.useDeleteZookeeperAction();
 
+  const eventLog = hooks.useEventLog();
+  const stepperRef = useRef(null);
   const steps = [
     {
       name: 'delete connectors',
@@ -102,6 +105,18 @@ const DeleteWorkspace = (props) => {
     },
   ];
 
+  const handleClose = () => {
+    const isFinish = stepperRef.current.isFinish();
+    const errors = stepperRef.current.getErrorLogs();
+    if (!isFinish && !isEmpty(errors)) {
+      eventLog.error({
+        title: `Failed to delete workspace ${workspace?.name}.`,
+        data: errors,
+      });
+    }
+    if (onClose) onClose();
+  };
+
   return (
     <Dialog
       data-testid="delete-workspace"
@@ -111,7 +126,7 @@ const DeleteWorkspace = (props) => {
     >
       <DialogTitle>{'Delete Workspace'}</DialogTitle>
       <DialogContent>
-        <Stepper onClose={onClose} steps={steps} />
+        <Stepper onClose={handleClose} ref={stepperRef} steps={steps} />
       </DialogContent>
     </Dialog>
   );

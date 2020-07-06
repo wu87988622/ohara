@@ -124,7 +124,7 @@ export const useEventLog = () => {
       error: (message, showSnackbar = true) => {
         const title = isPlainObject(message) ? message.title : message;
         if (isPlainObject(message)) {
-          createEventLog(message, LOG_LEVEL.error);
+          createEventLog({ ...message, type: LOG_LEVEL.error });
         } else {
           createEventLog({ title, type: LOG_LEVEL.error });
         }

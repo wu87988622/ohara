@@ -47,6 +47,7 @@ import {
   isObjectType,
   Necessary,
 } from '../src/api/apiInterface/definitionInterface';
+import { NodeRequest } from '../src/api/apiInterface/nodeInterface';
 
 export const waitFor = async <T extends BasicResponse>(
   resource: string,
@@ -408,3 +409,16 @@ export const assertSettingsByDefinitions = (
     }
   });
 };
+
+export function generateNodeIfNeeded(): NodeRequest {
+  const nodeHost = Cypress.env('nodeHost');
+  const nodePort = Cypress.env('nodePort');
+  const nodeUser = Cypress.env('nodeUser');
+  const nodePass = Cypress.env('nodePass');
+  return {
+    hostname: nodeHost || generate.serviceName({ prefix: 'node' }),
+    port: nodePort || generate.port().toString(),
+    user: nodeUser || generate.userName(),
+    password: nodePass || generate.password(),
+  };
+}

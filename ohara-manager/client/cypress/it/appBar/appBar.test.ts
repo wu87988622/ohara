@@ -16,6 +16,8 @@
 
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
+import { GROUP } from '../../../src/const';
+import { generateNodeIfNeeded } from '../../utils';
 
 describe('App Bar', () => {
   before(() => cy.deleteAllServices());
@@ -98,7 +100,7 @@ describe('App Bar', () => {
         .find('tbody tr')
         .should('have.length', 1)
         .contains('td', /no records to display/i);
-      cy.findByTestId('fullscreen-dialog-close-button').click();
+      cy.findByTestId('nodes-dialog-close-button').click();
     });
   });
 
@@ -168,6 +170,33 @@ describe('App Bar', () => {
         .click();
       // the url should changed
       cy.location('pathname').should('equal', `/${name}`);
+    });
+
+    it('should have an event log when creating a workspace fails', () => {
+      const workspaceName = 'workspace2';
+      cy.visit('/');
+
+      cy.createNode().then((node) => {
+        // create a zookeeper by native api
+        cy.request('POST', 'api/zookeepers', {
+          name: workspaceName,
+          group: GROUP.ZOOKEEPER,
+          nodeNames: [node.hostname],
+        });
+
+        cy.createWorkspace({
+          workspaceName,
+          node,
+        });
+
+        cy.findByTestId('close-intro-button').filter(':visible').click();
+        cy.findByTitle('Event logs').click();
+        cy.findByTestId('event-log-list').within(() => {
+          cy.findAllByText(
+            `Failed to create workspace ${workspaceName}.`,
+          ).should('exist');
+        });
+      });
     });
   });
 });

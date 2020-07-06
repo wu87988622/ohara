@@ -55,7 +55,12 @@ const NodeListDialog = (props) => {
       .isEmpty();
 
   return (
-    <FullScreenDialog onClose={onClose} open={isOpen} title="All nodes">
+    <FullScreenDialog
+      onClose={onClose}
+      open={isOpen}
+      testId="nodes-dialog"
+      title="All nodes"
+    >
       <NodeTable
         nodes={nodes}
         onCreate={handleCreate}

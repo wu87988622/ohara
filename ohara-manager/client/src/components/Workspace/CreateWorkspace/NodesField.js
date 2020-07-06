@@ -124,6 +124,7 @@ const NodesField = (props) => {
           },
           title: 'All node',
         }}
+        testId="nodes-dialog"
         title="Select nodes"
       />
     </>

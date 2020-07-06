@@ -139,6 +139,7 @@ const AppBar = () => {
           <Tooltip placement="right" title="Node list">
             <IconButton
               className="node-list item"
+              data-testid="nodes-dialog-open-button"
               onClick={() => setIsNodeListDialogOpen(true)}
             >
               <StorageIcon />

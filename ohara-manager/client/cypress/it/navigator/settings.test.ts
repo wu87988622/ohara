@@ -1060,7 +1060,7 @@ describe('Navigator', () => {
       cy.get('input[name=user]').type(generate.userName());
       cy.get('input[name=password]').type(generate.password());
       cy.findByText('CREATE').click();
-      cy.findByTestId('fullscreen-dialog-close-button').click();
+      cy.findByTestId('nodes-dialog-close-button').click();
 
       // add new added node into workspace
       cy.switchSettingSection(SETTING_SECTIONS.nodes);

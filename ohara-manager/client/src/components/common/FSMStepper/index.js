@@ -30,9 +30,10 @@ import Stepper from './Stepper';
 import stepperMachine, {
   config as stepperMachineConfig,
 } from './stepperMachine';
+import { STEP_STAGES } from './const';
 import Styles from './Styles';
 
-const FSMStepper = (props) => {
+const FSMStepper = React.forwardRef((props, ref) => {
   const {
     forceCloseAfterFinish,
     onClose,
@@ -49,6 +50,7 @@ const FSMStepper = (props) => {
     stepperMachine.withContext({ ...stepperMachineConfig.context, steps }),
   );
   const isFinish = state.matches('finish');
+  const hasError = !!state.context.error;
   const [closeChecked, setCloseChecked] = useState(forceCloseAfterFinish);
 
   useEffect(() => {
@@ -56,6 +58,15 @@ const FSMStepper = (props) => {
       setTimeout(onClose, 1000);
     }
   }, [closeChecked, onClose, isFinish]);
+
+  // Apis
+  React.useImperativeHandle(ref, () => ({
+    getErrorLogs: () =>
+      state?.context?.logs?.filter(
+        (log) => log?.stepStage === STEP_STAGES.FAILURE,
+      ),
+    isFinish: () => isFinish,
+  }));
 
   return (
     <Styles>
@@ -104,7 +115,7 @@ const FSMStepper = (props) => {
           />
           <Button
             data-testid="stepper-close-button"
-            disabled={!isFinish}
+            disabled={!(hasError || isFinish)}
             onClick={onClose}
           >
             CLOSE
@@ -113,7 +124,7 @@ const FSMStepper = (props) => {
       </Grid>
     </Styles>
   );
-};
+});
 
 FSMStepper.propTypes = {
   forceCloseAfterFinish: PropTypes.bool,

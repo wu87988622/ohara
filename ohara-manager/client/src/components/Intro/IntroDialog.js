@@ -87,6 +87,7 @@ const MuiDialog = ({ quickModeText }) => {
 
   return (
     <Dialog
+      data-testid="intro-dialog"
       fullWidth
       maxWidth="sm"
       onClose={closeIntroDialog}

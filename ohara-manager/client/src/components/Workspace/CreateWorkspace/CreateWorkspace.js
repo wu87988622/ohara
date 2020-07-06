@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { capitalize } from 'lodash';
+import React, { useRef, useState } from 'react';
+import { capitalize, isEmpty } from 'lodash';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -53,8 +53,11 @@ export default () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [steps, setSteps] = useState([]);
+  const [workspaceName, setWorkspaceName] = useState(null);
+  const stepperRef = useRef(null);
 
   const handleSubmit = (values) => {
+    setWorkspaceName(values?.name);
     setSteps([
       {
         name: 'create workspace',
@@ -116,6 +119,14 @@ export default () => {
   };
 
   const handleClose = () => {
+    const isFinish = stepperRef.current.isFinish();
+    const errors = stepperRef.current.getErrorLogs();
+    if (!isFinish && !isEmpty(errors)) {
+      eventLog.error({
+        title: `Failed to create workspace ${workspaceName}.`,
+        data: errors,
+      });
+    }
     setSubmitting(false);
     closeDialog();
   };
@@ -132,7 +143,6 @@ export default () => {
           data-testid="create-workspace"
           fullWidth={submitting}
           maxWidth={'sm'}
-          onClose={handleClose}
           open={submitting}
         >
           <DialogTitle id="alert-dialog-title">
@@ -141,6 +151,7 @@ export default () => {
           <DialogContent>
             <Stepper
               onClose={handleClose}
+              ref={stepperRef}
               revertible
               revertText="Cancel"
               steps={steps}

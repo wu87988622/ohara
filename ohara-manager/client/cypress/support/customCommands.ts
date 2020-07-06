@@ -33,7 +33,7 @@ import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
 import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
-import { deleteAllServices } from '../utils';
+import { deleteAllServices, generateNodeIfNeeded } from '../utils';
 
 interface FixtureResponse {
   name: string;
@@ -75,6 +75,7 @@ declare global {
     interface Chainable {
       // Utils
       createJar: (file: FixtureRequest) => Promise<FixtureResponse>;
+      createNode: (node?: NodeRequest) => Chainable<NodeRequest>;
       createWorkspace: ({
         workspaceName,
         node,
@@ -174,6 +175,30 @@ Cypress.Commands.add('createJar', (file: Cypress.FixtureRequest) => {
       return params;
     });
 });
+
+Cypress.Commands.add(
+  'createNode',
+  (node: NodeRequest = generateNodeIfNeeded()) => {
+    cy.findByTestId('nodes-dialog-open-button').click();
+    cy.findByTestId('nodes-dialog').should('exist');
+
+    cy.findByRole('table').then(($table) => {
+      if ($table.find(`td:contains(${node.hostname})`).length === 0) {
+        cy.findByTitle('Create Node').click();
+        cy.get('input[name=hostname]').type(node.hostname);
+        cy.get('input[name=port]').type(`${node.port}`);
+        cy.get('input[name=user]').type(node.user);
+        cy.get('input[name=password]').type(node.password);
+        cy.findByText('CREATE').click();
+      }
+    });
+
+    cy.findByTestId('nodes-dialog-close-button').click();
+    cy.findByTestId('nodes-dialog').should('not.exist');
+
+    return cy.wrap(node);
+  },
+);
 
 Cypress.Commands.add(
   'createWorkspace',

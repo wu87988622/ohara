@@ -22,7 +22,7 @@ import { Dialog } from 'components/common/Dialog';
 import NodeTable from './NodeTable';
 
 const NodeSelectorDialog = React.forwardRef((props, ref) => {
-  const { isOpen, onClose, onConfirm, tableProps, title } = props;
+  const { isOpen, onClose, onConfirm, tableProps, testId, title } = props;
 
   const initialSelectedNodes = tableProps?.options?.selectedNodes || [];
 
@@ -78,6 +78,7 @@ const NodeSelectorDialog = React.forwardRef((props, ref) => {
       onClose={handleCancel}
       onConfirm={handleConfirm}
       open={isOpen}
+      testId={testId}
       title={title}
     >
       <NodeTable
@@ -104,6 +105,7 @@ NodeSelectorDialog.propTypes = {
       selectedNodes: PropTypes.array,
     }),
   }),
+  testId: PropTypes.string,
   title: PropTypes.string,
 };
 
