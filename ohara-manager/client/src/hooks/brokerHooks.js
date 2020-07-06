@@ -119,10 +119,12 @@ export const useCreateBrokerAction = () => {
 
 export const useUpdateBrokerAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useBrokerGroup();
   return useCallback(
-    (values) => dispatch(actions.updateBroker.trigger({ ...values, group })),
-    [dispatch, group],
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(actions.updateBroker.trigger({ values, resolve, reject })),
+      ),
+    [dispatch],
   );
 };
 

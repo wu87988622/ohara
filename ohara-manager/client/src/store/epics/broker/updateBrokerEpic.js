@@ -18,7 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
 
 import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
@@ -26,11 +26,14 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-export const updateBroker$ = (values) => {
+export const updateBroker$ = (values, resolve) => {
   const brokerId = getId(values);
   return defer(() => brokerApi.update(values)).pipe(
     map((res) => res.data),
     map((data) => normalize(data, schema.broker)),
+    tap((data) => {
+      if (resolve) resolve(data);
+    }),
     map((normalizedData) => merge(normalizedData, { brokerId })),
     map((normalizedData) => actions.updateBroker.success(normalizedData)),
     startWith(actions.updateBroker.request({ brokerId })),
@@ -41,16 +44,17 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateBroker.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) =>
-      updateBroker$(values).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) =>
+      updateBroker$(values, resolve).pipe(
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.updateBroker.failure(
               merge(err, { brokerId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+          ]);
+        }),
       ),
     ),
   );

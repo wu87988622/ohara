@@ -72,9 +72,9 @@ export const useConfig = ({
   deleteWorkspace,
   hasRunningServices,
   restartConfirmMessage,
-  openRestartWorkerProgressDialog,
-  openRestartBrokerProgressDialog,
-  openRestartWorkspaceProgressDialog,
+  restartWorkspace,
+  targetIsWorker,
+  targetIsBroker,
   workspace,
 }) => {
   const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
@@ -293,7 +293,10 @@ export const useConfig = ({
             children: restartConfirmMessage(KIND.worker),
             title: 'Are you absolutely sure?',
             confirmText: 'RESTART',
-            onConfirm: openRestartWorkerProgressDialog,
+            onConfirm: () => {
+              targetIsWorker();
+              restartWorkspace();
+            },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
           },
@@ -306,7 +309,10 @@ export const useConfig = ({
             children: restartConfirmMessage(KIND.broker),
             title: 'Are you absolutely sure?',
             confirmText: 'RESTART',
-            onConfirm: openRestartBrokerProgressDialog,
+            onConfirm: () => {
+              targetIsBroker();
+              restartWorkspace();
+            },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
           },
@@ -319,7 +325,7 @@ export const useConfig = ({
             children: restartConfirmMessage(),
             title: 'Are you absolutely sure?',
             confirmText: 'RESTART',
-            onConfirm: openRestartWorkspaceProgressDialog,
+            onConfirm: restartWorkspace,
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
           },

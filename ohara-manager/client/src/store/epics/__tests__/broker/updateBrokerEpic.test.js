@@ -44,7 +44,7 @@ it('update broker should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, jmxPort: 999 },
+        payload: { values: { ...brokerEntity, jmxPort: 999 } },
       },
     });
     const output$ = updateBrokerEpic(action$);
@@ -87,15 +87,15 @@ it('update broker multiple times should got latest result', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: { ...brokerEntity } },
       },
       b: {
         type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, nodeNames: ['n1', 'n2'] },
+        payload: { values: { ...brokerEntity, nodeNames: ['n1', 'n2'] } },
       },
       c: {
         type: actions.updateBroker.TRIGGER,
-        payload: { ...brokerEntity, clientPort: 1234 },
+        payload: { values: { ...brokerEntity, clientPort: 1234 } },
       },
     });
     const output$ = updateBrokerEpic(action$);
@@ -189,7 +189,7 @@ it('throw exception of update broker should also trigger event log action', () =
     const action$ = hot(input, {
       a: {
         type: actions.updateBroker.TRIGGER,
-        payload: brokerEntity,
+        payload: { values: { ...brokerEntity } },
       },
     });
     const output$ = updateBrokerEpic(action$);

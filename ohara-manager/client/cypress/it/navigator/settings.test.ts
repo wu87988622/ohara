@@ -1028,16 +1028,10 @@ describe('Navigator', () => {
         .should('have.length', 1)
         .within(() => {
           // expand the log process
-          cy.get('div.FlexIconButtonDiv').find('button').click();
-          cy.get('div.StyledCard').should('exist');
+          cy.findByText('Stop worker', { exact: false });
+          cy.findByText('Start worker', { exact: false });
 
-          cy.findByText('Stop worker success', { exact: false });
-          cy.findByText('Start worker success', { exact: false });
-
-          cy.get('div.FlexFooterDiv')
-            .contains('button', 'CLOSE')
-            .should('be.enabled')
-            .click();
+          cy.findByText('CLOSE').parent('button').should('be.enabled').click();
         });
       // close the snackbar
       cy.findByTestId('snackbar').find('button:visible').click();
@@ -1286,20 +1280,14 @@ describe('Navigator', () => {
         .should('have.length', 1)
         .within(() => {
           // expand the log process
-          cy.get('div.FlexIconButtonDiv').find('button').click();
-          cy.get('div.StyledCard').should('exist');
+          cy.findByText('Stop worker', { exact: false });
+          cy.findByText('Stop broker', { exact: false });
+          cy.findByText('Stop zookeeper', { exact: false });
+          cy.findByText('Start zookeeper', { exact: false });
+          cy.findByText('Start broker', { exact: false });
+          cy.findByText('Start worker', { exact: false });
 
-          cy.findByText('Stop worker success', { exact: false });
-          cy.findByText('Stop broker success', { exact: false });
-          cy.findByText('Stop zookeeper success', { exact: false });
-          cy.findByText('Start zookeeper success', { exact: false });
-          cy.findByText('Start broker success', { exact: false });
-          cy.findByText('Start worker success', { exact: false });
-
-          cy.get('div.FlexFooterDiv')
-            .contains('button', 'CLOSE')
-            .should('be.enabled')
-            .click();
+          cy.findByText('CLOSE').parent('button').should('be.enabled').click();
         });
 
       // close the snackbar

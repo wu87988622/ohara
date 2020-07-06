@@ -110,6 +110,18 @@ export function fetchAndStopTopics(
   );
 }
 
+// Fetch and start all topics for this workspace
+export function fetchAndStartTopics(
+  workspaceKey: ObjectKey,
+): Observable<TopicData[]> {
+  return fetchTopics(workspaceKey).pipe(
+    mergeMap((topics) => {
+      if (isEmpty(topics)) return of(topics);
+      return forkJoin(topics.map((topic) => startTopic(getKey(topic))));
+    }),
+  );
+}
+
 // Fetch and delete all topics for this workspace
 export function fetchAndDeleteTopics(workspaceKey: ObjectKey) {
   return fetchTopics(workspaceKey).pipe(

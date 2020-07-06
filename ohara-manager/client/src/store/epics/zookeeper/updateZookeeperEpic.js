@@ -18,7 +18,7 @@ import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
@@ -26,11 +26,14 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
-export const updateZookeeper$ = (values) => {
+export const updateZookeeper$ = (values, resolve) => {
   const zookeeperId = getId(values);
   return defer(() => zookeeperApi.update(values)).pipe(
     map((res) => res.data),
     map((data) => normalize(data, schema.zookeeper)),
+    tap((data) => {
+      if (resolve) resolve(data);
+    }),
     map((normalizedData) => merge(normalizedData, { zookeeperId })),
     map((normalizedData) => actions.updateZookeeper.success(normalizedData)),
     startWith(actions.updateZookeeper.request({ zookeeperId })),
@@ -41,16 +44,17 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateZookeeper.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) =>
-      updateZookeeper$(values).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) =>
+      updateZookeeper$(values, resolve).pipe(
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.updateZookeeper.failure(
               merge(err, { zookeeperId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+          ]);
+        }),
       ),
     ),
   );

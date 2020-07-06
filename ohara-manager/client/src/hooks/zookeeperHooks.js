@@ -113,10 +113,12 @@ export const useCreateZookeeperAction = () => {
 
 export const useUpdateZookeeperAction = () => {
   const dispatch = useDispatch();
-  const group = hooks.useZookeeperGroup();
   return useCallback(
-    (values) => dispatch(actions.updateZookeeper.trigger({ ...values, group })),
-    [dispatch, group],
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(actions.updateZookeeper.trigger({ values, resolve, reject })),
+      ),
+    [dispatch],
   );
 };
 

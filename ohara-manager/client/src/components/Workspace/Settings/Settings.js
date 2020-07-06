@@ -34,15 +34,20 @@ const Settings = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false);
   const scrollRef = React.useRef(null);
 
-  const openRestartWorkspace = hooks.useOpenRestartWorkspaceDialogAction();
-  const restartWorkspace = hooks.useRestartWorkspaceAction();
   const hasRunningServices = hooks.useHasRunningServices();
   const workspace = hooks.useWorkspace();
   const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
 
   const [isWorkspaceDeleting, setIsWorkspaceDeleting] = React.useState(false);
+  const [isWorkspaceRestarting, setIsWorkspaceRestarting] = React.useState(
+    false,
+  );
+  const [restartService, setRestartService] = React.useState(KIND.workspace);
 
   const deleteWorkspace = () => setIsWorkspaceDeleting(true);
+  const restartWorkspace = () => setIsWorkspaceRestarting(true);
+  const targetIsWorker = () => setRestartService(KIND.worker);
+  const targetIsBroker = () => setRestartService(KIND.broker);
 
   const resetSelectedItem = () => {
     setSelectedComponent(null);
@@ -50,25 +55,9 @@ const Settings = () => {
 
   const { menu, sections } = useConfig({
     deleteWorkspace,
-    openRestartWorkspaceProgressDialog: () => {
-      resetSelectedItem();
-      openRestartWorkspace();
-      restartWorkspace(KIND.workspace);
-    },
-    openRestartBrokerProgressDialog: () => {
-      resetSelectedItem();
-      openRestartWorkspace({
-        steps: ['Stop Worker', 'Stop Broker', 'Start Broker', 'Start Worker'],
-      });
-      restartWorkspace(KIND.broker);
-    },
-    openRestartWorkerProgressDialog: () => {
-      resetSelectedItem();
-      openRestartWorkspace({
-        steps: ['Stop Worker', 'Start Worker'],
-      });
-      restartWorkspace(KIND.worker);
-    },
+    restartWorkspace,
+    targetIsWorker,
+    targetIsBroker,
     restartConfirmMessage: (kind) => hooks.useRestartConfirmMessage(kind),
     hasRunningServices,
     workspace,
@@ -142,10 +131,20 @@ const Settings = () => {
         <SettingsMain
           handleChange={handleComponentChange}
           handleClose={resetSelectedItem}
+          restartWorkspace={restartWorkspace}
           sections={sections}
           selectedComponent={selectedComponent}
+          targetIsBroker={targetIsWorker}
+          targetIsWorker={targetIsWorker}
         />
-        <RestartWorkspace />
+        <RestartWorkspace
+          isOpen={isWorkspaceRestarting}
+          onClose={() => {
+            setIsWorkspaceRestarting(false);
+            resetSelectedItem();
+          }}
+          restartService={restartService}
+        />
         <DeleteWorkspace
           isOpen={isWorkspaceDeleting}
           onClose={() => {

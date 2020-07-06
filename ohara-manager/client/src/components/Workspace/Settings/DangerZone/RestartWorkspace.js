@@ -15,79 +15,193 @@
  */
 
 import React from 'react';
-import LogProgress from 'components/common/Progress/LogProgress';
+import PropTypes from 'prop-types';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
 
+import Stepper from 'components/common/FSMStepper';
 import * as hooks from 'hooks';
-import { convertIdToKey } from 'utils/object';
+import { KIND } from 'const';
+import { omit } from 'lodash';
 
-const RestartWorkspace = () => {
-  const pause = hooks.usePauseRestartWorkspaceAction();
-  const close = hooks.useCloseRestartWorkspaceDialogAction();
-  const resume = hooks.useResumeRestartWorkspaceAction();
-  const rollback = hooks.useRollbackRestartWorkspaceAction();
-  const autoClose = hooks.useAutoCloseRestartWorkspaceDialogAction();
-  const startWorkspace = hooks.useRestartWorkspaceAction();
-  const workspaceId = hooks.useWorkspaceId();
-  const zookeeperId = hooks.useZookeeperId();
-  const brokerId = hooks.useBrokerId();
-  const workerId = hooks.useWorkerId();
+const RestartWorkspace = (props) => {
+  const { isOpen, onClose, restartService } = props;
+
+  const eventLog = hooks.useEventLog();
+  const startBrokerAction = hooks.useStartBrokerAction();
+  const startTopicsAction = hooks.useStartTopicsInWorkspaceAction();
+  const startWorkerAction = hooks.useStartWorkerAction();
+  const startZookeeperAction = hooks.useStartZookeeperAction();
+  const stopBrokerAction = hooks.useStopBrokerAction();
+  const stopTopicsAction = hooks.useStopTopicsInWorkspaceAction();
+  const stopWorkerAction = hooks.useStopWorkerAction();
+  const stopZookeeperAction = hooks.useStopZookeeperAction();
+  const updateBrokerAction = hooks.useUpdateBrokerAction();
+  const updateWorkerAction = hooks.useUpdateWorkerAction();
+  const updateZookeeperAction = hooks.useUpdateZookeeperAction();
+  const refreshZookeeperAction = hooks.useFetchZookeeperAction();
+  const refreshBrokerAction = hooks.useFetchBrokerAction();
+  const refreshWorkerAction = hooks.useFetchWorkerAction();
+  const refreshNodeAction = hooks.useFetchNodesAction();
+
+  const worker = hooks.useWorker();
+  const broker = hooks.useBroker();
+  const zookeeper = hooks.useZookeeper();
   const workspace = hooks.useWorkspace();
 
-  const currentRestartWorkspace = hooks.useRestartWorkspace();
-  const {
-    isOpen,
-    skipList,
-    isAutoClose,
-    closeDisable,
-  } = currentRestartWorkspace;
-  const {
-    steps,
-    activeStep,
-    message,
-    isPause,
-    log,
-  } = currentRestartWorkspace.progress;
+  const getSteps = (restartService) => {
+    const stopWorker = {
+      name: 'stop worker',
+      action: () => stopWorkerAction(worker.name),
+      revertAction: () => startWorkerAction(worker.name),
+    };
+    const updateWorker = {
+      name: 'update worker',
+      action: () =>
+        updateWorkerAction({
+          ...workspace.worker,
+          tags: omit(worker, ['tags']),
+        }),
+      revertAction: () => updateWorkerAction({ ...worker.tags }),
+    };
+    const stopTopic = {
+      name: 'stop topic',
+      action: () => stopTopicsAction(),
+      revertAction: () => startTopicsAction(),
+    };
+    const stopBroker = {
+      name: 'stop broker',
+      action: () => stopBrokerAction(broker.name),
+      revertAction: () => startBrokerAction(broker.name),
+    };
+    const updateBroker = {
+      name: 'update broker',
+      action: () =>
+        updateBrokerAction({
+          ...workspace.broker,
+          tags: omit(broker, ['tags']),
+        }),
+      revertAction: () => updateBrokerAction({ ...broker.tags }),
+    };
+    const stopZookeeper = {
+      name: 'stop zookeeper',
+      action: () => stopZookeeperAction(zookeeper.name),
+      revertAction: () => startZookeeperAction(zookeeper.name),
+    };
+    const updateZookeeper = {
+      name: 'update zookeeper',
+      action: () =>
+        updateZookeeperAction({
+          ...workspace.zookeeper,
+          tags: omit(zookeeper, ['tags']),
+        }),
+      revertAction: () => updateZookeeperAction({ ...zookeeper.tags }),
+    };
+    const startZookeeper = {
+      name: 'start zookeeper',
+      action: () => startZookeeperAction(zookeeper.name),
+      revertAction: () => stopZookeeperAction(zookeeper.name),
+    };
+    const startBroker = {
+      name: 'start broker',
+      action: () => startBrokerAction(broker.name),
+      revertAction: () => stopBrokerAction(broker.name),
+    };
+    const startTopic = {
+      name: 'start topic',
+      action: () => startTopicsAction(),
+      revertAction: () => stopTopicsAction(),
+    };
+    const startWorker = {
+      name: 'start worker',
+      action: () => startWorkerAction(worker.name),
+      revertAction: () => stopWorkerAction(worker.name),
+    };
+    const restartWorkspace = {
+      name: 'restart workspace',
+      action: () => {
+        return new Promise((resolve) => {
+          // Log a success message to Event Log
+          eventLog.info(`Successfully Restart workspace ${workspace.name}.`);
+
+          refreshZookeeperAction(zookeeper.name);
+
+          refreshBrokerAction(broker.name);
+
+          refreshWorkerAction(worker.name);
+
+          refreshNodeAction();
+
+          resolve();
+        });
+      },
+    };
+
+    switch (restartService) {
+      //Restart target is worker
+      case KIND.worker:
+        return [stopWorker, updateWorker, startWorker, restartWorkspace];
+
+      //Restart target is worker and broker
+      case KIND.broker:
+        return [
+          stopWorker,
+          updateWorker,
+          stopTopic,
+          stopBroker,
+          updateBroker,
+          startBroker,
+          startTopic,
+          startWorker,
+          restartWorkspace,
+        ];
+
+      default:
+        return [
+          stopWorker,
+          updateWorker,
+          stopTopic,
+          stopBroker,
+          updateBroker,
+          stopZookeeper,
+          updateZookeeper,
+          startZookeeper,
+          startBroker,
+          startTopic,
+          startWorker,
+          restartWorkspace,
+        ];
+    }
+  };
 
   return (
-    <LogProgress
-      activeStep={activeStep}
-      closeDisable={closeDisable}
-      createTitle={'Restart Workspace'}
-      data={log}
-      isAutoClose={isAutoClose}
-      isOpen={isOpen}
-      isPause={isPause}
-      message={message}
-      onAutoClose={() => autoClose()}
-      onClose={() => close()}
-      onPause={pause}
-      onResume={() => {
-        resume();
-        startWorkspace({
-          workspace: convertIdToKey(workspaceId),
-          zookeeper: convertIdToKey(zookeeperId),
-          broker: convertIdToKey(brokerId),
-          worker: convertIdToKey(workerId),
-          skipList,
-        });
-      }}
-      onRollback={() => {
-        rollback();
-        startWorkspace({
-          workspace: convertIdToKey(workspaceId),
-          zookeeper: convertIdToKey(zookeeperId),
-          broker: convertIdToKey(brokerId),
-          worker: convertIdToKey(workerId),
-          skipList,
-          isRollBack: true,
-          tmpWorker: workspace.worker,
-          tmpBroker: workspace.Broker,
-          tmpZookeeper: workspace.Zookeeper,
-        });
-      }}
-      steps={steps}
-    />
+    <Dialog
+      data-testid="restart-workspace"
+      fullWidth={isOpen}
+      maxWidth={'sm'}
+      open={isOpen}
+    >
+      <DialogTitle>{'Restart Workspace'}</DialogTitle>
+      <DialogContent>
+        <Stepper
+          onClose={onClose}
+          revertible
+          steps={getSteps(restartService)}
+        />
+      </DialogContent>
+    </Dialog>
   );
+};
+
+RestartWorkspace.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  restartService: PropTypes.string.isRequired,
+};
+
+RestartWorkspace.defaultProps = {
+  onClose: () => {},
 };
 
 export default RestartWorkspace;
