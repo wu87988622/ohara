@@ -141,7 +141,7 @@ const Settings = () => {
           isOpen={isWorkspaceRestarting}
           onClose={() => {
             setIsWorkspaceRestarting(false);
-            handleClose();
+            resetSelectedItem();
           }}
           restartService={restartService}
         />

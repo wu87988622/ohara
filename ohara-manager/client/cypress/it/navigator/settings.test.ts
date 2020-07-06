@@ -1031,10 +1031,7 @@ describe('Navigator', () => {
           cy.findByText('Stop worker', { exact: false });
           cy.findByText('Start worker', { exact: false });
 
-          cy.get('div.FlexFooterDiv')
-            .contains('button', 'CLOSE')
-            .should('be.enabled')
-            .click();
+          cy.findByText('CLOSE').parent('button').should('be.enabled').click();
         });
       // close the snackbar
       cy.findByTestId('snackbar').find('button:visible').click();
@@ -1290,10 +1287,7 @@ describe('Navigator', () => {
           cy.findByText('Start broker', { exact: false });
           cy.findByText('Start worker', { exact: false });
 
-          cy.get('div.FlexFooterDiv')
-            .contains('button', 'CLOSE')
-            .should('be.enabled')
-            .click();
+          cy.findByText('CLOSE').parent('button').should('be.enabled').click();
         });
 
       // close the snackbar
