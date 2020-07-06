@@ -15,18 +15,13 @@
  */
 
 import * as generate from '../../../src/utils/generate';
+import { CELL_ACTIONS } from '../../support/customCommands';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
-
-const ACTIONS = {
-  link: 'link',
-  config: 'config',
-  remove: 'remove',
-};
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -97,7 +92,7 @@ describe('Paper Element connections', () => {
 
       // ⛔️ Cannot link two source connectors together: perfSource -> ftpSource
       cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, ACTIONS.link).click();
+      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
       cy.getCell(ftpSourceName).click();
       cy.findByText(`Target ${ftpSourceName} is a source!`)
         .should('exist')
@@ -107,7 +102,7 @@ describe('Paper Element connections', () => {
 
       // ⛔️ Cannot link two topics together: pipelineOnlyTopic1 -> pipelineOnlyTopic2
       cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
       cy.getCell(pipelineOnlyTopicName2).click();
       cy.findByText(
         `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
@@ -119,10 +114,10 @@ describe('Paper Element connections', () => {
 
       // Create a connection between PerfSource -> pipelineOnlyTopic1 -> hdfsSink
       cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, ACTIONS.link).click();
+      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
       cy.getCell(pipelineOnlyTopicName1).click();
       cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
       cy.getCell(hdfsSinkName).click();
 
       // Should create two links
@@ -130,7 +125,7 @@ describe('Paper Element connections', () => {
 
       // ⛔️ Cannot link a source to a sink where the sink already has a connection: ftpSource -> hdfsSink
       cy.getCell(ftpSourceName).trigger('mouseover');
-      cy.cellAction(ftpSourceName, ACTIONS.link).click();
+      cy.cellAction(ftpSourceName, CELL_ACTIONS.link).click();
       cy.getCell(hdfsSinkName).click();
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
@@ -142,7 +137,7 @@ describe('Paper Element connections', () => {
 
       // ⛔️ Cannot link a topic to a sink where the sink already has a connection: pipelineOnlyTopic2 -> hdfsSink
       cy.getCell(pipelineOnlyTopicName2).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName2, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName2, CELL_ACTIONS.link).click();
       cy.getCell(hdfsSinkName).click();
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
@@ -182,11 +177,11 @@ describe('Paper Element connections', () => {
 
       // Create the connections
       cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, ACTIONS.link).click();
+      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
       cy.getCell(pipelineOnlyTopicName).click();
 
       cy.getCell(pipelineOnlyTopicName).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName, CELL_ACTIONS.link).click();
       cy.getCell(smbSinkName).click();
 
       cy.get('#paper .paper-element').should('have.length', 3);
@@ -223,19 +218,19 @@ describe('Paper Element connections', () => {
 
       // 1. perf source -> topic1 -> stream -> topic2 -> hdfs sink
       cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, ACTIONS.link).click();
+      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
       cy.getCell(pipelineOnlyTopicName1).click();
 
       cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
       cy.getCell(streamName).click();
 
       cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, ACTIONS.link).click();
+      cy.cellAction(streamName, CELL_ACTIONS.link).click();
       cy.getCell(pipelineOnlyTopicName2).click();
 
       cy.getCell(pipelineOnlyTopicName2).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName2, ACTIONS.link).click();
+      cy.cellAction(pipelineOnlyTopicName2, CELL_ACTIONS.link).click();
       cy.getCell(hdfsSinkName).click();
 
       // Should create four links
@@ -252,7 +247,7 @@ describe('Paper Element connections', () => {
       cy.addElement(hdfsSinkName, KIND.sink, SINKS.hdfs);
 
       cy.getCell(shabondiSourceName).trigger('mouseover');
-      cy.cellAction(shabondiSourceName, ACTIONS.link).click();
+      cy.cellAction(shabondiSourceName, CELL_ACTIONS.link).click();
       cy.getCell(hdfsSinkName).click();
 
       // It should automatically generate a "T1" topic and create two links
@@ -268,7 +263,7 @@ describe('Paper Element connections', () => {
       cy.addElement(streamName, KIND.stream, KIND.stream);
 
       cy.getCell(jdbcSourceName).trigger('mouseover');
-      cy.cellAction(jdbcSourceName, ACTIONS.link).click();
+      cy.cellAction(jdbcSourceName, CELL_ACTIONS.link).click();
       cy.getCell(streamName).click();
 
       // It should automatically generate a "T1" topic and create two links
@@ -284,7 +279,7 @@ describe('Paper Element connections', () => {
       cy.addElement(shabondiSink, KIND.sink, SINKS.shabondi);
 
       cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, ACTIONS.link).click();
+      cy.cellAction(streamName, CELL_ACTIONS.link).click();
       cy.getCell(shabondiSink).click();
 
       // It should automatically generate a "T1" topic and create two links

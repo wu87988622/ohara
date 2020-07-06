@@ -22,6 +22,7 @@ import {
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
 import { isShabondi } from '../../../src/components/Pipeline/PipelineUtils';
+import { CELL_ACTIONS } from '../../support/customCommands';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -98,7 +99,7 @@ describe('Paper', () => {
 
       // Remove the source
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'remove').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.remove).click();
       cy.findByTestId('delete-dialog').within(() =>
         cy.findByText(/^delete$/i).click(),
       );
@@ -188,12 +189,12 @@ describe('Paper', () => {
       // Create connection
       // source -> topic1
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'link').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
       cy.getCell(topicName1).click();
 
       // topic1 -> stream
       cy.getCell(topicName1).trigger('mouseover');
-      cy.cellAction(topicName1, 'link').click();
+      cy.cellAction(topicName1, CELL_ACTIONS.link).click();
       cy.getCell(streamName).click();
 
       // Update property dialog form and close it
@@ -201,12 +202,12 @@ describe('Paper', () => {
 
       // stream -> topic2
       cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, 'link').click();
+      cy.cellAction(streamName, CELL_ACTIONS.link).click();
       cy.getCell(topicName2).click();
 
       // topic2 -> sink
       cy.getCell(topicName2).trigger('mouseover');
-      cy.cellAction(topicName2, 'link').click();
+      cy.cellAction(topicName2, CELL_ACTIONS.link).click();
       cy.getCell(sinkName).click();
 
       // Update property dialog form and close it
@@ -248,7 +249,7 @@ describe('Paper', () => {
 
 function fillNodeName(elementName: string) {
   cy.getCell(elementName).trigger('mouseover');
-  cy.cellAction(elementName, 'config').click();
+  cy.cellAction(elementName, CELL_ACTIONS.config).click();
 
   cy.findByLabelText('Node name list').click();
   cy.findByText(node.hostname)
@@ -279,7 +280,7 @@ function createSourceAndTopic() {
 
   // Then, link Perf source and Topic together
   cy.getCell(sourceName).trigger('mouseover');
-  cy.cellAction(sourceName, 'link').click();
+  cy.cellAction(sourceName, CELL_ACTIONS.link).click();
   cy.getCell(topicName).click();
 
   return { sourceName, topicName };

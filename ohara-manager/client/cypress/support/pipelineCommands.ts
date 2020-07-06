@@ -19,7 +19,7 @@ import { capitalize } from 'lodash';
 
 import { KIND, CELL_TYPES, CELL_STATUS } from '../../src/const';
 import { hashByGroupAndName } from '../../src/utils/sha';
-import { SETTING_SECTIONS } from './customCommands';
+import { SETTING_SECTIONS, CELL_ACTIONS } from './customCommands';
 
 Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.log(`Creating pipeline: ${name}`);
@@ -253,7 +253,7 @@ Cypress.Commands.add('removeElement', (name) => {
   cy.log(`Removing an element: ${name}`);
 
   cy.getCell(name).trigger('mouseover');
-  cy.cellAction(name, 'remove').click();
+  cy.cellAction(name, CELL_ACTIONS.remove).click();
   cy.findByTestId('delete-dialog').findByText('DELETE').click();
 
   cy.get('#paper').findByText(name).should('not.exist');
@@ -281,7 +281,7 @@ Cypress.Commands.add('getCell', (name) => {
   });
 });
 
-Cypress.Commands.add('cellAction', (name, action) => {
+Cypress.Commands.add('cellAction', (name, action: CELL_ACTIONS) => {
   // open the cell menu
   cy.get('#paper').within(() => {
     cy.findAllByText(name)
@@ -295,7 +295,7 @@ Cypress.Commands.add('cellAction', (name, action) => {
           : '.connector',
       )
       .first()
-      .within(() => cy.get(`button.${action}:visible`));
+      .within(() => cy.get(`button.${action.toString()}:visible`));
   });
 });
 

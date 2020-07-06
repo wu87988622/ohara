@@ -26,12 +26,14 @@ const topic = () => {
 
     if (isShared) {
       const target = toolBoxTopics.find((topic) => topic.name === name);
-      return paperApi.updateElement(id, {
-        status: target.state.toLowerCase(),
-      });
+      return Promise.resolve(
+        paperApi.updateElement(id, {
+          status: target.state.toLowerCase(),
+        }),
+      );
     }
 
-    createAndStartTopic(
+    return createAndStartTopic(
       {
         id,
         name,

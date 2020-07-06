@@ -55,6 +55,14 @@ export enum SETTING_SECTIONS {
   dangerZone = 'Danger Zone',
 }
 
+export enum CELL_ACTIONS {
+  link = 'link',
+  config = 'config',
+  remove = 'remove',
+  start = 'start',
+  stop = 'stop',
+}
+
 declare global {
   namespace Cypress {
     type FixtureRequest = {
@@ -124,7 +132,10 @@ declare global {
       ) => Chainable<null>;
       removeElement: (name: string) => Chainable<null>;
       getCell: (name: string) => Chainable<HTMLElement>;
-      cellAction: (name: string, action: string) => Chainable<HTMLElement>;
+      cellAction: (
+        name: string,
+        action: CELL_ACTIONS,
+      ) => Chainable<HTMLElement>;
       uploadStreamJar: () => Chainable<null>;
       // Pipeline
       createPipeline: (name?: string) => Chainable<null>;

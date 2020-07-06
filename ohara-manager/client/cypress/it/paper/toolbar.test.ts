@@ -21,6 +21,7 @@ import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
+import { CELL_ACTIONS } from '../../support/customCommands';
 
 describe('Toolbar', () => {
   const node: NodeRequest = {
@@ -469,7 +470,7 @@ describe('Toolbar', () => {
 
       // Then, link Perf source and Topic together
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'link').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
       cy.getCell(topicName).click();
 
       // Connector should be stopped after added
@@ -563,11 +564,11 @@ describe('Toolbar', () => {
 
       // Then, link Perf source and Topic together
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'link').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
       cy.getCell(topicName).click();
 
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.get('#paper')
         .findByText(sourceName)

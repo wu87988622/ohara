@@ -15,6 +15,7 @@
  */
 
 import * as generate from '../../../src/utils/generate';
+import { CELL_ACTIONS } from '../../support/customCommands';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface';
 import { fetchPipeline } from '../../utils';
@@ -65,12 +66,12 @@ describe('Elements', () => {
 
       // Link them together, ftpSource -> topic
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'link').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
       cy.getCell(topicName).click();
 
       // topic -> smbSink
       cy.getCell(topicName).trigger('mouseover');
-      cy.cellAction(topicName, 'link').click();
+      cy.cellAction(topicName, CELL_ACTIONS.link).click();
       cy.getCell(sinkName).click();
 
       // Should have two links
@@ -82,7 +83,7 @@ describe('Elements', () => {
 
       // Start the connector
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -100,7 +101,7 @@ describe('Elements', () => {
 
       // Start the connector
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -113,7 +114,7 @@ describe('Elements', () => {
       });
 
       // Stop the connector
-      cy.cellAction(sourceName, 'stop').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.stop).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -138,7 +139,7 @@ describe('Elements', () => {
 
       // Open the dialog
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'config').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.config).click();
 
       // Should be visible by now
       cy.findByText(`Edit the property of ${sourceName}`).should('be.visible');
@@ -158,7 +159,7 @@ describe('Elements', () => {
 
       // Delete it
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'remove').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.remove).click();
       cy.findByTestId('delete-dialog').within(() =>
         cy.findByText(/^delete$/i).click(),
       );
@@ -429,7 +430,7 @@ describe('Elements', () => {
 
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -452,7 +453,7 @@ describe('Elements', () => {
     it('should disable some of the actions when running', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -482,7 +483,7 @@ describe('Elements', () => {
     it('should disable some of the actions when failed', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, 'start').click();
+      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
       cy.wrap(null).then(async () => {
         const pipelineData = await fetchPipeline(
@@ -543,7 +544,7 @@ function createSourceAndTopic() {
 
   // Then, link Perf source and Topic together
   cy.getCell(sourceName).trigger('mouseover');
-  cy.cellAction(sourceName, 'link').click();
+  cy.cellAction(sourceName, CELL_ACTIONS.link).click();
   cy.getCell(topicName).click();
 
   return { sourceName, topicName };

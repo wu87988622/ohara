@@ -15,6 +15,7 @@
  */
 
 import * as generate from '../../../src/utils/generate';
+import { CELL_ACTIONS } from '../../support/customCommands';
 import {
   SOURCES,
   SINKS,
@@ -272,7 +273,7 @@ describe('ToolBox', () => {
 
       // Remove it
       cy.getCell(sharedTopicName).trigger('mouseover');
-      cy.cellAction(sharedTopicName, 'remove').click();
+      cy.cellAction(sharedTopicName, CELL_ACTIONS.remove).click();
       cy.findByTestId('delete-dialog').within(() =>
         cy.findByText('DELETE').click(),
       );

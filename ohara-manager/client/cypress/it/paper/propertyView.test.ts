@@ -15,6 +15,7 @@
  */
 
 import { isEmpty, isObject } from 'lodash';
+import { CELL_ACTIONS } from '../../support/customCommands';
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import {
@@ -118,12 +119,12 @@ describe('Property view', () => {
 
     // Then, link Perf source and Topic together
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, 'link').click();
+    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
     cy.getCell(topicName).click();
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, 'start').click();
+    cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
     // Open source property view
     cy.getCell(sourceName).click();
@@ -148,7 +149,7 @@ describe('Property view', () => {
 
     // Stop the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, 'stop').click();
+    cy.cellAction(sourceName, CELL_ACTIONS.stop).click();
 
     cy.getCell(sourceName).click();
 
@@ -329,12 +330,12 @@ describe('Property view', () => {
 
     // Then, link Perf source and Topic together
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, 'link').click();
+    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
     cy.getCell(topicName).click();
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, 'start').click();
+    cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 
     // Open property view
     cy.getCell(sourceName).click();
@@ -366,5 +367,41 @@ describe('Property view', () => {
     });
   });
 
-  it('should not update topic field before successfully creating topic in paper', () => {});
+  it('should not update the topic field of property view before successfully creating topic', () => {
+    const sourceName = generate.serviceName({ prefix: 'source' });
+    const sinkName = generate.serviceName({ prefix: 'sink' });
+    // Create a Shabondi source
+    cy.addElement(sourceName, KIND.source, SOURCES.shabondi);
+    // Create a Shabondi sink
+    cy.addElement(sinkName, KIND.sink, SINKS.shabondi);
+
+    // Open source property view
+    cy.getCell(sourceName).click();
+
+    // link the source-sink
+    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
+    cy.getCell(sinkName).click();
+
+    // target topic should not exist before creating topic
+    cy.get('#property-view')
+      .find('.MuiExpansionPanelDetails-root')
+      .contains('span', 'Target topic')
+      .should('not.exist');
+
+    // topic "T1" will be auto created
+    cy.findByText('T1')
+      .should('exist')
+      .parent('.topic')
+      .find('.topic-status.running')
+      .should('exist'); // Status
+
+    // after topic creation executed successfully
+    // we should see the topic field in property view
+    cy.get('#property-view')
+      .find('.MuiExpansionPanelDetails-root')
+      .contains('span', 'Target topic')
+      .siblings('span')
+      .invoke('html')
+      .should('equal', 'T1');
+  });
 });
