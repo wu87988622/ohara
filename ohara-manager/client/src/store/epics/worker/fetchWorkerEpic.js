@@ -26,7 +26,6 @@ import {
   throttleTime,
   takeUntil,
   endWith,
-  tap,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
