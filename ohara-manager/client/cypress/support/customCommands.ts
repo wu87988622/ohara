@@ -190,6 +190,13 @@ Cypress.Commands.add('createJar', (file: Cypress.FixtureRequest) => {
 Cypress.Commands.add(
   'createNode',
   (node: NodeRequest = generateNodeIfNeeded()) => {
+    // if the intro dialog appears, we should close it
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-testid="intro-dialog"]').length > 0) {
+        cy.findByTestId('close-intro-button').filter(':visible').click();
+      }
+    });
+
     cy.findByTestId('nodes-dialog-open-button').click();
     cy.findByTestId('nodes-dialog').should('exist');
 
@@ -286,7 +293,26 @@ Cypress.Commands.add(
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
     cy.findByTestId('create-workspace').should('be.visible');
-    cy.findByTestId('stepper-close-button').should('be.visible').click();
+    cy.findByTestId('stepper-close-button').should('be.visible');
+
+    // if the RETRY button is enabled, the task is stopped and has not been completed
+    cy.get('body').then(($body) => {
+      const $retryButton = $body.find(
+        'button[data-testid="stepper-retry-button"]',
+      );
+      if ($retryButton.filter(':visible').length > 0) {
+        // when we refresh the browser, the native alert should prompt
+        // TODO: assert the alert should be appears [Tracked by https://github.com/oharastream/ohara/issues/5381]
+
+        // when we click the CLOSE button, the ABORT confirm dialog should prompt
+        cy.findByTestId('stepper-close-button').click();
+        cy.findByTestId('abort-task-confirm-dialog').should('be.visible');
+        cy.findByTestId('confirm-button-ABORT').should('be.visible').click();
+      } else {
+        cy.findByTestId('stepper-close-button').click();
+      }
+    });
+
     cy.findByTestId('create-workspace').should('not.be.visible');
     cy.end();
   },

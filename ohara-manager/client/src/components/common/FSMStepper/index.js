@@ -22,7 +22,9 @@ import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
+import { Beforeunload } from 'react-beforeunload';
 
+import { DeleteDialog as Confirm } from 'components/common/Dialog';
 import Controller from './Controller';
 import LogViewer from './LogViewer';
 import Progress from './Progress';
@@ -52,6 +54,7 @@ const FSMStepper = React.forwardRef((props, ref) => {
   const isFinish = state.matches('finish');
   const hasError = !!state.context.error;
   const [closeChecked, setCloseChecked] = useState(forceCloseAfterFinish);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (closeChecked && isFinish && onClose) {
@@ -116,12 +119,31 @@ const FSMStepper = React.forwardRef((props, ref) => {
           <Button
             data-testid="stepper-close-button"
             disabled={!(hasError || isFinish)}
-            onClick={onClose}
+            onClick={() => (isFinish ? onClose() : setIsConfirmOpen(true))}
           >
             CLOSE
           </Button>
         </Grid>
       </Grid>
+      <Confirm
+        confirmText="ABORT"
+        content="The task currently being executed is not yet complete. If aborted,
+            this workspace will be UNAVAILABLE. Are you sure you want to
+            abort?"
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={onClose}
+        open={isConfirmOpen}
+        testId="abort-task-confirm-dialog"
+        title="Abort task?"
+      />
+
+      <Beforeunload
+        onBeforeunload={() => {
+          if (!isFinish) {
+            return 'The task currently being executed is not yet complete. If aborted, this workspace will be UNAVAILABLE. Are you sure you want to abort?';
+          }
+        }}
+      />
     </Styles>
   );
 });

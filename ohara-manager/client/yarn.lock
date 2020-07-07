@@ -10618,6 +10618,13 @@ react-beautiful-dnd@11.0.3:
     tiny-invariant "^1.0.4"
     use-memo-one "^1.1.0"
 
+react-beforeunload@2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/react-beforeunload/-/react-beforeunload-2.2.1.tgz#b30778a7110a6469ad6d449fa9d387c54ddec72e"
+  integrity sha512-qydpYQuGUaB1C5EP2EFN0YjPo9kgV10Z4suIZ79GIhp0DWNJxHyuR8BiTViOBltTIn9PwlpSqX4fE3uprsdqKA==
+  dependencies:
+    prop-types "^15.7.2"
+
 react-content-loader@5.0.4:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/react-content-loader/-/react-content-loader-5.0.4.tgz#1493491d2f6b309d281d84144a655417ea734486"
