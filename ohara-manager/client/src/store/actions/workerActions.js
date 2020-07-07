@@ -23,3 +23,4 @@ export const updateWorker = createRoutine('UPDATE_WORKER');
 export const startWorker = createRoutine('START_WORKER');
 export const stopWorker = createRoutine('STOP_WORKER');
 export const deleteWorker = createRoutine('DELETE_WORKER');
+export const inspectWorker = createRoutine('INSPECT_WORKER');

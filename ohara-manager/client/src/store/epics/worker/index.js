@@ -19,6 +19,7 @@ import createWorkerEpic from './createWorkerEpic';
 import deleteWorkerEpic from './deleteWorkerEpic';
 import fetchWorkerEpic from './fetchWorkerEpic';
 import updateWorkerEpic from './updateWorkerEpic';
+import inspectWorkerEpic from './inspectWorkerEpic';
 import startWorkerEpic from './startWorkerEpic';
 import stopWorkerEpic from './stopWorkerEpic';
 
@@ -27,6 +28,7 @@ export default combineEpics(
   deleteWorkerEpic,
   fetchWorkerEpic,
   updateWorkerEpic,
+  inspectWorkerEpic,
   startWorkerEpic,
   stopWorkerEpic,
 );
