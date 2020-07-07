@@ -25,13 +25,16 @@ import AddIcon from '@material-ui/icons/Add';
 import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
 import Link from '@material-ui/core/Link';
+import WarningIcon from '@material-ui/icons/Warning';
 
 import * as context from 'context';
 import * as hooks from 'hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
 import { Tooltip } from 'components/common/Tooltip';
+import { IconWrapper } from 'components/common/Icon';
 import NodeListDialog from './NodeListDialog';
+import { isStable as isStableWorkspace } from 'utils/workspace';
 
 // Since Mui doesn't provide a vertical AppBar, we're creating our own
 // therefore, this AppBar has nothing to do with Muis
@@ -63,21 +66,32 @@ const AppBar = () => {
           <Logo height="38" width="38" />
         </div>
         <div className="workspace-list">
-          {workspaces.map(({ name }) => {
+          {workspaces.map((wk) => {
+            const { name } = wk;
             const displayName = name.substring(0, 2).toUpperCase();
 
             return (
               <Tooltip key={name} placement="right" title={name}>
-                <Link
-                  className={clx('workspace-name', 'item', {
-                    'active-link': name === workspace?.name,
-                  })}
-                  onClick={() => {
-                    if (name !== workspace?.name) switchWorkspace(name);
-                  }}
+                <Badge
+                  badgeContent={
+                    <IconWrapper severity="warning">
+                      <WarningIcon fontSize="small" />
+                    </IconWrapper>
+                  }
+                  invisible={isStableWorkspace(wk)}
+                  title="Unstable workspace"
                 >
-                  {displayName}
-                </Link>
+                  <Link
+                    className={clx('workspace-name', 'item', {
+                      'active-link': name === workspace?.name,
+                    })}
+                    onClick={() => {
+                      if (name !== workspace?.name) switchWorkspace(name);
+                    }}
+                  >
+                    {displayName}
+                  </Link>
+                </Badge>
               </Tooltip>
             );
           })}

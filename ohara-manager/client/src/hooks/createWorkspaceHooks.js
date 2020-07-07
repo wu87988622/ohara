@@ -69,20 +69,3 @@ export const useSwitchCreateWorkspaceStepAction = () => {
     [dispatch],
   );
 };
-
-export const useCreateWorkspaceAction = () => {
-  const dispatch = useDispatch();
-  return useCallback(
-    (values) =>
-      new Promise((resolve, reject) =>
-        dispatch(
-          actions.createWorkspace.trigger({
-            values,
-            resolve,
-            reject,
-          }),
-        ),
-      ),
-    [dispatch],
-  );
-};

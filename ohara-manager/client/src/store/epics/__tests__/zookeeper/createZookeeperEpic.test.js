@@ -68,8 +68,7 @@ it('create zookeeper should be worked correctly', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          zookeeper: zookeeperEntity,
+          values: { ...workspaceKey, zookeeper: zookeeperEntity },
         },
       },
       u: {
@@ -131,8 +130,7 @@ it('create multiple zookeepers should be worked correctly', () => {
       x: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          zookeeper: zookeeperEntity,
+          values: { ...workspaceKey, zookeeper: zookeeperEntity },
         },
       },
       u: {
@@ -156,9 +154,11 @@ it('create multiple zookeepers should be worked correctly', () => {
       y: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          name: anotherZookeeperEntity.name,
-          group: GROUP.WORKSPACE,
-          zookeeper: anotherZookeeperEntity,
+          values: {
+            name: anotherZookeeperEntity.name,
+            group: GROUP.WORKSPACE,
+            zookeeper: anotherZookeeperEntity,
+          },
         },
       },
       v: {
@@ -207,8 +207,7 @@ it('create same zookeeper within period should be created once only', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          zookeeper: zookeeperEntity,
+          values: { ...workspaceKey, zookeeper: zookeeperEntity },
         },
       },
       u: {

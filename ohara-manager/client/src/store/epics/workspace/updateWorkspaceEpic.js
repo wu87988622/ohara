@@ -18,10 +18,11 @@ import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, startWith, tap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
 import * as workspaceApi from 'api/workspaceApi';
+import { updateWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -41,16 +42,25 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.updateWorkspace.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) =>
-      updateWorkspace$(values).pipe(
-        catchError((err) =>
-          from([
+    mergeMap(({ values, resolve, reject }) => {
+      const workspaceId = getId(values);
+      return updateWorkspace(values).pipe(
+        tap((data) => resolve && resolve(data)),
+        map((data) => normalize(data, schema.workspace)),
+        map((normalizedData) => merge(normalizedData, { workspaceId })),
+        map((normalizedData) =>
+          actions.updateWorkspace.success(normalizedData),
+        ),
+        startWith(actions.updateWorkspace.request({ workspaceId })),
+        catchError((err) => {
+          if (reject) reject(err);
+          return from([
             actions.updateWorkspace.failure(
               merge(err, { workspaceId: getId(values) }),
             ),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
-      ),
-    ),
+          ]);
+        }),
+      );
+    }),
   );

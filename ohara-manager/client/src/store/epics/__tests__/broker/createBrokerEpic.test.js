@@ -68,8 +68,7 @@ it('create broker should be worked correctly', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          broker: brokerEntity,
+          values: { ...workspaceKey, broker: brokerEntity },
         },
       },
       u: {
@@ -131,8 +130,7 @@ it('create multiple brokers should be worked correctly', () => {
       x: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          broker: brokerEntity,
+          values: { ...workspaceKey, broker: brokerEntity },
         },
       },
       u: {
@@ -156,9 +154,11 @@ it('create multiple brokers should be worked correctly', () => {
       y: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          name: anotherBrokerEntity.name,
-          group: GROUP.WORKSPACE,
-          broker: anotherBrokerEntity,
+          values: {
+            name: anotherBrokerEntity.name,
+            group: GROUP.WORKSPACE,
+            broker: anotherBrokerEntity,
+          },
         },
       },
       v: {
@@ -207,8 +207,7 @@ it('create same broker within period should be created once only', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          broker: brokerEntity,
+          values: { ...workspaceKey, broker: brokerEntity },
         },
       },
       u: {

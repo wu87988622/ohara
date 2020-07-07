@@ -111,7 +111,7 @@ describe('App Bar', () => {
 
       // there should have 2 element of workspace list link (workspace1 and new-add-button)
       cy.get('#app-bar')
-        .find('div.workspace-list span')
+        .find('div.workspace-list > span')
         .should('have.length', 2)
         .first()
         .contains('a', 'WO')
@@ -136,7 +136,7 @@ describe('App Bar', () => {
 
       // there should have 3 element of workspace list link now
       cy.get('#app-bar')
-        .find('div.workspace-list span')
+        .find('div.workspace-list > span')
         .should('have.length', 3)
         .first()
         .contains('a', name.substring(0, 2).toUpperCase());
@@ -144,7 +144,7 @@ describe('App Bar', () => {
 
       // switch workspace from quick icon to default one
       cy.get('#app-bar')
-        .find('div.workspace-list span')
+        .find('div.workspace-list > span')
         .contains('a', 'WO')
         .click();
       // should switch to workspace1
@@ -196,6 +196,13 @@ describe('App Bar', () => {
             `Failed to create workspace ${workspaceName}.`,
           ).should('exist');
         });
+
+        // should highlight the unstable workspaces
+        cy.get('#app-bar')
+          .find(`div.workspace-list > span[title="${workspaceName}"]`)
+          .within(() => {
+            cy.findByTitle('Unstable workspace').should('exist');
+          });
       });
     });
   });

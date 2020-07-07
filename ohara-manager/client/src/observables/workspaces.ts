@@ -17,10 +17,13 @@
 import { defer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
+import { Workspace } from 'api/apiInterface/workspaceInterface';
 import * as workspaceApi from 'api/workspaceApi';
 
-export function createWorkspace(values: any) {
-  return defer(() => workspaceApi.create(values)).pipe(map((res) => res.data));
+export function createWorkspace(workspace: Workspace) {
+  return defer(() => workspaceApi.create(workspace)).pipe(
+    map((res) => res.data),
+  );
 }
 
 export function deleteWorkspace(key: ObjectKey) {
@@ -29,4 +32,10 @@ export function deleteWorkspace(key: ObjectKey) {
 
 export function fetchWorkspaces() {
   return defer(() => workspaceApi.getAll()).pipe(map((res) => res.data));
+}
+
+export function updateWorkspace(workspace: Workspace) {
+  return defer(() => workspaceApi.update(workspace)).pipe(
+    map((res) => res.data),
+  );
 }

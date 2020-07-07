@@ -68,8 +68,7 @@ it('create worker should be worked correctly', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          worker: workerEntity,
+          values: { ...workspaceKey, worker: workerEntity },
         },
       },
       u: {
@@ -131,8 +130,7 @@ it('create multiple workers should be worked correctly', () => {
       x: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          worker: workerEntity,
+          values: { ...workspaceKey, worker: workerEntity },
         },
       },
       u: {
@@ -156,9 +154,11 @@ it('create multiple workers should be worked correctly', () => {
       y: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          name: anotherWorkerEntity.name,
-          group: GROUP.WORKSPACE,
-          worker: anotherWorkerEntity,
+          values: {
+            name: anotherWorkerEntity.name,
+            group: GROUP.WORKSPACE,
+            worker: anotherWorkerEntity,
+          },
         },
       },
       v: {
@@ -207,8 +207,7 @@ it('create same worker within period should be created once only', () => {
       b: {
         type: actions.updateWorkspace.TRIGGER,
         payload: {
-          ...workspaceKey,
-          worker: workerEntity,
+          values: { ...workspaceKey, worker: workerEntity },
         },
       },
       u: {

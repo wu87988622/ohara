@@ -24,16 +24,20 @@ import CardHeader from '@material-ui/core/CardHeader';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Avatar from '@material-ui/core/Avatar';
+import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
 import InputIcon from '@material-ui/icons/Input';
 import Typography from '@material-ui/core/Typography';
+import WarningIcon from '@material-ui/icons/Warning';
 
 import { KIND } from 'const';
 import * as context from 'context';
 import * as hooks from 'hooks';
 import { Dialog } from 'components/common/Dialog';
+import { IconWrapper } from 'components/common/Icon';
 import { Tooltip } from 'components/common/Tooltip';
 import { Wrapper } from './WorkspaceListStyles';
+import { isStable as isStableWorkspace } from 'utils/workspace';
 
 const Statistic = ({ value, label }) => (
   <>
@@ -91,11 +95,8 @@ function WorkspaceList() {
       >
         <Wrapper>
           <Grid container spacing={2}>
-            {workspaces.map((workspace) => {
-              const name = workspace?.name;
-              const nodeNames = workspace?.nodeNames;
-              const lastModified = workspace?.lastModified;
-
+            {workspaces.map((wk) => {
+              const { name, nodeNames, lastModified } = wk;
               const avatarText = name.substring(0, 2).toUpperCase();
               const updatedText = moment(toNumber(lastModified)).fromNow();
 
@@ -116,7 +117,18 @@ function WorkspaceList() {
                   <Card className={isActive ? 'active-workspace' : ''}>
                     <CardHeader
                       avatar={
-                        <Avatar className="workspace-icon">{avatarText}</Avatar>
+                        <Badge
+                          badgeContent={
+                            <IconWrapper severity="warning">
+                              <WarningIcon fontSize="small" />
+                            </IconWrapper>
+                          }
+                          invisible={isStableWorkspace(wk)}
+                        >
+                          <Avatar className="workspace-icon">
+                            {avatarText}
+                          </Avatar>
+                        </Badge>
                       }
                       subheader={`Updated: ${updatedText}`}
                       title={name}

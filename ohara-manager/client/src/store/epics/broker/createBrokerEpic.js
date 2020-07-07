@@ -78,10 +78,12 @@ export default (action$) =>
           });
           return from([
             actions.updateWorkspace.trigger({
-              broker: data,
-              // the workspace name of current object should be as same as the broker name
-              name: values.name,
-              group: GROUP.WORKSPACE,
+              values: {
+                broker: data,
+                // the workspace name of current object should be as same as the broker name
+                name: values.name,
+                group: GROUP.WORKSPACE,
+              },
             }),
             actions.createBroker.success(normalizedData),
           ]);

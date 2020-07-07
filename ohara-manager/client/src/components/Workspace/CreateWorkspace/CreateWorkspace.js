@@ -25,6 +25,7 @@ import * as hooks from 'hooks';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 import Stepper from 'components/common/FSMStepper';
 import CreateWorkspaceForm from './CreateWorkspaceForm';
+import { WORKSPACE_FLAGS } from 'api/apiInterface/workspaceInterface';
 
 export default () => {
   const isDialogOpen = hooks.useIsCreateWorkspaceDialogOpen();
@@ -44,6 +45,7 @@ export default () => {
   const deleteWorker = hooks.useDeleteWorkerAction();
   const deleteZookeeper = hooks.useDeleteZookeeperAction();
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const refreshNodes = hooks.useFetchNodesAction();
   const eventLog = hooks.useEventLog();
@@ -61,7 +63,8 @@ export default () => {
     setSteps([
       {
         name: 'create workspace',
-        action: () => createWorkspace(values),
+        action: () =>
+          createWorkspace({ ...values, flag: WORKSPACE_FLAGS.CREATING }),
         revertAction: () => deleteWorkspace(values?.name),
       },
       {
@@ -96,22 +99,23 @@ export default () => {
       },
       {
         name: 'finalize',
-        action: () => {
-          return new Promise((resolve) => {
-            // Log a success message to Event Log
-            eventLog.info(`Successfully created workspace ${values?.name}.`);
-            // Clear form data
-            resetForm(FORM.CREATE_WORKSPACE);
-            // Back to the first page of the form
-            switchFormStep(0);
-            // Close all dialogs
-            closeIntroDialog();
-            // Switch to the workspace you just created
-            switchWorkspace(values?.name);
-            // Refetch node list after creation successfully in order to get the runtime data
-            refreshNodes();
-            resolve();
+        action: async () => {
+          await updateWorkspace({
+            name: values.name,
+            flag: WORKSPACE_FLAGS.CREATED,
           });
+          // Log a success message to Event Log
+          eventLog.info(`Successfully created workspace ${values?.name}.`);
+          // Clear form data
+          resetForm(FORM.CREATE_WORKSPACE);
+          // Back to the first page of the form
+          switchFormStep(0);
+          // Close all dialogs
+          closeIntroDialog();
+          // Switch to the workspace you just created
+          switchWorkspace(values?.name);
+          // Refetch node list after creation successfully in order to get the runtime data
+          refreshNodes();
         },
       },
     ]);

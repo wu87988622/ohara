@@ -78,10 +78,12 @@ export default (action$) =>
           });
           return from([
             actions.updateWorkspace.trigger({
-              worker: data,
-              // the workspace name of current object should be as same as the worker name
-              name: values.name,
-              group: GROUP.WORKSPACE,
+              values: {
+                worker: data,
+                // the workspace name of current object should be as same as the worker name
+                name: values.name,
+                group: GROUP.WORKSPACE,
+              },
             }),
             actions.createWorker.success(normalizedData),
           ]);

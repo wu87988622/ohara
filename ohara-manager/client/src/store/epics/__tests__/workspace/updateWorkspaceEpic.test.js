@@ -41,7 +41,7 @@ it('update workspace should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateWorkspace.TRIGGER,
-        payload: { ...workspaceEntity, bar: 'foo' },
+        payload: { values: { ...workspaceEntity, bar: 'foo' } },
       },
     });
     const output$ = updateWorkspaceEpic(action$);
@@ -84,15 +84,15 @@ it('should only get the latest result when updating a workspace multiple times',
     const action$ = hot(input, {
       a: {
         type: actions.updateWorkspace.TRIGGER,
-        payload: workspaceEntity,
+        payload: { values: workspaceEntity },
       },
       b: {
         type: actions.updateWorkspace.TRIGGER,
-        payload: { ...workspaceEntity, nodeNames: ['n1', 'n2'] },
+        payload: { values: { ...workspaceEntity, nodeNames: ['n1', 'n2'] } },
       },
       c: {
         type: actions.updateWorkspace.TRIGGER,
-        payload: { ...workspaceEntity, nodeNames: ['n3'] },
+        payload: { values: { ...workspaceEntity, nodeNames: ['n3'] } },
       },
     });
     const output$ = updateWorkspaceEpic(action$);

@@ -78,10 +78,12 @@ export default (action$) =>
           });
           return of(
             actions.updateWorkspace.trigger({
-              zookeeper: data,
-              // the workspace name of current object should be as same as the zookeeper name
-              name: values.name,
-              group: GROUP.WORKSPACE,
+              values: {
+                zookeeper: data,
+                // the workspace name of current object should be as same as the zookeeper name
+                name: values.name,
+                group: GROUP.WORKSPACE,
+              },
             }),
             actions.createZookeeper.success(normalizedData),
           );

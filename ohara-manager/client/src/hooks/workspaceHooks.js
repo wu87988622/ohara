@@ -57,6 +57,23 @@ export const useFetchWorkspacesAction = () => {
   );
 };
 
+export const useCreateWorkspaceAction = () => {
+  const dispatch = useDispatch();
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.createWorkspace.trigger({
+            values,
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch],
+  );
+};
+
 export const useSwitchWorkspaceAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkspaceGroup();
@@ -80,7 +97,16 @@ export const useUpdateWorkspaceAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useWorkspaceGroup();
   return useCallback(
-    (values) => dispatch(actions.updateWorkspace.trigger({ ...values, group })),
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.updateWorkspace.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
     [dispatch, group],
   );
 };

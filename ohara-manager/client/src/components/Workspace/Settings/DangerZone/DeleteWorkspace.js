@@ -21,6 +21,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 
+import { WORKSPACE_FLAGS } from 'api/apiInterface/workspaceInterface';
 import Stepper from 'components/common/FSMStepper';
 import * as hooks from 'hooks';
 
@@ -43,10 +44,16 @@ const DeleteWorkspace = (props) => {
   const deleteWorker = hooks.useDeleteWorkerAction();
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const deleteZookeeper = hooks.useDeleteZookeeperAction();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
 
   const eventLog = hooks.useEventLog();
   const stepperRef = useRef(null);
   const steps = [
+    {
+      name: 'prepare',
+      action: () =>
+        updateWorkspace({ ...workspace, flag: WORKSPACE_FLAGS.DELETING }),
+    },
     {
       name: 'delete connectors',
       action: () => deleteConnectors(),
