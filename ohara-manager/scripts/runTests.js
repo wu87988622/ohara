@@ -21,7 +21,6 @@ const _ = require('lodash');
 const fs = require('fs');
 
 const mergeReports = require('./mergeReports');
-const copyJars = require('./copyJars');
 const utils = require('./scriptsUtils');
 const commonUtils = require('../utils/commonUtils');
 const { getConfig } = require('../utils/configHelpers');
@@ -51,6 +50,7 @@ const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
   let server;
   let client;
   let cypress;
+  let copyJars;
   serverPort = serverPort === 0 ? commonUtils.randomPort() : serverPort;
 
   const defaultEnv = getDefaultEnv();
@@ -114,6 +114,17 @@ const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
     await utils.waitOnService(`http://localhost:${clientPort}`);
   }
 
+  copyJars = execa('yarn', ['copy:jars'], {
+    stdio: 'inherit',
+  }); // We need these jars for test
+  console.log('copyJars.pid', copyJars.pid);
+  try {
+    await copyJars;
+  } catch (err) {
+    console.log(err.message);
+    process.exit(1);
+  }
+
   const buildCypressEnv = () => {
     const env = [];
     env.push(`port=${ci ? clientPort : serverPort}`);
@@ -159,10 +170,10 @@ const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
     if (cypress) cypress.kill();
     if (client) client.kill();
     if (server) server.kill();
+    if (copyJars) copyJars.kill();
   };
 
   try {
-    copyJars(); // We need these jars for test
     await cypress;
   } catch (err) {
     console.log(chalk.red(err.message));

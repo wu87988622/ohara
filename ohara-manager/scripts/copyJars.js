@@ -15,6 +15,7 @@
  */
 
 const fs = require('fs');
+const execa = require('execa');
 
 const srcBase = '../ohara-it/build/libs';
 const distBase = './client/cypress/fixtures/jars';
@@ -25,16 +26,25 @@ const files = [
   'ohara-it-0.11.0-SNAPSHOT.jar',
 ];
 
-const copyJars = () => {
-  if (!fs.existsSync(`${distBase}`)) {
-    fs.mkdirSync(`${distBase}`, { recursive: true });
-  }
+/* eslint-disable no-process-exit, no-console */
+const buildJars = execa('./gradlew', ['ohara-it:jar'], {
+  cwd: '..',
+  stdio: 'inherit',
+});
 
-  files.forEach((file) => {
-    fs.copyFileSync(`${srcBase}/${file}`, `${distBase}/${file}`);
+buildJars
+  .then((value) => {
+    console.log(`build jars output: ${value.stdout}`);
+
+    if (!fs.existsSync(`${distBase}`)) {
+      fs.mkdirSync(`${distBase}`, { recursive: true });
+    }
+
+    files.forEach((file) => {
+      fs.copyFileSync(`${srcBase}/${file}`, `${distBase}/${file}`);
+    });
+  })
+  .catch((err) => {
+    console.log(err.message);
+    process.exit(1);
   });
-};
-
-copyJars();
-
-module.exports = copyJars;
