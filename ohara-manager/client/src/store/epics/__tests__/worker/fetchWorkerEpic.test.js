@@ -21,7 +21,6 @@ import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import fetchWorkerEpic from '../../worker/fetchWorkerEpic';
 import { entity as workerEntity } from 'api/__mocks__/workerApi';
-import { workerInfoEntity } from 'api/__mocks__/inspectApi';
 import * as actions from 'store/actions';
 import { getId, getKey } from 'utils/object';
 
@@ -41,8 +40,8 @@ it('should fetch a worker', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
-    const expected = '--a 2999ms u';
-    const subs = ['^-----------', '--^ 2999ms !'];
+    const expected = '--a 99ms (uv)';
+    const subs = ['^-----------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -67,12 +66,13 @@ it('should fetch a worker', () => {
             workers: {
               [wkId]: { ...workerEntity, ...key },
             },
-            infos: {
-              [wkId]: { ...workerInfoEntity, ...key },
-            },
           },
           result: wkId,
         },
+      },
+      v: {
+        type: actions.inspectWorker.TRIGGER,
+        payload: key,
       },
     });
 
@@ -88,8 +88,8 @@ it('fetch worker multiple times within period should get first result', () => {
 
     const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
-    const expected = '--a 2999ms u-';
-    const subs = ['^------------', '--^ 2999ms !'];
+    const expected = '--a 99ms (uv)-';
+    const subs = ['^------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -118,69 +118,13 @@ it('fetch worker multiple times within period should get first result', () => {
             workers: {
               [wkId]: { ...workerEntity, ...key },
             },
-            infos: {
-              [wkId]: { ...workerInfoEntity, ...key },
-            },
           },
           result: wkId,
         },
       },
-    });
-
-    expectSubscriptions(action$.subscriptions).toBe(subs);
-
-    flush();
-  });
-});
-
-it('fetch worker multiple times without period should get latest result', () => {
-  makeTestScheduler().run((helpers) => {
-    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
-
-    const anotherKey = { name: 'anotherwk', group: 'newworkspace' };
-    const input = '   ^-a 2s b         ';
-    const expected = '--a 2s b 2999ms u';
-    const subs = ['^----------------', '--^ 2s !', '--- 2s ^ 2999ms !'];
-
-    const action$ = hot(input, {
-      a: {
-        type: actions.fetchWorker.TRIGGER,
+      v: {
+        type: actions.inspectWorker.TRIGGER,
         payload: key,
-      },
-      b: {
-        type: actions.fetchWorker.TRIGGER,
-        payload: anotherKey,
-      },
-    });
-    const output$ = fetchWorkerEpic(action$);
-
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.fetchWorker.REQUEST,
-        payload: {
-          workerId: wkId,
-        },
-      },
-      b: {
-        type: actions.fetchWorker.REQUEST,
-        payload: {
-          workerId: getId(anotherKey),
-        },
-      },
-      u: {
-        type: actions.fetchWorker.SUCCESS,
-        payload: {
-          workerId: getId(anotherKey),
-          entities: {
-            workers: {
-              [getId(anotherKey)]: { ...workerEntity, ...anotherKey },
-            },
-            infos: {
-              [getId(anotherKey)]: { ...workerInfoEntity, ...anotherKey },
-            },
-          },
-          result: getId(anotherKey),
-        },
       },
     });
 
