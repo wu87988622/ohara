@@ -25,6 +25,7 @@ import {
   ClusterResponseList,
 } from 'api/apiInterface/clusterInterface';
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
+import { version } from '../../../package.json';
 
 export const entity = {
   brokerClusterKey: {
@@ -39,7 +40,7 @@ export const entity = {
   sharedJarKeys: [],
   tags: {},
   xmx: 2048,
-  imageName: 'oharastream/connect-worker:0.11.0-SNAPSHOT',
+  imageName: `oharastream/connect-worker:${version}`,
   'offset.storage.topic': '346b839ea3e74387ab1eea409',
   'status.storage.replication.factor': 1,
   'group.id': 'af4b4d49234a4848bb90fb452',

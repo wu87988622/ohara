@@ -25,6 +25,7 @@ import {
   ClusterResponseList,
 } from 'api/apiInterface/clusterInterface';
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
+import { version } from '../../../package.json';
 
 export const entity = {
   name: 'bk00',
@@ -36,7 +37,7 @@ export const entity = {
   'num.network.threads': 1,
   tags: {},
   xmx: 1024,
-  imageName: 'oharastream/broker:0.11.0-SNAPSHOT',
+  imageName: `oharastream/broker:${version}`,
   'log.dirs': '/home/ohara/default/data',
   jmxPort: 42020,
   'num.io.threads': 1,

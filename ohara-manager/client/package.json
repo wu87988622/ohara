@@ -1,6 +1,6 @@
 {
   "name": "ohara-manager-client",
-  "version": "0.1.0",
+  "version": "0.11.0-SNAPSHOT",
   "private": true,
   "engines": {
     "node": ">=10.16.3 <13"
@@ -13,20 +13,21 @@
     "test:unit": "react-scripts test --env=jsdom",
     "pretest:unit:ci": "rm -rf coverage/ut || true",
     "test:unit:ci": "cross-env CI=true yarn test:unit --coverage --watchAll=false --reporters=default --reporters=jest-junit --coverageDirectory=coverage/ut --collectCoverageFrom=\"src/{!(components|context),}{*,/**}\"",
+    "posttest:unit:ci": "nyc check-coverage --lines=0 --statements=40 --temp-dir=coverage/ut",
     "test:api:open": "cross-env CYPRESS_CONFIG_FILE=api cypress open",
     "pretest:api:run": "rm -rf coverage/api .nyc_output || true",
     "test:api:run": "cross-env CYPRESS_CONFIG_FILE=api cypress run",
-    "posttest:api:run": "nyc report --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/api",
+    "posttest:api:run": "nyc report --check-coverage --lines=0 --statements=80 --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/api",
     "test:it:open": "cross-env CYPRESS_CONFIG_FILE=it cypress open",
     "pretest:it:run": "rm -rf coverage/it .nyc_output || true",
     "test:it:run": "cross-env CYPRESS_CONFIG_FILE=it cypress run",
-    "posttest:it:run": "nyc report --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/it",
+    "posttest:it:run": "nyc report --check-coverage --lines=0 --statements=75 --reporter=html --reporter=json --reporter=json-summary --report-dir=coverage/it",
     "test:e2e:open": "cross-env CYPRESS_CONFIG_FILE=e2e cypress open",
     "test:e2e:run": "cross-env CYPRESS_CONFIG_FILE=e2e cypress run",
     "test:coverage:check": "nyc report --compact false --reporter=text --check-coverage",
-    "prereport:combined": "cp coverage/ut/coverage-final.json coverage/coverage_ut.json && cp coverage/api/coverage-final.json coverage/coverage_api.json && cp coverage/it/coverage-final.json coverage/coverage_it.json || true",
-    "report:combined": "nyc report --reporter=html --reporter=json-summary --temp-dir coverage || true",
-    "postreport:combined": "rm -rf coverage/coverage_*.json",
+    "prereport:combined": "cross-env mkdir coverage/reports && cp coverage/ut/coverage-final.json coverage/reports/coverage-ut.json && cp coverage/api/coverage-final.json coverage/reports/coverage-api.json && cp coverage/it/coverage-final.json coverage/reports/coverage-it.json || true",
+    "report:combined": "nyc report --reporter=html --reporter=json-summary --temp-dir coverage/reports || true",
+    "postreport:combined": "rm -rf coverage/reports",
     "lint": "eslint --max-warnings 0 src cypress",
     "lint:ci": "cross-env CI=true eslint --max-warnings 0 src cypress",
     "vet": "yarn audit"
@@ -154,6 +155,9 @@
     "not op_mini all"
   ],
   "nyc": {
+    "exclude": [
+      "cypress"
+    ],
     "reporter": []
   }
 }

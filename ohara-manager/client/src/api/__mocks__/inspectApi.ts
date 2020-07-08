@@ -26,9 +26,10 @@ import {
   Reference,
   Permission,
 } from 'api/apiInterface/definitionInterface';
+import { version } from '../../../package.json';
 
 export const brokerInfoEntity = {
-  imageName: 'oharastream/broker:0.11.0-SNAPSHOT',
+  imageName: `oharastream/broker:${version}`,
   settingDefinitions: [
     {
       denyList: [],
@@ -51,7 +52,7 @@ export const brokerInfoEntity = {
 };
 
 export const zookeeperInfoEntity = {
-  imageName: 'oharastream/zookeeper:0.11.0-SNAPSHOT',
+  imageName: `oharastream/zookeeper:${version}`,
   settingDefinitions: [
     {
       denyList: [],
@@ -97,7 +98,7 @@ export const workerInfoEntity = {
       ],
     },
   ],
-  imageName: 'oharastream/connect-worker:0.11.0-SNAPSHOT',
+  imageName: `oharastream/connect-worker:${version}`,
   settingDefinitions: [
     {
       denyList: [],
@@ -119,7 +120,7 @@ export const workerInfoEntity = {
 
 export const shabondiInfoEntity = {
   classInfos: [],
-  imageName: 'oharastream/shabondi:0.11.0-SNAPSHOT',
+  imageName: `oharastream/shabondi:${version}`,
   settingDefinitions: [
     {
       denyList: [],

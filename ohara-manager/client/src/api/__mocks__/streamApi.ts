@@ -25,6 +25,7 @@ import {
   ClusterResponseList,
 } from 'api/apiInterface/clusterInterface';
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
+import { version } from '../../../package.json';
 
 export const entity = {
   author: 'root',
@@ -38,7 +39,7 @@ export const entity = {
   lastModified: 0,
   tags: {},
   xmx: 1024,
-  imageName: 'oharastream/stream:0.11.0-SNAPSHOT',
+  imageName: `oharastream/stream:${version}`,
   jarKey: {
     group: 'default',
     name: 'ohara-it-stream.jar',
@@ -50,7 +51,7 @@ export const entity = {
     },
   ],
   revision: 'b303f3c2e52647ee5e79e55f9d74a5e51238a92c',
-  version: '0.11.0-SNAPSHOT',
+  version: `${version}`,
   aliveNodes: [],
   'stream.class': 'oharastream.ohara.it.stream.DumbStream',
   from: [

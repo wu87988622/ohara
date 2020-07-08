@@ -25,6 +25,7 @@ import {
   ClusterResponseList,
 } from 'api/apiInterface/clusterInterface';
 import { ObjectKey, BasicResponse } from 'api/apiInterface/basicInterface';
+import { version } from '../../../package.json';
 
 export const entity = {
   author: 'root',
@@ -42,9 +43,9 @@ export const entity = {
   xmx: 1024,
   shabondi__class: 'oharastream.ohara.shabondi.ShabondiSource',
   nodeMetrics: {},
-  imageName: 'oharastream/shabondi:0.11.0-SNAPSHOT',
+  imageName: `oharastream/shabondi:${version}`,
   revision: '5d8618bd3f0994131a6374119b57c19778d4b331',
-  version: '0.11.0-SNAPSHOT',
+  version: `${version}`,
   aliveNodes: [],
   jmxPort: 33075,
   kind: 'source',
