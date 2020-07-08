@@ -18,10 +18,7 @@ import * as generate from '../../../src/utils/generate';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { ElementParameters } from './../../support/customCommands';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -56,12 +53,12 @@ describe('Paper Element connections', () => {
         {
           name: perfSourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: ftpSourceName,
           kind: KIND.source,
-          className: SOURCES.ftp,
+          className: SOURCE.ftp,
         },
         {
           name: pipelineOnlyTopicName1,
@@ -71,7 +68,7 @@ describe('Paper Element connections', () => {
         {
           name: consoleSinkName,
           kind: KIND.sink,
-          className: SINKS.console,
+          className: SINK.console,
         },
         {
           name: pipelineOnlyTopicName2,
@@ -81,7 +78,7 @@ describe('Paper Element connections', () => {
         {
           name: hdfsSinkName,
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
       ];
 
@@ -147,7 +144,7 @@ describe('Paper Element connections', () => {
         {
           name: perfSourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: pipelineOnlyTopicName,
@@ -157,7 +154,7 @@ describe('Paper Element connections', () => {
         {
           name: smbSinkName,
           kind: KIND.sink,
-          className: SINKS.smb,
+          className: SINK.smb,
         },
       ]);
 
@@ -196,22 +193,22 @@ describe('Paper Element connections', () => {
         {
           name: perfSourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: ftpSourceName,
           kind: KIND.source,
-          className: SOURCES.ftp,
+          className: SOURCE.ftp,
         },
         {
           name: consoleSinkName,
           kind: KIND.sink,
-          className: SINKS.console,
+          className: SINK.console,
         },
         {
           name: hdfsSinkName,
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
         {
           name: pipelineOnlyTopicName1,
@@ -250,12 +247,12 @@ describe('Paper Element connections', () => {
         {
           name: shabondiSourceName,
           kind: KIND.source,
-          className: SOURCES.shabondi,
+          className: SOURCE.shabondi,
         },
         {
           name: hdfsSinkName,
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
       ]);
 
@@ -274,7 +271,7 @@ describe('Paper Element connections', () => {
         {
           name: jdbcSourceName,
           kind: KIND.source,
-          className: SOURCES.jdbc,
+          className: SOURCE.jdbc,
         },
         {
           name: streamName,
@@ -301,7 +298,7 @@ describe('Paper Element connections', () => {
         {
           name: shabondiSink,
           kind: KIND.sink,
-          className: SINKS.shabondi,
+          className: SINK.shabondi,
         },
       ]);
 

@@ -17,7 +17,7 @@
 import { ObjectKey } from './basicInterface';
 import { ServiceBody } from './clusterInterface';
 
-export enum WORKSPACE_FLAGS {
+export enum WorkspaceFlag {
   CREATING = 'creating',
   CREATED = 'created',
   RESTARTING = 'restarting',
@@ -28,7 +28,7 @@ export enum WORKSPACE_FLAGS {
 
 export interface Workspace extends ObjectKey {
   broker?: ServiceBody;
-  flag?: WORKSPACE_FLAGS;
+  flag?: WorkspaceFlag;
   nodeNames: string[];
   worker?: ServiceBody;
   zookeeper?: ServiceBody;

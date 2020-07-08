@@ -22,7 +22,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Box from '@material-ui/core/Box';
 
 import { Dialog } from 'components/common/Dialog';
-import { SETTINGS_COMPONENT_TYPES } from 'const';
+import { SETTINGS_COMPONENT_TYPE } from 'const';
 
 const SectionComponent = (props) => {
   const { sections, selectedComponent, handleClose } = props;
@@ -54,7 +54,7 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
   const { title, type, componentProps } = component;
 
   switch (type) {
-    case SETTINGS_COMPONENT_TYPES.PAGE:
+    case SETTINGS_COMPONENT_TYPE.PAGE:
       return (
         <div className="section-page">
           <div className="section-page-header">
@@ -70,7 +70,7 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
         </div>
       );
 
-    case SETTINGS_COMPONENT_TYPES.DIALOG:
+    case SETTINGS_COMPONENT_TYPE.DIALOG:
       return (
         <Dialog
           onClose={handleClose}
@@ -79,7 +79,7 @@ function componentRenderer({ component, selectedComponent, handleClose }) {
         />
       );
 
-    case SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
+    case SETTINGS_COMPONENT_TYPE.CUSTOMIZED:
       return null;
 
     default:

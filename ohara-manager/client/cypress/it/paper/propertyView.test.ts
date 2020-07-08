@@ -15,7 +15,7 @@
  */
 
 import { isEmpty, isObject } from 'lodash';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import { CELL_ACTION } from '../../support/customCommands';
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { fetchServices, fetchServiceInfo } from '../../utils';
@@ -25,10 +25,7 @@ import {
   ClassInfo,
 } from '../../../src/api/apiInterface/definitionInterface';
 import { KIND } from '../../../src/const';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 describe('Property view', () => {
   const node: NodeRequest = {
@@ -57,7 +54,7 @@ describe('Property view', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open property view
@@ -96,7 +93,7 @@ describe('Property view', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Not visible by default
@@ -124,7 +121,7 @@ describe('Property view', () => {
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+    cy.cellAction(sourceName, CELL_ACTION.start).click();
 
     // Open source property view
     cy.getCell(sourceName).click();
@@ -149,7 +146,7 @@ describe('Property view', () => {
 
     // Stop the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.stop).click();
+    cy.cellAction(sourceName, CELL_ACTION.stop).click();
 
     cy.getCell(sourceName).click();
 
@@ -224,7 +221,7 @@ describe('Property view', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open property view
@@ -240,7 +237,7 @@ describe('Property view', () => {
 
         const defs =
           workerDefs.classInfos.find(
-            (classInfo: ClassInfo) => classInfo.className === SOURCES.perf,
+            (classInfo: ClassInfo) => classInfo.className === SOURCE.perf,
           )?.settingDefinitions || [];
 
         const currentConnector = connectors[0]; // we should only have one connector
@@ -286,17 +283,17 @@ describe('Property view', () => {
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        className: SOURCES.jdbc,
+        className: SOURCE.jdbc,
       },
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        className: SOURCES.shabondi,
+        className: SOURCE.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        className: SINKS.hdfs,
+        className: SINK.hdfs,
       },
       {
         name: 'T1',
@@ -330,7 +327,7 @@ describe('Property view', () => {
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+    cy.cellAction(sourceName, CELL_ACTION.start).click();
 
     // Open property view
     cy.getCell(sourceName).click();
@@ -371,12 +368,12 @@ describe('Property view', () => {
       {
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.shabondi,
+        className: SOURCE.shabondi,
       },
       {
         name: sinkName,
         kind: KIND.sink,
-        className: SINKS.shabondi,
+        className: SINK.shabondi,
       },
     ]);
 
@@ -384,7 +381,7 @@ describe('Property view', () => {
     cy.getCell(sourceName).click();
 
     // link the source-sink
-    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
+    cy.cellAction(sourceName, CELL_ACTION.link).click();
     cy.getCell(sinkName).click();
 
     // target topic should not exist before creating topic
@@ -420,7 +417,7 @@ function createSourceAndTopic() {
     {
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     },
     {
       name: topicName,

@@ -34,7 +34,7 @@ import Select from 'components/common/Select';
 import { TAB } from 'context/devTool/const';
 import { useCurrentLogs, useCurrentHosts } from 'components/DevTool/hooks';
 import * as hooks from 'hooks';
-import { LOG_SERVICES } from 'api/apiInterface/logInterface';
+import { LOG_SERVICE } from 'api/apiInterface/logInterface';
 import { StyledSearchBody, StyledTextField } from './ControllerStyles';
 
 const ControllerLog = () => {
@@ -102,7 +102,7 @@ const ControllerLog = () => {
     <>
       <Select
         disabled={isFetching}
-        list={Object.keys(LOG_SERVICES)}
+        list={Object.keys(LOG_SERVICE)}
         onChange={(event) => setLogQueryParams({ logType: event.target.value })}
         testId="log-type-select"
         value={logType}

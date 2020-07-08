@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-import {
-  WORKSPACE_FLAGS,
-  Workspace,
-} from 'api/apiInterface/workspaceInterface';
+import { WorkspaceFlag, Workspace } from 'api/apiInterface/workspaceInterface';
 
 export function isUnstable(workspace: Workspace): boolean {
   if (!workspace) return true;
   return (
-    workspace.flag === WORKSPACE_FLAGS.CREATING ||
-    workspace.flag === WORKSPACE_FLAGS.RESTARTING ||
-    workspace.flag === WORKSPACE_FLAGS.DELETING
+    workspace.flag === WorkspaceFlag.CREATING ||
+    workspace.flag === WorkspaceFlag.RESTARTING ||
+    workspace.flag === WorkspaceFlag.DELETING
   );
 }
 

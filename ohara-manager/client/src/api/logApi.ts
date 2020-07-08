@@ -18,12 +18,12 @@
 // unless you have a solution to resolve TypeScript + Coverage
 import { RESOURCE, API } from '../api/utils/apiUtils';
 import { ObjectKey } from './apiInterface/basicInterface';
-import { LogResponse, LOG_SERVICES } from './apiInterface/logInterface';
+import { LogResponse, LOG_SERVICE } from './apiInterface/logInterface';
 
-const logApi = (service: LOG_SERVICES) => new API(`${RESOURCE.LOG}/${service}`);
+const logApi = (service: LOG_SERVICE) => new API(`${RESOURCE.LOG}/${service}`);
 
 const fetchServiceLog = (
-  service: LOG_SERVICES,
+  service: LOG_SERVICE,
   objectKey?: ObjectKey,
   queryParams?: object,
 ) => {
@@ -34,41 +34,41 @@ const fetchServiceLog = (
 };
 
 export const getConfiguratorLog = (queryParams?: object) => {
-  return logApi(LOG_SERVICES.configurator).get<LogResponse>({ queryParams });
+  return logApi(LOG_SERVICE.configurator).get<LogResponse>({ queryParams });
 };
 
 export const getZookeeperLog = (objectKey: ObjectKey, queryParams?: object) => {
-  return fetchServiceLog(LOG_SERVICES.zookeeper, objectKey, queryParams);
+  return fetchServiceLog(LOG_SERVICE.zookeeper, objectKey, queryParams);
 };
 
 export const getBrokerLog = (objectKey: ObjectKey, queryParams?: object) => {
-  return fetchServiceLog(LOG_SERVICES.broker, objectKey, queryParams);
+  return fetchServiceLog(LOG_SERVICE.broker, objectKey, queryParams);
 };
 
 export const getWorkerLog = (objectKey: ObjectKey, queryParams?: object) => {
-  return fetchServiceLog(LOG_SERVICES.worker, objectKey, queryParams);
+  return fetchServiceLog(LOG_SERVICE.worker, objectKey, queryParams);
 };
 
 export const getShabondiLog = (objectKey: ObjectKey, queryParams?: object) => {
-  return fetchServiceLog(LOG_SERVICES.shabondi, objectKey, queryParams)
+  return fetchServiceLog(LOG_SERVICE.shabondi, objectKey, queryParams)
     .then((res) => {
-      res.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.shabondi} "${objectKey.name}" info successfully.`;
+      res.title = `Get ${RESOURCE.LOG}/${LOG_SERVICE.shabondi} "${objectKey.name}" info successfully.`;
       return res;
     })
     .catch((error: LogResponse) => {
-      error.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.shabondi} "${objectKey.name}" info failed.`;
+      error.title = `Get ${RESOURCE.LOG}/${LOG_SERVICE.shabondi} "${objectKey.name}" info failed.`;
       throw error;
     });
 };
 
 export const getStreamLog = (objectKey: ObjectKey, queryParams?: object) => {
-  return fetchServiceLog(LOG_SERVICES.stream, objectKey, queryParams)
+  return fetchServiceLog(LOG_SERVICE.stream, objectKey, queryParams)
     .then((res) => {
-      res.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.stream} "${objectKey.name}" info successfully.`;
+      res.title = `Get ${RESOURCE.LOG}/${LOG_SERVICE.stream} "${objectKey.name}" info successfully.`;
       return res;
     })
     .catch((error: LogResponse) => {
-      error.title = `Get ${RESOURCE.LOG}/${LOG_SERVICES.stream} "${objectKey.name}" info failed.`;
+      error.title = `Get ${RESOURCE.LOG}/${LOG_SERVICE.stream} "${objectKey.name}" info failed.`;
       throw error;
     });
 };

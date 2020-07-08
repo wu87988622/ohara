@@ -18,16 +18,13 @@ import * as generate from '../../../src/utils/generate';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { fetchServiceInfo } from '../../utils';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import { CELL_ACTION } from '../../support/customCommands';
 import { ElementParameters } from './../../support/customCommands';
 import {
   Permission,
   Type,
 } from '../../../src/api/apiInterface/definitionInterface';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -56,12 +53,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('property-dialog').within(() => {
       // Title and close button
@@ -101,12 +98,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.ftp,
+      className: SOURCE.ftp,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('property-dialog').within(() => {
       // The button is there and not being disabled
@@ -131,12 +128,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('definition-table').within(() => {
       // Ensure the table is ready
@@ -178,12 +175,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('definition-table').within(() => {
       // Ensure the table is ready
@@ -227,12 +224,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('definition-table').within(() => {
       // Ensure the table is ready
@@ -292,12 +289,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('property-dialog').then(async () => {
       const workerDefs = await fetchServiceInfo(KIND.source, {
@@ -306,7 +303,7 @@ describe('Property dialog', () => {
       });
 
       const perfDefs = workerDefs.classInfos.find(
-        (info) => info.className === SOURCES.perf,
+        (info) => info.className === SOURCE.perf,
       );
 
       // internal fields are hidden from UI
@@ -365,22 +362,22 @@ describe('Property dialog', () => {
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        className: SOURCES.jdbc,
+        className: SOURCE.jdbc,
       },
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        className: SOURCES.shabondi,
+        className: SOURCE.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        className: SINKS.hdfs,
+        className: SINK.hdfs,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        className: SINKS.shabondi,
+        className: SINK.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'stream' }),
@@ -393,7 +390,7 @@ describe('Property dialog', () => {
       cy.addElement({ name, ...rest });
 
       cy.getCell(name).trigger('mouseover');
-      cy.cellAction(name, CELL_ACTIONS.config).click();
+      cy.cellAction(name, CELL_ACTION.config).click();
 
       // Should have the dialog title
       cy.findByText(`Edit the property of ${name}`).should('exist');
@@ -411,12 +408,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // TODO: #5377 associate field label and input and so we can use `findByLabelText` in our "definition base" forms
     cy.get('input[name="perf__batch"]') // This field is supposed to be in Perf source connector
@@ -436,7 +433,7 @@ describe('Property dialog', () => {
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // The value should be kept
     cy.findByDisplayValue(inputValue).should('exist');
@@ -451,12 +448,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // It's open
     cy.findByTestId('property-dialog').should('visible');
@@ -469,7 +466,7 @@ describe('Property dialog', () => {
 
     // Open the dialog again
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // It's open
     cy.findByTestId('property-dialog').should('visible');
@@ -487,12 +484,12 @@ describe('Property dialog', () => {
     cy.addElement({
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.perf,
+      className: SOURCE.perf,
     });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     cy.findByTestId('property-dialog').within(() => {
       cy.findByTestId('sidebar').within(() => {
@@ -539,7 +536,7 @@ describe('Property dialog', () => {
       {
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       },
       {
         name: topicName,
@@ -551,7 +548,7 @@ describe('Property dialog', () => {
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // Open topics list and select the topic
     cy.findByTestId('definition-content').within(() => {
@@ -570,7 +567,7 @@ describe('Property dialog', () => {
 
     // Open dialog again for resetting the link this time
     cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+    cy.cellAction(sourceName, CELL_ACTION.config).click();
 
     // Open topics list and select the topic
     cy.findByTestId('definition-content').within(() => {

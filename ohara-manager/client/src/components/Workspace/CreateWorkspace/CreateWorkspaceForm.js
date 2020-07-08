@@ -24,7 +24,7 @@ import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 
 import * as hooks from 'hooks';
-import { CREATE_WORKSPACE_MODE, FORM, GROUP } from 'const';
+import { CreateWorkspaceMode, Form, GROUP } from 'const';
 import * as generate from 'utils/generate';
 import { getKey } from 'utils/object';
 import { Wrapper } from './CreateWorkspaceFormStyles';
@@ -35,7 +35,7 @@ import SetupWorkerForm from './SetupWorkerForm';
 import SetupWorkspaceForm from './SetupWorkspaceForm';
 import SetupZookeeperForm from './SetupZookeeperForm';
 
-const { EXPERT, QUICK } = CREATE_WORKSPACE_MODE;
+const { EXPERT, QUICK } = CreateWorkspaceMode;
 
 const CreateWorkspaceForm = (props) => {
   const { onCancel, onSubmit } = props;
@@ -156,7 +156,7 @@ CreateWorkspaceForm.defaultProps = {
 };
 
 export default reduxForm({
-  form: FORM.CREATE_WORKSPACE,
+  form: Form.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
   initialValues: {

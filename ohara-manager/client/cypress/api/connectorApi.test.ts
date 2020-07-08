@@ -23,7 +23,7 @@
 import * as generate from '../../src/utils/generate';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as inspectApi from '../../src/api/inspectApi';
-import { SOURCES, State } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE, State } from '../../src/api/apiInterface/connectorInterface';
 import * as topicApi from '../../src/api/topicApi';
 import {
   createServicesInNodes,
@@ -53,7 +53,7 @@ const generateConnector = async () => {
   const connector = {
     name: connectorName,
     group: generate.serviceName({ prefix: 'group' }),
-    connector__class: SOURCES.perf,
+    connector__class: SOURCE.perf,
     perf__frequency: 'PT2S',
     topicKeys: [{ name: topic.name, group: topic.group }],
     workerClusterKey: {

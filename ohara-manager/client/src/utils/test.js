@@ -15,7 +15,7 @@
  */
 
 import { keyBy, range } from 'lodash';
-import { GROUP, SERVICE_NAME } from 'const';
+import { GROUP, ServiceName } from 'const';
 import { getId } from 'utils/object';
 
 export const generateState = (options) => {
@@ -38,7 +38,7 @@ export const generateState = (options) => {
       resources: [],
       services: [
         {
-          name: SERVICE_NAME.BROKER,
+          name: ServiceName.BROKER,
           clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.BROKER,
@@ -47,7 +47,7 @@ export const generateState = (options) => {
           }),
         },
         {
-          name: SERVICE_NAME.WORKER,
+          name: ServiceName.WORKER,
           clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.WORKER,
@@ -56,7 +56,7 @@ export const generateState = (options) => {
           }),
         },
         {
-          name: SERVICE_NAME.ZOOKEEPER,
+          name: ServiceName.ZOOKEEPER,
           clusterKeys: range(numberOfWorkspaces).map((index) => {
             return {
               group: GROUP.ZOOKEEPER,

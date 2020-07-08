@@ -20,7 +20,7 @@ import { Field, reduxForm } from 'redux-form';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 
-import { FORM } from 'const';
+import { Form } from 'const';
 import NodesField from './NodesField';
 import validate from './validate';
 
@@ -60,7 +60,7 @@ SetupNodesForm.propTypes = {
 };
 
 export default reduxForm({
-  form: FORM.CREATE_WORKSPACE,
+  form: Form.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
   validate,

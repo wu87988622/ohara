@@ -16,7 +16,7 @@
 
 import _ from 'lodash';
 
-import { KIND, CELL_PROPS, CELL_STATUS } from 'const';
+import { KIND, CELL_PROP, CELL_STATUS } from 'const';
 import { createLink } from './cell';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
@@ -26,27 +26,27 @@ export const getCellData = (cellOrView) => {
 
   if (cell.isElement()) {
     return {
-      cellType: cell.get(CELL_PROPS.cellType), // JointJS element type
-      id: cell.get(CELL_PROPS.id),
-      name: cell.get(CELL_PROPS.name),
-      kind: cell.get(CELL_PROPS.kind),
-      displayName: cell.get(CELL_PROPS.displayName),
-      isTemporary: cell.get(CELL_PROPS.isTemporary) || false,
-      className: cell.get(CELL_PROPS.className),
-      position: cell.get(CELL_PROPS.position),
-      jarKey: cell.get(CELL_PROPS.jarKey) || null,
-      isShared: cell.get(CELL_PROPS.isShared) || false,
-      isSelected: cell.get(CELL_PROPS.isSelected),
-      status: cell.get(CELL_PROPS.status),
+      cellType: cell.get(CELL_PROP.cellType), // JointJS element type
+      id: cell.get(CELL_PROP.id),
+      name: cell.get(CELL_PROP.name),
+      kind: cell.get(CELL_PROP.kind),
+      displayName: cell.get(CELL_PROP.displayName),
+      isTemporary: cell.get(CELL_PROP.isTemporary) || false,
+      className: cell.get(CELL_PROP.className),
+      position: cell.get(CELL_PROP.position),
+      jarKey: cell.get(CELL_PROP.jarKey) || null,
+      isShared: cell.get(CELL_PROP.isShared) || false,
+      isSelected: cell.get(CELL_PROP.isSelected),
+      status: cell.get(CELL_PROP.status),
     };
   }
 
   const link = cell;
   return {
-    cellType: link.get(CELL_PROPS.cellType), // JointJS element type
-    id: link.get(CELL_PROPS.id),
-    sourceId: link.get(CELL_PROPS.source).id || null,
-    targetId: link.get(CELL_PROPS.target).id || null,
+    cellType: link.get(CELL_PROP.cellType), // JointJS element type
+    id: link.get(CELL_PROP.id),
+    sourceId: link.get(CELL_PROP.source).id || null,
+    targetId: link.get(CELL_PROP.target).id || null,
   };
 };
 
@@ -90,15 +90,15 @@ export const updateStatus = (cell, paperApi) => {
 export const createConnection = (params) => {
   const { sourceLink, eventLog, targetElementView, paperApi, graph } = params;
 
-  const sourceId = sourceLink.get(CELL_PROPS.source).id;
+  const sourceId = sourceLink.get(CELL_PROP.source).id;
   const sourceType = graph.getCell(sourceId).attributes.kind;
   const sourceElement = graph.getCell(sourceId);
 
   const targetElement = targetElementView.model;
-  const targetId = targetElement.get(CELL_PROPS.id);
-  const targetType = targetElement.get(CELL_PROPS.kind);
-  const targetDisplayName = targetElement.get(CELL_PROPS.displayName);
-  const targetStatus = targetElement.get(CELL_PROPS.status);
+  const targetId = targetElement.get(CELL_PROP.id);
+  const targetType = targetElement.get(CELL_PROP.kind);
+  const targetDisplayName = targetElement.get(CELL_PROP.displayName);
+  const targetStatus = targetElement.get(CELL_PROP.status);
 
   // Cell connection logic
   if (targetId === sourceId) {

@@ -16,7 +16,7 @@
 
 import { BasicResponse, ObjectKey } from './basicInterface';
 
-export enum LOG_SERVICES {
+export enum LOG_SERVICE {
   configurator = 'configurator',
   zookeeper = 'zookeepers',
   broker = 'brokers',

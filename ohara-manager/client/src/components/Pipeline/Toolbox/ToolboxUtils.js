@@ -24,7 +24,7 @@ import WavesIcon from '@material-ui/icons/Waves';
 import * as joint from 'jointjs';
 import $ from 'jquery';
 
-import { KIND, CELL_TYPES } from 'const';
+import { KIND, CELL_TYPE } from 'const';
 import { AddSharedTopicIcon } from 'components/common/Icon';
 import { getPipelineOnlyTopicDisplayNames } from '../PipelineUtils';
 import * as generate from 'utils/generate';
@@ -55,7 +55,7 @@ export const createToolboxList = (params) => {
   joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
     defaults: joint.util.deepSupplement(
       {
-        type: CELL_TYPES.ELEMENT,
+        type: CELL_TYPE.ELEMENT,
         attrs: {
           rect: { stroke: 'none', fill: 'transparent' },
         },
@@ -309,7 +309,7 @@ export const enableDragAndDrop = (params) => {
           if (isTopic) {
             const isTaken = paperApi
               .getCells()
-              .filter((cell) => cell.type !== CELL_TYPES.LINK)
+              .filter((cell) => cell.type !== CELL_TYPE.LINK)
               .find((element) => element.name === name);
 
             if (isTaken) {

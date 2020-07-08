@@ -29,7 +29,7 @@ import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 
 import { useShouldBeRestartWorkspace } from 'hooks';
-import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
+import { SETTINGS_COMPONENT_TYPE, KIND } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import AutofillPage from './pages/AutofillPage';
 import BrokerNodesPage from './pages/BrokerNodesPage';
@@ -43,7 +43,7 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
 
 /*
     Available props for component
-      1. SETTINGS_COMPONENT_TYPES.PAGE:
+      1. SETTINGS_COMPONENT_TYPE.PAGE:
           - title
           - type
           - icon: optional
@@ -51,14 +51,14 @@ import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
           - componentProps: 
             - children: a valid react children
 
-      2. SETTINGS_COMPONENT_TYPES.DIALOG:
+      2. SETTINGS_COMPONENT_TYPE.DIALOG:
           - title
           - type
           - icon: optional
           - subTitle: optional
           - componentProps: all props that are available in Dialog component
 
-      3. SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
+      3. SETTINGS_COMPONENT_TYPE.CUSTOMIZED:
           - title
           - type
           - icon: optional
@@ -147,7 +147,7 @@ export const useConfig = ({
         {
           icon: <SubjectIcon />,
           title: 'Topics in this workspace',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <TopicPage />,
           },
@@ -161,7 +161,7 @@ export const useConfig = ({
           icon: <AssignmentIcon />,
           title: 'Autofill',
           subTitle: 'For component settings',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <AutofillPage />,
           },
@@ -175,14 +175,14 @@ export const useConfig = ({
         // {
         //   icon: <TuneIcon />,
         //   title: 'Zookeeper settings',
-        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        //   type: SETTINGS_COMPONENT_TYPE.PAGE,
         // },
         {
           badge: { count: countOfChangedZookeeperNodes },
           icon: <StorageIcon />,
           title: 'Zookeeper nodes',
           subTitle: 'Nodes running the zookeeper',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <ZookeeperNodesPage />,
           },
@@ -196,14 +196,14 @@ export const useConfig = ({
         // {
         //   icon: <TuneIcon />,
         //   title: 'Broker settings',
-        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        //   type: SETTINGS_COMPONENT_TYPE.PAGE,
         // },
         {
           badge: { count: countOfChangedBrokerNodes },
           icon: <StorageIcon />,
           title: 'Broker nodes',
           subTitle: 'Nodes running the broker',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <BrokerNodesPage />,
           },
@@ -217,14 +217,14 @@ export const useConfig = ({
         // {
         //   icon: <TuneIcon />,
         //   title: 'Worker settings',
-        //   type: SETTINGS_COMPONENT_TYPES.PAGE,
+        //   type: SETTINGS_COMPONENT_TYPE.PAGE,
         // },
         {
           badge: { count: countOfChangedWorkerNodes },
           icon: <StorageIcon />,
           title: 'Worker nodes',
           subTitle: 'Nodes running the worker',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <WorkerNodesPage />,
           },
@@ -235,7 +235,7 @@ export const useConfig = ({
           },
           icon: <UnarchiveIcon />,
           title: 'Worker plugins and shared jars',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <WorkerPluginsPage />,
           },
@@ -248,7 +248,7 @@ export const useConfig = ({
         {
           icon: <UnarchiveIcon />,
           title: 'Stream jars',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <StreamJarsPage />,
           },
@@ -262,7 +262,7 @@ export const useConfig = ({
           icon: <StorageIcon />,
           title: 'Workspace nodes',
           subTitle: 'Nodes in this workspace',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <WorkspaceNodesPage />,
           },
@@ -275,7 +275,7 @@ export const useConfig = ({
         {
           icon: <FolderOpenIcon />,
           title: 'Files in this workspace',
-          type: SETTINGS_COMPONENT_TYPES.PAGE,
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <WorkspaceFilesPage />,
           },
@@ -288,7 +288,7 @@ export const useConfig = ({
         {
           icon: <PowerSettingsNewIcon />,
           title: 'Restart this worker',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          type: SETTINGS_COMPONENT_TYPE.DIALOG,
           componentProps: {
             children: restartConfirmMessage(KIND.worker),
             title: 'Are you absolutely sure?',
@@ -304,7 +304,7 @@ export const useConfig = ({
         {
           icon: <PowerSettingsNewIcon />,
           title: 'Restart this broker',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          type: SETTINGS_COMPONENT_TYPE.DIALOG,
           componentProps: {
             children: restartConfirmMessage(KIND.broker),
             title: 'Are you absolutely sure?',
@@ -320,7 +320,7 @@ export const useConfig = ({
         {
           icon: <PowerSettingsNewIcon />,
           title: 'Restart this workspace',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          type: SETTINGS_COMPONENT_TYPE.DIALOG,
           componentProps: {
             children: restartConfirmMessage(),
             title: 'Are you absolutely sure?',
@@ -333,7 +333,7 @@ export const useConfig = ({
         {
           icon: <DeleteForeverIcon />,
           title: 'Delete this workspace',
-          type: SETTINGS_COMPONENT_TYPES.DIALOG,
+          type: SETTINGS_COMPONENT_TYPE.DIALOG,
           componentProps: {
             children: (
               <DeleteConfirmDialogContent

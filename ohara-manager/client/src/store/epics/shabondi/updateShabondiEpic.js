@@ -23,7 +23,7 @@ import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL, CELL_TYPES } from 'const';
+import { LOG_LEVEL, CELL_TYPE } from 'const';
 
 export default (action$) => {
   return action$.pipe(
@@ -51,7 +51,7 @@ export default (action$) => {
               normalizedData.shabondi__source__toTopics[0].name,
             ).id;
             const linkId = cells
-              .filter((cell) => cell.cellType === CELL_TYPES.LINK)
+              .filter((cell) => cell.cellType === CELL_TYPE.LINK)
               .find(
                 (cell) =>
                   cell.sourceId === shabondiId && cell.targetId === topicId,
@@ -63,7 +63,7 @@ export default (action$) => {
               normalizedData.shabondi__sink__fromTopics[0].name,
             ).id;
             const linkId = cells
-              .filter((cell) => cell.cellType === CELL_TYPES.LINK)
+              .filter((cell) => cell.cellType === CELL_TYPE.LINK)
               .find(
                 (cell) =>
                   cell.sourceId === topicId && cell.targetId === shabondiId,

@@ -21,7 +21,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 
-import { WORKSPACE_FLAGS } from 'api/apiInterface/workspaceInterface';
+import { WorkspaceFlag } from 'api/apiInterface/workspaceInterface';
 import Stepper from 'components/common/FSMStepper';
 import * as hooks from 'hooks';
 
@@ -52,7 +52,7 @@ const DeleteWorkspace = (props) => {
     {
       name: 'prepare',
       action: () =>
-        updateWorkspace({ ...workspace, flag: WORKSPACE_FLAGS.DELETING }),
+        updateWorkspace({ ...workspace, flag: WorkspaceFlag.DELETING }),
     },
     {
       name: 'delete connectors',

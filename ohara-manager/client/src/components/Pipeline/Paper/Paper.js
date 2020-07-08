@@ -21,7 +21,7 @@ import $ from 'jquery';
 import * as joint from 'jointjs';
 import { useTheme } from '@material-ui/core/styles';
 
-import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
+import { KIND, CELL_STATUS, CELL_TYPE } from 'const';
 import { StyledPaper } from './PaperStyles';
 import { createConnectorCell, createTopicCell, createLink } from './cell';
 import { PipelineStateContext } from '../Pipeline';
@@ -721,7 +721,7 @@ const Paper = React.forwardRef((props, ref) => {
           .sort((a, b) => a.type.localeCompare(b.type))
           .forEach((cell) => {
             const { type, source, target, vertices } = cell;
-            if (type === CELL_TYPES.ELEMENT) {
+            if (type === CELL_TYPE.ELEMENT) {
               return this.addElement(
                 {
                   ...cell,
@@ -733,7 +733,7 @@ const Paper = React.forwardRef((props, ref) => {
               );
             }
 
-            if (type === CELL_TYPES.LINK) {
+            if (type === CELL_TYPE.LINK) {
               this.addLink(
                 source.id,
                 target.id,

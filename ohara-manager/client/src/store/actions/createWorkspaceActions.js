@@ -19,7 +19,7 @@ import { createRoutine } from 'redux-routines';
 export const openCreateWorkspace = createRoutine('OPEN_CREATE_WORKSPACE');
 export const closeCreateWorkspace = createRoutine('CLOSE_CREATE_WORKSPACE');
 export const switchCreateWorkspaceMode = createRoutine(
-  'SWITCH_CREATE_WORKSPACE_MODE',
+  'SWITCH_CreateWorkspaceMode',
 );
 export const switchCreateWorkspaceStep = createRoutine(
   'SWITCH_CREATE_WORKSPACE_STEP',

@@ -21,7 +21,7 @@ import { Field, reduxForm } from 'redux-form';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 
-import { FORM } from 'const';
+import { Form } from 'const';
 import * as hooks from 'hooks';
 import InputField from 'components/common/Form/InputField';
 import { checkDuplicate } from 'utils/validate';
@@ -40,14 +40,14 @@ const SetupWorkspaceForm = (props) => {
 
   const change = hooks.useReduxFormChangeAction();
   const defaultWorkspaceName = hooks.useUniqueWorkspaceName();
-  const formValues = hooks.useReduxFormValues(FORM.CREATE_WORKSPACE);
+  const formValues = hooks.useReduxFormValues(Form.CREATE_WORKSPACE);
   const workspaces = hooks.useAllWorkspaces();
 
   React.useEffect(() => {
     if (!formValues?.workspace?.name && !anyTouched) {
-      change(FORM.CREATE_WORKSPACE, 'workspace.name', defaultWorkspaceName);
+      change(Form.CREATE_WORKSPACE, 'workspace.name', defaultWorkspaceName);
       // Reset `anyTouched` so we won't run it again when users are editing the form
-      touch(FORM.CREATE_WORKSPACE);
+      touch(Form.CREATE_WORKSPACE);
     }
   }, [anyTouched, change, defaultWorkspaceName, formValues, touch]);
 
@@ -92,7 +92,7 @@ SetupWorkspaceForm.propTypes = {
 };
 
 export default reduxForm({
-  form: FORM.CREATE_WORKSPACE,
+  form: Form.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
   validate,

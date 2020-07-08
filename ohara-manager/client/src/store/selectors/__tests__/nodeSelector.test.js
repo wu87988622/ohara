@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { GROUP, SERVICE_NAME } from 'const';
+import { GROUP, ServiceName } from 'const';
 import { generateState } from 'utils/test';
 import { getAllNodes } from '../nodeSelector';
 
@@ -29,21 +29,21 @@ test('nodeSelector.getAllNodes', () => {
       hostname: 'node1',
       services: [
         {
-          name: SERVICE_NAME.BROKER,
+          name: ServiceName.BROKER,
           clusterKeys: [{ group: GROUP.BROKER, name: 'workspace1' }],
           clusters: [
             { group: GROUP.BROKER, name: 'workspace1', state: 'RUNNING' },
           ],
         },
         {
-          name: SERVICE_NAME.WORKER,
+          name: ServiceName.WORKER,
           clusterKeys: [{ group: GROUP.WORKER, name: 'workspace1' }],
           clusters: [
             { group: GROUP.WORKER, name: 'workspace1', state: 'RUNNING' },
           ],
         },
         {
-          name: SERVICE_NAME.ZOOKEEPER,
+          name: ServiceName.ZOOKEEPER,
           clusterKeys: [{ group: GROUP.ZOOKEEPER, name: 'workspace1' }],
           clusters: [
             { group: GROUP.ZOOKEEPER, name: 'workspace1', state: 'RUNNING' },

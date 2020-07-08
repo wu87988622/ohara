@@ -17,14 +17,11 @@ import { ElementParameters } from './../../support/customCommands';
 
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import { KIND, CELL_TYPES } from '../../../src/const';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { KIND, CELL_TYPE } from '../../../src/const';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
-const sources = Object.values(SOURCES).sort((a, b) => a.localeCompare(b));
-const sinks = Object.values(SINKS).sort((a, b) => a.localeCompare(b));
+const sources = Object.values(SOURCE).sort((a, b) => a.localeCompare(b));
+const sinks = Object.values(SINK).sort((a, b) => a.localeCompare(b));
 
 describe('ToolBox', () => {
   const node: NodeRequest = {
@@ -214,13 +211,13 @@ describe('ToolBox', () => {
 
   context('Toolbox interaction with Paper', () => {
     it('should able to create Paper elements with Toolbox items', () => {
-      const sources = Object.values(SOURCES).map((className) => ({
+      const sources = Object.values(SOURCE).map((className) => ({
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
         className,
       }));
 
-      const sinks = Object.values(SINKS).map((className) => ({
+      const sinks = Object.values(SINK).map((className) => ({
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
         className,
@@ -290,7 +287,7 @@ describe('ToolBox', () => {
 
       // Add a pipeline-only topic
       cy.findByTestId('toolbox-draggable')
-        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
+        .find(`g[data-type="${CELL_TYPE.ELEMENT}"]:visible`)
         // the only "draggable" cell is pipeline-only topic
         .first()
         .dragAndDrop(30, 450);
@@ -306,7 +303,7 @@ describe('ToolBox', () => {
       cy.createSharedTopic(name);
 
       // Add a sink into Paper with the same name
-      cy.addElement({ name, kind: KIND.sink, className: SINKS.shabondi });
+      cy.addElement({ name, kind: KIND.sink, className: SINK.shabondi });
 
       // Then, add the topic
       cy.findByText(Cypress._.capitalize(KIND.topic)).should('exist').click();

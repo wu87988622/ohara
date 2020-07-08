@@ -19,7 +19,7 @@ import React from 'react';
 import * as hooks from 'hooks';
 import SettingsMain from './SettingsMain';
 import SettingsMenu from './SettingsMenu';
-import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
+import { SETTINGS_COMPONENT_TYPE, KIND } from 'const';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
 import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
@@ -88,7 +88,7 @@ const Settings = () => {
   // Use a different layout for rendering page component
   const isPageComponent =
     !!selectedComponent?.name &&
-    selectedComponent?.type === SETTINGS_COMPONENT_TYPES.PAGE;
+    selectedComponent?.type === SETTINGS_COMPONENT_TYPE.PAGE;
 
   React.useEffect(() => {
     if (!isPageComponent && scrollRef?.current) {
@@ -100,7 +100,7 @@ const Settings = () => {
     if (pageName && pageName !== 'settings') {
       handleComponentChange({
         name: pageName,
-        type: SETTINGS_COMPONENT_TYPES.PAGE,
+        type: SETTINGS_COMPONENT_TYPE.PAGE,
       });
     }
   }, [pageName]);

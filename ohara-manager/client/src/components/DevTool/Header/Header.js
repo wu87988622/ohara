@@ -22,7 +22,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Grid from '@material-ui/core/Grid';
 
-import { KIND, CELL_PROPS } from 'const';
+import { KIND, CELL_PROP } from 'const';
 import * as context from 'context';
 import * as hooks from 'hooks';
 import { Tooltip } from 'components/common/Tooltip';
@@ -62,15 +62,15 @@ const Header = () => {
       return '';
     };
 
-    const kind = get(selectedCell, CELL_PROPS.kind, '');
-    const className = get(selectedCell, CELL_PROPS.className, '');
+    const kind = get(selectedCell, CELL_PROP.kind, '');
+    const className = get(selectedCell, CELL_PROP.className, '');
 
     if (kind === KIND.topic) {
       if (tabName === TAB.log) {
         setLogQueryParams({ logType: KIND.broker });
       } else {
         setTopicQueryParams({
-          name: get(selectedCell, CELL_PROPS.name, ''),
+          name: get(selectedCell, CELL_PROP.name, ''),
         });
       }
     } else if (!isEmpty(kind)) {
@@ -80,11 +80,11 @@ const Header = () => {
       setLogQueryParams({ logType: service });
       if (isShabondi(className)) {
         setLogQueryParams({
-          shabondiName: get(selectedCell, CELL_PROPS.displayName, ''),
+          shabondiName: get(selectedCell, CELL_PROP.displayName, ''),
         });
       } else if (kind === KIND.stream) {
         setLogQueryParams({
-          streamName: get(selectedCell, CELL_PROPS.displayName, ''),
+          streamName: get(selectedCell, CELL_PROP.displayName, ''),
         });
       }
     }

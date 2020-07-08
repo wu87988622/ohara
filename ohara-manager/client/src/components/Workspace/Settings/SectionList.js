@@ -26,7 +26,7 @@ import Badge from '@material-ui/core/Badge';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import IconButton from '@material-ui/core/IconButton';
 
-import { SETTINGS_COMPONENT_TYPES } from 'const';
+import { SETTINGS_COMPONENT_TYPE } from 'const';
 
 const SectionList = (props) => {
   const { list, handleChange, sectionHeading, sectionRef } = props;
@@ -46,8 +46,8 @@ const SectionList = (props) => {
 
         const onClick = (event, title) => {
           switch (type) {
-            case SETTINGS_COMPONENT_TYPES.PAGE:
-            case SETTINGS_COMPONENT_TYPES.DIALOG:
+            case SETTINGS_COMPONENT_TYPE.PAGE:
+            case SETTINGS_COMPONENT_TYPE.DIALOG:
               return handleChange({
                 type,
                 name: title,
@@ -55,7 +55,7 @@ const SectionList = (props) => {
                 heading: sectionHeading,
               });
 
-            case SETTINGS_COMPONENT_TYPES.CUSTOMIZED:
+            case SETTINGS_COMPONENT_TYPE.CUSTOMIZED:
               return (
                 typeof handleClick === 'function' && handleClick(event, title)
               );
@@ -71,7 +71,7 @@ const SectionList = (props) => {
               {icon && <ListItemIcon>{icon}</ListItemIcon>}
               <ListItemText primary={title} secondary={subTitle} />
 
-              {type === SETTINGS_COMPONENT_TYPES.PAGE && (
+              {type === SETTINGS_COMPONENT_TYPE.PAGE && (
                 <ListItemSecondaryAction>
                   <IconButton
                     edge="end"
@@ -83,7 +83,7 @@ const SectionList = (props) => {
                 </ListItemSecondaryAction>
               )}
 
-              {type === SETTINGS_COMPONENT_TYPES.CUSTOMIZED && <>{children}</>}
+              {type === SETTINGS_COMPONENT_TYPE.CUSTOMIZED && <>{children}</>}
             </Badge>
           </ListItem>
         );

@@ -21,7 +21,7 @@ import { isEmpty } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 import * as hooks from 'hooks';
-import { SETTINGS_COMPONENT_TYPES, KIND } from 'const';
+import { SETTINGS_COMPONENT_TYPE, KIND } from 'const';
 import { Wrapper } from './SettingsMainStyles';
 import RestartIndicator from './RestartIndicator';
 import SectionList from './SectionList';
@@ -36,7 +36,7 @@ const SettingsMain = ({
   targetIsBroker,
   targetIsWorker,
 }) => {
-  const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPES.DIALOG;
+  const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPE.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
     'should-display': isEmpty(selectedComponent) || isDialog,
   });

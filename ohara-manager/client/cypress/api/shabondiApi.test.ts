@@ -25,7 +25,7 @@ import * as topicApi from '../../src/api/topicApi';
 import * as shabondiApi from '../../src/api/shabondiApi';
 import * as inspectApi from '../../src/api/inspectApi';
 import { SERVICE_STATE } from '../../src/api/apiInterface/clusterInterface';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE } from '../../src/api/apiInterface/connectorInterface';
 import {
   createServicesInNodes,
   deleteAllServices,
@@ -54,7 +54,7 @@ const generateShabondi = async () => {
   const shabondi = {
     name: shabondiName,
     group: generate.serviceName({ prefix: 'group' }),
-    shabondi__class: SOURCES.shabondi,
+    shabondi__class: SOURCE.shabondi,
     shabondi__client__port: 1234,
     nodeNames: [node.hostname],
     brokerClusterKey: {

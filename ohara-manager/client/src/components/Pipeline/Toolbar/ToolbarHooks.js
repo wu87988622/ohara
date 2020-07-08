@@ -19,7 +19,7 @@ import React from 'react';
 import * as hooks from 'hooks';
 import * as pipelineApiHelper from '../PipelineApiHelper';
 import { PaperContext } from '../Pipeline';
-import { KIND, CELL_STATUS, CELL_TYPES } from 'const';
+import { KIND, CELL_STATUS, CELL_TYPE } from 'const';
 import { usePrevious } from 'utils/hooks';
 
 export const useRunningServices = () => {
@@ -27,7 +27,7 @@ export const useRunningServices = () => {
   return paperApi
     .getCells()
     .filter((cell) => cell.kind !== KIND.topic)
-    .filter((cell) => cell.cellType === CELL_TYPES.ELEMENT)
+    .filter((cell) => cell.cellType === CELL_TYPE.ELEMENT)
     .filter((cell) => cell.status?.toLowerCase() !== CELL_STATUS.stopped);
 };
 

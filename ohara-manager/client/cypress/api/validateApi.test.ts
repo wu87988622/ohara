@@ -23,7 +23,7 @@
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as validateApi from '../../src/api/validateApi';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE } from '../../src/api/apiInterface/connectorInterface';
 import { createServicesInNodes, deleteAllServices } from '../utils';
 
 const generateValidation = async () => {
@@ -47,7 +47,7 @@ const generateValidation = async () => {
   const connector = {
     name: generate.serviceName({ prefix: 'connector' }),
     group: generate.serviceName({ prefix: 'group' }),
-    connector__class: SOURCES.perf,
+    connector__class: SOURCE.perf,
     topicKeys: [{ name: topic.name, group: topic.group }],
     workerClusterKey: {
       name: worker.name,

@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { merge, flatMap, find, map, sortBy } from 'lodash';
 
-import { GROUP, SERVICE_NAME } from 'const';
+import { GROUP, ServiceName } from 'const';
 import Table from 'components/common/Table/MuiTable';
 import ClusterStateChip from './ClusterStateChip';
 
@@ -28,7 +28,7 @@ function NodeServiceTable({ node }) {
   const flatClusters = flatMap(node?.services, (service) => {
     const { name, clusterKeys, clusters } = service;
     // we don't want to see configurator in our node service list
-    if (name === SERVICE_NAME.CONFIGURATOR) return [];
+    if (name === ServiceName.CONFIGURATOR) return [];
     return map(clusterKeys, (clusterKey) => {
       const cluster = find(
         clusters,

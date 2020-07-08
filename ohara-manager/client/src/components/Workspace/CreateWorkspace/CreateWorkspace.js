@@ -20,12 +20,12 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 
-import { FORM } from 'const';
+import { Form } from 'const';
 import * as hooks from 'hooks';
 import FullScreenDialog from 'components/common/Dialog/FullScreenDialog';
 import Stepper from 'components/common/FSMStepper';
 import CreateWorkspaceForm from './CreateWorkspaceForm';
-import { WORKSPACE_FLAGS } from 'api/apiInterface/workspaceInterface';
+import { WorkspaceFlag } from 'api/apiInterface/workspaceInterface';
 
 export default () => {
   const isDialogOpen = hooks.useIsCreateWorkspaceDialogOpen();
@@ -64,7 +64,7 @@ export default () => {
       {
         name: 'create workspace',
         action: () =>
-          createWorkspace({ ...values, flag: WORKSPACE_FLAGS.CREATING }),
+          createWorkspace({ ...values, flag: WorkspaceFlag.CREATING }),
         revertAction: () => deleteWorkspace(values?.name),
       },
       {
@@ -102,12 +102,12 @@ export default () => {
         action: async () => {
           await updateWorkspace({
             name: values.name,
-            flag: WORKSPACE_FLAGS.CREATED,
+            flag: WorkspaceFlag.CREATED,
           });
           // Log a success message to Event Log
           eventLog.info(`Successfully created workspace ${values?.name}.`);
           // Clear form data
-          resetForm(FORM.CREATE_WORKSPACE);
+          resetForm(Form.CREATE_WORKSPACE);
           // Back to the first page of the form
           switchFormStep(0);
           // Close all dialogs

@@ -25,13 +25,13 @@ import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 
-import { FORM } from 'const';
+import { Form } from 'const';
 import * as hooks from 'hooks';
 import validate from './validate';
 
 const ReviewForm = (props) => {
   const { handleSubmit, previousStep } = props;
-  const values = hooks.useReduxFormValues(FORM.CREATE_WORKSPACE);
+  const values = hooks.useReduxFormValues(Form.CREATE_WORKSPACE);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -95,7 +95,7 @@ ReviewForm.propTypes = {
 };
 
 export default reduxForm({
-  form: FORM.CREATE_WORKSPACE,
+  form: Form.CREATE_WORKSPACE,
   destroyOnUnmount: false,
   forceUnregisterOnUnmount: true,
   validate,

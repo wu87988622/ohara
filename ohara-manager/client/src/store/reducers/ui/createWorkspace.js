@@ -16,9 +16,9 @@
 
 import { includes, isSafeInteger } from 'lodash';
 import * as actions from 'store/actions';
-import { CREATE_WORKSPACE_MODE } from 'const';
+import { CreateWorkspaceMode } from 'const';
 
-const { QUICK, EXPERT } = CREATE_WORKSPACE_MODE;
+const { QUICK, EXPERT } = CreateWorkspaceMode;
 
 const initialState = {
   isOpen: false,

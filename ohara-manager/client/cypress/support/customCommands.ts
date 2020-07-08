@@ -29,7 +29,7 @@ import {
 } from '../../src/api/apiInterface/nodeInterface';
 import { ClusterResponse } from '../../src/api/apiInterface/clusterInterface';
 import { TopicResponse } from '../../src/api/apiInterface/topicInterface';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE } from '../../src/api/apiInterface/connectorInterface';
 import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
@@ -50,7 +50,7 @@ export interface ElementParameters {
   className?: string;
 }
 
-export enum SETTING_SECTIONS {
+export enum SETTING_SECTION {
   topics = 'Topics',
   autofill = 'Autofill',
   zookeeper = 'Zookeeper',
@@ -62,7 +62,7 @@ export enum SETTING_SECTIONS {
   dangerZone = 'Danger Zone',
 }
 
-export enum CELL_ACTIONS {
+export enum CELL_ACTION {
   link = 'link',
   config = 'config',
   remove = 'remove',
@@ -136,10 +136,7 @@ declare global {
       addElements: (elements: ElementParameters[]) => Chainable<null>;
       removeElement: (name: string) => Chainable<null>;
       getCell: (name: string) => Chainable<HTMLElement>;
-      cellAction: (
-        name: string,
-        action: CELL_ACTIONS,
-      ) => Chainable<HTMLElement>;
+      cellAction: (name: string, action: CELL_ACTION) => Chainable<HTMLElement>;
       createConnections: (elements: string[]) => Chainable<null>;
       uploadStreamJar: () => Chainable<null>;
       // Pipeline
@@ -150,7 +147,7 @@ declare global {
       deleteAllPipelines: (name?: string) => Chainable<null>;
       // Settings
       switchSettingSection: (
-        section: SETTING_SECTIONS,
+        section: SETTING_SECTION,
         listItem?: string,
       ) => Chainable<null>;
       createSharedTopic: (name?: string) => Chainable<null>;
@@ -336,7 +333,7 @@ Cypress.Commands.add(
       name: generate.serviceName({ prefix: 'perf' }),
       // it is ok to use random group here; we just need a temp connector to produce data
       group: generate.serviceName({ prefix: 'group' }),
-      connector__class: SOURCES.perf,
+      connector__class: SOURCE.perf,
       topicKeys: [
         {
           name: topicName,
@@ -407,7 +404,7 @@ Cypress.Commands.add(
 // Settings
 Cypress.Commands.add(
   'switchSettingSection',
-  (section: SETTING_SECTIONS, listItem?: string) => {
+  (section: SETTING_SECTION, listItem?: string) => {
     cy.get('body').then(($body) => {
       // check whether we are in the homepage or not
       if (
@@ -451,7 +448,7 @@ Cypress.Commands.add(
 Cypress.Commands.add(
   'createSharedTopic',
   (name = generate.serviceName({ prefix: 'topic' })) => {
-    cy.switchSettingSection(SETTING_SECTIONS.topics);
+    cy.switchSettingSection(SETTING_SECTION.topics);
 
     // add shared topics
     cy.findByTitle('Create Topic').should('be.enabled').click();

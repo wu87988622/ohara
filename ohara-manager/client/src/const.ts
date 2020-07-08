@@ -44,7 +44,7 @@ export enum CELL_STATUS {
   failed = 'failed',
 }
 
-export enum CELL_PROPS {
+export enum CELL_PROP {
   cellType = 'type', // JointJS element type
   id = 'id',
   name = 'name',
@@ -61,12 +61,12 @@ export enum CELL_PROPS {
   target = 'target',
 }
 
-export enum CELL_TYPES {
+export enum CELL_TYPE {
   LINK = 'standard.Link',
   ELEMENT = 'html.Element',
 }
 
-export enum CREATE_WORKSPACE_MODE {
+export enum CreateWorkspaceMode {
   QUICK = 'quick',
   EXPERT = 'expert',
 }
@@ -79,7 +79,7 @@ export enum GROUP {
   WORKER = 'worker',
 }
 
-export enum FORM {
+export enum Form {
   CREATE_WORKSPACE = 'createWorkspace',
 }
 
@@ -94,7 +94,7 @@ export enum LOG_TIME_GROUP {
   customize = 'customize',
 }
 
-export enum SERVICE_NAME {
+export enum ServiceName {
   BROKER = 'broker',
   WORKER = 'connect-worker',
   STREAM = 'stream',
@@ -102,28 +102,10 @@ export enum SERVICE_NAME {
   CONFIGURATOR = 'configurator',
 }
 
-export enum CLUSTER_STATE {
-  RUNNING = 'RUNNING',
-}
-export enum SETTINGS_COMPONENT_TYPES {
+export enum SETTINGS_COMPONENT_TYPE {
   DIALOG = 'DIALOG',
   PAGE = 'PAGE',
   CUSTOMIZED = 'CUSTOMIZED',
-}
-
-export enum ACTIONS {
-  STOP_WORKER = 'STOP_WORKER',
-  STOP_BROKER = 'STOP_BROKER',
-  STOP_ZOOKEEPER = 'STOP_ZOOKEEPER',
-  DELETE_WORKER = 'DELETE_WORKER',
-  DELETE_BROKER = 'DELETE_BROKER',
-  DELETE_ZOOKEEPER = 'DELETE_ZOOKEEPER',
-  CREATE_WORKER = 'CREATE_WORKER',
-  CREATE_BROKER = 'CREATE_BROKER',
-  CREATE_ZOOKEEPER = 'CREATE_BROKER',
-  START_WORKER = 'START_WORKER',
-  START_BROKER = 'START_BROKER',
-  START_ZOOKEEPER = 'START_ZOOKEEPER',
 }
 
 // retry every 2 seconds, up to 10 times

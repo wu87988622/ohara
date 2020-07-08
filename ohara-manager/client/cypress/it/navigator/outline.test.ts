@@ -18,10 +18,7 @@ import * as generate from '../../../src/utils/generate';
 import { ElementParameters } from './../../support/customCommands';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 describe('Navigator', () => {
   const sharedTopicName = generate.serviceName({ prefix: 'topic' });
@@ -55,12 +52,12 @@ describe('Navigator', () => {
         {
           name: generate.serviceName({ prefix: 'source' }),
           kind: KIND.source,
-          className: SOURCES.jdbc,
+          className: SOURCE.jdbc,
         },
         {
           name: generate.serviceName({ prefix: 'sink' }),
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
         {
           name: sharedTopicName,
@@ -93,8 +90,8 @@ describe('Navigator', () => {
       const sink = generate.serviceName({ prefix: 'sink' });
 
       cy.addElements([
-        { name: source, kind: KIND.source, className: SOURCES.ftp },
-        { name: sink, kind: KIND.sink, className: SINKS.ftp },
+        { name: source, kind: KIND.source, className: SOURCE.ftp },
+        { name: sink, kind: KIND.sink, className: SINK.ftp },
       ]);
 
       cy.get('#outline').within(() => {

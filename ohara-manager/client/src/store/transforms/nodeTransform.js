@@ -15,7 +15,7 @@
  */
 
 import { filter, find, map } from 'lodash';
-import { SERVICE_NAME } from 'const';
+import { ServiceName } from 'const';
 
 export const transformNode = (node, clusters) => {
   const { brokers, workers, streams, zookeepers } = clusters;
@@ -27,15 +27,15 @@ export const transformNode = (node, clusters) => {
         clusters: filter(
           map(service.clusterKeys, (clusterKey) => {
             switch (service.name) {
-              case SERVICE_NAME.BROKER:
+              case ServiceName.BROKER:
                 return find(brokers, (b) => b.name === clusterKey.name);
-              case SERVICE_NAME.CONFIGURATOR:
+              case ServiceName.CONFIGURATOR:
                 return null;
-              case SERVICE_NAME.WORKER:
+              case ServiceName.WORKER:
                 return find(workers, (w) => w.name === clusterKey.name);
-              case SERVICE_NAME.STREAM:
+              case ServiceName.STREAM:
                 return find(streams, (s) => s.name === clusterKey.name);
-              case SERVICE_NAME.ZOOKEEPER:
+              case ServiceName.ZOOKEEPER:
                 return find(zookeepers, (z) => z.name === clusterKey.name);
               default:
                 throw Error('Unknown service name: ', service.name);

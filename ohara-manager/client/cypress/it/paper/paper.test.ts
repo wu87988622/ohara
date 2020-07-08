@@ -19,11 +19,8 @@ import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { KIND } from '../../../src/const';
 import { ElementParameters } from './../../support/customCommands';
 import { isShabondi } from '../../../src/components/Pipeline/PipelineUtils';
-import { CELL_ACTIONS } from '../../support/customCommands';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { CELL_ACTION } from '../../support/customCommands';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -69,7 +66,7 @@ describe('Paper', () => {
       cy.addElement({
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        className: SOURCES.smb,
+        className: SOURCE.smb,
       });
 
       // Should have one connector in the Paper
@@ -93,7 +90,7 @@ describe('Paper', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.ftp,
+        className: SOURCE.ftp,
       });
 
       // Should have one connector in the Paper
@@ -163,7 +160,7 @@ describe('Paper', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         { name: topicName1, kind: KIND.topic, className: KIND.topic },
         {
@@ -175,7 +172,7 @@ describe('Paper', () => {
         {
           name: sinkName,
           kind: KIND.sink,
-          className: SINKS.shabondi,
+          className: SINK.shabondi,
         },
       ];
 
@@ -227,7 +224,7 @@ describe('Paper', () => {
 
 function fillNodeName(elementName: string) {
   cy.getCell(elementName).trigger('mouseover');
-  cy.cellAction(elementName, CELL_ACTIONS.config).click();
+  cy.cellAction(elementName, CELL_ACTION.config).click();
 
   cy.findByLabelText('Node name list').click();
   cy.findByText(node.hostname)
@@ -258,7 +255,7 @@ function createSourceAndTopic() {
     {
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.ftp,
+      className: SOURCE.ftp,
     },
     {
       name: topicName,

@@ -15,17 +15,14 @@
  */
 
 import * as generate from '../../../src/utils/generate';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import { CELL_ACTION } from '../../support/customCommands';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface';
 import { fetchPipeline } from '../../utils';
 import { hashByGroupAndName } from '../../../src/utils/sha';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { ElementParameters } from './../../support/customCommands';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -65,7 +62,7 @@ describe('Elements', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: topicName,
@@ -74,7 +71,7 @@ describe('Elements', () => {
         {
           name: sinkName,
           kind: KIND.sink,
-          className: SINKS.smb,
+          className: SINK.smb,
         },
       ]);
 
@@ -90,7 +87,7 @@ describe('Elements', () => {
 
       // Start the connector
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -108,7 +105,7 @@ describe('Elements', () => {
 
       // Start the connector
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -121,7 +118,7 @@ describe('Elements', () => {
       });
 
       // Stop the connector
-      cy.cellAction(sourceName, CELL_ACTIONS.stop).click();
+      cy.cellAction(sourceName, CELL_ACTION.stop).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -141,7 +138,7 @@ describe('Elements', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       // The dialog title should not be visible
@@ -151,7 +148,7 @@ describe('Elements', () => {
 
       // Open the dialog
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.config).click();
+      cy.cellAction(sourceName, CELL_ACTION.config).click();
 
       // Should be visible by now
       cy.findByText(`Edit the property of ${sourceName}`).should('be.visible');
@@ -167,7 +164,7 @@ describe('Elements', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.jdbc,
+        className: SOURCE.jdbc,
       });
 
       // Should exist after adding
@@ -197,12 +194,12 @@ describe('Elements', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: sinkName,
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
       ]);
 
@@ -213,7 +210,7 @@ describe('Elements', () => {
         // Source is property rendered
         cy.findByText(sourceName).then(($source) => {
           const $container = $source.parents('.connector');
-          const type = SOURCES.perf.split('.').pop() || '';
+          const type = SOURCE.perf.split('.').pop() || '';
 
           cy.wrap($container).within(() => {
             // Connector type
@@ -230,7 +227,7 @@ describe('Elements', () => {
         // Sink is property rendered
         cy.findByText(sinkName).then(($sink) => {
           const $container = $sink.parents('.connector');
-          const type = SINKS.hdfs.split('.').pop() || '';
+          const type = SINK.hdfs.split('.').pop() || '';
 
           cy.wrap($container).within(() => {
             // Connector type
@@ -252,7 +249,7 @@ describe('Elements', () => {
       cy.addElement({
         name: streamName,
         kind: KIND.stream,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       cy.get('#paper').within(() => {
@@ -347,12 +344,12 @@ describe('Elements', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.smb,
+          className: SOURCE.smb,
         },
         {
           name: sinkName,
           kind: KIND.sink,
-          className: SINKS.ftp,
+          className: SINK.ftp,
         },
         {
           name: pipelineOnlyTopicName,
@@ -482,7 +479,7 @@ describe('Elements', () => {
 
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -505,7 +502,7 @@ describe('Elements', () => {
     it('should disable some of the actions when running', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.get('#paper').within(() => {
         cy.findByText(sourceName).should(($source) => {
@@ -535,7 +532,7 @@ describe('Elements', () => {
     it('should disable some of the actions when failed', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.wrap(null).then(async () => {
         const pipelineData = await fetchPipeline(
@@ -596,7 +593,7 @@ function createSourceAndTopic() {
     {
       name: sourceName,
       kind: KIND.source,
-      className: SOURCES.ftp,
+      className: SOURCE.ftp,
     },
     {
       name: topicName,

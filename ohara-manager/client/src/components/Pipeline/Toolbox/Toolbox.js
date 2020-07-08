@@ -27,7 +27,7 @@ import ToolboxSearch from './ToolboxSearch';
 import ToolboxBody from './ToolboxBody';
 import * as utils from './ToolboxUtils';
 import * as hooks from 'hooks';
-import { KIND, CELL_TYPES } from 'const';
+import { KIND, CELL_TYPE } from 'const';
 import { StyledToolbox } from './ToolboxStyles';
 import { useStreams, useToolboxHeight, useTopics } from './ToolboxHooks';
 import { PaperContext } from '../Pipeline';
@@ -251,7 +251,7 @@ const Toolbox = (props) => {
           onConfirm={handleAddGraph}
           paperElementNames={paperApi
             .getCells()
-            .filter((cell) => cell.cellType !== CELL_TYPES.LINK)
+            .filter((cell) => cell.cellType !== CELL_TYPE.LINK)
             .map((element) => element.name)}
         />
       </StyledToolbox>

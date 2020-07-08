@@ -26,7 +26,7 @@ import * as topicApi from '../../src/api/topicApi';
 import * as streamApi from '../../src/api/streamApi';
 import * as shabondiApi from '../../src/api/shabondiApi';
 import * as fileApi from '../../src/api/fileApi';
-import { SOURCES } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE } from '../../src/api/apiInterface/connectorInterface';
 import { createServicesInNodes, deleteAllServices } from '../utils';
 
 const file = {
@@ -121,7 +121,7 @@ describe('Log API', () => {
         const shabondi = {
           name: generate.serviceName({ prefix: 'shabondi' }),
           group: generate.serviceName({ prefix: 'group' }),
-          shabondi__class: SOURCES.shabondi,
+          shabondi__class: SOURCE.shabondi,
           shabondi__client__port: 1234,
           nodeNames: [node.hostname],
           brokerClusterKey: {

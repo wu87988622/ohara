@@ -15,8 +15,8 @@
  */
 
 import * as generate from '../../../src/utils/generate';
-import { LOG_SERVICES } from '../../../src/api/apiInterface/logInterface';
-import { SETTING_SECTIONS } from '../../support/customCommands';
+import { LOG_SERVICE } from '../../../src/api/apiInterface/logInterface';
+import { SETTING_SECTION } from '../../support/customCommands';
 import { KIND } from '../../../src/const';
 
 describe('App Bar', () => {
@@ -45,7 +45,7 @@ describe('App Bar', () => {
       cy.createPipeline();
 
       // add shared topics
-      cy.switchSettingSection(SETTING_SECTIONS.topics);
+      cy.switchSettingSection(SETTING_SECTION.topics);
       cy.findByTitle('Create Topic').should('be.enabled').click();
       cy.findAllByRole('dialog')
         .filter(':visible')
@@ -195,9 +195,9 @@ describe('App Bar', () => {
       cy.get('ul[role="listbox"]:visible')
         .should('have.length', 1)
         .find('li')
-        .should('have.length', Object.keys(LOG_SERVICES).length)
+        .should('have.length', Object.keys(LOG_SERVICE).length)
         .each(($el) => {
-          expect(Object.keys(LOG_SERVICES)).contains($el.text());
+          expect(Object.keys(LOG_SERVICE)).contains($el.text());
         })
         // select the last element of list to close this dropdown list
         .last()
@@ -205,7 +205,7 @@ describe('App Bar', () => {
 
       cy.findByTestId('log-type-select').click();
       cy.get('ul[role="listbox"]:visible li')
-        .findByText(LOG_SERVICES.configurator)
+        .findByText(LOG_SERVICE.configurator)
         .click();
 
       cy.findByTestId('log-hostname-select')
@@ -236,7 +236,7 @@ describe('App Bar', () => {
 
       cy.findByTestId('log-type-select').click();
       cy.get('ul[role="listbox"]:visible li')
-        .findByText(LOG_SERVICES.configurator)
+        .findByText(LOG_SERVICE.configurator)
         .click();
 
       // toggle the devTool

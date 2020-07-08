@@ -17,9 +17,9 @@
 import '@testing-library/cypress/add-commands';
 import { capitalize } from 'lodash';
 
-import { KIND, CELL_TYPES, CELL_STATUS } from '../../src/const';
+import { KIND, CELL_TYPE, CELL_STATUS } from '../../src/const';
 import { hashByGroupAndName } from '../../src/utils/sha';
-import { SETTING_SECTIONS, CELL_ACTIONS } from './customCommands';
+import { SETTING_SECTION, CELL_ACTION } from './customCommands';
 import { ElementParameters } from './customCommands';
 
 Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
@@ -208,14 +208,14 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
       } else {
         // create a pipeline-only topic
         cy.findByTestId('toolbox-draggable')
-          .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
+          .find(`g[data-type="${CELL_TYPE.ELEMENT}"]:visible`)
           // the only "draggable" cell is pipeline-only topic
           .first()
           .dragAndDrop(x, y);
       }
     } else if (kind === KIND.stream) {
       cy.findByTestId('toolbox-draggable')
-        .find(`g[data-type="${CELL_TYPES.ELEMENT}"]:visible`)
+        .find(`g[data-type="${CELL_TYPE.ELEMENT}"]:visible`)
         // we only got 1 class for the uploaded stream jar
         // it's ok to assert the first element is the "stream class"
         .eq(0)
@@ -269,7 +269,7 @@ Cypress.Commands.add('createConnections', (elementNames) => {
 
     // Action
     cy.getCell(elementName).trigger('mouseover');
-    cy.cellAction(elementName, CELL_ACTIONS.link).click();
+    cy.cellAction(elementName, CELL_ACTION.link).click();
 
     // Create the link: currentElement -> nextElement
     cy.getCell(nextElementName).click();
@@ -280,7 +280,7 @@ Cypress.Commands.add('removeElement', (name) => {
   cy.log(`Removing an element: ${name}`);
 
   cy.getCell(name).trigger('mouseover');
-  cy.cellAction(name, CELL_ACTIONS.remove).click();
+  cy.cellAction(name, CELL_ACTION.remove).click();
   cy.findByTestId('delete-dialog').findByText('DELETE').click();
 
   cy.get('#paper').findByText(name).should('not.exist');
@@ -308,7 +308,7 @@ Cypress.Commands.add('getCell', (name) => {
   });
 });
 
-Cypress.Commands.add('cellAction', (name, action: CELL_ACTIONS) => {
+Cypress.Commands.add('cellAction', (name, action: CELL_ACTION) => {
   // open the cell menu
   cy.get('#paper').within(() => {
     cy.findAllByText(name)
@@ -328,7 +328,7 @@ Cypress.Commands.add('cellAction', (name, action: CELL_ACTIONS) => {
 
 Cypress.Commands.add('uploadStreamJar', () => {
   cy.log('Uploading stream jar');
-  cy.switchSettingSection(SETTING_SECTIONS.stream);
+  cy.switchSettingSection(SETTING_SECTION.stream);
 
   // click upload plugins
   cy.findAllByTitle('Add File').first().click();

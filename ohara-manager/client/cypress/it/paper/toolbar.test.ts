@@ -18,11 +18,8 @@ import { ElementParameters } from './../../support/customCommands';
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { KIND, CELL_STATUS } from '../../../src/const';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
+import { CELL_ACTION } from '../../support/customCommands';
 
 describe('Toolbar', () => {
   const node: NodeRequest = {
@@ -159,7 +156,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       // Default
@@ -221,7 +218,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       // Toolbox might cover the element and cause our test to fail
@@ -269,7 +266,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       // Toolbox might cover the element and cause our test to fail
@@ -317,7 +314,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       cy.findByTestId('center-button').as('btn');
@@ -340,7 +337,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       cy.get('#paper')
@@ -424,12 +421,12 @@ describe('Toolbar', () => {
         {
           name: generate.serviceName({ prefix: 'source' }),
           kind: KIND.source,
-          className: SOURCES.jdbc,
+          className: SOURCE.jdbc,
         },
         {
           name: generate.serviceName({ prefix: 'sink' }),
           kind: KIND.sink,
-          className: SINKS.hdfs,
+          className: SINK.hdfs,
         },
         {
           name: 'T1',
@@ -491,7 +488,7 @@ describe('Toolbar', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: topicName,
@@ -551,7 +548,7 @@ describe('Toolbar', () => {
       cy.addElement({
         name: sourceName,
         kind: KIND.source,
-        className: SOURCES.perf,
+        className: SOURCE.perf,
       });
 
       // We have wrapped this feature in a custom `cy` command since it's used
@@ -597,7 +594,7 @@ describe('Toolbar', () => {
         {
           name: sourceName,
           kind: KIND.source,
-          className: SOURCES.perf,
+          className: SOURCE.perf,
         },
         {
           name: topicName,
@@ -610,7 +607,7 @@ describe('Toolbar', () => {
 
       // Start the source
       cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.start).click();
+      cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.get('#paper')
         .findByText(sourceName)

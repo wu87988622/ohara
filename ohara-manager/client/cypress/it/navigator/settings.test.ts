@@ -17,7 +17,7 @@
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import * as generate from '../../../src/utils/generate';
 import { hashByGroupAndName } from '../../../src/utils/sha';
-import { SETTING_SECTIONS } from '../../support/customCommands';
+import { SETTING_SECTION } from '../../support/customCommands';
 
 describe('Navigator', () => {
   // generate fake node
@@ -119,9 +119,9 @@ describe('Navigator', () => {
         .within(() => {
           cy.get('section').should(
             'have.length',
-            Object.keys(SETTING_SECTIONS).length,
+            Object.keys(SETTING_SECTION).length,
           );
-          for (var section of Object.values(SETTING_SECTIONS)) {
+          for (var section of Object.values(SETTING_SECTION)) {
             cy.contains('section', section);
           }
         });
@@ -130,7 +130,7 @@ describe('Navigator', () => {
 
   context('Topics Settings', () => {
     it('should have no topics initially', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.topics);
+      cy.switchSettingSection(SETTING_SECTION.topics);
 
       // there should not have any topic initially
       cy.get('div.shared-topic').within(() => {
@@ -142,7 +142,7 @@ describe('Navigator', () => {
     });
 
     it('should able to add shared topics', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.topics);
+      cy.switchSettingSection(SETTING_SECTION.topics);
 
       // add shared topics
       cy.findByTitle('Create Topic').should('be.enabled').click();
@@ -201,7 +201,7 @@ describe('Navigator', () => {
     });
 
     it('should able to filter and sort topics by name', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.topics);
+      cy.switchSettingSection(SETTING_SECTION.topics);
 
       // add multiple topics
       cy.findByTitle('Create Topic').should('be.enabled').click();
@@ -276,7 +276,7 @@ describe('Navigator', () => {
     });
 
     it('validation of topic creation', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.topics);
+      cy.switchSettingSection(SETTING_SECTION.topics);
 
       cy.findByTitle('Create Topic').should('be.enabled').click();
       cy.findAllByRole('dialog')
@@ -316,7 +316,7 @@ describe('Navigator', () => {
 
   context('Autofill Settings', () => {
     it('should have no data initially', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.autofill);
+      cy.switchSettingSection(SETTING_SECTION.autofill);
 
       // there should not have any setting filling initially
       cy.get('div.section-page-content').within(() => {
@@ -325,7 +325,7 @@ describe('Navigator', () => {
     });
 
     it('should able to add setting fillings', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.autofill);
+      cy.switchSettingSection(SETTING_SECTION.autofill);
 
       cy.contains('button', 'ADD AUTOFILL').click();
 
@@ -389,7 +389,7 @@ describe('Navigator', () => {
     });
 
     it('could not add duplicate name or key of setting fillings', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.autofill);
+      cy.switchSettingSection(SETTING_SECTION.autofill);
 
       // add a setting filling
       cy.contains('button', 'ADD AUTOFILL').click();
@@ -442,7 +442,7 @@ describe('Navigator', () => {
 
   context('Zookeeper Settings', () => {
     it('should have one node in zookeeper after creating workspace', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.switchSettingSection(SETTING_SECTION.zookeeper);
 
       // there should have one zookeeper node
       cy.get('div.section-page-content').within(() => {
@@ -452,7 +452,7 @@ describe('Navigator', () => {
     });
 
     it('should able to view node information of zookeeper', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.switchSettingSection(SETTING_SECTION.zookeeper);
 
       cy.findAllByTitle('View node').filter(':visible').click();
 
@@ -499,7 +499,7 @@ describe('Navigator', () => {
 
   context('Broker Settings', () => {
     it('should have one node in broker after creating workspace', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.broker);
+      cy.switchSettingSection(SETTING_SECTION.broker);
 
       // there should have one zookeeper node
       cy.get('div.section-page-content').within(() => {
@@ -509,7 +509,7 @@ describe('Navigator', () => {
     });
 
     it('should able to view node information of broker', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.broker);
+      cy.switchSettingSection(SETTING_SECTION.broker);
 
       cy.findAllByTitle('View node').filter(':visible').click();
 
@@ -554,7 +554,7 @@ describe('Navigator', () => {
 
   context('Worker Settings', () => {
     it('should have one node in worker after creating workspace', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.worker);
+      cy.switchSettingSection(SETTING_SECTION.worker);
 
       // there should have one zookeeper node
       cy.get('div.section-page-content').within(() => {
@@ -564,7 +564,7 @@ describe('Navigator', () => {
     });
 
     it('should able to view node information of worker', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.worker);
+      cy.switchSettingSection(SETTING_SECTION.worker);
 
       cy.findAllByTitle('View node').filter(':visible').click();
 
@@ -609,7 +609,7 @@ describe('Navigator', () => {
 
   context('Nodes Settings', () => {
     it('should have one node in workspace', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.nodes);
+      cy.switchSettingSection(SETTING_SECTION.nodes);
 
       // there should have one node
       cy.get('div.section-page-content').within(() => {
@@ -631,7 +631,7 @@ describe('Navigator', () => {
   context('Combine restart and delete workspaces operations', () => {
     it('should able to restart the same name workspace which just removed and re-created', () => {
       cy.switchSettingSection(
-        SETTING_SECTIONS.dangerZone,
+        SETTING_SECTION.dangerZone,
         'Delete this workspace',
       );
 
@@ -650,7 +650,7 @@ describe('Navigator', () => {
 
       // click restart workspace should be OK
       cy.switchSettingSection(
-        SETTING_SECTIONS.dangerZone,
+        SETTING_SECTION.dangerZone,
         'Restart this workspace',
       );
 
@@ -674,7 +674,7 @@ describe('Navigator', () => {
 
   context('Files Settings', () => {
     it('should able to add and remove files', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.files);
+      cy.switchSettingSection(SETTING_SECTION.files);
 
       cy.get('div.section-page-content').within(() => {
         // upload the files by custom command "createJar"
@@ -744,7 +744,7 @@ describe('Navigator', () => {
     });
 
     it('should able to select file in stream jars', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.stream);
+      cy.switchSettingSection(SETTING_SECTION.stream);
       cy.get('div.section-page-content').within(() => {
         cy.findByTitle('Add File').click();
       });
@@ -950,7 +950,7 @@ describe('Navigator', () => {
 
     it('should able to select file in worker plugins', () => {
       cy.switchSettingSection(
-        SETTING_SECTIONS.worker,
+        SETTING_SECTION.worker,
         'Worker plugins and shared jars',
       );
 
@@ -1006,14 +1006,14 @@ describe('Navigator', () => {
       });
 
       // the worker section should have 1 change warning
-      cy.contains('h2', SETTING_SECTIONS.worker)
+      cy.contains('h2', SETTING_SECTION.worker)
         .parent('section')
         .find('ul')
         .contains('span', '1');
 
       // restart worker
       cy.switchSettingSection(
-        SETTING_SECTIONS.dangerZone,
+        SETTING_SECTION.dangerZone,
         'Restart this worker',
       );
       cy.findAllByRole('dialog')
@@ -1057,7 +1057,7 @@ describe('Navigator', () => {
       cy.findByTestId('nodes-dialog-close-button').click();
 
       // add new added node into workspace
-      cy.switchSettingSection(SETTING_SECTIONS.nodes);
+      cy.switchSettingSection(SETTING_SECTION.nodes);
       cy.get('div.section-page-content').within(() => {
         cy.findByTitle('Add Node').click();
       });
@@ -1103,7 +1103,7 @@ describe('Navigator', () => {
     });
 
     it('should show an restart indicator after adding node to zookeeper', () => {
-      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.switchSettingSection(SETTING_SECTION.zookeeper);
 
       cy.get('div.section-page-content').within(() => {
         cy.findByTitle('Add Node').click();
@@ -1171,7 +1171,7 @@ describe('Navigator', () => {
       });
 
       // the zookeeper section should have 1 change warning
-      cy.contains('h2', SETTING_SECTIONS.zookeeper)
+      cy.contains('h2', SETTING_SECTION.zookeeper)
         .parent('section')
         .find('ul')
         .contains('span', '1');
@@ -1210,7 +1210,7 @@ describe('Navigator', () => {
 
       // the zookeeper section should not have warnings
       cy.findAllByRole('alert').should('not.exist');
-      cy.contains('h2', SETTING_SECTIONS.zookeeper)
+      cy.contains('h2', SETTING_SECTION.zookeeper)
         .parent('section')
         .find('ul')
         .contains('span', '1')
@@ -1219,7 +1219,7 @@ describe('Navigator', () => {
 
     it('should able to restart from indicator after adding node to zookeeper', () => {
       // add node to zookeeper
-      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.switchSettingSection(SETTING_SECTION.zookeeper);
       cy.get('div.section-page-content').within(() => {
         cy.findByTitle('Add Node').click();
       });
@@ -1298,7 +1298,7 @@ describe('Navigator', () => {
         .should('be.visible')
         .click();
 
-      cy.switchSettingSection(SETTING_SECTIONS.zookeeper);
+      cy.switchSettingSection(SETTING_SECTION.zookeeper);
       cy.get('div.section-page-content').within(() => {
         cy.get('table')
           .should('have.length', 1)
@@ -1311,7 +1311,7 @@ describe('Navigator', () => {
 
     it('should able to restart worker by directly click button', () => {
       cy.switchSettingSection(
-        SETTING_SECTIONS.dangerZone,
+        SETTING_SECTION.dangerZone,
         'Restart this worker',
       );
       cy.findAllByRole('dialog')
@@ -1323,7 +1323,7 @@ describe('Navigator', () => {
 
       // re-click again
       cy.switchSettingSection(
-        SETTING_SECTIONS.dangerZone,
+        SETTING_SECTION.dangerZone,
         'Restart this worker',
       );
 

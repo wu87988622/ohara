@@ -15,17 +15,17 @@
  */
 
 import { isShabondi } from '../PipelineUtils';
-import { SOURCES, SINKS } from 'api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from 'api/apiInterface/connectorInterface';
 
 describe('isShabondi', () => {
   it('should return false when not matching', () => {
     expect(isShabondi('abc')).toBe(false);
-    expect(isShabondi(SOURCES.jdbc)).toBe(false);
-    expect(isShabondi(SINKS.ftp)).toBe(false);
+    expect(isShabondi(SOURCE.jdbc)).toBe(false);
+    expect(isShabondi(SINK.ftp)).toBe(false);
   });
 
   it('should return true when className is matched', () => {
-    expect(isShabondi(SOURCES.shabondi)).toBe(true);
-    expect(isShabondi(SINKS.shabondi)).toBe(true);
+    expect(isShabondi(SOURCE.shabondi)).toBe(true);
+    expect(isShabondi(SINK.shabondi)).toBe(true);
   });
 });

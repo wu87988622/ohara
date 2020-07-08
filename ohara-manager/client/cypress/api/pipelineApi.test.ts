@@ -25,7 +25,7 @@ import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as connectorApi from '../../src/api/connectorApi';
 import * as pipelineApi from '../../src/api/pipelineApi';
-import { SOURCES, SINKS } from '../../src/api/apiInterface/connectorInterface';
+import { SOURCE, SINK } from '../../src/api/apiInterface/connectorInterface';
 import { createServicesInNodes, deleteAllServices } from '../utils';
 
 const generatePipeline = async () => {
@@ -48,7 +48,7 @@ const generatePipeline = async () => {
   const connectorSource = {
     name: generate.serviceName({ prefix: 'connector' }),
     group: generate.serviceName({ prefix: 'group' }),
-    connector__class: SOURCES.perf,
+    connector__class: SOURCE.perf,
     topicKeys: [{ name: topic.name, group: topic.group }],
     workerClusterKey: {
       name: worker.name,
@@ -60,7 +60,7 @@ const generatePipeline = async () => {
   const connectorSink = {
     name: generate.serviceName({ prefix: 'connector' }),
     group: generate.serviceName({ prefix: 'group' }),
-    connector__class: SINKS.console,
+    connector__class: SINK.console,
     topicKeys: [{ name: topic.name, group: topic.group }],
     workerClusterKey: {
       name: worker.name,
