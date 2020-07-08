@@ -72,7 +72,6 @@ class TestRemoteFolderHandler extends OharaTest {
     val folderInfo = result(folderHandler.inspect(hostname, "/tmp"))
     folderInfo.name shouldBe "tmp"
     folderInfo.permission shouldBe FolderPermission.READWRITE
-    folderInfo.size should be > 0L
     folderInfo.uid should be >= 0
   }
 

@@ -21,6 +21,6 @@ case class FolderInfo(
   owner: String,
   group: String,
   uid: Int,
-  size: Long,
+  size: Option[Long],
   name: String
 )

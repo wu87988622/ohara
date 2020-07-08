@@ -116,13 +116,17 @@ object RemoteFolderHandler {
       val owner = splits(2)
       val group = splits(3)
 
-      val size = agent
+      val size = try agent
         .execute(s"du -sb $path")
         // take last string since something inaccessible happens before size count
         .map(_.split("\n").last)
         // ex: 613878290	/home/chia7712
         .map(_.split("\t").head.toLong)
-        .getOrElse(throw new IllegalArgumentException(s"failed to get size of $path"))
+      catch {
+        case _: Throwable =>
+          // TODO: recursively count folder is a dangerous operation but we can't handle all exception currently.
+          None
+      }
 
       val name = agent
         .execute(s"basename $path")
