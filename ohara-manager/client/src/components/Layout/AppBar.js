@@ -58,6 +58,7 @@ const AppBar = () => {
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const initEventLogs = hooks.useInitEventLogsAction();
   const [isNodeListDialogOpen, setIsNodeListDialogOpen] = useState(false);
+  const showMessage = hooks.useShowMessage();
 
   return (
     <StyledAppBar id="app-bar">
@@ -69,6 +70,7 @@ const AppBar = () => {
           {workspaces.map((wk) => {
             const { name } = wk;
             const displayName = name.substring(0, 2).toUpperCase();
+            const isStable = isStableWorkspace(wk);
 
             return (
               <Tooltip key={name} placement="right" title={name}>
@@ -78,7 +80,7 @@ const AppBar = () => {
                       <WarningIcon fontSize="small" />
                     </IconWrapper>
                   }
-                  invisible={isStableWorkspace(wk)}
+                  invisible={isStable}
                   title="Unstable workspace"
                 >
                   <Link
@@ -86,6 +88,10 @@ const AppBar = () => {
                       'active-link': name === workspace?.name,
                     })}
                     onClick={() => {
+                      if (!isStable) {
+                        showMessage(`This is an unstable workspace: ${name}`);
+                        return;
+                      }
                       if (name !== workspace?.name) switchWorkspace(name);
                     }}
                   >
@@ -107,6 +113,7 @@ const AppBar = () => {
           <Tooltip placement="right" title="Workspace list">
             <IconButton
               className="workspace-list item"
+              data-testid="workspace-list-button"
               onClick={() =>
                 isEmpty(workspaces) ? openIntro() : toggleWorkspaceList()
               }

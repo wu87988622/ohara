@@ -16,6 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import cx from 'classnames';
 import { toNumber, size, filter, isEqual } from 'lodash';
 import moment from 'moment';
 import Grid from '@material-ui/core/Grid';
@@ -24,7 +25,6 @@ import CardHeader from '@material-ui/core/CardHeader';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Avatar from '@material-ui/core/Avatar';
-import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
 import InputIcon from '@material-ui/icons/Input';
 import Typography from '@material-ui/core/Typography';
@@ -89,6 +89,7 @@ function WorkspaceList() {
         onClose={close}
         open={isOpen}
         showActions={false}
+        testId="workspace-list-dialog"
         title={`Showing ${workspaceCount} ${
           workspaceCount > 1 ? 'workspaces' : 'workspace'
         }`}
@@ -100,6 +101,7 @@ function WorkspaceList() {
               const avatarText = name.substring(0, 2).toUpperCase();
               const updatedText = moment(toNumber(lastModified)).fromNow();
 
+              const isStable = isStableWorkspace(wk);
               const isActive = name === workspaceName;
               const brokerKey = { name, group: KIND.broker };
               const count = {
@@ -114,21 +116,16 @@ function WorkspaceList() {
 
               return (
                 <Grid item key={name} xs={4}>
-                  <Card className={isActive ? 'active-workspace' : ''}>
+                  <Card
+                    className={cx({
+                      active: isActive,
+                      inactive: !isActive,
+                      unstable: !isStable,
+                    })}
+                  >
                     <CardHeader
                       avatar={
-                        <Badge
-                          badgeContent={
-                            <IconWrapper severity="warning">
-                              <WarningIcon fontSize="small" />
-                            </IconWrapper>
-                          }
-                          invisible={isStableWorkspace(wk)}
-                        >
-                          <Avatar className="workspace-icon">
-                            {avatarText}
-                          </Avatar>
-                        </Badge>
+                        <Avatar className="workspace-icon">{avatarText}</Avatar>
                       }
                       subheader={`Updated: ${updatedText}`}
                       title={name}
@@ -167,12 +164,20 @@ function WorkspaceList() {
                         }
                       >
                         <Button
-                          disabled={isActive}
+                          disabled={isActive || !isStable}
                           onClick={handleClick(name)}
                           size="large"
-                          startIcon={<InputIcon />}
+                          startIcon={
+                            isStable ? (
+                              <InputIcon />
+                            ) : (
+                              <IconWrapper severity="warning">
+                                <WarningIcon fontSize="small" />
+                              </IconWrapper>
+                            )
+                          }
                         >
-                          Into Workspace
+                          {isStable ? 'INTO WORKSPACE' : 'UNSTABLE WORKSPACE'}
                         </Button>
                       </Tooltip>
                     </CardActions>

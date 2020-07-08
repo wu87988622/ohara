@@ -150,21 +150,20 @@ describe('App Bar', () => {
       cy.location('pathname').should('equal', '/workspace1');
 
       // click workspace list button will show all workspaces
-      cy.findByTitle(/workspace list/i).click();
+      cy.findByTestId('workspace-list-button').click();
       // the workspace list dialog
-      cy.findAllByRole('dialog')
-        .filter(':visible')
-        .should('have.length', 1)
-        .contains('div', /showing 2 workspaces/i);
+      cy.findByTestId('workspace-list-dialog').contains(
+        'div',
+        /showing 2 workspaces/i,
+      );
       // we should in one of the workspaces and it should not be able to click
       cy.findByTitle(`This is the workspace that you're at now`)
         .find('button')
         .should('be.disabled');
 
       // switch workspace from workspace list to another workspace
-      cy.findByRole('dialog')
-        .filter(':visible')
-        .contains('button', /into workspace/i)
+      cy.findByTestId('workspace-list-dialog')
+        .contains('button', 'INTO WORKSPACE')
         .filter(':enabled')
         .click();
       // the url should changed
@@ -199,9 +198,31 @@ describe('App Bar', () => {
         // should highlight the unstable workspaces
         cy.get('#app-bar')
           .find(`div.workspace-list > span[title="${workspaceName}"]`)
-          .within(() => {
-            cy.findByTitle('Unstable workspace').should('exist');
-          });
+          .as('unstableWorkspaceBtn');
+
+        cy.get('@unstableWorkspaceBtn').within(() => {
+          cy.findByTitle('Unstable workspace').should('exist');
+        });
+
+        // clicking the button of unstable workspace should show a snackbar
+        cy.get('@unstableWorkspaceBtn').click();
+        cy.findByTestId('snackbar')
+          .contains(`This is an unstable workspace: ${workspaceName}`)
+          .should('exist');
+
+        // cannot use URL to access unstable workspace
+        cy.visit(`/${workspaceName}`)
+          .location()
+          .should('not.eq', `/${workspaceName}`);
+
+        // open the workspace list dialog
+        cy.findByTestId('workspace-list-button').click();
+        // buttons of unstable workspaces should be disabled
+        cy.findByTestId('workspace-list-dialog')
+          .should('exist')
+          .contains('div.MuiCard-root', workspaceName)
+          .contains('UNSTABLE WORKSPACE')
+          .should('be.disabled');
       });
     });
   });

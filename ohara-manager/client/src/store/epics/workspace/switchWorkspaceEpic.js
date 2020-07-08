@@ -23,6 +23,7 @@ import { GROUP } from 'const';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId } from 'utils/object';
+import { isStable as isStableWorkspace } from 'utils/workspace';
 
 export default (action$, state$, { history }) =>
   action$.pipe(
@@ -40,7 +41,7 @@ export default (action$, state$, { history }) =>
         }),
       });
 
-      if (targetWorkspace) {
+      if (isStableWorkspace(targetWorkspace)) {
         history.push(`/${targetWorkspace.name}`);
         return from([
           actions.switchWorkspace.success(targetWorkspace.name),
@@ -48,15 +49,15 @@ export default (action$, state$, { history }) =>
         ]);
       }
 
-      const headWorkspace = selectors.getHeadWorkspace(state);
+      const firstStableWorkspace = selectors.getFirstStableWorkspace(state);
 
-      if (headWorkspace) {
-        history.push(`/${headWorkspace.name}`);
+      if (firstStableWorkspace) {
+        history.push(`/${firstStableWorkspace.name}`);
       } else {
         history.push('/');
       }
       return from([
-        actions.switchWorkspace.success(headWorkspace?.name),
+        actions.switchWorkspace.success(firstStableWorkspace?.name),
         actions.switchPipeline.trigger(),
       ]);
     }),

@@ -28,12 +28,16 @@ export const Wrapper = styled.div(
       margin: 0 auto;
     }
 
-    .active-workspace {
+    .active {
       border: 2px solid ${theme.palette.primary[400]};
     }
 
-    .MuiCard-root:not(.active-workspace):hover {
+    .inactive:hover {
       border: 2px solid ${theme.palette.grey[400]};
+    }
+
+    .unstable:hover {
+      border: none;
     }
   `,
 );

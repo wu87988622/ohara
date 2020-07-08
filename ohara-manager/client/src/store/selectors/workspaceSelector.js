@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { head, sortBy, values } from 'lodash';
+import { filter, head, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
+import { isStable as isStableWorkspace } from 'utils/workspace';
 
 const getEntities = (state) => state?.entities?.workspaces;
 
@@ -35,4 +36,9 @@ export const getWorkspaceById = createSelector(
 export const getHeadWorkspace = createSelector(
   [getAllWorkspaces],
   (workspaces) => head(workspaces),
+);
+
+export const getFirstStableWorkspace = createSelector(
+  [getAllWorkspaces],
+  (workspaces) => head(filter(workspaces, isStableWorkspace)),
 );
