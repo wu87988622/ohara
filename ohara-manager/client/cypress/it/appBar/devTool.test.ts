@@ -69,7 +69,7 @@ describe('App Bar', () => {
       cy.findByTestId('workspace-settings-dialog-close-button').click();
 
       // drag the new add topic into paper
-      cy.addElement(t1, KIND.topic);
+      cy.addElement({ name: t1, kind: KIND.topic });
 
       // topic list of devTool should not be empty
       cy.findByTitle(/developer tools/i).click();

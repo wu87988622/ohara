@@ -1,3 +1,4 @@
+import { ElementParameters } from './../../support/customCommands';
 /*
  * Copyright 2019 is-land
  *
@@ -15,13 +16,12 @@
  */
 
 import * as generate from '../../../src/utils/generate';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
+import { KIND, CELL_TYPES } from '../../../src/const';
 import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
-import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import { KIND, CELL_TYPES } from '../../../src/const';
 
 const sources = Object.values(SOURCES).sort((a, b) => a.localeCompare(b));
 const sinks = Object.values(SINKS).sort((a, b) => a.localeCompare(b));
@@ -214,23 +214,23 @@ describe('ToolBox', () => {
 
   context('Toolbox interaction with Paper', () => {
     it('should able to create Paper elements with Toolbox items', () => {
-      const sources = Object.values(SOURCES).map((type) => ({
+      const sources = Object.values(SOURCES).map((className) => ({
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        type,
+        className,
       }));
 
-      const sinks = Object.values(SINKS).map((type) => ({
+      const sinks = Object.values(SINKS).map((className) => ({
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        type,
+        className,
       }));
 
       const streams = [
         {
           name: 'stream',
           kind: KIND.stream,
-          type: KIND.stream,
+          className: KIND.stream,
         },
       ];
 
@@ -238,17 +238,18 @@ describe('ToolBox', () => {
         {
           name: sharedTopicName,
           kind: KIND.topic,
-          type: KIND.topic,
+          className: KIND.topic,
         },
-        { name: 'T1', kind: KIND.topic, type: KIND.topic },
-        { name: 'T2', kind: KIND.topic, type: KIND.topic },
+        { name: 'T1', kind: KIND.topic },
+        { name: 'T2', kind: KIND.topic },
       ];
 
-      [...sources, ...sinks, ...topics, ...streams].forEach(
-        ({ name, kind, type }) => {
-          cy.addElement(name, kind, type);
-        },
-      );
+      cy.addElements([
+        ...sources,
+        ...sinks,
+        ...streams,
+        ...topics,
+      ] as ElementParameters[]);
 
       cy.get('#paper').within(() => {
         cy.get('.stream').should('have.length', streams.length);
@@ -261,7 +262,7 @@ describe('ToolBox', () => {
     });
 
     it('should disable the shared topic in Toolbox if the topic is used in the pipeline', () => {
-      cy.addElement(sharedTopicName, KIND.topic);
+      cy.addElement({ name: sharedTopicName, kind: KIND.topic });
 
       // Disabled when it's used
       cy.get('#toolbox').within(() => {
@@ -272,11 +273,7 @@ describe('ToolBox', () => {
       });
 
       // Remove it
-      cy.getCell(sharedTopicName).trigger('mouseover');
-      cy.cellAction(sharedTopicName, CELL_ACTIONS.remove).click();
-      cy.findByTestId('delete-dialog').within(() =>
-        cy.findByText('DELETE').click(),
-      );
+      cy.removeElement(sharedTopicName);
 
       // Available again since it's removed from Paper
       cy.get('#toolbox').within(() => {
@@ -309,7 +306,7 @@ describe('ToolBox', () => {
       cy.createSharedTopic(name);
 
       // Add a sink into Paper with the same name
-      cy.addElement(name, KIND.sink, SINKS.shabondi);
+      cy.addElement({ name, kind: KIND.sink, className: SINKS.shabondi });
 
       // Then, add the topic
       cy.findByText(Cypress._.capitalize(KIND.topic)).should('exist').click();

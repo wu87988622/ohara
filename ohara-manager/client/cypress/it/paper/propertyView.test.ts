@@ -18,6 +18,8 @@ import { isEmpty, isObject } from 'lodash';
 import { CELL_ACTIONS } from '../../support/customCommands';
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
+import { fetchServices, fetchServiceInfo } from '../../utils';
+import { ElementParameters } from './../../support/customCommands';
 import {
   SettingDef,
   ClassInfo,
@@ -27,7 +29,6 @@ import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
-import { fetchServices, fetchServiceInfo } from '../../utils';
 
 describe('Property view', () => {
   const node: NodeRequest = {
@@ -53,7 +54,11 @@ describe('Property view', () => {
   it('should render Property view UI', () => {
     const sourceName = generate.serviceName({ prefix: 'source' });
     // Create a Perf source
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open property view
     cy.getCell(sourceName).click();
@@ -88,7 +93,11 @@ describe('Property view', () => {
   it('should able to open and close the view', () => {
     const sourceName = generate.serviceName({ prefix: 'source' });
     // Create a Perf source
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Not visible by default
     cy.get('#property-view').should('not.exist');
@@ -111,16 +120,7 @@ describe('Property view', () => {
   });
 
   it('should reflect the correct status on Property view', () => {
-    // Create a Perf source and than a pipeline only topic
-    const sourceName = generate.serviceName({ prefix: 'source' });
-    const topicName = 'T1';
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
-    cy.addElement(topicName, KIND.topic);
-
-    // Then, link Perf source and Topic together
-    cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-    cy.getCell(topicName).click();
+    const { sourceName, topicName } = createSourceAndTopic();
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
@@ -172,7 +172,7 @@ describe('Property view', () => {
   it('should render topic settings panel', () => {
     // Create a pipeline only topic
     const topicName = 'T1';
-    cy.addElement(topicName, KIND.topic);
+    cy.addElement({ name: topicName, kind: KIND.topic });
 
     // Open property view
     cy.getCell(topicName).click();
@@ -221,7 +221,11 @@ describe('Property view', () => {
   it('should render source settings panel', () => {
     // Create a perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open property view
     cy.getCell(sourceName).click();
@@ -278,36 +282,36 @@ describe('Property view', () => {
   });
 
   it('should able to render the view with different kind of pipeline components', () => {
-    const elements = [
+    const elements: ElementParameters[] = [
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        type: SOURCES.jdbc,
+        className: SOURCES.jdbc,
       },
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        type: SOURCES.shabondi,
+        className: SOURCES.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        type: SINKS.hdfs,
+        className: SINKS.hdfs,
       },
       {
         name: 'T1',
         kind: KIND.topic,
-        type: KIND.topic,
+        className: KIND.topic,
       },
       {
         name: generate.serviceName({ prefix: 'stream' }),
         kind: KIND.stream,
-        type: KIND.stream,
+        className: KIND.stream,
       },
     ];
 
-    elements.forEach(({ name, kind, type }) => {
-      cy.addElement(name, kind, type);
+    elements.forEach(({ name, ...rest }) => {
+      cy.addElement({ name, ...rest });
       cy.getCell(name).click();
 
       // The view should be opened
@@ -322,16 +326,7 @@ describe('Property view', () => {
   });
 
   it('should render Nodes panel', () => {
-    // Create a Perf source and than a pipeline only topic
-    const sourceName = generate.serviceName({ prefix: 'source' });
-    const topicName = 'T1';
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
-    cy.addElement(topicName, KIND.topic);
-
-    // Then, link Perf source and Topic together
-    cy.getCell(sourceName).trigger('mouseover');
-    cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-    cy.getCell(topicName).click();
+    const { sourceName } = createSourceAndTopic();
 
     // Start the connection
     cy.getCell(sourceName).trigger('mouseover');
@@ -370,10 +365,20 @@ describe('Property view', () => {
   it('should not update the topic field of property view before successfully creating topic', () => {
     const sourceName = generate.serviceName({ prefix: 'source' });
     const sinkName = generate.serviceName({ prefix: 'sink' });
-    // Create a Shabondi source
-    cy.addElement(sourceName, KIND.source, SOURCES.shabondi);
-    // Create a Shabondi sink
-    cy.addElement(sinkName, KIND.sink, SINKS.shabondi);
+    // Create a Shabondi source and sink
+
+    cy.addElements([
+      {
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.shabondi,
+      },
+      {
+        name: sinkName,
+        kind: KIND.sink,
+        className: SINKS.shabondi,
+      },
+    ]);
 
     // Open source property view
     cy.getCell(sourceName).click();
@@ -405,3 +410,26 @@ describe('Property view', () => {
       .should('equal', 'T1');
   });
 });
+
+function createSourceAndTopic() {
+  // Create a Perf source connector and a pipeline only topic
+  // then link them together
+  const sourceName = generate.serviceName({ prefix: 'source' });
+  const topicName = 'T1';
+  const elements: ElementParameters[] = [
+    {
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    },
+    {
+      name: topicName,
+      kind: KIND.topic,
+    },
+  ];
+
+  cy.addElements(elements);
+  cy.createConnections([sourceName, topicName]);
+
+  return { sourceName, topicName };
+}

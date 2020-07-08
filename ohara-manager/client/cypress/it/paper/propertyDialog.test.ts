@@ -17,16 +17,17 @@
 import * as generate from '../../../src/utils/generate';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import {
-  SOURCES,
-  SINKS,
-} from '../../../src/api/apiInterface/connectorInterface';
+import { fetchServiceInfo } from '../../utils';
+import { CELL_ACTIONS } from '../../support/customCommands';
+import { ElementParameters } from './../../support/customCommands';
 import {
   Permission,
   Type,
 } from '../../../src/api/apiInterface/definitionInterface';
-import { fetchServiceInfo } from '../../utils';
-import { CELL_ACTIONS } from '../../support/customCommands';
+import {
+  SOURCES,
+  SINKS,
+} from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -52,7 +53,11 @@ describe('Property dialog', () => {
   it('should render Property view UI', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -93,7 +98,11 @@ describe('Property dialog', () => {
     // Create a FTP source, we need a FTP source here since it has many "required" fields and so can
     //  be used for our testing spec
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.ftp);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.ftp,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -119,7 +128,11 @@ describe('Property dialog', () => {
   it('should able to add new schema', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -162,7 +175,11 @@ describe('Property dialog', () => {
   it('should able to delete a schema', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -207,7 +224,11 @@ describe('Property dialog', () => {
   it('should able to update a schema', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -268,7 +289,11 @@ describe('Property dialog', () => {
   it('should render the form with definition APIs', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -336,36 +361,36 @@ describe('Property dialog', () => {
   });
 
   it('should able to open the dialog', () => {
-    const elements = [
+    const elements: ElementParameters[] = [
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        type: SOURCES.jdbc,
+        className: SOURCES.jdbc,
       },
       {
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,
-        type: SOURCES.shabondi,
+        className: SOURCES.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        type: SINKS.hdfs,
+        className: SINKS.hdfs,
       },
       {
         name: generate.serviceName({ prefix: 'sink' }),
         kind: KIND.sink,
-        type: SINKS.shabondi,
+        className: SINKS.shabondi,
       },
       {
         name: generate.serviceName({ prefix: 'stream' }),
         kind: KIND.stream,
-        type: KIND.stream,
+        className: KIND.stream,
       },
     ];
 
-    elements.forEach(({ name, kind, type }) => {
-      cy.addElement(name, kind, type);
+    elements.forEach(({ name, ...rest }) => {
+      cy.addElement({ name, ...rest });
 
       cy.getCell(name).trigger('mouseover');
       cy.cellAction(name, CELL_ACTIONS.config).click();
@@ -383,7 +408,11 @@ describe('Property dialog', () => {
 
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -419,7 +448,11 @@ describe('Property dialog', () => {
   it('should close the dialog by hitting escape key and clicking on backdrop', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -451,7 +484,11 @@ describe('Property dialog', () => {
   it('should able to expand all definition panels', () => {
     // Create a Perf source
     const sourceName = generate.serviceName({ prefix: 'source' });
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.perf,
+    });
 
     // Open dialog
     cy.getCell(sourceName).trigger('mouseover');
@@ -497,8 +534,18 @@ describe('Property dialog', () => {
     // Create a perf source and pipeline-only topic
     const sourceName = generate.serviceName({ prefix: 'source' });
     const topicName = 'T1';
-    cy.addElement(sourceName, KIND.source, SOURCES.perf);
-    cy.addElement(topicName, KIND.topic);
+
+    cy.addElements([
+      {
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      },
+      {
+        name: topicName,
+        kind: KIND.topic,
+      },
+    ]);
 
     cy.get('#paper .joint-link').should('have.length', 0);
 

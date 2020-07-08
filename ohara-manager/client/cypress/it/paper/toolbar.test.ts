@@ -1,3 +1,4 @@
+import { ElementParameters } from './../../support/customCommands';
 /*
  * Copyright 2019 is-land
  *
@@ -155,7 +156,11 @@ describe('Toolbar', () => {
 
       // Use a Perf source connector for this test
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       // Default
       cy.findByTestId('zoom-display').should('have.text', '100%');
@@ -213,7 +218,11 @@ describe('Toolbar', () => {
       const maxScale = `${scales[scales.length - 1]}%`;
 
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       // Toolbox might cover the element and cause our test to fail
       cy.get('#toolbox').findByTestId('close-button').click();
@@ -257,7 +266,11 @@ describe('Toolbar', () => {
 
     it('should fit everything into the view', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       // Toolbox might cover the element and cause our test to fail
       cy.get('#toolbox').findByTestId('close-button').click();
@@ -301,7 +314,11 @@ describe('Toolbar', () => {
 
     it('toggles button disable state by select and unselect a Paper element', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       cy.findByTestId('center-button').as('btn');
 
@@ -320,7 +337,11 @@ describe('Toolbar', () => {
     it('should center a Paper element', () => {
       // Use a Perf source connector for this test, could be other element as well
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       cy.get('#paper')
         .findByText(sourceName)
@@ -399,31 +420,31 @@ describe('Toolbar', () => {
     });
 
     it('should enable start and stop all components when there is a connector, stream or shabondi', () => {
-      const elements = [
+      const elements: ElementParameters[] = [
         {
           name: generate.serviceName({ prefix: 'source' }),
           kind: KIND.source,
-          type: SOURCES.jdbc,
+          className: SOURCES.jdbc,
         },
         {
           name: generate.serviceName({ prefix: 'sink' }),
           kind: KIND.sink,
-          type: SINKS.hdfs,
+          className: SINKS.hdfs,
         },
         {
           name: 'T1',
           kind: KIND.topic,
-          type: KIND.topic,
+          className: KIND.topic,
         },
         {
           name: generate.serviceName({ prefix: 'stream' }),
           kind: KIND.stream,
-          type: KIND.stream,
+          className: KIND.stream,
         },
       ];
 
-      elements.forEach(({ name, kind, type }) => {
-        cy.addElement(name, kind, type);
+      elements.forEach(({ name, kind, className }) => {
+        cy.addElement({ name, kind, className });
 
         cy.findByTestId('pipeline-controls-button').should('exist').click();
 
@@ -465,13 +486,21 @@ describe('Toolbar', () => {
       // Create a Perf source and than a pipeline only topic
       const sourceName = generate.serviceName({ prefix: 'source' });
       const topicName = 'T1';
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
-      cy.addElement(topicName, KIND.topic);
+
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCES.perf,
+        },
+        {
+          name: topicName,
+          kind: KIND.topic,
+        },
+      ]);
 
       // Then, link Perf source and Topic together
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-      cy.getCell(topicName).click();
+      cy.createConnections([sourceName, topicName]);
 
       // Connector should be stopped after added
       cy.get('#paper').within(() => {
@@ -519,7 +548,11 @@ describe('Toolbar', () => {
 
     it('should able to delete a pipeline', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       // We have wrapped this feature in a custom `cy` command since it's used
       // quite often in our test code.
@@ -559,14 +592,23 @@ describe('Toolbar', () => {
       // Create a Perf source and than a pipeline only topic
       const sourceName = generate.serviceName({ prefix: 'source' });
       const topicName = 'T1';
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
-      cy.addElement(topicName, KIND.topic);
+
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCES.perf,
+        },
+        {
+          name: topicName,
+          kind: KIND.topic,
+        },
+      ]);
 
       // Then, link Perf source and Topic together
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-      cy.getCell(topicName).click();
+      cy.createConnections([sourceName, topicName]);
 
+      // Start the source
       cy.getCell(sourceName).trigger('mouseover');
       cy.cellAction(sourceName, CELL_ACTIONS.start).click();
 

@@ -80,7 +80,7 @@ describe('DevToolDialog - Topics tab', () => {
     // check the toolbox
     cy.findByText(/^toolbox$/i).should('exist');
     // add the topic
-    cy.addElement(sharedTopicName, KIND.topic);
+    cy.addElement({ name: sharedTopicName, kind: KIND.topic });
 
     cy.produceTopicData(workspaceName, sharedTopicName).visit('/', {
       onBeforeLoad(win) {

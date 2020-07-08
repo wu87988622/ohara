@@ -20,6 +20,7 @@ import { capitalize } from 'lodash';
 import { KIND, CELL_TYPES, CELL_STATUS } from '../../src/const';
 import { hashByGroupAndName } from '../../src/utils/sha';
 import { SETTING_SECTIONS, CELL_ACTIONS } from './customCommands';
+import { ElementParameters } from './customCommands';
 
 Cypress.Commands.add('createPipeline', (name = 'pipeline1') => {
   cy.log(`Creating pipeline: ${name}`);
@@ -126,7 +127,7 @@ Cypress.Commands.add(
   },
 );
 
-Cypress.Commands.add('addElement', (name, kind, className) => {
+Cypress.Commands.add('addElement', ({ name, kind, className }) => {
   cy.log(
     `add element: ${name} of ${kind}` + className
       ? `with className ${className}`
@@ -145,11 +146,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       'calculate the size of elements(source, sink, stream, topic) in pipeline',
     );
 
-    let size = 0;
-
-    if ($paper.find('.paper-element').length > 0) {
-      size += $paper.find('.paper-element').length;
-    }
+    const size = $paper.find('.paper-element').length;
 
     // Open Toolbox panel
     cy.findByText(capitalize(kind)).should('exist').click();
@@ -158,7 +155,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
     // the view of cells will be a [n, 2] matrix
     const x = size % 2 === 0 ? initialX : initialX + shiftWidth;
     const y = initialY + ~~(size / 2) * shiftHeight;
-    cy.log(`element position: ${x}, ${y}`);
+    cy.log(`Element position: ${x}, ${y}`);
 
     // wait a little time for the toolbox list rendered
     cy.wait(2000);
@@ -173,9 +170,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
             .and('have.class', 'display-name')
             .parent('.item')
             .should('have.attr', 'data-testid')
-            .then((testId) => {
-              cy.get(`g[model-id="${testId}"]`);
-            });
+            .then((testId) => cy.get(`g[model-id="${testId}"]`));
         })
         .dragAndDrop(x, y);
 
@@ -185,23 +180,20 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
       );
       cy.findAllByText('ADD').filter(':visible').click();
     } else if (kind === KIND.topic) {
-      // Share topic
-      if (!name.startsWith('T')) {
+      const isSharedTopic = !name.startsWith('T');
+      if (isSharedTopic) {
         cy.findByText(name).should('exist');
 
         let topics: string[] = [];
 
-        $paper
-          .find('#topic-list')
-          .find('span.display-name')
-          .each((_, element) => {
-            if (element.textContent) {
-              if (element.textContent === 'Pipeline Only')
-                // make sure the "pipeline only" topic is in first order
-                topics.push('_private');
-              topics.push(element.textContent);
-            }
-          });
+        $paper.find('#topic-list .display-name').each((_, element) => {
+          if (element.textContent) {
+            if (element.textContent === 'Pipeline Only')
+              // make sure the "pipeline only" topic is in first order
+              topics.push('_private');
+            topics.push(element.textContent);
+          }
+        });
 
         cy.findByTestId('toolbox-draggable')
           .within(() => {
@@ -210,9 +202,7 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
               .and('have.class', 'display-name')
               .parent('.item')
               .should('have.attr', 'data-testid')
-              .then((testId) => {
-                cy.get(`g[model-id="${testId}"]`);
-              });
+              .then((testId) => cy.get(`g[model-id="${testId}"]`));
           })
           .dragAndDrop(x, y);
       } else {
@@ -239,13 +229,50 @@ Cypress.Commands.add('addElement', (name, kind, className) => {
     }
 
     // wait for the cell added
-    cy.get('#outline').within(() => {
-      cy.findByText(name).should('exist');
+    cy.get('#outline').findByText(name).should('exist');
+
+    // If it's a topic, we need to make sure it's started and in 'running' state
+    // this is because 'pending' topic cannot be operated
+    cy.get('#paper').then(($paper) => {
+      if (kind === KIND.topic) {
+        cy.wrap($paper)
+          .findByText(name)
+          .prev('svg')
+          .find(`.${CELL_STATUS.running}`);
+      }
     });
 
-    // close this panel
+    // Collapse this panel
     cy.findByText(capitalize(kind)).click();
     cy.end();
+  });
+});
+
+Cypress.Commands.add('addElements', (elements) => {
+  cy.log('Adding multiple elements into Paper');
+
+  elements.forEach((element: ElementParameters) => {
+    cy.addElement(element);
+  });
+});
+
+Cypress.Commands.add('createConnections', (elementNames) => {
+  cy.log('Creating connection for multiple elements');
+
+  elementNames.forEach((elementName: string, i: number) => {
+    const nextElementName = elementNames[++i];
+
+    // Don't create a connection from last element
+    if (elementNames.length === i) return;
+
+    cy.log(`Connecting: ${elementName} -> ${nextElementName}`);
+
+    // Action
+    cy.getCell(elementName).trigger('mouseover');
+    cy.cellAction(elementName, CELL_ACTIONS.link).click();
+
+    // Create the link: currentElement -> nextElement
+    cy.getCell(nextElementName).click();
   });
 });
 

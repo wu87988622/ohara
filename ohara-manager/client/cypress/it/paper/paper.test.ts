@@ -17,12 +17,13 @@
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { KIND } from '../../../src/const';
+import { ElementParameters } from './../../support/customCommands';
+import { isShabondi } from '../../../src/components/Pipeline/PipelineUtils';
+import { CELL_ACTIONS } from '../../support/customCommands';
 import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
-import { isShabondi } from '../../../src/components/Pipeline/PipelineUtils';
-import { CELL_ACTIONS } from '../../support/customCommands';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -65,11 +66,11 @@ describe('Paper', () => {
       cy.get('#paper .connector').should('have.length', 0);
 
       // Add a SMB source
-      cy.addElement(
-        generate.serviceName({ prefix: 'source' }),
-        KIND.source,
-        SOURCES.smb,
-      );
+      cy.addElement({
+        name: generate.serviceName({ prefix: 'source' }),
+        kind: KIND.source,
+        className: SOURCES.smb,
+      });
 
       // Should have one connector in the Paper
       cy.get('#paper .connector').should('have.length', 1);
@@ -89,7 +90,11 @@ describe('Paper', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
 
       // Add a FTP source
-      cy.addElement(sourceName, KIND.source, SOURCES.ftp);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.ftp,
+      });
 
       // Should have one connector in the Paper
       cy.get('#paper .connector').should('have.length', 1);
@@ -98,11 +103,7 @@ describe('Paper', () => {
       cy.wait(1000);
 
       // Remove the source
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.remove).click();
-      cy.findByTestId('delete-dialog').within(() =>
-        cy.findByText(/^delete$/i).click(),
-      );
+      cy.removeElement(sourceName);
 
       // Wait until the changes are saved
       cy.wait(1000);
@@ -158,7 +159,7 @@ describe('Paper', () => {
       const topicName2 = 'T2';
 
       // Creating elements
-      const elements = [
+      const elements: ElementParameters[] = [
         {
           name: sourceName,
           kind: KIND.source,
@@ -178,41 +179,18 @@ describe('Paper', () => {
         },
       ];
 
-      elements.forEach((element) => {
-        const { name, kind, className } = element;
-        cy.addElement(name, kind, className);
-      });
+      cy.addElements(elements);
 
       // Ensure everything is added
       cy.get('#paper .paper-element').should('have.length', elements.length);
 
-      // Create connection
-      // source -> topic1
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-      cy.getCell(topicName1).click();
+      cy.createConnections(elements.map((el) => el.name));
 
-      // topic1 -> stream
-      cy.getCell(topicName1).trigger('mouseover');
-      cy.cellAction(topicName1, CELL_ACTIONS.link).click();
-      cy.getCell(streamName).click();
-
-      // Update property dialog form and close it
+      // Update stream and sink property dialog
       fillNodeName(streamName);
-
-      // stream -> topic2
-      cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, CELL_ACTIONS.link).click();
-      cy.getCell(topicName2).click();
-
-      // topic2 -> sink
-      cy.getCell(topicName2).trigger('mouseover');
-      cy.cellAction(topicName2, CELL_ACTIONS.link).click();
-      cy.getCell(sinkName).click();
-
-      // Update property dialog form and close it
       fillNodeName(sinkName);
 
+      // Start pipeline
       cy.findByTestId('pipeline-controls-button').click();
       cy.findByTestId('pipeline-controls-dropdown').within(() => {
         cy.findByText('Start all components').click();
@@ -227,7 +205,7 @@ describe('Paper', () => {
         .parent()
         .should('have.class', 'Mui-selected');
 
-      elements.forEach(({ name, kind, className }) => {
+      elements.forEach(({ name, kind, className = '' }) => {
         cy.getCell(name).click();
 
         cy.get('#dev-tool').within(() => {
@@ -272,16 +250,24 @@ function getLogType(kind: string, type: string) {
 }
 
 function createSourceAndTopic() {
-  // Create a Perf source and than a pipeline only topic
+  // Create a Perf source connector and a pipeline only topic
+  // then link them together
   const sourceName = generate.serviceName({ prefix: 'source' });
   const topicName = 'T1';
-  cy.addElement(sourceName, KIND.source, SOURCES.perf);
-  cy.addElement(topicName, KIND.topic);
+  const elements: ElementParameters[] = [
+    {
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.ftp,
+    },
+    {
+      name: topicName,
+      kind: KIND.topic,
+    },
+  ];
 
-  // Then, link Perf source and Topic together
-  cy.getCell(sourceName).trigger('mouseover');
-  cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-  cy.getCell(topicName).click();
+  cy.addElements(elements);
+  cy.createConnections([sourceName, topicName]);
 
   return { sourceName, topicName };
 }

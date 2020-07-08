@@ -34,6 +34,7 @@ import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
 import { sleep } from '../../src/utils/common';
 import { deleteAllServices, generateNodeIfNeeded } from '../utils';
+import { KIND } from '../../src/const';
 
 interface FixtureResponse {
   name: string;
@@ -41,6 +42,12 @@ interface FixtureResponse {
   file: File;
   group: string;
   tags?: object;
+}
+
+export interface ElementParameters {
+  name: string;
+  kind: KIND.stream | KIND.topic | KIND.source | KIND.sink | KIND.shabondi;
+  className?: string;
 }
 
 export enum SETTING_SECTIONS {
@@ -125,17 +132,15 @@ declare global {
         shiftY: number,
       ) => Chainable<JQuery<HTMLElement>>;
       addNode: () => Chainable<null>;
-      addElement: (
-        name: string,
-        kind: string,
-        className?: string,
-      ) => Chainable<null>;
+      addElement: (element: ElementParameters) => Chainable<null>;
+      addElements: (elements: ElementParameters[]) => Chainable<null>;
       removeElement: (name: string) => Chainable<null>;
       getCell: (name: string) => Chainable<HTMLElement>;
       cellAction: (
         name: string,
         action: CELL_ACTIONS,
       ) => Chainable<HTMLElement>;
+      createConnections: (elements: string[]) => Chainable<null>;
       uploadStreamJar: () => Chainable<null>;
       // Pipeline
       createPipeline: (name?: string) => Chainable<null>;

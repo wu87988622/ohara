@@ -15,9 +15,9 @@
  */
 
 import * as generate from '../../../src/utils/generate';
-import { CELL_ACTIONS } from '../../support/customCommands';
 import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
+import { ElementParameters } from './../../support/customCommands';
 import {
   SOURCES,
   SINKS,
@@ -52,7 +52,7 @@ describe('Paper Element connections', () => {
       const pipelineOnlyTopicName1 = 'T1';
       const pipelineOnlyTopicName2 = 'T2';
 
-      const elements = [
+      const elements: ElementParameters[] = [
         {
           name: perfSourceName,
           kind: KIND.source,
@@ -85,15 +85,11 @@ describe('Paper Element connections', () => {
         },
       ];
 
-      // Add to Paper
-      elements.forEach(({ name, kind, className }) => {
-        cy.addElement(name, kind, className);
-      });
+      // Add elements to Paper
+      cy.addElements(elements);
 
       // ⛔️ Cannot link two source connectors together: perfSource -> ftpSource
-      cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(ftpSourceName).click();
+      cy.createConnections([perfSourceName, ftpSourceName]);
       cy.findByText(`Target ${ftpSourceName} is a source!`)
         .should('exist')
         .siblings('div')
@@ -101,9 +97,7 @@ describe('Paper Element connections', () => {
         .click();
 
       // ⛔️ Cannot link two topics together: pipelineOnlyTopic1 -> pipelineOnlyTopic2
-      cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
-      cy.getCell(pipelineOnlyTopicName2).click();
+      cy.createConnections([pipelineOnlyTopicName1, pipelineOnlyTopicName2]);
       cy.findByText(
         `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
       )
@@ -113,20 +107,17 @@ describe('Paper Element connections', () => {
         .click();
 
       // Create a connection between PerfSource -> pipelineOnlyTopic1 -> hdfsSink
-      cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(pipelineOnlyTopicName1).click();
-      cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
-      cy.getCell(hdfsSinkName).click();
+      cy.createConnections([
+        perfSourceName,
+        pipelineOnlyTopicName1,
+        hdfsSinkName,
+      ]);
 
       // Should create two links
       cy.get('#paper .joint-link').should('have.length', 2);
 
       // ⛔️ Cannot link a source to a sink where the sink already has a connection: ftpSource -> hdfsSink
-      cy.getCell(ftpSourceName).trigger('mouseover');
-      cy.cellAction(ftpSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(hdfsSinkName).click();
+      cy.createConnections([ftpSourceName, hdfsSinkName]);
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
       )
@@ -136,9 +127,7 @@ describe('Paper Element connections', () => {
         .click();
 
       // ⛔️ Cannot link a topic to a sink where the sink already has a connection: pipelineOnlyTopic2 -> hdfsSink
-      cy.getCell(pipelineOnlyTopicName2).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName2, CELL_ACTIONS.link).click();
-      cy.getCell(hdfsSinkName).click();
+      cy.createConnections([pipelineOnlyTopicName2, hdfsSinkName]);
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
       )
@@ -153,7 +142,8 @@ describe('Paper Element connections', () => {
       const pipelineOnlyTopicName = 'T1';
       const smbSinkName = generate.serviceName({ prefix: 'sink' });
 
-      const elements = [
+      // Add elements
+      cy.addElements([
         {
           name: perfSourceName,
           kind: KIND.source,
@@ -169,20 +159,14 @@ describe('Paper Element connections', () => {
           kind: KIND.sink,
           className: SINKS.smb,
         },
-      ];
+      ]);
 
-      elements.forEach(({ name, kind, className }) => {
-        cy.addElement(name, kind, className);
-      });
-
-      // Create the connections
-      cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(pipelineOnlyTopicName).click();
-
-      cy.getCell(pipelineOnlyTopicName).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName, CELL_ACTIONS.link).click();
-      cy.getCell(smbSinkName).click();
+      // Create connections
+      cy.createConnections([
+        perfSourceName,
+        pipelineOnlyTopicName,
+        smbSinkName,
+      ]);
 
       cy.get('#paper .paper-element').should('have.length', 3);
       cy.get('#paper .joint-link').should('have.length', 2);
@@ -208,30 +192,49 @@ describe('Paper Element connections', () => {
       const streamName = generate.serviceName({ prefix: 'stream' });
       const pipelineOnlyTopicName2 = 'T2';
 
-      cy.addElement(perfSourceName, KIND.source, SOURCES.perf);
-      cy.addElement(ftpSourceName, KIND.source, SOURCES.ftp);
-      cy.addElement(consoleSinkName, KIND.sink, SINKS.console);
-      cy.addElement(hdfsSinkName, KIND.sink, SINKS.hdfs);
-      cy.addElement(pipelineOnlyTopicName1, KIND.topic);
-      cy.addElement(streamName, KIND.stream);
-      cy.addElement(pipelineOnlyTopicName2, KIND.topic);
+      cy.addElements([
+        {
+          name: perfSourceName,
+          kind: KIND.source,
+          className: SOURCES.perf,
+        },
+        {
+          name: ftpSourceName,
+          kind: KIND.source,
+          className: SOURCES.ftp,
+        },
+        {
+          name: consoleSinkName,
+          kind: KIND.sink,
+          className: SINKS.console,
+        },
+        {
+          name: hdfsSinkName,
+          kind: KIND.sink,
+          className: SINKS.hdfs,
+        },
+        {
+          name: pipelineOnlyTopicName1,
+          kind: KIND.topic,
+        },
+        {
+          name: streamName,
+          kind: KIND.stream,
+        },
+        {
+          name: pipelineOnlyTopicName2,
+          kind: KIND.topic,
+        },
+      ]);
 
-      // 1. perf source -> topic1 -> stream -> topic2 -> hdfs sink
-      cy.getCell(perfSourceName).trigger('mouseover');
-      cy.cellAction(perfSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(pipelineOnlyTopicName1).click();
-
-      cy.getCell(pipelineOnlyTopicName1).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName1, CELL_ACTIONS.link).click();
-      cy.getCell(streamName).click();
-
-      cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, CELL_ACTIONS.link).click();
-      cy.getCell(pipelineOnlyTopicName2).click();
-
-      cy.getCell(pipelineOnlyTopicName2).trigger('mouseover');
-      cy.cellAction(pipelineOnlyTopicName2, CELL_ACTIONS.link).click();
-      cy.getCell(hdfsSinkName).click();
+      //  perf source -> topic1 -> stream -> topic2 -> hdfs sink
+      cy.createConnections([
+        perfSourceName,
+        pipelineOnlyTopicName1,
+        streamName,
+        pipelineOnlyTopicName2,
+        hdfsSinkName,
+      ]);
 
       // Should create four links
       cy.get('#paper .joint-link').should('have.length', 4);
@@ -243,12 +246,20 @@ describe('Paper Element connections', () => {
       const shabondiSourceName = generate.serviceName({ prefix: 'source' });
       const hdfsSinkName = generate.serviceName({ prefix: 'sink' });
 
-      cy.addElement(shabondiSourceName, KIND.source, SOURCES.shabondi);
-      cy.addElement(hdfsSinkName, KIND.sink, SINKS.hdfs);
+      cy.addElements([
+        {
+          name: shabondiSourceName,
+          kind: KIND.source,
+          className: SOURCES.shabondi,
+        },
+        {
+          name: hdfsSinkName,
+          kind: KIND.sink,
+          className: SINKS.hdfs,
+        },
+      ]);
 
-      cy.getCell(shabondiSourceName).trigger('mouseover');
-      cy.cellAction(shabondiSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(hdfsSinkName).click();
+      cy.createConnections([shabondiSourceName, hdfsSinkName]);
 
       // It should automatically generate a "T1" topic and create two links
       cy.get('#paper').findByText('T1').should('exist');
@@ -259,12 +270,19 @@ describe('Paper Element connections', () => {
       const jdbcSourceName = generate.serviceName({ prefix: 'source' });
       const streamName = generate.serviceName({ prefix: 'stream' });
 
-      cy.addElement(jdbcSourceName, KIND.source, SOURCES.jdbc);
-      cy.addElement(streamName, KIND.stream, KIND.stream);
+      cy.addElements([
+        {
+          name: jdbcSourceName,
+          kind: KIND.source,
+          className: SOURCES.jdbc,
+        },
+        {
+          name: streamName,
+          kind: KIND.stream,
+        },
+      ]);
 
-      cy.getCell(jdbcSourceName).trigger('mouseover');
-      cy.cellAction(jdbcSourceName, CELL_ACTIONS.link).click();
-      cy.getCell(streamName).click();
+      cy.createConnections([jdbcSourceName, streamName]);
 
       // It should automatically generate a "T1" topic and create two links
       cy.get('#paper').findByText('T1').should('exist');
@@ -275,12 +293,19 @@ describe('Paper Element connections', () => {
       const streamName = generate.serviceName({ prefix: 'stream' });
       const shabondiSink = generate.serviceName({ prefix: 'source' });
 
-      cy.addElement(streamName, KIND.stream, KIND.stream);
-      cy.addElement(shabondiSink, KIND.sink, SINKS.shabondi);
+      cy.addElements([
+        {
+          name: streamName,
+          kind: KIND.stream,
+        },
+        {
+          name: shabondiSink,
+          kind: KIND.sink,
+          className: SINKS.shabondi,
+        },
+      ]);
 
-      cy.getCell(streamName).trigger('mouseover');
-      cy.cellAction(streamName, CELL_ACTIONS.link).click();
-      cy.getCell(shabondiSink).click();
+      cy.createConnections([streamName, shabondiSink]);
 
       // It should automatically generate a "T1" topic and create two links
       cy.get('#paper').findByText('T1').should('exist');

@@ -21,6 +21,7 @@ import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface'
 import { fetchPipeline } from '../../utils';
 import { hashByGroupAndName } from '../../../src/utils/sha';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
+import { ElementParameters } from './../../support/customCommands';
 import {
   SOURCES,
   SINKS,
@@ -60,25 +61,31 @@ describe('Elements', () => {
       const topicName = 'T1';
       const sinkName = generate.serviceName({ prefix: 'sink' });
 
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
-      cy.addElement(topicName, KIND.topic);
-      cy.addElement(sinkName, KIND.sink, SINKS.smb);
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCES.perf,
+        },
+        {
+          name: topicName,
+          kind: KIND.topic,
+        },
+        {
+          name: sinkName,
+          kind: KIND.sink,
+          className: SINKS.smb,
+        },
+      ]);
 
-      // Link them together, ftpSource -> topic
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-      cy.getCell(topicName).click();
-
-      // topic -> smbSink
-      cy.getCell(topicName).trigger('mouseover');
-      cy.cellAction(topicName, CELL_ACTIONS.link).click();
-      cy.getCell(sinkName).click();
+      cy.createConnections([sourceName, topicName, sinkName]);
 
       // Should have two links
       cy.get('#paper .joint-link').should('have.length', 2);
     });
 
     it('should able to start a connector', () => {
+      // Add elements into Paper and create connection
       const { sourceName } = createSourceAndTopic();
 
       // Start the connector
@@ -130,7 +137,12 @@ describe('Elements', () => {
     it('should able to open Property dialog', () => {
       // Create a source
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
+
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.perf,
+      });
 
       // The dialog title should not be visible
       cy.findByText(`Edit the property of ${sourceName}`).should(
@@ -152,17 +164,17 @@ describe('Elements', () => {
 
     it('should able to delete an element', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement(sourceName, KIND.source, SOURCES.jdbc);
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCES.jdbc,
+      });
 
       // Should exist after adding
       cy.get('#paper').findByText(sourceName).should('exist');
 
       // Delete it
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTIONS.remove).click();
-      cy.findByTestId('delete-dialog').within(() =>
-        cy.findByText(/^delete$/i).click(),
-      );
+      cy.removeElement(sourceName);
 
       // Should be gone after the deletion
       cy.get('#paper').findByText(sourceName).should('not.exist');
@@ -180,8 +192,19 @@ describe('Elements', () => {
       // Use a source and sink connector for the test
       const sourceName = generate.serviceName({ prefix: 'source' });
       const sinkName = generate.serviceName({ prefix: 'sink' });
-      cy.addElement(sourceName, KIND.source, SOURCES.perf);
-      cy.addElement(sinkName, KIND.sink, SINKS.hdfs);
+
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCES.perf,
+        },
+        {
+          name: sinkName,
+          kind: KIND.sink,
+          className: SINKS.hdfs,
+        },
+      ]);
 
       cy.get('#paper').within(() => {
         // Ensure the system under test are exist
@@ -226,7 +249,11 @@ describe('Elements', () => {
 
     it('should render stream element UI', () => {
       const streamName = generate.serviceName({ prefix: 'stream' });
-      cy.addElement(streamName, KIND.stream, SOURCES.perf);
+      cy.addElement({
+        name: streamName,
+        kind: KIND.stream,
+        className: SOURCES.perf,
+      });
 
       cy.get('#paper').within(() => {
         cy.get('.stream').should('have.length', 1);
@@ -255,8 +282,17 @@ describe('Elements', () => {
     it('should render topic element UI', () => {
       const pipelineOnlyTopicName = 'T1';
       // Test both pipeline only and shared topic
-      cy.addElement(sharedTopicName, KIND.topic);
-      cy.addElement(pipelineOnlyTopicName, KIND.topic);
+
+      cy.addElements([
+        {
+          name: sharedTopicName,
+          kind: KIND.topic,
+        },
+        {
+          name: pipelineOnlyTopicName,
+          kind: KIND.topic,
+        },
+      ]);
 
       cy.get('#paper').within(() => {
         cy.get('.topic').should('have.length', 2);
@@ -290,7 +326,9 @@ describe('Elements', () => {
 
       // TODO: refactor this to run without using `cy.addElement()` as the method
       // requires a topic name and doing too much in the background which makes our test unreal
-      topics.forEach((topic: string) => cy.addElement(topic, KIND.topic));
+      topics.forEach((topic: string) =>
+        cy.addElement({ name: topic, kind: KIND.topic }),
+      );
 
       cy.get('#paper').within(() => {
         cy.get('.topic').should('have.length', 3);
@@ -304,9 +342,23 @@ describe('Elements', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
       const sinkName = generate.serviceName({ prefix: 'sink' });
       const pipelineOnlyTopicName = 'T1';
-      cy.addElement(sourceName, KIND.source, SOURCES.smb);
-      cy.addElement(sinkName, KIND.sink, SINKS.ftp);
-      cy.addElement(pipelineOnlyTopicName, KIND.topic);
+
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCES.smb,
+        },
+        {
+          name: sinkName,
+          kind: KIND.sink,
+          className: SINKS.ftp,
+        },
+        {
+          name: pipelineOnlyTopicName,
+          kind: KIND.topic,
+        },
+      ]);
 
       // Testing source
       cy.getCell(sourceName).trigger('mouseover');
@@ -536,16 +588,24 @@ describe('Elements', () => {
 });
 
 function createSourceAndTopic() {
-  // Create a Perf source and than a pipeline only topic
+  // Create a Perf source connector and a pipeline only topic
+  // then link them together
   const sourceName = generate.serviceName({ prefix: 'source' });
   const topicName = 'T1';
-  cy.addElement(sourceName, KIND.source, SOURCES.perf);
-  cy.addElement(topicName, KIND.topic);
+  const elements: ElementParameters[] = [
+    {
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCES.ftp,
+    },
+    {
+      name: topicName,
+      kind: KIND.topic,
+    },
+  ];
 
-  // Then, link Perf source and Topic together
-  cy.getCell(sourceName).trigger('mouseover');
-  cy.cellAction(sourceName, CELL_ACTIONS.link).click();
-  cy.getCell(topicName).click();
+  cy.addElements(elements);
+  cy.createConnections([sourceName, topicName]);
 
   return { sourceName, topicName };
 }

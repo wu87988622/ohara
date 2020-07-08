@@ -15,12 +15,13 @@
  */
 
 import * as generate from '../../../src/utils/generate';
+import { ElementParameters } from './../../support/customCommands';
+import { KIND } from '../../../src/const';
+import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import {
   SOURCES,
   SINKS,
 } from '../../../src/api/apiInterface/connectorInterface';
-import { KIND } from '../../../src/const';
-import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 
 describe('Navigator', () => {
   const sharedTopicName = generate.serviceName({ prefix: 'topic' });
@@ -50,37 +51,32 @@ describe('Navigator', () => {
     });
 
     it('should render all Paper elements in the list', () => {
-      const elements = [
+      const elements: ElementParameters[] = [
         {
           name: generate.serviceName({ prefix: 'source' }),
           kind: KIND.source,
-          type: SOURCES.jdbc,
+          className: SOURCES.jdbc,
         },
         {
           name: generate.serviceName({ prefix: 'sink' }),
           kind: KIND.sink,
-          type: SINKS.hdfs,
+          className: SINKS.hdfs,
         },
         {
           name: sharedTopicName,
           kind: KIND.topic,
-          type: KIND.topic,
         },
         {
           name: 'T1',
           kind: KIND.topic,
-          type: KIND.topic,
         },
         {
           name: generate.serviceName({ prefix: 'stream' }),
           kind: KIND.stream,
-          type: KIND.stream,
         },
       ];
 
-      elements.forEach(({ name, kind, type }) => {
-        cy.addElement(name, kind, type);
-      });
+      cy.addElements(elements);
 
       cy.get('#outline').within(() => {
         cy.get('.list > li').should('have.length', elements.length);
@@ -96,8 +92,10 @@ describe('Navigator', () => {
       const source = generate.serviceName({ prefix: 'source' });
       const sink = generate.serviceName({ prefix: 'sink' });
 
-      cy.addElement(source, KIND.source, SOURCES.ftp);
-      cy.addElement(sink, KIND.sink, SINKS.ftp);
+      cy.addElements([
+        { name: source, kind: KIND.source, className: SOURCES.ftp },
+        { name: sink, kind: KIND.sink, className: SINKS.ftp },
+      ]);
 
       cy.get('#outline').within(() => {
         cy.findByText(source).click().should('have.class', 'is-selected');
