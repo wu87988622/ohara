@@ -30,7 +30,7 @@ import {
   toFormValues,
 } from 'components/Autofill/autofillUtils';
 
-const PipelinePropertySpeedDial = ({ formRef }) => {
+const PipelinePropertySpeedDial = ({ testId = 'speed-dialog', formRef }) => {
   const [isSeepDialOpen, setIsSeepDialOpen] = useState(false);
   const [isAutofillSelectorOpen, setIsAutofillSelectorOpen] = useState(false);
   const [isAutofillEditorOpen, setIsAutofillEditorOpen] = useState(false);
@@ -68,6 +68,7 @@ const PipelinePropertySpeedDial = ({ formRef }) => {
     <>
       <SpeedDial
         ariaLabel="Pipeline property speedDial"
+        data-testid={testId}
         direction="up"
         icon={<SpeedDialIcon />}
         onClose={handleClose}
@@ -103,6 +104,7 @@ const PipelinePropertySpeedDial = ({ formRef }) => {
 };
 
 PipelinePropertySpeedDial.propTypes = {
+  testId: PropTypes.string,
   formRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.any }),

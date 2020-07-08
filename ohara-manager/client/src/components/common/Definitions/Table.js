@@ -99,7 +99,7 @@ const Table = (props) => {
 
   const hasError = (meta.error && meta.touched) || (meta.error && meta.dirty);
   return (
-    <div ref={refs}>
+    <div data-testid="definition-table" ref={refs}>
       <MaterialTable
         columns={stateRef.current.columns}
         data={stateRef.current.data}

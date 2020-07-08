@@ -209,7 +209,7 @@ const PipelinePropertyDialog = (props) => {
     >
       <DialogTitle onClose={onClose} title={title} />
       <StyleMuiDialogContent dividers>
-        <LeftBody>
+        <LeftBody data-testid="sidebar">
           {
             // Unimplemented feature
             false && (
@@ -272,7 +272,7 @@ const PipelinePropertyDialog = (props) => {
             })}
           </div>
         </LeftBody>
-        <RightBody>
+        <RightBody data-testid="definition-content">
           <PipelinePropertyForm
             definitions={definitionsByGroup}
             freePorts={
