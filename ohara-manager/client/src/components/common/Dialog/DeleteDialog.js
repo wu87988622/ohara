@@ -95,7 +95,11 @@ const DeleteDialog = ({
       <div data-testid={testId}>
         <StyledDialogTitle disableTypography>
           <Typography variant="h3">{title}</Typography>
-          <IconButton className="close-button" onClick={onClose}>
+          <IconButton
+            className="close-button"
+            data-testid="close-button"
+            onClick={onClose}
+          >
             <CloseIcon />
           </IconButton>
         </StyledDialogTitle>

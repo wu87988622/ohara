@@ -543,6 +543,59 @@ describe('Toolbar', () => {
       });
     });
 
+    // Running services -> connectors, streams, shabondies.
+    it('should prevent users from deleting a pipeline if it has running services', () => {
+      const sourceName = generate.serviceName({ prefix: 'source' });
+      const pipelineOnlyTopicName = 'T1';
+
+      // Add a perf source connector and a pipeline-only topic
+      cy.addElements([
+        {
+          name: sourceName,
+          kind: KIND.source,
+          className: SOURCE.perf,
+        },
+        {
+          name: pipelineOnlyTopicName,
+          kind: KIND.topic,
+        },
+      ]);
+
+      // Create connection and start pipeline
+      cy.createConnections([sourceName, pipelineOnlyTopicName]);
+      cy.startPipeline('pipeline1');
+
+      // The connector should be running by now
+      cy.get('#paper')
+        .findByText(sourceName)
+        .parents('.connector')
+        .find('.status-value')
+        .should('have.text', CELL_STATUS.running);
+
+      // Try to delete it
+      cy.get('.pipeline-controls').find('button').click();
+      cy.findByText('Delete this pipeline').click();
+
+      // A dialog should be displayed and tell users to stop the pipeline before deleting
+      cy.findByTestId('delete-dialog')
+        .should('exist')
+        .within(() => {
+          // Assert dialog, title, message and button disable state
+          cy.findByText('Delete pipeline').should('exist');
+
+          cy.findByText(
+            'Oops, there are still some running services in pipeline1. You should stop them first and then you will be able to delete this pipeline.',
+          );
+
+          cy.findByText('DELETE')
+            .should('exist')
+            .parent('button')
+            .should('be.disabled');
+
+          cy.findByTestId('close-button').click();
+        });
+    });
+
     it('should able to delete a pipeline', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
       cy.addElement({
