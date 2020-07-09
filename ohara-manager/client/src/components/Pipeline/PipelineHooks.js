@@ -27,6 +27,7 @@ export const usePipelineState = () => {
     isToolboxOpen: true,
     toolboxKey: 0,
     isMetricsOn,
+    objects: [],
     toolboxExpanded: {
       topic: false,
       source: false,
@@ -65,6 +66,12 @@ export const usePipelineState = () => {
             ...payload,
           },
         };
+      case 'updateMetrics': {
+        return {
+          ...state,
+          objects: [...state.objects, ...payload],
+        };
+      }
       case 'resetToolboxExpanded':
         return {
           ...state,

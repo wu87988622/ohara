@@ -16,7 +16,14 @@
 
 import { ofType } from 'redux-observable';
 import { defer, timer, merge, from } from 'rxjs';
-import { switchMap, map, catchError, takeUntil, filter } from 'rxjs/operators';
+import {
+  switchMap,
+  map,
+  catchError,
+  ignoreElements,
+  takeUntil,
+  filter,
+} from 'rxjs/operators';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
@@ -40,10 +47,11 @@ export default (action$) =>
             }),
             map((res) => {
               const { objects } = res.data;
-              const { paperApi } = options;
-              if (paperApi) paperApi.updateMetrics(objects);
-              return actions.startUpdateMetrics.success(objects);
+              options.updatePipelineMetrics(objects);
             }),
+            // Don't dispatch an action from here. Doing so to prevent this epic from
+            // updating other components during metrics update
+            ignoreElements(),
           );
         }),
         takeUntil(

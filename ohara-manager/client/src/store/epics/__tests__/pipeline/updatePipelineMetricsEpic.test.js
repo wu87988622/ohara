@@ -28,9 +28,7 @@ import { LOG_LEVEL } from 'const';
 
 jest.mock('api/pipelineApi');
 
-const paperApi = {
-  updateMetrics: jest.fn(),
-};
+const updatePipelineMetrics = jest.fn();
 
 beforeEach(() => {
   jest.restoreAllMocks();
@@ -74,8 +72,8 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush, expectSubscriptions } = helpers;
 
-    const input = '   ^-a 20000ms                    (k|)';
-    const expected = '-- 6ms a 7999ms a 7999ms a 3994ms |';
+    const input = '   ^-a 20000ms (k|)';
+    const expected = '--  20001ms    |';
     const subs = ['^ 20002ms !', '--^ 20000ms !'];
 
     const action$ = hot(input, {
@@ -87,7 +85,7 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
             name: pipelineEntity.name,
           },
           options: {
-            paperApi,
+            updatePipelineMetrics,
           },
         },
       },
@@ -98,19 +96,16 @@ it('should start to update pipeline metrics and stop when a stop action is dispa
 
     const output$ = updatePipelineMetricsEpic(action$);
 
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.startUpdateMetrics.SUCCESS,
-        payload: objects,
-      },
-    });
+    expectObservable(output$).toBe(expected);
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
 
-    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(3);
-    expect(paperApi.updateMetrics).toHaveBeenCalledWith(objects);
+    // We fetch the data upon every 8 seconds, and the first time is fetched
+    // on epic startup, so there are 3 times of function calls 👇
+    expect(updatePipelineMetrics).toHaveBeenCalledTimes(3);
+    expect(updatePipelineMetrics).toHaveBeenCalledWith(objects);
   });
 });
 
@@ -158,7 +153,7 @@ it('should not trigger any actions when no running services found in the respons
             name: pipelineEntity.name,
           },
           options: {
-            paperApi,
+            updatePipelineMetrics,
           },
         },
       },
@@ -178,12 +173,17 @@ it('should not trigger any actions when no running services found in the respons
 
     flush();
 
-    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(0);
+    expect(updatePipelineMetrics).toHaveBeenCalledTimes(0);
   });
 });
 
-// TODO: Add new tests to test all of the actions that are able to stop this epic
-it('should stop the epic when a stop action is fired', () => {
+// These actions should all stop this epic from running
+it.each([
+  actions.switchPipeline.TRIGGER,
+  actions.deletePipeline.SUCCESS,
+  actions.stopUpdateMetrics.TRIGGER,
+  actions.startUpdateMetrics.FAILURE,
+])('should stop the epic when a (%s) action is fired', (actionType) => {
   const objects = [
     {
       kind: KIND.topic,
@@ -215,8 +215,8 @@ it('should stop the epic when a stop action is fired', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, flush, expectSubscriptions } = helpers;
 
-    const input = '   ^-a 10000ms           (k|)';
-    const expected = '-- 6ms a 7999ms a 1994ms |';
+    const input = '   ^-a 10000ms (k|)';
+    const expected = '--  10001ms    |';
     const subs = ['^ 10002ms !', '--^ 10000ms !'];
 
     const action$ = hot(input, {
@@ -228,30 +228,25 @@ it('should stop the epic when a stop action is fired', () => {
             name: pipelineEntity.name,
           },
           options: {
-            paperApi,
+            updatePipelineMetrics,
           },
         },
       },
       k: {
-        type: actions.startUpdateMetrics.FAILURE,
+        type: actionType,
       },
     });
 
     const output$ = updatePipelineMetricsEpic(action$);
 
-    expectObservable(output$).toBe(expected, {
-      a: {
-        type: actions.startUpdateMetrics.SUCCESS,
-        payload: objects,
-      },
-    });
+    expectObservable(output$).toBe(expected);
 
     expectSubscriptions(action$.subscriptions).toBe(subs);
 
     flush();
 
-    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(2);
-    expect(paperApi.updateMetrics).toHaveBeenCalledWith(objects);
+    expect(updatePipelineMetrics).toHaveBeenCalledTimes(2);
+    expect(updatePipelineMetrics).toHaveBeenCalledWith(objects);
   });
 });
 
@@ -280,7 +275,7 @@ it('should handle error', () => {
             name: pipelineEntity.name,
           },
           options: {
-            paperApi,
+            updatePipelineMetrics,
           },
         },
       },
@@ -306,6 +301,6 @@ it('should handle error', () => {
 
     flush();
 
-    expect(paperApi.updateMetrics).toHaveBeenCalledTimes(0);
+    expect(updatePipelineMetrics).toHaveBeenCalledTimes(0);
   });
 });

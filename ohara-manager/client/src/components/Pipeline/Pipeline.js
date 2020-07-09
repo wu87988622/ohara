@@ -160,9 +160,20 @@ const Pipeline = React.forwardRef((props, ref) => {
     if (!pipelineState.isMetricsOn) return;
 
     startUpdateMetrics(currentPipeline?.name, {
-      paperApi: paperApiRef.current,
+      updatePipelineMetrics: (objects) => {
+        // Updating Paper elements metrics
+        paperApiRef.current.updateMetrics(objects);
+
+        // Update Property view metrics panel
+        pipelineDispatch({ type: 'updateMetrics', payload: objects });
+      },
     });
-  }, [currentPipeline, pipelineState.isMetricsOn, startUpdateMetrics]);
+  }, [
+    currentPipeline,
+    pipelineDispatch,
+    pipelineState.isMetricsOn,
+    startUpdateMetrics,
+  ]);
 
   // Only run this once since we only want to load the graph once and maintain
   // the local state ever since
