@@ -44,7 +44,7 @@ it('start topic should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 499ms v';
+    const expected = '--a 99ms v';
     const subs = '    ^----------';
 
     const action$ = hot(input, {
@@ -161,7 +161,7 @@ it('start topic multiple times should be worked once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
+    const expected = '--a       99ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -211,7 +211,7 @@ it('start different topic should be worked correctly', () => {
       numberOfReplications: 3,
     };
     const input = '   ^-a--b           ';
-    const expected = '--a--b 496ms y--z';
+    const expected = '--a--b 96ms y--z';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {

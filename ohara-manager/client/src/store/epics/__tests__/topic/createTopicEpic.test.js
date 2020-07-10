@@ -38,7 +38,7 @@ it('should create a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
@@ -81,7 +81,7 @@ it('should create multiple topics', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
+    const expected = '--ab 98ms uv';
     const subs = '    ^-------------';
     const anotherTopicEntity = { ...topicEntity, name: 'topic2' };
 
@@ -147,7 +147,7 @@ it('create same topic within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a  ';
-    const expected = '--a 1999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {

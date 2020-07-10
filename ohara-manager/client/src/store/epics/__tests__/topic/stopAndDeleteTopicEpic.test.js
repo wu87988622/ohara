@@ -50,7 +50,7 @@ it('should able to stop and delete a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                      ';
-    const expected = '--a 499ms (mn) 996ms (vz)';
+    const expected = '--a 99ms (mn) 96ms (vz)';
     const subs = '    ^------------------------';
     const id = '1234';
 
@@ -207,7 +207,7 @@ it('should handle delete error', async () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                         ';
-    const expected = '--a 499ms (bcde) ';
+    const expected = '--a 99ms (bcde) ';
     const subs = '    ^---------------------------';
     const id = '1234';
 

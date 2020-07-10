@@ -51,7 +51,7 @@ it('should able to create and start a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                    ';
-    const expected = '--a 1999ms (mn) 496ms v';
+    const expected = '--a 99ms (mn) 96ms v';
     const subs = '    ^----------------------';
     const id = '1234';
 
@@ -205,7 +205,7 @@ it('should handle start error', async () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                         ';
-    const expected = '--a 1999ms (bc) 21996ms (de)';
+    const expected = '--a 99ms (bc) 21996ms (de)';
     const subs = '    ^---------------------------';
     const id = '1234';
 

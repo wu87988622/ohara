@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { Observable, defer, forkJoin, of, throwError, zip } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+/* eslint-disable no-throw-literal */
+import { Observable, defer, forkJoin, of } from 'rxjs';
+import { map, mergeMap, concatAll, last, tap } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { isEmpty } from 'lodash';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
-import { TopicData } from 'api/apiInterface/topicInterface';
+import { TopicData, TopicResponse } from 'api/apiInterface/topicInterface';
 import * as topicApi from 'api/topicApi';
 import { RETRY_CONFIG } from 'const';
 import { getKey } from 'utils/object';
@@ -40,57 +41,47 @@ export function fetchTopics(workspaceKey: ObjectKey): Observable<TopicData[]> {
   );
 }
 
-export function startTopic(key: ObjectKey): Observable<TopicData> {
-  return zip(
-    // attempt to start at intervals
+export function startTopic(key: ObjectKey) {
+  // try to start until the topic really started
+  return of(
     defer(() => topicApi.start(key)),
-    // wait until the service is running
     defer(() => topicApi.get(key)).pipe(
-      map((res: any) => {
-        if (res?.data?.state === 'RUNNING') return res.data;
-        throw res;
+      tap((res: TopicResponse) => {
+        if (res?.data?.state !== 'RUNNING') {
+          throw {
+            ...res,
+            title: `Failed to start topic ${key.name}: Unable to confirm the status of the topic is running`,
+          };
+        }
       }),
     ),
   ).pipe(
-    map(([, data]) => data),
-    // retry every 2 seconds, up to 10 times
+    concatAll(),
+    last(),
+    map((res) => res.data),
     retryBackoff(RETRY_CONFIG),
-    catchError((error) =>
-      throwError({
-        data: error?.data,
-        meta: error?.meta,
-        title:
-          `Try to start topic: "${key.name}" failed after retry ${RETRY_CONFIG.maxRetries} times. ` +
-          `Expected state: RUNNING, Actual state: ${error.data.state}`,
-      }),
-    ),
   );
 }
 
-export function stopTopic(key: ObjectKey): Observable<TopicData> {
-  return zip(
-    // attempt to stop at intervals
+export function stopTopic(key: ObjectKey) {
+  // try to stop until the topic really stopped
+  return of(
     defer(() => topicApi.stop(key)),
-    // wait until the service is not running
     defer(() => topicApi.get(key)).pipe(
-      map((res: any) => {
-        if (!res?.data?.state) return res.data;
-        throw res;
+      tap((res: TopicResponse) => {
+        if (res?.data?.state) {
+          throw {
+            ...res,
+            title: `Failed to stop topic ${key.name}: Unable to confirm the status of the topic is not running`,
+          };
+        }
       }),
     ),
   ).pipe(
-    map(([, data]) => data),
-    // retry every 2 seconds, up to 10 times
+    concatAll(),
+    last(),
+    map((res) => res.data),
     retryBackoff(RETRY_CONFIG),
-    catchError((error) =>
-      throwError({
-        data: error?.data,
-        meta: error?.meta,
-        title:
-          `Try to stop topic: "${key.name}" failed after retry ${RETRY_CONFIG.maxRetries} times. ` +
-          `Expected state is nonexistent, Actual state: ${error.data.state}`,
-      }),
-    ),
   );
 }
 
@@ -99,9 +90,7 @@ export function deleteTopic(key: ObjectKey) {
 }
 
 // Fetch and stop all topics for this workspace
-export function fetchAndStopTopics(
-  workspaceKey: ObjectKey,
-): Observable<TopicData[]> {
+export function fetchAndStopTopics(workspaceKey: ObjectKey) {
   return fetchTopics(workspaceKey).pipe(
     mergeMap((topics) => {
       if (isEmpty(topics)) return of(topics);
@@ -111,9 +100,7 @@ export function fetchAndStopTopics(
 }
 
 // Fetch and start all topics for this workspace
-export function fetchAndStartTopics(
-  workspaceKey: ObjectKey,
-): Observable<TopicData[]> {
+export function fetchAndStartTopics(workspaceKey: ObjectKey) {
   return fetchTopics(workspaceKey).pipe(
     mergeMap((topics) => {
       if (isEmpty(topics)) return of(topics);

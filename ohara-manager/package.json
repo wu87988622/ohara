@@ -47,7 +47,7 @@
     "format:check": "prettier --check \"**/*.*(js|ts|json|html|md)\"",
     "license:test": "cd .. && cross-env ./gradlew licenseTest",
     "license:apply": "cd .. && cross-env ./gradlew licenseApply",
-    "prepush": "run-s clean:files setup lint test license:apply format"
+    "prepush": "run-s clean:files setup lint test:unit:ci license:apply format"
   },
   "dependencies": {
     "axios": "0.19.2",

@@ -38,7 +38,7 @@ it('should delete a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    const expected = '--a 999ms (uv)';
+    const expected = '--a 99ms (uv)';
     const subs = '    ^--------------';
 
     const action$ = hot(input, {
@@ -79,7 +79,7 @@ it('should delete multiple topics', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
-    const expected = '--a---b 995ms (uv)(xy)';
+    const expected = '--a---b 95ms (uv)(xy)';
     const subs = '    ^---------------------';
     const anotherTopicEntity = { ...topicEntity, name: 'bk01' };
 
@@ -141,7 +141,7 @@ it('delete same topic within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a----';
-    const expected = '--a 999ms (uv)';
+    const expected = '--a 99ms (uv)';
     const subs = '    ^-------------';
 
     const action$ = hot(input, {
