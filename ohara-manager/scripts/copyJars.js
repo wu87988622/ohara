@@ -32,24 +32,28 @@ const filesExist = files.every((file) => fs.existsSync(`${distBase}/${file}`));
 if (!filesExist) {
   /* eslint-disable no-process-exit, no-console */
   (async function () {
-    try {
-      const value = await execa('./gradlew', ['ohara-it:jar'], {
-        cwd: '..',
-        stdio: 'inherit',
-      });
+    const args = process.argv.slice(2);
+    // Only rebuild the jars if not in QA
+    if (!args || args.shift() !== '--ci') {
+      try {
+        const value = await execa('./gradlew', ['ohara-it:jar'], {
+          cwd: '..',
+          stdio: 'inherit',
+        });
 
-      console.log(`build jars output: ${value.stdout}`);
-
-      if (!fs.existsSync(`${distBase}`)) {
-        fs.mkdirSync(`${distBase}`, { recursive: true });
+        console.log(`build jars output: ${value.stdout}`);
+      } catch (err) {
+        console.log(err.message);
+        process.exit(1);
       }
-
-      files.forEach((file) => {
-        fs.copyFileSync(`${srcBase}/${file}`, `${distBase}/${file}`);
-      });
-    } catch (err) {
-      console.log(err.message);
-      process.exit(1);
     }
+
+    if (!fs.existsSync(`${distBase}`)) {
+      fs.mkdirSync(`${distBase}`, { recursive: true });
+    }
+
+    files.forEach((file) => {
+      fs.copyFileSync(`${srcBase}/${file}`, `${distBase}/${file}`);
+    });
   })();
 }

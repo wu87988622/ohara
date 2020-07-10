@@ -114,9 +114,17 @@ const run = async (ci, apiRoot, serverPort = 5050, clientPort = 3000) => {
     await utils.waitOnService(`http://localhost:${clientPort}`);
   }
 
-  copyJars = execa('yarn', ['copy:jars'], {
-    stdio: 'inherit',
-  }); // We need these jars for test
+  copyJars = execa(
+    'yarn',
+    [
+      'copy:jars',
+      // indicate this command is running under QA mode
+      '--ci',
+    ],
+    {
+      stdio: 'inherit',
+    },
+  ); // We need these jars for test
   console.log('copyJars.pid', copyJars.pid);
   try {
     await copyJars;
