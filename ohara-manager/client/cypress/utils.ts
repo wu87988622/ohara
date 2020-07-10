@@ -323,8 +323,8 @@ export const deleteAllServices = async () => {
   };
 };
 
-export const fetchPipeline = (objectKey: ObjectKey) => {
-  return pipelineApi.get(objectKey).then((res) => res.data);
+export const fetchPipelines = () => {
+  return pipelineApi.getAll().then((res) => res.data);
 };
 
 export const fetchServices = (kind: KIND) => {

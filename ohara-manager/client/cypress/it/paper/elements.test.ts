@@ -18,11 +18,12 @@ import * as generate from '../../../src/utils/generate';
 import { CELL_ACTION } from '../../support/customCommands';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface';
-import { fetchPipeline } from '../../utils';
+import { fetchPipelines } from '../../utils';
 import { hashByGroupAndName } from '../../../src/utils/sha';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { ElementParameters } from './../../support/customCommands';
 import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
+import { PipelineRequest } from '../../../src/api/apiInterface/pipelineInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -465,16 +466,14 @@ describe('Elements', () => {
     });
   });
 
-  // TODO, move this to end-to-end tests as the scenario is hard to produce in fake configurator
-  context.skip('Elements when pending', () => {
+  context('Elements when pending', () => {
     it('should disable all action buttons', () => {
       cy.server();
       cy.route({
         method: 'PUT',
-        url: '/connectors/*',
-        status: 200,
+        url: 'api/connectors/*/start**',
         response: {},
-        delay: 2000,
+        delay: 1500,
       });
 
       const { sourceName } = createSourceAndTopic();
@@ -494,11 +493,22 @@ describe('Elements', () => {
           // All action are disabled right now
           expect($menu.find('.is-disabled').length).to.eq(5);
         });
+
+        // Wait until connector is not in pending state, and so we can manually stop it later
+        cy.findByText(sourceName).should(($source) => {
+          expect(
+            $source.parents('.connector').find('.status-value').text(),
+          ).not.to.eq(CELL_STATUS.pending);
+        });
       });
+
+      // Manually stop the connector, this ensures it gets the "stop" state and could be properly cleanup later
+      cy.getCell(sourceName).trigger('mouseover');
+      cy.cellAction(sourceName, CELL_ACTION.stop).click();
     });
   });
 
-  context('Elements when starting', () => {
+  context('Elements when started', () => {
     it('should disable some of the actions when running', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
@@ -527,37 +537,41 @@ describe('Elements', () => {
     });
   });
 
-  // TODO, move this to end-to-end tests as the scenario is hard to produce in fake configurator
-  context.skip('Elements when failed', () => {
+  context('Elements when failed', () => {
     it('should disable some of the actions when failed', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
       cy.cellAction(sourceName, CELL_ACTION.start).click();
 
       cy.wrap(null).then(async () => {
-        const pipelineData = await fetchPipeline(
-          hashByGroupAndName('workspace', 'workspace1'),
-        );
+        // There's only one pipeline in our env
+        const [pipelineData]: PipelineRequest[] = await fetchPipelines();
 
         cy.server();
-        cy.route('api/pipelines', {
-          ...(pipelineData as any)[0],
-          objects: [
-            (pipelineData as any)[0].objects.map((object: ObjectAbstract) => {
-              if (object.name === sourceName) {
-                return {
-                  ...object,
-                  state: 'FAILED',
-                };
-              }
+        cy.route({
+          method: 'GET',
+          url: 'api/pipelines',
+          response: [
+            {
+              ...pipelineData,
+              objects: pipelineData.objects.map((object: ObjectAbstract) => {
+                if (object.name === sourceName) {
+                  return {
+                    ...object,
+                    state: 'FAILED',
+                  };
+                }
 
-              return object;
-            }),
+                return object;
+              }),
+            },
           ],
         }).as('getPipelines');
 
         cy.reload();
         cy.wait('@getPipelines');
+
+        cy.findByText('pipeline1').should('exist');
 
         cy.get('#paper').within(() => {
           cy.findByText(sourceName).should(($source) => {
@@ -566,17 +580,17 @@ describe('Elements', () => {
 
             // Should be running
             expect($container.find('.status-value').text()).to.eq(
-              CELL_STATUS.running,
+              CELL_STATUS.failed,
             );
 
-            // Only stop action is not disabled
+            // Only start and stop actions are not disabled
             expect($menu.find('.link.is-disabled')).to.exist;
-            expect($menu.find('.start.is-disabled')).to.exist;
+            expect($menu.find('.start')).to.exist;
             expect($menu.find('.stop')).to.exist;
             expect($menu.find('.config.is-disabled')).to.exist;
             expect($menu.find('.remove.is-disabled')).to.exist;
 
-            expect($menu.find('.is-disabled').length).to.eq(4);
+            expect($menu.find('.is-disabled').length).to.eq(3);
           });
         });
       });

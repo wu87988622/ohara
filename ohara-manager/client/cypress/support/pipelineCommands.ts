@@ -51,13 +51,10 @@ Cypress.Commands.add('stopPipeline', (name) => {
 
   cy.get('#paper').then(($paper) => {
     // Topics are not included in the comparison as they will always be running in the UI
-    const noneTopicEls = $paper
-      .find('.paper-element')
-      .filter((_, el) => !el.classList.contains(KIND.topic));
-
+    const noneTopicEls = $paper.find('.paper-element').not('.topic');
     const runningElements = noneTopicEls.find('.running');
 
-    // // If there's no running els, we don't need to stop the pipeline
+    // If there's no running elements, no need to stop the pipeline
     if (noneTopicEls.length === 0 || runningElements.length === 0) return;
 
     cy.get('.pipeline-controls').find('button').click();
