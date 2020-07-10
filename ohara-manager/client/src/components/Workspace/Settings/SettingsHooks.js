@@ -75,6 +75,7 @@ export const useConfig = ({
   restartWorkspace,
   targetIsWorker,
   targetIsBroker,
+  targetIsWorkspace,
   workspace,
 }) => {
   const [isDeleteEnabled, setIsDeleteEnabled] = React.useState(false);
@@ -325,7 +326,10 @@ export const useConfig = ({
             children: restartConfirmMessage(),
             title: 'Are you absolutely sure?',
             confirmText: 'RESTART',
-            onConfirm: restartWorkspace,
+            onConfirm: () => {
+              restartWorkspace();
+              targetIsWorkspace();
+            },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
           },
