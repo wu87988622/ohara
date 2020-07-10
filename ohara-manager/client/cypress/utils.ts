@@ -417,8 +417,8 @@ export function generateNodeIfNeeded(): NodeRequest {
   const nodePass = Cypress.env('nodePass');
   return {
     hostname: nodeHost || generate.serviceName({ prefix: 'node' }),
-    port: nodePort || generate.port().toString(),
+    port: nodePort ? Number(nodePort) : generate.port(),
     user: nodeUser || generate.userName(),
     password: nodePass || generate.password(),
-  };
+  } as NodeRequest;
 }

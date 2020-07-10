@@ -108,7 +108,7 @@ const DeleteWorkspace = (props) => {
     },
     {
       name: 'delete workspace',
-      action: () => deleteWorkspace(),
+      action: () => deleteWorkspace(workspace?.name),
     },
   ];
 

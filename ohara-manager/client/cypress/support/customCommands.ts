@@ -22,6 +22,7 @@
 // unless you have a solution to resolve TypeScript + Coverage
 import '@testing-library/cypress/add-commands';
 
+import { some } from 'lodash';
 import * as connectorApi from '../../src/api/connectorApi';
 import {
   NodeRequest,
@@ -91,12 +92,15 @@ declare global {
       // Utils
       createJar: (file: FixtureRequest) => Promise<FixtureResponse>;
       createNode: (node?: NodeRequest) => Chainable<NodeRequest>;
+      createNodeIfNotExists: (node: NodeRequest) => Chainable<NodeResponse>;
       createWorkspace: ({
         workspaceName,
         node,
+        closeOnFailureOrFinish,
       }: {
         workspaceName?: string;
         node?: NodeRequest;
+        closeOnFailureOrFinish?: boolean;
       }) => Chainable<null>;
       produceTopicData: (
         workspaceName?: string,
@@ -131,7 +135,7 @@ declare global {
         shiftX: number,
         shiftY: number,
       ) => Chainable<JQuery<HTMLElement>>;
-      addNode: () => Chainable<null>;
+      addNode: (node?: NodeRequest) => Chainable<null>;
       addElement: (element: ElementParameters) => Chainable<null>;
       addElements: (elements: ElementParameters[]) => Chainable<null>;
       removeElement: (name: string) => Chainable<null>;
@@ -151,17 +155,10 @@ declare global {
         listItem?: string,
       ) => Chainable<null>;
       createSharedTopic: (name?: string) => Chainable<null>;
+      closeIntroDialog: () => Chainable<null>;
     }
   }
 }
-
-// if the Cypress.env is undefined and no node paramter specify
-// we generate random value for it
-let nodeHost =
-  Cypress.env('nodeHost') || generate.serviceName({ prefix: 'node' });
-let nodePort = Cypress.env('nodePort') || generate.port().toString();
-let nodeUser = Cypress.env('nodeUser') || generate.userName();
-let nodePass = Cypress.env('nodePass') || generate.password();
 
 const workspaceGroup = 'workspace';
 const workerGroup = 'worker';
@@ -220,44 +217,56 @@ Cypress.Commands.add(
   },
 );
 
+Cypress.Commands.add('createNodeIfNotExists', (nodeToCreate: NodeRequest) => {
+  cy.request('api/nodes')
+    .then((res) => res.body)
+    .then((nodes) => {
+      const isExist = some(nodes, {
+        hostname: nodeToCreate.hostname,
+      });
+      if (isExist) {
+        return cy.wrap(nodeToCreate);
+      } else {
+        // create if the node does not exist
+        cy.request('POST', 'api/nodes', nodeToCreate).then((createdNode) => {
+          return cy.wrap(createdNode);
+        });
+      }
+    });
+});
+
+Cypress.Commands.add('addNode', (node = generateNodeIfNeeded) => {
+  cy.get('body').then(($body) => {
+    // the node has not been added yet, added directly
+    if ($body.find(`td:contains(${node.hostname})`).length === 0) {
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(node.hostname);
+      cy.get('input[name=port]').type(String(node.port));
+      cy.get('input[name=user]').type(node.user);
+      cy.get('input[name=password]').type(node.password);
+      cy.findByText('CREATE').click();
+    }
+    cy.findByText(node.hostname)
+      .siblings('td')
+      .find('input[type="checkbox"]')
+      .click();
+    cy.findByText('SAVE').click();
+    cy.findAllByText('NEXT').filter(':visible').click();
+  });
+  cy.end();
+});
+
 Cypress.Commands.add(
   'createWorkspace',
   ({
     workspaceName,
-    node,
+    node = generateNodeIfNeeded(),
+    closeOnFailureOrFinish = true,
   }: {
     workspaceName?: string;
     node?: NodeRequest;
+    closeOnFailureOrFinish?: boolean;
   } = {}) => {
-    Cypress.Commands.add('addNode', () => {
-      // use passed node data if defined
-      if (node) {
-        nodeHost = node.hostname;
-        nodePort = node.port;
-        nodeUser = node.user;
-        nodePass = node.password;
-      }
-
-      cy.get('body').then(($body) => {
-        // the node has not been added yet, added directly
-        if ($body.find(`td:contains(${nodeHost})`).length === 0) {
-          cy.findByTitle('Create Node').click();
-          cy.get('input[name=hostname]').type(nodeHost);
-          cy.get('input[name=port]').type(nodePort);
-          cy.get('input[name=user]').type(nodeUser);
-          cy.get('input[name=password]').type(nodePass);
-          cy.findByText('CREATE').click();
-        }
-        cy.findByText(nodeHost)
-          .siblings('td')
-          .find('input[type="checkbox"]')
-          .click();
-        cy.findByText('SAVE').click();
-        cy.findAllByText('NEXT').filter(':visible').click();
-      });
-      cy.end();
-    });
-
     // Click the quickstart dialog
     cy.visit('/');
 
@@ -265,15 +274,10 @@ Cypress.Commands.add(
     // need to wait a little time for url applying
     cy.wait(1000);
 
-    cy.location().then((location) => {
-      if (location.pathname === '/') {
-        // first time in homepage, click quick create directly
-        cy.findByText('QUICK CREATE').should('exist').click();
-      } else {
-        cy.findByTitle('Create a new workspace').click();
-        cy.findByText('QUICK CREATE').should('exist').click();
-      }
-    });
+    cy.closeIntroDialog();
+
+    cy.findByTitle('Create a new workspace').click();
+    cy.findByText('QUICK CREATE').should('exist').click();
 
     // Step1: workspace name
     if (workspaceName) {
@@ -288,7 +292,7 @@ Cypress.Commands.add(
     // we wait a little time for the "click button" to be rendered
     cy.wait(1000);
     cy.contains('p:visible', 'Click here to select nodes').click();
-    cy.addNode();
+    cy.addNode(node);
 
     // Step3: create workspace
     cy.wait(1000);
@@ -297,25 +301,27 @@ Cypress.Commands.add(
     cy.findByTestId('create-workspace').should('be.visible');
     cy.findByTestId('stepper-close-button').should('be.visible');
 
-    // if the RETRY button is enabled, the task is stopped and has not been completed
-    cy.get('body').then(($body) => {
-      const $retryButton = $body.find(
-        'button[data-testid="stepper-retry-button"]',
-      );
-      if ($retryButton.filter(':visible').length > 0) {
-        // when we refresh the browser, the native alert should prompt
-        // TODO: assert the alert should be appears [Tracked by https://github.com/oharastream/ohara/issues/5381]
+    if (closeOnFailureOrFinish) {
+      // if the RETRY button is enabled, the task is stopped and has not been completed
+      cy.get('body').then(($body) => {
+        const $retryButton = $body.find(
+          'button[data-testid="stepper-retry-button"]',
+        );
+        if ($retryButton.filter(':visible').length > 0) {
+          // when we refresh the browser, the native alert should prompt
+          // TODO: assert the alert should be appears [Tracked by https://github.com/oharastream/ohara/issues/5381]
 
-        // when we click the CLOSE button, the ABORT confirm dialog should prompt
-        cy.findByTestId('stepper-close-button').click();
-        cy.findByTestId('abort-task-confirm-dialog').should('be.visible');
-        cy.findByTestId('confirm-button-ABORT').should('be.visible').click();
-      } else {
-        cy.findByTestId('stepper-close-button').click();
-      }
-    });
+          // when we click the CLOSE button, the ABORT confirm dialog should prompt
+          cy.findByTestId('stepper-close-button').click();
+          cy.findByTestId('abort-task-confirm-dialog').should('be.visible');
+          cy.findByTestId('confirm-button-ABORT').should('be.visible').click();
+        } else {
+          cy.findByTestId('stepper-close-button').click();
+        }
+      });
+      cy.findByTestId('create-workspace').should('not.be.visible');
+    }
 
-    cy.findByTestId('create-workspace').should('not.be.visible');
     cy.end();
   },
 );
@@ -482,3 +488,13 @@ Cypress.Commands.add(
     });
   },
 );
+
+Cypress.Commands.add('closeIntroDialog', () => {
+  // if the intro dialog appears, we should close it
+  cy.get('body').then(($body) => {
+    if ($body.find('[data-testid="intro-dialog"]').length > 0) {
+      cy.findByTestId('close-intro-button').filter(':visible').click();
+    }
+  });
+  return cy.end();
+});
