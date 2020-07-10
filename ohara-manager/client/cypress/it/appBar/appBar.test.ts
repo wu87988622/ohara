@@ -16,7 +16,6 @@
 
 import * as generate from '../../../src/utils/generate';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
-import { GROUP } from '../../../src/const';
 
 describe('App Bar', () => {
   before(() => cy.deleteAllServices());
@@ -173,15 +172,21 @@ describe('App Bar', () => {
     it('should have an event log when creating a workspace fails', () => {
       const workspaceName = 'workspace2';
 
-      cy.createNode().then((node) => {
-        // create a zookeeper by native api
-        cy.request('POST', 'api/zookeepers', {
-          name: workspaceName,
-          group: GROUP.ZOOKEEPER,
-          nodeNames: [node.hostname],
-        });
+      // mock the API to start a worker, return 400 error
+      cy.server();
+      cy.route({
+        method: 'PUT',
+        url: 'api/workers/*/start**',
+        status: 400,
+        response: {
+          code: 'java.lang.IllegalArgumentException',
+          message: `Does not have image:oharastream/connect-worker`,
+          stack: `mock stack`,
+        },
+      });
 
-        // Create a workspace
+      cy.createNode().then((node) => {
+        // create a workspace
         cy.createWorkspace({
           workspaceName,
           node,
@@ -190,6 +195,9 @@ describe('App Bar', () => {
         cy.findByTestId('close-intro-button').filter(':visible').click();
         cy.findByTitle('Event logs').click();
         cy.findByTestId('event-log-list').within(() => {
+          cy.findAllByText(
+            `Start workers "${workspaceName}" failed. --> Does not have image:oharastream/connect-worker`,
+          ).should('exist');
           cy.findAllByText(
             `Failed to create workspace ${workspaceName}.`,
           ).should('exist');

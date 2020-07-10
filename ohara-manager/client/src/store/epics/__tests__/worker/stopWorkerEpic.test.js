@@ -146,8 +146,8 @@ it('stop worker failed after reach retry limit', () => {
         payload: {
           workerId: wkId,
           data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
-          meta: undefined,
-          title: `Try to stop worker: "${workerEntity.name}" failed after retry 10 times. Expected state is nonexistent, Actual state: RUNNING`,
+          status: 200,
+          title: `Failed to stop worker ${workerEntity.name}: Unable to confirm the status of the worker is not running`,
         },
       },
       u: {
@@ -155,8 +155,8 @@ it('stop worker failed after reach retry limit', () => {
         payload: {
           workerId: wkId,
           data: { ...workerEntity, state: SERVICE_STATE.RUNNING },
-          meta: undefined,
-          title: `Try to stop worker: "${workerEntity.name}" failed after retry 10 times. Expected state is nonexistent, Actual state: RUNNING`,
+          status: 200,
+          title: `Failed to stop worker ${workerEntity.name}: Unable to confirm the status of the worker is not running`,
           type: LOG_LEVEL.error,
         },
       },

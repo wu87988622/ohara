@@ -60,7 +60,7 @@ export const create = (params: ServiceBody): Observable<ClusterResponse> =>
     status: 200,
     title: 'mock create zookeeper data',
     data: { ...(omit(runtimeData, 'state') as ClusterData), ...params },
-  }).pipe(delay(2000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 1s
 export const remove = (): Observable<BasicResponse> =>
@@ -68,7 +68,7 @@ export const remove = (): Observable<BasicResponse> =>
     status: 200,
     title: 'mock delete zookeeper data',
     data: {},
-  }).pipe(delay(1000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 500ms
 export const get = (params: ObjectKey): Observable<ClusterResponse> =>
@@ -76,7 +76,7 @@ export const get = (params: ObjectKey): Observable<ClusterResponse> =>
     status: 200,
     title: 'mock get zookeeper data',
     data: { ...entity, ...runtimeData, ...params },
-  }).pipe(delay(500));
+  }).pipe(delay(100));
 
 // this mock function is used for deleteWorkspaceEpic
 export const getAll = (): Observable<ClusterResponseList> =>
@@ -84,7 +84,7 @@ export const getAll = (): Observable<ClusterResponseList> =>
     status: 200,
     title: 'mock get all zookeeper data',
     data: [],
-  });
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: ServiceBody): Observable<ClusterResponse> =>
@@ -103,7 +103,7 @@ export const start = (): Observable<BasicResponse> =>
   }).pipe(
     // to simulate broker is "started" in fetch request
     tap(() => (runtimeData = { ...runtimeData, state: SERVICE_STATE.RUNNING })),
-    delay(10),
+    delay(100),
   );
 
 // simulate a promise request with a delay of 10ms
@@ -115,5 +115,5 @@ export const stop = (): Observable<BasicResponse> =>
   }).pipe(
     // to simulate broker is "stopped" in fetch request
     tap(() => delete runtimeData.state),
-    delay(10),
+    delay(100),
   );

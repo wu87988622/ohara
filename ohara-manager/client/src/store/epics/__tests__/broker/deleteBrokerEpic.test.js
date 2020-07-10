@@ -38,8 +38,8 @@ it('delete broker should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 999ms u';
-    const subs = ['   ^----------', '--^ 999ms !'];
+    const expected = '--a 99ms u';
+    const subs = ['   ^----------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -75,8 +75,8 @@ it('delete multiple brokers should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
-    const subs = ['   ^------------', '--^ 999ms !', '---^ 999ms !'];
+    const expected = '--ab 98ms uv';
+    const subs = ['   ^------------', '--^ 99ms !', '---^ 99ms !'];
     const anotherBrokerEntity = { ...brokerEntity, name: 'bk01' };
 
     const action$ = hot(input, {
@@ -129,8 +129,8 @@ it('delete same broker within period should be deleted once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a---';
-    const expected = '--a 999ms u--';
-    const subs = ['   ^------------', '--^ 999ms !'];
+    const expected = '--a 99ms u--';
+    const subs = ['   ^------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {

@@ -43,8 +43,8 @@ it('create zookeeper should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    const expected = '--a 1999ms (bu)';
-    const subs = ['   ^--------------', '--^ 1999ms !'];
+    const expected = '--a 99ms (bu)';
+    const subs = ['   ^--------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -100,11 +100,11 @@ it('create multiple zookeepers should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b                ';
-    const expected = '--a---b 1995ms (xu)(yv)';
+    const expected = '--a---b 95ms (xu)(yv)';
     const subs = [
       '               ^----                  ',
-      '               --^---- 1995ms !       ',
-      '               ------^---- 1995ms !   ',
+      '               --^---- 95ms !       ',
+      '               ------^---- 95ms !   ',
     ];
     const anotherZookeeperEntity = { ...zookeeperEntity, name: 'zk01' };
 
@@ -186,8 +186,8 @@ it('create same zookeeper within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a       ';
-    const expected = '--a 1999ms (bu)--';
-    const subs = ['    ^---------------', '--^ 1999ms !'];
+    const expected = '--a 99ms (bu)--';
+    const subs = ['    ^---------------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {

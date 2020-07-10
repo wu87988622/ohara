@@ -15,6 +15,7 @@
  */
 
 import { of, throwError } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 import { times } from 'lodash';
 
@@ -47,7 +48,7 @@ it('get zookeeper should be worked correctly', () => {
   makeTestScheduler().run(({ expectObservable }) => {
     const params = { group: zookeeperEntity.group, name: zookeeperEntity.name };
 
-    const expected = '- 499ms (v|)';
+    const expected = '100ms (v|)';
 
     const output$ = fetchZookeeper(params);
 
@@ -78,15 +79,21 @@ it('start zookeeper should run in two minutes', () => {
     jest.restoreAllMocks();
     const spyStart = jest.spyOn(zookeeperApi, 'start');
     const spyGet = jest.spyOn(zookeeperApi, 'get');
-    times(5, () => spyGet.mockReturnValueOnce(of(RESPONSES.success)));
-    spyGet.mockReturnValueOnce(of(RESPONSES.successWithRunning));
+    times(5, () =>
+      spyGet.mockReturnValueOnce(of(RESPONSES.success).pipe(delay(100))),
+    );
+    spyGet.mockReturnValueOnce(
+      of(RESPONSES.successWithRunning).pipe(delay(100)),
+    );
 
     const params = {
       group: zookeeperEntity.group,
       name: zookeeperEntity.name,
     };
 
-    const expected = '10s 10ms (v|)';
+    // start 6 times, get 6 times, retry 5 times
+    // => 100 * 6 + 100 * 6 + 2000 * 5 = 11200ms
+    const expected = '11200ms (v|)';
 
     const output$ = startZookeeper(params, true);
 

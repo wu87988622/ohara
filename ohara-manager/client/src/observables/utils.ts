@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
+import { has } from 'lodash';
+import { SERVICE_STATE, ClusterData } from 'api/apiInterface/clusterInterface';
 
 export function isServiceRunning(res: any) {
   return res?.data?.state === SERVICE_STATE.RUNNING;
+}
+
+export function isServiceStarted(data: ClusterData) {
+  return data.state === SERVICE_STATE.RUNNING;
+}
+
+export function isServiceStopped(data: ClusterData) {
+  return !has(data, 'state');
 }

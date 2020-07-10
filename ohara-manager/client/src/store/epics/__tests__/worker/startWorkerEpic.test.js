@@ -154,8 +154,8 @@ it('start worker failed after reach retry limit', () => {
         payload: {
           workerId: wkId,
           data: workerEntity,
-          meta: undefined,
-          title: `Try to start worker: "${workerEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start worker ${workerEntity.name}: Unable to confirm the status of the worker is running`,
         },
       },
       u: {
@@ -163,8 +163,8 @@ it('start worker failed after reach retry limit', () => {
         payload: {
           workerId: wkId,
           data: workerEntity,
-          meta: undefined,
-          title: `Try to start worker: "${workerEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start worker ${workerEntity.name}: Unable to confirm the status of the worker is running`,
           type: LOG_LEVEL.error,
         },
       },

@@ -17,6 +17,7 @@
 import { omit } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
 import { of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 
 import startBrokerEpic from '../../broker/startBrokerEpic';
 import * as brokerApi from 'api/brokerApi';
@@ -48,8 +49,8 @@ it('start broker should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 499ms v';
-    const subs = ['   ^----------', '--^ 499ms !'];
+    const expected = '--a 199ms v';
+    const subs = ['   ^----------', '--^ 199ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -109,7 +110,7 @@ it('start broker failed after reach retry limit', () => {
         status: 200,
         title: 'retry mock get data',
         data: { ...omit(brokerEntity, 'state') },
-      }),
+      }).pipe(delay(100)),
     );
   }
   // get result finally
@@ -118,7 +119,7 @@ it('start broker failed after reach retry limit', () => {
       status: 200,
       title: 'retry mock get data',
       data: { ...brokerEntity, state: SERVICE_STATE.RUNNING },
-    }),
+    }).pipe(delay(100)),
   );
   const mockResolve = jest.fn();
   const mockReject = jest.fn();
@@ -127,9 +128,10 @@ it('start broker failed after reach retry limit', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a              ';
-    // we failed after retry 10 times (10 * 2000ms = 20s)
-    const expected = '--a  19999ms (vu)';
-    const subs = ['   ^---------------', '--^ 19999ms !'];
+    // stop 11 times, get 11 times, retry 10 times
+    // => 100 * 11 + 100 * 11 + 2000 * 10 = 22200ms
+    const expected = '--a 22199ms (vu)';
+    const subs = ['   ^---------------', '--^ 22199ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -155,8 +157,8 @@ it('start broker failed after reach retry limit', () => {
         payload: {
           brokerId: bkId,
           data: brokerEntity,
-          meta: undefined,
-          title: `Try to start broker: "${brokerEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start broker ${brokerEntity.name}: Unable to confirm the status of the broker is running`,
         },
       },
       u: {
@@ -164,8 +166,8 @@ it('start broker failed after reach retry limit', () => {
         payload: {
           brokerId: bkId,
           data: brokerEntity,
-          meta: undefined,
-          title: `Try to start broker: "${brokerEntity.name}" failed after retry 10 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start broker ${brokerEntity.name}: Unable to confirm the status of the broker is running`,
           type: LOG_LEVEL.error,
         },
       },
@@ -185,8 +187,8 @@ it('start broker multiple times should be executed once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
-    const subs = ['   ^----------------', '--^ 499ms !'];
+    const expected = '--a       199ms v';
+    const subs = ['   ^----------------', '--^ 199ms !'];
 
     const action$ = hot(input, {
       a: {
@@ -239,8 +241,8 @@ it('start different broker should be worked correctly', () => {
       clientPort: 3333,
     };
     const input = '   ^-a--b           ';
-    const expected = '--a--b 496ms y--z';
-    const subs = ['   ^----------------', '--^ 499ms !', '-----^ 499ms !'];
+    const expected = '--a--b 196ms y--z';
+    const subs = ['   ^----------------', '--^ 199ms !', '-----^ 199ms !'];
 
     const action$ = hot(input, {
       a: {
