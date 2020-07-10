@@ -48,6 +48,7 @@ const Settings = () => {
   const restartWorkspace = () => setIsWorkspaceRestarting(true);
   const targetIsWorker = () => setRestartService(KIND.worker);
   const targetIsBroker = () => setRestartService(KIND.broker);
+  const targetIsWorkspace = () => setRestartService(KIND.workspace);
 
   const resetSelectedItem = () => {
     setSelectedComponent(null);
@@ -58,6 +59,7 @@ const Settings = () => {
     restartWorkspace,
     targetIsWorker,
     targetIsBroker,
+    targetIsWorkspace,
     restartConfirmMessage: (kind) => hooks.useRestartConfirmMessage(kind),
     hasRunningServices,
     workspace,
@@ -134,8 +136,9 @@ const Settings = () => {
           restartWorkspace={restartWorkspace}
           sections={sections}
           selectedComponent={selectedComponent}
-          targetIsBroker={targetIsWorker}
+          targetIsBroker={targetIsBroker}
           targetIsWorker={targetIsWorker}
+          targetIsWorkspace={targetIsWorkspace}
         />
         <RestartWorkspace
           isOpen={isWorkspaceRestarting}

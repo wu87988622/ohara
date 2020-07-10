@@ -63,7 +63,7 @@ const RestartWorkspace = (props) => {
           ...workspace.worker,
           tags: omit(worker, ['tags']),
         }),
-      revertAction: () => updateWorkerAction({ ...worker.tags }),
+      revertAction: () => updateWorkerAction({ ...worker }),
     };
     const stopTopic = {
       name: 'stop topic',
@@ -82,7 +82,7 @@ const RestartWorkspace = (props) => {
           ...workspace.broker,
           tags: omit(broker, ['tags']),
         }),
-      revertAction: () => updateBrokerAction({ ...broker.tags }),
+      revertAction: () => updateBrokerAction({ ...broker }),
     };
     const stopZookeeper = {
       name: 'stop zookeeper',
@@ -96,7 +96,7 @@ const RestartWorkspace = (props) => {
           ...workspace.zookeeper,
           tags: omit(zookeeper, ['tags']),
         }),
-      revertAction: () => updateZookeeperAction({ ...zookeeper.tags }),
+      revertAction: () => updateZookeeperAction({ ...zookeeper }),
     };
     const startZookeeper = {
       name: 'start zookeeper',

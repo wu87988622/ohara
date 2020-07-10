@@ -35,6 +35,7 @@ const SettingsMain = ({
   restartWorkspace,
   targetIsBroker,
   targetIsWorker,
+  targetIsWorkspace,
 }) => {
   const isDialog = selectedComponent?.type === SETTINGS_COMPONENT_TYPE.DIALOG;
   const sectionWrapperCls = cx('section-wrapper', {
@@ -60,6 +61,8 @@ const SettingsMain = ({
   } else if (shouldBeRestartBroker && !shouldBeRestartZookeeper) {
     kind = KIND.broker;
     targetIsBroker();
+  } else {
+    targetIsWorkspace();
   }
 
   const restartConfirmMessage = hooks.useRestartConfirmMessage(kind);
@@ -130,6 +133,7 @@ SettingsMain.propTypes = {
   restartWorkspace: PropTypes.func.isRequired,
   targetIsBroker: PropTypes.func.isRequired,
   targetIsWorker: PropTypes.func.isRequired,
+  targetIsWorkspace: PropTypes.func.isRequired,
 };
 
 SettingsMain.defaultProps = {
