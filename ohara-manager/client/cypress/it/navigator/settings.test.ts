@@ -129,7 +129,7 @@ describe('Navigator', () => {
   });
 
   context('Topics Settings', () => {
-    it('should have no topics initially', () => {
+    it('should have no topics when page loaded', () => {
       cy.switchSettingSection(SETTING_SECTION.topics);
 
       // there should not have any topic initially
@@ -1333,6 +1333,33 @@ describe('Navigator', () => {
         .within(() => {
           cy.findByText('RESTART').click();
         });
+    });
+
+    it('delete a workspace of workspace list normally should be worked and switch to head workspace', () => {
+      // Remove all workspaces and create our own to ensure the data are as expected
+      cy.deleteAllServices();
+      cy.createWorkspace({ workspaceName: 'workspace1' });
+      cy.createWorkspace({ workspaceName: 'workspace2' });
+
+      // Switch to workspace1
+      cy.findByTitle('workspace1').click();
+
+      // Open settings
+      cy.findByText('workspace1').click();
+      cy.contains('li', 'Settings').click();
+
+      // Delete the workspace
+      cy.findByText('Delete this workspace').click();
+      cy.findByPlaceholderText('workspace1').type('workspace1');
+      cy.findByText('DELETE').click();
+
+      // It should be deleted from the list
+      cy.findAllByTitle('workspace1').should('not.exist');
+      cy.findAllByText(/^WO$/).should('have.length', 1);
+
+      // We're not in workspace2
+      cy.findByText('workspace2').should('exist');
+      cy.location('pathname').should('eq', '/workspace2');
     });
   });
 });

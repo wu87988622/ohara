@@ -72,6 +72,67 @@ describe('Create Workspace', () => {
         .should('equal', nodeHost);
     });
 
+    it('should able to selected and filtered node', () => {
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname1 = generate.serviceName();
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname1);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname1).should('exist');
+
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname2 = generate.serviceName();
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname2);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname2).should('exist');
+
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname3 = `${hostname1}${generate.serviceName()}`;
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname3);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname3).should('exist');
+
+      cy.visit('/');
+      cy.findByText(/^quick create$/i)
+        .should('exist')
+        .click();
+
+      // Step1: workspace name (using default)
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // Since Unavailable node could not be selected
+      // We check the existence only
+      cy.findByText('Click here to select nodes').click();
+      cy.findByText(hostname1).should('exist');
+      cy.findByText(hostname2).should('exist');
+      cy.findByText(hostname3).should('exist');
+
+      // filter by hostname
+      cy.findAllByPlaceholderText('Search').filter(':visible').type(hostname2);
+      cy.findByText(hostname1).should('not.exist');
+      cy.findByText(hostname3).should('not.exist');
+    });
+
     it('should reset the form after create workspace successfully', () => {
       cy.createWorkspace({ workspaceName });
 

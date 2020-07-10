@@ -83,7 +83,47 @@ describe('App Bar', () => {
       cy.findByText(hostname).should('not.exist');
     });
 
-    it('should not able to remove an in use node', () => {
+    it('filter nodes should be work', () => {
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname1 = generate.serviceName();
+      cy.findByTitle('Create Node').should('be.visible').click();
+      cy.get('input[name=hostname]').type(hostname1);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname1).should('be.visible');
+
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname2 = generate.serviceName();
+      cy.findByTitle('Create Node').should('be.visible').click();
+      cy.get('input[name=hostname]').type(hostname2);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname2).should('be.visible');
+
+      cy.findAllByPlaceholderText('Search').filter(':visible').type(hostname2);
+
+      cy.findByText(hostname1).should('not.exist');
+      cy.findByText(hostname2).should('exist');
+
+      cy.findAllByPlaceholderText('Search')
+        .filter(':visible')
+        .clear()
+        .type('fake');
+
+      cy.findByText(hostname1).should('not.exist');
+      cy.findByText(hostname2).should('not.exist');
+    });
+
+    it(`should not able to remove a node which is already in use`, () => {
       const node = {
         hostname: generate.serviceName(),
         port: generate.port(),
@@ -96,8 +136,9 @@ describe('App Bar', () => {
 
       // click node list
       cy.findByTitle(/node list/i).click();
-      // Since the node we use for creating services
-      // it could not be removed
+
+      // Since the node is being used by workspace1
+      // it could not be removed at the moment
       cy.findByTestId(`delete-node-${node.hostname}`).should('not.be.visible');
       cy.findByTitle(
         'Cannot remove a node which has services running in it',

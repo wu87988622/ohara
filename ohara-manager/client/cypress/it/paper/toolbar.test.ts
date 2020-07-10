@@ -668,7 +668,7 @@ describe('Toolbar', () => {
         .find('.status-value')
         .should('have.text', CELL_STATUS.running);
 
-      // Checked
+      // Enable metrics
       cy.findByTestId('metrics-switch')
         .click()
         .should('have.class', 'Mui-checked');
