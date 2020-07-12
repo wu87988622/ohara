@@ -22,7 +22,6 @@ import devToolEpics from './devTool';
 import connectorEpics from './connector';
 import eventLogEpics from './eventLog';
 import fileEpics from './file';
-import logProgressEpics from './logProgress';
 import nodeEpics from './nodeEpics';
 import pipelineEpics from './pipeline';
 import shabondiEpics from './shabondi';
@@ -40,7 +39,6 @@ export default combineEpics(
   connectorEpics,
   eventLogEpics,
   fileEpics,
-  logProgressEpics,
   nodeEpics,
   shabondiEpics,
   streamEpics,

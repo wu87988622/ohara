@@ -17,8 +17,6 @@
 import Action from './Action';
 import Actions from './Actions';
 import Table from './Table';
-import SortTable from './SortTable';
-import SelectTable from './SelectTable';
 import MuiTable from './MuiTable';
 
-export { Action, Actions, Table, SortTable, SelectTable, MuiTable };
+export { Action, Actions, Table, MuiTable };
