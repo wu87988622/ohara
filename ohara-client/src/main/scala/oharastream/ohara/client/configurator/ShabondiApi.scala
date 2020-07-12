@@ -33,9 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ShabondiApi {
   val KIND: String = SettingDef.Reference.SHABONDI.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val SHABONDI_PREFIX_PATH = "shabondis"
+  val PREFIX       = "shabondis"
 
   val SHABONDI_SOURCE_CLASS: Class[ShabondiSource] = classOf[ShabondiSource]
   val SHABONDI_SOURCE_CLASS_NAME: String           = SHABONDI_SOURCE_CLASS.getName
@@ -183,7 +181,7 @@ object ShabondiApi {
     def update()(implicit executionContext: ExecutionContext): Future[ShabondiClusterInfo]
   }
 
-  final class Access private[ShabondiApi] extends ClusterAccess[Creation, Updating, ShabondiClusterInfo](KIND) {
+  final class Access private[ShabondiApi] extends ClusterAccess[Creation, Updating, ShabondiClusterInfo](PREFIX) {
     override def query: Query[ShabondiClusterInfo] = new Query[ShabondiClusterInfo] {
       override protected def doExecute(
         request: QueryRequest

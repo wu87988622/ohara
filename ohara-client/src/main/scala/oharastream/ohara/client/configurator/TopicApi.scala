@@ -33,14 +33,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 object TopicApi {
-  val KIND: String = SettingDef.Reference.TOPIC.name().toLowerCase
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val TOPICS_PREFIX_PATH: String = "topics"
+  val KIND: String               = SettingDef.Reference.TOPIC.name().toLowerCase
+  val PREFIX: String             = "topics"
   val BROKER_CLUSTER_KEY_KEY     = "brokerClusterKey"
   val NUMBER_OF_PARTITIONS_KEY   = "numberOfPartitions"
   val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-  val SEGMENT_BYTES_KEY          = TopicConfig.SEGMENT_BYTES_CONFIG
-  val SEGMENT_MS_KEY             = TopicConfig.SEGMENT_MS_CONFIG
+  val SEGMENT_BYTES_KEY: String  = TopicConfig.SEGMENT_BYTES_CONFIG
+  val SEGMENT_MS_KEY: String     = TopicConfig.SEGMENT_MS_CONFIG
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -330,7 +329,7 @@ object TopicApi {
   }
 
   class Access private[configurator]
-      extends oharastream.ohara.client.configurator.Access[Creation, Updating, TopicInfo](KIND) {
+      extends oharastream.ohara.client.configurator.Access[Creation, Updating, TopicInfo](PREFIX) {
     def start(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, START_COMMAND)
     def stop(key: TopicKey)(implicit executionContext: ExecutionContext): Future[Unit]  = put(key, STOP_COMMAND)
 

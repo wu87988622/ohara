@@ -79,7 +79,7 @@ object ValidationApi {
     override def connectorRequest: ConnectorRequest = new ConnectorRequest {
       override def verify()(implicit executionContext: ExecutionContext): Future[SettingInfo] =
         exec.put[oharastream.ohara.client.configurator.ConnectorApi.Creation, SettingInfo, ErrorApi.Error](
-          s"$url/${ConnectorApi.KIND}",
+          s"$url/${ConnectorApi.PREFIX}",
           creation
         )
     }

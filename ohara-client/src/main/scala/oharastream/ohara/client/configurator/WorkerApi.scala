@@ -28,10 +28,8 @@ import spray.json.{JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonForma
 
 import scala.concurrent.{ExecutionContext, Future}
 object WorkerApi {
-  val KIND: String = SettingDef.Reference.WORKER.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val WORKER_PREFIX_PATH: String = "workers"
+  val KIND: String   = SettingDef.Reference.WORKER.name().toLowerCase
+  val PREFIX: String = "workers"
 
   /**
     * the default docker image used to run containers of worker cluster
@@ -369,7 +367,7 @@ object WorkerApi {
     def update()(implicit executionContext: ExecutionContext): Future[WorkerClusterInfo]
   }
 
-  final class Access private[WorkerApi] extends ClusterAccess[Creation, Updating, WorkerClusterInfo](KIND) {
+  final class Access private[WorkerApi] extends ClusterAccess[Creation, Updating, WorkerClusterInfo](PREFIX) {
     override def query: Query[WorkerClusterInfo] = new Query[WorkerClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

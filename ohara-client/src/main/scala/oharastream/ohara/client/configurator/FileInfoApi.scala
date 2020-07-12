@@ -32,10 +32,8 @@ import spray.json.{JsObject, JsString, JsValue, RootJsonFormat, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 object FileInfoApi {
-  val KIND: String = SettingDef.Reference.FILE.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val FILE_PREFIX_PATH: String = "files"
+  val KIND: String   = SettingDef.Reference.FILE.name().toLowerCase
+  val PREFIX: String = "files"
 
   /**
     * the key used in formData to point out the data.
@@ -251,7 +249,7 @@ object FileInfoApi {
     ): Future[FileInfo]
   }
 
-  final class Access private[configurator] extends BasicAccess(KIND) {
+  final class Access private[configurator] extends BasicAccess(PREFIX) {
     def list()(implicit executionContext: ExecutionContext): Future[Seq[FileInfo]] =
       exec.get[Seq[FileInfo], ErrorApi.Error](url)
 

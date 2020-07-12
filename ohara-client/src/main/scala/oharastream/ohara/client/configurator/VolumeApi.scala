@@ -28,7 +28,8 @@ import spray.json.{JsString, JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 object VolumeApi {
-  val KIND: String = SettingDef.Reference.VOLUME.name().toLowerCase
+  val KIND: String   = SettingDef.Reference.VOLUME.name().toLowerCase
+  val PREFIX: String = "volumes"
 
   final case class Creation(
     override val group: String,
@@ -175,7 +176,7 @@ object VolumeApi {
   }
 
   class Access private[configurator]
-      extends oharastream.ohara.client.configurator.Access[Creation, Updating, Volume](KIND) {
+      extends oharastream.ohara.client.configurator.Access[Creation, Updating, Volume](PREFIX) {
     /**
       * start to deploy the volume on specify nodes
       * @param key object key

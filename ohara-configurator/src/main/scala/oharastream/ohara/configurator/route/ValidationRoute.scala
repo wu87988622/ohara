@@ -34,7 +34,7 @@ private[configurator] object ValidationRoute {
     executionContext: ExecutionContext
   ): server.Route =
     pathPrefix(VALIDATION_KIND) {
-      path(ConnectorApi.KIND) {
+      path(ConnectorApi.PREFIX | ConnectorApi.KIND) {
         put {
           entity(as[Creation])(
             req =>

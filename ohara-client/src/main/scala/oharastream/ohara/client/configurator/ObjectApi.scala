@@ -24,10 +24,8 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object ObjectApi {
-  val KIND: String = SettingDef.Reference.OBJECT.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val OBJECTS_PREFIX_PATH: String = "objects"
+  val KIND: String   = SettingDef.Reference.OBJECT.name().toLowerCase
+  val PREFIX: String = "objects"
 
   final class Creation(val raw: Map[String, JsValue]) extends BasicCreation {
     private[this] implicit def update(raw: Map[String, JsValue]): Updating = new Updating(raw)
@@ -124,7 +122,7 @@ object ObjectApi {
   }
 
   class Access private[configurator]
-      extends oharastream.ohara.client.configurator.Access[Creation, Updating, ObjectInfo](KIND) {
+      extends oharastream.ohara.client.configurator.Access[Creation, Updating, ObjectInfo](PREFIX) {
     def request: Request = new Request {
       override def create()(implicit executionContext: ExecutionContext): Future[ObjectInfo] = post(creation)
       override def update()(implicit executionContext: ExecutionContext): Future[ObjectInfo] =

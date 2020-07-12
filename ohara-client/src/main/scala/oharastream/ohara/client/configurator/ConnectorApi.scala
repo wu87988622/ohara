@@ -31,10 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 object ConnectorApi {
-  val KIND: String = SettingDef.Reference.CONNECTOR.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val CONNECTORS_PREFIX_PATH: String                       = "connectors"
+  val KIND: String                                         = SettingDef.Reference.CONNECTOR.name().toLowerCase
+  val PREFIX: String                                       = "connectors"
   private[configurator] val WORKER_CLUSTER_KEY_KEY: String = ConnectorDefUtils.WORKER_CLUSTER_KEY_DEFINITION.key()
   private[this] val NUMBER_OF_TASKS_KEY: String            = ConnectorDefUtils.NUMBER_OF_TASKS_DEFINITION.key()
   private[this] val TOPIC_KEYS_KEY: String                 = ConnectorDefUtils.TOPIC_KEYS_DEFINITION.key()
@@ -303,7 +301,7 @@ object ConnectorApi {
   }
 
   class Access private[configurator]
-      extends oharastream.ohara.client.configurator.Access[Creation, Updating, ConnectorInfo](KIND) {
+      extends oharastream.ohara.client.configurator.Access[Creation, Updating, ConnectorInfo](PREFIX) {
     /**
       * start to run a connector on worker cluster.
       *

@@ -18,12 +18,10 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.client.configurator.ObjectApi
-import oharastream.ohara.client.configurator.ObjectApi.{Creation, OBJECTS_PREFIX_PATH, ObjectInfo, Updating}
-import oharastream.ohara.common.setting.SettingDef
+import oharastream.ohara.client.configurator.ObjectApi.{Creation, ObjectInfo, PREFIX, Updating}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.store.DataStore
 
-import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 private[configurator] object ObjectRoute {
@@ -36,11 +34,9 @@ private[configurator] object ObjectRoute {
       )
     )
 
-  @nowarn("cat=deprecation")
   def apply(implicit store: DataStore, executionContext: ExecutionContext): server.Route =
     RouteBuilder[Creation, Updating, ObjectInfo]()
-      .prefixOfPlural(OBJECTS_PREFIX_PATH)
-      .prefixOfSingular(SettingDef.Reference.OBJECT.name().toLowerCase)
+      .prefix(PREFIX)
       .hookOfCreation(toObject)
       .hookOfUpdating(
         (key, updating, previousOption) =>

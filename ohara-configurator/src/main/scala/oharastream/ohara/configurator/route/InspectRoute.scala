@@ -55,7 +55,6 @@ import oharastream.ohara.shabondi.common.JsonSupport
 import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.{DeserializationException, JsArray, JsNull, JsNumber, JsObject, JsString, JsTrue}
 
-import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
@@ -122,7 +121,6 @@ private[configurator] object InspectRoute {
     )
   )
 
-  @nowarn("cat=deprecation")
   def apply(mode: Mode, k8sUrls: Option[K8sUrls])(
     implicit brokerCollie: BrokerCollie,
     dataStore: DataStore,
@@ -131,7 +129,7 @@ private[configurator] object InspectRoute {
     objectChecker: DataChecker,
     executionContext: ExecutionContext
   ): server.Route = pathPrefix(KIND) {
-    path(RDB_KIND) {
+    path(RDB_PREFIX | "rdb") {
       post {
         entity(as[RdbQuery]) { query =>
           complete(both(query.workerClusterKey) { (_, connectorAdmin, _, topicAdmin) =>
@@ -159,7 +157,7 @@ private[configurator] object InspectRoute {
           })
         }
       }
-    } ~ path(TopicApi.KIND / Segment) { topicName =>
+    } ~ path((TopicApi.PREFIX | TopicApi.KIND) / Segment) { topicName =>
       post {
         parameters(
           (
@@ -248,7 +246,7 @@ private[configurator] object InspectRoute {
           )
         }
       }
-    } ~ path(FileInfoApi.FILE_PREFIX_PATH | FileInfoApi.KIND) {
+    } ~ path(FileInfoApi.PREFIX | FileInfoApi.KIND) {
       FileInfoRoute.routeOfUploadingFile(urlMaker = _ => None, storeOption = None)
     } ~ path(oharastream.ohara.client.configurator.CONFIGURATOR_KIND) {
       complete(
@@ -264,7 +262,7 @@ private[configurator] object InspectRoute {
           k8sUrls = k8sUrls
         )
       )
-    } ~ pathPrefix(WorkerApi.KIND) {
+    } ~ pathPrefix(WorkerApi.PREFIX | WorkerApi.KIND) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
           complete(
@@ -293,7 +291,7 @@ private[configurator] object InspectRoute {
           )
         )
       }
-    } ~ pathPrefix(BrokerApi.KIND) {
+    } ~ pathPrefix(BrokerApi.PREFIX | BrokerApi.KIND) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
           complete(
@@ -305,7 +303,7 @@ private[configurator] object InspectRoute {
       } ~ pathEnd {
         complete(brokerDefinition)
       }
-    } ~ pathPrefix(ZookeeperApi.KIND) {
+    } ~ pathPrefix(ZookeeperApi.PREFIX | ZookeeperApi.KIND) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
           complete(
@@ -317,7 +315,7 @@ private[configurator] object InspectRoute {
       } ~ pathEnd {
         complete(zookeeperDefinition)
       }
-    } ~ pathPrefix(StreamApi.KIND) {
+    } ~ pathPrefix(StreamApi.PREFIX | StreamApi.KIND) {
       path(Segment) { name =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { group =>
           complete(
@@ -349,7 +347,7 @@ private[configurator] object InspectRoute {
           )
         )
       }
-    } ~ pathPrefix(ShabondiApi.KIND) {
+    } ~ pathPrefix(ShabondiApi.PREFIX | ShabondiApi.KIND) {
       path(Segment) { _ =>
         parameters(GROUP_KEY ? GROUP_DEFAULT) { _ =>
           complete(shabondiDefinition)
@@ -388,7 +386,7 @@ private[configurator] object InspectRoute {
               }
           }).toString(),
           InspectApi.REQUEST_ID -> requestId,
-          InspectApi.TARGET_KEY -> InspectApi.RDB_KIND
+          InspectApi.TARGET_KEY -> InspectApi.RDB_PREFIX
         )
       )
       .threadPool(executionContext)

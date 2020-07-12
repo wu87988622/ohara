@@ -86,7 +86,6 @@ package object route {
     Updating <: ClusterUpdating
   ](
     root: String,
-    prefixOfSingular: String,
     hookOfCreation: HookOfCreation[Creation, Cluster],
     hookOfUpdating: HookOfUpdating[Updating, Cluster],
     hookOfStart: HookOfAction[Cluster],
@@ -104,8 +103,7 @@ package object route {
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[Creation, Updating, Cluster]()
-      .prefixOfPlural(root)
-      .prefixOfSingular(prefixOfSingular)
+      .prefix(root)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(updateState[Cluster])

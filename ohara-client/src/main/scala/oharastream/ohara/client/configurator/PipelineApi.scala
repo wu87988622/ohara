@@ -27,10 +27,8 @@ import spray.json.{JsValue, RootJsonFormat}
 import scala.concurrent.{ExecutionContext, Future}
 
 object PipelineApi {
-  val KIND: String = SettingDef.Reference.PIPELINE.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val PIPELINES_PREFIX_PATH: String = "pipelines"
+  val KIND: String   = SettingDef.Reference.PIPELINE.name().toLowerCase
+  val PREFIX: String = "pipelines"
 
   /**
     * action key. it is used to auto-remove the existent objs from endpoints,
@@ -167,7 +165,7 @@ object PipelineApi {
   }
 
   class Access private[configurator]
-      extends oharastream.ohara.client.configurator.Access[Creation, Updating, Pipeline](KIND) {
+      extends oharastream.ohara.client.configurator.Access[Creation, Updating, Pipeline](PREFIX) {
     def refresh(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[Unit] = put(key, REFRESH_COMMAND)
 
     def query: Query = new Query {

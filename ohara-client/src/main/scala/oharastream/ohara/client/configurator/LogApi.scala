@@ -41,7 +41,7 @@ object LogApi {
       s"$url/$service/${clusterKey.name()}?$GROUP_KEY=${clusterKey.group()}"
 
     def log4ZookeeperCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(ZookeeperApi.KIND, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(ZookeeperApi.PREFIX, clusterKey))
 
     def log4ZookeeperCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -49,13 +49,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(ZookeeperApi.KIND)
+          .prefix(ZookeeperApi.PREFIX)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4BrokerCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(BrokerApi.KIND, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(BrokerApi.PREFIX, clusterKey))
 
     def log4BrokerCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -63,13 +63,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(BrokerApi.KIND)
+          .prefix(BrokerApi.PREFIX)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4WorkerCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(WorkerApi.KIND, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(WorkerApi.PREFIX, clusterKey))
 
     def log4WorkerCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -77,13 +77,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(WorkerApi.KIND)
+          .prefix(WorkerApi.PREFIX)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4StreamCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.KIND, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(StreamApi.PREFIX, clusterKey))
 
     def log4StreamCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -91,13 +91,13 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(StreamApi.KIND)
+          .prefix(StreamApi.PREFIX)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )
 
     def log4ShabondiCluster(clusterKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[ClusterLog] =
-      exec.get[ClusterLog, ErrorApi.Error](_url(ShabondiApi.KIND, clusterKey))
+      exec.get[ClusterLog, ErrorApi.Error](_url(ShabondiApi.PREFIX, clusterKey))
 
     def log4ShabondiCluster(clusterKey: ObjectKey, sinceSeconds: Long)(
       implicit executionContext: ExecutionContext
@@ -105,7 +105,7 @@ object LogApi {
       exec.get[ClusterLog, ErrorApi.Error](
         urlBuilder
           .key(clusterKey)
-          .prefix(ShabondiApi.KIND)
+          .prefix(ShabondiApi.PREFIX)
           .param(SINCE_SECONDS_KEY, sinceSeconds.toString)
           .build()
       )

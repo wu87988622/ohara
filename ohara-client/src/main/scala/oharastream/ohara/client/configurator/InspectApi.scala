@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object InspectApi {
   val KIND: String                    = "inspect"
-  val RDB_KIND: String                = "rdb"
+  val RDB_PREFIX: String              = "rdb"
   val TOPIC_TIMEOUT_KEY: String       = "timeout"
   val TOPIC_TIMEOUT_DEFAULT: Duration = Duration(3, TimeUnit.SECONDS)
   val TOPIC_LIMIT_KEY: String         = "limit"
@@ -180,31 +180,31 @@ object InspectApi {
       exec.get[ConfiguratorInfo, ErrorApi.Error](s"$url/$CONFIGURATOR_KIND")
 
     def zookeeperInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ZookeeperApi.KIND}")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ZookeeperApi.PREFIX}")
 
     def zookeeperInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(ZookeeperApi.KIND).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(ZookeeperApi.PREFIX).key(key).build())
 
     def brokerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${BrokerApi.KIND}")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${BrokerApi.PREFIX}")
 
     def brokerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(BrokerApi.KIND).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(BrokerApi.PREFIX).key(key).build())
 
     def workerInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${WorkerApi.KIND}")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${WorkerApi.PREFIX}")
 
     def workerInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(WorkerApi.KIND).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(WorkerApi.PREFIX).key(key).build())
 
     def streamInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${StreamApi.KIND}")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${StreamApi.PREFIX}")
 
     def streamInfo(key: ObjectKey)(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(StreamApi.KIND).key(key).build())
+      exec.get[ServiceDefinition, ErrorApi.Error](urlBuilder.prefix(StreamApi.PREFIX).key(key).build())
 
     def shabondiInfo()(implicit executionContext: ExecutionContext): Future[ServiceDefinition] =
-      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ShabondiApi.KIND}")
+      exec.get[ServiceDefinition, ErrorApi.Error](s"$url/${ShabondiApi.PREFIX}")
 
     def rdbRequest: RdbRequest = new RdbRequest {
       private[this] var jdbcUrl: String             = _
@@ -261,7 +261,7 @@ object InspectApi {
       )
 
       override def query()(implicit executionContext: ExecutionContext): Future[RdbInfo] =
-        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_KIND", query)
+        exec.post[RdbQuery, RdbInfo, ErrorApi.Error](s"$url/$RDB_PREFIX", query)
     }
 
     def topicRequest: TopicRequest = new TopicRequest {
@@ -288,7 +288,7 @@ object InspectApi {
         exec.post[TopicData, ErrorApi.Error](
           urlBuilder
             .key(key)
-            .prefix(TopicApi.KIND)
+            .prefix(TopicApi.PREFIX)
             .param(TOPIC_LIMIT_KEY, limit.toString)
             .param(TOPIC_TIMEOUT_KEY, timeout.toMillis.toString)
             .build()
@@ -314,7 +314,7 @@ object InspectApi {
             )
           )
         ).to[RequestEntity]
-          .map(e => HttpRequest(HttpMethods.POST, uri = s"$url/${FileInfoApi.KIND}", entity = e))
+          .map(e => HttpRequest(HttpMethods.POST, uri = s"$url/${FileInfoApi.PREFIX}", entity = e))
           .flatMap(exec.request[FileInfo, ErrorApi.Error])
     }
   }

@@ -61,8 +61,7 @@ import scala.reflect.ClassTag
   */
 trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
     extends oharastream.ohara.common.pattern.Builder[server.Route] {
-  private[this] var prefixOfPlural: String                                   = _
-  private[this] var prefixOfSingular: String                                 = _
+  private[this] var prefix: String                                           = _
   private[this] var customPost: Option[() => Route]                          = None
   private[this] var hookOfCreation: Option[HookOfCreation[Creation, Res]]    = None
   private[this] var hookAfterCreation: Option[HookAfterCreation[Res]]        = None
@@ -76,13 +75,8 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   private[this] val hookOfDeleteActions                                      = mutable.Map[String, HookOfAction[ObjectKey]]()
   private[this] var hookOfFinalDeleteAction: Option[HookOfAction[ObjectKey]] = None
 
-  def prefixOfPlural(prefixOfPlural: String): RouteBuilder[Creation, Updating, Res] = {
-    this.prefixOfPlural = CommonUtils.requireNonEmpty(prefixOfPlural)
-    this
-  }
-
-  def prefixOfSingular(prefixOfSingular: String): RouteBuilder[Creation, Updating, Res] = {
-    this.prefixOfSingular = CommonUtils.requireNonEmpty(prefixOfSingular)
+  def prefix(prefixOfPlural: String): RouteBuilder[Creation, Updating, Res] = {
+    this.prefix = CommonUtils.requireNonEmpty(prefixOfPlural)
     this
   }
 
@@ -168,8 +162,7 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   }
 
   override def build(): Route = doBuild(
-    prefixOfPlural = CommonUtils.requireNonEmpty(prefixOfPlural),
-    prefixOfSingular = CommonUtils.requireNonEmpty(prefixOfSingular),
+    prefix = CommonUtils.requireNonEmpty(prefix),
     customPost = customPost,
     hookOfCreation = hookOfCreation,
     hookAfterCreation = hookAfterCreation,
@@ -185,8 +178,7 @@ trait RouteBuilder[Creation <: BasicCreation, Updating, Res <: Data]
   )
 
   protected def doBuild(
-    prefixOfPlural: String,
-    prefixOfSingular: String,
+    prefix: String,
     customPost: Option[() => Route],
     hookOfCreation: Option[HookOfCreation[Creation, Res]],
     hookAfterCreation: Option[HookAfterCreation[Res]],
@@ -214,8 +206,7 @@ object RouteBuilder {
     executionContext: ExecutionContext
   ): RouteBuilder[Creation, Updating, Res] =
     (
-      prefixOfPlural: String,
-      prefixOfSingular: String,
+      prefix: String,
       customPost: Option[() => Route],
       hookOfCreation: Option[HookOfCreation[Creation, Res]],
       hookAfterCreation: Option[HookAfterCreation[Res]],
@@ -258,7 +249,7 @@ object RouteBuilder {
                       .flatMap(res => hookAfterCreation.map(hook => hook(res)).getOrElse(Future.successful(res)))
                   )
               )
-              .getOrElse(routeToOfficialUrl(s"/$prefixOfPlural"))
+              .getOrElse(routeToOfficialUrl(s"/$prefix"))
           }))
 
       def routeOfGet(key: ObjectKey) =
@@ -285,7 +276,7 @@ object RouteBuilder {
                       )
                   )
               )
-              .getOrElse(routeToOfficialUrl(s"/$prefixOfPlural/${key.name}?${key.group()}"))
+              .getOrElse(routeToOfficialUrl(s"/$prefix/${key.name}?${key.group()}"))
         )
       )
 
@@ -294,7 +285,7 @@ object RouteBuilder {
       def routeOfSubPut(key: ObjectKey, subName: String, params: Map[String, String]) =
         put {
           hookOfPutActions.get(subName).orElse(hookOfFinalPutAction) match {
-            case None => routeToOfficialUrl(s"/$prefixOfPlural/$subName")
+            case None => routeToOfficialUrl(s"/$prefix/$subName")
             case Some(f) =>
               complete {
                 store.value[Res](key).flatMap(res => f(res, subName, params)).map(_ => StatusCodes.Accepted)
@@ -312,7 +303,7 @@ object RouteBuilder {
             .map(_(key, subName, params))
             .map(_.map(_ => StatusCodes.Accepted))
             .map(complete(_))
-            .getOrElse(routeToOfficialUrl(s"/$prefixOfPlural/$subName"))
+            .getOrElse(routeToOfficialUrl(s"/$prefix/$subName"))
         }
 
       // check the group and value through json refiner
@@ -321,14 +312,14 @@ object RouteBuilder {
         rm.check(NAME_KEY, JsString(name)).value
       )
 
-      pathPrefix(prefixOfPlural | prefixOfSingular) {
+      pathPrefix(prefix) {
         pathEnd(routeOfPost ~ routeOfList) ~ path(Segment) { name =>
           parameter(GROUP_KEY ? GROUP_DEFAULT) { group =>
             val key = objectKey(group, name)
             routeOfGet(key) ~ routeOfDelete(key) ~ routeOfUpdate(key)
           }
         }
-      } ~ pathPrefix((prefixOfPlural | prefixOfSingular) / Segment / Segment) {
+      } ~ pathPrefix(prefix / Segment / Segment) {
         case (name, subName) =>
           parameterMap { params =>
             val key =

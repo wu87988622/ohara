@@ -18,7 +18,6 @@ package oharastream.ohara.configurator.route
 import akka.http.scaladsl.server
 import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.{BrokerCollie, ServiceCollie, WorkerCollie}
-import oharastream.ohara.client.configurator.Data
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.FileInfoApi.FileInfo
@@ -33,6 +32,7 @@ import oharastream.ohara.client.configurator.ZookeeperApi.ZookeeperClusterInfo
 import oharastream.ohara.client.configurator.{
   BrokerApi,
   ConnectorApi,
+  Data,
   FileInfoApi,
   NodeApi,
   ObjectApi,
@@ -43,12 +43,11 @@ import oharastream.ohara.client.configurator.{
   WorkerApi,
   ZookeeperApi
 }
-import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
+import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 
-import scala.annotation.nowarn
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -369,7 +368,6 @@ private[configurator] object PipelineRoute {
         .flatMap(pipeline => store.add[Pipeline](pipeline))
         .map(_ => ())
 
-  @nowarn("cat=deprecation")
   def apply(
     implicit brokerCollie: BrokerCollie,
     serviceCollie: ServiceCollie,
@@ -379,8 +377,7 @@ private[configurator] object PipelineRoute {
     meterCache: MetricsCache
   ): server.Route =
     RouteBuilder[Creation, Updating, Pipeline]()
-      .prefixOfPlural(PIPELINES_PREFIX_PATH)
-      .prefixOfSingular(SettingDef.Reference.PIPELINE.name().toLowerCase)
+      .prefix(PREFIX)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(hookOfGet)

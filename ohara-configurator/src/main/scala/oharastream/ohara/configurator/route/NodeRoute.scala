@@ -21,14 +21,13 @@ import com.typesafe.scalalogging.Logger
 import oharastream.ohara.agent.{ClusterKind, ServiceCollie}
 import oharastream.ohara.client.configurator.NodeApi._
 import oharastream.ohara.client.configurator.{ClusterInfo, NodeApi}
-import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
+import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.AdvertisedInfo
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.DataStore
 import spray.json.DeserializationException
 
-import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 object NodeRoute {
   private[this] lazy val LOG = Logger(NodeRoute.getClass)
@@ -309,7 +308,6 @@ object NodeRoute {
         }
         .map(_ => ())
 
-  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     advertisedInfo: AdvertisedInfo,
@@ -318,8 +316,7 @@ object NodeRoute {
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[Creation, Updating, Node]()
-      .prefixOfPlural(NODES_PREFIX_PATH)
-      .prefixOfSingular(SettingDef.Reference.NODE.name().toLowerCase)
+      .prefix(PREFIX)
       .hookOfCreation(hookOfCreation)
       .hookAfterCreation(hookAfterCreation)
       .hookOfUpdating(hookOfUpdating)

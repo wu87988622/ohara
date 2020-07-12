@@ -18,8 +18,8 @@ package oharastream.ohara.configurator.route
 
 import akka.http.scaladsl.server
 import oharastream.ohara.agent.ServiceCollie
+import oharastream.ohara.client.configurator.ClusterInfo
 import oharastream.ohara.client.configurator.VolumeApi.{Creation, Updating, Volume}
-import oharastream.ohara.client.configurator.{ClusterInfo, VolumeApi}
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction}
@@ -147,8 +147,7 @@ private[configurator] object VolumeRoute {
     executionContext: ExecutionContext
   ): server.Route =
     RouteBuilder[Creation, Updating, Volume]()
-      .prefixOfPlural("volumes")
-      .prefixOfSingular(VolumeApi.KIND)
+      .prefix("volumes")
       .hookOfCreation(toVolume)
       .hookOfUpdating(
         (key, updating, previousOption) =>

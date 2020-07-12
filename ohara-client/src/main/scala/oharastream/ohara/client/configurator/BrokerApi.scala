@@ -28,10 +28,8 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 object BrokerApi {
-  val KIND: String = SettingDef.Reference.BROKER.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val BROKER_PREFIX_PATH: String = "brokers"
+  val KIND: String   = SettingDef.Reference.BROKER.name().toLowerCase
+  val PREFIX: String = "brokers"
 
   /**
     * the default docker image used to run containers of broker cluster
@@ -284,7 +282,7 @@ object BrokerApi {
     def update()(implicit executionContext: ExecutionContext): Future[BrokerClusterInfo]
   }
 
-  final class Access private[BrokerApi] extends ClusterAccess[Creation, Updating, BrokerClusterInfo](KIND) {
+  final class Access private[BrokerApi] extends ClusterAccess[Creation, Updating, BrokerClusterInfo](PREFIX) {
     override def query: Query[BrokerClusterInfo] = new Query[BrokerClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext

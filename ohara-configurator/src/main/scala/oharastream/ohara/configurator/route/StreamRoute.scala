@@ -20,14 +20,13 @@ import akka.http.scaladsl.server
 import oharastream.ohara.agent._
 import oharastream.ohara.client.configurator.StreamApi
 import oharastream.ohara.client.configurator.StreamApi._
-import oharastream.ohara.common.setting.{ClassType, ObjectKey, SettingDef}
+import oharastream.ohara.common.setting.{ClassType, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook.{HookBeforeDelete, HookOfAction, HookOfCreation, HookOfUpdating}
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.stream.config.StreamDefUtils
 import spray.json.DeserializationException
 
-import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object StreamRoute {
   private[this] def creationToClusterInfo(creation: Creation)(
@@ -224,7 +223,6 @@ private[configurator] object StreamRoute {
 
   private[this] def hookBeforeDelete: HookBeforeDelete = _ => Future.unit
 
-  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     dataChecker: DataChecker,
@@ -234,8 +232,7 @@ private[configurator] object StreamRoute {
     executionContext: ExecutionContext
   ): server.Route =
     clusterRoute[StreamClusterInfo, Creation, Updating](
-      root = STREAM_PREFIX_PATH,
-      prefixOfSingular = SettingDef.Reference.STREAM.name().toLowerCase,
+      root = PREFIX,
       hookOfCreation = hookOfCreation,
       hookOfUpdating = hookOfUpdating,
       hookOfStart = hookOfStart,

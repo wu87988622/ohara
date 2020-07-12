@@ -22,14 +22,13 @@ import oharastream.ohara.agent.WorkerCollie
 import oharastream.ohara.client.configurator.ConnectorApi
 import oharastream.ohara.client.configurator.ConnectorApi._
 import oharastream.ohara.client.configurator.FileInfoApi.ClassInfo
-import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey, SettingDef}
+import oharastream.ohara.common.setting.{ConnectorKey, ObjectKey}
 import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.configurator.route.hook._
 import oharastream.ohara.configurator.store.{DataStore, MetricsCache}
 import oharastream.ohara.kafka.connector.json.ConnectorDefUtils
 import spray.json.DeserializationException
 
-import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 private[configurator] object ConnectorRoute {
   private[this] lazy val LOG = Logger(ConnectorRoute.getClass)
@@ -344,7 +343,6 @@ private[configurator] object ConnectorRoute {
           }
         }
 
-  @nowarn("cat=deprecation")
   def apply(
     implicit store: DataStore,
     objectChecker: DataChecker,
@@ -353,8 +351,7 @@ private[configurator] object ConnectorRoute {
     meterCache: MetricsCache
   ): server.Route =
     RouteBuilder[Creation, Updating, ConnectorInfo]()
-      .prefixOfPlural(CONNECTORS_PREFIX_PATH)
-      .prefixOfSingular(SettingDef.Reference.CONNECTOR.name().toLowerCase)
+      .prefix(PREFIX)
       .hookOfCreation(hookOfCreation)
       .hookOfUpdating(hookOfUpdating)
       .hookOfGet(hookOfGet)

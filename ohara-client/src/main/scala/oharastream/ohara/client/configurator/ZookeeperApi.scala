@@ -28,10 +28,8 @@ import spray.json.{JsNumber, JsObject, JsValue, RootJsonFormat}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 object ZookeeperApi {
-  val KIND: String = SettingDef.Reference.ZOOKEEPER.name().toLowerCase
-
-  @deprecated(message = s"replaced by $KIND", since = "0.11.0")
-  val ZOOKEEPER_PREFIX_PATH: String = "zookeepers"
+  val KIND: String   = SettingDef.Reference.ZOOKEEPER.name().toLowerCase
+  val PREFIX: String = "zookeepers"
 
   /**
     * the default docker image used to run containers of worker cluster
@@ -258,7 +256,7 @@ object ZookeeperApi {
     def update()(implicit executionContext: ExecutionContext): Future[ZookeeperClusterInfo]
   }
 
-  final class Access private[ZookeeperApi] extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](KIND) {
+  final class Access private[ZookeeperApi] extends ClusterAccess[Creation, Updating, ZookeeperClusterInfo](PREFIX) {
     override def query: Query[ZookeeperClusterInfo] = new Query[ZookeeperClusterInfo] {
       override protected def doExecute(request: QueryRequest)(
         implicit executionContext: ExecutionContext
