@@ -20,6 +20,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 
+import { WorkspaceFlag } from 'api/apiInterface/workspaceInterface';
 import Stepper from 'components/common/FSMStepper';
 import * as hooks from 'hooks';
 import { KIND } from 'const';
@@ -44,6 +45,7 @@ const RestartWorkspace = (props) => {
   const refreshBrokerAction = hooks.useFetchBrokerAction();
   const refreshWorkerAction = hooks.useFetchWorkerAction();
   const refreshNodeAction = hooks.useFetchNodesAction();
+  const updateWorkspace = hooks.useUpdateWorkspaceAction();
 
   const worker = hooks.useWorker();
   const broker = hooks.useBroker();
@@ -51,6 +53,14 @@ const RestartWorkspace = (props) => {
   const workspace = hooks.useWorkspace();
 
   const getSteps = (restartService) => {
+    const prepare = {
+      name: 'prepare',
+      action: () =>
+        updateWorkspace({ ...workspace, flag: WorkspaceFlag.RESTARTING }),
+      revertAction: () =>
+        updateWorkspace({ ...workspace, flag: WorkspaceFlag.RESTARTED }),
+    };
+
     const stopWorker = {
       name: 'stop worker',
       action: () => stopWorkerAction(worker.name),
@@ -116,7 +126,6 @@ const RestartWorkspace = (props) => {
     const startWorker = {
       name: 'start worker',
       action: () => startWorkerAction(worker.name),
-      revertAction: () => stopWorkerAction(worker.name),
     };
     const restartWorkspace = {
       name: 'restart workspace',
@@ -124,6 +133,8 @@ const RestartWorkspace = (props) => {
         return new Promise((resolve) => {
           // Log a success message to Event Log
           eventLog.info(`Successfully Restart workspace ${workspace.name}.`);
+
+          updateWorkspace({ ...workspace, flag: WorkspaceFlag.RESTARTED });
 
           refreshZookeeperAction(zookeeper.name);
 
@@ -141,11 +152,18 @@ const RestartWorkspace = (props) => {
     switch (restartService) {
       //Restart target is worker
       case KIND.worker:
-        return [stopWorker, updateWorker, startWorker, restartWorkspace];
+        return [
+          prepare,
+          stopWorker,
+          updateWorker,
+          startWorker,
+          restartWorkspace,
+        ];
 
       //Restart target is worker and broker
       case KIND.broker:
         return [
+          prepare,
           stopWorker,
           updateWorker,
           stopTopic,
@@ -159,6 +177,7 @@ const RestartWorkspace = (props) => {
 
       default:
         return [
+          prepare,
           stopWorker,
           updateWorker,
           stopTopic,
