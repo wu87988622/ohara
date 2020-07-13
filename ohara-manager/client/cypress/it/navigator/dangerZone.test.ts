@@ -1219,12 +1219,49 @@ describe('Danger Zone', () => {
       response: {},
     });
 
-    cy.findByText('8%');
+    cy.findByText('15%');
 
     cy.request('PUT', 'api/workers/workspace1/start?group=worker');
 
     cy.findByText('0%');
 
     cy.findByText('CLOSE').parent('button').should('be.enabled').click();
+  });
+
+  it('should mark the workspace as unstable when it fails', () => {
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Restart this workspace',
+    );
+
+    cy.route({
+      method: 'PUT',
+      url: 'api/workers/workspace1?group=worker',
+      status: 403,
+      response: {},
+    });
+
+    cy.findAllByRole('dialog')
+      .filter(':visible')
+      .should('have.length', 1)
+      .within(() => {
+        cy.findByText('RESTART').click();
+      });
+
+    cy.findByText('ERROR', { exact: false }).should('have.length', 1);
+
+    cy.findByText('CLOSE').parent('button').should('be.enabled').click();
+
+    cy.findByText('ABORT').parent('button').click();
+
+    // close the snackbar
+    cy.findByTestId('snackbar').find('button:visible').click();
+
+    // close the settings dialog
+    cy.findByTestId('workspace-settings-dialog-close-button')
+      .should('be.visible')
+      .click();
+
+    cy.get('span[title="Unstable workspace"]').should('have.length', 1);
   });
 });
