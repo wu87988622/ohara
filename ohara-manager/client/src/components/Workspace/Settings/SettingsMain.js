@@ -57,15 +57,24 @@ const SettingsMain = ({
     !shouldBeRestartZookeeper
   ) {
     kind = KIND.worker;
-    targetIsWorker();
   } else if (shouldBeRestartBroker && !shouldBeRestartZookeeper) {
     kind = KIND.broker;
-    targetIsBroker();
   } else {
-    targetIsWorkspace();
+    kind = KIND.workspace;
   }
 
   const restartConfirmMessage = hooks.useRestartConfirmMessage(kind);
+
+  const handleOnRestart = () => {
+    if (kind === KIND.worker) {
+      targetIsWorker();
+    } else if (kind === KIND.broker) {
+      targetIsBroker();
+    } else {
+      targetIsWorkspace();
+    }
+    restartWorkspace();
+  };
 
   return (
     <Wrapper>
@@ -74,7 +83,7 @@ const SettingsMain = ({
           hasRunningServices={hasRunningServices}
           isOpen={shouldBeRestartWorkspace}
           onDiscard={discardWorkspace}
-          onRestart={restartWorkspace}
+          onRestart={handleOnRestart}
           restartConfirmMessage={restartConfirmMessage}
         />
         {sections.map((section) => {
