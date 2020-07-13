@@ -64,10 +64,7 @@ describe('Inspect API', () => {
   });
 
   it('fetchServiceDefinition', async () => {
-    function expectResult(
-      serviceName: inspect.INSPECT_KIND,
-      result: InspectServiceResponse,
-    ) {
+    function expectResult(serviceName: KIND, result: InspectServiceResponse) {
       const { imageName, settingDefinitions, classInfos } = result.data;
       expect(imageName).to.be.a('string');
       expect(imageName).to.include(serviceName);
@@ -79,19 +76,19 @@ describe('Inspect API', () => {
     }
 
     const infoZookeeper = await inspect.getZookeeperInfo();
-    expectResult(inspect.INSPECT_KIND.zookeeper, infoZookeeper);
+    expectResult(KIND.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo();
-    expectResult(inspect.INSPECT_KIND.broker, infoBroker);
+    expectResult(KIND.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo();
-    expectResult(inspect.INSPECT_KIND.worker, infoWorker);
+    expectResult(KIND.worker, infoWorker);
 
     const infoStream = await inspect.getStreamsInfo();
-    expectResult(inspect.INSPECT_KIND.stream, infoStream);
+    expectResult(KIND.stream, infoStream);
 
     const infoShabondi = await inspect.getShabondiInfo();
-    expectResult(inspect.INSPECT_KIND.shabondi, infoShabondi);
+    expectResult(KIND.shabondi, infoShabondi);
   });
 
   it('fetchServiceDefinitionByName', async () => {
@@ -101,10 +98,7 @@ describe('Inspect API', () => {
       withZookeeper: true,
     });
 
-    function expectResult(
-      serviceName: inspect.INSPECT_KIND,
-      result: InspectServiceResponse,
-    ) {
+    function expectResult(serviceName: KIND, result: InspectServiceResponse) {
       const { imageName, settingDefinitions, classInfos } = result.data;
       expect(imageName).to.be.a('string');
       expect(imageName).to.include(serviceName);
@@ -116,13 +110,13 @@ describe('Inspect API', () => {
     }
 
     const infoZookeeper = await inspect.getZookeeperInfo(zookeeper);
-    expectResult(inspect.INSPECT_KIND.zookeeper, infoZookeeper);
+    expectResult(KIND.zookeeper, infoZookeeper);
 
     const infoBroker = await inspect.getBrokerInfo(broker);
-    expectResult(inspect.INSPECT_KIND.broker, infoBroker);
+    expectResult(KIND.broker, infoBroker);
 
     const infoWorker = await inspect.getWorkerInfo(worker);
-    expectResult(inspect.INSPECT_KIND.worker, infoWorker);
+    expectResult(KIND.worker, infoWorker);
   });
 
   it('fetchTopicDefinition', async () => {

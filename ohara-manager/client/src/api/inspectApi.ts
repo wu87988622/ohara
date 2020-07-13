@@ -29,16 +29,16 @@ const hiddenDefinitions = [
   'brokerClusterKey',
 ];
 
-export enum INSPECT_KIND {
+enum INSPECT_KIND {
   configurator = 'configurator',
-  zookeeper = 'zookeeper',
-  broker = 'broker',
-  worker = 'worker',
-  stream = 'stream',
-  shabondi = 'shabondi',
+  zookeeper = 'zookeepers',
+  broker = 'brokers',
+  worker = 'workers',
+  stream = 'streams',
+  shabondi = 'shabondis',
   manager = 'manager',
   rdb = 'rdb',
-  topic = 'topic',
+  topic = 'topics',
   file = 'files',
 }
 
