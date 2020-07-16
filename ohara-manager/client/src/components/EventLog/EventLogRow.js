@@ -41,24 +41,27 @@ const EventLogRow = ({ onClick, rowData: log, style }) => {
 
   return (
     <Row className={classNames} style={style}>
-      {isError ? (
-        <Link onClick={onClick}>
-          <CancelIcon className="log-icon" />
-          <span className="log-content">
-            {title} {message && `--> ${message}`}
-          </span>
-        </Link>
-      ) : isWarning ? (
-        <>
-          <WarningIcon className="log-icon" />
-          <span className="log-content">
-            {title} {message && `--> ${message}`}
-          </span>
-        </>
-      ) : (
-        <span className="log-content">{title}</span>
-      )}
-      <div className="date">{getDateFromTimestamp(log?.createAt)}</div>
+      <div className="log-content">
+        {isError ? (
+          <Link onClick={onClick}>
+            <CancelIcon className="log-icon" />
+            <span className="log-title">
+              {title} {message && `--> ${message}`}
+            </span>
+          </Link>
+        ) : isWarning ? (
+          <>
+            <WarningIcon className="log-icon" />
+            <span className="log-title">
+              {title} {message && `--> ${message}`}
+            </span>
+          </>
+        ) : (
+          <span className="log-title">{title}</span>
+        )}
+      </div>
+
+      <div className="log-date">{getDateFromTimestamp(log?.createAt)}</div>
     </Row>
   );
 };

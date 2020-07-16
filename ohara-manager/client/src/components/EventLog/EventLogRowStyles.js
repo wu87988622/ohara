@@ -24,6 +24,13 @@ export default styled.div(
     padding: ${theme.spacing(0.5, 1.5, 0.25, 3)};
     border-bottom: 1px solid ${theme.palette.divider};
 
+    .log-content {
+      max-width: 80%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
     .log-icon {
       position: absolute;
       left: 5px;
@@ -43,7 +50,7 @@ export default styled.div(
       }
     }
 
-    .date {
+    .log-date {
       min-width: ${theme.spacing(15)}px;
       text-align: right;
     }
