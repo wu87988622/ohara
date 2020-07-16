@@ -139,17 +139,13 @@ package object route {
       .hookOfPutAction(
         STOP_COMMAND,
         (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
-          hookBeforeStop(clusterInfo, subName, params).flatMap(
-            _ =>
-              collie
-                .clusters()
-                .flatMap { clusters =>
-                  if (!clusters.map(_.key).contains(clusterInfo.key)) Future.unit
-                  else if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
-                  else collie.remove(clusterInfo.key)
-                }
-                .flatMap(_ => Future.unit)
-          )
+          hookBeforeStop(clusterInfo, subName, params)
+            .flatMap(
+              _ =>
+                if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
+                else collie.remove(clusterInfo.key)
+            )
+            .flatMap(_ => Future.unit)
       )
       .hookOfFinalPutAction((clusterInfo: Cluster, nodeName: String, _: Map[String, String]) => {
         // A BIT hard-code here to reuse the checker :(
