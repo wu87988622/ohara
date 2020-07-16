@@ -200,6 +200,7 @@ export const usePipeline = () => {
   const group = usePipelineGroup();
   const name = usePipelineName();
   const pipelineId = getId({ group, name });
+
   const selector = useCallback(
     (state) => selectors.getPipelineById(state, { id: pipelineId }),
     [pipelineId],

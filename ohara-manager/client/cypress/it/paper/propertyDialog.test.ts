@@ -43,7 +43,7 @@ describe('Property dialog', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAllPipelines();
+    cy.deleteAndStopAllPipelines();
     cy.createPipeline();
   });
 

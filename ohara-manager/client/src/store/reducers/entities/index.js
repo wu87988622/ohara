@@ -29,8 +29,9 @@ import topics from './topics';
 import workers from './workers';
 import workspaces from './workspaces';
 import zookeepers from './zookeepers';
+import { getId } from 'utils/object';
 
-// Allow empty array in the new state to override previous state
+// Allow using an empty array to override previous state
 const customizer = (object, source) =>
   isArray(source) && isEmpty(source) ? source : object;
 
@@ -46,11 +47,19 @@ export const entity = (type) => (state = {}, action) => {
       );
       return result;
     }
-
     return mergeWith(payload.entities[type], state, customizer);
   }
 
   return state;
+};
+
+export const deleteEntitiesByIds = (state, action) => {
+  return Object.values(state).reduce((acc, entity) => {
+    if (!action.payload.includes(getId(entity))) {
+      acc[getId(entity)] = entity;
+    }
+    return acc;
+  }, {});
 };
 
 export default combineReducers({

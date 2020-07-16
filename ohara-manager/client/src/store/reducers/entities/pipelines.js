@@ -15,14 +15,16 @@
  */
 
 import { omit } from 'lodash';
-import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
-import { entity } from './index';
+import { entity, deleteEntitiesByIds } from './index';
+import * as actions from 'store/actions';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deletePipeline.SUCCESS:
       return omit(state, action.payload?.pipelineId);
+    case actions.deletePipelines.SUCCESS:
+      return deleteEntitiesByIds(state, action);
     default:
       return entity(ENTITY_TYPE.pipelines)(state, action);
   }

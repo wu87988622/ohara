@@ -26,12 +26,11 @@ import {
 } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 import { merge } from 'lodash';
-import { normalize } from 'normalizr';
 
 import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteStreams } from 'observables';
+import { getId } from 'utils/object';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 
 export default (action$) =>
   action$.pipe(
@@ -41,12 +40,11 @@ export default (action$) =>
     mergeMap(({ values, resolve, reject }) => {
       const { workspaceKey } = values;
       return fetchAndDeleteStreams(workspaceKey).pipe(
-        tap((data) => {
-          if (resolve) resolve(data);
-          return data;
+        tap((streams) => {
+          if (resolve) resolve(streams);
+          return streams;
         }),
-        map((data) => normalize(data, [schema.stream])),
-        map((normalizedData) => actions.deleteStreams.success(normalizedData)),
+        map((streams) => actions.deleteStreams.success(streams.map(getId))),
         startWith(actions.deleteStreams.request()),
         catchError((err) => {
           if (reject) reject(err);

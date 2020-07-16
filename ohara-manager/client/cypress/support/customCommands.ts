@@ -148,7 +148,7 @@ declare global {
       startPipeline: (name: string) => Chainable<null>;
       stopPipeline: (name: string) => Chainable<null>;
       deletePipeline: (name: string) => Chainable<null>;
-      deleteAllPipelines: (name?: string) => Chainable<null>;
+      deleteAndStopAllPipelines: () => Chainable<null>;
       // Settings
       switchSettingSection: (
         section: SETTING_SECTION,
@@ -298,7 +298,7 @@ Cypress.Commands.add(
     cy.wait(1000);
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
-    cy.findByTestId('create-workspace').should('be.visible');
+    cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
     cy.findByTestId('stepper-close-button').should('be.visible');
 
     if (closeOnFailureOrFinish) {
@@ -319,7 +319,9 @@ Cypress.Commands.add(
           cy.findByTestId('stepper-close-button').click();
         }
       });
-      cy.findByTestId('create-workspace').should('not.be.visible');
+      cy.findByTestId('create-workspace-progress-dialog').should(
+        'not.be.visible',
+      );
     }
 
     cy.end();

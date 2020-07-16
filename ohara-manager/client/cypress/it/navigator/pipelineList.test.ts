@@ -32,7 +32,7 @@ describe('Navigator', () => {
 
   context('Pipeline list', () => {
     beforeEach(() => {
-      cy.deleteAllPipelines();
+      cy.deleteAndStopAllPipelines();
     });
 
     it('should render the UI', () => {

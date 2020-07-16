@@ -16,7 +16,7 @@
 
 /* eslint-disable no-throw-literal */
 import { Observable, defer, forkJoin, of } from 'rxjs';
-import { map, mergeMap, concatAll, last, tap } from 'rxjs/operators';
+import { map, mergeMap, concatAll, last, tap, mapTo } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { isEmpty } from 'lodash';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
@@ -114,7 +114,9 @@ export function fetchAndDeleteTopics(workspaceKey: ObjectKey) {
   return fetchTopics(workspaceKey).pipe(
     mergeMap((topics) => {
       if (isEmpty(topics)) return of(topics);
-      return forkJoin(topics.map((topic) => deleteTopic(getKey(topic))));
+      return forkJoin(
+        topics.map((topic) => deleteTopic(getKey(topic)).pipe(mapTo(topic))),
+      );
     }),
   );
 }

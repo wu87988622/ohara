@@ -15,7 +15,7 @@
  */
 
 import { Observable, defer, forkJoin, of, throwError, zip } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mapTo, mergeMap } from 'rxjs/operators';
 import { isEmpty, union, uniqWith } from 'lodash';
 import { retryBackoff } from 'backoff-rxjs';
 
@@ -145,7 +145,9 @@ export function fetchAndDeleteShabondis(workspaceKey: ObjectKey) {
     mergeMap((shabondis) => {
       if (isEmpty(shabondis)) return of(shabondis);
       return forkJoin(
-        shabondis.map((shabondi) => deleteShabondi(getKey(shabondi))),
+        shabondis.map((shabondi) =>
+          deleteShabondi(getKey(shabondi)).pipe(mapTo(shabondi)),
+        ),
       );
     }),
   );

@@ -17,12 +17,14 @@
 import { omit } from 'lodash';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
-import { entity } from './index';
+import { entity, deleteEntitiesByIds } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteTopic.SUCCESS:
       return omit(state, action.payload?.topicId);
+    case actions.deleteTopics.SUCCESS:
+      return deleteEntitiesByIds(state, action);
     case actions.createTopic.FAILURE:
     case actions.deleteTopic.FAILURE:
     case actions.updateTopic.FAILURE:

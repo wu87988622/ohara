@@ -144,14 +144,12 @@ export default () => {
       <CreateWorkspaceForm onCancel={closeDialog} onSubmit={handleSubmit} />
       {submitting && (
         <Dialog
-          data-testid="create-workspace"
+          data-testid="create-workspace-progress-dialog"
           fullWidth={submitting}
           maxWidth={'sm'}
           open={submitting}
         >
-          <DialogTitle id="alert-dialog-title">
-            {'Create Workspace'}
-          </DialogTitle>
+          <DialogTitle id="alert-dialog-title">Create Workspace</DialogTitle>
           <DialogContent>
             <Stepper
               onClose={handleClose}

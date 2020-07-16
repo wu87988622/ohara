@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
@@ -30,8 +29,8 @@ import {
 
 import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteConnectors } from 'observables';
+import { getId } from 'utils/object';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 
 export default (action$) =>
   action$.pipe(
@@ -41,13 +40,12 @@ export default (action$) =>
     mergeMap(({ values, resolve, reject }) => {
       const { workspaceKey } = values;
       return fetchAndDeleteConnectors(workspaceKey).pipe(
-        tap((data) => {
-          if (resolve) resolve(data);
-          return data;
+        tap((connectors) => {
+          if (resolve) resolve(connectors);
+          return connectors;
         }),
-        map((data) => normalize(data, [schema.connector])),
-        map((normalizedData) =>
-          actions.deleteConnectors.success(normalizedData),
+        map((connectors) =>
+          actions.deleteConnectors.success(connectors.map(getId)),
         ),
         startWith(actions.deleteConnectors.request()),
         catchError((err) => {

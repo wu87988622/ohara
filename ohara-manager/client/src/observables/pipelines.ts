@@ -15,7 +15,7 @@
  */
 
 import { Observable, defer, forkJoin, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mapTo, mergeMap } from 'rxjs/operators';
 import { isEmpty } from 'lodash';
 
 import { ObjectKey } from 'api/apiInterface/basicInterface';
@@ -46,7 +46,9 @@ export function fetchAndDeletePipelines(workspaceKey: ObjectKey) {
     mergeMap((pipelines) => {
       if (isEmpty(pipelines)) return of(pipelines);
       return forkJoin(
-        pipelines.map((pipeline) => deletePipeline(getKey(pipeline))),
+        pipelines.map((pipeline) =>
+          deletePipeline(getKey(pipeline)).pipe(mapTo(pipeline)),
+        ),
       );
     }),
   );
