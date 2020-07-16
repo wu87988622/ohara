@@ -18,16 +18,22 @@ import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import * as generate from '../../../src/utils/generate';
 import { SETTING_SECTION } from '../../support/customCommands';
 import { hashByGroupAndName } from '../../../src/utils/sha';
+import { ElementParameters } from './../../support/customCommands';
+import { KIND } from '../../../src/const';
+import {
+  SOURCE,
+  SINK,
+} from './../../../src/api/apiInterface/connectorInterface';
 
-describe('Danger Zone', () => {
-  // generate fake node
-  const node: NodeRequest = {
-    hostname: generate.serviceName(),
-    port: generate.port(),
-    user: generate.userName(),
-    password: generate.password(),
-  };
+// generate fake node
+const node: NodeRequest = {
+  hostname: generate.serviceName(),
+  port: generate.port(),
+  user: generate.userName(),
+  password: generate.password(),
+};
 
+describe('Restart workspace', () => {
   const hostname = generate.serviceName();
 
   before(() => {
@@ -1263,5 +1269,250 @@ describe('Danger Zone', () => {
       .click();
 
     cy.get('span[title="Unstable workspace"]').should('have.length', 1);
+  });
+});
+
+describe('Delete workspace', () => {
+  before(() => {
+    cy.deleteAllServices();
+    cy.createWorkspace({ node });
+  });
+
+  beforeEach(() => cy.visit('/'));
+
+  it('should able to restart the same name workspace which just removed and re-created', () => {
+    // Delete workspace1
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Delete this workspace',
+    );
+
+    cy.findByTestId('delete-workspace-confirm-dialog')
+      .should('exist')
+      .and('be.visible')
+      .within(() => {
+        cy.get('input').type('workspace1');
+        cy.findByText('DELETE').click();
+      });
+
+    // Wait until it's completed deleted
+    cy.findByTestId('delete-workspace-progress-dialog', {
+      timeout: 30000,
+    }).should('not.visible');
+
+    // Create a new workspace
+    cy.createWorkspace({ node });
+
+    // click restart workspace should be OK
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Restart this workspace',
+    );
+
+    cy.findByTestId('restart-workspace-confirm-dialog')
+      .should('exist')
+      .and('be.visible')
+      .within(() => {
+        cy.findByText('RESTART').click();
+      });
+
+    cy.findByTestId('restart-workspace-progress-dialog')
+      .should('exist')
+      .and('be.visible')
+      .within(() => {
+        cy.findByText('CLOSE').parent('button').should('be.enabled').click();
+      });
+
+    cy.location('pathname').should('equal', '/workspace1');
+  });
+
+  it('should prevent users from deleting a workspace which has running services in pipelines', () => {
+    cy.createPipeline();
+
+    const sourceName = generate.serviceName({ prefix: 'source' });
+    const topicName = 'T1';
+
+    cy.addElements([
+      {
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.perf,
+      },
+      {
+        name: topicName,
+        kind: KIND.topic,
+      },
+    ] as ElementParameters[]);
+
+    cy.createConnections([sourceName, topicName]);
+    cy.startPipeline('pipeline1');
+
+    // Go to settings page and delete the workspace
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Delete this workspace',
+    );
+
+    // Should stop users from deleting
+    cy.findByTestId('delete-workspace-confirm-dialog')
+      .should('exist')
+      .and('visible')
+      .within(() => {
+        // The button should be disabled
+        cy.findByText('DELETE')
+          .parent('button')
+          .should('be.disabled')
+          .and('have.class', 'Mui-disabled');
+
+        // Some instructions are given to users
+        cy.findByText(
+          'Oops, there are still some services running in your workspace. You should stop all pipelines under this workspace first and then you will be able to delete this workspace.',
+        ).should('exist');
+      });
+
+    // clean up
+    cy.visit('/');
+    cy.deleteAndStopAllPipelines();
+  });
+
+  it('should only delete services running within the workspace, not others', () => {
+    const pipeline1 = 'pipeline1';
+    const pipeline2 = 'pipeline2';
+    const workspace1 = 'workspace1';
+    const workspace2 = 'workspace2';
+
+    const sourceName = generate.serviceName({ prefix: 'source' });
+    cy.createPipeline(pipeline1);
+    cy.addElement({
+      name: sourceName,
+      kind: KIND.source,
+      className: SOURCE.jdbc,
+    });
+
+    const sinkName = generate.serviceName({ prefix: 'sink' });
+    cy.createWorkspace({ workspaceName: workspace2, node });
+    cy.createPipeline(pipeline2);
+    cy.addElement({
+      name: sinkName,
+      kind: KIND.sink,
+      className: SINK.smb,
+    });
+
+    cy.findByTitle(workspace1).should('exist').click();
+
+    // Go to settings page and delete the workspace
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Delete this workspace',
+    );
+
+    // Confirm deletion
+    cy.findByTestId('delete-workspace-confirm-dialog')
+      .should('exist')
+      .and('visible')
+      .within(() => {
+        cy.get('input').type(workspace1);
+        cy.findByText('DELETE')
+          .parent('button')
+          .should('not.be.disabled')
+          .click();
+      });
+
+    // Wait until it's completed deleted
+    cy.findByTestId('delete-workspace-progress-dialog', {
+      timeout: 30000,
+    }).should('not.visible');
+
+    cy.findByTitle(workspace1).should('not.exist');
+
+    cy.location('pathname').should('eq', `/${workspace2}/${pipeline2}`);
+    cy.findByText(pipeline2).should('exist');
+    cy.get('#paper').findByText(sinkName).should('exist');
+
+    // clean up
+    cy.deleteAndStopAllPipelines();
+    cy.deleteAllServices();
+    cy.createWorkspace({ workspaceName: workspace1, node });
+  });
+
+  it('should clean up local state when a workspace is deleted', () => {
+    // Create a pipeline and add a ftp source connector
+    const sourceName = generate.serviceName({ prefix: 'source' });
+    const pipelineName = generate.serviceName({ prefix: 'pipe' });
+    cy.createPipeline(pipelineName);
+
+    cy.addElements([
+      {
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.ftp,
+      },
+    ] as ElementParameters[]);
+
+    // Both pipeline and connector should exist
+    cy.findByText(pipelineName).should('exist');
+    cy.get('#paper').findByText(sourceName).should('exist');
+
+    // Go to settings page and delete the workspace
+    cy.switchSettingSection(
+      SETTING_SECTION.dangerZone,
+      'Delete this workspace',
+    );
+
+    // Confirm deletion
+    cy.findByTestId('delete-workspace-confirm-dialog')
+      .should('exist')
+      .and('visible')
+      .within(() => {
+        cy.get('input').type('workspace1');
+        cy.findByText('DELETE')
+          .parent('button')
+          .should('not.be.disabled')
+          .click();
+      });
+
+    // Wait until it's completed deleted
+    cy.findByTestId('delete-workspace-progress-dialog', {
+      timeout: 20000,
+    }).should('not.visible');
+
+    // Close the intro dialog
+    cy.findByTestId('close-intro-button').should('be.visible');
+    cy.closeIntroDialog();
+
+    // Create another workspace with the same name. Note that we're not using
+    // `cy.createWorkspace` as that command includes a `cy.visit` which will "reload"
+    // our app and therefore reset our state
+    cy.findByTitle('Create a new workspace').click();
+    cy.findByText('QUICK CREATE').should('exist').click();
+
+    // Enter workspace name
+    cy.findByDisplayValue('workspace', { exact: false })
+      .clear()
+      .type('workspace1');
+
+    cy.findAllByText('NEXT').filter(':visible').click();
+
+    // Select a node
+    cy.contains('p:visible', 'Click here to select nodes').click();
+    cy.addNode(node);
+
+    // Submit the form and create the workspace
+    cy.findAllByText('SUBMIT').filter(':visible').click();
+
+    // Wait until the workspace is created and close the dialog
+    cy.findByTestId('create-workspace-progress-dialog')
+      .should('exist')
+      .and('visible')
+      .within(() => {
+        cy.findByText('CLOSE')
+          .parent('button')
+          .should('not.be.disabled')
+          .click();
+      });
+
+    // Both pipeline and connector should no longer exist
+    cy.findByText(pipelineName).should('not.exist');
+    cy.get('#paper').findByText(sourceName).should('not.exist');
   });
 });

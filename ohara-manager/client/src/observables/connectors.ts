@@ -15,7 +15,7 @@
  */
 
 import { Observable, defer, forkJoin, of, throwError, zip } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mapTo, mergeMap } from 'rxjs/operators';
 import { isEmpty, union, uniqWith } from 'lodash';
 import { retryBackoff } from 'backoff-rxjs';
 
@@ -146,7 +146,9 @@ export function fetchAndDeleteConnectors(workspaceKey: ObjectKey) {
     mergeMap((connectors) => {
       if (isEmpty(connectors)) return of(connectors);
       return forkJoin(
-        connectors.map((connector) => deleteConnector(getKey(connector))),
+        connectors.map((connector) =>
+          deleteConnector(getKey(connector)).pipe(mapTo(connector)),
+        ),
       );
     }),
   );

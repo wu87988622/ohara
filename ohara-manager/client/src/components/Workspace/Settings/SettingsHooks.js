@@ -300,6 +300,7 @@ export const useConfig = ({
             },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
+            testId: 'restart-worker-confirm-dialog',
           },
         },
         {
@@ -316,6 +317,7 @@ export const useConfig = ({
             },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
+            testId: 'restart-broker-confirm-dialog',
           },
         },
         {
@@ -332,6 +334,7 @@ export const useConfig = ({
             },
             maxWidth: 'sm',
             confirmDisabled: hasRunningServices,
+            testId: 'restart-workspace-confirm-dialog',
           },
         },
         {
@@ -350,6 +353,7 @@ export const useConfig = ({
             confirmText: 'DELETE',
             maxWidth: 'sm',
             onConfirm: deleteWorkspace,
+            testId: 'delete-workspace-confirm-dialog',
           },
         },
       ],

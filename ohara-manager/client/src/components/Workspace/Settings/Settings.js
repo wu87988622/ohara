@@ -149,6 +149,7 @@ const Settings = () => {
           restartService={restartService}
         />
         <DeleteWorkspace
+          data-testid="delete-workspace-confirm-dialog"
           isOpen={isWorkspaceDeleting}
           onClose={() => {
             setIsWorkspaceDeleting(false);

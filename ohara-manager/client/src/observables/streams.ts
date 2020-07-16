@@ -15,7 +15,7 @@
  */
 
 import { Observable, defer, forkJoin, of, throwError, zip } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, mapTo } from 'rxjs/operators';
 import { isEmpty, union, uniqWith } from 'lodash';
 import { retryBackoff } from 'backoff-rxjs';
 
@@ -143,7 +143,9 @@ export function fetchAndDeleteStreams(workspaceKey: ObjectKey) {
     mergeMap((streams: ClusterData[]) => {
       if (isEmpty(streams)) return of(streams);
       return forkJoin(
-        streams.map((stream: ClusterData) => deleteStream(getKey(stream))),
+        streams.map((stream: ClusterData) =>
+          deleteStream(getKey(stream)).pipe(mapTo(stream)),
+        ),
       );
     }),
   );

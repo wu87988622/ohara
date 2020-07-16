@@ -44,7 +44,7 @@ describe('Toolbar', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAllPipelines();
+    cy.deleteAndStopAllPipelines();
     cy.createPipeline();
   });
 

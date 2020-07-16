@@ -84,7 +84,7 @@ Cypress.Commands.add('deletePipeline', (name) => {
 });
 
 // Delete all pipelines under current workspace
-Cypress.Commands.add('deleteAllPipelines', () => {
+Cypress.Commands.add('deleteAndStopAllPipelines', () => {
   cy.log(`Deleting all pipelines`);
 
   cy.get('#pipeline-list').then(($list) => {
@@ -167,7 +167,8 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
             .and('have.class', 'display-name')
             .parent('.item')
             .should('have.attr', 'data-testid')
-            .then((testId) => cy.get(`g[model-id="${testId}"]`));
+            .then((testId) => cy.get(`g[model-id="${testId}"]`))
+            .should('exist');
         })
         .dragAndDrop(x, y);
 
@@ -199,7 +200,8 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
               .and('have.class', 'display-name')
               .parent('.item')
               .should('have.attr', 'data-testid')
-              .then((testId) => cy.get(`g[model-id="${testId}"]`));
+              .then((testId) => cy.get(`g[model-id="${testId}"]`))
+              .should('exist');
           })
           .dragAndDrop(x, y);
       } else {

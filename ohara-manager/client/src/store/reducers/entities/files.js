@@ -17,12 +17,14 @@
 import { omit } from 'lodash';
 import * as actions from 'store/actions';
 import { ENTITY_TYPE } from 'store/schema';
-import { entity } from './index';
+import { entity, deleteEntitiesByIds } from './index';
 
 export default function reducer(state = {}, action) {
   switch (action.type) {
     case actions.deleteFile.SUCCESS:
       return omit(state, action.payload?.fileId);
+    case actions.deleteFiles.SUCCESS:
+      return deleteEntitiesByIds(state, action);
     default:
       return entity(ENTITY_TYPE.files)(state, action);
   }

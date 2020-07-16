@@ -126,12 +126,12 @@ const DeleteWorkspace = (props) => {
 
   return (
     <Dialog
-      data-testid="delete-workspace"
+      data-testid="delete-workspace-progress-dialog"
       fullWidth={isOpen}
-      maxWidth={'md'}
+      maxWidth="md"
       open={isOpen}
     >
-      <DialogTitle>{'Delete Workspace'}</DialogTitle>
+      <DialogTitle>Delete Workspace</DialogTitle>
       <DialogContent>
         <Stepper onClose={handleClose} ref={stepperRef} steps={steps} />
       </DialogContent>

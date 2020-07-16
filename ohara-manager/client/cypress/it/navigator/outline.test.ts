@@ -39,7 +39,7 @@ describe('Navigator', () => {
 
   context('Outline', () => {
     beforeEach(() => {
-      cy.deleteAllPipelines();
+      cy.deleteAndStopAllPipelines();
       cy.createPipeline();
     });
 

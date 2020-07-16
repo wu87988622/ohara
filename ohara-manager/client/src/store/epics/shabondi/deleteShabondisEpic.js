@@ -26,12 +26,11 @@ import {
 } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 import { merge } from 'lodash';
-import { normalize } from 'normalizr';
 
 import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteShabondis } from 'observables';
+import { getId } from 'utils/object';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 
 export default (action$) =>
   action$.pipe(
@@ -41,13 +40,12 @@ export default (action$) =>
     mergeMap(({ values, resolve, reject }) => {
       const { workspaceKey } = values;
       return fetchAndDeleteShabondis(workspaceKey).pipe(
-        tap((data) => {
-          if (resolve) resolve(data);
-          return data;
+        tap((shabondis) => {
+          if (resolve) resolve(shabondis);
+          return shabondis;
         }),
-        map((data) => normalize(data, [schema.shabondi])),
-        map((normalizedData) =>
-          actions.deleteShabondis.success(normalizedData),
+        map((shabondis) =>
+          actions.deleteShabondis.success(shabondis.map(getId)),
         ),
         startWith(actions.deleteShabondis.request()),
         catchError((err) => {

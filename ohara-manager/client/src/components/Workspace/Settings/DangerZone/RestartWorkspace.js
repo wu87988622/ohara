@@ -196,12 +196,12 @@ const RestartWorkspace = (props) => {
 
   return (
     <Dialog
-      data-testid="restart-workspace"
+      data-testid="restart-workspace-progress-dialog"
       fullWidth={isOpen}
-      maxWidth={'sm'}
+      maxWidth="sm"
       open={isOpen}
     >
-      <DialogTitle>{'Restart Workspace'}</DialogTitle>
+      <DialogTitle>Restart Workspace</DialogTitle>
       <DialogContent>
         <Stepper
           onClose={onClose}

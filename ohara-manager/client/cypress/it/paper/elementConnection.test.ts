@@ -35,7 +35,7 @@ describe('Paper Element connections', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAllPipelines();
+    cy.deleteAndStopAllPipelines();
     cy.createPipeline();
   });
 

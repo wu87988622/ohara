@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
@@ -30,8 +29,8 @@ import {
 
 import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteTopics } from 'observables';
+import { getId } from 'utils/object';
 import * as actions from 'store/actions';
-import * as schema from 'store/schema';
 
 export default (action$) =>
   action$.pipe(
@@ -41,12 +40,11 @@ export default (action$) =>
     mergeMap(({ values, resolve, reject }) => {
       const { workspaceKey } = values;
       return fetchAndDeleteTopics(workspaceKey).pipe(
-        tap((data) => {
-          if (resolve) resolve(data);
-          return data;
+        tap((topics) => {
+          if (resolve) resolve(topics);
+          return topics;
         }),
-        map((data) => normalize(data, [schema.topic])),
-        map((normalizedData) => actions.deleteTopics.success(normalizedData)),
+        map((topics) => actions.deleteTopics.success(topics.map(getId))),
         startWith(actions.deleteTopics.request()),
         catchError((err) => {
           if (reject) reject(err);

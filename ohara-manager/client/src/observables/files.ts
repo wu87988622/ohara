@@ -15,7 +15,7 @@
  */
 
 import { Observable, defer, forkJoin, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mapTo, mergeMap } from 'rxjs/operators';
 import { isEmpty } from 'lodash';
 
 import { ObjectKey } from 'api/apiInterface/basicInterface';
@@ -40,7 +40,9 @@ export function fetchAndDeleteFiles(workspaceKey: ObjectKey) {
   return fetchFiles(workspaceKey).pipe(
     mergeMap((files) => {
       if (isEmpty(files)) return of(files);
-      return forkJoin(files.map((file) => deleteFile(getKey(file))));
+      return forkJoin(
+        files.map((file) => deleteFile(getKey(file)).pipe(mapTo(file))),
+      );
     }),
   );
 }

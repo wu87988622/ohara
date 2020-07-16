@@ -38,7 +38,7 @@ describe('Paper', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAllPipelines();
+    cy.deleteAndStopAllPipelines();
     cy.createPipeline();
   });
 

@@ -626,50 +626,6 @@ describe('Navigator', () => {
     });
   });
 
-  context('Combine restart and delete workspaces operations', () => {
-    it('should able to restart the same name workspace which just removed and re-created', () => {
-      cy.switchSettingSection(
-        SETTING_SECTION.dangerZone,
-        'Delete this workspace',
-      );
-
-      cy.findAllByRole('dialog')
-        .filter(':visible')
-        .should('have.length', 1)
-        .within(() => {
-          cy.get('input').type('workspace1');
-          cy.findByText('DELETE').click();
-        });
-
-      // after removed, the quick create should be appear
-      cy.findByTestId('close-intro-button').should('be.visible');
-
-      cy.createWorkspace({ node });
-
-      // click restart workspace should be OK
-      cy.switchSettingSection(
-        SETTING_SECTION.dangerZone,
-        'Restart this workspace',
-      );
-
-      cy.findAllByRole('dialog')
-        .filter(':visible')
-        .should('have.length', 1)
-        .within(() => {
-          cy.findByText('RESTART').click();
-        });
-
-      cy.findAllByRole('dialog')
-        .filter(':visible')
-        .should('have.length', 1)
-        .within(() => {
-          cy.findByText('CLOSE').parent('button').should('be.enabled').click();
-        });
-
-      cy.location('pathname').should('equal', '/workspace1');
-    });
-  });
-
   context('Files Settings', () => {
     it('should able to add and remove files', () => {
       cy.switchSettingSection(SETTING_SECTION.files);
