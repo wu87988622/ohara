@@ -19,12 +19,11 @@ import { KIND } from '../../../src/const';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { fetchServiceInfo } from '../../utils';
 import { CELL_ACTION } from '../../support/customCommands';
-import { ElementParameters } from './../../support/customCommands';
 import {
   Permission,
   Type,
 } from '../../../src/api/apiInterface/definitionInterface';
-import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
+import { SOURCE } from '../../../src/api/apiInterface/connectorInterface';
 
 const node: NodeRequest = {
   hostname: generate.serviceName(),
@@ -351,49 +350,6 @@ describe('Property dialog', () => {
           }
         });
       });
-
-      // Close the dialog
-      cy.findByTestId('property-dialog').findByTestId('close-button').click();
-    });
-  });
-
-  it('should able to open the dialog', () => {
-    const elements: ElementParameters[] = [
-      {
-        name: generate.serviceName({ prefix: 'source' }),
-        kind: KIND.source,
-        className: SOURCE.jdbc,
-      },
-      {
-        name: generate.serviceName({ prefix: 'source' }),
-        kind: KIND.source,
-        className: SOURCE.shabondi,
-      },
-      {
-        name: generate.serviceName({ prefix: 'sink' }),
-        kind: KIND.sink,
-        className: SINK.hdfs,
-      },
-      {
-        name: generate.serviceName({ prefix: 'sink' }),
-        kind: KIND.sink,
-        className: SINK.shabondi,
-      },
-      {
-        name: generate.serviceName({ prefix: 'stream' }),
-        kind: KIND.stream,
-        className: KIND.stream,
-      },
-    ];
-
-    elements.forEach(({ name, ...rest }) => {
-      cy.addElement({ name, ...rest });
-
-      cy.getCell(name).trigger('mouseover');
-      cy.cellAction(name, CELL_ACTION.config).click();
-
-      // Should have the dialog title
-      cy.findByText(`Edit the property of ${name}`).should('exist');
 
       // Close the dialog
       cy.findByTestId('property-dialog').findByTestId('close-button').click();

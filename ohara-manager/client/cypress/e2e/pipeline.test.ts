@@ -16,8 +16,13 @@
 
 import * as generate from '../../src/utils/generate';
 import { KIND, CELL_STATUS } from '../../src/const';
-import { ElementParameters, CELL_ACTION } from '../support/customCommands';
+import {
+  ElementParameters,
+  CELL_ACTION,
+  SETTING_SECTION,
+} from '../support/customCommands';
 import { SOURCE, SINK } from '../../src/api/apiInterface/connectorInterface';
+import { hashByGroupAndName } from '../../src/utils/sha';
 
 describe('Pipeline', () => {
   context('Create connections from scratch', () => {
@@ -114,6 +119,148 @@ describe('Pipeline', () => {
               expect(Number($value.text())).to.be.greaterThan(0);
             });
         });
+    });
+  });
+  context('Check all type jar propertyDialog', () => {
+    const workspaceKey = {
+      name: 'workspace1',
+      group: 'workspace',
+    };
+    const fileGroup = hashByGroupAndName(workspaceKey.group, workspaceKey.name);
+
+    // create files
+    const source = {
+      fixturePath: 'jars',
+      name: 'ohara-it-source.jar',
+      group: fileGroup,
+    };
+    const sink = {
+      fixturePath: 'jars',
+      name: 'ohara-it-sink.jar',
+      group: fileGroup,
+    };
+    const files = [source, sink];
+
+    it('should able to open the dialog', () => {
+      cy.deleteAllServices();
+      cy.createWorkspace({});
+      cy.uploadStreamJar();
+      cy.createPipeline();
+
+      cy.switchSettingSection(SETTING_SECTION.files);
+
+      cy.get('div.section-page-content').within(() => {
+        // upload the files by custom command "createJar"
+        files.forEach((file) => {
+          cy.get('input[type="file"]').then((element) => {
+            cy.createJar(file).then((params) => {
+              (element[0] as HTMLInputElement).files = params.fileList;
+              cy.wrap(element).trigger('change', { force: true });
+            });
+          });
+        });
+
+        // after upload file, click the upload file again
+        cy.wait(1000);
+        cy.findByTitle('Upload File').click();
+      });
+
+      cy.switchSettingSection(
+        SETTING_SECTION.worker,
+        'Worker plugins and shared jars',
+      );
+
+      cy.get('div.plugins').findByTitle('Add File').click();
+
+      cy.findByText('ohara-it-sink.jar')
+        .siblings('td')
+        .eq(0)
+        .find('input')
+        .check();
+      cy.findByText('ohara-it-source.jar')
+        .siblings('td')
+        .eq(0)
+        .find('input')
+        .check();
+      cy.findByText('SAVE').click();
+
+      cy.switchSettingSection(
+        SETTING_SECTION.dangerZone,
+        'Restart this worker',
+      );
+      cy.findAllByRole('dialog')
+        .filter(':visible')
+        .should('have.length', 1)
+        .within(() => {
+          cy.findByText('RESTART').click();
+        });
+
+      cy.findByText('CLOSE').parent('button').should('be.enabled').click();
+
+      // close the snackbar
+      cy.findByTestId('snackbar').find('button:visible').click();
+
+      // close the settings dialog
+      cy.findByTestId('workspace-settings-dialog-close-button')
+        .should('be.visible')
+        .click();
+
+      const elements: ElementParameters[] = [
+        {
+          name: generate.serviceName({ prefix: 'source' }),
+          kind: KIND.source,
+          className: SOURCE.jdbc,
+        },
+        {
+          name: generate.serviceName({ prefix: 'source' }),
+          kind: KIND.source,
+          className: SOURCE.shabondi,
+        },
+        {
+          name: generate.serviceName({ prefix: 'sink' }),
+          kind: KIND.sink,
+          className: SINK.hdfs,
+        },
+        {
+          name: generate.serviceName({ prefix: 'sink' }),
+          kind: KIND.sink,
+          className: SINK.shabondi,
+        },
+        {
+          name: generate.serviceName({ prefix: 'stream' }),
+          kind: KIND.stream,
+          className: KIND.stream,
+        },
+        {
+          name: generate.serviceName({
+            prefix: 'jarsource',
+          }),
+          kind: KIND.source,
+          className:
+            'oharastream.ohara.it.connector.IncludeAllTypesSourceConnector',
+        },
+        {
+          name: generate.serviceName({
+            prefix: 'jarsink',
+          }),
+          kind: KIND.sink,
+          className:
+            'oharastream.ohara.it.connector.IncludeAllTypesSinkConnector',
+        },
+      ];
+
+      elements.forEach(({ name, ...rest }) => {
+        cy.addElement({ name, ...rest });
+
+        cy.getCell(name).trigger('mouseover');
+        cy.cellAction(name, CELL_ACTION.config).click();
+
+        // Should have the dialog title
+        cy.findByText(`Edit the property of ${name}`).should('exist');
+
+        // Close the dialog
+        cy.findByTestId('property-dialog').findByTestId('close-button').click();
+      });
     });
   });
 });
