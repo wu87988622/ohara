@@ -38,6 +38,7 @@ export const getCellData = (cellOrView) => {
       isShared: cell.get(CELL_PROP.isShared) || false,
       isSelected: cell.get(CELL_PROP.isSelected),
       status: cell.get(CELL_PROP.status),
+      isIllegal: cell.get(CELL_PROP.isIllegal),
     };
   }
 

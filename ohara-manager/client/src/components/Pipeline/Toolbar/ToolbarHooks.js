@@ -143,7 +143,11 @@ export const useMakeRequest = () => {
   const connectorApiHelper = pipelineApiHelper.connector();
 
   const makeRequest = (pipeline, action) => {
-    const cells = paperApi.getCells();
+    const cells = paperApi
+      .getCells()
+      .filter((cell) => cell.cellType === CELL_TYPE.ELEMENT)
+      .filter((element) => !element.isIllegal);
+
     const connectors = cells.filter(
       (cell) => cell.kind === KIND.source || cell.kind === KIND.sink,
     );

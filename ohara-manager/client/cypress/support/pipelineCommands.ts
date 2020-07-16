@@ -52,7 +52,7 @@ Cypress.Commands.add('stopPipeline', (name) => {
   cy.get('#paper').then(($paper) => {
     // Topics are not included in the comparison as they will always be running in the UI
     const noneTopicEls = $paper.find('.paper-element').not('.topic');
-    const runningElements = noneTopicEls.find('.running');
+    const runningElements = noneTopicEls.find('.running, .failed');
 
     // If there's no running elements, no need to stop the pipeline
     if (noneTopicEls.length === 0 || runningElements.length === 0) return;

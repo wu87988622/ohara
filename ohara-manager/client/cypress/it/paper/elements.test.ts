@@ -19,7 +19,6 @@ import { CELL_ACTION } from '../../support/customCommands';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface';
 import { fetchPipelines } from '../../utils';
-import { hashByGroupAndName } from '../../../src/utils/sha';
 import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { ElementParameters } from './../../support/customCommands';
 import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
@@ -181,9 +180,9 @@ describe('Elements', () => {
 
   // Testing different states of the Paper elements:
   // # added -> default state
-  // # linked -> but not started yet
-  // # pending -> starting
-  // # started -> running okay
+  // # linked -> connected with other elements
+  // # pending -> an action is in the air
+  // # running -> running okay
   // # failed -> started but with errors from backend
   context('Elements when added', () => {
     it('should render connector element UI', () => {
@@ -445,10 +444,16 @@ describe('Elements', () => {
         cy.findByText(sourceName)
           .should('exist')
           .then(($source) => {
-            const $menu = $source.parents('.connector').find('.menu');
+            const $container = $source.parents('.connector');
+            const $menu = $container.find('.menu');
 
             // Menu should be visible when hovering
             expect($menu).to.be.visible;
+
+            // Should be pending
+            expect($container.find('.status-value').text()).to.eq(
+              CELL_STATUS.stopped,
+            );
 
             expect($menu.find('button').length).to.eq(5);
 
@@ -466,8 +471,8 @@ describe('Elements', () => {
     });
   });
 
-  context('Elements when pending', () => {
-    it('should disable all action buttons', () => {
+  context('Elements:pending', () => {
+    it('should disable all action buttons when in pending', () => {
       cy.server();
       cy.route({
         method: 'PUT',
@@ -508,7 +513,7 @@ describe('Elements', () => {
     });
   });
 
-  context('Elements when started', () => {
+  context('Elements:running', () => {
     it('should disable some of the actions when running', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
@@ -537,7 +542,7 @@ describe('Elements', () => {
     });
   });
 
-  context('Elements when failed', () => {
+  context('Elements:failed', () => {
     it('should disable some of the actions when failed', () => {
       const { sourceName } = createSourceAndTopic();
       cy.getCell(sourceName).trigger('mouseover');
@@ -578,7 +583,7 @@ describe('Elements', () => {
             const $container = $source.parents('.connector');
             const $menu = $container.find('.menu');
 
-            // Should be running
+            // Should be failed
             expect($container.find('.status-value').text()).to.eq(
               CELL_STATUS.failed,
             );
@@ -591,6 +596,60 @@ describe('Elements', () => {
             expect($menu.find('.remove.is-disabled')).to.exist;
 
             expect($menu.find('.is-disabled').length).to.eq(3);
+          });
+        });
+      });
+    });
+  });
+
+  context('Elements:illegal', () => {
+    it(`should disable some of the actions when it's illegal`, () => {
+      const sourceName = generate.serviceName({ prefix: 'source' });
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.jdbc,
+      });
+
+      cy.wrap(null).then(async () => {
+        // There's only one pipeline in our env
+        const [pipelineData]: PipelineRequest[] = await fetchPipelines();
+
+        const mockData = {
+          ...pipelineData,
+          objects: pipelineData.objects.map((object: ObjectAbstract) => {
+            if (object.name === sourceName) {
+              return {
+                ...object,
+                error: 'Oops, something went terribly wrong!',
+              };
+            }
+
+            return object;
+          }),
+        };
+
+        cy.server();
+        cy.route({
+          method: 'GET',
+          url: 'api/pipelines',
+          response: [mockData],
+        }).as('getPipelines');
+
+        cy.reload();
+        cy.wait('@getPipelines');
+
+        cy.findByText('pipeline1').should('exist');
+
+        cy.get('#paper').within(() => {
+          cy.findByText(sourceName).should(($source) => {
+            const $container = $source.parents('.connector');
+            const $menu = $container.find('.menu');
+
+            // Only delete action is not disabled
+            expect($menu.find('.remove')).to.exist;
+            expect($menu.find('.remove')).not.to.have.class('.is-disabled');
+            expect($menu.find('.is-disabled').length).to.eq(4);
           });
         });
       });

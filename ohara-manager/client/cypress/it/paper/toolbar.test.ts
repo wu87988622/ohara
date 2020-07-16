@@ -1,4 +1,3 @@
-import { ElementParameters } from './../../support/customCommands';
 /*
  * Copyright 2019 is-land
  *
@@ -20,6 +19,10 @@ import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 import { CELL_ACTION } from '../../support/customCommands';
+import { fetchPipelines } from '../../utils';
+import { ElementParameters } from './../../support/customCommands';
+import { PipelineRequest } from '../../../src/api/apiInterface/pipelineInterface';
+import { ObjectAbstract } from '../../../src/api/apiInterface/pipelineInterface';
 
 describe('Toolbar', () => {
   const node: NodeRequest = {
@@ -479,7 +482,7 @@ describe('Toolbar', () => {
       });
     });
 
-    it('should able to start and stop a pipeline with the start and all components button', () => {
+    it('should able to start and stop a pipeline with the start and stop all components button', () => {
       // Create a Perf source and than a pipeline only topic
       const sourceName = generate.serviceName({ prefix: 'source' });
       const topicName = 'T1';
@@ -540,6 +543,72 @@ describe('Toolbar', () => {
 
         // Topic is still running
         cy.findByText(topicName).prev('svg').find(`.${CELL_STATUS.running}`);
+      });
+    });
+
+    it('should not start and stop an illegal Paper element', () => {
+      const sourceName = generate.serviceName({ prefix: 'source' });
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.shabondi,
+      });
+
+      cy.server();
+      cy.wrap(null).then(async () => {
+        // There's only one pipeline in our setup
+        const [pipelineData]: PipelineRequest[] = await fetchPipelines();
+
+        const mockData = {
+          ...pipelineData,
+          objects: pipelineData.objects.map((object: ObjectAbstract) => {
+            if (object.name === sourceName) {
+              return {
+                ...object,
+                error: 'Oops, something went terribly wrong!',
+              };
+            }
+
+            return object;
+          }),
+        };
+
+        cy.server();
+        cy.route({
+          method: 'GET',
+          url: 'api/pipelines',
+          response: [mockData],
+        }).as('getPipelines');
+
+        cy.reload();
+        cy.wait('@getPipelines');
+
+        cy.findByText('pipeline1').should('exist');
+
+        cy.startPipeline('pipeline1');
+        cy.get('#paper').within(() => {
+          cy.findByText(sourceName).should(($source) => {
+            const $container = $source.parents('.connector');
+
+            // Should be running
+            expect($container.find('.status-value').text()).not.to.eq(
+              CELL_STATUS.pending,
+            );
+          });
+        });
+
+        cy.stopPipeline('pipeline1');
+
+        cy.get('#paper').within(() => {
+          cy.findByText(sourceName).should(($source) => {
+            const $container = $source.parents('.connector');
+
+            // Should be running
+            expect($container.find('.status-value').text()).not.to.eq(
+              CELL_STATUS.pending,
+            );
+          });
+        });
       });
     });
 
