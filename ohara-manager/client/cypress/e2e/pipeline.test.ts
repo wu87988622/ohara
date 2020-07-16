@@ -121,7 +121,7 @@ describe('Pipeline', () => {
         });
     });
   });
-  context('Check all type jar propertyDialog', () => {
+  context('Test all connectors', () => {
     const workspaceKey = {
       name: 'workspace1',
       group: 'workspace',
