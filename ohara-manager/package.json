@@ -60,7 +60,7 @@
     "forever": "1.0.0",
     "http-proxy-middleware": "1.0.4",
     "junit-report-merger": "0.0.6",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "morgan": "1.10.0",
     "sha.js": "2.4.11",
     "ts-node": "8.10.2",
