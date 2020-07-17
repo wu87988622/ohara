@@ -113,8 +113,8 @@ const DeleteWorkspace = (props) => {
   ];
 
   const handleClose = () => {
-    const isFinish = stepperRef.current.isFinish();
-    const errors = stepperRef.current.getErrorLogs();
+    const isFinish = stepperRef.current?.isFinish();
+    const errors = stepperRef.current?.getErrorLogs();
     if (!isFinish && !isEmpty(errors)) {
       eventLog.error({
         title: `Failed to delete workspace ${workspace?.name}.`,

@@ -177,4 +177,43 @@ describe('Create Workspace', () => {
         .should('be.disabled');
     });
   });
+  it('If "close after finish" is checked, it should be closed automatically', () => {
+    const workspaceName = generate.serviceName({ prefix: 'wk' });
+
+    // Click the quickstart dialog
+    cy.visit('/');
+
+    // Since we will redirect the url
+    // need to wait a little time for url applying
+    cy.wait(1000);
+
+    cy.closeIntroDialog();
+
+    cy.findByTitle('Create a new workspace').click();
+    cy.findByText('QUICK CREATE').should('exist').click();
+
+    // Step1: workspace name
+    if (workspaceName) {
+      // type the workspaceName by parameter
+      cy.findByDisplayValue('workspace', { exact: false })
+        .clear()
+        .type(workspaceName);
+    }
+    cy.findAllByText('NEXT').filter(':visible').click();
+
+    // Step2: select nodes
+    cy.contains('p:visible', 'Click here to select nodes').click();
+    cy.addNode(node);
+
+    // Step3: create workspace
+    cy.wait(1000);
+    cy.findAllByText('SUBMIT').filter(':visible').click();
+
+    cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
+    cy.findByText('Close after finish').click();
+
+    cy.findByTestId('create-workspace-progress-dialog').should(
+      'not.be.visible',
+    );
+  });
 });
