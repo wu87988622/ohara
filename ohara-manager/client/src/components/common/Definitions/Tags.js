@@ -38,7 +38,7 @@ const Tags = (props) => {
       jsonValue = JSON.stringify(jsonValue, 0, 2);
     } else {
       hasError = true;
-      meta.error = 'Invalid JSON format';
+      meta[error] = 'Invalid JSON format';
     }
   }
 
