@@ -202,8 +202,6 @@ describe('Create Workspace', () => {
     cy.findAllByText('NEXT').filter(':visible').click();
 
     // Step2: select nodes
-    // we wait a little time for the "click button" to be rendered
-    cy.wait(1000);
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode(node);
 
