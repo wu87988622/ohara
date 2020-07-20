@@ -47,7 +47,7 @@ describe('Restart workspace', () => {
     cy.server();
   });
 
-  it('should able to add node into workspace', () => {
+  it('should be able to add node into workspace', () => {
     // click node list
     cy.findByTitle(/node list/i).click();
     // create a node
@@ -220,7 +220,7 @@ describe('Restart workspace', () => {
       .should('not.exist');
   });
 
-  it('should able to restart from indicator after adding node to zookeeper', () => {
+  it('should be able to restart from indicator after adding node to zookeeper', () => {
     // add node to zookeeper
     cy.switchSettingSection(SETTING_SECTION.zookeeper);
     cy.get('div.section-page-content').within(() => {
@@ -318,7 +318,7 @@ describe('Restart workspace', () => {
     });
   });
 
-  it('should able to restart from indicator after adding node to broker', () => {
+  it('should be able to restart from indicator after adding node to broker', () => {
     // add node to zookeeper
     cy.switchSettingSection(SETTING_SECTION.broker);
     cy.get('div.section-page-content').within(() => {
@@ -408,7 +408,7 @@ describe('Restart workspace', () => {
     });
   });
 
-  it('should able to restart from indicator after adding node to worker', () => {
+  it('should be able to restart from indicator after adding node to worker', () => {
     // add node to zookeeper
     cy.switchSettingSection(SETTING_SECTION.worker);
     cy.get('div.section-page-content').within(() => {
@@ -498,7 +498,7 @@ describe('Restart workspace', () => {
     });
   });
 
-  it('should able to restart worker by directly click button', () => {
+  it('should be able to restart worker by directly click button', () => {
     cy.switchSettingSection(SETTING_SECTION.dangerZone, 'Restart this worker');
     cy.findAllByRole('dialog')
       .filter(':visible')
@@ -525,7 +525,7 @@ describe('Restart workspace', () => {
     cy.findByText('CLOSE').parent('button').should('be.enabled').click();
   });
 
-  it('should able to restart broker by directly click button', () => {
+  it('should be able to restart broker by directly click button', () => {
     cy.switchSettingSection(SETTING_SECTION.dangerZone, 'Restart this broker');
     cy.findAllByRole('dialog')
       .filter(':visible')
@@ -557,7 +557,7 @@ describe('Restart workspace', () => {
     cy.findByText('CLOSE').parent('button').should('be.enabled').click();
   });
 
-  it('should able to restart workspace by directly click button', () => {
+  it('should be able to restart workspace by directly click button', () => {
     cy.switchSettingSection(
       SETTING_SECTION.dangerZone,
       'Restart this workspace',
@@ -1280,7 +1280,7 @@ describe('Delete workspace', () => {
 
   beforeEach(() => cy.visit('/'));
 
-  it('should able to restart the same name workspace which just removed and re-created', () => {
+  it('should be able to restart the same name workspace which just removed and re-created', () => {
     // Delete workspace1
     cy.switchSettingSection(
       SETTING_SECTION.dangerZone,

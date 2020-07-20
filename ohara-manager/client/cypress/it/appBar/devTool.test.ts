@@ -108,7 +108,7 @@ describe('App Bar', () => {
         });
     });
 
-    it('should able to change the topic settings', () => {
+    it('should be able to change the topic settings', () => {
       cy.findByTitle(/developer tools/i).click();
 
       // switch to topics tab
@@ -186,7 +186,7 @@ describe('App Bar', () => {
       cy.findByTestId('data-window').children().should('be.visible');
     });
 
-    it('should able to switch to log tab', () => {
+    it('should be able to switch to log tab', () => {
       cy.findByTitle(/developer tools/i).click();
 
       // switch to logs tab
@@ -216,7 +216,7 @@ describe('App Bar', () => {
       cy.get('.status-bar').findByText('Latest 10 minutes').should('exist');
     });
 
-    it('should able to change the log settings', () => {
+    it('should be able to change the log settings', () => {
       cy.findByTitle(/developer tools/i).click();
 
       // switch to logs tab

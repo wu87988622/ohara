@@ -87,7 +87,7 @@ describe('Property view', () => {
     });
   });
 
-  it('should able to open and close the view', () => {
+  it('should be able to open and close the view', () => {
     const sourceName = generate.serviceName({ prefix: 'source' });
     // Create a Perf source
     cy.addElement({
@@ -278,7 +278,7 @@ describe('Property view', () => {
       });
   });
 
-  it('should able to render the view with different kind of pipeline components', () => {
+  it('should be able to render the view with different kind of pipeline components', () => {
     const elements: ElementParameters[] = [
       {
         name: generate.serviceName({ prefix: 'source' }),

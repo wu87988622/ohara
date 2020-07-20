@@ -64,7 +64,7 @@ describe('Toolbar', () => {
       });
     });
 
-    it('should able to open hidden Toolbox via insert controls', () => {
+    it('should be able to open hidden Toolbox via insert controls', () => {
       // Hide Toolbox first
       cy.get('#toolbox')
         .should('be.visible')
@@ -147,7 +147,7 @@ describe('Toolbar', () => {
       });
     });
 
-    it('should able to change scale with zoom dropdown', () => {
+    it('should be able to change scale with zoom dropdown', () => {
       // The scale numbers are exactly the same of Paper connector's height,
       // and since connector width is 2.4 times of the height, so we can get the exact
       // width and height during the test by doing `scale (height) * 2.4 = width`
@@ -209,7 +209,7 @@ describe('Toolbar', () => {
       cy.findByTestId('zoom-display').should('have.text', '150%');
     });
 
-    it('should able to change scale with zoom in and out buttons', () => {
+    it('should be able to change scale with zoom in and out buttons', () => {
       // The scale numbers are exactly the same of Paper connector's height,
       // and since connector width is 2.4 times of the height, so we can get the exact
       // width and height during the test by doing `scale (height) * 2.4 = width`
@@ -482,7 +482,7 @@ describe('Toolbar', () => {
       });
     });
 
-    it('should able to start and stop a pipeline with the start and stop all components button', () => {
+    it('should be able to start and stop a pipeline with the start and stop all components button', () => {
       // Create a Perf source and than a pipeline only topic
       const sourceName = generate.serviceName({ prefix: 'source' });
       const topicName = 'T1';
@@ -665,7 +665,7 @@ describe('Toolbar', () => {
         });
     });
 
-    it('should able to delete a pipeline', () => {
+    it('should be able to delete a pipeline', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
       cy.addElement({
         name: sourceName,

@@ -29,6 +29,175 @@ describe('Create Workspace', () => {
     cy.visit('/');
   });
 
+  context('Quick Create Workspace', () => {
+    it('should remember the state when close the dialog', () => {
+      const workspaceName = generate.serviceName({ prefix: 'ws' });
+      const nodeHost = generate.serviceName({ prefix: 'node' });
+
+      // first visit will popup the quick create dialog
+      cy.findByText('QUICK CREATE').click();
+
+      // type workspace name
+      cy.findByDisplayValue('workspace', { exact: false })
+        .clear()
+        .type(workspaceName);
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // add node
+      cy.contains('p:visible', 'Click here to select nodes').click();
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(nodeHost);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(nodeHost)
+        .siblings('td')
+        .find('input[type="checkbox"]')
+        .click();
+      cy.findByText('SAVE').click();
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // assert the node data should appear when click back button
+      cy.findAllByText('BACK').filter(':visible').click();
+      cy.contains('h6', 'Hostname')
+        .siblings('div')
+        .invoke('html')
+        .should('equal', nodeHost);
+
+      // close dialog
+      cy.findByTestId('fullscreen-dialog-close-button').click();
+
+      // back to create workspace dialog again
+      // the state should keep in "select nodes"
+      cy.findByText('QUICK CREATE').click();
+      cy.contains('h6', 'Hostname')
+        .siblings('div')
+        .invoke('html')
+        .should('equal', nodeHost);
+    });
+
+    it('should be able to selected and filtered node', () => {
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname1 = generate.serviceName();
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname1);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname1).should('exist');
+
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname2 = generate.serviceName();
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname2);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname2).should('exist');
+
+      cy.visit('/');
+      cy.findByTestId('close-intro-button').click();
+      cy.findByTitle('Node list').should('exist').click();
+
+      const hostname3 = `${hostname1}${generate.serviceName()}`;
+      cy.findByTitle('Create Node').click();
+      cy.get('input[name=hostname]').type(hostname3);
+      cy.get('input[name=port]').type(generate.port().toString());
+      cy.get('input[name=user]').type(generate.userName());
+      cy.get('input[name=password]').type(generate.password());
+      cy.findByText('CREATE').click();
+      cy.findByText(hostname3).should('exist');
+
+      cy.visit('/');
+      cy.findByText(/^quick create$/i)
+        .should('exist')
+        .click();
+
+      // Step1: workspace name (using default)
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // Since Unavailable node could not be selected
+      // We check the existence only
+      cy.findByText('Click here to select nodes').click();
+      cy.findByText(hostname1).should('exist');
+      cy.findByText(hostname2).should('exist');
+      cy.findByText(hostname3).should('exist');
+
+      // filter by hostname
+      cy.findAllByPlaceholderText('Search').filter(':visible').type(hostname2);
+      cy.findByText(hostname1).should('not.exist');
+      cy.findByText(hostname3).should('not.exist');
+    });
+
+    it('should reset the form after create workspace successfully', () => {
+      const workspaceName = generate.serviceName({ prefix: 'ws' });
+      cy.createWorkspace({ workspaceName });
+
+      // after creation with specific workspace name, the workspace should use default name
+      cy.findByTitle('Create a new workspace').click();
+      cy.findByText('QUICK CREATE').should('exist').click();
+      cy.findByDisplayValue('workspace', { exact: false })
+        .invoke('val')
+        .should('equal', 'workspace1');
+
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // the node selected cards should be initialized (only the "select nodes" card exists)
+      cy.get('div.MuiGrid-container').children('div').should('have.length', 1);
+    });
+
+    it('should close the progress dialog automatically when "Close after finish" is checked', () => {
+      const workspaceName = generate.serviceName({ prefix: 'ws' });
+
+      cy.visit('/');
+
+      // Wait until the page is loaded
+      cy.wait(1000);
+
+      cy.closeIntroDialog();
+
+      // Create a new workspace
+      cy.findByTitle('Create a new workspace').click();
+      cy.findByText('QUICK CREATE').should('exist').click();
+
+      // Step1: workspace name
+      if (workspaceName) {
+        // type the workspaceName by parameter
+        cy.findByDisplayValue('workspace', { exact: false })
+          .clear()
+          .type(workspaceName);
+      }
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // Step2: select nodes
+      cy.contains('p:visible', 'Click here to select nodes').click();
+      cy.addNode(node);
+
+      // Submit the form
+      cy.findAllByText('SUBMIT').filter(':visible').click();
+
+      // The progress dialog should exist
+      cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
+
+      // Check the option
+      cy.findByText('Close after finish').click();
+
+      // It should be closed when done
+      cy.findByTestId('create-workspace-progress-dialog').should(
+        'not.be.visible',
+      );
+    });
+  });
+
   context('When creating a workspace failed', () => {
     it('should be able to cancel ', () => {
       const workspaceName = generate.serviceName({ prefix: 'wk' });
@@ -176,44 +345,5 @@ describe('Create Workspace', () => {
         .contains('UNSTABLE WORKSPACE')
         .should('be.disabled');
     });
-  });
-  it('If "close after finish" is checked, it should be closed automatically', () => {
-    const workspaceName = generate.serviceName({ prefix: 'wk' });
-
-    // Click the quickstart dialog
-    cy.visit('/');
-
-    // Since we will redirect the url
-    // need to wait a little time for url applying
-    cy.wait(1000);
-
-    cy.closeIntroDialog();
-
-    cy.findByTitle('Create a new workspace').click();
-    cy.findByText('QUICK CREATE').should('exist').click();
-
-    // Step1: workspace name
-    if (workspaceName) {
-      // type the workspaceName by parameter
-      cy.findByDisplayValue('workspace', { exact: false })
-        .clear()
-        .type(workspaceName);
-    }
-    cy.findAllByText('NEXT').filter(':visible').click();
-
-    // Step2: select nodes
-    cy.contains('p:visible', 'Click here to select nodes').click();
-    cy.addNode(node);
-
-    // Step3: create workspace
-    cy.wait(1000);
-    cy.findAllByText('SUBMIT').filter(':visible').click();
-
-    cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
-    cy.findByText('Close after finish').click();
-
-    cy.findByTestId('create-workspace-progress-dialog').should(
-      'not.be.visible',
-    );
   });
 });

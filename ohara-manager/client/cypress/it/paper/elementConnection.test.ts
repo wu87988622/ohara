@@ -27,7 +27,7 @@ const node: NodeRequest = {
   password: generate.password(),
 };
 
-describe('Paper Element connections', () => {
+describe('Element connections', () => {
   before(() => {
     cy.deleteAllServices();
     cy.createWorkspace({ node });
@@ -134,7 +134,7 @@ describe('Paper Element connections', () => {
         .click();
     });
 
-    it('should able to delete a connected topic', () => {
+    it('should be able to delete a connected topic', () => {
       const perfSourceName = generate.serviceName({ prefix: 'source' });
       const pipelineOnlyTopicName = 'T1';
       const smbSinkName = generate.serviceName({ prefix: 'sink' });

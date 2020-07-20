@@ -58,7 +58,7 @@ describe('Paper', () => {
 
   // TODO: Add a test to verify element position could be saved too
   context('Save', () => {
-    it('should able to add element and then save', () => {
+    it('should be able to add element and then save', () => {
       // No connector exists yet
       cy.get('#paper .connector').should('have.length', 0);
 
@@ -81,7 +81,7 @@ describe('Paper', () => {
       cy.get('#paper .connector').should('have.length', 1);
     });
 
-    it('should able to remove element and then save', () => {
+    it('should be able to remove element and then save', () => {
       // No connector exists yet
       cy.get('#paper .connector').should('have.length', 0);
       const sourceName = generate.serviceName({ prefix: 'source' });
@@ -109,7 +109,7 @@ describe('Paper', () => {
       cy.get('#paper .connector').should('have.length', 0);
     });
 
-    it('should able to add a connection and then save', () => {
+    it('should be able to add a connection and then save', () => {
       // There are many possible connection, here we are adding a simple one
       // Perf -> topic
       createSourceAndTopic();
@@ -126,7 +126,7 @@ describe('Paper', () => {
       cy.get('#paper .joint-link').should('have.length', 1);
     });
 
-    it('should able to remove a connection and then save', () => {
+    it('should be able to remove a connection and then save', () => {
       createSourceAndTopic();
 
       // We should have a link now

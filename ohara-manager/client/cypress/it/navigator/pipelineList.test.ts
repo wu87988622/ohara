@@ -43,7 +43,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to expand and collapse the list', () => {
+    it('should be able to expand and collapse the list', () => {
       const pipeline1 = generate.serviceName({ prefix: 'pi' });
 
       cy.createPipeline(pipeline1);
@@ -68,7 +68,7 @@ describe('Navigator', () => {
       cy.findByText(pipeline2).should('have.class', 'active-link');
     });
 
-    it('should able to switch between pipelines', () => {
+    it('should be able to switch between pipelines', () => {
       const pipeline1 = generate.serviceName({ prefix: 'pi' });
       const pipeline2 = generate.serviceName({ prefix: 'pi' });
       const pipeline3 = generate.serviceName({ prefix: 'pi' });
@@ -177,7 +177,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to close dialog with close button and cancel button', () => {
+    it('should be able to close dialog with close button and cancel button', () => {
       const newBtn = 'new-pipeline-button';
       const closeBtn = 'close-button';
       const dialog = 'new-pipeline-dialog';
@@ -239,7 +239,7 @@ describe('Navigator', () => {
       cy.findByText(requireFieldError).should('exist');
       cy.findByText('ADD').parent('button').should('be.disabled');
 
-      // valid name, we should able to create a new pipeline with it
+      // valid name, we should be able to create a new pipeline with it
       cy.get('@input').clear().type(validName);
       cy.findByText('ADD').parent('button').should('not.be.disabled').click();
 

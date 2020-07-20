@@ -46,7 +46,7 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('should able to create and start a topic', () => {
+it('should be able to create and start a topic', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 

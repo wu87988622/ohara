@@ -228,9 +228,11 @@ Cypress.Commands.add('createNodeIfNotExists', (nodeToCreate: NodeRequest) => {
         return cy.wrap(nodeToCreate);
       } else {
         // create if the node does not exist
-        cy.request('POST', 'api/nodes', nodeToCreate).then((createdNode) => {
-          return cy.wrap(createdNode);
-        });
+        return cy
+          .request('POST', 'api/nodes', nodeToCreate)
+          .then((createdNode) => {
+            return cy.wrap(createdNode);
+          });
       }
     });
 });
@@ -270,10 +272,8 @@ Cypress.Commands.add(
     // Click the quickstart dialog
     cy.visit('/');
 
-    // Since we will redirect the url
-    // need to wait a little time for url applying
+    // Wait until page is loaded
     cy.wait(1000);
-
     cy.closeIntroDialog();
 
     cy.findByTitle('Create a new workspace').click();
@@ -281,21 +281,16 @@ Cypress.Commands.add(
 
     // Step1: workspace name
     if (workspaceName) {
-      // type the workspaceName by parameter
-      cy.findByDisplayValue('workspace', { exact: false })
-        .clear()
-        .type(workspaceName);
+      cy.findByPlaceholderText('workspace1').clear().type(workspaceName);
     }
+
     cy.findAllByText('NEXT').filter(':visible').click();
 
     // Step2: select nodes
-    // we wait a little time for the "click button" to be rendered
-    cy.wait(1000);
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode(node);
 
     // Step3: create workspace
-    cy.wait(1000);
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
     cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
@@ -325,44 +320,6 @@ Cypress.Commands.add(
     }
 
     cy.end();
-  },
-);
-
-// Note: this custom command is a "heavy" command, may take almost 40 seconds to accomplish
-// make sure you have set enough timeout of defaultCommandTimeout in cypress.e2e.json
-Cypress.Commands.add(
-  'produceTopicData',
-  async (workspaceName?: string, topicName?: String) => {
-    if (!workspaceName || !topicName) {
-      console.error('the workspaceName and topicName are required fields');
-      return;
-    }
-    const connector = {
-      name: generate.serviceName({ prefix: 'perf' }),
-      // it is ok to use random group here; we just need a temp connector to produce data
-      group: generate.serviceName({ prefix: 'group' }),
-      connector__class: SOURCE.perf,
-      topicKeys: [
-        {
-          name: topicName,
-          group: hashByGroupAndName(workspaceGroup, workspaceName),
-        },
-      ],
-      workerClusterKey: {
-        name: workspaceName,
-        group: workerGroup,
-      },
-    };
-
-    await connectorApi.create(connector);
-    await connectorApi.start(connector);
-
-    // sleep 10 seconds for perf connector to write some data to topic
-    await sleep(10000);
-
-    // remove this temp connector
-    await connectorApi.forceStop(connector);
-    await connectorApi.remove(connector);
   },
 );
 

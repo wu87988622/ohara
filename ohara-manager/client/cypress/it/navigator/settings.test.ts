@@ -89,7 +89,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to click the workspace menu', () => {
+    it('should be able to click the workspace menu', () => {
       cy.get('#navigator').within(() => {
         cy.contains('button', /workspace1/i).click();
       });
@@ -103,7 +103,7 @@ describe('Navigator', () => {
         .type('{ESC}');
     });
 
-    it('should able to see settings of current workspace', () => {
+    it('should be able to see settings of current workspace', () => {
       cy.get('#navigator').within(() => {
         cy.contains('button', /workspace1/i).click();
       });
@@ -139,7 +139,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to add shared topics', () => {
+    it('should be able to add shared topics', () => {
       cy.switchSettingSection(SETTING_SECTION.topics);
 
       // add shared topics
@@ -198,7 +198,7 @@ describe('Navigator', () => {
       cy.findByText(t1).should('not.exist');
     });
 
-    it('should able to filter and sort topics by name', () => {
+    it('should be able to filter and sort topics by name', () => {
       cy.switchSettingSection(SETTING_SECTION.topics);
 
       // add multiple topics
@@ -232,7 +232,7 @@ describe('Navigator', () => {
             .type('1');
           cy.contains('button', 'CREATE').click();
         });
-      // should able to filter topics by name
+      // should be able to filter topics by name
       cy.get('div.shared-topic').within(() => {
         cy.findAllByPlaceholderText('Search').filter(':visible').type(t2);
         cy.findByText(t1).should('not.exist');
@@ -322,7 +322,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to add setting fillings', () => {
+    it('should be able to add setting fillings', () => {
       cy.switchSettingSection(SETTING_SECTION.autofill);
 
       cy.contains('button', 'ADD AUTOFILL').click();
@@ -449,7 +449,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to view node information of zookeeper', () => {
+    it('should be able to view node information of zookeeper', () => {
       cy.switchSettingSection(SETTING_SECTION.zookeeper);
 
       cy.findAllByTitle('View node').filter(':visible').click();
@@ -506,7 +506,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to view node information of broker', () => {
+    it('should be able to view node information of broker', () => {
       cy.switchSettingSection(SETTING_SECTION.broker);
 
       cy.findAllByTitle('View node').filter(':visible').click();
@@ -561,7 +561,7 @@ describe('Navigator', () => {
       });
     });
 
-    it('should able to view node information of worker', () => {
+    it('should be able to view node information of worker', () => {
       cy.switchSettingSection(SETTING_SECTION.worker);
 
       cy.findAllByTitle('View node').filter(':visible').click();
@@ -627,7 +627,7 @@ describe('Navigator', () => {
   });
 
   context('Files Settings', () => {
-    it('should able to add and remove files', () => {
+    it('should be able to add and remove files', () => {
       cy.switchSettingSection(SETTING_SECTION.files);
 
       cy.get('div.section-page-content').within(() => {
@@ -697,7 +697,7 @@ describe('Navigator', () => {
       cy.findAllByText('DumbStream', { exact: false }).should('exist');
     });
 
-    it('should able to select file in stream jars', () => {
+    it('should be able to select file in stream jars', () => {
       cy.switchSettingSection(SETTING_SECTION.stream);
       cy.get('div.section-page-content').within(() => {
         cy.findByTitle('Add File').click();
@@ -902,7 +902,7 @@ describe('Navigator', () => {
       cy.findByText(fakeJar.name).should('not.exist');
     });
 
-    it('should able to select file in worker plugins', () => {
+    it('should be able to select file in worker plugins', () => {
       cy.switchSettingSection(
         SETTING_SECTION.worker,
         'Worker plugins and shared jars',

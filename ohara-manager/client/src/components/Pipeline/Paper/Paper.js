@@ -642,7 +642,7 @@ const Paper = React.forwardRef((props, ref) => {
       addLink(sourceId, targetId, data, options) {
         if (typeof sourceId !== 'string') {
           throw new Error(
-            `paperApi: addLink(sourceId: string, targetId: string?) invalid argument sourceId`,
+            `paperApi: addLink(sourceId: string, targetId?: string) invalid argument sourceId`,
           );
         }
 
@@ -695,7 +695,7 @@ const Paper = React.forwardRef((props, ref) => {
 
           if (!validTypes.includes(kind))
             throw new Error(
-              `paperApi: getCells(kind: string?) argument ${kind} is not a valid type! Available types are: ${validTypes.toString()}`,
+              `paperApi: getCells(kind?: string) argument ${kind} is not a valid type! Available types are: ${validTypes.toString()}`,
             );
 
           return graph

@@ -57,7 +57,7 @@ describe('ToolBox', () => {
       });
     });
 
-    it('should able to hide Toolbox', () => {
+    it('should be able to hide Toolbox', () => {
       cy.get('#toolbox')
         .should('be.visible')
         .within(() => {
@@ -69,7 +69,7 @@ describe('ToolBox', () => {
   });
 
   context('Search', () => {
-    it('should able to search components', () => {
+    it('should be able to search components', () => {
       cy.get('#toolbox').within(() => {
         cy.findByPlaceholderText('Search topic & connector...').as('input');
 
@@ -95,7 +95,7 @@ describe('ToolBox', () => {
       });
     });
 
-    it('should able to clear search term with escape key', () => {
+    it('should be able to clear search term with escape key', () => {
       cy.get('#toolbox').within(() => {
         cy.findByPlaceholderText('Search topic & connector...').as('input');
         cy.get('@input').type('abcdefg');
@@ -210,7 +210,7 @@ describe('ToolBox', () => {
   });
 
   context('Toolbox interaction with Paper', () => {
-    it('should able to create Paper elements with Toolbox items', () => {
+    it('should be able to create Paper elements with Toolbox items', () => {
       const sources = Object.values(SOURCE).map((className) => ({
         name: generate.serviceName({ prefix: 'source' }),
         kind: KIND.source,

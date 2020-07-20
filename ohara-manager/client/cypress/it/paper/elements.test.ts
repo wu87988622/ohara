@@ -50,7 +50,7 @@ describe('Elements', () => {
   });
 
   context('Element actions', () => {
-    it('should able to create connection between connector', () => {
+    it('should be able to create connection between connector', () => {
       // Create a connection: ftpSource -> topic -> smbSink
 
       // Add elements
@@ -81,7 +81,7 @@ describe('Elements', () => {
       cy.get('#paper .joint-link').should('have.length', 2);
     });
 
-    it('should able to start a connector', () => {
+    it('should be able to start a connector', () => {
       // Add elements into Paper and create connection
       const { sourceName } = createSourceAndTopic();
 
@@ -100,7 +100,7 @@ describe('Elements', () => {
       });
     });
 
-    it('should able to stop a connector', () => {
+    it('should be able to stop a connector', () => {
       const { sourceName } = createSourceAndTopic();
 
       // Start the connector
@@ -131,7 +131,7 @@ describe('Elements', () => {
       });
     });
 
-    it('should able to open Property dialog', () => {
+    it('should be able to open Property dialog', () => {
       // Create a source
       const sourceName = generate.serviceName({ prefix: 'source' });
 
@@ -159,7 +159,7 @@ describe('Elements', () => {
       });
     });
 
-    it('should able to delete an element', () => {
+    it('should be able to delete an element', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
       cy.addElement({
         name: sourceName,

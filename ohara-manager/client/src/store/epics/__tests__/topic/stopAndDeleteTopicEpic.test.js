@@ -45,7 +45,7 @@ const makeTestScheduler = () =>
     expect(actual).toEqual(expected);
   });
 
-it('should able to stop and delete a topic', () => {
+it('should be able to stop and delete a topic', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
