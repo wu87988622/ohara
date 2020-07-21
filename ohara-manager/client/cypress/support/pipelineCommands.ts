@@ -146,16 +146,18 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
     const size = $paper.find('.paper-element').length;
 
     // Open Toolbox panel
-    cy.findByText(capitalize(kind)).should('exist').click();
+    cy.findByText(capitalize(kind))
+      .should('exist')
+      .click()
+      .parent()
+      .next()
+      .should('be.visible'); // Ensure the list is opened
 
     // re-render the cell position to maximize the available space
     // the view of cells will be a [n, 2] matrix
     const x = size % 2 === 0 ? initialX : initialX + shiftWidth;
     const y = initialY + ~~(size / 2) * shiftHeight;
     cy.log(`Element position: ${x}, ${y}`);
-
-    // wait a little time for the toolbox list rendered
-    cy.wait(2000);
 
     if (kind === KIND.source || kind === KIND.sink) {
       const displayName = className.split('.').pop();

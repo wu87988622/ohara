@@ -83,7 +83,7 @@ it('should delete a pipeline', () => {
     // prettier-ignore
     const input = '   ^-a                                                         ';
     // prettier-ignore
-    const expected =  '-- 1s a 999ms b 999ms c 99ms d 99ms e 99ms (fg) 496ms (hi)';
+    const expected =  '-- 1s a 99ms b 999ms c 99ms d 99ms e 99ms (fg) 496ms (hi)';
     // prettier-ignore
     const subs = '    ^-----------------------------------------------------------';
 

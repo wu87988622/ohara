@@ -67,9 +67,9 @@ it('stop shabondis should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 499ms v';
-    const subs = ['   ^----------', '--^ 499ms !'];
+    const input = '   ^-a       ';
+    const expected = '--a 99ms v';
+    const subs = ['   ^---------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {

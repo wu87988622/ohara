@@ -49,9 +49,9 @@ it('should start the shabondi', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a        ';
-    const expected = '--a 499ms v';
-    const subs = '    ^----------';
+    const input = '   ^-a       ';
+    const expected = '--a 99ms v';
+    const subs = '    ^---------';
     const id = '1234';
 
     const action$ = hot(input, {
@@ -192,7 +192,7 @@ it('start shabondi multiple times should be worked once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
+    const expected = '--a        99ms v';
     const subs = '    ^----------------';
     const id = '1234';
 
@@ -256,9 +256,9 @@ it('start different shabondi should be worked correctly', () => {
       xmx: 2222,
       clientPort: 3333,
     };
-    const input = '   ^-a--b           ';
-    const expected = '--a--b 496ms y--z';
-    const subs = '    ^----------------';
+    const input = '   ^-a--b          ';
+    const expected = '--a--b 96ms y--z';
+    const subs = '    ^---------------';
     const id1 = '1234';
     const id2 = '5678';
 
