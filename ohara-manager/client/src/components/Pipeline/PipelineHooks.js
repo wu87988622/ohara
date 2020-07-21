@@ -69,7 +69,7 @@ export const usePipelineState = () => {
       case 'updateMetrics': {
         return {
           ...state,
-          objects: [...payload],
+          objects: payload,
         };
       }
       case 'resetToolboxExpanded':
