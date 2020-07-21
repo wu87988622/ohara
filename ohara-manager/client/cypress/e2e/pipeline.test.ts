@@ -114,13 +114,14 @@ describe('Pipeline', () => {
 
           // Should have metrics value that are coming from Backend APIs
           cy.wrap($metricsEls)
-            .find('.metrics-value')
+            .find('.metrics-value', { timeout: 40000 })
             .should(($value) => {
               expect(Number($value.text())).to.be.greaterThan(0);
             });
         });
     });
   });
+
   context('Test all connectors', () => {
     const workspaceKey = {
       name: 'workspace1',

@@ -29,6 +29,8 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 
+import { getDateFromTimestamp } from 'utils/date';
+
 const StyledDiv = styled.div(
   ({ theme }) => css`
     display: flex;
@@ -110,6 +112,7 @@ const groupBy = (source, key) => {
 
 const SelectCard = (props) => {
   const { rows, handleClose, filterKey = [] } = props;
+
   return (
     <StyledCard key={rows[Object.keys(rows)[0]]}>
       <CardContent>
@@ -130,7 +133,11 @@ const SelectCard = (props) => {
                 <Typography variant="subtitle2">
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </Typography>
-                <div>{rows[key]}</div>
+                <div>
+                  {key === 'lastModified'
+                    ? getDateFromTimestamp(rows[key])
+                    : rows[key]}
+                </div>
               </StyledDiv>
             );
           })}
