@@ -706,6 +706,15 @@ const Paper = React.forwardRef((props, ref) => {
 
         return graph.getCells().map(paperUtils.getCellData);
       },
+      isConnected(id) {
+        if (typeof id !== 'string') {
+          throw new Error(
+            `paperApi: isConnected(id: string) invalid argument id`,
+          );
+        }
+
+        return graph.getConnectedLinks(findCell(id)).length > 0;
+      },
       loadGraph(cells) {
         // Clear the graph before loading
         graph.clear({ skipGraphEvents: true });
@@ -827,7 +836,6 @@ const Paper = React.forwardRef((props, ref) => {
           )
           .forEach((element) => element.toggleMetrics(isOpen));
       },
-
       updateMetrics(objects) {
         objects
           .filter((object) => object.kind !== KIND.topic) // topic metrics are not displayed in the current UI
@@ -838,7 +846,6 @@ const Paper = React.forwardRef((props, ref) => {
             findElementView(name).updateMeters(nodeMetrics[firstNode]);
           });
       },
-
       highlight(id) {
         if (typeof id !== 'string') {
           throw new Error(
@@ -855,7 +862,6 @@ const Paper = React.forwardRef((props, ref) => {
           elementView.active().setIsSelected(true);
         }
       },
-
       state: {
         // Only expose necessary options from JointJS' default
         options: _.pick(paper.options, ['origin']),
@@ -879,6 +885,7 @@ const Paper = React.forwardRef((props, ref) => {
     );
   }
 
+  // Support using `name` or `id` to find a cell
   function findCell(nameOrId) {
     return (
       graphRef.current.getCell(nameOrId) ||

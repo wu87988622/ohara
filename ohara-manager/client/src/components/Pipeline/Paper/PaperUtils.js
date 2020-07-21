@@ -25,6 +25,7 @@ export const getCellData = (cellOrView) => {
   const cell = _.has(cellOrView, 'model') ? cellOrView.model : cellOrView;
 
   if (cell.isElement()) {
+    // We only expose necessary cell data to our users
     return {
       cellType: cell.get(CELL_PROP.cellType), // JointJS element type
       id: cell.get(CELL_PROP.id),

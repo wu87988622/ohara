@@ -590,7 +590,7 @@ describe('Toolbar', () => {
           cy.findByText(sourceName).should(($source) => {
             const $container = $source.parents('.connector');
 
-            // Should be running
+            // Should not be pending
             expect($container.find('.status-value').text()).not.to.eq(
               CELL_STATUS.pending,
             );
@@ -603,11 +603,50 @@ describe('Toolbar', () => {
           cy.findByText(sourceName).should(($source) => {
             const $container = $source.parents('.connector');
 
-            // Should be running
+            // Should not be pending
             expect($container.find('.status-value').text()).not.to.eq(
               CELL_STATUS.pending,
             );
           });
+        });
+      });
+    });
+
+    it('should not start and stop an element without connections', () => {
+      // Create a SMB source connector and add it into Paper
+      const sourceName = generate.serviceName({ prefix: 'source' });
+
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.smb,
+      });
+
+      cy.startPipeline('pipeline1');
+
+      // Since it won't be triggered, the state should remain `stopped`
+      cy.get('#paper').within(() => {
+        cy.findByText(sourceName).should(($source) => {
+          const $container = $source.parents('.connector');
+
+          // Should be stopped
+          expect($container.find('.status-value').text()).to.eq(
+            CELL_STATUS.stopped,
+          );
+        });
+      });
+
+      cy.stopPipeline('pipeline1');
+
+      // Same with stop, it should still have a state of `stopped`
+      cy.get('#paper').within(() => {
+        cy.findByText(sourceName).should(($source) => {
+          const $container = $source.parents('.connector');
+
+          // Should be stopped
+          expect($container.find('.status-value').text()).to.eq(
+            CELL_STATUS.stopped,
+          );
         });
       });
     });

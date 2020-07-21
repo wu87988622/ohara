@@ -146,7 +146,8 @@ export const useMakeRequest = () => {
     const cells = paperApi
       .getCells()
       .filter((cell) => cell.cellType === CELL_TYPE.ELEMENT)
-      .filter((element) => !element.isIllegal);
+      .filter((element) => !element.isIllegal)
+      .filter((element) => paperApi.isConnected(element.id));
 
     const connectors = cells.filter(
       (cell) => cell.kind === KIND.source || cell.kind === KIND.sink,
