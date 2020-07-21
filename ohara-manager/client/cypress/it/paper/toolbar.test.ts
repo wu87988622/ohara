@@ -121,6 +121,27 @@ describe('Toolbar', () => {
       cy.get('#stream-list').should('be.visible');
       cy.get('.toolbox-list:visible').should('have.length', 1);
     });
+
+    it('should reset and open only one panel when more than one panel are opened', () => {
+      // Open three panels
+      cy.get('#toolbox')
+        .within(() => {
+          cy.findByText(/^source$/i).click();
+          cy.findByText(/^topic$/i).click();
+          cy.findByText(/^stream$/i).click();
+
+          cy.get('.toolbox-list:visible').should('have.length', 3);
+        })
+        .as('toolbar');
+
+      // Click on the source panel, it should reset all panel except the source
+      cy.get('#toolbar').findByTestId(`insert-${source}-button`).click();
+
+      cy.get('#toolbox').within(() => {
+        cy.get('.toolbox-list:visible').should('have.length', 1);
+        cy.get('#source-list').should('be.visible');
+      });
+    });
   });
 
   context('Zoom', () => {

@@ -517,6 +517,28 @@ const Pipeline = React.forwardRef((props, ref) => {
     setCurrentCellData(cellData);
   };
 
+  const handleToolbarInsertClick = (panel) => {
+    const { toolboxExpanded } = pipelineState;
+    const isSelectedPanelExpanded = toolboxExpanded[panel];
+    const expandedPanels = Object.values(toolboxExpanded).filter(Boolean);
+
+    // Close all panels
+    pipelineDispatch({ type: 'resetToolboxExpanded' });
+
+    // 1. Toggle the panel if it's already open
+    // 2. If it has more than one panel opened (only possible by interacting with Toolbox not Toolbar)
+    //    then, let's set the clicked panel to open
+    if (
+      !isSelectedPanelExpanded ||
+      (isSelectedPanelExpanded && expandedPanels.length > 1)
+    ) {
+      pipelineDispatch({
+        type: 'setToolbox',
+        payload: panel,
+      });
+    }
+  };
+
   // Public APIs
   React.useImperativeHandle(ref, () => {
     if (!paperApiRef.current) return null;
@@ -539,18 +561,7 @@ const Pipeline = React.forwardRef((props, ref) => {
         <PaperContext.Provider value={{ ...paperApiRef.current }}>
           {paperApiRef.current && currentPipeline && (
             <Toolbar
-              handleToolbarClick={(panel) => {
-                const isExpanded = pipelineState.toolboxExpanded[panel];
-                pipelineDispatch({ type: 'resetToolboxExpanded' });
-
-                // Toggle the panel if it's already open
-                if (!isExpanded) {
-                  pipelineDispatch({
-                    type: 'setToolbox',
-                    payload: panel,
-                  });
-                }
-              }}
+              handleToolbarInsertClick={handleToolbarInsertClick}
               handleToolboxOpen={() =>
                 pipelineDispatch({ type: 'openToolbox' })
               }

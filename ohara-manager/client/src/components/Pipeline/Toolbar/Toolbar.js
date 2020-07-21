@@ -47,7 +47,7 @@ import {
 } from './ToolbarHooks';
 
 const Toolbar = (props) => {
-  const { handleToolboxOpen, handleToolbarClick, isToolboxOpen } = props;
+  const { handleToolboxOpen, handleToolbarInsertClick, isToolboxOpen } = props;
 
   const [pipelineAnchorEl, setPipelineAnchorEl] = React.useState(null);
   const [zoomAnchorEl, setZoomAnchorEl] = React.useState(null);
@@ -132,10 +132,9 @@ const Toolbar = (props) => {
   };
 
   const onToolboxClick = (panel) => {
-    // If the Toolbox is not "open", we should open it before opening
-    // the expansion panel
+    // If the Toolbox is not "open", we should open it before opening the expansion panel
     if (!isToolboxOpen) handleToolboxOpen();
-    handleToolbarClick(panel);
+    handleToolbarInsertClick(panel);
   };
 
   const getZoomDisplayedValue = (scale) => {
@@ -352,7 +351,7 @@ const Toolbar = (props) => {
 
 Toolbar.propTypes = {
   handleToolboxOpen: PropTypes.func.isRequired,
-  handleToolbarClick: PropTypes.func.isRequired,
+  handleToolbarInsertClick: PropTypes.func.isRequired,
   isToolboxOpen: PropTypes.bool.isRequired,
 };
 
