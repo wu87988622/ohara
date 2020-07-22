@@ -83,7 +83,7 @@ export const remove = (): Observable<BasicResponse> =>
   }).pipe(
     // after remove, the element should be "invisible"
     tap(() => (entities = [])),
-    delay(1000),
+    delay(100),
   );
 
 // simulate a promise request with a delay of 500ms
@@ -92,7 +92,7 @@ export const getAll = (): Observable<ClusterResponseList> =>
     status: 200,
     title: 'mock get all shabondi data',
     data: entities,
-  }).pipe(delay(500));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 500ms
 export const get = (params: ObjectKey): Observable<ClusterResponse> =>
@@ -100,7 +100,7 @@ export const get = (params: ObjectKey): Observable<ClusterResponse> =>
     status: 200,
     title: 'mock get shabondi data',
     data: { ...entity, ...runtimeData, ...params },
-  }).pipe(delay(500));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: ServiceBody): Observable<ClusterResponse> =>
@@ -119,7 +119,7 @@ export const start = (): Observable<BasicResponse> =>
   }).pipe(
     // to simulate shabondi is "started" in fetch request
     tap(() => (runtimeData = { ...runtimeData, state: SERVICE_STATE.RUNNING })),
-    delay(10),
+    delay(100),
   );
 
 // simulate a promise request with a delay of 10ms
@@ -131,5 +131,5 @@ export const stop = (): Observable<BasicResponse> =>
   }).pipe(
     // to simulate shabondi is "stopped" in fetch request
     tap(() => delete runtimeData.state),
-    delay(10),
+    delay(100),
   );

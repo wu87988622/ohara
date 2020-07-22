@@ -63,46 +63,32 @@ function handleSuccess(values, options) {
     (connector) => connector.name === values.name,
   );
   const hasTopicKey = values.topicKeys.length > 0;
-  const connectorId = paperApi.getCell(values.name).id;
+  const connectorId = paperApi.getCell(values.name)?.id;
   const currentHasTopicKey = currentConnector?.topicKeys.length > 0;
 
   if (currentHasTopicKey) {
-    const topicId = paperApi.getCell(currentConnector.topicKeys[0].name).id;
+    const topicId = paperApi.getCell(currentConnector.topicKeys[0]?.name).id;
+    const links = cells.filter((cell) => cell.cellType === CELL_TYPE.LINK);
+
     let linkId;
-    switch (cell.kind) {
-      case KIND.source:
-        linkId = cells
-          .filter((cell) => cell.cellType === CELL_TYPE.LINK)
-          .find(
-            (cell) =>
-              cell.sourceId === connectorId && cell.targetId === topicId,
-          ).id;
-        break;
-      case KIND.sink:
-        linkId = cells
-          .filter((cell) => cell.cellType === CELL_TYPE.LINK)
-          .find(
-            (cell) =>
-              cell.sourceId === topicId && cell.targetId === connectorId,
-          ).id;
-        break;
-      default:
-        break;
+    if (cell.kind === KIND.source) {
+      linkId = links.find(
+        (cell) => cell.sourceId === connectorId && cell.targetId === topicId,
+      )?.id;
+    } else {
+      linkId = links.find(
+        (cell) => cell.sourceId === topicId && cell.targetId === connectorId,
+      )?.id;
     }
 
     paperApi.removeLink(linkId);
   }
 
   if (hasTopicKey) {
-    switch (cell.kind) {
-      case KIND.source:
-        paperApi.addLink(cell.id, topics[0].data.id);
-        break;
-      case KIND.sink:
-        paperApi.addLink(topics[0].data.id, cell.id);
-        break;
-      default:
-        break;
+    if (cell.kind === KIND.source) {
+      paperApi.addLink(cell.id, topics[0]?.data.id);
+    } else {
+      paperApi.addLink(topics[0]?.data.id, cell.id);
     }
   }
 }

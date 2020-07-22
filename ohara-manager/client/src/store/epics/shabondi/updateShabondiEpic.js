@@ -30,50 +30,13 @@ export default (action$) => {
     ofType(actions.updateShabondi.TRIGGER),
     map((action) => action.payload),
     mergeMap(({ values, options }) => {
-      const hasSourceTopicKey =
-        _.get(values, 'shabondi__source__toTopics', []).length > 0;
-      const hasSinkTopicKey =
-        _.get(values, 'shabondi__sink__fromTopics', []).length > 0;
-      const { cell, paperApi, topics } = options;
-      const cells = paperApi.getCells();
+      const { paperApi } = options;
       const shabondiId = paperApi.getCell(values.name).id;
 
       return defer(() => shabondiApi.update(values)).pipe(
         map((res) => normalize(res.data, schema.shabondi)),
         map((normalizedData) => {
-          const currentHasSourceTopicKey =
-            _.get(normalizedData, 'shabondi__source__toTopics', []).length > 0;
-          const currentHasSinkTopicKey =
-            _.get(normalizedData, 'shabondi__sink__fromTopics', []).length > 0;
-
-          if (currentHasSourceTopicKey) {
-            const topicId = paperApi.getCell(
-              normalizedData.shabondi__source__toTopics[0].name,
-            ).id;
-            const linkId = cells
-              .filter((cell) => cell.cellType === CELL_TYPE.LINK)
-              .find(
-                (cell) =>
-                  cell.sourceId === shabondiId && cell.targetId === topicId,
-              ).id;
-            paperApi.removeLink(linkId);
-          }
-          if (currentHasSinkTopicKey) {
-            const topicId = paperApi.getCell(
-              normalizedData.shabondi__sink__fromTopics[0].name,
-            ).id;
-            const linkId = cells
-              .filter((cell) => cell.cellType === CELL_TYPE.LINK)
-              .find(
-                (cell) =>
-                  cell.sourceId === topicId && cell.targetId === shabondiId,
-              ).id;
-            paperApi.removeLink(linkId);
-          }
-
-          if (hasSourceTopicKey) paperApi.addLink(cell.id, topics[0].data.id);
-          if (hasSinkTopicKey) paperApi.addLink(topics[0].data.id, cell.id);
-
+          handleSuccess(values, options);
           return actions.updateShabondi.success(
             _.merge(normalizedData, { shabondiId }),
           );
@@ -89,3 +52,46 @@ export default (action$) => {
     }),
   );
 };
+
+function handleSuccess(values, options) {
+  if (!options.paperApi) return;
+
+  const { cell, paperApi, topics, connectors } = options;
+  const TO_TOPIC_KEY = 'shabondi__source__toTopics';
+  const FROM_TOPIC_KEY = 'shabondi__sink__fromTopics';
+  const currentShabondi = connectors.find(
+    (connector) => connector.name === values.name,
+  );
+  const shabondiId = paperApi.getCell(values.name)?.id;
+
+  const currentHasSourceTopicKey = currentShabondi?.[TO_TOPIC_KEY]?.length > 0;
+  const currentHasSinkTopicKey = currentShabondi?.[FROM_TOPIC_KEY]?.length > 0;
+  const hasSourceTopicKey = values[TO_TOPIC_KEY]?.length > 0;
+  const hasSinkTopicKey = values[FROM_TOPIC_KEY]?.length > 0;
+  const links = paperApi
+    .getCells()
+    .filter((cell) => cell.cellType === CELL_TYPE.LINK);
+
+  if (currentHasSourceTopicKey) {
+    const topicName = currentShabondi?.[TO_TOPIC_KEY][0].name;
+    const topicId = paperApi.getCell(topicName)?.id;
+    const linkId = links.find(
+      (link) => link.sourceId === shabondiId && link.targetId === topicId,
+    )?.id;
+
+    paperApi.removeLink(linkId);
+  }
+
+  if (currentHasSinkTopicKey) {
+    const topicName = currentShabondi?.[FROM_TOPIC_KEY][0].name;
+    const topicId = paperApi.getCell(topicName)?.id;
+    const linkId = links.find(
+      (link) => link.sourceId === topicId && link.targetId === shabondiId,
+    ).id;
+
+    paperApi.removeLink(linkId);
+  }
+
+  if (hasSourceTopicKey) paperApi.addLink(cell.id, topics[0].data.id);
+  if (hasSinkTopicKey) paperApi.addLink(topics[0].data.id, cell.id);
+}

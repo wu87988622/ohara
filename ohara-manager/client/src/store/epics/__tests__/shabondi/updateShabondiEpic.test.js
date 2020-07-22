@@ -44,6 +44,8 @@ const mockedPaperApi = jest.fn(() => {
 });
 const paperApi = new mockedPaperApi();
 const cell = {};
+const topics = [];
+const connectors = [];
 
 const makeTestScheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -63,7 +65,7 @@ it('update shabondi should be worked correctly', () => {
         type: actions.updateShabondi.TRIGGER,
         payload: {
           values: { ...shabondiEntity, jmxPort: 999 },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
     });
@@ -109,21 +111,21 @@ it('update shabondi multiple times should got latest result', () => {
         type: actions.updateShabondi.TRIGGER,
         payload: {
           values: shabondiEntity,
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
       b: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
           values: { ...shabondiEntity, nodeNames: ['n1', 'n2'] },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
       c: {
         type: actions.updateShabondi.TRIGGER,
         payload: {
           values: { ...shabondiEntity, clientPort: 1234 },
-          options: { paperApi, cell },
+          options: { paperApi, cell, topics, connectors },
         },
       },
     });
