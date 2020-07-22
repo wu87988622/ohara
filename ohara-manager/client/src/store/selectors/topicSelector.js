@@ -43,7 +43,7 @@ export const getTopicsByGroup = createSelector(
         pipelines: filter(pipelines, (pipeline) => {
           return some(
             pipeline?.objects,
-            (object) => object.name === topic.name,
+            (object) => object.name === topic.name && object.kind === 'topic',
           );
         }),
       };
