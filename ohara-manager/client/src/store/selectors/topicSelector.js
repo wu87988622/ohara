@@ -17,6 +17,7 @@
 import { filter, map, some, sortBy, values } from 'lodash';
 import { createSelector } from 'reselect';
 import { findPipelinesByGroup } from './pipelineSelector';
+import { KIND } from 'const';
 
 const getEntities = (state) => state?.entities?.topics;
 
@@ -43,7 +44,8 @@ export const getTopicsByGroup = createSelector(
         pipelines: filter(pipelines, (pipeline) => {
           return some(
             pipeline?.objects,
-            (object) => object.name === topic.name && object.kind === 'topic',
+            (object) =>
+              object.name === topic.name && object.kind === KIND.topic,
           );
         }),
       };
