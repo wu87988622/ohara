@@ -245,8 +245,13 @@ const createConnectorCell = (options) => {
     },
     updateMeters(newMetrics) {
       const defaultMetrics = metrics;
-      const meters = newMetrics?.meters;
-      const displayMetrics = meters.length > 0 ? meters : defaultMetrics;
+
+      // Combine all node metrics together
+      const meters = Object.values(newMetrics).reduce(
+        (acc, cur) => acc.concat(cur?.meters),
+        [],
+      );
+      const displayMetrics = meters?.length > 0 ? meters : defaultMetrics;
       const metricsData = getMetrics(displayMetrics);
       this.$box.find('.metrics').html(metricsData);
       return this;
@@ -349,30 +354,44 @@ function getIcon(kind) {
 }
 
 function getMetrics(meters) {
-  // Make sure we're getting
-  // 1. Filter out meters that have the value of zero
-  // 2. Get the same metrics data every time by sorting
-  // 2. And removing duplicate items
-  // 3. Finally, just pick the values that need to be displayed
+  // Since we can only display "one" metrics item on Paper element, we need to
+  // Make sure:
+  // 1. Filter out meters that have the value of zero. As users cannot tell if an element is being updated or not
+  // 2. Get the same metrics data every time by sorting and use the first item from result
+  // 2. Removing duplicate items
+  // 3. Only display "document" and "value"
+  if (meters.length > 1) {
+    const removeZeroValue = ({ value }) => value;
+    const results = _.map(
+      _.sortBy(_.uniqBy(_.filter(meters, removeZeroValue), 'value'), 'name'),
+      _.partialRight(_.pick, ['document', 'value']),
+    );
 
-  const removeZeroValue = ({ value }) => value;
-  const results = _.map(
-    _.sortBy(_.uniqBy(_.filter(meters, removeZeroValue), 'value'), 'name'),
-    _.partialRight(_.pick, ['document', 'value']),
-  );
+    // The user will be able to choose a metrics item with our UI in the future, but for now,
+    // we're displaying the first item from the list
+    const defaultText = 'No metrics data available';
+    const metricsName = results?.[0]?.document || defaultText;
+    const defaultValue = metricsName === defaultText ? '' : 0;
+    const metricsValue = results?.[0]?.value || defaultValue;
 
-  // The user will be able to choose a metrics item with our UI
-  // in the future, but for now, we're displaying the first item
-  // from the list
-  const defaultText = 'No metrics data available';
-  const metricsName = results?.[0]?.document || defaultText;
-  const defaultValue = metricsName === defaultText ? '' : 0;
-  const firstFieldValue = results?.[0]?.value || defaultValue;
-
-  return `
-    <span class="metrics-name">${metricsName}</span>
-    <span class="metrics-value">${firstFieldValue.toLocaleString()}</span>
+    return `
+      <span class="metrics-name">${metricsName}</span>
+      <span class="metrics-value">${metricsValue.toLocaleString()}</span>
+    `;
+  } else if (meters.length === 1) {
+    // Since there's only one item available, display it even if its value is zero
+    const value = meters[0]?.value || 0;
+    return `
+    <span class="metrics-name">${meters[0]?.document}</span>
+    <span class="metrics-value">${value.toLocaleString()}</span>
   `;
+  } else {
+    // Default text when there's no metrics available in the current cell
+    return `
+    <span class="metrics-name">No metrics data available</span>
+    <span class="metrics-value"></span>
+  `;
+  }
 }
 
 export default createConnectorCell;

@@ -153,6 +153,9 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
       .next()
       .should('be.visible'); // Ensure the list is opened
 
+    // Wait for these two extra seconds to avoid `detached DOM` issue that breaks the test
+    cy.wait(2000);
+
     // re-render the cell position to maximize the available space
     // the view of cells will be a [n, 2] matrix
     const x = size % 2 === 0 ? initialX : initialX + shiftWidth;

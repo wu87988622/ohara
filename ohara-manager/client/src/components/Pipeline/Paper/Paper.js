@@ -830,13 +830,11 @@ const Paper = React.forwardRef((props, ref) => {
 
       updateMetrics(objects) {
         objects
-          .filter((object) => object.kind !== KIND.topic) // topic metrics are not displayed in the current UI
-          .forEach(({ nodeMetrics, name }) => {
-            // Since there could be more than one node's metrics data available
-            // in the element, we will only display the first node
-            const firstNode = Object.keys(nodeMetrics)[0];
-            findElementView(name).updateMeters(nodeMetrics[firstNode]);
-          });
+          .filter(({ kind }) => kind !== KIND.topic) // topic metrics are not displayed in the current UI
+          .filter(({ state }) => state?.toLowerCase() === CELL_STATUS.running)
+          .forEach((object) =>
+            findElementView(object.name).updateMeters(object.nodeMetrics),
+          );
       },
 
       highlight(id) {
