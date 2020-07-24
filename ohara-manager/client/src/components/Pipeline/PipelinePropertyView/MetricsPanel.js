@@ -22,6 +22,7 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import SignalCellularAltIcon from '@material-ui/icons/SignalCellularAlt';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import { isEmpty } from 'lodash';
 
 import PropertyField from './PipelinePropertyViewField';
 import { Wrapper } from './MetricsPanelStyles';
@@ -60,6 +61,9 @@ const MetricsPanel = (props) => {
           {Object.keys(metrics)
             .sort()
             .map((key) => {
+              // Don't render the node title if it doesn't contain any metrics data
+              if (isEmpty(metrics[key].meters)) return null;
+
               return (
                 <React.Fragment key={key}>
                   <Typography variant="h6">{key}</Typography>
