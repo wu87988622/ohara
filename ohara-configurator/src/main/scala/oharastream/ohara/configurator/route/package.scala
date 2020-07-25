@@ -16,6 +16,9 @@
 
 package oharastream.ohara.configurator
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
@@ -38,6 +41,7 @@ import spray.json.{DeserializationException, JsArray, JsString, JsValue, RootJso
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
+import scala.util.{Failure, Success}
 package object route {
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
@@ -50,6 +54,39 @@ package object route {
   private[route] val STOP_COMMAND: String    = oharastream.ohara.client.configurator.STOP_COMMAND
   private[route] val PAUSE_COMMAND: String   = oharastream.ohara.client.configurator.PAUSE_COMMAND
   private[route] val RESUME_COMMAND: String  = oharastream.ohara.client.configurator.RESUME_COMMAND
+
+  private[this] val STOPPING_FLAGS = new ConcurrentHashMap[KeyKind, AtomicBoolean]()
+
+  /**
+    * This is a workaround of dealing with threads competition on stopping clusters. For example, a stopping worker
+    * is unable to accept connection. However, our worker route has to check the active connectors before stopping it.
+    * Hence, the later request of stopping worker hangs since it can't get connectors information from stopping worker.
+    * If our UI closes connection (due to timeout), the connection (on server) ends up being a ghost and it will stop worker
+    * cluster again (randomly!!!)
+    */
+  private[this] def hookOfStopAction[Cluster <: ClusterInfo](
+    hookBeforeStop: HookOfAction[Cluster]
+  )(implicit collie: Collie, executionContext: ExecutionContext) = new HookOfAction[Cluster] {
+    override def apply(clusterInfo: Cluster, subName: String, params: Map[String, String]): Future[Unit] = {
+      val keyKind    = KeyKind(clusterInfo.key, clusterInfo.kind)
+      val isStopping = STOPPING_FLAGS.computeIfAbsent(keyKind, _ => new AtomicBoolean(false))
+      if (isStopping.compareAndSet(false, true)) {
+        val f = hookBeforeStop(clusterInfo, subName, params)
+        f.onComplete {
+          case Success(_) => // we will reset the flag later
+          case Failure(_) => isStopping.set(false)
+        }
+        f.flatMap { _ =>
+            val f2 =
+              if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
+              else collie.remove(clusterInfo.key)
+            f2.onComplete(_ => isStopping.set(false))
+            f2
+          }
+          .map(_ => ())
+      } else Future.unit
+    }
+  }
 
   /**
     * this is a variety to basic route of all APIs to access ohara's "cluster" data.
@@ -136,17 +173,7 @@ package object route {
               checkResourcesConflict(clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
           }
       )
-      .hookOfPutAction(
-        STOP_COMMAND,
-        (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
-          hookBeforeStop(clusterInfo, subName, params)
-            .flatMap(
-              _ =>
-                if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
-                else collie.remove(clusterInfo.key)
-            )
-            .flatMap(_ => Future.unit)
-      )
+      .hookOfPutAction(STOP_COMMAND, hookOfStopAction[Cluster](hookBeforeStop))
       .hookOfFinalPutAction((clusterInfo: Cluster, nodeName: String, _: Map[String, String]) => {
         // A BIT hard-code here to reuse the checker :(
         rm.check[JsArray]("nodeNames", JsArray(JsString(nodeName)))

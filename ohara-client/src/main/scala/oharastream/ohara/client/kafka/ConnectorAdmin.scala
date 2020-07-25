@@ -175,8 +175,8 @@ object ConnectorAdmin {
       */
     private[this] var workerClusterKey: ObjectKey = ObjectKey.of("fake", "fake")
     private[this] var connectionProps: String     = _
-    private[this] var retryLimit: Int             = 3
-    private[this] var retryInternal: Duration     = Duration(3, TimeUnit.SECONDS)
+    private[this] var retryLimit: Int             = 1
+    private[this] var retryInternal: Duration     = Duration(2, TimeUnit.SECONDS)
 
     def workerClusterKey(workerClusterKey: ObjectKey): Builder = {
       this.workerClusterKey = Objects.requireNonNull(workerClusterKey)
@@ -188,7 +188,7 @@ object ConnectorAdmin {
       this
     }
 
-    @Optional("default value is 3")
+    @Optional("default value is 1")
     def retryLimit(retryLimit: Int): Builder = {
       this.retryLimit = CommonUtils.requirePositiveInt(retryLimit)
       this
