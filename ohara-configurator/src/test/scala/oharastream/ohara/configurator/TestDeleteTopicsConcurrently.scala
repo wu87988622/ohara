@@ -88,7 +88,7 @@ class TestDeleteTopicsConcurrently extends WithBrokerWorker {
     withClue(s"${exceptionQueue.asScala.map(_.getMessage).mkString(",")}") {
       executors.awaitTermination(60, TimeUnit.SECONDS) shouldBe true
     }
-    exceptionQueue.size() shouldBe 0
+    withClue(s"exceptions: $exceptionQueue")(exceptionQueue.size() shouldBe 0)
   }
   @After
   def tearDown(): Unit = Releasable.close(configurator)
