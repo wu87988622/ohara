@@ -17,8 +17,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import * as context from 'context';
-import { TAB } from 'context/devTool/const';
+import * as hooks from 'hooks';
+import { DevToolTabName } from 'const';
 import { ViewTopic, ViewLog } from './View';
 
 const TabPanel = styled.div`
@@ -31,14 +31,15 @@ const TabPanel = styled.div`
 `;
 
 const Body = () => {
-  const { tabName } = context.useDevTool();
+  const devToolDialog = hooks.useDevToolDialog();
+  const tabName = devToolDialog?.data?.tabName;
 
   return (
     <>
-      <TabPanel index={TAB.topic} value={tabName}>
+      <TabPanel index={DevToolTabName.TOPIC} value={tabName}>
         <ViewTopic />
       </TabPanel>
-      <TabPanel index={TAB.log} value={tabName}>
+      <TabPanel index={DevToolTabName.LOG} value={tabName}>
         <ViewLog />
       </TabPanel>
     </>

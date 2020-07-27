@@ -30,7 +30,6 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import { QuickSearch } from 'components/common/Search';
 import { Tooltip } from 'components/common/Tooltip';
 import Popover from 'components/common/Popover';
-import { useEventLogDialog } from 'context';
 import * as hooks from 'hooks';
 import Wrapper from './EventLogHeaderStyles';
 import EventLogSettings from './EventLogSettings';
@@ -39,7 +38,7 @@ const EventLogHeader = ({ onFilter }) => {
   const clearEventLogs = hooks.useClearEventLogsAction();
   const initEventLogs = hooks.useInitEventLogsAction();
   const { data: logs } = hooks.useEventLogs();
-  const { close } = useEventLogDialog();
+  const { close } = hooks.useEventLogDialog();
   const settingsPopoverRef = useRef(null);
 
   return (

@@ -15,6 +15,4 @@
  */
 
 export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/devTool/DevToolContext';
 export * from './StoreContext';

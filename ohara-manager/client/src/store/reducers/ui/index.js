@@ -20,13 +20,12 @@ import brokers from './brokers';
 import connector from './connector';
 import createWorkspace from './createWorkspace';
 import devTool from './devTool';
+import dialog from './dialog';
 import eventLog from './eventLog';
 import file from './file';
-import intro from './intro';
 import logProgress from './logProgress';
 import node from './node';
 import pipeline from './pipeline';
-import settings from './settings';
 import shabondi from './shabondi';
 import stream from './stream';
 import snackbar from './snackbar';
@@ -41,13 +40,12 @@ export default combineReducers({
   connector,
   createWorkspace,
   devTool,
+  dialog,
   eventLog,
   file,
-  intro,
   logProgress,
   node,
   pipeline,
-  settings,
   shabondi,
   stream,
   snackbar,

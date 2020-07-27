@@ -23,11 +23,11 @@ function PipelineOnlyTopicTable() {
   const broker = hooks.useBroker();
   const topics = hooks.useTopicsInWorkspace(false);
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const closeSettings = hooks.useCloseSettingsAction();
+  const settingsDialog = hooks.useWorkspaceSettingsDialog();
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettings();
+      settingsDialog.close();
       switchPipeline(pipelineClicked.name);
     }
   };

@@ -15,33 +15,43 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import ReactJson from 'react-json-view';
 import { get } from 'lodash';
 
-import { useEventLogContentDialog } from 'context';
 import { Dialog } from 'components/common/Dialog';
 
-const EventLogContentDialog = () => {
-  const { isOpen, close, data: log } = useEventLogContentDialog();
+const EventLogContentDialog = (props) => {
+  const { data, isOpen, onClose } = props;
   return (
     <>
       <Dialog
         maxWidth="md"
-        onClose={close}
+        onClose={onClose}
         open={isOpen}
         showActions={false}
-        title={get(log, 'title', '')}
+        title={get(data, 'title', '')}
       >
         <ReactJson
           displayDataTypes={false}
           displayObjectSize={false}
           enableClipboard={false}
           iconStyle="square"
-          src={get(log, 'payload', {})}
+          src={get(data, 'payload', {})}
         />
       </Dialog>
     </>
   );
+};
+
+EventLogContentDialog.propTypes = {
+  data: PropTypes.any,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+};
+
+EventLogContentDialog.defaultProps = {
+  onClose: () => {},
 };
 
 export default EventLogContentDialog;
