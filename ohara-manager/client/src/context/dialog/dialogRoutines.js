@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/devTool/DevToolContext';
-export * from './StoreContext';
+import { createRoutine } from 'redux-routines';
+
+const openDialogRoutine = createRoutine('OPEN_DIALOG');
+const setDialogDataRoutine = createRoutine('SET_DIALOG_DATA');
+const closeDialogRoutine = createRoutine('CLOSE_DIALOG');
+const closePeakDialogRoutine = createRoutine('CLOSE_PEAK_DIALOG');
+const closeAllDialogRoutine = createRoutine('CLOSE_ALL_DIALOG');
+
+export {
+  openDialogRoutine,
+  setDialogDataRoutine,
+  closeDialogRoutine,
+  closePeakDialogRoutine,
+  closeAllDialogRoutine,
+};

@@ -17,7 +17,7 @@
 import * as generate from '../../../src/utils/generate';
 import { LOG_SERVICE } from '../../../src/api/apiInterface/logInterface';
 import { SETTING_SECTION } from '../../support/customCommands';
-import { KIND, DevToolTabName } from '../../../src/const';
+import { KIND } from '../../../src/const';
 
 describe('App Bar', () => {
   // generate variables
@@ -182,9 +182,7 @@ describe('App Bar', () => {
     });
 
     it('open new window for topic data', () => {
-      cy.visit(
-        `/view?type=${DevToolTabName.TOPIC}&topicName=${t1}&topicLimit=10`,
-      );
+      cy.visit(`/view?type=TOPICS&topicName=${t1}&topicLimit=10`);
       cy.findByTestId('data-window').children().should('be.visible');
     });
 
@@ -318,7 +316,7 @@ describe('App Bar', () => {
 
     it('open new window for log data', () => {
       cy.visit(
-        `/view?type=${DevToolTabName.LOG}&logType=configurator`
+        `/view?type=LOGS&logType=configurator`
           .concat(`&hostname=${hostname}`)
           .concat(`&timeGroup=latest&timeRange=10`),
       );

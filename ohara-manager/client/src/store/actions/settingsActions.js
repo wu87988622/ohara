@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/devTool/DevToolContext';
-export * from './StoreContext';
+import { createRoutine } from 'redux-routines';
+
+export const openSettings = createRoutine('OPEN_SETTINGS');
+export const closeSettings = createRoutine('CLOSE_SETTINGS');

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/devTool/DevToolContext';
-export * from './StoreContext';
+export const TAB = {
+  topic: 'TOPICS',
+  log: 'LOGS',
+};

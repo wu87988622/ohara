@@ -37,14 +37,14 @@ const Navigator = ({ pipelineApi }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const currentWorkspace = hooks.useWorkspace();
-  const settingsDialog = hooks.useWorkspaceSettingsDialog();
+  const openSettings = hooks.useOpenSettingsAction();
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuItemClick = (pageName) => () => {
-    settingsDialog.open({ pageName });
+    openSettings({ pageName });
     setAnchorEl(null);
   };
 

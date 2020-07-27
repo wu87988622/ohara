@@ -17,8 +17,9 @@
 import { useMemo } from 'react';
 import moment from 'moment';
 import { get, map, find, isEmpty } from 'lodash';
+import * as context from 'context';
 import * as hooks from 'hooks';
-import { DevToolTabName } from 'const';
+import { TAB } from 'context/devTool/const';
 
 export const useCurrentLogs = () => {
   const { data, query } = hooks.useDevToolLog();
@@ -37,15 +38,14 @@ export const useCurrentHosts = () => {
 };
 
 export const useStatusText = () => {
-  const devToolDialog = hooks.useDevToolDialog();
-  const tabName = devToolDialog?.data?.tabName;
+  const { tabName } = context.useDevTool();
   const { query: logQuery } = hooks.useDevToolLog();
   const { timeGroup, timeRange, startTime, endTime } = logQuery;
   const { data: messages } = hooks.useDevToolTopicData();
   const currentLog = useCurrentLogs();
 
   return useMemo(() => {
-    if (tabName === DevToolTabName.TOPIC) {
+    if (tabName === TAB.topic) {
       if (isEmpty(messages)) {
         return 'No topic data';
       } else {

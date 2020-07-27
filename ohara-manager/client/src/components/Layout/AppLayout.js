@@ -14,53 +14,44 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import SplitPane from 'react-split-pane';
 import { useParams } from 'react-router-dom';
-import { isEmpty } from 'lodash';
 
-import * as hooks from 'hooks';
+import AppBar from './AppBar';
 import Pipeline from 'components/Pipeline';
+import Navigator from './Navigator';
 import EventLog from 'components/EventLog';
+import * as context from 'context';
 import { DevToolDialog } from 'components/DevTool';
 import {
   WorkspaceList as ListWorkspacesDialog,
   CreateWorkspace as CreateWorkspaceDialog,
 } from 'components/Workspace';
 import IntroDialog from 'components/Intro';
+
 import StyledSnackbar from 'components/common/Snackbar';
-import Navigator from './Navigator';
-import AppBar from './AppBar';
 import { Wrapper } from './AppLayoutStyles';
+import * as hooks from 'hooks';
 
 const AppLayout = () => {
   const { workspaceName, pipelineName } = useParams();
-  const isAppReady = hooks.useIsAppReady();
-  const workspaces = hooks.useAllWorkspaces();
-  const introDialog = hooks.useIntroDialog();
-  const eventLogDialog = hooks.useEventLogDialog();
-  const devToolDialog = hooks.useDevToolDialog();
-  const pipelineApiRef = useRef(null);
-
-  // Initialize the application
   hooks.useInitializeApp(workspaceName, pipelineName);
+  hooks.useWelcome();
 
-  // The introduction dialog will be displayed on first used
-  useEffect(() => {
-    const hasIntroDialogBeenOpened = !!introDialog?.lastUpdated;
-    if (isAppReady && isEmpty(workspaces) && !hasIntroDialogBeenOpened) {
-      introDialog.open();
-    }
-  }, [isAppReady, workspaces, introDialog]);
+  const { isOpen: isDevToolOpen } = context.useDevToolDialog();
+  const { isOpen: isEventLogOpen } = context.useEventLogDialog();
+
+  const pipelineApiRef = useRef(null);
 
   return (
     <Wrapper>
       <SplitPane allowResize={false} defaultSize={64} split="vertical">
         <AppBar />
         <SplitPane
-          defaultSize={devToolDialog.isOpen || eventLogDialog.isOpen ? 240 : 0}
-          maxSize={devToolDialog.isOpen || eventLogDialog.isOpen ? 480 : 0}
-          minSize={devToolDialog.isOpen || eventLogDialog.isOpen ? 80 : 0}
+          defaultSize={isDevToolOpen || isEventLogOpen ? 240 : 0}
+          maxSize={isDevToolOpen || isEventLogOpen ? 480 : 0}
+          minSize={isDevToolOpen || isEventLogOpen ? 80 : 0}
           primary="second"
           split="horizontal"
         >
@@ -73,13 +64,13 @@ const AppLayout = () => {
             <Navigator pipelineApi={pipelineApiRef.current} />
             <Pipeline ref={pipelineApiRef} />
           </SplitPane>
-          {eventLogDialog.isOpen && <EventLog />}
-          {devToolDialog.isOpen && <DevToolDialog />}
+          {isEventLogOpen && <EventLog />}
+          {isDevToolOpen && <DevToolDialog />}
           <div />
         </SplitPane>
       </SplitPane>
 
-      <IntroDialog isOpen={introDialog.isOpen} onClose={introDialog.close} />
+      <IntroDialog quickModeText={'QUICK CREATE'} />
       <CreateWorkspaceDialog />
       <ListWorkspacesDialog />
       <StyledSnackbar />

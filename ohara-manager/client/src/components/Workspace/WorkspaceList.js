@@ -31,6 +31,7 @@ import Typography from '@material-ui/core/Typography';
 import WarningIcon from '@material-ui/icons/Warning';
 
 import { KIND } from 'const';
+import * as context from 'context';
 import * as hooks from 'hooks';
 import { Dialog } from 'components/common/Dialog';
 import { IconWrapper } from 'components/common/Icon';
@@ -62,14 +63,14 @@ Statistic.propTypes = {
 
 function WorkspaceList() {
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
-  const workspaceListDialog = hooks.useWorkspaceListDialog();
+  const { isOpen, close } = context.useListWorkspacesDialog();
   const workspaces = hooks.useAllWorkspaces();
   const workspaceName = hooks.useWorkspaceName();
   const allTopics = hooks.useAllTopics();
 
   const handleClick = (name) => () => {
     switchWorkspace(name);
-    workspaceListDialog.close();
+    close();
   };
 
   const pickBrokerKey = (object) => {
@@ -85,8 +86,8 @@ function WorkspaceList() {
     <>
       <Dialog
         maxWidth="md"
-        onClose={workspaceListDialog.close}
-        open={workspaceListDialog.isOpen}
+        onClose={close}
+        open={isOpen}
         showActions={false}
         testId="workspace-list-dialog"
         title={`Showing ${workspaceCount} ${

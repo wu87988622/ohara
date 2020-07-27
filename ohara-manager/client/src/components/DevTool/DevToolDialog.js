@@ -16,6 +16,8 @@
 
 import React from 'react';
 
+import * as context from 'context';
+import { TAB } from '../../context/devTool/const';
 import Header from './Header';
 import Body from './Body';
 import { useStatusText } from './hooks';
@@ -23,7 +25,13 @@ import StatusBar from 'components/common/StatusBar';
 import { StyledDevTool } from './DevToolDialogStyles';
 
 const DevToolDialog = () => {
+  const { tabName, setTabName } = context.useDevTool();
   const statusText = useStatusText();
+
+  if (!tabName) {
+    // initialize the tab
+    setTabName(TAB.topic);
+  }
 
   return (
     <StyledDevTool id="dev-tool">

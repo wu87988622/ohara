@@ -27,7 +27,7 @@ import { Tooltip } from 'components/common/Tooltip';
 import { Button } from 'components/common/Form';
 import Popover from 'components/common/Popover';
 import Select from 'components/common/Select';
-import { DevToolTabName } from 'const';
+import { TAB } from 'context/devTool/const';
 import { usePrevious } from 'utils/hooks';
 import { StyledSearchBody } from './ControllerStyles';
 
@@ -44,7 +44,7 @@ const ControllerTopic = () => {
   const handleOpenNewWindow = () => {
     if (name)
       window.open(
-        `${window.location}/view?type=${DevToolTabName.TOPIC}&topicName=${name}&topicLimit=${limit}`,
+        `${window.location}/view?type=${TAB.topic}&topicName=${name}&topicLimit=${limit}`,
       );
   };
 
@@ -93,10 +93,7 @@ const ControllerTopic = () => {
           </IconButton>
         }
       >
-        <StyledSearchBody
-          data-testid="topic-query-popover"
-          tab={DevToolTabName.TOPIC}
-        >
+        <StyledSearchBody data-testid="topic-query-popover" tab={TAB.topic}>
           <label>Rows per query</label>
           <TextField
             defaultValue={limit}

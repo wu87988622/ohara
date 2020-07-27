@@ -14,7 +14,27 @@
  * limitations under the License.
  */
 
-export * from 'context/configurator/ConfiguratorContext';
-export * from 'context/dialog/DialogContext';
-export * from 'context/devTool/DevToolContext';
-export * from './StoreContext';
+import * as actions from 'store/actions';
+
+const initialState = {
+  isOpen: false,
+  opened: false,
+};
+
+export default function reducer(state = initialState, action) {
+  switch (action.type) {
+    case actions.openIntro.TRIGGER:
+      return {
+        ...state,
+        isOpen: true,
+        opened: true,
+      };
+    case actions.closeIntro.TRIGGER:
+      return {
+        ...state,
+        isOpen: false,
+      };
+    default:
+      return state;
+  }
+}

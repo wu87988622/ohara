@@ -41,7 +41,7 @@ function PluginTable() {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const pipelines = hooks.usePipelines();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const settingsDialog = hooks.useWorkspaceSettingsDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -163,7 +163,7 @@ function PluginTable() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      settingsDialog.close();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

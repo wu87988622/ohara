@@ -49,7 +49,7 @@ export default () => {
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const refreshNodes = hooks.useFetchNodesAction();
   const eventLog = hooks.useEventLog();
-  const introDialog = hooks.useIntroDialog();
+  const closeIntroDialog = hooks.useCloseIntroAction();
   const switchFormStep = hooks.useSwitchCreateWorkspaceStepAction();
   const resetForm = hooks.useReduxFormResetAction();
 
@@ -111,7 +111,7 @@ export default () => {
           // Back to the first page of the form
           switchFormStep(0);
           // Close all dialogs
-          introDialog.close();
+          closeIntroDialog();
           // Switch to the workspace you just created
           switchWorkspace(values?.name);
           // Refetch node list after creation successfully in order to get the runtime data

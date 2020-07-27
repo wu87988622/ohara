@@ -40,10 +40,10 @@ const ToolboxList = (props) => {
     pipelineDispatch,
     expanded,
   } = props;
-  const settingsDialog = hooks.useWorkspaceSettingsDialog();
+  const openSettings = hooks.useOpenSettingsAction();
 
   const handleRedirect = (pageName) => {
-    settingsDialog.open({ pageName });
+    openSettings({ pageName });
   };
 
   return (

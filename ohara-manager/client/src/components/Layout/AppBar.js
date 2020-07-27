@@ -28,7 +28,6 @@ import Link from '@material-ui/core/Link';
 import WarningIcon from '@material-ui/icons/Warning';
 
 import * as context from 'context';
-import { DialogToggleType } from 'const';
 import * as hooks from 'hooks';
 import { ReactComponent as Logo } from 'images/logo.svg';
 import { StyledAppBar } from './AppBarStyles';
@@ -43,11 +42,18 @@ const AppBar = () => {
   const allNodes = hooks.useAllNodes();
   const workspaces = hooks.useAllWorkspaces();
   const workspace = hooks.useWorkspace();
-  const introDialog = hooks.useIntroDialog();
-  const devToolDialog = hooks.useDevToolDialog();
-  const eventLogDialog = hooks.useEventLogDialog();
+  const openIntro = hooks.useOpenIntroAction();
+  const {
+    toggle: toggleDevTool,
+    close: closeDevTool,
+  } = context.useDevToolDialog();
+  const {
+    toggle: toggleEventLog,
+    close: closeEventLog,
+    isOpen: isEventLogOpen,
+  } = context.useEventLogDialog();
   const { data: configuratorInfo } = context.useConfiguratorState();
-  const workspaceListDialog = hooks.useWorkspaceListDialog();
+  const { toggle: toggleWorkspaceList } = context.useListWorkspacesDialog();
   const { data: notifications } = hooks.useEventNotifications();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
   const initEventLogs = hooks.useInitEventLogsAction();
@@ -97,7 +103,7 @@ const AppBar = () => {
           })}
 
           <Tooltip placement="right" title="Create a new workspace">
-            <div className="add-workspace item" onClick={introDialog.open}>
+            <div className="add-workspace item" onClick={openIntro}>
               <AddIcon />
             </div>
           </Tooltip>
@@ -109,9 +115,7 @@ const AppBar = () => {
               className="workspace-list item"
               data-testid="workspace-list-button"
               onClick={() =>
-                isEmpty(workspaces)
-                  ? introDialog.open()
-                  : workspaceListDialog.open()
+                isEmpty(workspaces) ? openIntro() : toggleWorkspaceList()
               }
             >
               <AppsIcon />
@@ -122,11 +126,11 @@ const AppBar = () => {
             <IconButton
               className="event-logs item"
               onClick={() => {
-                eventLogDialog.open();
-                devToolDialog.toggle(DialogToggleType.FORCE_CLOSE);
+                toggleEventLog();
+                closeDevTool();
                 // during clicking action, the event log dialog is still "opened"
                 // we should assert isOpen=true(which will close dialog later) and trigger the initEventLogs
-                if (eventLogDialog.isOpen) initEventLogs();
+                if (isEventLogOpen) initEventLogs();
               }}
             >
               <Badge
@@ -142,8 +146,8 @@ const AppBar = () => {
             <IconButton
               className="developer-tools item"
               onClick={() => {
-                devToolDialog.toggle(DialogToggleType.FORCE_OPEN);
-                eventLogDialog.close();
+                toggleDevTool();
+                closeEventLog();
                 // We should initial event logs when clicking the devTool button
                 // since it will trigger close event log whether devTool opens or not
                 initEventLogs();

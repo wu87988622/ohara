@@ -25,7 +25,7 @@ function SharedTopicTable() {
   const createAndStartTopic = hooks.useCreateAndStartTopicAction();
   const stopAndDeleteTopic = hooks.useStopAndDeleteTopicAction();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const settingsDialog = hooks.useWorkspaceSettingsDialog();
+  const closeSettings = hooks.useCloseSettingsAction();
 
   const handleCreate = (topicToCreate) => {
     return createAndStartTopic({
@@ -43,7 +43,7 @@ function SharedTopicTable() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      settingsDialog.close();
+      closeSettings();
       switchPipeline(pipelineClicked.name);
     }
   };

@@ -21,7 +21,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { CellMeasurerCache } from 'react-virtualized/dist/commonjs/CellMeasurer';
 import { Typography } from '@material-ui/core';
 
-import { DevToolTabName } from 'const';
+import { TAB } from 'context/devTool/const';
 import { ViewTopic, ViewLog } from './View';
 import * as hooks from 'hooks';
 
@@ -116,13 +116,13 @@ const DataWindow = () => {
   }
 
   switch (type) {
-    case DevToolTabName.TOPIC:
+    case TAB.topic:
       return (
         <WindowDiv data-testid="data-window">
           <ViewTopic />
         </WindowDiv>
       );
-    case DevToolTabName.LOG:
+    case TAB.log:
       return (
         <WindowDiv data-testid="data-window">
           <ViewLog />

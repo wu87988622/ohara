@@ -26,11 +26,12 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import { KIND, LOG_TIME_GROUP, DevToolTabName } from 'const';
+import { KIND, LOG_TIME_GROUP } from 'const';
 import { Tooltip } from 'components/common/Tooltip';
 import { Button } from 'components/common/Form';
 import Popover from 'components/common/Popover';
 import Select from 'components/common/Select';
+import { TAB } from 'context/devTool/const';
 import { useCurrentLogs, useCurrentHosts } from 'components/DevTool/hooks';
 import * as hooks from 'hooks';
 import { LOG_SERVICE } from 'api/apiInterface/logInterface';
@@ -64,7 +65,7 @@ const ControllerLog = () => {
       // remove the trailing slash if no pathname
       const addSlash = window.location.pathname === '/' ? '' : '/';
       window.open(
-        `${window.location}${addSlash}view?type=${DevToolTabName.LOG}&logType=${logType}`
+        `${window.location}${addSlash}view?type=${TAB.log}&logType=${logType}`
           .concat(
             `&hostname=${hostName}&shabondiName=${shabondiName}&streamName=${streamName}`,
           )
@@ -161,10 +162,7 @@ const ControllerLog = () => {
           </IconButton>
         }
       >
-        <StyledSearchBody
-          data-testid="log-query-popover"
-          tab={DevToolTabName.LOG}
-        >
+        <StyledSearchBody data-testid="log-query-popover" tab={TAB.log}>
           <RadioGroup onChange={handleRadioChange} value={timeGroup}>
             <FormControlLabel
               control={<Radio color="primary" />}

@@ -17,6 +17,7 @@
 import React, { useEffect, useRef, createContext } from 'react';
 import _ from 'lodash';
 
+import * as context from 'context';
 import * as hooks from 'hooks';
 import * as pipelineUtils from './PipelineApiHelper';
 import Paper from './Paper';
@@ -51,7 +52,7 @@ const Pipeline = React.forwardRef((props, ref) => {
     isOpen: isPropertyDialogOpen,
     close: closePropertyDialog,
     data: propertyDialogData,
-  } = hooks.usePipelinePropertyDialog();
+  } = context.usePipelinePropertyDialog();
 
   const [pipelineState, pipelineDispatch] = usePipelineReducerState();
 

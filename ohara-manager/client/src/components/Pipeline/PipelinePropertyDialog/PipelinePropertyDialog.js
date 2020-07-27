@@ -46,9 +46,13 @@ import {
 } from './PipelinePropertyDialogStyles';
 
 const PipelinePropertyDialog = (props) => {
-  const { isOpen, onClose, onSubmit, data, maxWidth = 'md' } = props;
-  const { title = '', classInfo = {}, cellData = { kind: '' }, paperApi } =
-    data || {};
+  const { isOpen, onClose, onSubmit, data = {}, maxWidth = 'md' } = props;
+  const {
+    title = '',
+    classInfo = {},
+    cellData = { kind: '' },
+    paperApi,
+  } = data;
   const { kind } = cellData;
   const [expanded, setExpanded] = useState(null);
   const [selected, setSelected] = useState(null);

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
 
 import { VirtualizedList } from 'components/common/List';
+import { useEventLogContentDialog } from 'context';
 import EventLogContentDialog from './EventLogContentDialog';
 import EventLogRow from './EventLogRow';
 
@@ -46,24 +47,16 @@ MemorizeList.propTypes = {
 };
 
 const EventLogList = ({ data, isFetching }) => {
-  const [isContentOpen, setIsContentOpen] = useState(false);
-  const [activeRowData, setActiveRowData] = useState(null);
-
+  const { open: openEventLogContentDialog } = useEventLogContentDialog();
+  const handleRowClick = (rowData) => openEventLogContentDialog(rowData);
   return (
     <>
       <MemorizeList
         data={data}
         isLoading={isFetching}
-        onRowClick={(rowData) => {
-          setIsContentOpen(true);
-          setActiveRowData(rowData);
-        }}
+        onRowClick={handleRowClick}
       />
-      <EventLogContentDialog
-        data={activeRowData}
-        isOpen={isContentOpen}
-        onClose={() => setIsContentOpen(false)}
-      />
+      <EventLogContentDialog />
     </>
   );
 };

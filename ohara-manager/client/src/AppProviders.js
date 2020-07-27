@@ -24,7 +24,12 @@ import {
 
 import MuiTheme from './theme/muiTheme';
 import { ErrorBoundary } from 'components/ErrorPages';
-import { ConfiguratorProvider, StoreProvider } from './context';
+import {
+  DialogProvider,
+  ConfiguratorProvider,
+  DevToolProvider,
+  StoreProvider,
+} from './context';
 
 const ContextProviderComposer = ({ contextProviders, children }) => {
   return contextProviders.reduceRight(
@@ -44,7 +49,9 @@ const AppProviders = ({ children }) => {
         <ThemeProvider children={children} theme={MuiTheme} />,
         <ErrorBoundary children={children} />,
         <StoreProvider children={children} />,
+        <DialogProvider children={children} />,
         <ConfiguratorProvider children={children} />,
+        <DevToolProvider children={children} />,
       ]}
     >
       {children}

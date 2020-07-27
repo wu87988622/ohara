@@ -22,18 +22,19 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Grid from '@material-ui/core/Grid';
 
-import { KIND, CELL_PROP, DialogToggleType } from 'const';
+import { KIND, CELL_PROP } from 'const';
+import * as context from 'context';
 import * as hooks from 'hooks';
 import { Tooltip } from 'components/common/Tooltip';
-import { DevToolTabName } from 'const';
+import { TAB } from 'context/devTool/const';
 import { usePrevious } from 'utils/hooks';
 import { ControllerLog, ControllerTopic } from './Controller';
 import { StyledHeader } from './HeaderStyles';
 import { isShabondi } from 'components/Pipeline/PipelineUtils';
 
 const Header = () => {
-  const devToolDialog = hooks.useDevToolDialog();
-  const tabName = devToolDialog?.data?.tabName;
+  const { tabName, setTabName } = context.useDevTool();
+  const { isOpen, close: closeDialog } = context.useDevToolDialog();
 
   const setSelectedCell = hooks.useSetSelectedCellAction();
   const setLogQueryParams = hooks.useSetDevToolLogQueryParams();
@@ -47,10 +48,7 @@ const Header = () => {
   const prevTab = usePrevious(tabName);
 
   React.useEffect(() => {
-    if (
-      !devToolDialog.isOpen ||
-      (prevSelectedCell === selectedCell && prevTab === tabName)
-    )
+    if (!isOpen || (prevSelectedCell === selectedCell && prevTab === tabName))
       return;
 
     const getService = (kind, className) => {
@@ -68,7 +66,7 @@ const Header = () => {
     const className = get(selectedCell, CELL_PROP.className, '');
 
     if (kind === KIND.topic) {
-      if (tabName === DevToolTabName.LOG) {
+      if (tabName === TAB.log) {
         setLogQueryParams({ logType: KIND.broker });
       } else {
         setTopicQueryParams({
@@ -77,7 +75,7 @@ const Header = () => {
       }
     } else if (!isEmpty(kind)) {
       // the selected cell is a source, sink, or stream
-      devToolDialog.open({ tabName: DevToolTabName.LOG });
+      setTabName(TAB.log);
       const service = getService(kind, className);
       setLogQueryParams({ logType: service });
       if (isShabondi(className)) {
@@ -91,13 +89,14 @@ const Header = () => {
       }
     }
   }, [
-    devToolDialog,
+    isOpen,
     prevSelectedCell,
     selectedCell,
     prevTab,
+    tabName,
+    setTabName,
     setTopicQueryParams,
     setLogQueryParams,
-    tabName,
   ]);
 
   const handleTabChange = (event, currentTab) => {
@@ -105,7 +104,7 @@ const Header = () => {
     // we need to clear the select cell to avoid the following situation
     // click log tab -> click source -> click topics tab will be disabled
     setSelectedCell(null);
-    devToolDialog.open({ tabName: currentTab });
+    setTabName(currentTab);
   };
 
   return (
@@ -122,29 +121,17 @@ const Header = () => {
           textColor="primary"
           value={tabName}
         >
-          <Tab
-            disabled={isFetchingTopic}
-            label={DevToolTabName.TOPIC}
-            value={DevToolTabName.TOPIC}
-          />
-          <Tab
-            disabled={isFetchingLog}
-            label={DevToolTabName.LOG}
-            value={DevToolTabName.LOG}
-          />
+          <Tab disabled={isFetchingTopic} label={TAB.topic} value={TAB.topic} />
+          <Tab disabled={isFetchingLog} label={TAB.log} value={TAB.log} />
         </Tabs>
       </Grid>
 
       <Grid item lg={7} xs={8}>
         <div className="items">
-          {tabName === DevToolTabName.TOPIC && <ControllerTopic />}
-          {tabName === DevToolTabName.LOG && <ControllerLog />}
+          {tabName === TAB.topic && <ControllerTopic />}
+          {tabName === TAB.log && <ControllerLog />}
           <Tooltip title="Close this panel">
-            <IconButton
-              className="item"
-              onClick={() => devToolDialog.toggle(DialogToggleType.FORCE_CLOSE)}
-              size="small"
-            >
+            <IconButton className="item" onClick={closeDialog} size="small">
               <CloseIcon />
             </IconButton>
           </Tooltip>
