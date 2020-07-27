@@ -26,9 +26,8 @@ import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
 import { Dialog } from 'components/common/Dialog';
 
 const Settings = () => {
-  const isSettingsOpen = hooks.useIsSettingsOpen();
-  const pageName = hooks.usePageNameInSettings();
-  const closeSettings = hooks.useCloseSettingsAction();
+  const settingsDialog = hooks.useWorkspaceSettingsDialog();
+  const pageName = settingsDialog?.data?.pageName;
   const [selectedMenu, setSelectedMenu] = React.useState('');
   const [selectedComponent, setSelectedComponent] = React.useState(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = React.useState(false);
@@ -83,7 +82,7 @@ const Settings = () => {
       return setIsConfirmDialogOpen(true);
     }
 
-    closeSettings();
+    settingsDialog.close();
     resetSelectedItem();
   };
 
@@ -111,7 +110,7 @@ const Settings = () => {
     <StyledFullScreenDialog
       isPageComponent={isPageComponent}
       onClose={handleClose}
-      open={isSettingsOpen}
+      open={settingsDialog.isOpen}
       testId="workspace-settings-dialog"
       title="Settings"
     >
@@ -162,7 +161,7 @@ const Settings = () => {
           maxWidth="xs"
           onClose={() => setIsConfirmDialogOpen(false)}
           onConfirm={() => {
-            closeSettings();
+            settingsDialog.close();
             setIsConfirmDialogOpen(false);
           }}
           open={isConfirmDialogOpen}

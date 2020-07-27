@@ -17,11 +17,12 @@
 import styled from 'styled-components';
 import TextField from '@material-ui/core/TextField';
 
-import { TAB } from 'context/devTool/const';
+import { DevToolTabName } from 'const';
 
 export const StyledSearchBody = styled.div`
   width: 280px;
-  height: ${(props) => (props.tab === TAB.topic ? '210px' : '440px')};
+  height: ${(props) =>
+    props.tab === DevToolTabName.TOPIC ? '210px' : '440px'};
   display: flex;
   flex-direction: column;
   justify-content: space-between;

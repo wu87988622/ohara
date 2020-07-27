@@ -41,7 +41,7 @@ function SharedJarTable() {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const pipelines = hooks.usePipelines();
   const switchPipeline = hooks.useSwitchPipelineAction();
-  const closeSettings = hooks.useCloseSettingsAction();
+  const settingsDialog = hooks.useWorkspaceSettingsDialog();
 
   const selectorDialogRef = useRef(null);
   const [isSelectorDialogOpen, setIsSelectorDialogOpen] = useState(false);
@@ -161,7 +161,7 @@ function SharedJarTable() {
 
   const handleLinkClick = (pipelineClicked) => {
     if (pipelineClicked?.name) {
-      closeSettings();
+      settingsDialog.close();
       switchPipeline(pipelineClicked.name);
     }
   };

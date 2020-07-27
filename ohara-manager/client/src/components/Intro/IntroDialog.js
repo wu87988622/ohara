@@ -80,9 +80,7 @@ const StyledDialogActions = styled(DialogActions)(
   `,
 );
 
-const MuiDialog = ({ quickModeText }) => {
-  const isIntroDialogOpen = hooks.useIsIntroOpen();
-  const closeIntroDialog = hooks.useCloseIntroAction();
+const IntroDialog = ({ isOpen, onClose, quickModeText }) => {
   const openWorkspaceDialog = hooks.useOpenCreateWorkspaceDialogAction();
 
   return (
@@ -90,8 +88,8 @@ const MuiDialog = ({ quickModeText }) => {
       data-testid="intro-dialog"
       fullWidth
       maxWidth="sm"
-      onClose={closeIntroDialog}
-      open={isIntroDialogOpen}
+      onClose={onClose}
+      open={isOpen}
       PaperComponent={DrabblePaper}
       TransitionComponent={Transition}
     >
@@ -105,7 +103,7 @@ const MuiDialog = ({ quickModeText }) => {
         <IconButton
           className="close-button"
           data-testid="close-intro-button"
-          onClick={closeIntroDialog}
+          onClick={onClose}
         >
           <CloseIcon />
         </IconButton>
@@ -135,8 +133,15 @@ const MuiDialog = ({ quickModeText }) => {
   );
 };
 
-MuiDialog.propTypes = {
-  quickModeText: PropTypes.string.isRequired,
+IntroDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  quickModeText: PropTypes.string,
 };
 
-export default MuiDialog;
+IntroDialog.defaultProps = {
+  onClose: () => {},
+  quickModeText: 'QUICK CREATE',
+};
+
+export default IntroDialog;
