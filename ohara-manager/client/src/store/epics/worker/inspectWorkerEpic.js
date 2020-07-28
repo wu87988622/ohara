@@ -26,6 +26,7 @@ import {
   catchError,
 } from 'rxjs/operators';
 
+/* eslint-disable no-throw-literal */
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
@@ -48,7 +49,13 @@ const inspectWorker$ = (params) =>
     defer(() => inspectApi.getWorkerInfo(params)).pipe(
       map((res) => {
         // Ensure classInfos are loaded since it's required in our UI
-        if (res.data.classInfos.length === 0) throw res;
+        if (res.data.classInfos.length === 0) {
+          throw {
+            ...res,
+            title: `Inspect worker ${params?.name} info failed.`,
+          };
+        }
+
         return res;
       }),
       retryBackoff(RETRY_CONFIG),

@@ -127,7 +127,7 @@ it('inspect worker failed after reach retry limit', () => {
             classInfos: [],
           },
           status: 200,
-          title: 'retry mock get data',
+          title: `Inspect worker ${workerEntity.name} info failed.`,
           workerId: 'default_wk00',
         },
         type: 'INSPECT_WORKER/FAILURE',
@@ -137,7 +137,7 @@ it('inspect worker failed after reach retry limit', () => {
         payload: {
           data: { ...workerInfoEntity, classInfos: [] },
           status: 200,
-          title: 'retry mock get data',
+          title: `Inspect worker ${workerEntity.name} info failed.`,
           type: LOG_LEVEL.error,
           workerId: wkId,
         },
