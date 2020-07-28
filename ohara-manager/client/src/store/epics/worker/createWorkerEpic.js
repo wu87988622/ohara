@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -28,40 +28,11 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import * as workerApi from 'api/workerApi';
 import { LOG_LEVEL, GROUP } from 'const';
 import { createWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-
-export const createWorker$ = (values) => {
-  const workerId = getId(values);
-  return defer(() => workerApi.create(values)).pipe(
-    map((res) => res.data),
-    switchMap((data) => {
-      const normalizedData = merge(normalize(data, schema.worker), {
-        workerId,
-      });
-      return from([
-        actions.updateWorkspace.trigger({
-          worker: data,
-          // the workspace name of current object should be as same as the worker name
-          name: values.name,
-          group: GROUP.WORKSPACE,
-        }),
-        actions.createWorker.success(normalizedData),
-      ]);
-    }),
-    startWith(actions.createWorker.request({ workerId })),
-    catchError((err) =>
-      from([
-        actions.createWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

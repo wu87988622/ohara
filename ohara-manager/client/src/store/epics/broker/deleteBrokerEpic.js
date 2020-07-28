@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   map,
@@ -26,20 +26,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
 import { deleteBroker } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
-
-// Note: The caller SHOULD handle the error of this action
-export const deleteBroker$ = (params) => {
-  const brokerId = getId(params);
-  return defer(() => brokerApi.remove(params)).pipe(
-    map(() => actions.deleteBroker.success({ brokerId })),
-    startWith(actions.deleteBroker.request({ brokerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

@@ -17,26 +17,14 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import { catchError, map, mergeMap, startWith, tap } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
-import * as workspaceApi from 'api/workspaceApi';
 import { updateWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-
-export const updateWorkspace$ = (values) => {
-  const workspaceId = getId(values);
-  return defer(() => workspaceApi.update(values)).pipe(
-    map((res) => res.data),
-    map((data) => normalize(data, schema.workspace)),
-    map((normalizedData) => merge(normalizedData, { workspaceId })),
-    map((normalizedData) => actions.updateWorkspace.success(normalizedData)),
-    startWith(actions.updateWorkspace.request({ workspaceId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

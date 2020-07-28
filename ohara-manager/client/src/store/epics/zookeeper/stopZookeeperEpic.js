@@ -17,61 +17,21 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  delay,
   map,
-  retryWhen,
   startWith,
-  concatMap,
   distinctUntilChanged,
   mergeMap,
   takeUntil,
 } from 'rxjs/operators';
 
-import * as zookeeperApi from 'api/zookeeperApi';
 import * as actions from 'store/actions';
 import { stopZookeeper } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
-
-// Note: The caller SHOULD handle the error of this action
-export const stopZookeeper$ = (params) => {
-  const zookeeperId = getId(params);
-  return zip(
-    defer(() => zookeeperApi.stop(params)),
-    defer(() => zookeeperApi.get(params)).pipe(
-      map((res) => {
-        if (res.data?.state) throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title:
-                `Try to stop zookeeper: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state is nonexistent, Actual state: ${value.data.state}`,
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(([, data]) => normalize(data, schema.zookeeper)),
-    map((normalizedData) => merge(normalizedData, { zookeeperId })),
-    map((normalizedData) => actions.stopZookeeper.success(normalizedData)),
-    startWith(actions.stopZookeeper.request({ zookeeperId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(
