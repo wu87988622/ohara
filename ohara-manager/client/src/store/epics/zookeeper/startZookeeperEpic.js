@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-import { defer, from, iif, of, throwError, zip } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  concatMap,
-  delay,
   distinctUntilChanged,
   map,
   mergeMap,
-  retryWhen,
   startWith,
   takeUntil,
 } from 'rxjs/operators';
@@ -30,50 +27,11 @@ import { ofType } from 'redux-observable';
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import * as zookeeperApi from 'api/zookeeperApi';
 import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import { startZookeeper } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-
-// Note: The caller SHOULD handle the error of this action
-export const startZookeeper$ = (params) => {
-  const zookeeperId = getId(params);
-  return zip(
-    defer(() => zookeeperApi.start(params)),
-    defer(() => zookeeperApi.get(params)).pipe(
-      map((res) => {
-        if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
-          throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title:
-                `Try to start zookeeper: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(([, data]) => normalize(data, schema.zookeeper)),
-    map((normalizedData) => merge(normalizedData, { zookeeperId })),
-    map((normalizedData) => actions.startZookeeper.success(normalizedData)),
-    startWith(actions.startZookeeper.request({ zookeeperId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

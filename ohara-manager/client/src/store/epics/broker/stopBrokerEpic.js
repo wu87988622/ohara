@@ -17,61 +17,21 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  delay,
   map,
-  retryWhen,
   startWith,
   distinctUntilChanged,
   mergeMap,
-  concatMap,
   takeUntil,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
 import * as actions from 'store/actions';
 import { stopBroker } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
-
-// Note: The caller SHOULD handle the error of this action
-export const stopBroker$ = (params) => {
-  const brokerId = getId(params);
-  return zip(
-    defer(() => brokerApi.stop(params)),
-    defer(() => brokerApi.get(params)).pipe(
-      map((res) => {
-        if (res.data?.state) throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title:
-                `Try to stop broker: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state is nonexistent, Actual state: ${value.data.state}`,
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(([, data]) => normalize(data, schema.broker)),
-    map((normalizedData) => merge(normalizedData, { brokerId })),
-    map((normalizedData) => actions.stopBroker.success(normalizedData)),
-    startWith(actions.stopBroker.request({ brokerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

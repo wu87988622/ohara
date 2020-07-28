@@ -17,62 +17,22 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, of, iif, throwError, zip, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  concatMap,
-  delay,
   distinctUntilChanged,
   map,
   mergeMap,
-  retryWhen,
   startWith,
   tap,
   takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
-import * as workerApi from 'api/workerApi';
 import { stopWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId, getKey } from 'utils/object';
-
-// Note: The caller SHOULD handle the error of this action
-export const stopWorker$ = (params) => {
-  const workerId = getId(params);
-  return zip(
-    defer(() => workerApi.stop(params)),
-    defer(() => workerApi.get(params)).pipe(
-      map((res) => {
-        if (res.data?.state) throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title:
-                `Try to stop worker: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state is nonexistent, Actual state: ${value.data.state}`,
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(([, data]) => normalize(data, schema.worker)),
-    map((normalizedData) => merge(normalizedData, { workerId })),
-    map((normalizedData) => actions.stopWorker.success(normalizedData)),
-    startWith(actions.stopWorker.request({ workerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

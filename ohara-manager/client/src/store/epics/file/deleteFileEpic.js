@@ -29,14 +29,6 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { LOG_LEVEL } from 'const';
 
-// Note: The caller SHOULD handle the error of this action
-export const deleteFile$ = (file) =>
-  defer(() => fileApi.remove(file)).pipe(
-    map(() => getId(file)),
-    map((id) => actions.deleteFile.success({ fileId: id })),
-    startWith(actions.deleteFile.request()),
-  );
-
 export default (action$) =>
   action$.pipe(
     ofType(actions.deleteFile.TRIGGER),

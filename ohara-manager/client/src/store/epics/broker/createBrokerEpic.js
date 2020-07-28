@@ -17,7 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -28,40 +28,11 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import * as brokerApi from 'api/brokerApi';
 import { LOG_LEVEL, GROUP } from 'const';
 import { createBroker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-
-export const createBroker$ = (values) => {
-  const brokerId = getId(values);
-  return defer(() => brokerApi.create(values)).pipe(
-    map((res) => res.data),
-    switchMap((data) => {
-      const normalizedData = merge(normalize(data, schema.broker), {
-        brokerId,
-      });
-      return from([
-        actions.updateWorkspace.trigger({
-          broker: data,
-          // the workspace name of current object should be as same as the broker name
-          name: values.name,
-          group: GROUP.WORKSPACE,
-        }),
-        actions.createBroker.success(normalizedData),
-      ]);
-    }),
-    startWith(actions.createBroker.request({ brokerId })),
-    catchError((err) =>
-      from([
-        actions.createBroker.failure(merge(err, { brokerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
-    ),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

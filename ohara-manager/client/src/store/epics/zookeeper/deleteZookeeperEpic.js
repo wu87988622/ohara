@@ -16,7 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   distinctUntilChanged,
@@ -27,19 +27,9 @@ import {
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
-import * as zookeeperApi from 'api/zookeeperApi';
 import { deleteZookeeper } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-
-// Note: The caller SHOULD handle the error of this action
-export const deleteZookeeper$ = (params) => {
-  const zookeeperId = getId(params);
-  return defer(() => zookeeperApi.remove(params)).pipe(
-    map(() => actions.deleteZookeeper.success({ zookeeperId })),
-    startWith(actions.deleteZookeeper.request({ zookeeperId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

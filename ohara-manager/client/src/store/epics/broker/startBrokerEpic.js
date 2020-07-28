@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-import { defer, from, iif, of, throwError, zip } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
-  concatMap,
-  delay,
   distinctUntilChanged,
   map,
   mergeMap,
-  retryWhen,
   startWith,
   takeUntil,
 } from 'rxjs/operators';
@@ -30,50 +27,11 @@ import { ofType } from 'redux-observable';
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 
-import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import * as brokerApi from 'api/brokerApi';
 import { LOG_LEVEL } from 'const';
 import { startBroker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-
-// Note: The caller SHOULD handle the error of this action
-export const startBroker$ = (params) => {
-  const brokerId = getId(params);
-  return zip(
-    defer(() => brokerApi.start(params)),
-    defer(() => brokerApi.get(params)).pipe(
-      map((res) => {
-        if (!res.data?.state || res.data.state !== SERVICE_STATE.RUNNING)
-          throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title:
-                `Try to start broker: "${params.name}" failed after retry ${index} times. ` +
-                `Expected state: ${SERVICE_STATE.RUNNING}, Actual state: ${value.data.state}`,
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(([, data]) => normalize(data, schema.broker)),
-    map((normalizedData) => merge(normalizedData, { brokerId })),
-    map((normalizedData) => actions.startBroker.success(normalizedData)),
-    startWith(actions.startBroker.request({ brokerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(

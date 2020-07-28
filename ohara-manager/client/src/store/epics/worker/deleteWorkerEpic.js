@@ -16,60 +16,20 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from, zip, iif, of, throwError } from 'rxjs';
+import { from } from 'rxjs';
 import {
   catchError,
   map,
   startWith,
   mergeMap,
   distinctUntilChanged,
-  retryWhen,
-  concatMap,
-  delay,
   takeUntil,
 } from 'rxjs/operators';
 
 import { LOG_LEVEL } from 'const';
-import * as workerApi from 'api/workerApi';
 import { deleteWorker } from 'observables';
 import * as actions from 'store/actions';
 import { getId, getKey } from 'utils/object';
-
-// Note: The caller SHOULD handle the error of this action
-export const deleteWorker$ = (params) => {
-  const workerId = getId(params);
-  return zip(
-    defer(() => workerApi.remove(params)),
-    defer(() => workerApi.getAll({ group: params.group })).pipe(
-      map((res) => {
-        if (
-          res.data.length > 0 &&
-          res.data.map((value) => value.name).includes(params.name)
-        )
-          throw res;
-        else return res.data;
-      }),
-    ),
-  ).pipe(
-    retryWhen((errors) =>
-      errors.pipe(
-        concatMap((value, index) =>
-          iif(
-            () => index > 10,
-            throwError({
-              data: value?.data,
-              meta: value?.meta,
-              title: 'delete worker exceeded max retry count',
-            }),
-            of(value).pipe(delay(2000)),
-          ),
-        ),
-      ),
-    ),
-    map(() => actions.deleteWorker.success({ workerId })),
-    startWith(actions.deleteWorker.request({ workerId })),
-  );
-};
 
 export default (action$) =>
   action$.pipe(
