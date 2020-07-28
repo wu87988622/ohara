@@ -153,6 +153,9 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
       .next()
       .should('be.visible'); // Ensure the list is opened
 
+    // Wait for 2 seconds here for Toolbox list to be ready
+    cy.wait(2000);
+
     // re-render the cell position to maximize the available space
     // the view of cells will be a [n, 2] matrix
     const x = size % 2 === 0 ? initialX : initialX + shiftWidth;

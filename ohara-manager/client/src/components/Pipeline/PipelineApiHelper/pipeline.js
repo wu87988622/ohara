@@ -54,10 +54,6 @@ const pipeline = () => {
       if (currentObject) {
         return {
           ...cell,
-          // TODO: use a more robust way to do the check
-          // Normally, object won't have error field and so we're using this to
-          // determine if the given object doesn't contain class definitions
-          isIllegal: !!currentObject?.error,
           status: currentObject.state,
         };
       }

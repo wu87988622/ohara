@@ -59,7 +59,6 @@ export enum CELL_PROP {
   status = 'status',
   source = 'source',
   target = 'target',
-  isIllegal = 'isIllegal',
 }
 
 export enum CELL_TYPE {

@@ -601,60 +601,6 @@ describe('Elements', () => {
       });
     });
   });
-
-  context('Elements:illegal', () => {
-    it(`should disable some of the actions when it's illegal`, () => {
-      const sourceName = generate.serviceName({ prefix: 'source' });
-      cy.addElement({
-        name: sourceName,
-        kind: KIND.source,
-        className: SOURCE.jdbc,
-      });
-
-      cy.wrap(null).then(async () => {
-        // There's only one pipeline in our env
-        const [pipelineData]: PipelineRequest[] = await fetchPipelines();
-
-        const mockData = {
-          ...pipelineData,
-          objects: pipelineData.objects.map((object: ObjectAbstract) => {
-            if (object.name === sourceName) {
-              return {
-                ...object,
-                error: 'Oops, something went terribly wrong!',
-              };
-            }
-
-            return object;
-          }),
-        };
-
-        cy.server();
-        cy.route({
-          method: 'GET',
-          url: 'api/pipelines',
-          response: [mockData],
-        }).as('getPipelines');
-
-        cy.reload();
-        cy.wait('@getPipelines');
-
-        cy.findByText('pipeline1').should('exist');
-
-        cy.get('#paper').within(() => {
-          cy.findByText(sourceName).should(($source) => {
-            const $container = $source.parents('.connector');
-            const $menu = $container.find('.menu');
-
-            // Only delete action is not disabled
-            expect($menu.find('.remove')).to.exist;
-            expect($menu.find('.remove')).not.to.have.class('.is-disabled');
-            expect($menu.find('.is-disabled').length).to.eq(4);
-          });
-        });
-      });
-    });
-  });
 });
 
 function createSourceAndTopic() {
