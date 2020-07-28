@@ -16,7 +16,8 @@
 
 import { omit } from 'lodash';
 import { TestScheduler } from 'rxjs/testing';
-import { of } from 'rxjs';
+import { timer, of, throwError } from 'rxjs';
+import { delay, switchMap } from 'rxjs/operators';
 
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
@@ -31,6 +32,7 @@ jest.mock('api/connectorApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const connectorId = getId(connectorEntity);
@@ -50,7 +52,7 @@ it('should start the connector', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 499ms v';
+    const expected = '--a 199ms v';
     const subs = '    ^----------';
     const id = '1234';
 
@@ -58,7 +60,7 @@ it('should start the connector', () => {
       a: {
         type: actions.startConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, id },
+          values: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -113,7 +115,7 @@ it('should fail after reaching the retry limit', () => {
         status: 200,
         title: 'retry mock get data',
         data: { ...omit(connectorEntity, 'state') },
-      }),
+      }).pipe(delay(100)),
     );
   }
   // get result finally
@@ -122,15 +124,16 @@ it('should fail after reaching the retry limit', () => {
       status: 200,
       title: 'retry mock get data',
       data: { ...connectorEntity, state: SERVICE_STATE.RUNNING },
-    }),
+    }).pipe(delay(100)),
   );
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    // we failed after retry 5 times (5 * 2000ms = 10s)
-    const expected = '--a 9999ms (vu)';
+    // start 11 times, get 11 times, retry 10 times
+    // => 100 * 11 + 100 * 11 + 2000 * 10 = 22200ms
+    const expected = '--a 22199ms (vu)';
     const subs = '    ^--------------';
     const id = '1234';
 
@@ -138,7 +141,10 @@ it('should fail after reaching the retry limit', () => {
       a: {
         type: actions.startConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, id },
+          values: {
+            ...connectorEntity,
+            id,
+          },
           options: { paperApi },
         },
       },
@@ -157,8 +163,8 @@ it('should fail after reaching the retry limit', () => {
         payload: {
           connectorId,
           data: connectorEntity,
-          meta: undefined,
-          title: `Try to start connector: "${connectorEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start connector ${connectorEntity.name}: Unable to confirm the status of the connector is running`,
         },
       },
       u: {
@@ -166,8 +172,8 @@ it('should fail after reaching the retry limit', () => {
         payload: {
           connectorId,
           data: connectorEntity,
-          meta: undefined,
-          title: `Try to start connector: "${connectorEntity.name}" failed after retry 5 times. Expected state: RUNNING, Actual state: undefined`,
+          status: 200,
+          title: `Failed to start connector ${connectorEntity.name}: Unable to confirm the status of the connector is running`,
           type: LOG_LEVEL.error,
         },
       },
@@ -192,7 +198,7 @@ it('start connector multiple times should be worked once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
+    const expected = '--a       199ms v';
     const subs = '    ^----------------';
     const id = '1234';
 
@@ -200,7 +206,7 @@ it('start connector multiple times should be worked once', () => {
       a: {
         type: actions.startConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, id },
+          values: { ...connectorEntity, id },
           options: { paperApi },
         },
       },
@@ -257,7 +263,7 @@ it('start different connector should be worked correctly', () => {
       clientPort: 3333,
     };
     const input = '   ^-a--b           ';
-    const expected = '--a--b 496ms y--z';
+    const expected = '--a--b 196ms y--z';
     const subs = '    ^----------------';
     const id1 = '1234';
     const id2 = '5678';
@@ -266,14 +272,14 @@ it('start different connector should be worked correctly', () => {
       a: {
         type: actions.startConnector.TRIGGER,
         payload: {
-          params: { ...connectorEntity, id: id1 },
+          values: { ...connectorEntity, id: id1 },
           options: { paperApi },
         },
       },
       b: {
         type: actions.startConnector.TRIGGER,
         payload: {
-          params: { ...anotherConnectorEntity, id: id2 },
+          values: { ...anotherConnectorEntity, id: id2 },
           options: { paperApi },
         },
       },
@@ -337,6 +343,90 @@ it('start different connector should be worked correctly', () => {
     });
     expect(paperApi.updateElement).toHaveBeenCalledWith(id1, {
       status: CELL_STATUS.running,
+    });
+  });
+});
+
+it('should stop retrying when an API error occurs', () => {
+  const spyStart = jest.spyOn(connectorApi, 'start');
+
+  spyStart.mockReturnValueOnce(
+    timer().pipe(
+      delay(100),
+      switchMap(() =>
+        throwError({
+          status: 400,
+          title: 'Failed to start connector aaa',
+          data: {
+            error: { code: 'mock', message: 'mock', stack: 'mock' },
+          },
+        }),
+      ),
+    ),
+  );
+
+  makeTestScheduler().run((helpers) => {
+    const { hot, expectObservable, expectSubscriptions, flush } = helpers;
+
+    const input = '   ^-a            ';
+    const expected = '--a 99ms (vu)';
+    const subs = '    ^--------------';
+    const id = '1234';
+
+    const action$ = hot(input, {
+      a: {
+        type: actions.startConnector.TRIGGER,
+        payload: {
+          values: {
+            ...connectorEntity,
+            id,
+          },
+          options: { paperApi },
+        },
+      },
+    });
+    const output$ = startConnectorEpic(action$);
+
+    expectObservable(output$).toBe(expected, {
+      a: {
+        type: actions.startConnector.REQUEST,
+        payload: {
+          connectorId,
+        },
+      },
+      v: {
+        type: actions.startConnector.FAILURE,
+        payload: {
+          status: 400,
+          title: 'Failed to start connector aaa',
+          data: { error: { code: 'mock', message: 'mock', stack: 'mock' } },
+          connectorId,
+        },
+      },
+      u: {
+        type: actions.createEventLog.TRIGGER,
+        payload: {
+          status: 400,
+          title: 'Failed to start connector aaa',
+          data: { error: { code: 'mock', message: 'mock', stack: 'mock' } },
+          connectorId,
+          type: LOG_LEVEL.error,
+        },
+      },
+    });
+
+    expectSubscriptions(action$.subscriptions).toBe(subs);
+
+    flush();
+
+    expect(spyStart).toHaveBeenCalled();
+
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.pending,
+    });
+    expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
+      status: CELL_STATUS.stopped,
     });
   });
 });
