@@ -48,7 +48,6 @@ const createConnectorCell = (options) => {
     showMetrics,
     isTemporary = false,
     isSelected = false,
-    isIllegal = false,
   } = options;
 
   joint.shapes.html = {};
@@ -259,13 +258,7 @@ const createConnectorCell = (options) => {
     updateElement(cellData, options) {
       const { $box, model } = this;
 
-      const { isIllegal, id } = cellData;
-
-      if (isIllegal) {
-        $box.addClass('is-illegal');
-      } else {
-        $box.removeClass('is-illegal');
-      }
+      const { id } = cellData;
 
       // Status
       const status = cellData.status.toLowerCase();
@@ -334,7 +327,6 @@ const createConnectorCell = (options) => {
     showMetrics,
     jarKey,
     isSelected,
-    isIllegal,
     size: {
       width: 240,
       height: 100,

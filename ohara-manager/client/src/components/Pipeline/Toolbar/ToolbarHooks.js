@@ -144,6 +144,7 @@ export const useMakeRequest = () => {
 
   const makeRequest = (pipeline, action) => {
     const cells = paperApi.getCells();
+
     const connectors = cells.filter(
       (cell) => cell.kind === KIND.source || cell.kind === KIND.sink,
     );

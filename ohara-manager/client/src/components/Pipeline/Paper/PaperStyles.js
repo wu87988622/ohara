@@ -83,10 +83,6 @@ export const StyledPaper = styled.div(
       border-radius: ${theme.shape.borderRadius}px;
       pointer-events: none;
 
-      &.is-illegal {
-        opacity: 0.6;
-      }
-
       &.is-hover {
         :before {
           content: ' ';
