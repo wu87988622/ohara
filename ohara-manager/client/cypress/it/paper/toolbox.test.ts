@@ -40,7 +40,7 @@ describe('ToolBox', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 
@@ -315,8 +315,8 @@ describe('ToolBox', () => {
             .should('exist')
             .and('have.class', 'display-name')
             .parent('.item')
-            .should('have.attr', 'data-testid')
-            .then((testId) => cy.get(`g[model-id="${testId}"]`));
+            .should('have.attr', 'data-jointid')
+            .then((jointid) => cy.get(`g[model-id="${jointid}"]`));
         })
         .dragAndDrop(800, 500); // just a position to place the topic
 

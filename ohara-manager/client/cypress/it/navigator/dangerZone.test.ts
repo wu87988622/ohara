@@ -1371,7 +1371,7 @@ describe.only('Delete workspace', () => {
 
     // clean up
     cy.visit('/');
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
   });
 
   it('should only delete services running within the workspace, not others', () => {
@@ -1428,7 +1428,7 @@ describe.only('Delete workspace', () => {
     cy.get('#paper').findByText(sinkName).should('exist');
 
     // clean up
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.deleteAllServices();
     cy.createWorkspace({ workspaceName: workspace1, node });
   });

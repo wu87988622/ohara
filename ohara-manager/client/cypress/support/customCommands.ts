@@ -23,17 +23,13 @@
 import '@testing-library/cypress/add-commands';
 
 import { some } from 'lodash';
-import * as connectorApi from '../../src/api/connectorApi';
 import {
   NodeRequest,
   NodeResponse,
 } from '../../src/api/apiInterface/nodeInterface';
 import { ClusterResponse } from '../../src/api/apiInterface/clusterInterface';
 import { TopicResponse } from '../../src/api/apiInterface/topicInterface';
-import { SOURCE } from '../../src/api/apiInterface/connectorInterface';
-import { hashByGroupAndName } from '../../src/utils/sha';
 import * as generate from '../../src/utils/generate';
-import { sleep } from '../../src/utils/common';
 import { deleteAllServices, generateNodeIfNeeded } from '../utils';
 import { KIND } from '../../src/const';
 
@@ -79,15 +75,6 @@ declare global {
       group: string;
       tags?: object;
     };
-    type ServiceData = {
-      workspaceName?: string;
-      node?: NodeResponse;
-      zookeeper?: ClusterResponse;
-      broker?: ClusterResponse;
-      worker?: ClusterResponse;
-      topic?: TopicResponse;
-    };
-
     interface Chainable {
       // Utils
       createJar: (file: FixtureRequest) => Promise<FixtureResponse>;
@@ -139,16 +126,40 @@ declare global {
       addElement: (element: ElementParameters) => Chainable<null>;
       addElements: (elements: ElementParameters[]) => Chainable<null>;
       removeElement: (name: string) => Chainable<null>;
+
+      /**
+       * Get a Paper element by name
+       * @param {string} name Element name
+       * @param {boolean} isTopic If element is a topic
+       * @example cy.getElement('mySource').should('have.text', 'running');
+       * @example cy.getElement('myTopic').should('have.class', 'running');
+       */
+
+      getElementStatus: (
+        name: string,
+        isTopic?: boolean,
+      ) => Chainable<JQuery<HTMLElement>>;
       getCell: (name: string) => Chainable<HTMLElement>;
       cellAction: (name: string, action: CELL_ACTION) => Chainable<HTMLElement>;
-      createConnections: (elements: string[]) => Chainable<null>;
+
+      /**
+       * Create a connection between elements
+       * @param {string[]} elements Element list, the connection will be created following the list order
+       * @param {boolean} waitForApiCall If the command should wait for pipeline update API call to finish or not
+       * @example cy.createConnection(['ftpSource', 'topic1', 'consoleSink']); // create a connection of ftpSource -> topic1 -> consoleSink
+       */
+
+      createConnections: (
+        elements: string[],
+        waitForApiCall?: boolean,
+      ) => Chainable<null>;
       uploadStreamJar: () => Chainable<null>;
       // Pipeline
       createPipeline: (name?: string) => Chainable<null>;
       startPipeline: (name: string) => Chainable<null>;
       stopPipeline: (name: string) => Chainable<null>;
       deletePipeline: (name: string) => Chainable<null>;
-      deleteAndStopAllPipelines: () => Chainable<null>;
+      stopAndDeleteAllPipelines: () => Chainable<null>;
       // Settings
       switchSettingSection: (
         section: SETTING_SECTION,
@@ -159,9 +170,6 @@ declare global {
     }
   }
 }
-
-const workspaceGroup = 'workspace';
-const workerGroup = 'worker';
 
 // Utility commands
 Cypress.Commands.add('createJar', (file: Cypress.FixtureRequest) => {

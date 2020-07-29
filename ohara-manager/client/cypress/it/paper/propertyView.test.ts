@@ -44,7 +44,7 @@ describe('Property view', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 

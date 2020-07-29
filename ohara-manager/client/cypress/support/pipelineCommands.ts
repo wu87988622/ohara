@@ -84,7 +84,7 @@ Cypress.Commands.add('deletePipeline', (name) => {
 });
 
 // Delete all pipelines under current workspace
-Cypress.Commands.add('deleteAndStopAllPipelines', () => {
+Cypress.Commands.add('stopAndDeleteAllPipelines', () => {
   cy.log(`Deleting all pipelines`);
 
   cy.get('#pipeline-list').then(($list) => {
@@ -149,11 +149,11 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
     cy.findByText(capitalize(kind))
       .should('exist')
       .click()
-      .parent()
+      .parents('.MuiExpansionPanelSummary-root')
       .next()
       .should('be.visible'); // Ensure the list is opened
 
-    // Wait for 2 seconds here for Toolbox list to be ready
+    // Wait for these two extra seconds to avoid `detached DOM` issue that breaks the test
     cy.wait(2000);
 
     // re-render the cell position to maximize the available space
@@ -171,8 +171,8 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
             .should('exist')
             .and('have.class', 'display-name')
             .parent('.item')
-            .should('have.attr', 'data-testid')
-            .then((testId) => cy.get(`g[model-id="${testId}"]`))
+            .should('have.attr', 'data-jointid')
+            .then((jointId) => cy.get(`g[model-id="${jointId}"]`))
             .should('exist');
         })
         .dragAndDrop(x, y);
@@ -204,8 +204,8 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
               .should('exist')
               .and('have.class', 'display-name')
               .parent('.item')
-              .should('have.attr', 'data-testid')
-              .then((testId) => cy.get(`g[model-id="${testId}"]`))
+              .should('have.attr', 'data-jointid')
+              .then((jointId) => cy.get(`g[model-id="${jointId}"]`))
               .should('exist');
           })
           .dragAndDrop(x, y);
@@ -232,19 +232,8 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
       cy.findAllByText('ADD').filter(':visible').click();
     }
 
-    // wait for the cell added
+    // wait until the cell added
     cy.get('#outline').findByText(name).should('exist');
-
-    // If it's a topic, we need to make sure it's started and in 'running' state
-    // this is because 'pending' topic cannot be operated
-    cy.get('#paper').then(($paper) => {
-      if (kind === KIND.topic) {
-        cy.wrap($paper)
-          .findByText(name)
-          .prev('svg')
-          .find(`.${CELL_STATUS.running}`);
-      }
-    });
 
     // Collapse this panel
     cy.findByText(capitalize(kind)).click();
@@ -260,25 +249,36 @@ Cypress.Commands.add('addElements', (elements) => {
   });
 });
 
-Cypress.Commands.add('createConnections', (elementNames) => {
-  cy.log('Creating connection for multiple elements');
+Cypress.Commands.add(
+  'createConnections',
+  (elementNames, waitForApiCall = true) => {
+    cy.log('Creating connection for multiple elements');
 
-  elementNames.forEach((elementName: string, i: number) => {
-    const nextElementName = elementNames[++i];
+    cy.server();
+    cy.route('PUT', '/api/pipelines/*').as('updatePipeline');
 
-    // Don't create a connection from last element
-    if (elementNames.length === i) return;
+    elementNames.forEach((elementName: string, i: number) => {
+      const nextElementName = elementNames[++i];
 
-    cy.log(`Connecting: ${elementName} -> ${nextElementName}`);
+      // Don't create a connection from last element
+      if (elementNames.length === i) return;
 
-    // Action
-    cy.getCell(elementName).trigger('mouseover');
-    cy.cellAction(elementName, CELL_ACTION.link).click();
+      cy.log(`Connecting: ${elementName} -> ${nextElementName}`);
 
-    // Create the link: currentElement -> nextElement
-    cy.getCell(nextElementName).click();
-  });
-});
+      // Action
+      cy.getCell(elementName).trigger('mouseover');
+      cy.cellAction(elementName, CELL_ACTION.link).click();
+
+      // Create the link: currentElement -> nextElement
+      cy.getCell(nextElementName).click();
+
+      // It's unfortunately we current don't have a visual indicator from UI for Cypress to check
+      // if a link creation is saved or not, so we will need to run `cy.wait(route)` in order to
+      // make sure the update request is done
+      if (waitForApiCall) cy.wait('@updatePipeline');
+    });
+  },
+);
 
 Cypress.Commands.add('removeElement', (name) => {
   cy.log(`Removing an element: ${name}`);
@@ -289,8 +289,8 @@ Cypress.Commands.add('removeElement', (name) => {
 
   cy.get('#paper').findByText(name).should('not.exist');
 
-  // Ensure API requests are finished
-  cy.wait(2000);
+  // Ensure element is removed
+  cy.get('#outline').findByText(name).should('have.length', 0);
 });
 
 Cypress.Commands.add('getCell', (name) => {
@@ -298,16 +298,10 @@ Cypress.Commands.add('getCell', (name) => {
   cy.get('#paper').within(() => {
     cy.findByText(name)
       .should('exist')
-      .parents(
-        name.startsWith('topic') || name.startsWith('T')
-          ? '.topic'
-          : name.startsWith('stream')
-          ? '.stream'
-          : '.connector',
-      )
+      .parents('.paper-element')
       .then(($el) => {
-        const testId = $el.attr('data-testid');
-        return cy.get(`g[model-id="${testId}"]`);
+        const jointid = $el.attr('data-jointid');
+        return cy.get(`g[model-id="${jointid}"]`);
       });
   });
 });
@@ -318,16 +312,24 @@ Cypress.Commands.add('cellAction', (name, action: CELL_ACTION) => {
     cy.findAllByText(name)
       .filter(':visible')
       .should('exist')
-      .parents(
-        name.startsWith('topic') || name.startsWith('T')
-          ? '.topic'
-          : name.startsWith('stream')
-          ? '.stream'
-          : '.connector',
-      )
+      .parents('.paper-element')
       .first()
       .within(() => cy.get(`button.${action.toString()}:visible`));
   });
+});
+
+Cypress.Commands.add('getElementStatus', (name, isTopic = false) => {
+  cy.log(`Get element status of ${name}`);
+
+  if (isTopic) {
+    return cy.get('#paper').findByText(name).prev('svg').find('.topic-status');
+  }
+
+  return cy
+    .get('#paper')
+    .findByText(name)
+    .parents('.paper-element')
+    .find('.status-value');
 });
 
 Cypress.Commands.add('uploadStreamJar', () => {

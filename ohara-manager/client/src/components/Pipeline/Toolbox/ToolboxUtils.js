@@ -81,7 +81,7 @@ export const createToolboxList = (params) => {
       $box.appendTo(this.paper.el);
 
       // JointJS ID, for testing
-      $box.attr('data-testid', this.model.id);
+      $box.attr('data-jointid', this.model.id);
 
       this.updateBox();
       return this;

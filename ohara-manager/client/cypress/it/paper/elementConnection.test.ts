@@ -35,7 +35,7 @@ describe('Element connections', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 
@@ -86,7 +86,7 @@ describe('Element connections', () => {
       cy.addElements(elements);
 
       // ⛔️ Cannot link two source connectors together: perfSource -> ftpSource
-      cy.createConnections([perfSourceName, ftpSourceName]);
+      cy.createConnections([perfSourceName, ftpSourceName], false);
       cy.findByText(`Target ${ftpSourceName} is a source!`)
         .should('exist')
         .siblings('div')
@@ -94,7 +94,10 @@ describe('Element connections', () => {
         .click();
 
       // ⛔️ Cannot link two topics together: pipelineOnlyTopic1 -> pipelineOnlyTopic2
-      cy.createConnections([pipelineOnlyTopicName1, pipelineOnlyTopicName2]);
+      cy.createConnections(
+        [pipelineOnlyTopicName1, pipelineOnlyTopicName2],
+        false,
+      );
       cy.findByText(
         `Cannot connect a ${KIND.topic} to another ${KIND.topic}, they both have the same type`,
       )
@@ -114,7 +117,7 @@ describe('Element connections', () => {
       cy.get('#paper .joint-link').should('have.length', 2);
 
       // ⛔️ Cannot link a source to a sink where the sink already has a connection: ftpSource -> hdfsSink
-      cy.createConnections([ftpSourceName, hdfsSinkName]);
+      cy.createConnections([ftpSourceName, hdfsSinkName], false);
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
       )
@@ -124,7 +127,7 @@ describe('Element connections', () => {
         .click();
 
       // ⛔️ Cannot link a topic to a sink where the sink already has a connection: pipelineOnlyTopic2 -> hdfsSink
-      cy.createConnections([pipelineOnlyTopicName2, hdfsSinkName]);
+      cy.createConnections([pipelineOnlyTopicName2, hdfsSinkName], false);
       cy.findByText(
         `The target ${hdfsSinkName} is already connected to a source`,
       )
