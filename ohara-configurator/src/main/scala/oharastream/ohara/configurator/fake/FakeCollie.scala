@@ -16,19 +16,22 @@
 
 package oharastream.ohara.configurator.fake
 
-import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.{ConcurrentSkipListMap, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 
 import oharastream.ohara.agent._
 import oharastream.ohara.agent.container.ContainerName
 import oharastream.ohara.agent.docker.ContainerState
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
+import oharastream.ohara.client.configurator.ConnectorApi.ConnectorInfo
 import oharastream.ohara.client.configurator.ContainerApi.{ContainerInfo, PortMapping}
 import oharastream.ohara.client.configurator.NodeApi.Node
 import oharastream.ohara.client.configurator.ShabondiApi.ShabondiClusterInfo
 import oharastream.ohara.client.configurator.StreamApi.StreamClusterInfo
+import oharastream.ohara.client.configurator.TopicApi.{TopicInfo, TopicState}
 import oharastream.ohara.client.configurator.VolumeApi.Volume
-import oharastream.ohara.client.configurator.{ClusterInfo, ClusterState, NodeApi}
+import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
+import oharastream.ohara.client.configurator.{ClusterInfo, ClusterState, ConnectorApi, NodeApi}
 import oharastream.ohara.common.annotations.VisibleForTesting
 import oharastream.ohara.common.setting.ObjectKey
 import oharastream.ohara.common.util.CommonUtils
@@ -36,8 +39,9 @@ import oharastream.ohara.metrics.BeanChannel
 import oharastream.ohara.metrics.basic.{Counter, CounterMBean}
 import oharastream.ohara.metrics.kafka.TopicMeter
 
+import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) extends Collie {
   @VisibleForTesting
   protected[configurator] val clusterCache = new ConcurrentSkipListMap[ObjectKey, ClusterStatus]()
@@ -80,6 +84,31 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
           .toSeq
       )
     )
+
+  /**
+    * Test this collie is running on embedded mode or not by checking local JVM metrics.
+    * @return true if run on embedded mode
+    */
+  private[configurator] def isEmbedded: Boolean =
+    !BeanChannel.local().topicMeters().isEmpty || !BeanChannel.local().counterMBeans().isEmpty
+
+  // fake topicMeter metrics
+  private def fakeTopicMeter(key: ObjectKey) =
+    TopicMeter
+      .builder()
+      .topicName(key.toPlain)
+      .catalog(TopicMeter.Catalog.MessagesInPerSec)
+      .rateUnit(TimeUnit.SECONDS)
+      .build()
+
+  // fake counter metrics
+  private def fakeCounter(key: ObjectKey) =
+    Counter
+      .builder()
+      .key(key)
+      .item("fake counter")
+      .value(CommonUtils.randomInteger().toLong)
+      .build()
 
   override def exist(objectKey: ObjectKey)(implicit executionContext: ExecutionContext): Future[Boolean] =
     Future.successful(clusterCache.keySet.asScala.contains(objectKey))
@@ -141,18 +170,24 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
 
   override protected def topicMeters(cluster: ClusterInfo): Map[String, Seq[TopicMeter]] = cluster match {
     case _: BrokerClusterInfo =>
-      // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
-      Map(CommonUtils.hostname() -> BeanChannel.local().topicMeters().asScala.toSeq)
+      if (isEmbedded) {
+        // using local jvm on embedded mode
+        Map(CommonUtils.hostname() -> BeanChannel.local().topicMeters().asScala.toSeq)
+      } else {
+        if (clusterCache.containsKey(cluster.key)) {
+          import scala.concurrent.ExecutionContext.Implicits.global
+          val topicKeys =
+            Await.result(
+              dataCollie
+                .values[TopicInfo]()
+                .map(infos => infos.filter(info => info.state.contains(TopicState.RUNNING)).map(info => info.key)),
+              Duration.Inf
+            )
+          topicKeys.map(topicKey => CommonUtils.hostname() -> Seq(fakeTopicMeter(topicKey))).toMap
+        } else Map.empty
+      }
     case _ => Map.empty
   }
-
-  private def fakeCounter(key: ObjectKey) =
-    Counter
-      .builder()
-      .key(key)
-      .item("fake counter")
-      .value(CommonUtils.randomInteger().toLong)
-      .build()
 
   override protected def counterMBeans(cluster: ClusterInfo): Map[String, Seq[CounterMBean]] = cluster match {
     case _: BrokerClusterInfo =>
@@ -165,6 +200,25 @@ private[configurator] abstract class FakeCollie(val dataCollie: DataCollie) exte
       if (clusterCache.containsKey(cluster.key)) {
         Map(CommonUtils.hostname() -> Seq(fakeCounter(cluster.key)))
       } else Map.empty
+    case _ @(_: WorkerClusterInfo) =>
+      if (isEmbedded) {
+        // using local jvm on embedded mode
+        Map(CommonUtils.hostname() -> BeanChannel.local().counterMBeans().asScala.toSeq)
+      } else {
+        if (clusterCache.containsKey(cluster.key)) {
+          import scala.concurrent.ExecutionContext.Implicits.global
+          val connectorKeys =
+            Await.result(
+              dataCollie
+                .values[ConnectorInfo]()
+                .map(
+                  infos => infos.filter(info => info.state.contains(ConnectorApi.State.RUNNING)).map(info => info.key)
+                ),
+              Duration.Inf
+            )
+          connectorKeys.map(connectorKey => CommonUtils.hostname() -> Seq(fakeCounter(connectorKey))).toMap
+        } else Map.empty
+      }
     case _ =>
       // we don't care for the fake mode since both fake mode and embedded mode are run on local jvm
       Map(CommonUtils.hostname() -> BeanChannel.local().counterMBeans().asScala.toSeq)

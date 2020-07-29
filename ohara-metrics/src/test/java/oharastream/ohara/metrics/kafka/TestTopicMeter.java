@@ -39,6 +39,11 @@ public class TestTopicMeter extends OharaTest {
         CommonUtils.current());
   }
 
+  @Test(expected = NullPointerException.class)
+  public void nullTopicNameInBuilder() {
+    TopicMeter.builder().topicName(null).build();
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void emptyTopicName() {
     new TopicMeter(
@@ -54,8 +59,13 @@ public class TestTopicMeter extends OharaTest {
         CommonUtils.current());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyTopicNameInBuilder() {
+    TopicMeter.builder().topicName("").build();
+  }
+
   @Test(expected = NullPointerException.class)
-  public void nullName() {
+  public void nullCatalog() {
     new TopicMeter(
         CommonUtils.randomString(),
         null,
@@ -67,6 +77,11 @@ public class TestTopicMeter extends OharaTest {
         (double) CommonUtils.current(),
         TimeUnit.DAYS,
         CommonUtils.current());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullCatalogInBuilder() {
+    TopicMeter.builder().catalog(null).build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -84,6 +99,11 @@ public class TestTopicMeter extends OharaTest {
         CommonUtils.current());
   }
 
+  @Test(expected = NullPointerException.class)
+  public void nullEventTypeInBuilder() {
+    TopicMeter.builder().eventType(null).build();
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void emptyEventType() {
     new TopicMeter(
@@ -99,6 +119,11 @@ public class TestTopicMeter extends OharaTest {
         CommonUtils.current());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyEventTypeInBuilder() {
+    TopicMeter.builder().eventType("").build();
+  }
+
   @Test(expected = NullPointerException.class)
   public void nullTimeUnit() {
     new TopicMeter(
@@ -112,6 +137,11 @@ public class TestTopicMeter extends OharaTest {
         (double) CommonUtils.current(),
         null,
         CommonUtils.current());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void nullTimeUnitInBuilder() {
+    TopicMeter.builder().rateUnit(null).build();
   }
 
   @Test

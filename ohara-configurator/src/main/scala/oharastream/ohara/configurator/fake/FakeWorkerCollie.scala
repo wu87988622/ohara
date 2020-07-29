@@ -23,6 +23,7 @@ import oharastream.ohara.agent.{ClusterKind, DataCollie, NoSuchClusterException,
 import oharastream.ohara.client.configurator.WorkerApi.WorkerClusterInfo
 import oharastream.ohara.client.kafka.ConnectorAdmin
 import oharastream.ohara.common.setting.ObjectKey
+import oharastream.ohara.common.util.CommonUtils
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -67,4 +68,6 @@ private[configurator] class FakeWorkerCollie(
       Future.successful(if (r == null) fake else r)
     } else
       Future.failed(new NoSuchClusterException(s"cluster:${cluster.key} is not running"))
+
+  override def isEmbedded: Boolean = !CommonUtils.isEmpty(wkConnectionProps)
 }

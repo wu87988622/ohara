@@ -22,6 +22,7 @@ import oharastream.ohara.agent.container.ContainerClient
 import oharastream.ohara.agent.{BrokerCollie, ClusterKind, DataCollie, NoSuchClusterException}
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
 import oharastream.ohara.common.annotations.VisibleForTesting
+import oharastream.ohara.common.util.CommonUtils
 import oharastream.ohara.kafka.TopicAdmin
 
 import scala.jdk.CollectionConverters._
@@ -66,4 +67,6 @@ private[configurator] class FakeBrokerCollie(
       Future.successful(if (r == null) fake else r)
     } else
       Future.failed(new NoSuchClusterException(s"cluster:${brokerClusterInfo.key} is not running"))
+
+  override def isEmbedded: Boolean = !CommonUtils.isEmpty(bkConnectionProps)
 }
