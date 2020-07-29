@@ -45,7 +45,7 @@ it('should delete a stream', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
-    const expected = '--a 999ms (uv)';
+    const expected = '--a 99ms (uv)';
     const subs = '    ^-------------';
     const id = '1234';
     const action$ = hot(input, {
@@ -96,7 +96,7 @@ it('should delete multiple streams', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---b               ';
-    const expected = '--a---b 995ms (uv)(xy)';
+    const expected = '--a---b 95ms (uv)(xy)';
     const subs = '    ^---------------------';
     const anotherStreamEntity = {
       ...streamEntity,
@@ -180,7 +180,7 @@ it(`should not call paperApi when the options params are not supplied`, () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a           ';
-    const expected = '--a 999ms (uv)';
+    const expected = '--a 99ms (uv)';
     const subs = '    ^-------------';
 
     const action$ = hot(input, {
@@ -226,7 +226,7 @@ it('delete same stream within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a------';
-    const expected = '--a 999ms (uv)--';
+    const expected = '--a 99ms (uv)--';
     const subs = '    ^---------------';
     const id = '1234';
 

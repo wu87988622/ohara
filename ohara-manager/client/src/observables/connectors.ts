@@ -81,7 +81,7 @@ export function startConnector(key: ObjectKey) {
 }
 
 export function stopConnector(key: ObjectKey) {
-  // try to stop until the worker really stops
+  // try to stop until the connector really stops
   return of(
     defer(() => connectorApi.stop(key)),
     defer(() => connectorApi.get(key)).pipe(

@@ -55,7 +55,7 @@ export default (action$) =>
         map((normalizedData) => actions.startConnector.success(normalizedData)),
         startWith(actions.startConnector.request({ connectorId })),
         catchError((err) => {
-          updateStatus(err?.data?.state?.toLowerCase() || previousStatus);
+          updateStatus(err?.data?.state?.toLowerCase() ?? previousStatus);
           return of(
             actions.startConnector.failure(merge(err, { connectorId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
