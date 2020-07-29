@@ -1272,7 +1272,7 @@ describe('Restart workspace', () => {
   });
 });
 
-describe('Delete workspace', () => {
+describe.only('Delete workspace', () => {
   before(() => {
     cy.deleteAllServices();
     cy.createWorkspace({ node });
@@ -1296,9 +1296,8 @@ describe('Delete workspace', () => {
       });
 
     // Wait until it's completed deleted
-    cy.findByTestId('delete-workspace-progress-dialog', {
-      timeout: 30000,
-    }).should('not.visible');
+    cy.findByText('CLOSE').parent('button').should('not.be.disabled').click();
+    cy.findByTestId('delete-workspace-progress-dialog').should('not.visible');
 
     // Create a new workspace
     cy.createWorkspace({ node });
@@ -1419,9 +1418,8 @@ describe('Delete workspace', () => {
       });
 
     // Wait until it's completed deleted
-    cy.findByTestId('delete-workspace-progress-dialog', {
-      timeout: 30000,
-    }).should('not.visible');
+    cy.findByText('CLOSE').parent('button').should('not.be.disabled').click();
+    cy.findByTestId('delete-workspace-progress-dialog').should('not.visible');
 
     cy.findByTitle(workspace1).should('not.exist');
 
@@ -1472,13 +1470,11 @@ describe('Delete workspace', () => {
       });
 
     // Wait until it's completed deleted
-    cy.findByTestId('delete-workspace-progress-dialog', {
-      timeout: 20000,
-    }).should('not.visible');
+    cy.findByText('CLOSE').parent('button').should('not.be.disabled').click();
+    cy.findByTestId('delete-workspace-progress-dialog').should('not.visible');
 
-    // Close the intro dialog
-    cy.findByTestId('close-intro-button').should('be.visible');
-    cy.closeIntroDialog();
+    // The intro dialog should not be displayed
+    cy.findByTestId('close-intro-button').should('not.visible');
 
     // Create another workspace with the same name. Note that we're not using
     // `cy.createWorkspace` as that command includes a `cy.visit` which will "reload"

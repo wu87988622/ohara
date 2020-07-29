@@ -27,6 +27,7 @@ import {
   WorkspaceList as ListWorkspacesDialog,
   CreateWorkspace as CreateWorkspaceDialog,
 } from 'components/Workspace';
+import DeleteWorkspaceDialog from 'components/Workspace/Settings/DangerZone/DeleteWorkspace';
 import IntroDialog from 'components/Intro';
 import StyledSnackbar from 'components/common/Snackbar';
 import Navigator from './Navigator';
@@ -40,6 +41,7 @@ const AppLayout = () => {
   const introDialog = hooks.useIntroDialog();
   const eventLogDialog = hooks.useEventLogDialog();
   const devToolDialog = hooks.useDevToolDialog();
+  const workspaceDeleteDialog = hooks.useWorkspaceDeleteDialog();
   const pipelineApiRef = useRef(null);
 
   // Initialize the application
@@ -48,8 +50,11 @@ const AppLayout = () => {
   // The introduction dialog will be displayed on first used
   useEffect(() => {
     const hasIntroDialogBeenOpened = !!introDialog?.lastUpdated;
-    if (isAppReady && isEmpty(workspaces) && !hasIntroDialogBeenOpened) {
-      introDialog.open();
+    if (isAppReady && !hasIntroDialogBeenOpened) {
+      if (isEmpty(workspaces)) introDialog.open();
+      // If there is any workspace, the intro dialog will not be displayed.
+      // The call to close the introDialog will assign a timestamp to 'lastUpdated'.
+      else introDialog.close();
     }
   }, [isAppReady, workspaces, introDialog]);
 
@@ -82,6 +87,11 @@ const AppLayout = () => {
       <IntroDialog isOpen={introDialog.isOpen} onClose={introDialog.close} />
       <CreateWorkspaceDialog />
       <ListWorkspacesDialog />
+      <DeleteWorkspaceDialog
+        isOpen={workspaceDeleteDialog.isOpen}
+        onClose={workspaceDeleteDialog.close}
+      />
+
       <StyledSnackbar />
     </Wrapper>
   );

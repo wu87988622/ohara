@@ -27,8 +27,8 @@ import * as hooks from 'hooks';
 
 const DeleteWorkspace = (props) => {
   const { isOpen, onClose } = props;
-  const workspace = hooks.useWorkspace();
 
+  const workspace = hooks.useWorkspace();
   const stopBroker = hooks.useStopBrokerAction();
   const stopTopics = hooks.useStopTopicsInWorkspaceAction();
   const stopWorker = hooks.useStopWorkerAction();

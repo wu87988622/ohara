@@ -22,7 +22,7 @@ import SettingsMenu from './SettingsMenu';
 import { SETTINGS_COMPONENT_TYPE, KIND } from 'const';
 import { Wrapper, StyledFullScreenDialog } from './SettingsStyles';
 import { useConfig } from './SettingsHooks';
-import { DeleteWorkspace, RestartWorkspace } from './DangerZone';
+import { RestartWorkspace } from './DangerZone';
 import { Dialog } from 'components/common/Dialog';
 
 const Settings = () => {
@@ -37,13 +37,13 @@ const Settings = () => {
   const workspace = hooks.useWorkspace();
   const { shouldBeRestartWorkspace } = hooks.useShouldBeRestartWorkspace();
 
-  const [isWorkspaceDeleting, setIsWorkspaceDeleting] = React.useState(false);
+  const workspaceDeleteDialog = hooks.useWorkspaceDeleteDialog();
   const [isWorkspaceRestarting, setIsWorkspaceRestarting] = React.useState(
     false,
   );
   const [restartService, setRestartService] = React.useState(KIND.workspace);
 
-  const deleteWorkspace = () => setIsWorkspaceDeleting(true);
+  const deleteWorkspace = () => workspaceDeleteDialog.open();
   const restartWorkspace = () => setIsWorkspaceRestarting(true);
   const targetIsWorker = () => setRestartService(KIND.worker);
   const targetIsBroker = () => setRestartService(KIND.broker);
@@ -146,14 +146,6 @@ const Settings = () => {
             resetSelectedItem();
           }}
           restartService={restartService}
-        />
-        <DeleteWorkspace
-          data-testid="delete-workspace-confirm-dialog"
-          isOpen={isWorkspaceDeleting}
-          onClose={() => {
-            setIsWorkspaceDeleting(false);
-            handleClose();
-          }}
         />
 
         <Dialog

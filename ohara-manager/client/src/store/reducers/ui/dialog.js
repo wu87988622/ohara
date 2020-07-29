@@ -44,11 +44,10 @@ const initialState = {
 
 // open the dialog
 function openDialog(state, action, dialogName) {
-  const dialogState = state[dialogName] || {};
-  const { isOpen, data } = dialogState;
+  const dialogState = state[dialogName];
+  const { data, lastUpdated, isOpen } = dialogState || {};
   const { payload: newData } = action;
-
-  if (isOpen && isDeepEqual(data, newData)) return state;
+  if (lastUpdated && isOpen && isDeepEqual(data, newData)) return state;
 
   return {
     ...state,
@@ -63,9 +62,9 @@ function openDialog(state, action, dialogName) {
 
 // close the dialog
 function closeDialog(state, action, dialogName) {
-  const dialogState = state[dialogName] || {};
-
-  if (!dialogState.isOpen) return state;
+  const dialogState = state[dialogName];
+  const { lastUpdated, isOpen } = dialogState || {};
+  if (lastUpdated && !isOpen) return state;
 
   return {
     ...state,
@@ -140,13 +139,12 @@ export default function reducer(state = initialState, action) {
     case actions.openWorkspaceSettingsDialog.FULFILL:
       return closeDialog(state, action, DialogName.WORKSPACE_SETTINGS_DIALOG);
 
-    // after switching the workspace, all dialogs in the workspace should be closed
-    case actions.switchWorkspace.SUCCESS:
+    // after successfully deleting the workspace, the related dialogs should be closed
+    case actions.deleteWorkspace.SUCCESS:
       return {
         ...state,
         [DialogName.PIPELINE_PROPERTY_DIALOG]: initialDialogState,
         [DialogName.WORKSPACE_CREATION_DIALOG]: initialDialogState,
-        [DialogName.WORKSPACE_DELETE_DIALOG]: initialDialogState,
         [DialogName.WORKSPACE_RESTART_DIALOG]: initialDialogState,
         [DialogName.WORKSPACE_SETTINGS_DIALOG]: initialDialogState,
       };
