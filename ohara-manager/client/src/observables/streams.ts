@@ -26,7 +26,7 @@ import {
   ClusterResponse,
 } from 'api/apiInterface/clusterInterface';
 import * as streamApi from 'api/streamApi';
-import { RETRY_CONFIG } from 'const';
+import { RETRY_STRATEGY } from 'const';
 import { fetchPipelines } from 'observables';
 import { getKey, isEqualByKey } from 'utils/object';
 import { hashByGroupAndName } from 'utils/sha';
@@ -62,18 +62,12 @@ export function startStream(key: ObjectKey) {
           };
         }
       }),
+      retryBackoff(RETRY_STRATEGY),
     ),
   ).pipe(
     concatAll(),
     last(),
     map((res) => res.data),
-    retryBackoff({
-      ...RETRY_CONFIG,
-      shouldRetry: (error) => {
-        if (error.status === 400) return false;
-        return true;
-      },
-    }),
   );
 }
 
@@ -90,12 +84,12 @@ export function stopStream(key: ObjectKey) {
           };
         }
       }),
+      retryBackoff(RETRY_STRATEGY),
     ),
   ).pipe(
     concatAll(),
     last(),
     map((res) => res.data),
-    retryBackoff(RETRY_CONFIG),
   );
 }
 

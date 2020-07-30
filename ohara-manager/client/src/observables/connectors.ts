@@ -26,7 +26,7 @@ import {
   Data as ConnectorData,
 } from 'api/apiInterface/connectorInterface';
 import * as connectorApi from 'api/connectorApi';
-import { RETRY_CONFIG } from 'const';
+import { RETRY_STRATEGY } from 'const';
 import { fetchPipelines } from 'observables';
 import { hashByGroupAndName } from 'utils/sha';
 import { getKey, isEqualByKey } from 'utils/object';
@@ -71,7 +71,7 @@ export function startConnector(key: ObjectKey) {
     last(),
     map((res) => res.data),
     retryBackoff({
-      ...RETRY_CONFIG,
+      ...RETRY_STRATEGY,
       shouldRetry: (error) => {
         if (error.status === 400) return false;
         return true;
@@ -98,7 +98,7 @@ export function stopConnector(key: ObjectKey) {
     concatAll(),
     last(),
     map((res) => res.data),
-    retryBackoff(RETRY_CONFIG),
+    retryBackoff(RETRY_STRATEGY),
   );
 }
 

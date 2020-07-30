@@ -130,9 +130,9 @@ it('should fail after reaching the retry limit', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    // start 11 times, get 11 times, retry 10 times
-    // => 100 * 11 + 100 * 11 + 2000 * 10 = 22200ms
-    const expected = '--a 22199ms (vu)';
+    // start 1 time, get 6 times, retry 5 times
+    // => 100ms * 1 + 100ms * 6 + 31s = 31700ms
+    const expected = '--a 31699ms (vu)';
     const subs = '    ^--------------';
     const id = '1234';
 

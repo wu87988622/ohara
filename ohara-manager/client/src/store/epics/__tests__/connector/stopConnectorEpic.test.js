@@ -129,9 +129,9 @@ it('should fail after reaching the retry limit', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a            ';
-    // stop 11 times, get 11 times, retry 10 times
-    // => 100 * 11 + 100 * 11 + 2000 * 10 = 22200ms
-    const expected = '--a 22199ms (vu)';
+    // stop 6 times, get 6 times, retry 5 times
+    // => 100ms * 6 + 100ms * 6 + 31s = 32200ms
+    const expected = '--a 32199ms (vu)';
     const subs = '    ^--------------';
     const id = '1234';
 
@@ -160,7 +160,10 @@ it('should fail after reaching the retry limit', () => {
         type: actions.stopConnector.FAILURE,
         payload: {
           connectorId,
-          data: { ...connectorEntity, state: ConnectorState.RUNNING },
+          data: {
+            ...connectorEntity,
+            state: ConnectorState.RUNNING,
+          },
           status: 200,
           title: `Failed to stop connector ${connectorEntity.name}: Unable to confirm the status of the connector is not running`,
         },
@@ -169,7 +172,10 @@ it('should fail after reaching the retry limit', () => {
         type: actions.createEventLog.TRIGGER,
         payload: {
           connectorId,
-          data: { ...connectorEntity, state: ConnectorState.RUNNING },
+          data: {
+            ...connectorEntity,
+            state: ConnectorState.RUNNING,
+          },
           status: 200,
           title: `Failed to stop connector ${connectorEntity.name}: Unable to confirm the status of the connector is not running`,
           type: LOG_LEVEL.error,

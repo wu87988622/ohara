@@ -32,7 +32,7 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { retryBackoff } from 'backoff-rxjs';
-import { RETRY_CONFIG, LOG_LEVEL } from 'const';
+import { RETRY_STRATEGY, LOG_LEVEL } from 'const';
 
 const customizer = (objValue, srcValue) => {
   if (isArray(objValue)) {
@@ -58,7 +58,7 @@ const inspectWorker$ = (params) =>
 
         return res;
       }),
-      retryBackoff(RETRY_CONFIG),
+      retryBackoff(RETRY_STRATEGY),
     ),
   ).pipe(
     map(([shabondiInfo, wkInfo]) =>
