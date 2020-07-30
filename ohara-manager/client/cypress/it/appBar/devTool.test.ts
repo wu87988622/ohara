@@ -41,7 +41,7 @@ describe('App Bar', () => {
   });
 
   context('DevTool', () => {
-    it.only('should see topic list and data in devTool after creating a topic', () => {
+    it('should see topic list and data in devTool after creating a topic', () => {
       cy.createPipeline();
 
       // add shared topics
