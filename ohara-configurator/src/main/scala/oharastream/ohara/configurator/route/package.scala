@@ -41,7 +41,7 @@ import spray.json.{DeserializationException, JsArray, JsString, JsValue, RootJso
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
-import scala.util.{Failure, Success}
+
 package object route {
   /** default we restrict the jar size to 50MB */
   private[route] val DEFAULT_FILE_SIZE_BYTES = 50 * 1024 * 1024L
@@ -55,7 +55,7 @@ package object route {
   private[route] val PAUSE_COMMAND: String   = oharastream.ohara.client.configurator.PAUSE_COMMAND
   private[route] val RESUME_COMMAND: String  = oharastream.ohara.client.configurator.RESUME_COMMAND
 
-  private[this] val STOPPING_FLAGS = new ConcurrentHashMap[KeyKind, AtomicBoolean]()
+  private[this] val CHANGING_FLAGS = new ConcurrentHashMap[KeyKind, AtomicBoolean]()
 
   /**
     * This is a workaround of dealing with threads competition on stopping clusters. For example, a stopping worker
@@ -68,23 +68,44 @@ package object route {
     hookBeforeStop: HookOfAction[Cluster]
   )(implicit collie: Collie, executionContext: ExecutionContext) = new HookOfAction[Cluster] {
     override def apply(clusterInfo: Cluster, subName: String, params: Map[String, String]): Future[Unit] = {
-      val keyKind    = KeyKind(clusterInfo.key, clusterInfo.kind)
-      val isStopping = STOPPING_FLAGS.computeIfAbsent(keyKind, _ => new AtomicBoolean(false))
-      if (isStopping.compareAndSet(false, true)) {
+      val keyKind = KeyKind(clusterInfo.key, clusterInfo.kind)
+      val flag    = new AtomicBoolean(true)
+      val current = CHANGING_FLAGS.computeIfAbsent(keyKind, _ => flag)
+      if (current == flag) {
         val f = hookBeforeStop(clusterInfo, subName, params)
-        f.onComplete {
-          case Success(_) => // we will reset the flag later
-          case Failure(_) => isStopping.set(false)
-        }
-        f.flatMap { _ =>
-            val f2 =
-              if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
-              else collie.remove(clusterInfo.key)
-            f2.onComplete(_ => isStopping.set(false))
-            f2
+          .flatMap { _ =>
+            if (params.get(FORCE_KEY).exists(_.toLowerCase == "true")) collie.forceRemove(clusterInfo.key)
+            else collie.remove(clusterInfo.key)
           }
           .map(_ => ())
-      } else Future.unit
+        f.onComplete(_ => CHANGING_FLAGS.remove(keyKind))
+        f
+      } else if (current.get()) Future.unit
+      else Future.failed(new IllegalStateException(s"$keyKind is starting"))
+    }
+  }
+
+  private[this] def hookOfStartAction[Cluster <: ClusterInfo: ClassTag](hookOfStart: HookOfAction[Cluster])(
+    implicit collie: Collie,
+    executionContext: ExecutionContext,
+    objectChecker: DataChecker,
+    serviceCollie: ServiceCollie
+  ) = new HookOfAction[Cluster] {
+    override def apply(clusterInfo: Cluster, subName: String, params: Map[String, String]): Future[Unit] = {
+      val keyKind = KeyKind(clusterInfo.key, clusterInfo.kind)
+      val flag    = new AtomicBoolean(false)
+      val current = CHANGING_FLAGS.computeIfAbsent(keyKind, _ => flag)
+      if (current == flag) {
+        val f = collie
+          .exist(clusterInfo.key)
+          .flatMap(
+            if (_) Future.unit
+            else checkResourcesConflict(clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
+          )
+        f.onComplete(_ => CHANGING_FLAGS.remove(keyKind))
+        f
+      } else if (current.get()) Future.failed(new IllegalStateException(s"$keyKind is stopping"))
+      else Future.unit
     }
   }
 
@@ -162,17 +183,7 @@ package object route {
             }
           }
       )
-      .hookOfPutAction(
-        START_COMMAND,
-        (clusterInfo: Cluster, subName: String, params: Map[String, String]) =>
-          collie.exist(clusterInfo.key).flatMap {
-            if (_) {
-              // this cluster already exists, return OK
-              Future.unit
-            } else
-              checkResourcesConflict(clusterInfo).flatMap(_ => hookOfStart(clusterInfo, subName, params))
-          }
-      )
+      .hookOfPutAction(START_COMMAND, hookOfStartAction[Cluster](hookOfStart))
       .hookOfPutAction(STOP_COMMAND, hookOfStopAction[Cluster](hookBeforeStop))
       .hookOfFinalPutAction((clusterInfo: Cluster, nodeName: String, _: Map[String, String]) => {
         // A BIT hard-code here to reuse the checker :(
