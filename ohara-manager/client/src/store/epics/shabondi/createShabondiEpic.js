@@ -32,22 +32,24 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
+/* eslint-disable no-unused-expressions */
 const createShabondi$ = (value) => {
-  const { values, options } = value;
+  const { values, options = {} } = value;
   const shabondiId = getId(values);
   return defer(() => shabondiApi.create(values)).pipe(
     map((res) => res.data),
     map((data) => normalize(data, schema.shabondi)),
     map((normalizedData) => {
-      options.paperApi.updateElement(values.id, {
+      options.paperApi?.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
+
       return merge(normalizedData, { shabondiId });
     }),
     map((normalizedData) => actions.createShabondi.success(normalizedData)),
     startWith(actions.createShabondi.request({ shabondiId })),
     catchError((err) => {
-      options.paperApi.removeElement(values.id);
+      options.paperApi?.removeElement(values.id);
       return from([
         actions.createShabondi.failure(merge(err, { shabondiId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

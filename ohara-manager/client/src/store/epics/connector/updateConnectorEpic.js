@@ -25,13 +25,13 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { KIND, CELL_TYPE, LOG_LEVEL } from 'const';
 
+/* eslint-disable no-unused-expressions */
 export default (action$) => {
   return action$.pipe(
     ofType(actions.updateConnector.TRIGGER),
     map((action) => action.payload),
-    mergeMap(({ values, options }) => {
-      const { paperApi } = options;
-      const connectorId = paperApi.getCell(values.name).id;
+    mergeMap(({ values, options = {} }) => {
+      const connectorId = options.paperApi?.getCell(values.name).id;
 
       return defer(() => connectorApi.update(values)).pipe(
         map((res) => normalize(res.data, schema.connector)),

@@ -30,6 +30,7 @@ jest.mock('api/streamApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const streamId = getId(streamEntity);

@@ -29,6 +29,7 @@ jest.mock('api/topicApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const promise = { resolve: jest.fn(), reject: jest.fn() };

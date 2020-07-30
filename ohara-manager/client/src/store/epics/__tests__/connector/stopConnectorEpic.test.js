@@ -30,6 +30,7 @@ jest.mock('api/connectorApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const connectorId = getId(connectorEntity);
@@ -154,7 +155,7 @@ it('should fail after reaching the retry limit', () => {
         type: actions.stopConnector.FAILURE,
         payload: {
           connectorId,
-          data: connectorEntity.tasksStatus,
+          data: { ...connectorEntity, state: SERVICE_STATE.RUNNING },
           meta: undefined,
           title: `Try to stop connector: "${connectorEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
         },
@@ -163,7 +164,7 @@ it('should fail after reaching the retry limit', () => {
         type: actions.createEventLog.TRIGGER,
         payload: {
           connectorId,
-          data: connectorEntity.tasksStatus,
+          data: { ...connectorEntity, state: SERVICE_STATE.RUNNING },
           meta: undefined,
           title: `Try to stop connector: "${connectorEntity.name}" failed after retry 5 times. Expected state is nonexistent, Actual state: RUNNING`,
           type: LOG_LEVEL.error,

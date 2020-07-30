@@ -31,6 +31,7 @@ jest.mock('api/connectorApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const connectorId = getId(connectorEntity);

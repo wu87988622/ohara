@@ -27,6 +27,7 @@ jest.mock('api/streamApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 beforeEach(() => {

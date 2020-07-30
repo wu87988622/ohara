@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, from, throwError } from 'rxjs';
 import { catchError, map, concatAll, mergeMap, tap } from 'rxjs/operators';
@@ -26,18 +25,16 @@ import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "create + start" for single creation request
+/* eslint-disable no-unused-expressions */
 export default (action$) =>
   action$.pipe(
     ofType(actions.createAndStartTopic.TRIGGER),
     map((action) => action.payload),
     mergeMap((values) => {
-      const { params, options, promise } = values;
-      const paperApi = get(options, 'paperApi');
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.pending,
-        });
-      }
+      const { params, options = {}, promise } = values;
+      options.paperApi?.updateElement(params.id, {
+        status: CELL_STATUS.pending,
+      });
       return of(
         createTopic$(params).pipe(
           tap((action) => {
@@ -48,9 +45,7 @@ export default (action$) =>
             }
           }),
           catchError((err) => {
-            if (paperApi) {
-              paperApi.removeElement(params.id);
-            }
+            options.paperApi?.removeElement(params.id);
             if (typeof promise?.reject === 'function') {
               promise.reject(err);
             }
@@ -60,18 +55,16 @@ export default (action$) =>
         ),
         startTopic$(params).pipe(
           tap((action) => {
-            if (action.type === actions.startTopic.SUCCESS && paperApi) {
-              paperApi.updateElement(params.id, {
+            if (action.type === actions.startTopic.SUCCESS) {
+              options.paperApi?.updateElement(params.id, {
                 status: CELL_STATUS.running,
               });
             }
           }),
           catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.stopped,
-              });
-            }
+            options.paperApi?.updateElement(params.id, {
+              status: err?.data?.state?.toLowerCase() ?? CELL_STATUS.stopped,
+            });
             if (typeof promise?.reject === 'function') {
               promise.reject(err);
             }

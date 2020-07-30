@@ -36,11 +36,15 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
+/* eslint-disable no-unused-expressions */
 const startStream$ = (value) => {
-  const { params, options } = value;
-  const { paperApi } = options;
+  const { params, options = {} } = value;
   const streamId = getId(params);
-  paperApi.updateElement(params.id, {
+
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
     status: CELL_STATUS.pending,
   });
   return zip(
@@ -73,19 +77,19 @@ const startStream$ = (value) => {
     map(([, data]) => normalize(data, schema.stream)),
     map((normalizedData) => merge(normalizedData, { streamId })),
     map((normalizedData) => {
-      paperApi.updateElement(params.id, {
+      options.paperApi?.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
       return actions.startStream.success(normalizedData);
     }),
     startWith(actions.startStream.request({ streamId })),
-    catchError((error) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.stopped,
+    catchError((err) => {
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
       });
       return from([
-        actions.startStream.failure(merge(error, { streamId })),
-        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+        actions.startStream.failure(merge(err, { streamId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
       ]);
     }),
   );

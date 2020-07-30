@@ -35,19 +35,25 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
+/* eslint-disable no-unused-expressions */
 const stopConnector$ = (values) => {
-  const { params, options } = values;
-  const { paperApi } = options;
+  const { params, options = {} } = values;
   const connectorId = getId(params);
-  paperApi.updateElement(params.id, {
+
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi.updateElement(params.id, {
     status: CELL_STATUS.pending,
   });
+
   return zip(
     defer(() => connectorApi.stop(params)),
     defer(() => connectorApi.get(params)).pipe(
       map((res) => {
         if (res.data.state) throw res;
-        else return res.data;
+
+        return res.data;
       }),
     ),
   ).pipe(
@@ -57,7 +63,7 @@ const stopConnector$ = (values) => {
           iif(
             () => index > 4,
             throwError({
-              data: value.data.tasksStatus,
+              data: value.data,
               meta: value?.meta,
               title:
                 `Try to stop connector: "${params.name}" failed after retry ${index} times. ` +
@@ -71,16 +77,17 @@ const stopConnector$ = (values) => {
     map(([, data]) => normalize(data, schema.connector)),
     map((normalizedData) => merge(normalizedData, { connectorId })),
     map((normalizedData) => {
-      paperApi.updateElement(params.id, {
+      options.paperApi?.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
       return actions.stopConnector.success(normalizedData);
     }),
     startWith(actions.stopConnector.request({ connectorId })),
     catchError((err) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.running,
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
       });
+
       return from([
         actions.stopConnector.failure(merge(err, { connectorId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from, throwError } from 'rxjs';
 import { catchError, map, mergeMap, concatAll, tap } from 'rxjs/operators';
@@ -26,26 +25,26 @@ import { LOG_LEVEL, CELL_STATUS } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "delete + stop" for single deletion request
+/* eslint-disable no-unused-expressions */
 export default (action$) =>
   action$.pipe(
     ofType(actions.stopAndDeleteTopic.TRIGGER),
     map((action) => action.payload),
     mergeMap((values) => {
-      const { params, options, promise } = values;
-      const paperApi = get(options, 'paperApi');
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.pending,
-        });
-      }
+      const { params, options = {}, promise } = values;
+
+      const previousStatus =
+        options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+      options.paperApi?.updateElement(params.id, {
+        status: CELL_STATUS.pending,
+      });
       return from([
         stopTopic$(params).pipe(
           catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.running,
-              });
-            }
+            options.paperApi?.updateElement(params.id, {
+              status: CELL_STATUS.running,
+            });
             if (typeof promise?.reject === 'function') {
               promise.reject(err);
             }
@@ -58,17 +57,13 @@ export default (action$) =>
               if (typeof promise?.resolve === 'function') {
                 promise.resolve();
               }
-              if (paperApi) {
-                paperApi.removeElement(params.id);
-              }
+              options.paperApi?.removeElement(params.id);
             }
           }),
           catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.stopped,
-              });
-            }
+            options.paperApi?.updateElement(params.id, {
+              status: err?.data?.state?.toLowerCase() ?? previousStatus,
+            });
             if (typeof promise?.reject === 'function') {
               promise.reject(err);
             }

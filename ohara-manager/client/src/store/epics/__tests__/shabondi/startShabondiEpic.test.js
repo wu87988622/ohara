@@ -31,6 +31,7 @@ jest.mock('api/shabondiApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const shabondiId = getId(shabondiEntity);

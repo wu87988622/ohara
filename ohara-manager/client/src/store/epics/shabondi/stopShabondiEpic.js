@@ -35,11 +35,15 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
+/* eslint-disable no-unused-expressions */
 const stopShabondi$ = (value) => {
-  const { params, options } = value;
-  const { paperApi } = options;
+  const { params, options = {} } = value;
   const shabondiId = getId(params);
-  paperApi.updateElement(params.id, {
+
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
     status: CELL_STATUS.pending,
   });
   return zip(
@@ -71,15 +75,15 @@ const stopShabondi$ = (value) => {
     map(([, data]) => normalize(data, schema.shabondi)),
     map((normalizedData) => merge(normalizedData, { shabondiId })),
     map((normalizedData) => {
-      paperApi.updateElement(params.id, {
+      options.paperApi?.updateElement(params.id, {
         status: CELL_STATUS.stopped,
       });
       return actions.stopShabondi.success(normalizedData);
     }),
     startWith(actions.stopShabondi.request({ shabondiId })),
     catchError((err) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.running,
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
       });
       return from([
         actions.stopShabondi.failure(merge(err, { shabondiId })),

@@ -32,14 +32,16 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 
+/* eslint-disable no-unused-expressions */
 const createConnector$ = (value) => {
-  const { values, options } = value;
+  const { values, options = {} } = value;
   const connectorId = getId(values);
+
   return defer(() => connectorApi.create(values)).pipe(
     map((res) => res.data),
     map((data) => normalize(data, schema.connector)),
     map((normalizedData) => {
-      options.paperApi.updateElement(values.id, {
+      options.paperApi?.updateElement(values.id, {
         status: CELL_STATUS.stopped,
       });
       return merge(normalizedData, { connectorId });
@@ -47,7 +49,7 @@ const createConnector$ = (value) => {
     map((normalizedData) => actions.createConnector.success(normalizedData)),
     startWith(actions.createConnector.request({ connectorId })),
     catchError((err) => {
-      options.paperApi.removeElement(values.id);
+      options.paperApi?.removeElement(values.id);
       return from([
         actions.createConnector.failure(merge(err, { connectorId })),
         actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),

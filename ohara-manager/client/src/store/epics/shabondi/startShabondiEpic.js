@@ -36,13 +36,18 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
+/* eslint-disable no-unused-expressions */
 const startShabondi$ = (value) => {
-  const { params, options } = value;
-  const { paperApi } = options;
+  const { params, options = {} } = value;
   const shabondiId = getId(params);
-  paperApi.updateElement(params.id, {
+
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
     status: CELL_STATUS.pending,
   });
+
   return zip(
     defer(() => shabondiApi.start(params)),
     defer(() => shabondiApi.get(params)).pipe(
@@ -73,15 +78,16 @@ const startShabondi$ = (value) => {
     map(([, data]) => normalize(data, schema.shabondi)),
     map((normalizedData) => merge(normalizedData, { shabondiId })),
     map((normalizedData) => {
-      paperApi.updateElement(params.id, {
+      options.paperApi?.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
+
       return actions.startShabondi.success(normalizedData);
     }),
     startWith(actions.startShabondi.request({ shabondiId })),
     catchError((err) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.stopped,
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
       });
       return from([
         actions.startShabondi.failure(merge(err, { shabondiId })),

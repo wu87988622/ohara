@@ -36,20 +36,26 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
+/* eslint-disable no-unused-expressions */
 const startConnector$ = (values) => {
-  const { params, options } = values;
-  const { paperApi } = options;
+  const { params, options = {} } = values;
   const connectorId = getId(params);
-  paperApi.updateElement(params.id, {
+
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
     status: CELL_STATUS.pending,
   });
+
   return zip(
     defer(() => connectorApi.start(params)),
     defer(() => connectorApi.get(params)).pipe(
       map((res) => {
         if (!res.data.state || res.data.state !== SERVICE_STATE.RUNNING)
           throw res;
-        else return res.data;
+
+        return res.data;
       }),
     ),
   ).pipe(
@@ -73,15 +79,15 @@ const startConnector$ = (values) => {
     map(([, data]) => normalize(data, schema.connector)),
     map((normalizedData) => merge(normalizedData, { connectorId })),
     map((normalizedData) => {
-      paperApi.updateElement(params.id, {
+      options.paperApi?.updateElement(params.id, {
         status: CELL_STATUS.running,
       });
       return actions.startConnector.success(normalizedData);
     }),
     startWith(actions.startConnector.request({ connectorId })),
     catchError((err) => {
-      options.paperApi.updateElement(params.id, {
-        status: CELL_STATUS.stopped,
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
       });
       return from([
         actions.startConnector.failure(merge(err, { connectorId })),

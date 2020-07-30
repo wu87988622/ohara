@@ -38,12 +38,13 @@ import { getId } from 'utils/object';
 import { KIND, CELL_STATUS, LOG_LEVEL } from 'const';
 import { isShabondi } from 'components/Pipeline/PipelineUtils';
 
+/* eslint-disable no-unused-expressions */
 const deleteStream$ = (params, paperApi) => {
   const { id, name, group } = params;
   const streamId = getId({ name, group });
   return defer(() => streamApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { skipGraphEvents: true });
+      paperApi?.removeElement(id, { skipGraphEvents: true });
       return actions.deleteStream.success({ streamId });
     }),
   );
@@ -60,7 +61,7 @@ const deleteConnector$ = (params, paperApi) => {
   const connectorId = getId({ name, group });
   return defer(() => connectorApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { skipGraphEvents: true });
+      paperApi?.removeElement(id, { skipGraphEvents: true });
       return actions.deleteConnector.success({ connectorId });
     }),
   );
@@ -76,7 +77,7 @@ const deleteShabondi$ = (params, paperApi) => {
   const { id, name, group } = params;
   return defer(() => shabondiApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { skipGraphEvents: true });
+      paperApi?.removeElement(id, { skipGraphEvents: true });
       return actions.deleteShabondi.success(getId(name, group));
     }),
   );
@@ -100,11 +101,12 @@ const waitUntilTopicStopped$ = (params, paperApi) => {
     map((res) => {
       if (res.data.state) throw res;
 
-      paperApi.updateElement(
+      paperApi?.updateElement(
         id,
         { status: CELL_STATUS.stopped },
         { skipGraphEvents: true },
       );
+
       return actions.stopTopic.success(res.data);
     }),
     retryWhen((errors) =>
@@ -132,7 +134,7 @@ const deleteTopic$ = (params, paperApi) => {
   const topicId = getId({ name, group });
   return defer(() => topicApi.remove({ name, group })).pipe(
     map(() => {
-      paperApi.removeElement(id, { skipGraphEvents: true });
+      paperApi?.removeElement(id, { skipGraphEvents: true });
       return actions.deleteTopic.success({ topicId });
     }),
   );
@@ -175,7 +177,7 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.deletePipeline.TRIGGER),
     map((action) => action.payload),
-    switchMap(({ params, options }) => {
+    switchMap(({ params, options = {} }) => {
       const { name, group, cells } = params;
       const { paperApi } = options;
       const streams = cells.filter((cell) => cell.kind === KIND.stream);

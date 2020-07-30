@@ -33,16 +33,17 @@ import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 
+/* eslint-disable no-unused-expressions */
 export const deleteConnector$ = (values) => {
   const { params, options = {} } = values;
-  const { paperApi } = options;
   const connectorId = getId(params);
 
-  if (paperApi) {
-    paperApi.updateElement(params.id, {
-      status: CELL_STATUS.pending,
-    });
-  }
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
 
   return zip(
     defer(() => connectorApi.remove(params)),
@@ -70,9 +71,7 @@ export const deleteConnector$ = (values) => {
       ),
     ),
     mergeMap(() => {
-      if (paperApi) {
-        paperApi.removeElement(params.id);
-      }
+      options.paperApi?.removeElement(params.id);
 
       return from([
         actions.setSelectedCell.trigger(null),
@@ -81,11 +80,9 @@ export const deleteConnector$ = (values) => {
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
     catchError((err) => {
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.failed,
-        });
-      }
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
+      });
 
       return from([
         actions.deleteConnector.failure(merge(err, { connectorId })),

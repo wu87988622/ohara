@@ -33,16 +33,17 @@ import * as actions from 'store/actions';
 import { getId } from 'utils/object';
 import { CELL_STATUS, LOG_LEVEL } from 'const';
 
+/* eslint-disable no-unused-expressions */
 export const deleteStream$ = (value) => {
   const { params, options = {} } = value;
-  const { paperApi } = options;
   const streamId = getId(params);
 
-  if (paperApi) {
-    paperApi.updateElement(params.id, {
-      status: CELL_STATUS.pending,
-    });
-  }
+  const previousStatus =
+    options.paperApi?.getCell(params?.id)?.status || CELL_STATUS.stopped;
+
+  options.paperApi?.updateElement(params.id, {
+    status: CELL_STATUS.pending,
+  });
 
   return zip(
     defer(() => streamApi.remove(params)),
@@ -69,9 +70,7 @@ export const deleteStream$ = (value) => {
       ),
     ),
     mergeMap(() => {
-      if (paperApi) {
-        paperApi.removeElement(params.id);
-      }
+      options.paperApi?.removeElement(params.id);
 
       return from([
         actions.setSelectedCell.trigger(null),
@@ -79,16 +78,14 @@ export const deleteStream$ = (value) => {
       ]);
     }),
     startWith(actions.deleteStream.request({ streamId })),
-    catchError((error) => {
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.failed,
-        });
-      }
+    catchError((err) => {
+      options.paperApi?.updateElement(params.id, {
+        status: err?.data?.state?.toLowerCase() ?? previousStatus,
+      });
 
       return from([
-        actions.deleteStream.failure(merge(error, { streamId })),
-        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
+        actions.deleteStream.failure(merge(err, { streamId })),
+        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
       ]);
     }),
   );

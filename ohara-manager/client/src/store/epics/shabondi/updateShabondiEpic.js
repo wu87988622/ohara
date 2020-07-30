@@ -25,13 +25,13 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { LOG_LEVEL, CELL_TYPE } from 'const';
 
+/* eslint-disable no-unused-expressions */
 export default (action$) => {
   return action$.pipe(
     ofType(actions.updateShabondi.TRIGGER),
     map((action) => action.payload),
-    mergeMap(({ values, options }) => {
-      const { paperApi } = options;
-      const shabondiId = paperApi.getCell(values.name).id;
+    mergeMap(({ values, options = {} }) => {
+      const shabondiId = options.paperApi?.getCell(values.name).id;
 
       return defer(() => shabondiApi.update(values)).pipe(
         map((res) => normalize(res.data, schema.shabondi)),

@@ -29,6 +29,7 @@ jest.mock('api/streamApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const streamId = getId(streamEntity);
@@ -331,7 +332,7 @@ it('should handle error properly', () => {
       status: CELL_STATUS.pending,
     });
     expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
-      status: CELL_STATUS.failed,
+      status: CELL_STATUS.stopped,
     });
     expect(paperApi.removeElement).not.toHaveBeenCalled();
   });
