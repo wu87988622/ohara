@@ -628,6 +628,37 @@ class TestWorkerRoute extends OharaTest {
     worker.pluginKeys.size shouldBe 0
   }
 
+  @Test
+  def testConcurrentlyRestart(): Unit = {
+    val worker = result(
+      workerApi.request
+        .nodeNames(nodeNames)
+        .brokerClusterKey(brokerClusterKey)
+        .create()
+    )
+
+    result(workerApi.start(worker.key))
+    result(workerApi.get(worker.key)).state.get shouldBe ClusterState.RUNNING
+
+    val exceptions = (0 until 10)
+      .map { index =>
+        if (index % 2 == 0) workerApi.stop(worker.key)
+        else workerApi.start(worker.key)
+      }
+      .flatMap(
+        f =>
+          try {
+            result(f)
+            None
+          } catch {
+            case e: Throwable => Some(e)
+          }
+      )
+
+    exceptions.size should not be 0
+    exceptions.count(e => e.getMessage.contains("is stopping") || e.getMessage.contains("is starting")) should not be 0
+  }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }

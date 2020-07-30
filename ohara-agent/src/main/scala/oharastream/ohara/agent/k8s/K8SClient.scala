@@ -366,16 +366,15 @@ object K8SClient {
         private[this] def removePod(name: String, isForce: Boolean)(
           implicit executionContext: ExecutionContext
         ): Future[Unit] = {
-          val isForceRemovePod: String = if (isForce) "?gracePeriodSeconds=0" else ""
+          val gracePeriodSeconds = if (isForce) 0 else 2
           containers(name)
             .flatMap(
-              Future.traverse(_)(
-                container =>
-                  httpExecutor
-                    .delete[ErrorResponse](
-                      s"$serverURL/namespaces/$namespace/pods/${container.name}${isForceRemovePod}"
-                    )
-              )
+              Future.traverse(_) { container =>
+                httpExecutor
+                  .delete[ErrorResponse](
+                    s"$serverURL/namespaces/$namespace/pods/${container.name}?gracePeriodSeconds=$gracePeriodSeconds"
+                  )
+              }
             )
             .map(_ => ())
         }
