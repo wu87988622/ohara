@@ -1,4 +1,3 @@
-import { ElementParameters } from './../../support/customCommands';
 /*
  * Copyright 2019 is-land
  *
@@ -20,6 +19,7 @@ import { NodeRequest } from '../../../src/api/apiInterface/nodeInterface';
 import { KIND, CELL_STATUS } from '../../../src/const';
 import { SOURCE, SINK } from '../../../src/api/apiInterface/connectorInterface';
 import { CELL_ACTION } from '../../support/customCommands';
+import { ElementParameters } from './../../support/customCommands';
 
 describe('Toolbar', () => {
   const node: NodeRequest = {
@@ -41,7 +41,7 @@ describe('Toolbar', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 
@@ -65,16 +65,15 @@ describe('Toolbar', () => {
       // Hide Toolbox first
       cy.get('#toolbox')
         .should('be.visible')
-        .within(() => cy.findByTestId('close-button').click());
+        .findByTestId('close-button')
+        .click();
 
       // It should not be visible now
       cy.get('#toolbox').should('not.be.visible');
 
       // Loop thur each control and use the control to open Toolbox
       controls.forEach((item) => {
-        cy.get('#toolbar').within(() => {
-          cy.findByTestId(`insert-${item}-button`).click();
-        });
+        cy.get('#toolbar').findByTestId(`insert-${item}-button`).click();
 
         // The target panel should be opened and the others are closed
         cy.get(`#${item}-list`).should('be.visible');
@@ -83,7 +82,8 @@ describe('Toolbar', () => {
         // Hide the Toolbox again, in prepare of the next iteration
         cy.get('#toolbox')
           .should('be.visible')
-          .within(() => cy.findByTestId('close-button').click());
+          .findByTestId('close-button')
+          .click();
 
         cy.get('#toolbox').should('not.be.visible');
       });
@@ -117,6 +117,25 @@ describe('Toolbar', () => {
       cy.findByTestId('insert-stream-button').click();
       cy.get('#stream-list').should('be.visible');
       cy.get('.toolbox-list:visible').should('have.length', 1);
+    });
+
+    it('should reset and open only one panel when more than one panel are opened', () => {
+      // Open three panels
+      cy.get('#toolbox').within(() => {
+        cy.findByText(/^source$/i).click();
+        cy.findByText(/^topic$/i).click();
+        cy.findByText(/^stream$/i).click();
+
+        cy.get('.toolbox-list:visible').should('have.length', 3);
+      });
+
+      // Click on the source panel, it should reset all panel except the source
+      cy.get('#toolbar').findByTestId(`insert-${source}-button`).click();
+
+      cy.get('#toolbox').within(() => {
+        cy.get('.toolbox-list:visible').should('have.length', 1);
+        cy.get('#source-list').should('be.visible');
+      });
     });
   });
 
@@ -499,54 +518,58 @@ describe('Toolbar', () => {
       // Then, link Perf source and Topic together
       cy.createConnections([sourceName, topicName]);
 
-      // Connector should be stopped after added
-      cy.get('#paper').within(() => {
-        cy.findByText(sourceName)
-          .parents('.connector')
-          .find('.status-value')
-          .should('have.text', CELL_STATUS.stopped);
-
-        // Topic should be running after added
-        cy.findByText(topicName).prev('svg').find(`.${CELL_STATUS.running}`);
-      });
+      // Connector should have the status of stopped after added by default
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.stopped);
 
       // Start the connection
       cy.findByTestId('pipeline-controls-button').should('exist').click();
       cy.findByText('Start all components').should('exist').click();
 
-      cy.get('#paper').within(() => {
-        // Ensure connector is running now
-        cy.findByText(sourceName)
-          .parents('.connector')
-          .find('.status-value')
-          .should('have.text', CELL_STATUS.running);
-
-        // Topic should still be running, the start/stop actions won't affect its
-        // status in UI
-        cy.findByText(topicName).prev('svg').find(`.${CELL_STATUS.running}`);
-      });
+      // Ensure both connector and topic are running now
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.running);
+      cy.getElementStatus(topicName, true).should(
+        'have.class',
+        CELL_STATUS.running,
+      );
 
       // Stop the connection
       cy.findByTestId('pipeline-controls-button').should('exist').click();
       cy.findByText('Stop all components').should('exist').click();
 
       // Assert again, this time the connector should be stopped
-      cy.get('#paper').within(() => {
-        // Connector should be stopped after added
-        cy.findByText(sourceName)
-          .parents('.connector')
-          .find('.status-value')
-          .should('have.text', CELL_STATUS.stopped);
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.stopped);
 
-        // Topic is still running
-        cy.findByText(topicName).prev('svg').find(`.${CELL_STATUS.running}`);
+      // Topic is not affecting byt the start/stop action, and so should still be running
+      cy.getElementStatus(topicName, true).should(
+        'have.class',
+        CELL_STATUS.running,
+      );
+    });
+
+    it('should not start and stop an element without connections', () => {
+      // Create a SMB source connector and add it into Paper
+      const sourceName = generate.serviceName({ prefix: 'source' });
+
+      cy.addElement({
+        name: sourceName,
+        kind: KIND.source,
+        className: SOURCE.smb,
       });
+
+      cy.startPipeline('pipeline1');
+
+      // Since it won't be triggered, the state should remain `stopped`
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.stopped);
+
+      // Same with stop, it should still have a state of `stopped`
+      cy.stopPipeline('pipeline1');
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.stopped);
     });
 
     // Running services -> connectors, streams, shabondies.
     it('should prevent users from deleting a pipeline if it has running services', () => {
       const sourceName = generate.serviceName({ prefix: 'source' });
-      const pipelineOnlyTopicName = 'T1';
+      const topicName = 'T1';
 
       // Add a perf source connector and a pipeline-only topic
       cy.addElements([
@@ -556,21 +579,17 @@ describe('Toolbar', () => {
           className: SOURCE.perf,
         },
         {
-          name: pipelineOnlyTopicName,
+          name: topicName,
           kind: KIND.topic,
         },
       ]);
 
       // Create connection and start pipeline
-      cy.createConnections([sourceName, pipelineOnlyTopicName]);
+      cy.createConnections([sourceName, topicName]);
       cy.startPipeline('pipeline1');
 
       // The connector should be running by now
-      cy.get('#paper')
-        .findByText(sourceName)
-        .parents('.connector')
-        .find('.status-value')
-        .should('have.text', CELL_STATUS.running);
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.running);
 
       // Try to delete it
       cy.get('.pipeline-controls').find('button').click();
@@ -625,55 +644,83 @@ describe('Toolbar', () => {
       // Default
       cy.findByTestId('metrics-switch')
         .should('exist')
-        .and('not.have.class', 'Mui-checked');
+        .and('not.have.class', 'Mui-checked')
+        .as('switch');
 
-      // Checked
-      cy.findByTestId('metrics-switch')
-        .click()
-        .should('have.class', 'Mui-checked');
+      // On
+      cy.get('@switch').click().should('have.class', 'Mui-checked');
 
-      // unChecked
-      cy.findByTestId('metrics-switch')
-        .click()
-        .should('not.have.class', 'Mui-checked');
+      // Off
+      cy.get('@switch').click().should('not.have.class', 'Mui-checked');
     });
 
-    it('should display metrics data in Paper elements', () => {
-      // Create a Perf source and than a pipeline only topic
-      const sourceName = generate.serviceName({ prefix: 'source' });
-      const topicName = 'T1';
+    context('Displaying metrics when', () => {
+      let sourceName = '';
 
-      cy.addElements([
-        {
-          name: sourceName,
-          kind: KIND.source,
-          className: SOURCE.perf,
-        },
-        {
-          name: topicName,
-          kind: KIND.topic,
-        },
-      ]);
+      beforeEach(() => {
+        // Create a Perf source and than a pipeline only topic
+        sourceName = generate.serviceName({ prefix: 'source' });
+        const topicName = 'T1';
 
-      // Then, link Perf source and Topic together
-      cy.createConnections([sourceName, topicName]);
+        cy.addElements([
+          {
+            name: sourceName,
+            kind: KIND.source,
+            className: SOURCE.perf,
+          },
+          {
+            name: topicName,
+            kind: KIND.topic,
+          },
+        ]);
 
-      // Start the source
-      cy.getCell(sourceName).trigger('mouseover');
-      cy.cellAction(sourceName, CELL_ACTION.start).click();
+        // Then, link Perf source and Topic together
+        cy.createConnections([sourceName, topicName]);
+      });
 
-      cy.get('#paper')
-        .findByText(sourceName)
-        .parents('.connector')
-        .find('.status-value')
-        .should('have.text', CELL_STATUS.running);
+      it(`starts a connection with Paper element's start action button`, () => {
+        // Start the source with element's start action button
+        cy.getCell(sourceName).trigger('mouseover');
+        cy.cellAction(sourceName, CELL_ACTION.start).click();
 
-      // Enable metrics
-      cy.findByTestId('metrics-switch')
-        .click()
-        .should('have.class', 'Mui-checked');
+        // Ensure the connector is running
+        cy.getElementStatus(sourceName).should(
+          'have.text',
+          CELL_STATUS.running,
+        );
 
-      cy.findByText('No metrics data available').should('exist');
+        // Enable metrics
+        cy.findByTestId('metrics-switch')
+          .click()
+          .should('have.class', 'Mui-checked');
+
+        // Should display metrics, although we don't have real data here
+        cy.findByText('No metrics data available').should('exist');
+
+        // Reset metrics
+        cy.findByTestId('metrics-switch')
+          .click()
+          .should('not.have.class', 'Mui-checked');
+      });
+
+      it('starts a connection with start all components action', () => {
+        // Start the pipeline with start all components action
+        cy.startPipeline('pipeline1');
+
+        // Ensure the connector is running
+        cy.getElementStatus(sourceName).should(
+          'have.text',
+          CELL_STATUS.running,
+        );
+
+        // Enable metrics
+        cy.findByTestId('metrics-switch')
+          .click()
+          .should('have.class', 'Mui-checked');
+
+        // Should display metrics, although we don't have real data here
+        cy.findByText('No metrics data available').should('exist');
+      });
     });
   });
 });

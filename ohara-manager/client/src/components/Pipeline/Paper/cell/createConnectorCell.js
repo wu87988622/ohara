@@ -79,7 +79,7 @@ const createConnectorCell = (options) => {
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
-      <div class="${elementClassName}" data-testid=${id}>
+      <div class="${elementClassName}" data-jointid=${id}>
         <div class="header">
           <div class="icon ${iconStatus}">${getIcon(kind)}</div>
           <div class="display-name-wrapper">
@@ -230,7 +230,6 @@ const createConnectorCell = (options) => {
         // 1. Status bar (default),
         // 2. Menu (displayed when hovering)
         // 3. Metrics (displayed when metrics switch is on and the element is running),
-
         if ($box.hasClass('is-hover')) {
           $box.find('.status').hide();
         } else {
@@ -266,7 +265,7 @@ const createConnectorCell = (options) => {
       model.set('status', status, options);
 
       // ID, for e2e and it testing
-      $box.attr('data-testid', id);
+      $box.attr('data-jointid', id);
 
       // Display name
       $box.find('.display-name').text(displayName);

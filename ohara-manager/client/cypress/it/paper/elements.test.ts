@@ -46,7 +46,7 @@ describe('Elements', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 
@@ -90,15 +90,8 @@ describe('Elements', () => {
       cy.getCell(sourceName).trigger('mouseover');
       cy.cellAction(sourceName, CELL_ACTION.start).click();
 
-      cy.get('#paper').within(() => {
-        cy.findByText(sourceName).should(($source) => {
-          const $container = $source.parents('.connector');
-          // Should be running
-          expect($container.find('.status-value').text()).to.eq(
-            CELL_STATUS.running,
-          );
-        });
-      });
+      // Should have the status of running
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.running);
     });
 
     it('should able to stop a connector', () => {
@@ -108,28 +101,14 @@ describe('Elements', () => {
       cy.getCell(sourceName).trigger('mouseover');
       cy.cellAction(sourceName, CELL_ACTION.start).click();
 
-      cy.get('#paper').within(() => {
-        cy.findByText(sourceName).should(($source) => {
-          const $container = $source.parents('.connector');
-          // Should be running
-          expect($container.find('.status-value').text()).to.eq(
-            CELL_STATUS.running,
-          );
-        });
-      });
+      // It's Running
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.running);
 
       // Stop the connector
       cy.cellAction(sourceName, CELL_ACTION.stop).click();
 
-      cy.get('#paper').within(() => {
-        cy.findByText(sourceName).should(($source) => {
-          const $container = $source.parents('.connector');
-          // Should be stopped
-          expect($container.find('.status-value').text()).to.eq(
-            CELL_STATUS.stopped,
-          );
-        });
-      });
+      // It's stopped
+      cy.getElementStatus(sourceName).should('have.text', CELL_STATUS.stopped);
     });
 
     it('should able to open Property dialog', () => {

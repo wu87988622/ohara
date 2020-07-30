@@ -38,7 +38,7 @@ describe('Paper', () => {
   });
 
   beforeEach(() => {
-    cy.deleteAndStopAllPipelines();
+    cy.stopAndDeleteAllPipelines();
     cy.createPipeline();
   });
 
@@ -72,9 +72,6 @@ describe('Paper', () => {
       // Should have one connector in the Paper
       cy.get('#paper .connector').should('have.length', 1);
 
-      // Wait until the changes are saved.
-      cy.wait(1000);
-
       cy.reload();
 
       // See if SMB is indeed saved and can be loaded again
@@ -96,14 +93,8 @@ describe('Paper', () => {
       // Should have one connector in the Paper
       cy.get('#paper .connector').should('have.length', 1);
 
-      // Wait until the changes are saved
-      cy.wait(1000);
-
       // Remove the source
       cy.removeElement(sourceName);
-
-      // Wait until the changes are saved
-      cy.wait(1000);
 
       // The connector should be removed from Paper by now
       cy.get('#paper .connector').should('have.length', 0);
@@ -116,9 +107,6 @@ describe('Paper', () => {
 
       // We should have a link now
       cy.get('#paper .joint-link').should('have.length', 1);
-
-      // Wait until the changes are saved
-      cy.wait(1000);
 
       cy.reload();
 

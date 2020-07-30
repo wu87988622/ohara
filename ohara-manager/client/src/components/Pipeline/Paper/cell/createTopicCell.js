@@ -71,7 +71,7 @@ const createTopicCell = (options) => {
 
   joint.shapes.html.ElementView = joint.dia.ElementView.extend({
     template: `
-      <div class="paper-element topic" data-testid=${id}>
+      <div class="paper-element topic" data-jointid=${id}>
         ${isShared ? sharedIcon : pipelineOnlyIcon}
         <div class="display-name">${displayName}</div>
         <div class="menu">
@@ -170,7 +170,7 @@ const createTopicCell = (options) => {
       model.set('status', status, options);
 
       // ID, for e2e and it testing
-      $box.attr('data-testid', id);
+      $box.attr('data-jointid', id);
       return this;
     },
     updatePosition() {
