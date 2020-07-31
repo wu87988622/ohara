@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import { merge } from 'lodash';
+import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { of, from, throwError } from 'rxjs';
-import { catchError, map, concatAll, mergeMap, tap } from 'rxjs/operators';
+import {
+  catchError,
+  concatAll,
+  map,
+  mergeMap,
+  startWith,
+  tap,
+} from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { createTopic$ } from './createTopicEpic';
-import { startTopic$ } from './startTopicEpic';
-import { LOG_LEVEL, CELL_STATUS } from 'const';
+import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+import { createTopic, startTopic } from 'observables';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "create + start" for single creation request
@@ -30,60 +39,46 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.createAndStartTopic.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) => {
-      const { params, options, promise } = values;
-      const paperApi = get(options, 'paperApi');
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.pending,
+    mergeMap(({ values = {}, options = {}, resolve, reject }) => {
+      const topicId = getId(values);
+      const previousStatus =
+        options.paperApi?.getCell(values?.id)?.status || CELL_STATUS.stopped;
+      const updateStatus = (status) =>
+        options.paperApi?.updateElement(values.id, {
+          status,
         });
-      }
-      return of(
-        createTopic$(params).pipe(
-          tap((action) => {
-            if (action.type === actions.createTopic.SUCCESS) {
-              if (typeof promise?.resolve === 'function') {
-                promise.resolve();
-              }
-            }
-          }),
-          catchError((err) => {
-            if (paperApi) {
-              paperApi.removeElement(params.id);
-            }
-            if (typeof promise?.reject === 'function') {
-              promise.reject(err);
-            }
 
+      updateStatus(CELL_STATUS.pending);
+      return of(
+        createTopic(values).pipe(
+          tap((data) => typeof resolve === 'function' && resolve(data)),
+          map((data) => normalize(data, schema.topic)),
+          map((normalizedData) => merge(normalizedData, { topicId })),
+          map((normalizedData) => actions.createTopic.success(normalizedData)),
+          startWith(actions.createTopic.request({ topicId })),
+          catchError((err) => {
+            if (options.paperApi?.removeElement)
+              options.paperApi.removeElement(values.id);
             return throwError(err);
           }),
         ),
-        startTopic$(params).pipe(
-          tap((action) => {
-            if (action.type === actions.startTopic.SUCCESS && paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.running,
-              });
-            }
-          }),
+        startTopic(values).pipe(
+          tap(() => updateStatus(CELL_STATUS.running)),
+          map((data) => normalize(data, schema.topic)),
+          map((normalizedData) => merge(normalizedData, { topicId })),
+          map((normalizedData) => actions.startTopic.success(normalizedData)),
+          startWith(actions.startTopic.request({ topicId })),
           catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.stopped,
-              });
-            }
-            if (typeof promise?.reject === 'function') {
-              promise.reject(err);
-            }
-
+            updateStatus(err?.data?.state?.toLowerCase() ?? previousStatus);
             return throwError(err);
           }),
         ),
       ).pipe(
         concatAll(),
         catchError((err) => {
+          if (typeof reject === 'function') reject(err);
           return from([
-            actions.createAndStartTopic.failure(err),
+            actions.createAndStartTopic.failure(merge(err, { topicId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),

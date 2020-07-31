@@ -47,6 +47,7 @@ export const useFetchTopicsAction = () => {
   return useCallback(() => dispatch(actions.fetchTopics.trigger()), [dispatch]);
 };
 
+// TODO: not used, will be deleted
 export const useCreateTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
@@ -63,6 +64,7 @@ export const useCreateTopicAction = () => {
   );
 };
 
+// TODO: not used, will be deleted
 export const useUpdateTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
@@ -72,6 +74,7 @@ export const useUpdateTopicAction = () => {
   );
 };
 
+// TODO: not used, will be deleted
 export const useDeleteTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
@@ -99,6 +102,7 @@ export const useDeleteTopicsInWorkspaceAction = () => {
   );
 };
 
+// TODO: not used, will be deleted
 export const useStartTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
@@ -144,6 +148,7 @@ export const useStopTopicsInWorkspaceAction = () => {
   );
 };
 
+// TODO: not used, will be deleted
 export const useStopTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
@@ -156,18 +161,16 @@ export const useStopTopicAction = () => {
 export const useCreateAndStartTopicAction = () => {
   const dispatch = useDispatch();
   const group = useTopicGroup();
-  const brokerClusterKey = {
-    group: hooks.useBrokerGroup(),
-    name: hooks.useWorkspaceName(),
-  };
+  const brokerClusterKey = hooks.useBrokerKey();
   return useCallback(
     (values, options) => {
       return new Promise((resolve, reject) => {
         dispatch(
           actions.createAndStartTopic.trigger({
-            params: { ...values, group, brokerClusterKey },
+            values: { ...values, group, brokerClusterKey },
             options,
-            promise: { resolve, reject },
+            resolve,
+            reject,
           }),
         );
       });
@@ -184,9 +187,10 @@ export const useStopAndDeleteTopicAction = () => {
       return new Promise((resolve, reject) => {
         dispatch(
           actions.stopAndDeleteTopic.trigger({
-            params: { ...values, group },
+            values: { ...values, group },
             options,
-            promise: { resolve, reject },
+            resolve,
+            reject,
           }),
         );
       });

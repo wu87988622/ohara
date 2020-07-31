@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
+import { omit } from 'lodash';
 
 import * as topicApi from 'api/topicApi';
 import createAndStartTopicEpic from '../../topic/createAndStartTopicEpic';
@@ -30,6 +32,7 @@ jest.mock('api/topicApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const promise = { resolve: jest.fn(), reject: jest.fn() };
@@ -51,7 +54,7 @@ it('should be able to create and start a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                    ';
-    const expected = '--a 99ms (mn) 96ms v';
+    const expected = '--a 99ms (mn) 196ms v';
     const subs = '    ^----------------------';
     const id = '1234';
 
@@ -59,9 +62,9 @@ it('should be able to create and start a topic', () => {
       a: {
         type: actions.createAndStartTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id },
+          values: { ...topicEntity, id },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -143,9 +146,9 @@ it('should handle create error', () => {
       a: {
         type: actions.createAndStartTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id },
+          values: { ...topicEntity, id },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -164,7 +167,7 @@ it('should handle create error', () => {
       },
       c: {
         type: actions.createEventLog.TRIGGER,
-        payload: { ...error, type: LOG_LEVEL.error },
+        payload: { ...error, topicId, type: LOG_LEVEL.error },
       },
     });
 
@@ -186,26 +189,22 @@ it('should handle create error', () => {
 });
 
 it('should handle start error', async () => {
-  const error = {
-    status: -1,
-    data: {},
-    title: 'Error mock',
-  };
-
-  const startError = {
-    data: {},
-    meta: undefined,
-    title: `Try to start topic: "${topicEntity.name}" failed after retry 11 times. Expected state: ${SERVICE_STATE.RUNNING}, Actual state: undefined`,
-  };
-
-  jest.spyOn(topicApi, 'get').mockReturnValue(throwError(error));
-  jest.spyOn(topicApi, 'start').mockReturnValue(throwError(error));
+  const spyGet = jest.spyOn(topicApi, 'get');
+  for (let i = 0; i < 20; i++) {
+    spyGet.mockReturnValueOnce(
+      of({
+        status: 200,
+        title: 'retry mock get data',
+        data: { ...omit(topicEntity, 'state') },
+      }).pipe(delay(100)),
+    );
+  }
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                         ';
-    const expected = '--a 99ms (bc) 21996ms (de)';
+    const expected = '--a 99ms (bc) 32196ms (de)';
     const subs = '    ^---------------------------';
     const id = '1234';
 
@@ -213,9 +212,9 @@ it('should handle start error', async () => {
       a: {
         type: actions.createAndStartTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id, state: undefined },
+          values: { ...topicEntity, id, state: undefined },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -244,11 +243,22 @@ it('should handle start error', async () => {
       },
       d: {
         type: actions.createAndStartTopic.FAILURE,
-        payload: startError,
+        payload: {
+          topicId,
+          data: topicEntity,
+          status: 200,
+          title: `Failed to start topic ${topicEntity.name}: Unable to confirm the status of the topic is running`,
+        },
       },
       e: {
         type: actions.createEventLog.TRIGGER,
-        payload: { ...startError, type: LOG_LEVEL.error },
+        payload: {
+          topicId,
+          data: topicEntity,
+          status: 200,
+          title: `Failed to start topic ${topicEntity.name}: Unable to confirm the status of the topic is running`,
+          type: LOG_LEVEL.error,
+        },
       },
     });
 
@@ -265,6 +275,5 @@ it('should handle start error', async () => {
     });
 
     expect(promise.reject).toHaveBeenCalledTimes(1);
-    expect(promise.reject).toHaveBeenCalledWith(startError);
   });
 });

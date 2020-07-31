@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-import { get } from 'lodash';
+import { merge } from 'lodash';
+import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, throwError } from 'rxjs';
-import { catchError, map, mergeMap, concatAll, tap } from 'rxjs/operators';
+import { of, from, throwError } from 'rxjs';
+import {
+  catchError,
+  concatAll,
+  map,
+  mergeMap,
+  startWith,
+  tap,
+} from 'rxjs/operators';
 
 import * as actions from 'store/actions';
-import { stopTopic$ } from './stopTopicEpic';
-import { deleteTopic$ } from './deleteTopicEpic';
-import { LOG_LEVEL, CELL_STATUS } from 'const';
+import * as schema from 'store/schema';
+import { getId } from 'utils/object';
+import { deleteTopic, stopTopic } from 'observables';
+import { CELL_STATUS, LOG_LEVEL } from 'const';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "delete + stop" for single deletion request
@@ -30,57 +39,51 @@ export default (action$) =>
   action$.pipe(
     ofType(actions.stopAndDeleteTopic.TRIGGER),
     map((action) => action.payload),
-    mergeMap((values) => {
-      const { params, options, promise } = values;
-      const paperApi = get(options, 'paperApi');
-      if (paperApi) {
-        paperApi.updateElement(params.id, {
-          status: CELL_STATUS.pending,
+    mergeMap(({ values = {}, options = {}, resolve, reject }) => {
+      const topicId = getId(values);
+      const previousStatus =
+        options.paperApi?.getCell(values?.id)?.status || CELL_STATUS.running;
+      const updateStatus = (status) =>
+        options.paperApi?.updateElement(values.id, {
+          status,
         });
-      }
-      return from([
-        stopTopic$(params).pipe(
-          catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.running,
-              });
-            }
-            if (typeof promise?.reject === 'function') {
-              promise.reject(err);
-            }
-            return throwError(err);
-          }),
-        ),
-        deleteTopic$(params).pipe(
-          tap((action) => {
-            if (action.type === actions.deleteTopic.SUCCESS) {
-              if (typeof promise?.resolve === 'function') {
-                promise.resolve();
-              }
-              if (paperApi) {
-                paperApi.removeElement(params.id);
-              }
-            }
-          }),
-          catchError((err) => {
-            if (paperApi) {
-              paperApi.updateElement(params.id, {
-                status: CELL_STATUS.stopped,
-              });
-            }
-            if (typeof promise?.reject === 'function') {
-              promise.reject(err);
-            }
 
+      updateStatus(CELL_STATUS.pending);
+      return of(
+        stopTopic(values).pipe(
+          tap(() => updateStatus(CELL_STATUS.stopped)),
+          map((data) => normalize(data, schema.topic)),
+          map((normalizedData) => merge(normalizedData, { topicId })),
+          map((normalizedData) => actions.stopTopic.success(normalizedData)),
+          startWith(actions.stopTopic.request({ topicId })),
+          catchError((err) => {
+            updateStatus(err?.data?.state?.toLowerCase() ?? previousStatus);
             return throwError(err);
           }),
         ),
-      ]).pipe(
+        deleteTopic(values).pipe(
+          tap(() => {
+            if (typeof resolve === 'function') resolve();
+            if (options.paperApi?.removeElement)
+              options.paperApi.removeElement(values.id);
+          }),
+          mergeMap(() =>
+            from([
+              actions.setSelectedCell.trigger(null),
+              actions.deleteTopic.success({ topicId }),
+            ]),
+          ),
+          startWith(actions.deleteTopic.request({ topicId })),
+          catchError((err) => {
+            return throwError(err);
+          }),
+        ),
+      ).pipe(
         concatAll(),
         catchError((err) => {
+          if (typeof reject === 'function') reject(err);
           return from([
-            actions.stopAndDeleteTopic.failure(err),
+            actions.stopAndDeleteTopic.failure(merge(err, { topicId })),
             actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
           ]);
         }),

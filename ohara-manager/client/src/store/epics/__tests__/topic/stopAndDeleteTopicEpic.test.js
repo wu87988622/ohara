@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { TestScheduler } from 'rxjs/testing';
 
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import stopAndDeleteTopicEpic from '../../topic/stopAndDeleteTopicEpic';
@@ -29,6 +31,7 @@ jest.mock('api/topicApi');
 const paperApi = {
   updateElement: jest.fn(),
   removeElement: jest.fn(),
+  getCell: jest.fn(),
 };
 
 const promise = { resolve: jest.fn(), reject: jest.fn() };
@@ -50,7 +53,7 @@ it('should be able to stop and delete a topic', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                      ';
-    const expected = '--a 99ms (mn) 96ms (vz)';
+    const expected = '--a 199ms (mn) 96ms (vz)';
     const subs = '    ^------------------------';
     const id = '1234';
 
@@ -58,9 +61,9 @@ it('should be able to stop and delete a topic', () => {
       a: {
         type: actions.stopAndDeleteTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id },
+          values: { ...topicEntity, id },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -113,7 +116,7 @@ it('should be able to stop and delete a topic', () => {
     expect(paperApi.removeElement).toHaveBeenCalledTimes(1);
     expect(paperApi.removeElement).toHaveBeenCalledWith(id);
 
-    expect(paperApi.updateElement).toHaveBeenCalledTimes(1);
+    expect(paperApi.updateElement).toHaveBeenCalledTimes(2);
     expect(paperApi.updateElement).toHaveBeenCalledWith(id, {
       status: CELL_STATUS.pending,
     });
@@ -123,25 +126,22 @@ it('should be able to stop and delete a topic', () => {
 });
 
 it('should handle stop error', () => {
-  const error = {
-    status: -1,
-    data: {},
-    title: 'Error mock',
-  };
-
-  const stopError = {
-    data: {},
-    meta: undefined,
-    title: `Try to stop topic: "${topicEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: undefined`,
-  };
-
-  jest.spyOn(topicApi, 'stop').mockReturnValue(throwError(error));
+  const spyGet = jest.spyOn(topicApi, 'get');
+  for (let i = 0; i < 20; i++) {
+    spyGet.mockReturnValueOnce(
+      of({
+        status: 200,
+        title: 'retry mock get data',
+        data: { ...topicEntity, state: SERVICE_STATE.RUNNING },
+      }).pipe(delay(100)),
+    );
+  }
 
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a    ';
-    const expected = '--a 21999ms (bc)';
+    const expected = '--a 32199ms (bc)';
     const subs = '    ^------';
     const id = '1234';
 
@@ -149,9 +149,9 @@ it('should handle stop error', () => {
       a: {
         type: actions.stopAndDeleteTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id },
+          values: { ...topicEntity, id },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -166,12 +166,26 @@ it('should handle stop error', () => {
       },
       b: {
         type: actions.stopAndDeleteTopic.FAILURE,
-        payload: stopError,
+        payload: {
+          topicId,
+          data: {
+            ...topicEntity,
+            state: SERVICE_STATE.RUNNING,
+          },
+          status: 200,
+          title: `Failed to stop topic ${topicEntity.name}: Unable to confirm the status of the topic is not running`,
+        },
       },
       c: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          ...stopError,
+          topicId,
+          data: {
+            ...topicEntity,
+            state: SERVICE_STATE.RUNNING,
+          },
+          status: 200,
+          title: `Failed to stop topic ${topicEntity.name}: Unable to confirm the status of the topic is not running`,
           type: LOG_LEVEL.error,
         },
       },
@@ -190,7 +204,6 @@ it('should handle stop error', () => {
     });
 
     expect(promise.reject).toHaveBeenCalledTimes(1);
-    expect(promise.reject).toHaveBeenCalledWith(stopError);
   });
 });
 
@@ -207,7 +220,7 @@ it('should handle delete error', async () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a                         ';
-    const expected = '--a 99ms (bcde) ';
+    const expected = '--a 199ms (bcde) ';
     const subs = '    ^---------------------------';
     const id = '1234';
 
@@ -215,9 +228,9 @@ it('should handle delete error', async () => {
       a: {
         type: actions.stopAndDeleteTopic.TRIGGER,
         payload: {
-          params: { ...topicEntity, id },
+          values: { ...topicEntity, id },
           options: { paperApi },
-          promise,
+          ...promise,
         },
       },
     });
@@ -253,7 +266,7 @@ it('should handle delete error', async () => {
       },
       e: {
         type: actions.createEventLog.TRIGGER,
-        payload: { ...error, type: LOG_LEVEL.error },
+        payload: { ...error, topicId, type: LOG_LEVEL.error },
       },
     });
 
