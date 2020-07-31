@@ -24,6 +24,9 @@ const Wrapper = styled.div`
   }
 `;
 
+// TODO: disable this in the global eslint settings, we can do so while we're at #5457
+//  Since we're not strictly following the a11y rules in our App, disable the for now
+/* eslint-disable jsx-a11y/anchor-is-valid */
 const FileDownload = React.forwardRef(({ file }, ref) => (
   <Wrapper>
     <a download={file?.name} href={file?.url} ref={ref}>

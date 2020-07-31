@@ -149,7 +149,7 @@ Cypress.Commands.add('addElement', ({ name, kind, className }) => {
     cy.findByText(capitalize(kind))
       .should('exist')
       .click()
-      .parents('.MuiExpansionPanelSummary-root')
+      .parents('.MuiAccordionSummary-root')
       .next()
       .should('be.visible'); // Ensure the list is opened
 

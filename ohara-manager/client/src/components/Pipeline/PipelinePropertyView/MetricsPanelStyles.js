@@ -18,7 +18,7 @@ import styled, { css } from 'styled-components';
 
 export const Wrapper = styled.div(
   ({ theme }) => css`
-    .MuiExpansionPanelDetails-root {
+    .MuiAccordionDetails-root {
       .MuiTypography-h6 {
         margin-bottom: ${theme.spacing(2)}px;
       }

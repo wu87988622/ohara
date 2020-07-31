@@ -26,8 +26,8 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
 
 import PipelinePropertyForm from './PipelinePropertyForm';
 import { KIND } from 'const';
@@ -42,7 +42,7 @@ import {
   LeftBody,
   RightBody,
   StyleFilter,
-  StyleExpansionPanel,
+  StyleAccordion,
 } from './PipelinePropertyDialogStyles';
 
 const PipelinePropertyDialog = (props) => {
@@ -170,7 +170,7 @@ const PipelinePropertyDialog = (props) => {
     onClose();
   };
 
-  const handleExpansionPanelChange = (panel) => (event, isExpanded) => {
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
 
@@ -229,18 +229,18 @@ const PipelinePropertyDialog = (props) => {
 
               if (defs.length > 0) {
                 return (
-                  <StyleExpansionPanel
+                  <StyleAccordion
                     data-testid="group-panel"
                     expanded={
                       expanded === title || (index === 0 && expanded === null)
                     }
                     key={title}
-                    onChange={handleExpansionPanelChange(title)}
+                    onChange={handleAccordionChange(title)}
                   >
-                    <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography>{_.capitalize(title)}</Typography>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails>
+                    </AccordionSummary>
+                    <AccordionDetails>
                       <div>
                         {defs.map((def, index) => {
                           return (
@@ -259,8 +259,8 @@ const PipelinePropertyDialog = (props) => {
                           );
                         })}
                       </div>
-                    </ExpansionPanelDetails>
-                  </StyleExpansionPanel>
+                    </AccordionDetails>
+                  </StyleAccordion>
                 );
               } else {
                 return null;

@@ -88,28 +88,28 @@ export const StyledToolbox = styled.div(
       }
     }
 
-    .MuiExpansionPanelSummary-root {
+    .MuiAccordionSummary-root {
       padding: ${theme.spacing(0, 2)};
       background-color: ${theme.palette.grey[100]};
     }
 
-    .MuiExpansionPanel-root {
+    .MuiAccordion-root {
       box-shadow: none;
     }
 
-    .MuiExpansionPanelSummary-root.Mui-expanded {
+    .MuiAccordionSummary-root.Mui-expanded {
       min-height: 52px;
     }
-    .MuiExpansionPanelSummary-content.Mui-expanded,
-    .MuiExpansionPanel-root.Mui-expanded {
+    .MuiAccordionSummary-content.Mui-expanded,
+    .MuiAccordion-root.Mui-expanded {
       margin: 0;
     }
 
-    .MuiExpansionPanel-root:before {
+    .MuiAccordion-root:before {
       opacity: 1;
     }
 
-    .MuiExpansionPanel-root.Mui-expanded:before {
+    .MuiAccordion-root.Mui-expanded:before {
       opacity: 1;
     }
 

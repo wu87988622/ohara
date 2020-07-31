@@ -65,16 +65,14 @@ const config = {
       initial: 'unknown',
       states: {
         unknown: {
-          on: {
-            '': [
-              {
-                target: 'loading',
-                actions: 'toNextStep',
-                cond: 'hasNextStep',
-              },
-              { target: '#stepper.finish', actions: 'toNextStep' },
-            ],
-          },
+          always: [
+            {
+              target: 'loading',
+              actions: 'toNextStep',
+              cond: 'hasNextStep',
+            },
+            { target: '#stepper.finish', actions: 'toNextStep' },
+          ],
         },
         loading: {
           invoke: {

@@ -18,10 +18,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import Accordion from '@material-ui/core/Accordion';
 import SignalCellularAltIcon from '@material-ui/icons/SignalCellularAlt';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
 import { isEmpty } from 'lodash';
 
 import PropertyField from './PipelinePropertyViewField';
@@ -43,12 +43,12 @@ const MetricsPanel = (props) => {
 
   return (
     <Wrapper>
-      <ExpansionPanel
+      <Accordion
         data-testid="metrics-panel"
         defaultExpanded={true}
         expanded={isExpanded}
       >
-        <ExpansionPanelSummary
+        <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() => setIsExpanded((prevState) => !prevState)}
         >
@@ -56,8 +56,8 @@ const MetricsPanel = (props) => {
           <Typography className="section-title" variant="h5">
             Metrics
           </Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
+        </AccordionSummary>
+        <AccordionDetails>
           {Object.keys(metrics)
             .sort()
             .map((key) => {
@@ -89,8 +89,8 @@ const MetricsPanel = (props) => {
                 </React.Fragment>
               );
             })}
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
     </Wrapper>
   );
 };

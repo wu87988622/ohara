@@ -115,7 +115,7 @@ NodeEditorDialog.propTypes = {
   node: PropTypes.shape({
     hostname: PropTypes.string,
     port: PropTypes.number,
-    username: PropTypes.string,
+    user: PropTypes.string,
     password: PropTypes.string,
   }),
   onClose: PropTypes.func,

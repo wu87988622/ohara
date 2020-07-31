@@ -19,9 +19,9 @@ import PropTypes from 'prop-types';
 import StorageIcon from '@material-ui/icons/Storage';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
 import { partition } from 'lodash';
 
 import NodeList from './NodeList';
@@ -45,12 +45,12 @@ const NodePanel = (props) => {
   if (tasksStatus.length === 0) return null;
   return (
     <>
-      <ExpansionPanel
+      <Accordion
         data-testid="nodes-panel"
         defaultExpanded={true}
         expanded={isExpanded}
       >
-        <ExpansionPanelSummary
+        <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() => setIsExpanded((prevState) => !prevState)}
         >
@@ -58,8 +58,8 @@ const NodePanel = (props) => {
           <Typography className="section-title" variant="h5">
             Nodes
           </Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
+        </AccordionSummary>
+        <AccordionDetails>
           <NodeList
             heading={`Coordinators (${coordinatorNodes.length})`}
             list={coordinatorNodes}
@@ -70,8 +70,8 @@ const NodePanel = (props) => {
             list={followerNodes}
             onErrorTextClick={handleOpenErrorDialog}
           />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
 
       <NodeErrorDialog
         error={currentError}

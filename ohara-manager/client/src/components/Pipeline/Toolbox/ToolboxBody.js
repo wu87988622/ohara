@@ -17,9 +17,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -53,8 +53,8 @@ const ToolboxList = (props) => {
       ref={toolboxBodyRef}
       style={{ height: toolboxHeight ? toolboxHeight : 'auto' }}
     >
-      <ExpansionPanel expanded={expanded.source} id="source-panel" square>
-        <ExpansionPanelSummary
+      <Accordion expanded={expanded.source} id="source-panel" square>
+        <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
             pipelineDispatch({ type: 'setToolbox', payload: 'source' })
@@ -62,8 +62,8 @@ const ToolboxList = (props) => {
           ref={panelSummaryRef}
         >
           <Typography variant="subtitle1">Source</Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails className="detail">
+        </AccordionSummary>
+        <AccordionDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="source-list">
               {times(5, (index) => (
@@ -82,11 +82,11 @@ const ToolboxList = (props) => {
             onClick={() => handleRedirect('Worker plugins and shared jars')}
             ref={panelAddButtonRef}
           />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
 
-      <ExpansionPanel expanded={expanded.topic} id="topic-panel" square>
-        <ExpansionPanelSummary
+      <Accordion expanded={expanded.topic} id="topic-panel" square>
+        <AccordionSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
@@ -94,8 +94,8 @@ const ToolboxList = (props) => {
           }
         >
           <Typography variant="subtitle1">Topic</Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails className="detail">
+        </AccordionSummary>
+        <AccordionDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="topic-list"></div>
           </List>
@@ -108,11 +108,11 @@ const ToolboxList = (props) => {
             </IconButton>
             <Typography variant="subtitle2">Add topics</Typography>
           </div>
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
 
-      <ExpansionPanel expanded={expanded.stream} id="stream-panel" square>
-        <ExpansionPanelSummary
+      <Accordion expanded={expanded.stream} id="stream-panel" square>
+        <AccordionSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
@@ -120,8 +120,8 @@ const ToolboxList = (props) => {
           }
         >
           <Typography variant="subtitle1">Stream</Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails className="detail">
+        </AccordionSummary>
+        <AccordionDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="stream-list"></div>
           </List>
@@ -131,11 +131,11 @@ const ToolboxList = (props) => {
             onClick={() => handleRedirect('Stream jars')}
             ref={panelAddButtonRef}
           />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
 
-      <ExpansionPanel expanded={expanded.sink} id="sink-panel" square>
-        <ExpansionPanelSummary
+      <Accordion expanded={expanded.sink} id="sink-panel" square>
+        <AccordionSummary
           className="panel-title"
           expandIcon={<ExpandMoreIcon />}
           onClick={() =>
@@ -143,8 +143,8 @@ const ToolboxList = (props) => {
           }
         >
           <Typography variant="subtitle1">Sink</Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails className="detail">
+        </AccordionSummary>
+        <AccordionDetails className="detail">
           <List disablePadding>
             <div className="toolbox-list" id="sink-list">
               {times(5, (index) => (
@@ -163,8 +163,8 @@ const ToolboxList = (props) => {
             onClick={() => handleRedirect('Worker plugins and shared jars')}
             ref={panelAddButtonRef}
           />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+        </AccordionDetails>
+      </Accordion>
     </div>
   );
 };

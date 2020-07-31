@@ -20,9 +20,9 @@ import _ from 'lodash';
 import TuneIcon from '@material-ui/icons/Tune';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
 
 import * as defUtils from 'api/apiInterface/definitionInterface';
 import * as propertyUtils from './PipelinePropertyViewUtils';
@@ -124,13 +124,13 @@ const SettingsPanel = (props) => {
   };
 
   return (
-    <ExpansionPanel
+    <Accordion
       data-testid="settings-panel"
       defaultExpanded={true}
       expanded={isSettingsExpanded}
       square
     >
-      <ExpansionPanelSummary
+      <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         onClick={() => setIsSettingsExpanded((prevState) => !prevState)}
       >
@@ -138,8 +138,8 @@ const SettingsPanel = (props) => {
         <Typography className="section-title" variant="h5">
           Settings
         </Typography>
-      </ExpansionPanelSummary>
-      <ExpansionPanelDetails>
+      </AccordionSummary>
+      <AccordionDetails>
         {Object.keys(settings)
           .filter((key) => !getIgnoreDefs(settings).includes(key))
           .filter((key) => {
@@ -155,8 +155,8 @@ const SettingsPanel = (props) => {
               .find((defKey) => defKey === key);
           })
           .map((key) => renderSettings(settings, key))}
-      </ExpansionPanelDetails>
-    </ExpansionPanel>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 

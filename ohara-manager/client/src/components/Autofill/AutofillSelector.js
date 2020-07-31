@@ -18,9 +18,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { get, find, map, noop, toString } from 'lodash';
 
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Radio from '@material-ui/core/Radio';
 import Table from '@material-ui/core/Table';
@@ -71,12 +71,12 @@ const AutofillSelector = (props) => {
       <Wrapper>
         {settingFillings.map((settingFilling) => {
           return (
-            <ExpansionPanel
+            <Accordion
               expanded={expanded === settingFilling.name}
               key={settingFilling.name}
               onChange={handleChange(settingFilling.name)}
             >
-              <ExpansionPanelSummary
+              <AccordionSummary
                 aria-controls={`autofill-${settingFilling.name}-content`}
                 expandIcon={<ExpandMoreIcon />}
                 id={settingFilling.name}
@@ -88,8 +88,8 @@ const AutofillSelector = (props) => {
                   label={settingFilling.displayName}
                   value={settingFilling.name}
                 />
-              </ExpansionPanelSummary>
-              <ExpansionPanelDetails>
+              </AccordionSummary>
+              <AccordionDetails>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -106,8 +106,8 @@ const AutofillSelector = (props) => {
                     ))}
                   </TableBody>
                 </Table>
-              </ExpansionPanelDetails>
-            </ExpansionPanel>
+              </AccordionDetails>
+            </Accordion>
           );
         })}
       </Wrapper>

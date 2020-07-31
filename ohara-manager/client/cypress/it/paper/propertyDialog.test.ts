@@ -74,10 +74,7 @@ describe('Property dialog', () => {
             .should('have.class', 'Mui-expanded');
 
           // Only one panel is expanded by default
-          cy.get('.MuiExpansionPanel-root.Mui-expanded').should(
-            'have.length',
-            1,
-          );
+          cy.get('.MuiAccordion-root.Mui-expanded').should('have.length', 1);
 
           // These two panels should also be there
           cy.findByText('Core').should('exist');
@@ -190,35 +187,26 @@ describe('Property dialog', () => {
             .should('have.class', 'Mui-expanded');
 
           // Only one panel is expanded by default
-          cy.get('.MuiExpansionPanel-root.Mui-expanded').should(
-            'have.length',
-            1,
-          );
+          cy.get('.MuiAccordion-root.Mui-expanded').should('have.length', 1);
 
           // Open core panel
           cy.findByText('Core')
             .click()
-            .parents('.MuiExpansionPanel-root')
-            .find('.MuiExpansionPanelDetails-root')
+            .parents('.MuiAccordion-root')
+            .find('.MuiAccordionDetails-root')
             .should('exist');
 
           // Only one panel is expanded
-          cy.get('.MuiExpansionPanel-root.Mui-expanded').should(
-            'have.length',
-            1,
-          );
+          cy.get('.MuiAccordion-root.Mui-expanded').should('have.length', 1);
 
           // Open meta panel
           cy.findByText('Meta')
             .click()
-            .parents('.MuiExpansionPanel-root')
-            .find('.MuiExpansionPanelDetails-root')
+            .parents('.MuiAccordion-root')
+            .find('.MuiAccordionDetails-root')
             .should('exist');
 
-          cy.get('.MuiExpansionPanel-root.Mui-expanded').should(
-            'have.length',
-            1,
-          );
+          cy.get('.MuiAccordion-root.Mui-expanded').should('have.length', 1);
         });
 
         // Close the dialog

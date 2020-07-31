@@ -15,7 +15,7 @@
  */
 
 import styled, { css } from 'styled-components';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import Accordion from '@material-ui/core/Accordion';
 
 export const StyledNavigator = styled.nav(
   ({ theme }) => css`
@@ -76,7 +76,7 @@ export const StyledNavigator = styled.nav(
   `,
 );
 
-export const StyledExpansionPanel = styled(ExpansionPanel)(
+export const StyledAccordion = styled(Accordion)(
   ({ theme }) => css`
     box-shadow: none;
     color: ${theme.palette.common.white};
@@ -93,7 +93,7 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
     */
     .MuiCollapse-wrapper,
     .MuiCollapse-wrapperInner,
-    .MuiExpansionPanelDetails-root,
+    .MuiAccordionDetails-root,
     .scrollbar-wrapper,
     div[role='region'] {
       height: 100%;
@@ -108,32 +108,32 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
       }
     }
 
-    &.MuiExpansionPanel-root.Mui-expanded {
+    &.MuiAccordion-root.Mui-expanded {
       margin: 0;
       height: calc(50% - 60px) !important;
     }
 
-    /* Prevent an extra line when the expansion panel is closed...  */
-    &.MuiExpansionPanel-root:before {
+    /* Prevent an extra line when the Accordion panel is closed...  */
+    &.MuiAccordion-root:before {
       height: 0;
     }
 
-    .MuiExpansionPanelSummary-content {
+    .MuiAccordionSummary-content {
       margin: 0;
     }
 
-    .MuiExpansionPanelSummary-root {
+    .MuiAccordionSummary-root {
       padding: 0 ${theme.spacing(2)}px;
       position: relative;
     }
 
-    .MuiExpansionPanelSummary-expandIcon {
+    .MuiAccordionSummary-expandIcon {
       background-color: transparent !important;
       box-shadow: none !important;
       color: white;
     }
 
-    .MuiExpansionPanelDetails-root {
+    .MuiAccordionDetails-root {
       padding: 0;
     }
 
@@ -154,12 +154,12 @@ export const StyledExpansionPanel = styled(ExpansionPanel)(
       cursor: pointer;
     }
 
-    .MuiExpansionPanelSummary-root.Mui-focused {
+    .MuiAccordionSummary-root.Mui-focused {
       /* Remove default focused color which looks a lot like a bug... */
       background-color: transparent;
     }
 
-    .MuiExpansionPanelSummary-root:hover:not(.Mui-disabled) {
+    .MuiAccordionSummary-root:hover:not(.Mui-disabled) {
       /* Disable the title from having pointer cursor */
       cursor: auto;
     }

@@ -17,7 +17,7 @@
 import styled, { css } from 'styled-components';
 
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import Accordion from '@material-ui/core/Accordion';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
 import TextField from '@material-ui/core/TextField';
@@ -74,7 +74,7 @@ export const LeftBody = styled.div(
       box-shadow: none;
     }
 
-    .MuiExpansionPanelDetails-root {
+    .MuiAccordionDetails-root {
       padding: ${theme.spacing(0, 1, 1)};
     }
 
@@ -137,9 +137,9 @@ export const StyleFilter = styled(TextField)(
   `,
 );
 
-export const StyleExpansionPanel = styled(ExpansionPanel)(
+export const StyleAccordion = styled(Accordion)(
   () => css`
-    &.MuiExpansionPanel-root.Mui-expanded {
+    &.MuiAccordion-root.Mui-expanded {
       margin: 0;
     }
   `,

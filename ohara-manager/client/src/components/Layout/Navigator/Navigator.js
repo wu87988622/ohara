@@ -17,8 +17,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import MenuItem from '@material-ui/core/MenuItem';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
@@ -30,7 +30,7 @@ import Outline from './Outline';
 import AddPipelineDialog from './AddPipelineDialog';
 import WorkspaceSettings from 'components/Workspace/Settings';
 import { Button } from 'components/common/Form';
-import { StyledNavigator, StyledExpansionPanel } from './NavigatorStyles';
+import { StyledNavigator, StyledAccordion } from './NavigatorStyles';
 
 const Navigator = ({ pipelineApi }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -64,7 +64,7 @@ const Navigator = ({ pipelineApi }) => {
     // SVG elements also have `className`, but it's not a string 😳
     const isIcon =
       typeof className.includes === 'function' &&
-      className.includes('MuiExpansionPanelSummary-expandIcon');
+      className.includes('MuiAccordionSummary-expandIcon');
 
     if (isSvg || isIcon) setIsExpanded(!isExpanded);
   };
@@ -106,12 +106,12 @@ const Navigator = ({ pipelineApi }) => {
       </Menu>
 
       <AddPipelineDialog isOpen={isOpen} setIsOpen={setIsOpen} />
-      <StyledExpansionPanel
+      <StyledAccordion
         defaultExpanded={true}
         expanded={isExpanded}
         id="pipeline"
       >
-        <ExpansionPanelSummary
+        <AccordionSummary
           disableRipple
           expandIcon={
             <ExpandMoreIcon data-testid="pipeline-list-expand-button" />
@@ -124,13 +124,13 @@ const Navigator = ({ pipelineApi }) => {
             data-testid="new-pipeline-button"
             onClick={handleAddButtonClick}
           />
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
+        </AccordionSummary>
+        <AccordionDetails>
           <div className="scrollbar-wrapper">
             <PipelineList />
           </div>
-        </ExpansionPanelDetails>
-      </StyledExpansionPanel>
+        </AccordionDetails>
+      </StyledAccordion>
       <Outline isExpanded={isExpanded} pipelineApi={pipelineApi} />
       <WorkspaceSettings />
     </StyledNavigator>

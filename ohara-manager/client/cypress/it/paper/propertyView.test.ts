@@ -79,11 +79,11 @@ describe('Property view', () => {
 
       // Only settings panel is expanded
       cy.findByTestId('settings-panel')
-        .find('.MuiExpansionPanelSummary-root')
+        .find('.MuiAccordionSummary-root')
         .should('be.visible')
         .and('have.class', 'Mui-expanded');
 
-      cy.get('.MuiExpansionPanel-root.Mui-expanded').should('have.length', 1);
+      cy.get('.MuiAccordion-root.Mui-expanded').should('have.length', 1);
     });
   });
 
@@ -175,7 +175,7 @@ describe('Property view', () => {
     cy.getCell(topicName).click();
 
     cy.get('#property-view')
-      .find('.MuiExpansionPanelDetails-root')
+      .find('.MuiAccordionDetails-root')
       .then(async ($details) => {
         const objectKey = { group: 'broker', name: 'workspace1' };
         // Need both defs and settings in order to do the assertion
@@ -228,7 +228,7 @@ describe('Property view', () => {
     cy.getCell(sourceName).click();
 
     cy.get('#property-view')
-      .find('.MuiExpansionPanelDetails-root')
+      .find('.MuiAccordionDetails-root')
       .then(async ($details) => {
         const objectKey = { group: 'worker', name: 'workspace1' };
 
@@ -336,11 +336,11 @@ describe('Property view', () => {
       cy.findByText('Nodes').should('exist');
 
       cy.findByTestId('nodes-panel')
-        .find('.MuiExpansionPanelSummary-root')
+        .find('.MuiAccordionSummary-root')
         .as('summary');
 
       cy.findByTestId('nodes-panel').within(() => {
-        cy.get(' > .MuiExpansionPanelSummary-root').as('summary');
+        cy.get(' > .MuiAccordionSummary-root').as('summary');
 
         // Is hidden by default
         cy.get('@summary').should('not.have.class', 'Mui-expanded');
@@ -386,7 +386,7 @@ describe('Property view', () => {
 
     // target topic should not exist before creating topic
     cy.get('#property-view')
-      .find('.MuiExpansionPanelDetails-root')
+      .find('.MuiAccordionDetails-root')
       .contains('span', 'Target topic')
       .should('not.exist');
 
@@ -400,7 +400,7 @@ describe('Property view', () => {
     // after topic creation executed successfully
     // we should see the topic field in property view
     cy.get('#property-view')
-      .find('.MuiExpansionPanelDetails-root')
+      .find('.MuiAccordionDetails-root')
       .contains('span', 'Target topic')
       .siblings('span')
       .invoke('html')

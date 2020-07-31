@@ -91,17 +91,17 @@ export const Wrapper = styled(Paper)(
       overflow-y: auto;
     }
 
-    .MuiExpansionPanel-root {
+    .MuiAccordion-root {
       /* We don't want the default shadow */
       box-shadow: none;
       border-bottom: 1px solid ${theme.palette.divider};
     }
 
-    .MuiExpansionPanelSummary-content {
+    .MuiAccordionSummary-content {
       align-items: center;
     }
 
-    .MuiExpansionPanelDetails-root {
+    .MuiAccordionDetails-root {
       /* Mui's default "display: flex" breaks our layout */
       display: block;
     }

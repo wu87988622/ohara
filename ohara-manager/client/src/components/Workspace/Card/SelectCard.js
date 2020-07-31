@@ -25,9 +25,9 @@ import Card from '@material-ui/core/Card';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
 
 import { getDateFromTimestamp } from 'utils/date';
 
@@ -66,26 +66,26 @@ const StyledCard = styled(Card)(
   `,
 );
 
-const StyledExpansionPanel = styled(ExpansionPanel)`
-  &.MuiExpansionPanel-root.Mui-expanded {
+const StyledAccordion = styled(Accordion)`
+  &.MuiAccordion-root.Mui-expanded {
     margin: 0;
   }
 `;
-const StyledExpansionPanelSummary = styled(ExpansionPanelSummary)(
+const StyledAccordionSummary = styled(AccordionSummary)(
   ({ theme }) => css`
     padding: 0 ${theme.spacing(1)}px 0 ${theme.spacing(2)}px;
 
-    &.MuiExpansionPanelSummary-root.Mui-expanded {
+    &.MuiAccordionSummary-root.Mui-expanded {
       min-height: 0;
       height: ${theme.spacing(4)}px;
     }
-    .MuiExpansionPanelSummary-content.Mui-expanded {
+    .MuiAccordionSummary-content.Mui-expanded {
       margin: 0;
     }
   `,
 );
 
-const StyledExpansionPanelDetails = styled(ExpansionPanelDetails)(
+const StyledAccordionDetails = styled(AccordionDetails)(
   ({ theme }) => css`
     padding: ${theme.spacing(0.5)}px ${theme.spacing(1)}px
       ${theme.spacing(0.5)}px ${theme.spacing(2)}px;
@@ -147,17 +147,17 @@ const SelectCard = (props) => {
           {Object.keys(groupBy(rows.classInfos, 'classType')).map((key) => {
             const array = groupBy(rows.classInfos, 'classType')[key];
             return (
-              <StyledExpansionPanel key={key}>
-                <StyledExpansionPanelSummary
+              <StyledAccordion key={key}>
+                <StyledAccordionSummary
                   expandIcon={<ExpandMoreIcon />}
                   variant="subtitle2"
                 >
                   <StyledTypography variant="subtitle2">{key}</StyledTypography>
                   <div>{array.length}</div>
-                </StyledExpansionPanelSummary>
+                </StyledAccordionSummary>
                 {array.map((classes) => {
                   return (
-                    <StyledExpansionPanelDetails key={classes.className}>
+                    <StyledAccordionDetails key={classes.className}>
                       <StyledTypography variant="subtitle2">
                         {classes.className.split('.').pop()}
                       </StyledTypography>
@@ -170,10 +170,10 @@ const SelectCard = (props) => {
                           '',
                         )}
                       </StyledTypographyVersion>
-                    </StyledExpansionPanelDetails>
+                    </StyledAccordionDetails>
                   );
                 })}
-              </StyledExpansionPanel>
+              </StyledAccordion>
             );
           })}
         </>
