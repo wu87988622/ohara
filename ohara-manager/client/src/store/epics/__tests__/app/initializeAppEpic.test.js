@@ -39,7 +39,7 @@ it('initial app correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-|         ';
-    const expected = '--------(abc|)';
+    const expected = '--- 99ms (abc|)';
     const subs = '    ^---!---------';
 
     const action$ = hot(input, {
@@ -90,7 +90,7 @@ it('switch to existed workspace correctly', () => {
       workspaceName: 'workspace1',
     };
     const input = '   ^-a-|         ';
-    const expected = '--------(abc|)';
+    const expected = '--- 99ms (abc|)';
     const subs = '    ^---!---------';
 
     const action$ = hot(input, {
@@ -143,9 +143,9 @@ it('switch to existed workspace and pipeline correctly', () => {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a-|         ';
-    const expected = '--------(abc|)';
-    const subs = '    ^---!---------';
+    const input = '   ^-a-         ';
+    const expected = '--- 99ms (abc)';
+    const subs = '    ^------------';
 
     const action$ = hot(input, {
       a: {
@@ -198,9 +198,9 @@ it('multiple actions will only used the latest action', () => {
       workspaceName: 'workspace1',
       pipelineName: 'p1',
     };
-    const input = '   ^-a--b-|         ';
-    const expected = '-----------(abc|)';
-    const subs = '    ^------!---------';
+    const input = '   ^-a--b-         ';
+    const expected = '------ 99ms (abc)';
+    const subs = '    ^---------------';
 
     const action$ = hot(input, {
       a: {

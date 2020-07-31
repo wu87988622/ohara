@@ -48,7 +48,7 @@ export const create = (params: ServiceBody): Observable<ObjectResponse> =>
     status: 200,
     title: 'mock create workspace data',
     data: params,
-  }).pipe(delay(2000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 5 ms
 export const getAll = (): Observable<ObjectResponseList> =>
@@ -56,7 +56,7 @@ export const getAll = (): Observable<ObjectResponseList> =>
     status: 200,
     title: 'mock workspace data',
     data: entities,
-  }).pipe(delay(5));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 1s
 export const remove = (): Observable<BasicResponse> =>
@@ -64,7 +64,7 @@ export const remove = (): Observable<BasicResponse> =>
     status: 200,
     title: 'mock delete workspace data',
     data: {},
-  }).pipe(delay(1000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: ServiceBody): Observable<BasicResponse> =>

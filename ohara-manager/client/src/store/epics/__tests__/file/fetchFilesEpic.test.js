@@ -36,7 +36,7 @@ it('fetch file list should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s    ';
-    const expected = '--a 499ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^----------';
 
     const action$ = hot(input, {
@@ -72,7 +72,7 @@ it('fetch file list multiple times within period should get first result', () =>
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 50ms a   ';
-    const expected = '--a 499ms u--';
+    const expected = '--a 99ms u--';
     const subs = '    ^------------';
 
     const action$ = hot(input, {

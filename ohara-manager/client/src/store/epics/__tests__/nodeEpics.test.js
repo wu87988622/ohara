@@ -49,7 +49,7 @@ it('create node should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '--a 1999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
@@ -88,7 +88,7 @@ it('create multiple nodes should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab          ';
-    const expected = '--ab 1998ms uv';
+    const expected = '--ab 98ms uv';
     const subs = '    ^-------------';
     const anotherNodeEntity = { ...nodeEntity, hostname: 'node01' };
 
@@ -146,7 +146,7 @@ it('create same node within period should be created once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a    ';
-    const expected = '--a 1999ms u--';
+    const expected = '--a 99ms u--';
     const subs = '    ^-------------';
 
     const action$ = hot(input, {
@@ -406,9 +406,9 @@ it('fetch node list should be worked correctly', () => {
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a-----|';
-    const expected = '--a----u|';
-    const subs = '    ^-------!';
+    const input = '   ^-a-------';
+    const expected = '--a 99ms u';
+    const subs = '    ^---------';
 
     const action$ = hot(input, {
       a: {
@@ -444,8 +444,8 @@ it('fetch node list multiple times within period should get first result', () =>
   makeTestScheduler().run((helpers) => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
-    const input = '   ^-a 50ms a   ';
-    const expected = '--a----u-----';
+    const input = '   ^-a 50ms a';
+    const expected = '--a 99ms u';
     const subs = '    ^------------';
 
     const action$ = hot(input, {
@@ -537,7 +537,7 @@ it('delete node should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 499ms v';
+    const expected = '--a 99ms v';
     const subs = '    ^----------';
 
     const action$ = hot(input, {
@@ -651,7 +651,7 @@ it('delete node multiple times should be executed once', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a---a 1s a 10s ';
-    const expected = '--a       499ms v';
+    const expected = '--a       99ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -690,7 +690,7 @@ it('delete different node should be worked correctly', () => {
       user: 'fake',
     };
     const input = '   ^-a--b           ';
-    const expected = '--a--b 496ms y--z';
+    const expected = '--a--b 96ms y--z';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {

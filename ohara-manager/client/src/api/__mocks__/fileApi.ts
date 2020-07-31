@@ -42,7 +42,7 @@ export const create = (params: FileRequest): Observable<FileResponse> =>
     status: 200,
     title: 'mock create file data',
     data: { ...entity, ...params },
-  }).pipe(delay(2000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: {
@@ -60,7 +60,7 @@ export const remove = (): Observable<BasicResponse> =>
     status: 200,
     title: 'mock delete file data',
     data: {},
-  }).pipe(delay(1000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 500ms
 export const get = (): Observable<FileResponse> =>
@@ -68,7 +68,7 @@ export const get = (): Observable<FileResponse> =>
     status: 200,
     title: 'mock get file data',
     data: entity,
-  }).pipe(delay(500));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 500ms
 export const getAll = (): Observable<FileResponseList> =>
@@ -76,4 +76,4 @@ export const getAll = (): Observable<FileResponseList> =>
     status: 200,
     title: 'mock get file list data',
     data: [entity],
-  }).pipe(delay(500));
+  }).pipe(delay(100));

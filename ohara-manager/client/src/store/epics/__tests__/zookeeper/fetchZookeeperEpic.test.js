@@ -41,7 +41,7 @@ it('fetch zookeeper should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
-    const expected = '--a 2999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
@@ -88,7 +88,7 @@ it('fetch zookeeper multiple times within period should get first result', () =>
 
     const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
-    const expected = '--a 2999ms u-';
+    const expected = '--a 99ms u-';
     const subs = '    ^------------';
 
     const action$ = hot(input, {
@@ -138,8 +138,8 @@ it('fetch zookeeper multiple times without period should get latest result', () 
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherzk', group: 'newworkspace' };
-    const input = '   ^-a 2s b         ';
-    const expected = '--a 2s b 2999ms u';
+    const input = '   ^-a        2s     b       ';
+    const expected = '--a 99ms u 1900ms b 99ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -168,6 +168,21 @@ it('fetch zookeeper multiple times without period should get latest result', () 
         },
       },
       u: {
+        type: actions.fetchZookeeper.SUCCESS,
+        payload: {
+          zookeeperId: zkId,
+          entities: {
+            zookeepers: {
+              [zkId]: { ...zookeeperEntity, ...key },
+            },
+            infos: {
+              [zkId]: { ...zookeeperInfoEntity, ...key },
+            },
+          },
+          result: zkId,
+        },
+      },
+      v: {
         type: actions.fetchZookeeper.SUCCESS,
         payload: {
           zookeeperId: getId(anotherKey),

@@ -38,7 +38,7 @@ it('delete file should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a        ';
-    const expected = '--a 999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^----------';
 
     const action$ = hot(input, {
@@ -71,7 +71,7 @@ it('delete multiple files should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab         ';
-    const expected = '--ab 998ms uv';
+    const expected = '--ab 98ms uv';
     const subs = '    ^------------';
     const anotherFileEntity = { ...fileEntity, name: 'app.jar' };
 
@@ -117,7 +117,7 @@ it('delete same file within period should be deleted once only', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-aa 10s a   ';
-    const expected = '--a 999ms u--';
+    const expected = '--a 99ms u--';
     const subs = '    ^------------';
 
     const action$ = hot(input, {

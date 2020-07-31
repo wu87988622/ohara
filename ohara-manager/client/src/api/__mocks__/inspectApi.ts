@@ -154,7 +154,7 @@ export const getZookeeperInfo = (): Observable<InspectServiceResponse> =>
     status: 200,
     title: 'mock inspect zookeeper data',
     data: zookeeperInfoEntity,
-  }).pipe(delay(3000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 3s
 export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
@@ -162,7 +162,7 @@ export const getBrokerInfo = (): Observable<InspectServiceResponse> =>
     status: 200,
     title: 'mock inspect broker data',
     data: brokerInfoEntity,
-  }).pipe(delay(3000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 3s
 export const getWorkerInfo = (): Observable<InspectServiceResponse> =>
@@ -170,14 +170,14 @@ export const getWorkerInfo = (): Observable<InspectServiceResponse> =>
     status: 200,
     title: 'mock inspect worker data',
     data: workerInfoEntity,
-  }).pipe(delay(3000));
+  }).pipe(delay(100));
 
 export const getShabondiInfo = (): Observable<InspectServiceResponse> =>
   of({
     status: 200,
     title: 'mock inspect shabondi data',
     data: shabondiInfoEntity,
-  });
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 5s
 export const getTopicData = (): Observable<InspectTopicResponse> =>
@@ -185,4 +185,4 @@ export const getTopicData = (): Observable<InspectTopicResponse> =>
     status: 200,
     title: 'mock inspect topic data',
     data: topicEntity,
-  }).pipe(delay(5000));
+  }).pipe(delay(100));

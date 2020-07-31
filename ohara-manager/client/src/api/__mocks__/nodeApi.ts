@@ -80,7 +80,7 @@ export const create = (params: NodeRequest): Observable<NodeResponse> =>
     status: 200,
     title: 'mock create node data',
     data: { ...entity, ...params },
-  }).pipe(delay(2000));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 100ms
 export const update = (params: NodeRequest): Observable<NodeResponse> =>
@@ -96,7 +96,7 @@ export const getAll = (): Observable<NodeResponseList> =>
     status: 200,
     title: 'mock node data',
     data: [entity],
-  }).pipe(delay(5));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 5 ms
 export const get = (): Observable<NodeResponse> =>
@@ -104,7 +104,7 @@ export const get = (): Observable<NodeResponse> =>
     status: 200,
     title: 'mock node data',
     data: entity,
-  }).pipe(delay(5));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 500ms
 export const remove = (): Observable<BasicResponse> =>
@@ -114,5 +114,5 @@ export const remove = (): Observable<BasicResponse> =>
     data: {},
   }).pipe(
     tap(() => (entity.hostname = 'unexistednode')),
-    delay(500),
+    delay(100),
   );

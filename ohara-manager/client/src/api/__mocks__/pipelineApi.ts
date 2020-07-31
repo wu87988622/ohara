@@ -70,7 +70,7 @@ export const get = (): Observable<PipelineResponse> =>
     status: 200,
     title: 'Get pipeline mock',
     data: entity,
-  }).pipe(delay(6));
+  }).pipe(delay(100));
 
 // simulate a promise request with a delay of 6 ms
 export const getAll = (): Observable<PipelineResponseList> =>
@@ -78,21 +78,21 @@ export const getAll = (): Observable<PipelineResponseList> =>
     status: 200,
     title: 'Get all pipelines mock',
     data: entities,
-  }).pipe(delay(6));
+  }).pipe(delay(100));
 
 export const create = (params: PipelineRequest): Observable<PipelineResponse> =>
   of({
     status: 200,
     title: 'Create pipeline mock',
     data: { ...entity, ...params },
-  }).pipe(delay(2000));
+  }).pipe(delay(100));
 
 export const remove = (): Observable<BasicResponse> =>
   of({
     status: 200,
     title: 'Delete pipeline mock',
     data: {},
-  }).pipe(delay(500));
+  }).pipe(delay(100));
 
 export const update = (params: PipelineRequest): Observable<PipelineResponse> =>
   of({

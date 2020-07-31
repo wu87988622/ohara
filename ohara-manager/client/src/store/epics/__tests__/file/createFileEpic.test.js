@@ -39,7 +39,7 @@ it('create file should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '-- 500ms a 1999ms u';
+    const expected = '-- 100ms a 99ms u';
     const subs = '    ^-----------';
 
     jest.spyOn(fileApi, 'getAll').mockReturnValue(
@@ -47,7 +47,7 @@ it('create file should be worked correctly', () => {
         status: 200,
         title: 'Get file mock',
         data: [],
-      }).pipe(delay(500)),
+      }).pipe(delay(100)),
     );
 
     const action$ = hot(input, {
@@ -86,7 +86,7 @@ it('create multiple files should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-ab                                ';
-    const expected = '-- 500ms a 1999ms u 499ms b 1999ms v';
+    const expected = '-- 100ms a 99ms u 99ms b 99ms v';
     const subs = '    ^-----------------------------------';
     const anotherFileEntity = { ...fileEntity, name: 'app.jar' };
 
@@ -146,7 +146,7 @@ it('create same file within period should be rename', () => {
     jest.restoreAllMocks();
 
     const input = '   ^-a                ';
-    const expected = '-- 500ms a 1999ms u';
+    const expected = '-- 100ms a 99ms u';
     const subs = '    ^------------------';
     const anotherFileEntity = {
       ...fileEntity,
@@ -198,7 +198,7 @@ it('throw exception of create file should also trigger event log action', () => 
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a-----------|';
-    const expected = '-- 500ms (aeu|)';
+    const expected = '-- 100ms (aeu|)';
     const subs = '    ^-------------!';
 
     const action$ = hot(input, {

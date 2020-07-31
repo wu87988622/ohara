@@ -51,8 +51,8 @@ it('create workspace should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '--a 1999ms b';
-    const subs = ['   ^-----------', '--^ 1999ms !'];
+    const expected = '--a 99ms b';
+    const subs = ['   ^-----------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {

@@ -55,7 +55,7 @@ it('fetch topic data should be executed correctly', () => {
     const state$ = new StateObservable(hot('v', { v: stateValues }));
 
     const input = '   ^-a-----------|';
-    const expected = '--- 4999ms (a|)';
+    const expected = '--- 99ms (a|)';
     const subs = '    ^-------------!';
 
     const action$ = hot(input, {
@@ -86,9 +86,9 @@ it('fetch topic data multiple times should be executed the first one until finis
 
     const state$ = new StateObservable(hot('v', { v: stateValues }));
 
-    const input = '   ^-a-aa    5s   a-----------|';
-    const expected = '--- 4999ms a---- 4999ms (a|)';
-    const subs = '    ^-----    5s   ------------!';
+    const input = '   ^-a-aa        200ms a-----------|';
+    const expected = '--- 99ms a--- 200ms (a|)';
+    const subs = '    ^-----        200ms ------------!';
 
     const action$ = hot(input, {
       a: {

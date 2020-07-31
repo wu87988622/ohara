@@ -38,7 +38,7 @@ it('should create a new pipeline and switch to it', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a         ';
-    const expected = '--a 1999ms (bc)';
+    const expected = '--a 99ms (bc)';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {

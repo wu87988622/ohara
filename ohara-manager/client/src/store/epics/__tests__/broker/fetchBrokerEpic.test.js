@@ -45,7 +45,7 @@ it('fetch broker should be worked correctly', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
-    const expected = '--a 2999ms u';
+    const expected = '--a 99ms u';
     const subs = '    ^-----------';
 
     const action$ = hot(input, {
@@ -92,7 +92,7 @@ it('fetch broker multiple times within period should get first result', () => {
 
     const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
     const input = '   ^-a 50ms b   ';
-    const expected = '--a 2999ms u-';
+    const expected = '--a 99ms u-';
     const subs = '    ^------------';
 
     const action$ = hot(input, {
@@ -142,8 +142,8 @@ it('fetch broker multiple times without period should get latest result', () => 
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const anotherKey = { name: 'anotherbk', group: 'newworkspace' };
-    const input = '   ^-a 2s b         ';
-    const expected = '--a 2s b 2999ms u';
+    const input = '   ^-a        2s     b       ';
+    const expected = '--a 99ms u 1900ms b 99ms v';
     const subs = '    ^----------------';
 
     const action$ = hot(input, {
@@ -172,6 +172,21 @@ it('fetch broker multiple times without period should get latest result', () => 
         },
       },
       u: {
+        type: actions.fetchBroker.SUCCESS,
+        payload: {
+          brokerId: bkId,
+          entities: {
+            brokers: {
+              [bkId]: { ...brokerEntity, ...key },
+            },
+            infos: {
+              [bkId]: { ...brokerInfoEntity, ...key },
+            },
+          },
+          result: bkId,
+        },
+      },
+      v: {
         type: actions.fetchBroker.SUCCESS,
         payload: {
           brokerId: getId(anotherKey),

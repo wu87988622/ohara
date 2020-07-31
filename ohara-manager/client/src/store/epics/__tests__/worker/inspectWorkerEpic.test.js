@@ -41,8 +41,8 @@ it('should inspect a worker', () => {
     const { hot, expectObservable, expectSubscriptions, flush } = helpers;
 
     const input = '   ^-a 10s     ';
-    const expected = '--a 2999ms u';
-    const subs = ['^-----------', '--^ 2999ms !'];
+    const expected = '--a 99ms u';
+    const subs = ['^-----------', '--^ 99ms !'];
 
     const action$ = hot(input, {
       a: {
