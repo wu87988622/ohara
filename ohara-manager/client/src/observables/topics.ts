@@ -20,7 +20,11 @@ import { map, mergeMap, concatAll, last, tap, mapTo } from 'rxjs/operators';
 import { retryBackoff } from 'backoff-rxjs';
 import { isEmpty } from 'lodash';
 import { ObjectKey } from 'api/apiInterface/basicInterface';
-import { TopicData, TopicResponse } from 'api/apiInterface/topicInterface';
+import {
+  TopicData,
+  TopicResponse,
+  State,
+} from 'api/apiInterface/topicInterface';
 import * as topicApi from 'api/topicApi';
 import { RETRY_STRATEGY } from 'const';
 import { getKey } from 'utils/object';
@@ -47,7 +51,7 @@ export function startTopic(key: ObjectKey) {
     defer(() => topicApi.start(key)),
     defer(() => topicApi.get(key)).pipe(
       tap((res: TopicResponse) => {
-        if (res?.data?.state !== 'RUNNING') {
+        if (res?.data?.state !== State.RUNNING) {
           throw {
             ...res,
             title: `Failed to start topic ${key.name}: Unable to confirm the status of the topic is running`,

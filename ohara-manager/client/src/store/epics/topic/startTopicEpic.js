@@ -31,6 +31,7 @@ import {
 
 import { LOG_LEVEL } from 'const';
 import * as topicApi from 'api/topicApi';
+import { State } from 'api/apiInterface/topicInterface';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
@@ -42,7 +43,7 @@ export const startTopic$ = (params) => {
     defer(() => topicApi.start(params)),
     defer(() => topicApi.get(params)).pipe(
       map((res) => {
-        if (!res.data.state || res.data.state !== 'RUNNING') throw res;
+        if (!res.data.state || res.data.state !== State.RUNNING) throw res;
         return res.data;
       }),
     ),

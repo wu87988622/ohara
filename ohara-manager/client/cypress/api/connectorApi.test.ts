@@ -139,7 +139,7 @@ describe('Connector API', () => {
     await connectorApi.create(connector);
     await connectorApi.start(connector);
     const runningRes = await connectorApi.get(connector);
-    expect(runningRes.data.state).to.eq('RUNNING');
+    expect(runningRes.data.state).to.eq(State.RUNNING);
 
     await connectorApi.stop(connector);
     await connectorApi.remove(connector);

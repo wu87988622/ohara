@@ -21,9 +21,10 @@ import { capitalize } from 'lodash';
 import Chip from '@material-ui/core/Chip';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import HelpIcon from '@material-ui/icons/Help';
+import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
 
 const ClusterStateChip = ({ cluster }) => {
-  if (cluster?.state === 'RUNNING') {
+  if (cluster?.state === SERVICE_STATE.RUNNING) {
     return (
       <Chip
         color="primary"

@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { get, merge, reject } from 'lodash';
 
 import * as hooks from 'hooks';
+import { State } from 'api/apiInterface/topicInterface';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import { getId, isEqualByKey } from 'utils/object';
@@ -256,7 +257,7 @@ export const useTopicsInToolbox = () => {
       (state) =>
         reject(
           selectors.getTopicsByGroup(state, { group }),
-          (topic) => !topic.isShared || topic.state !== 'RUNNING',
+          (topic) => !topic.isShared || topic.state !== State.RUNNING,
         ),
       [group],
     ),

@@ -22,6 +22,7 @@ import Link from '@material-ui/core/Link';
 import Tooltip from '@material-ui/core/Tooltip';
 import CreateIcon from '@material-ui/icons/Create';
 
+import { State } from 'api/apiInterface/topicInterface';
 import { Actions, MuiTable as Table } from 'components/common/Table';
 import TopicCreateDialog from './TopicCreateDialog';
 import TopicDeleteDialog from './TopicDeleteDialog';
@@ -128,7 +129,7 @@ function TopicTable(props) {
       <Table
         actions={[
           {
-            disabled: broker?.state !== 'RUNNING',
+            disabled: broker?.state !== State.RUNNING,
             hidden: !options?.showCreateIcon,
             icon: () => <CreateIcon />,
             isFreeAction: true,

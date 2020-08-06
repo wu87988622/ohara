@@ -23,6 +23,7 @@
 import * as generate from '../../src/utils/generate';
 import * as topicApi from '../../src/api/topicApi';
 import * as inspectApi from '../../src/api/inspectApi';
+import { State } from '../../src/api/apiInterface/topicInterface';
 import {
   createServicesInNodes,
   deleteAllServices,
@@ -109,7 +110,7 @@ describe('Topic API', () => {
     await topicApi.create(topic);
     await topicApi.start(topic);
     const runningRes = await topicApi.get(topic);
-    expect(runningRes.data.state).to.eq('RUNNING');
+    expect(runningRes.data.state).to.eq(State.RUNNING);
 
     await topicApi.stop(topic);
     await topicApi.remove(topic);
@@ -144,7 +145,7 @@ describe('Topic API', () => {
 
     await topicApi.start(topic);
     const runningTopicRes = await topicApi.get(topic);
-    expect(runningTopicRes.data.state).to.eq('RUNNING');
+    expect(runningTopicRes.data.state).to.eq(State.RUNNING);
   });
 
   it('stopTopic', async () => {
@@ -156,7 +157,7 @@ describe('Topic API', () => {
 
     await topicApi.start(topic);
     const runningTopicRes = await topicApi.get(topic);
-    expect(runningTopicRes.data.state).to.eq('RUNNING');
+    expect(runningTopicRes.data.state).to.eq(State.RUNNING);
 
     await topicApi.stop(topic);
     const stopTopicRes = await topicApi.get(topic);

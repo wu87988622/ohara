@@ -27,8 +27,7 @@ import {
   NodeRequest,
   NodeResponse,
 } from '../../src/api/apiInterface/nodeInterface';
-import { ClusterResponse } from '../../src/api/apiInterface/clusterInterface';
-import { TopicResponse } from '../../src/api/apiInterface/topicInterface';
+import { State } from '../../src/api/apiInterface/topicInterface';
 import * as generate from '../../src/utils/generate';
 import { deleteAllServices, generateNodeIfNeeded } from '../utils';
 import { KIND } from '../../src/const';
@@ -447,7 +446,7 @@ Cypress.Commands.add(
         cy.getTableCellByColumn($table, 'Name', name).should('exist');
         cy.getTableCellByColumn($table, 'State')
           .invoke('html')
-          .should('equal', 'RUNNING');
+          .should('equal', State.RUNNING);
       });
 
     cy.findByTestId('workspace-settings-dialog-close-button').click({

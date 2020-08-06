@@ -16,6 +16,10 @@
 
 import { BasicResponse, Metrics } from './basicInterface';
 
+export enum State {
+  RUNNING = 'RUNNING',
+}
+
 interface PartitionNode {
   id: number;
   host: string;
@@ -30,7 +34,7 @@ interface PartitionInfo {
   endOffset: number;
 }
 export interface TopicData {
-  state?: 'RUNNING';
+  state?: State;
   partitionInfos: PartitionInfo[];
   nodeMetrics: {
     [hostname: string]: Metrics;
