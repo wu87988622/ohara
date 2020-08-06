@@ -18,7 +18,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, zip, defer, iif, throwError, from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   distinctUntilChanged,
@@ -31,7 +30,8 @@ import {
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export const deleteStream$ = (value) => {
   const { params, options = {} } = value;
@@ -79,17 +79,14 @@ export const deleteStream$ = (value) => {
       ]);
     }),
     startWith(actions.deleteStream.request({ streamId })),
-    catchError((error) => {
+    catchErrorWithEventLog((error) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
         });
       }
 
-      return from([
-        actions.deleteStream.failure(merge(error, { streamId })),
-        actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
-      ]);
+      return actions.deleteStream.failure(merge(error, { streamId }));
     }),
   );
 };

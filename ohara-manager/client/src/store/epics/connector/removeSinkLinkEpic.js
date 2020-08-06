@@ -17,12 +17,12 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { map, startWith, switchMap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) => {
   return action$.pipe(
@@ -33,12 +33,9 @@ export default (action$) => {
         map((res) => normalize(res.data, schema.connector)),
         map((entities) => actions.removeConnectorSinkLink.success(entities)),
         startWith(actions.removeConnectorSinkLink.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           options.paperApi.addLink(params.id, options.topic.id);
-          return from([
-            actions.removeConnectorSinkLink.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.removeConnectorSinkLink.failure(err);
         }),
       ),
     ),

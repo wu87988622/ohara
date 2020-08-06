@@ -16,12 +16,11 @@
 
 import { normalize } from 'normalizr';
 import { combineEpics, ofType } from 'redux-observable';
-import { of, defer, iif, throwError, zip, from } from 'rxjs';
+import { of, defer, iif, throwError, zip } from 'rxjs';
 import {
   switchMap,
   map,
   startWith,
-  catchError,
   retryWhen,
   delay,
   concatMap,
@@ -30,10 +29,10 @@ import {
   throttleTime,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import * as nodeApi from 'api/nodeApi';
+import { catchErrorWithEventLog } from './utils';
 
 export const createNodeEpic = (action$) =>
   action$.pipe(
@@ -50,14 +49,11 @@ export const createNodeEpic = (action$) =>
           return actions.createNode.success(entities);
         }),
         startWith(actions.createNode.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (options?.onError) {
             options.onError(err);
           }
-          return from([
-            actions.createNode.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.createNode.failure(err);
         }),
       ),
     ),
@@ -72,12 +68,7 @@ export const updateNodeEpic = (action$) =>
         map((res) => normalize(res.data, schema.node)),
         map((entities) => actions.updateNode.success(entities)),
         startWith(actions.updateNode.request()),
-        catchError((err) =>
-          from([
-            actions.updateNode.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.updateNode.failure(err)),
       ),
     ),
   );
@@ -91,12 +82,7 @@ export const fetchNodesEpic = (action$) =>
         map((res) => normalize(res.data, [schema.node])),
         map((entities) => actions.fetchNodes.success(entities)),
         startWith(actions.fetchNodes.request()),
-        catchError((err) =>
-          from([
-            actions.fetchNodes.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.fetchNodes.failure(err)),
       ),
     ),
   );
@@ -140,12 +126,9 @@ export const deleteNodeEpic = (action$) =>
           return actions.deleteNode.success(values);
         }),
         startWith(actions.deleteNode.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteNode.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.deleteNode.failure(err);
         }),
       );
     }),

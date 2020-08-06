@@ -207,7 +207,6 @@ it('throw exception of update topic should also trigger event log action', () =>
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          topicId,
           type: LOG_LEVEL.error,
         },
       },

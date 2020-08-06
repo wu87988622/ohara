@@ -17,14 +17,15 @@
 import _ from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap } from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, mergeMap } from 'rxjs/operators';
 
 import * as streamApi from 'api/streamApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL, CELL_TYPE } from 'const';
+import { CELL_TYPE } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -41,11 +42,8 @@ export default (action$) =>
           );
         }),
         startWith(actions.updateStream.request({ streamId })),
-        catchError((error) =>
-          from([
-            actions.updateStream.failure(_.merge(error, { streamId })),
-            actions.createEventLog.trigger({ ...error, type: LOG_LEVEL.error }),
-          ]),
+        catchErrorWithEventLog((error) =>
+          actions.updateStream.failure(_.merge(error, { streamId })),
         ),
       );
     }),

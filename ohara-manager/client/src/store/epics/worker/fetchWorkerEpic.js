@@ -17,9 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   map,
   switchMap,
   startWith,
@@ -28,12 +26,12 @@ import {
   endWith,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { fetchWorker } from 'observables';
 
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 const fetchWorker$ = (params) => {
   const workerId = getId(params);
@@ -42,11 +40,8 @@ const fetchWorker$ = (params) => {
     map((normalizedData) => actions.fetchWorker.success(normalizedData)),
     startWith(actions.fetchWorker.request({ workerId })),
     endWith(actions.inspectWorker.trigger(params)),
-    catchError((err) =>
-      from([
-        actions.fetchWorker.failure(merge(err, { workerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
+    catchErrorWithEventLog((err) =>
+      actions.fetchWorker.failure(merge(err, { workerId })),
     ),
   );
 };

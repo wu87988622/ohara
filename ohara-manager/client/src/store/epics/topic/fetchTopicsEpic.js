@@ -16,13 +16,13 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import { catchError, map, switchMap, startWith } from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, switchMap, startWith } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -32,12 +32,7 @@ export default (action$) =>
         map((res) => normalize(res.data, [schema.topic])),
         map((normalizedData) => actions.fetchTopics.success(normalizedData)),
         startWith(actions.fetchTopics.request()),
-        catchError((err) =>
-          from([
-            actions.fetchTopics.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.fetchTopics.failure(err)),
       ),
     ),
   );

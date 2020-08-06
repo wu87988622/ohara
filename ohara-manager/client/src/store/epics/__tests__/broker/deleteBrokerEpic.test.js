@@ -199,7 +199,6 @@ it('throw exception of delete broker should also trigger event log action', () =
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          brokerId: bkId,
           type: LOG_LEVEL.error,
         },
       },

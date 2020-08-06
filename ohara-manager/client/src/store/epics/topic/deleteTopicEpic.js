@@ -17,18 +17,12 @@
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  mergeMap,
-  distinctUntilChanged,
-  startWith,
-} from 'rxjs/operators';
+import { map, mergeMap, distinctUntilChanged, startWith } from 'rxjs/operators';
 
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 // Note: The caller SHOULD handle the error of this action
 export const deleteTopic$ = (params) => {
@@ -51,11 +45,8 @@ export default (action$) =>
     distinctUntilChanged(),
     mergeMap((params) =>
       deleteTopic$(params).pipe(
-        catchError((err) =>
-          from([
-            actions.deleteTopic.failure(merge(err, { topicId: getId(params) })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
+        catchErrorWithEventLog((err) =>
+          actions.deleteTopic.failure(merge(err, { topicId: getId(params) })),
         ),
       ),
     ),

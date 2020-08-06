@@ -164,7 +164,6 @@ it('start broker failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          brokerId: bkId,
           data: brokerEntity,
           status: 200,
           title: `Failed to start broker ${brokerEntity.name}: Unable to confirm the status of the broker is running`,

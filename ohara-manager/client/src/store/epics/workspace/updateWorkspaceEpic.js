@@ -17,14 +17,13 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
-import { catchError, map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { updateWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -40,14 +39,11 @@ export default (action$) =>
           actions.updateWorkspace.success(normalizedData),
         ),
         startWith(actions.updateWorkspace.request({ workspaceId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.updateWorkspace.failure(
-              merge(err, { workspaceId: getId(values) }),
-            ),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.updateWorkspace.failure(
+            merge(err, { workspaceId: getId(values) }),
+          );
         }),
       );
     }),

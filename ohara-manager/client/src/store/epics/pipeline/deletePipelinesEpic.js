@@ -16,9 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,10 +25,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndDeletePipelines } from 'observables';
 import { getId } from 'utils/object';
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -48,15 +46,9 @@ export default (action$) =>
           actions.deletePipelines.success(pipelines.map(getId)),
         ),
         startWith(actions.deletePipelines.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deletePipelines.failure(merge(err)),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.deletePipelines.failure(merge(err));
         }),
         takeUntil(action$.pipe(ofType(actions.deletePipelines.CANCEL))),
       );

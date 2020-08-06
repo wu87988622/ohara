@@ -17,9 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -28,11 +26,11 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { stopWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId, getKey } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -55,12 +53,11 @@ export default (action$) =>
         ),
         map((normalizedData) => actions.stopWorker.success(normalizedData)),
         startWith(actions.stopWorker.request({ workerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.stopWorker.failure(merge(err, { workerId: getId(values) })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.stopWorker.failure(
+            merge(err, { workerId: getId(values) }),
+          );
         }),
         takeUntil(action$.pipe(ofType(actions.stopWorker.CANCEL))),
       );

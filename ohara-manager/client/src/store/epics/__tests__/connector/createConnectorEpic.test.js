@@ -248,7 +248,6 @@ it('throw exception of create connector should also trigger event log action', (
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          connectorId,
           type: LOG_LEVEL.error,
         },
       },

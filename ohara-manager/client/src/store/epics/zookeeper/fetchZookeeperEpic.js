@@ -17,21 +17,15 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  switchMap,
-  startWith,
-  throttleTime,
-} from 'rxjs/operators';
+import { defer, forkJoin } from 'rxjs';
+import { map, switchMap, startWith, throttleTime } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as zookeeperApi from 'api/zookeeperApi';
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 const fetchZookeeper$ = (params) => {
   const zookeeperId = getId(params);
@@ -48,11 +42,8 @@ const fetchZookeeper$ = (params) => {
     map((normalizedData) => merge(...normalizedData, { zookeeperId })),
     map((normalizedData) => actions.fetchZookeeper.success(normalizedData)),
     startWith(actions.fetchZookeeper.request({ zookeeperId })),
-    catchError((err) =>
-      from([
-        actions.fetchZookeeper.failure(merge(err, { zookeeperId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
+    catchErrorWithEventLog((err) =>
+      actions.fetchZookeeper.failure(merge(err, { zookeeperId })),
     ),
   );
 };

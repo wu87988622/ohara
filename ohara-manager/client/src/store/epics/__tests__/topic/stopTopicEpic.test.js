@@ -140,7 +140,6 @@ it('stop topic failed after reach retry limit', () => {
       y: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          topicId,
           data: { ...topicEntity, state: SERVICE_STATE.RUNNING },
           meta: undefined,
           title: `Try to stop topic: "${topicEntity.name}" failed after retry 11 times. Expected state is nonexistent, Actual state: RUNNING`,

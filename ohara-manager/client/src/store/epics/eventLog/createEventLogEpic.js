@@ -15,11 +15,12 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, of } from 'rxjs';
-import { concatMap, map, catchError } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { concatMap, map } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 localForage.config({
   name: 'ohara',
@@ -55,7 +56,7 @@ export default (action$) =>
             actions.updateNotifications.trigger(entity),
           ]),
         ),
-        catchError((res) => of(actions.createEventLog.failure(res))),
+        catchErrorWithEventLog((err) => actions.createEventLog.failure(err)),
       ),
     ),
   );

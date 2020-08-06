@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,10 +25,10 @@ import {
 import { ofType } from 'redux-observable';
 import { merge } from 'lodash';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteStreams } from 'observables';
 import { getId } from 'utils/object';
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -46,15 +44,9 @@ export default (action$) =>
         }),
         map((streams) => actions.deleteStreams.success(streams.map(getId))),
         startWith(actions.deleteStreams.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteStreams.failure(merge(err)),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.deleteStreams.failure(merge(err));
         }),
         takeUntil(action$.pipe(ofType(actions.deleteStreams.CANCEL))),
       );

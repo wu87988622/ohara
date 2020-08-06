@@ -16,9 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,10 +25,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndStartTopics } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -47,15 +45,9 @@ export default (action$) =>
         map((data) => normalize(data, [schema.topic])),
         map((normalizedData) => actions.startTopics.success(normalizedData)),
         startWith(actions.startTopics.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.startTopics.failure(err),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.startTopics.failure(err);
         }),
         takeUntil(action$.pipe(ofType(actions.startTopics.CANCEL))),
       );

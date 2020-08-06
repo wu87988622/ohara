@@ -17,9 +17,8 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from, zip, throwError, iif, of } from 'rxjs';
+import { defer, zip, throwError, iif, of } from 'rxjs';
 import {
-  catchError,
   map,
   retryWhen,
   delay,
@@ -33,7 +32,7 @@ import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 // Note: The caller SHOULD handle the error of this action
 export const stopTopic$ = (params) => {
@@ -78,11 +77,8 @@ export default (action$) =>
     distinctUntilChanged(),
     mergeMap((values) =>
       stopTopic$(values).pipe(
-        catchError((err) =>
-          from([
-            actions.stopTopic.failure(merge(err, { topicId: getId(values) })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
+        catchErrorWithEventLog((err) =>
+          actions.stopTopic.failure(merge(err, { topicId: getId(values) })),
         ),
       ),
     ),

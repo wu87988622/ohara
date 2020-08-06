@@ -15,13 +15,13 @@
  */
 
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import { map, catchError, exhaustMap } from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, exhaustMap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$, state$) =>
   action$.pipe(
@@ -41,11 +41,8 @@ export default (action$, state$) =>
         });
       }).pipe(
         map((res) => actions.fetchDevToolTopicData.success(res.data.messages)),
-        catchError((err) =>
-          from([
-            actions.fetchDevToolTopicData.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
+        catchErrorWithEventLog((err) =>
+          actions.fetchDevToolTopicData.failure(err),
         ),
       ),
     ),

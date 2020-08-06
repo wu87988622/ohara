@@ -15,19 +15,13 @@
  */
 
 import { ofType } from 'redux-observable';
-import { from, defer } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  distinctUntilChanged,
-  mergeMap,
-} from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, distinctUntilChanged, mergeMap } from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -39,12 +33,7 @@ export default (action$) =>
       return defer(() => fileApi.remove(params)).pipe(
         map(() => actions.deleteFile.success({ fileId })),
         startWith(actions.deleteFile.request({ fileId })),
-        catchError((err) =>
-          from([
-            actions.deleteFile.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.deleteFile.failure(err)),
       );
     }),
   );

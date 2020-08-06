@@ -15,11 +15,10 @@
  */
 
 import { ofType } from 'redux-observable';
-import { defer, timer, merge, from } from 'rxjs';
+import { defer, timer, merge } from 'rxjs';
 import {
   switchMap,
   map,
-  catchError,
   ignoreElements,
   takeUntil,
   filter,
@@ -28,7 +27,8 @@ import {
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 import { SERVICE_STATE } from 'api/apiInterface/clusterInterface';
-import { KIND, LOG_LEVEL } from 'const';
+import { KIND } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -66,15 +66,9 @@ export default (action$) =>
             ),
           ),
         ),
-        catchError((err) => {
-          return from([
-            actions.startUpdateMetrics.failure(err),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
-        }),
+        catchErrorWithEventLog((err) =>
+          actions.startUpdateMetrics.failure(err),
+        ),
       ),
     ),
   );

@@ -18,7 +18,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   retryWhen,
@@ -28,10 +27,11 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export const deleteConnector$ = (values) => {
   const { params, options = {} } = values;
@@ -80,17 +80,14 @@ export const deleteConnector$ = (values) => {
       ]);
     }),
     startWith(actions.deleteConnector.request({ connectorId })),
-    catchError((err) => {
+    catchErrorWithEventLog((err) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
         });
       }
 
-      return from([
-        actions.deleteConnector.failure(merge(err, { connectorId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]);
+      return actions.deleteConnector.failure(merge(err, { connectorId }));
     }),
   );
 };

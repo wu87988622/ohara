@@ -17,20 +17,15 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  distinctUntilChanged,
-  mergeMap,
-} from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, distinctUntilChanged, mergeMap } from 'rxjs/operators';
 
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 const createShabondi$ = (value) => {
   const { values, options } = value;
@@ -46,12 +41,9 @@ const createShabondi$ = (value) => {
     }),
     map((normalizedData) => actions.createShabondi.success(normalizedData)),
     startWith(actions.createShabondi.request({ shabondiId })),
-    catchError((err) => {
+    catchErrorWithEventLog((err) => {
       options.paperApi.removeElement(values.id);
-      return from([
-        actions.createShabondi.failure(merge(err, { shabondiId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]);
+      return actions.createShabondi.failure(merge(err, { shabondiId }));
     }),
   );
 };

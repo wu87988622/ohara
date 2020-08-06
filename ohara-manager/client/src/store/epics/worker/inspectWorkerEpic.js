@@ -17,14 +17,8 @@
 import { normalize } from 'normalizr';
 import { sortBy, mergeWith, omit, isArray, merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, zip, from } from 'rxjs';
-import {
-  map,
-  switchMap,
-  startWith,
-  takeUntil,
-  catchError,
-} from 'rxjs/operators';
+import { defer, zip } from 'rxjs';
+import { map, switchMap, startWith, takeUntil } from 'rxjs/operators';
 
 /* eslint-disable no-throw-literal */
 import * as inspectApi from 'api/inspectApi';
@@ -32,7 +26,8 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { retryBackoff } from 'backoff-rxjs';
-import { RETRY_STRATEGY, LOG_LEVEL } from 'const';
+import { RETRY_STRATEGY } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 const customizer = (objValue, srcValue) => {
   if (isArray(objValue)) {
@@ -74,11 +69,8 @@ const inspectWorker$ = (params) =>
     map((data) => normalize(data, schema.info)),
     map((normalizedData) => actions.inspectWorker.success(normalizedData)),
     startWith(actions.inspectWorker.request({ workerId: getId(params) })),
-    catchError((err) =>
-      from([
-        actions.inspectWorker.failure(merge(err, { workerId: getId(params) })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
+    catchErrorWithEventLog((err) =>
+      actions.inspectWorker.failure(merge(err, { workerId: getId(params) })),
     ),
   );
 

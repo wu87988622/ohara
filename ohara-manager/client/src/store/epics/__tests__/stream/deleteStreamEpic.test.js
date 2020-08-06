@@ -315,7 +315,6 @@ it('should handle error properly', () => {
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          streamId,
           type: LOG_LEVEL.error,
         },
       },

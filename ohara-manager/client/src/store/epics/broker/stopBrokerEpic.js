@@ -17,9 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   distinctUntilChanged,
@@ -31,7 +29,7 @@ import * as actions from 'store/actions';
 import { stopBroker } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -49,12 +47,11 @@ export default (action$) =>
           return actions.stopBroker.success(normalizedData);
         }),
         startWith(actions.stopBroker.request({ brokerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.stopBroker.failure(merge(err, { brokerId: getId(values) })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.stopBroker.failure(
+            merge(err, { brokerId: getId(values) }),
+          );
         }),
         takeUntil(action$.pipe(ofType(actions.stopBroker.CANCEL))),
       );

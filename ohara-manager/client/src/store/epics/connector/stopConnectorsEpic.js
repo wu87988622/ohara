@@ -17,9 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -28,10 +26,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndStopConnectors } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -48,15 +46,9 @@ export default (action$) =>
         map((data) => normalize(data, [schema.connector])),
         map((normalizedData) => actions.stopConnectors.success(normalizedData)),
         startWith(actions.stopConnectors.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.stopConnectors.failure(merge(err)),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.stopConnectors.failure(merge(err));
         }),
         takeUntil(action$.pipe(ofType(actions.stopConnectors.CANCEL))),
       );

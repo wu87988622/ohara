@@ -17,9 +17,7 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { of } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,11 +25,12 @@ import {
   tap,
 } from 'rxjs/operators';
 
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { stopConnector } from 'observables';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -54,12 +53,9 @@ export default (action$) =>
         map((normalizedData) => merge(normalizedData, { connectorId })),
         map((normalizedData) => actions.stopConnector.success(normalizedData)),
         startWith(actions.stopConnector.request({ connectorId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           updateStatus(err?.data?.state?.toLowerCase() ?? previousStatus);
-          return of(
-            actions.stopConnector.failure(merge(err, { connectorId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          );
+          return actions.stopConnector.failure(merge(err, { connectorId }));
         }),
       );
     }),

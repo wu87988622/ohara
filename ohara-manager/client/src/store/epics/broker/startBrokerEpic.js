@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,11 +25,11 @@ import { ofType } from 'redux-observable';
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 
-import { LOG_LEVEL } from 'const';
 import { startBroker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -49,14 +47,11 @@ export default (action$) =>
           return actions.startBroker.success(normalizedData);
         }),
         startWith(actions.startBroker.request({ brokerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.startBroker.failure(
-              merge(err, { brokerId: getId(values) }),
-            ),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.startBroker.failure(
+            merge(err, { brokerId: getId(values) }),
+          );
         }),
         takeUntil(action$.pipe(ofType(actions.startBroker.CANCEL))),
       );

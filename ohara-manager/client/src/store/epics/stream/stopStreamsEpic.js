@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -28,10 +26,10 @@ import { ofType } from 'redux-observable';
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndStopStreams } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -48,15 +46,9 @@ export default (action$) =>
         map((data) => normalize(data, [schema.stream])),
         map((normalizedData) => actions.stopStreams.success(normalizedData)),
         startWith(actions.stopStreams.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.stopStreams.failure(merge(err)),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.stopStreams.failure(merge(err));
         }),
         takeUntil(action$.pipe(ofType(actions.stopStreams.CANCEL))),
       );

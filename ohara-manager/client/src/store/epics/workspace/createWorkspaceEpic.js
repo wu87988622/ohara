@@ -16,9 +16,7 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,11 +25,11 @@ import {
 } from 'rxjs/operators';
 import { merge } from 'lodash';
 
-import { LOG_LEVEL } from 'const';
 import { createWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -49,15 +47,9 @@ export default (action$) =>
           return actions.createWorkspace.success(normalizedData);
         }),
         startWith(actions.createWorkspace.request({ workspaceId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.createWorkspace.failure(merge(err, { workspaceId })),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.createWorkspace.failure(merge(err, { workspaceId }));
         }),
         takeUntil(action$.pipe(ofType(actions.createWorkspace.CANCEL))),
       );

@@ -148,7 +148,6 @@ it('stop zookeeper failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          zookeeperId: zkId,
           data: {
             ...zookeeperEntity,
             state: SERVICE_STATE.RUNNING,

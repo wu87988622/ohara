@@ -17,20 +17,15 @@
 import { merge } from 'lodash';
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  startWith,
-  distinctUntilChanged,
-  mergeMap,
-} from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, distinctUntilChanged, mergeMap } from 'rxjs/operators';
 
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 const createConnector$ = (value) => {
   const { values, options } = value;
@@ -46,12 +41,9 @@ const createConnector$ = (value) => {
     }),
     map((normalizedData) => actions.createConnector.success(normalizedData)),
     startWith(actions.createConnector.request({ connectorId })),
-    catchError((err) => {
+    catchErrorWithEventLog((err) => {
       options.paperApi.removeElement(values.id);
-      return from([
-        actions.createConnector.failure(merge(err, { connectorId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]);
+      return actions.createConnector.failure(merge(err, { connectorId }));
     }),
   );
 };

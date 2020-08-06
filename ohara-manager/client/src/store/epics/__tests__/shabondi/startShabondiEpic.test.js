@@ -170,7 +170,6 @@ it('should fail after reaching the retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          shabondiId,
           data: shabondiEntity,
           status: 200,
           title: `Failed to start shabondi ${shabondiEntity.name}: Unable to confirm the status of the shabondi is running`,
@@ -409,7 +408,6 @@ it('should stop retrying when an API error occurs', () => {
           status: 400,
           title: 'Failed to start shabondi aaa',
           data: { error: { code: 'mock', message: 'mock', stack: 'mock' } },
-          shabondiId,
           type: LOG_LEVEL.error,
         },
       },

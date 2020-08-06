@@ -179,7 +179,6 @@ it('should handle stop error', () => {
       c: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          topicId,
           data: {
             ...topicEntity,
             state: SERVICE_STATE.RUNNING,
@@ -266,7 +265,7 @@ it('should handle delete error', async () => {
       },
       e: {
         type: actions.createEventLog.TRIGGER,
-        payload: { ...error, topicId, type: LOG_LEVEL.error },
+        payload: { ...error, type: LOG_LEVEL.error },
       },
     });
 

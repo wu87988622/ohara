@@ -241,7 +241,6 @@ it('throw exception of update connector should also trigger event log action', (
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          connectorId,
           type: LOG_LEVEL.error,
         },
       },

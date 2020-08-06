@@ -248,7 +248,6 @@ it('throw exception of create stream should also trigger event log action', () =
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          streamId,
           type: LOG_LEVEL.error,
         },
       },

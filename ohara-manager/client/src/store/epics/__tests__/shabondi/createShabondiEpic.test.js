@@ -248,7 +248,6 @@ it('throw exception of create shabondi should also trigger event log action', ()
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          shabondiId,
           type: LOG_LEVEL.error,
         },
       },

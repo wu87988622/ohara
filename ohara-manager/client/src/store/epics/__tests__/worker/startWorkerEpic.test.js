@@ -161,7 +161,6 @@ it('start worker failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          workerId: wkId,
           data: workerEntity,
           status: 200,
           title: `Failed to start worker ${workerEntity.name}: Unable to confirm the status of the worker is running`,

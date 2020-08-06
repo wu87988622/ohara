@@ -167,7 +167,7 @@ it('should handle create error', () => {
       },
       c: {
         type: actions.createEventLog.TRIGGER,
-        payload: { ...error, topicId, type: LOG_LEVEL.error },
+        payload: { ...error, type: LOG_LEVEL.error },
       },
     });
 
@@ -253,7 +253,6 @@ it('should handle start error', async () => {
       e: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          topicId,
           data: topicEntity,
           status: 200,
           title: `Failed to start topic ${topicEntity.name}: Unable to confirm the status of the topic is running`,

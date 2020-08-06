@@ -16,13 +16,12 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
-import { catchError, map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { fetchWorkspaces } from 'observables';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -38,12 +37,9 @@ export default (action$) =>
           actions.fetchWorkspaces.success(normalizedData),
         ),
         startWith(actions.fetchWorkspaces.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.fetchWorkspaces.failure(err),
-            actions.fetchWorkspaces.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.fetchWorkspaces.failure(err);
         }),
       ),
     ),

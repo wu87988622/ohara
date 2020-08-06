@@ -17,18 +17,12 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
-import {
-  catchError,
-  map,
-  mergeMap,
-  startWith,
-  switchMap,
-} from 'rxjs/operators';
+import { map, mergeMap, startWith, switchMap } from 'rxjs/operators';
 
 import * as pipelineApi from 'api/pipelineApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -44,12 +38,7 @@ export default (action$) =>
           ]),
         ),
         startWith(actions.createPipeline.request()),
-        catchError((err) =>
-          from([
-            actions.createPipeline.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.createPipeline.failure(err)),
       ),
     ),
   );
