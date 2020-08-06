@@ -24,7 +24,8 @@ LABEL stage=$STAGE
 ARG KAFKA_DIR=/opt/kafka
 ARG KAFKA_REVISION="trunk"
 ARG SCALA_VERSION=2.13.3
-RUN git clone https://github.com/apache/kafka /kafka
+ARG KAFKA_REPO="https://github.com/apache/kafka"
+RUN git clone $KAFKA_REPO /kafka
 WORKDIR /kafka
 RUN git checkout $KAFKA_REVISION
 RUN ./gradlew clean releaseTarGz -Pscala.version=$SCALA_VERSION
