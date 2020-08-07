@@ -16,19 +16,13 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, defer } from 'rxjs';
-import {
-  switchMap,
-  map,
-  startWith,
-  catchError,
-  throttleTime,
-} from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { switchMap, map, startWith, throttleTime } from 'rxjs/operators';
 
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -40,12 +34,7 @@ export default (action$) =>
         map((res) => normalize(res.data, [schema.file])),
         map((normalizedData) => actions.fetchFiles.success(normalizedData)),
         startWith(actions.fetchFiles.request()),
-        catchError((err) =>
-          from([
-            actions.fetchFiles.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.fetchFiles.failure(err)),
       ),
     ),
   );

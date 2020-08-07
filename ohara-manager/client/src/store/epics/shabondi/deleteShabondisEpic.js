@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,10 +25,10 @@ import {
 import { ofType } from 'redux-observable';
 import { merge } from 'lodash';
 
-import { LOG_LEVEL } from 'const';
 import { fetchAndDeleteShabondis } from 'observables';
 import { getId } from 'utils/object';
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -48,15 +46,9 @@ export default (action$) =>
           actions.deleteShabondis.success(shabondis.map(getId)),
         ),
         startWith(actions.deleteShabondis.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteShabondis.failure(merge(err)),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.deleteShabondis.failure(merge(err));
         }),
         takeUntil(action$.pipe(ofType(actions.deleteShabondis.CANCEL))),
       );

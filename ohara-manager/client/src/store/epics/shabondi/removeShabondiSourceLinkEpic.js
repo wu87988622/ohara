@@ -17,12 +17,12 @@
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { map, startWith, switchMap } from 'rxjs/operators';
 
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) => {
   return action$.pipe(
@@ -35,12 +35,9 @@ export default (action$) => {
           actions.removeShabondiSourceLink.success(normalizedData),
         ),
         startWith(actions.removeShabondiSourceLink.request()),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           options.paperApi.addLink(params.id, options.topic.id);
-          return from([
-            actions.removeShabondiSourceLink.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.removeShabondiSourceLink.failure(err);
         }),
       ),
     ),

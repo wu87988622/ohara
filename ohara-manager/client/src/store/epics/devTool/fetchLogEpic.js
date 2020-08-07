@@ -18,12 +18,13 @@ import moment from 'moment';
 import _ from 'lodash';
 import { ofType } from 'redux-observable';
 import { defer, from, queueScheduler } from 'rxjs';
-import { catchError, concatMap, exhaustMap } from 'rxjs/operators';
+import { concatMap, exhaustMap } from 'rxjs/operators';
 
-import { KIND, LOG_TIME_GROUP, GROUP, LOG_LEVEL } from 'const';
+import { KIND, LOG_TIME_GROUP, GROUP } from 'const';
 import * as logApi from 'api/logApi';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$, state$) =>
   action$.pipe(
@@ -113,12 +114,7 @@ export default (action$, state$) =>
             queueScheduler,
           ),
         ),
-        catchError((err) =>
-          from([
-            actions.fetchDevToolLog.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.fetchDevToolLog.failure(err)),
       ),
     ),
   );

@@ -171,7 +171,6 @@ it('should fail after reaching the retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          connectorId,
           data: {
             ...connectorEntity,
             state: ConnectorState.RUNNING,

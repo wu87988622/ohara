@@ -243,7 +243,6 @@ it('throw exception of fetch zookeeper should also trigger event log action', ()
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          zookeeperId: zkId,
           type: LOG_LEVEL.error,
         },
       },

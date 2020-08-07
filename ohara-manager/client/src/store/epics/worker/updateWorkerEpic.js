@@ -17,14 +17,14 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import { catchError, map, startWith, mergeMap, tap } from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, mergeMap, tap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as workerApi from 'api/workerApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export const updateWorker$ = (values, resolve) => {
   const workerId = getId(values);
@@ -46,14 +46,11 @@ export default (action$) =>
     map((action) => action.payload),
     mergeMap(({ values, resolve, reject }) =>
       updateWorker$(values, resolve).pipe(
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.updateWorker.failure(
-              merge(err, { workerId: getId(values) }),
-            ),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.updateWorker.failure(
+            merge(err, { workerId: getId(values) }),
+          );
         }),
       ),
     ),

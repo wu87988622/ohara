@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -27,11 +25,11 @@ import { ofType } from 'redux-observable';
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 
-import { LOG_LEVEL } from 'const';
 import { startWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -49,14 +47,11 @@ export default (action$) =>
           return actions.startWorker.success(normalizedData);
         }),
         startWith(actions.startWorker.request({ workerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.startWorker.failure(
-              merge(err, { workerId: getId(values) }),
-            ),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.startWorker.failure(
+            merge(err, { workerId: getId(values) }),
+          );
         }),
         takeUntil(action$.pipe(ofType(actions.startWorker.CANCEL))),
       );

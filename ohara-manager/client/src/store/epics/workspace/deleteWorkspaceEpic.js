@@ -18,7 +18,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -31,6 +30,7 @@ import { LOG_LEVEL } from 'const';
 import { deleteWorkspace } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -56,12 +56,9 @@ export default (action$) =>
           ]),
         ),
         startWith(actions.deleteWorkspace.request({ workspaceId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteWorkspace.failure(merge(err, { workspaceId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.deleteWorkspace.failure(merge(err, { workspaceId }));
         }),
         takeUntil(action$.pipe(ofType(actions.deleteWorkspace.CANCEL))),
       );

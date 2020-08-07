@@ -156,7 +156,6 @@ it('stop worker failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          workerId: wkId,
           data: {
             ...workerEntity,
             state: SERVICE_STATE.RUNNING,

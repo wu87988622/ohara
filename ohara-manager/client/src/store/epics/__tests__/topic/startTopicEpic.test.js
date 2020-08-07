@@ -141,7 +141,6 @@ it('start topic failed after reach retry limit', () => {
       z: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          topicId,
           data: topicEntity,
           meta: undefined,
           title: `Try to start topic: "${topicEntity.name}" failed after retry 11 times. Expected state: RUNNING, Actual state: undefined`,

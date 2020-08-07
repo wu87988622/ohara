@@ -164,7 +164,6 @@ it('start zookeeper failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          zookeeperId: zkId,
           data: zookeeperEntity,
           status: 200,
           title: `Failed to start zookeeper ${zookeeperEntity.name}: Unable to confirm the status of the zookeeper is running`,

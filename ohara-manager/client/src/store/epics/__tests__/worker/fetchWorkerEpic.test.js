@@ -172,7 +172,6 @@ it('throw exception of fetch worker should also trigger event log action', () =>
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          workerId: wkId,
           type: LOG_LEVEL.error,
         },
       },

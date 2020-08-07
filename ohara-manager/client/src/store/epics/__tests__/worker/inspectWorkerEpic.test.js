@@ -145,7 +145,6 @@ it('inspect worker failed after reach retry limit', () => {
           status: 200,
           title: `Inspect worker ${workerEntity.name} info failed.`,
           type: LOG_LEVEL.error,
-          workerId: wkId,
         },
       },
     });

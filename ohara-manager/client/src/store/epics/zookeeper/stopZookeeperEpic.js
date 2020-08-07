@@ -17,9 +17,7 @@
 import { normalize } from 'normalizr';
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   distinctUntilChanged,
@@ -31,7 +29,7 @@ import * as actions from 'store/actions';
 import { stopZookeeper } from 'observables';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -49,14 +47,11 @@ export default (action$) =>
           return actions.stopZookeeper.success(normalizedData);
         }),
         startWith(actions.stopZookeeper.request({ zookeeperId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.stopZookeeper.failure(
-              merge(err, { zookeeperId: getId(values) }),
-            ),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.stopZookeeper.failure(
+            merge(err, { zookeeperId: getId(values) }),
+          );
         }),
         takeUntil(action$.pipe(ofType(actions.stopZookeeper.CANCEL))),
       );

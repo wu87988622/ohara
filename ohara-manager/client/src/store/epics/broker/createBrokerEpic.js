@@ -19,7 +19,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -28,11 +27,12 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL, GROUP } from 'const';
+import { GROUP } from 'const';
 import { createBroker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -60,15 +60,10 @@ export default (action$) =>
           ]);
         }),
         startWith(actions.createBroker.request({ brokerId })),
-        catchError((err) => {
+
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.createBroker.failure(merge(err, { brokerId })),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.createBroker.failure(merge(err, { brokerId }));
         }),
         takeUntil(action$.pipe(ofType(actions.createBroker.CANCEL))),
       );

@@ -316,7 +316,6 @@ it('should handle error properly', () => {
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          shabondiId,
           type: LOG_LEVEL.error,
         },
       },

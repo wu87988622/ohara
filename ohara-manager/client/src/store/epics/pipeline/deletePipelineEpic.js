@@ -17,7 +17,6 @@
 import { ofType } from 'redux-observable';
 import { of, defer, from, throwError, iif } from 'rxjs';
 import {
-  catchError,
   map,
   switchMap,
   startWith,
@@ -35,8 +34,9 @@ import * as shabondiApi from 'api/shabondiApi';
 import * as topicApi from 'api/topicApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { KIND, CELL_STATUS, LOG_LEVEL } from 'const';
+import { KIND, CELL_STATUS } from 'const';
 import { isShabondi } from 'components/Pipeline/PipelineUtils';
+import { catchErrorWithEventLog } from '../utils';
 
 const deleteStream$ = (params, paperApi) => {
   const { id, name, group } = params;
@@ -196,12 +196,7 @@ export default (action$) =>
         deletePipeline$({ group, name }),
       ).pipe(
         concatAll(),
-        catchError((err) => {
-          return from([
-            actions.deletePipeline.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
-        }),
+        catchErrorWithEventLog((err) => actions.deletePipeline.failure(err)),
       );
     }),
   );

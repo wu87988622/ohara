@@ -146,7 +146,6 @@ it('stop broker failed after reach retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          brokerId: bkId,
           data: {
             ...brokerEntity,
             state: SERVICE_STATE.RUNNING,

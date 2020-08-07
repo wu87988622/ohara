@@ -17,11 +17,12 @@
 import { min, isEmpty } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of } from 'rxjs';
-import { map, catchError, concatMap, filter } from 'rxjs/operators';
+import { map, concatMap, filter } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { LOG_LEVEL } from 'const';
 import { errorKey, warningKey } from './const';
+import { catchErrorWithEventLog } from '../utils';
 
 const increaseNotification$ = (entity, state$) => {
   const error = parseInt(localStorage.getItem(errorKey)) || 0;
@@ -55,7 +56,9 @@ export default (action$, state$) =>
     concatMap((entity) =>
       increaseNotification$(entity, state$).pipe(
         map((data) => actions.updateNotifications.success(data)),
-        catchError((res) => of(actions.updateNotifications.failure(res))),
+        catchErrorWithEventLog((err) =>
+          actions.updateNotifications.failure(err),
+        ),
       ),
     ),
   );

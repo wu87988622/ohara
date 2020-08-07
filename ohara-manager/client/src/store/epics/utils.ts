@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-import { ofType } from 'redux-observable';
-import { map } from 'rxjs/operators';
-
+import { isError } from 'lodash';
+import { catchError } from 'rxjs/operators';
+import { from } from 'rxjs';
 import * as actions from 'store/actions';
-import { catchErrorWithEventLog } from '../utils';
+import { LOG_LEVEL } from 'const';
 
-export default (action$) =>
-  action$.pipe(
-    ofType(actions.updateSettings.TRIGGER),
-    map((action) => action.payload),
-    map((values) => actions.updateSettings.success(values)),
-    catchErrorWithEventLog((err) => actions.updateSettings.failure(err)),
-  );
+export function catchErrorWithEventLog(error: any = Function) {
+  return catchError((err) => {
+    err = isError(err)
+      ? {
+          title: err.message,
+          data: { error: { message: err.stack } },
+        }
+      : err;
+    const eventLog = actions.createEventLog.trigger({
+      ...err,
+      type: LOG_LEVEL.error,
+    });
+    const otherError = error(err);
+    return from([otherError, eventLog]);
+  });
+}

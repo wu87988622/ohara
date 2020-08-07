@@ -16,17 +16,12 @@
 
 import _ from 'lodash';
 import { ofType } from 'redux-observable';
-import { of, defer, zip } from 'rxjs';
-import {
-  switchMap,
-  map,
-  catchError,
-  mergeMap,
-  defaultIfEmpty,
-} from 'rxjs/operators';
+import { defer, zip } from 'rxjs';
+import { switchMap, map, mergeMap, defaultIfEmpty } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 localForage.config({
   name: 'ohara',
@@ -56,7 +51,7 @@ export default (action$) =>
       getLogFromLocalForge$().pipe(
         defaultIfEmpty(),
         map((data) => actions.fetchEventLogs.success(data)),
-        catchError((res) => of(actions.fetchEventLogs.failure(res))),
+        catchErrorWithEventLog((err) => actions.fetchEventLogs.failure(err)),
       ),
     ),
   );

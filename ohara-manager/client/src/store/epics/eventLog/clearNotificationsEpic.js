@@ -15,11 +15,12 @@
  */
 
 import { ofType } from 'redux-observable';
-import { of, from } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import * as actions from 'store/actions';
 import { errorKey, warningKey } from './const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -33,5 +34,5 @@ export default (action$) =>
         actions.updateNotifications.trigger(),
       ]);
     }),
-    catchError((res) => of(actions.clearNotifications.failure(res))),
+    catchErrorWithEventLog((err) => actions.clearNotifications.failure(err)),
   );

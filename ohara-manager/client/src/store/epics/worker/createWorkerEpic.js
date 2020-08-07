@@ -19,7 +19,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { from } from 'rxjs';
 import {
-  catchError,
   distinctUntilChanged,
   map,
   mergeMap,
@@ -28,11 +27,12 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL, GROUP } from 'const';
+import { GROUP } from 'const';
 import { createWorker } from 'observables';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -60,15 +60,9 @@ export default (action$) =>
           ]);
         }),
         startWith(actions.createWorker.request({ workerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.createWorker.failure(merge(err, { workerId })),
-            actions.createEventLog.trigger({
-              ...err,
-              type: LOG_LEVEL.error,
-            }),
-          ]);
+          return actions.createWorker.failure(merge(err, { workerId }));
         }),
         takeUntil(action$.pipe(ofType(actions.createWorker.CANCEL))),
       );

@@ -170,7 +170,6 @@ it('should fail after reaching the retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          connectorId,
           data: connectorEntity,
           status: 200,
           title: `Failed to start connector ${connectorEntity.name}: Unable to confirm the status of the connector is running`,
@@ -409,7 +408,6 @@ it('should stop retrying when an API error occurs', () => {
           status: 400,
           title: 'Failed to start connector aaa',
           data: { error: { code: 'mock', message: 'mock', stack: 'mock' } },
-          connectorId,
           type: LOG_LEVEL.error,
         },
       },

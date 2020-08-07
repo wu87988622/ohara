@@ -273,7 +273,6 @@ it('throw exception of create zookeeper should also trigger event log action', (
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          zookeeperId: zkId,
           type: LOG_LEVEL.error,
         },
       },

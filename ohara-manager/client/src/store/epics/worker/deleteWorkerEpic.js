@@ -16,9 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   mergeMap,
@@ -26,10 +24,10 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import { deleteWorker } from 'observables';
 import * as actions from 'store/actions';
 import { getId, getKey } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -46,12 +44,9 @@ export default (action$) =>
           return actions.deleteWorker.success({ workerId });
         }),
         startWith(actions.deleteWorker.request({ workerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteWorker.failure(merge(err, { workerId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.deleteWorker.failure(merge(err, { workerId }));
         }),
         takeUntil(action$.pipe(ofType(actions.deleteWorker.CANCEL))),
       );

@@ -168,7 +168,6 @@ it('should fail after reaching the retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          streamId,
           data: {
             ...streamEntity,
             state: SERVICE_STATE.RUNNING,

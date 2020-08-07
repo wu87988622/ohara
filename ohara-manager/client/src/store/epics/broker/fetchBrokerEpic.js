@@ -17,14 +17,8 @@
 import { normalize } from 'normalizr';
 import { merge, get } from 'lodash';
 import { ofType } from 'redux-observable';
-import { defer, forkJoin, from } from 'rxjs';
-import {
-  catchError,
-  map,
-  switchMap,
-  startWith,
-  throttleTime,
-} from 'rxjs/operators';
+import { defer, forkJoin } from 'rxjs';
+import { map, switchMap, startWith, throttleTime } from 'rxjs/operators';
 
 import { UISettingDef, Type } from 'api/apiInterface/definitionInterface';
 import * as brokerApi from 'api/brokerApi';
@@ -32,7 +26,7 @@ import * as inspectApi from 'api/inspectApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 const addSettingDefByKeyAndType = (...args) => new UISettingDef(...args);
 
@@ -60,11 +54,8 @@ const fetchBroker$ = (params) => {
     map((normalizedData) => merge(...normalizedData, { brokerId })),
     map((normalizedData) => actions.fetchBroker.success(normalizedData)),
     startWith(actions.fetchBroker.request({ brokerId })),
-    catchError((err) =>
-      from([
-        actions.fetchBroker.failure(merge(err, { brokerId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]),
+    catchErrorWithEventLog((err) =>
+      actions.fetchBroker.failure(merge(err, { brokerId })),
     ),
   );
 };

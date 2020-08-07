@@ -16,9 +16,8 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { from, defer } from 'rxjs';
+import { defer } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   distinctUntilChanged,
@@ -28,8 +27,8 @@ import {
 import * as fileApi from 'api/fileApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
-import { LOG_LEVEL } from 'const';
 import { isEmpty } from 'lodash';
+import { catchErrorWithEventLog } from '../utils';
 
 const rename$ = (values) => {
   const { name, group } = values;
@@ -87,15 +86,7 @@ export default (action$) => {
             map((res) => normalize(res.data, schema.file)),
             map((normalizedData) => actions.createFile.success(normalizedData)),
             startWith(actions.createFile.request()),
-            catchError((err) =>
-              from([
-                actions.createFile.failure(err),
-                actions.createEventLog.trigger({
-                  ...err,
-                  type: LOG_LEVEL.error,
-                }),
-              ]),
-            ),
+            catchErrorWithEventLog((err) => actions.createFile.failure(err)),
           ),
         ),
       ),

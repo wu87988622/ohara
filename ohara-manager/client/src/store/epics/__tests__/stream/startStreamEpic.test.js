@@ -166,7 +166,6 @@ it('should fail after reaching the retry limit', () => {
       u: {
         type: actions.createEventLog.TRIGGER,
         payload: {
-          streamId,
           data: streamEntity,
           status: 200,
           title: `Failed to start stream ${streamEntity.name}: Unable to confirm the status of the stream is running`,
@@ -405,7 +404,6 @@ it('should stop retrying when an API error occurs', () => {
           status: 400,
           title: 'Failed to start stream aaa',
           data: { error: { code: 'mock', message: 'mock', stack: 'mock' } },
-          streamId,
           type: LOG_LEVEL.error,
         },
       },

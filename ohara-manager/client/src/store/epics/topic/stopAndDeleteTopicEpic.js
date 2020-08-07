@@ -31,7 +31,8 @@ import * as actions from 'store/actions';
 import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { deleteTopic, stopTopic } from 'observables';
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 // topic is not really a "component" in UI, i.e, we don't have actions on it
 // we should combine "delete + stop" for single deletion request
@@ -80,12 +81,9 @@ export default (action$) =>
         ),
       ).pipe(
         concatAll(),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (typeof reject === 'function') reject(err);
-          return from([
-            actions.stopAndDeleteTopic.failure(merge(err, { topicId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.stopAndDeleteTopic.failure(merge(err, { topicId }));
         }),
       );
     }),

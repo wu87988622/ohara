@@ -15,11 +15,12 @@
  */
 
 import { ofType } from 'redux-observable';
-import { defer, of, zip } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { defer, zip } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import localForage from 'localforage';
 
 import * as actions from 'store/actions';
+import { catchErrorWithEventLog } from '../utils';
 
 localForage.config({
   name: 'ohara',
@@ -36,7 +37,7 @@ export default (action$) =>
     switchMap((keys) =>
       deleteLogFromLocalForge$(keys).pipe(
         map(() => actions.deleteEventLogs.success(keys)),
-        catchError((res) => of(actions.deleteEventLogs.failure(res))),
+        catchErrorWithEventLog((err) => actions.deleteEventLogs.failure(err)),
       ),
     ),
   );

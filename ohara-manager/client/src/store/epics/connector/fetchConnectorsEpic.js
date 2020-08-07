@@ -16,13 +16,13 @@
 
 import { normalize } from 'normalizr';
 import { ofType } from 'redux-observable';
-import { defer, from } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { defer } from 'rxjs';
+import { map, startWith, switchMap } from 'rxjs/operators';
 
-import { LOG_LEVEL } from 'const';
 import * as connectorApi from 'api/connectorApi';
 import * as actions from 'store/actions';
 import * as schema from 'store/schema';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -34,12 +34,7 @@ export default (action$) =>
           actions.fetchConnectors.success(normalizedData),
         ),
         startWith(actions.fetchConnectors.request()),
-        catchError((err) =>
-          from([
-            actions.fetchConnectors.failure(err),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]),
-        ),
+        catchErrorWithEventLog((err) => actions.fetchConnectors.failure(err)),
       ),
     ),
   );

@@ -16,9 +16,7 @@
 
 import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
-import { from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   mergeMap,
@@ -29,7 +27,7 @@ import {
 import { deleteBroker } from 'observables';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
-import { LOG_LEVEL } from 'const';
+import { catchErrorWithEventLog } from '../utils';
 
 export default (action$) =>
   action$.pipe(
@@ -44,12 +42,9 @@ export default (action$) =>
           return actions.deleteBroker.success({ brokerId });
         }),
         startWith(actions.deleteBroker.request({ brokerId })),
-        catchError((err) => {
+        catchErrorWithEventLog((err) => {
           if (reject) reject(err);
-          return from([
-            actions.deleteBroker.failure(merge(err, { brokerId })),
-            actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-          ]);
+          return actions.deleteBroker.failure(merge(err, { brokerId }));
         }),
         takeUntil(action$.pipe(ofType(actions.deleteBroker.CANCEL))),
       );

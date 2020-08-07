@@ -318,7 +318,6 @@ it('should handle error properly', () => {
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          connectorId,
           type: LOG_LEVEL.error,
         },
       },

@@ -18,7 +18,6 @@ import { merge } from 'lodash';
 import { ofType } from 'redux-observable';
 import { of, defer, iif, throwError, zip, from } from 'rxjs';
 import {
-  catchError,
   map,
   startWith,
   retryWhen,
@@ -28,10 +27,11 @@ import {
   mergeMap,
 } from 'rxjs/operators';
 
-import { CELL_STATUS, LOG_LEVEL } from 'const';
+import { CELL_STATUS } from 'const';
 import * as shabondiApi from 'api/shabondiApi';
 import * as actions from 'store/actions';
 import { getId } from 'utils/object';
+import { catchErrorWithEventLog } from '../utils';
 
 export const deleteShabondi$ = (value) => {
   const { params, options = {} } = value;
@@ -80,17 +80,14 @@ export const deleteShabondi$ = (value) => {
       ]);
     }),
     startWith(actions.deleteShabondi.request({ shabondiId })),
-    catchError((err) => {
+    catchErrorWithEventLog((err) => {
       if (paperApi) {
         paperApi.updateElement(params.id, {
           status: CELL_STATUS.failed,
         });
       }
 
-      return from([
-        actions.deleteShabondi.failure(merge(err, { shabondiId })),
-        actions.createEventLog.trigger({ ...err, type: LOG_LEVEL.error }),
-      ]);
+      return actions.deleteShabondi.failure(merge(err, { shabondiId }));
     }),
   );
 };

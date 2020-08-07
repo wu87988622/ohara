@@ -245,7 +245,6 @@ it('throw exception of update stream should also trigger event log action', () =
         type: actions.createEventLog.TRIGGER,
         payload: {
           ...error,
-          streamId,
           type: LOG_LEVEL.error,
         },
       },
