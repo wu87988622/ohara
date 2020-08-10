@@ -38,7 +38,7 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings({"unchecked", "deprecation"})
 class OStreamImpl extends AbstractStream<Row, Row> implements OStream<Row> {
 
   private final Logger log = LoggerFactory.getLogger(OStreamImpl.class);
