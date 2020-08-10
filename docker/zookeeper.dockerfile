@@ -28,7 +28,7 @@ RUN yum install -y \
 # download zookeeper
 # WARN: Please don't change the value of ZOOKEEPER_DIR
 ARG ZOOKEEPER_DIR=/opt/zookeeper
-ARG ZOOKEEPER_VERSION=3.5.7
+ARG ZOOKEEPER_VERSION=3.5.8
 ARG MIRROR_SITE=https://archive.apache.org/dist
 RUN wget $MIRROR_SITE/zookeeper/zookeeper-${ZOOKEEPER_VERSION}/apache-zookeeper-${ZOOKEEPER_VERSION}-bin.tar.gz
 RUN mkdir ${ZOOKEEPER_DIR}
