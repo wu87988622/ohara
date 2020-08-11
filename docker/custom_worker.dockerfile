@@ -31,7 +31,7 @@ RUN git checkout $KAFKA_REVISION
 RUN ./gradlew clean releaseTarGz install -Pscala.version=$SCALA_VERSION
 RUN mkdir ${KAFKA_DIR}
 RUN tar -zxvf $(find ./core/build/distributions/ -maxdepth 1 -type f -name "kafka_*.tgz" | head -n 1) -C ${KAFKA_DIR}
-RUN echo $(./gradlew properties | grep "version:" | cut -f2 -d' ') > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
+RUN echo $(./gradlew properties | grep "version:" | cut -f2 -d' ') > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/worker_version
 
 # build ohara
 ARG BRANCH="master"
@@ -44,7 +44,7 @@ RUN git checkout $COMMIT
 RUN if [[ "$BEFORE_BUILD" != "" ]]; then /bin/bash -c "$BEFORE_BUILD" ; fi
 # we build ohara with specified version of kafka in order to keep the compatibility
 RUN ./gradlew clean ohara-connector:build -x test -PskipManager \
-  -Pkafka.version=$(cat $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version) \
+  -Pkafka.version=$(cat $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/worker_version) \
   -Pscala.version=$SCALA_VERSION
 RUN mkdir /opt/ohara
 RUN tar -xvf $(find "/testpatch/ohara/ohara-connector/build/distributions" -maxdepth 1 -type f -name "*.tar") -C /opt/ohara/

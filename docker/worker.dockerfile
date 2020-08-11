@@ -29,7 +29,7 @@ ARG MIRROR_SITE=https://archive.apache.org/dist
 RUN wget $MIRROR_SITE/kafka/${KAFKA_VERSION}/kafka_$(echo $SCALA_VERSION | cut -d. -f1-2)-${KAFKA_VERSION}.tgz
 RUN mkdir ${KAFKA_DIR}
 RUN tar -zxvf $(find ./ -maxdepth 1 -type f -name "kafka_*") -C ${KAFKA_DIR}
-RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
+RUN echo "$KAFKA_VERSION" > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/worker_version
 
 # build ohara
 ARG BRANCH="master"
