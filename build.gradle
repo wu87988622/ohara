@@ -129,6 +129,8 @@ subprojects {
   // -------------------------------------------------[repositories]-------------------------------------------------//
   if (it.name != 'ohara-manager') {
     repositories {
+      // enable to use local repo as we supports to build ohara image with up-to-date kafka source code.
+      mavenLocal()
       mavenCentral()
     }
   }
