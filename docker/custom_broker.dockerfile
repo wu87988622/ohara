@@ -30,8 +30,9 @@ WORKDIR /kafka
 RUN git checkout $KAFKA_REVISION
 RUN ./gradlew clean releaseTarGz -Pscala.version=$SCALA_VERSION
 RUN mkdir ${KAFKA_DIR}
-RUN tar -zxvf $(find ./core/build/distributions/ -maxdepth 1 -type f -name "kafka_*.tgz" | head -n 1) -C ${KAFKA_DIR}
-RUN echo $(./gradlew properties | grep "version:" | cut -f2 -d' ') > $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
+RUN echo $(./gradlew properties | grep "version:" | cut -f2 -d' ') > /version
+RUN tar -zxvf $(find ./core/build/distributions/ -maxdepth 1 -type f -name "kafka_*$(cat /version).tgz" | head -n 1) -C ${KAFKA_DIR}
+RUN cp /version $(find "${KAFKA_DIR}" -maxdepth 1 -type d -name "kafka_*")/bin/broker_version
 
 # clone ohara
 ARG BRANCH="master"
