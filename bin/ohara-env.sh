@@ -18,7 +18,7 @@
 
 # JVM options. Below is the default setting.
 if [[ -z "$OHARA_OPTS" ]]; then
-  export OHARA_OPTS="-Xmx4000m -XX:+UseConcMarkSweepGC"
+  export OHARA_OPTS="-Xmx4000m -XX:+UseG1GC"
 fi
 
 # This env is set specifically for Ohara manager
