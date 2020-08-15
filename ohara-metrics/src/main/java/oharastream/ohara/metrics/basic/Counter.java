@@ -16,7 +16,6 @@
 
 package oharastream.ohara.metrics.basic;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,9 +30,7 @@ import oharastream.ohara.metrics.BeanChannel;
  * This class is an implementation of JMX Bean. We need to implement serializable since we write
  * metrics data to rocksDB.
  */
-public final class Counter extends ReleaseOnce implements CounterMBean, Serializable {
-
-  private static final long serialVersionUID = 1L;
+public final class Counter extends ReleaseOnce implements CounterMBean {
 
   public static Builder builder() {
     return new Builder();
