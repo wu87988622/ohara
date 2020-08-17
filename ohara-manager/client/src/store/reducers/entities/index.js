@@ -26,6 +26,7 @@ import pipelines from './pipelines';
 import shabondis from './shabondis';
 import streams from './streams';
 import topics from './topics';
+import volumes from './volumes';
 import workers from './workers';
 import workspaces from './workspaces';
 import zookeepers from './zookeepers';
@@ -73,6 +74,7 @@ export default combineReducers({
   shabondis,
   streams,
   topics,
+  volumes,
   workers,
   workspaces,
   zookeepers,

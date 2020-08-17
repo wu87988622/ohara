@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './volumeSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import createRoutine from './createRoutine';
+
+export const fetchVolumes = createRoutine('FETCH_VOLUMES');
+export const fetchVolume = createRoutine('FETCH_VOLUME');
+export const createVolume = createRoutine('CREATE_VOLUME');
+export const updateVolume = createRoutine('UPDATE_VOLUME');
+export const startVolume = createRoutine('START_VOLUME');
+export const stopVolume = createRoutine('STOP_VOLUME');
+export const deleteVolume = createRoutine('DELETE_VOLUME');
+export const inspectVolume = createRoutine('INSPECT_VOLUME');

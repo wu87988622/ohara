@@ -28,6 +28,7 @@ import shabondiEpics from './shabondi';
 import streamEpics from './stream';
 import snackbarEpics from './snackbarEpics';
 import topicEpics from './topic';
+import volumeEpics from './volume';
 import workerEpics from './worker';
 import workspaceEpics from './workspace';
 import zookeeperEpics from './zookeeper';
@@ -45,6 +46,7 @@ export default combineEpics(
   pipelineEpics,
   snackbarEpics,
   topicEpics,
+  volumeEpics,
   workerEpics,
   workspaceEpics,
   zookeeperEpics,

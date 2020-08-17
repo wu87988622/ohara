@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './volumeSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { combineEpics } from 'redux-observable';
+import createVolumeEpic from './createVolumeEpic';
+import deleteVolumeEpic from './deleteVolumeEpic';
+import fetchVolumesEpic from './fetchVolumesEpic';
+import startVolumeEpic from './startVolumeEpic';
+import stopVolumeEpic from './stopVolumeEpic';
+import updateVolumeEpic from './updateVolumeEpic';
+
+export default combineEpics(
+  createVolumeEpic,
+  deleteVolumeEpic,
+  fetchVolumesEpic,
+  startVolumeEpic,
+  stopVolumeEpic,
+  updateVolumeEpic,
+);

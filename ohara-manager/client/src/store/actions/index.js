@@ -29,6 +29,7 @@ export * from './shabondiActions';
 export * from './streamActions';
 export * from './snackbarActions';
 export * from './topicActions';
+export * from './volumeActions';
 export * from './workerActions';
 export * from './workspaceActions';
 export * from './zookeeperActions';

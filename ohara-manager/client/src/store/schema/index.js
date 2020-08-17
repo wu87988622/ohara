@@ -28,6 +28,7 @@ export const ENTITY_TYPE = {
   shabondis: 'shabondis',
   streams: 'streams',
   topics: 'topics',
+  volumes: 'volumes',
   workers: 'workers',
   workspaces: 'workspaces',
   zookeepers: 'zookeepers',
@@ -68,6 +69,10 @@ export const stream = new schema.Entity(ENTITY_TYPE.streams, undefined, {
 });
 
 export const topic = new schema.Entity(ENTITY_TYPE.topics, undefined, {
+  idAttribute: getId,
+});
+
+export const volume = new schema.Entity(ENTITY_TYPE.volumes, undefined, {
   idAttribute: getId,
 });
 

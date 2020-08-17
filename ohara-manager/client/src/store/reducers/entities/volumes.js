@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './volumeSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { omit } from 'lodash';
+import * as actions from 'store/actions';
+import { ENTITY_TYPE } from 'store/schema';
+import { entity } from './index';
+
+export default function reducer(state = {}, action) {
+  switch (action.type) {
+    case actions.deleteVolume.SUCCESS:
+      return omit(state, action.payload?.volumeId);
+    default:
+      return entity(ENTITY_TYPE.volumes)(state, action);
+  }
+}

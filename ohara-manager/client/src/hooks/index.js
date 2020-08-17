@@ -31,6 +31,7 @@ export * from './streamHooks';
 export * from './reduxFormHooks';
 export * from './snackbarHooks';
 export * from './topicHooks';
+export * from './volumeHooks';
 export * from './workerHooks';
 export * from './workspaceHooks';
 export * from './zookeeperHooks';

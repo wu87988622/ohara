@@ -30,6 +30,7 @@ import shabondi from './shabondi';
 import stream from './stream';
 import snackbar from './snackbar';
 import topic from './topic';
+import volume from './volume';
 import workers from './workers';
 import workspace from './workspace';
 import zookeepers from './zookeepers';
@@ -50,6 +51,7 @@ export default combineReducers({
   stream,
   snackbar,
   topic,
+  volume,
   workers,
   workspace,
   zookeepers,
