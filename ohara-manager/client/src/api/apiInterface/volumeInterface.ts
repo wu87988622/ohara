@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './volumeSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import { BasicResponse } from './basicInterface';
+
+export enum SERVICE_STATE {
+  PENDING = 'PENDING',
+  RUNNING = 'RUNNING',
+  FAILED = 'FAILED',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export interface VolumeData {
+  lastModified: number;
+  nodeNames: string[];
+  path: string;
+  state?: SERVICE_STATE;
+  [k: string]: any;
+}
+
+export interface VolumeResponse extends BasicResponse {
+  data: VolumeData;
+}
+
+export interface VolumeResponseList extends BasicResponse {
+  data: VolumeData[];
+}

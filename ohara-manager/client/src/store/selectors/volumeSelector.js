@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-export * from './brokerSelector';
-export * from './connectorSelector';
-export * from './devToolSelector';
-export * from './eventLogSelector';
-export * from './fileSelector';
-export * from './infoSelector';
-export * from './logProgressSelector';
-export * from './nodeSelector';
-export * from './pipelineSelector';
-export * from './shabondiSelector';
-export * from './streamSelector';
-export * from './topicSelector';
-export * from './volumeSelector';
-export * from './workerSelector';
-export * from './workspaceSelector';
-export * from './zookeeperSelector';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+
+const getEntities = (state) => state?.entities?.volumes;
+
+const getGroupFromProps = (_, props) => props?.group;
+
+const getWorkspaceNameFromProps = (_, props) => props?.workspaceName;
+
+export const getVolumeByWorkspaceName = createSelector(
+  [getEntities, getGroupFromProps, getWorkspaceNameFromProps],
+  (entities, group, workspaceName) =>
+    _.values(entities).filter(
+      (volume) =>
+        volume?.group === group && volume.tags.workspaceName === workspaceName,
+    ),
+);

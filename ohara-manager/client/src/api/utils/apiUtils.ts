@@ -43,6 +43,7 @@ export enum RESOURCE {
   INSPECT = 'inspect',
   FILE = 'files',
   OBJECT = 'objects',
+  VOLUME = 'volumes',
 }
 
 export enum COMMAND {
