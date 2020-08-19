@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport
 
 apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: 'java-library-distribution'
+apply plugin: 'application'
 
 dependencies {
   implementation project(':ohara-agent')
@@ -52,34 +53,11 @@ dependencies {
   testImplementation libs.junit
 }
 
-/**
- * run a configurator based on kafka cluster
- */
-task runConfigurator(type: JavaExec, dependsOn: 'classes') {
-  description 'run a configurator. You can use -Phost and -Pport to change the address and port of configurator.' +
-    'Also, you can assign -Pbrokers, -Pworkers, -Ptopic, -Ppartitions, and -Preplications to run the configurator on truly kafka'
-
-  classpath = sourceSets.main.runtimeClasspath
-  main = "oharastream.ohara.configurator.Configurator"
-
-  def keywords = [
-    "hostname",
-    "port",
-    "k8s",
-    "folder",
-    "fake"
-  ]
-  // generate the log files
-  jvmArgs = ["-Dlog4j.configuration=file:../conf/log4j.properties"]
-  args = keywords.stream()
-    .filter {
-      word -> project.hasProperty(word)
-    }
-    .flatMap {
-      word -> Arrays.asList("--$word", project.getProperty(word)).stream()
-    }
-    .collect(Collectors.toUnmodifiableList())
+application {
+  applicationDefaultJvmArgs = ["-Dlog4j.configuration=file:../conf/log4j.properties"]
+  mainClassName = 'oharastream.ohara.configurator.Configurator'
 }
+
 // this testing jar is useful in testing route
 test.dependsOn(':ohara-stream:streamJar')
 // we use the dumb connector to test FileInfoRoute
