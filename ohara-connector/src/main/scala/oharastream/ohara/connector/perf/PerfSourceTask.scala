@@ -18,7 +18,7 @@ package oharastream.ohara.connector.perf
 import java.util.Collections
 
 import oharastream.ohara.common.annotations.VisibleForTesting
-import oharastream.ohara.common.data.{Cell, Column, DataType, Row}
+import oharastream.ohara.common.data.{Cell, Column, DataType, Row, Serializer}
 import oharastream.ohara.common.setting.TopicKey
 import oharastream.ohara.common.util.{ByteUtils, CommonUtils}
 import oharastream.ohara.kafka.connector.{RowSourceRecord, RowSourceTask, TaskSetting}
@@ -36,6 +36,7 @@ class PerfSourceTask extends RowSourceTask {
     * this is what we push to topics. We don't generate it repeatedly to avoid extra cost in testing.
     */
   private[this] var records: java.util.List[RowSourceRecord] = java.util.List.of()
+  private[this] var rowBytes: Array[Byte]                    = _
 
   override protected def run(settings: TaskSetting): Unit = {
     this.props = PerfSourceProps(settings)
@@ -61,10 +62,13 @@ class PerfSourceTask extends RowSourceTask {
         )
       }: _*
     )
+    this.rowBytes = Serializer.ROW.to(row)
     records = Collections.unmodifiableList(
       (0 until props.batch).flatMap(_ => topics.map(RowSourceRecord.builder().row(row).topicKey(_).build())).asJava
     )
   }
+
+  override protected def toBytes(record: RowSourceRecord): Array[Byte] = rowBytes
 
   override protected def terminate(): Unit = {}
 

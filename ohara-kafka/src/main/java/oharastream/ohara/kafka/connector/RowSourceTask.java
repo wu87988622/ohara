@@ -111,6 +111,17 @@ public abstract class RowSourceTask extends SourceTask {
   byte[] classNameInBytes = getClass().getName().getBytes(StandardCharsets.UTF_8);
 
   /**
+   * convert the row to byte array. This method is open to subclasses if they are another idea of
+   * handling the serialization.
+   *
+   * @param record row record
+   * @return byte array
+   */
+  protected byte[] toBytes(RowSourceRecord record) {
+    return Serializer.ROW.to(record.row());
+  }
+
+  /**
    * a helper method used to handle the fucking null produced by kafka...
    *
    * @return kafka's source
@@ -128,7 +139,7 @@ public abstract class RowSourceTask extends SourceTask {
         record.topicKey().topicNameOnKafka(),
         record.partition().orElse(null),
         Schema.BYTES_SCHEMA,
-        Serializer.ROW.to(record.row()),
+        toBytes(record),
         // TODO: we keep empty value in order to reduce data size in transmission
         Schema.BYTES_SCHEMA,
         null,
