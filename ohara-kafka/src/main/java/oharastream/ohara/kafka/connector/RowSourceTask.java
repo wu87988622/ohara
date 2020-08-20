@@ -18,9 +18,11 @@ package oharastream.ohara.kafka.connector;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import oharastream.ohara.common.annotations.VisibleForTesting;
 import oharastream.ohara.common.data.Column;
@@ -28,6 +30,7 @@ import oharastream.ohara.common.data.Serializer;
 import oharastream.ohara.common.setting.ObjectKey;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.TopicKey;
+import oharastream.ohara.common.util.ByteUtils;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.common.util.Releasable;
 import oharastream.ohara.common.util.VersionUtils;
@@ -39,9 +42,11 @@ import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.source.SourceTaskContext;
+import org.apache.log4j.Logger;
 
 /** A wrap to SourceTask. The users should substitute RowSourceRecord for SourceRecord. */
 public abstract class RowSourceTask extends SourceTask {
+  private static final Logger LOG = Logger.getLogger(RowSourceTask.class);
 
   /**
    * Start the Task. This should handle any configuration parsing and one-time setup from the task.
@@ -101,6 +106,21 @@ public abstract class RowSourceTask extends SourceTask {
   @VisibleForTesting Counter ignoredMessageNumberCounter = null;
   @VisibleForTesting Counter ignoredMessageSizeCounter = null;
   @VisibleForTesting TaskSetting taskSetting = null;
+
+  /**
+   * the index of kafka record. This index is the bridge between kafka record and ohara record. The
+   * conversion is too expensive so we cache the recent results of conversion. When we are going to
+   * forward callback ops to user-defined function, we take index (of kafka record) to find out the
+   * ohara record in order to avoid duplicate conversion.
+   */
+  @VisibleForTesting static final String RECORD_INDEX_KEY = "record.index";
+
+  private final AtomicLong recordIndex = new AtomicLong(0);
+
+  private static long recordIndex(SourceRecord record) {
+    return ByteUtils.toLong((byte[]) record.headers().lastWithName(RECORD_INDEX_KEY).value());
+  }
+
   /**
    * this value should be immutable after starting this connector task. It is used to generate kafka
    * records and the serialization of jackson is expensive so we cache it.
@@ -133,6 +153,8 @@ public abstract class RowSourceTask extends SourceTask {
     // make this header is readable to consumer.
     headers.addBytes(Header.SOURCE_CLASS_KEY, classNameInBytes);
     headers.addBytes(Header.SOURCE_KEY_KEY, keyInBytes);
+    // this is a internal field
+    headers.addBytes(RECORD_INDEX_KEY, ByteUtils.toBytes(recordIndex.getAndIncrement()));
     return new SourceRecord(
         record.sourcePartition(),
         record.sourceOffset(),
@@ -148,7 +170,8 @@ public abstract class RowSourceTask extends SourceTask {
   }
 
   /** the conversion is too expensive so we keep this mapping. */
-  @VisibleForTesting final Map<SourceRecord, RowSourceRecord> cachedRecords = new HashMap<>();
+  @VisibleForTesting
+  final ConcurrentMap<Long, RowSourceRecord> cachedRecords = new ConcurrentHashMap<>();
 
   @Override
   public final List<SourceRecord> poll() {
@@ -164,7 +187,6 @@ public abstract class RowSourceTask extends SourceTask {
             .map(record -> Map.entry(record, toKafka(record)))
             .filter(
                 pair -> {
-                  cachedRecords.put(pair.getValue(), pair.getKey());
                   long rowSize = ConnectorUtils.sizeOf(pair.getValue());
                   boolean pass =
                       ConnectorUtils.match(
@@ -176,6 +198,7 @@ public abstract class RowSourceTask extends SourceTask {
                           ignoredMessageNumberCounter,
                           ignoredMessageSizeCounter);
                   if (pass && messageSizeCounter != null) messageSizeCounter.addAndGet(rowSize);
+                  if (pass) cachedRecords.put(recordIndex(pair.getValue()), pair.getKey());
                   return pass;
                 })
             .map(Map.Entry::getValue)
@@ -228,11 +251,10 @@ public abstract class RowSourceTask extends SourceTask {
     commitOffsets();
   }
 
-  // TODO: We do a extra conversion here (bytes => Row)... by chia
   @Override
   public final void commitRecord(
       SourceRecord record, org.apache.kafka.clients.producer.RecordMetadata metadata) {
-    RowSourceRecord r = cachedRecords.remove(record);
+    RowSourceRecord r = cachedRecords.remove(recordIndex(record));
     // It is impossible to observer the null since we cache all records in #poll method.
     // However, we all hate the null so the workaround is to create a new record :(
     if (r == null) {
@@ -244,6 +266,7 @@ public abstract class RowSourceTask extends SourceTask {
       if (record.timestamp() != null) builder.timestamp(record.timestamp());
       builder.row(Serializer.ROW.from((byte[]) record.key()));
       r = builder.build();
+      LOG.error("An new SourceRecord is generated as we failed to find a SourceRecord from cache");
     }
     commitRecord(r, RecordMetadata.of(metadata));
   }

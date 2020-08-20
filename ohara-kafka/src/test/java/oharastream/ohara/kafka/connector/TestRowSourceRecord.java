@@ -20,19 +20,24 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import oharastream.ohara.common.data.Cell;
 import oharastream.ohara.common.data.Row;
 import oharastream.ohara.common.rule.OharaTest;
 import oharastream.ohara.common.setting.ConnectorKey;
 import oharastream.ohara.common.setting.SettingDef;
 import oharastream.ohara.common.setting.TopicKey;
+import oharastream.ohara.common.util.ByteUtils;
 import oharastream.ohara.common.util.CommonUtils;
 import oharastream.ohara.kafka.connector.json.ConnectorFormatter;
+import org.apache.kafka.connect.header.Header;
+import org.apache.kafka.connect.header.Headers;
+import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestRowSourceRecord extends OharaTest {
 
@@ -156,9 +161,22 @@ public class TestRowSourceRecord extends OharaTest {
             4L,
             5,
             6);
-    // this loop will remove the elements in the cache so we have to clone another list to prevent
-    // ConcurrentModificationException
-    new ArrayList<>(task.cachedRecords.keySet()).forEach(r -> task.commitRecord(r, meta));
+    // snapshot the cache and then generate fake records
+    var kafkaRecords =
+        task.cachedRecords.keySet().stream()
+            .map(
+                index -> {
+                  var header = Mockito.mock(Header.class);
+                  Mockito.when(header.value()).thenReturn(ByteUtils.toBytes(index));
+                  var headers = Mockito.mock(Headers.class);
+                  Mockito.when(headers.lastWithName(RowSourceTask.RECORD_INDEX_KEY))
+                      .thenReturn(header);
+                  var r = Mockito.mock(SourceRecord.class);
+                  Mockito.when(r.headers()).thenReturn(headers);
+                  return r;
+                })
+            .collect(Collectors.toList());
+    kafkaRecords.forEach(r -> task.commitRecord(r, meta));
     Assert.assertEquals(0, task.cachedRecords.size());
   }
 }

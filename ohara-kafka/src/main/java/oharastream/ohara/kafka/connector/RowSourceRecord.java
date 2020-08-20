@@ -81,6 +81,24 @@ public class RowSourceRecord {
     return new Builder();
   }
 
+  @Override
+  public String toString() {
+    return "RowSourceRecord{"
+        + "sourcePartition="
+        + sourcePartition
+        + ", sourceOffset="
+        + sourceOffset
+        + ", topicKey="
+        + topicKey
+        + ", partition="
+        + partition
+        + ", row="
+        + row
+        + ", timestamp="
+        + timestamp
+        + '}';
+  }
+
   public static class Builder implements oharastream.ohara.common.pattern.Builder<RowSourceRecord> {
     private Builder() {
       // do nothing
