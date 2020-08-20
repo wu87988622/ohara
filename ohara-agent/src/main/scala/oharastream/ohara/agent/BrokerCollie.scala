@@ -133,6 +133,8 @@ trait BrokerCollie extends Collie {
                 )
                 .append(BrokerApi.NUMBER_OF_NETWORK_THREADS_KEY, creation.numberOfNetworkThreads)
                 .append(BrokerApi.NUMBER_OF_IO_THREADS_KEY, creation.numberOfIoThreads)
+                .append(BrokerApi.MAX_OF_POOL_MEMORY_BYTES, creation.maxOfPoolMemory)
+                .append(BrokerApi.MAX_OF_REQUEST_MEMORY_BYTES, creation.maxOfRequestMemory)
                 .append(s"listeners=PLAINTEXT://:${creation.clientPort}")
                 .append(s"advertised.listeners=PLAINTEXT://${newNode.hostname}:${creation.clientPort}")
                 .done

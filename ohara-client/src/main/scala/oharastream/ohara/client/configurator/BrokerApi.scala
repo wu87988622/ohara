@@ -47,6 +47,12 @@ object BrokerApi {
 
   val NUMBER_OF_IO_THREADS_KEY: String = "num.io.threads"
 
+  // KafkaConfig.QueuedMaxBytesProp
+  val MAX_OF_POOL_MEMORY_BYTES: String = "queued.max.request.bytes"
+
+  // KafkaConfig.SocketRequestMaxBytesProp
+  val MAX_OF_REQUEST_MEMORY_BYTES: String = "socket.request.max.bytes"
+
   val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
     .addFollowupTo("core")
     .group()
@@ -88,6 +94,16 @@ object BrokerApi {
       _.key(NUMBER_OF_IO_THREADS_KEY)
         .documentation("the number of threads used to process network requests")
         .positiveNumber(1)
+    )
+    .definition(
+      _.key(MAX_OF_POOL_MEMORY_BYTES)
+        .documentation("Set the max memory usage of pool if you define a positive number")
+        .optional(-1L)
+    )
+    .definition(
+      _.key(MAX_OF_REQUEST_MEMORY_BYTES)
+        .documentation("Set the max memory allocation of per request")
+        .positiveNumber(100 * 1024 * 1024L)
     )
     .initHeap()
     .maxHeap()
@@ -134,6 +150,8 @@ object BrokerApi {
       raw.numberOfReplications4OffsetsTopic.get
     def numberOfNetworkThreads: Int = raw.numberOfNetworkThreads.get
     def numberOfIoThreads: Int      = raw.numberOfIoThreads.get
+    def maxOfPoolMemory: Long       = raw.maxOfPoolMemory.get
+    def maxOfRequestMemory: Long    = raw.maxOfRequestMemory.get
 
     override def volumeMaps: Map[ObjectKey, String] =
       if (logVolumeKeys.isEmpty) Map.empty
@@ -172,6 +190,12 @@ object BrokerApi {
 
     def numberOfIoThreads: Option[Int] =
       raw.get(NUMBER_OF_IO_THREADS_KEY).map(_.convertTo[Int])
+
+    def maxOfPoolMemory: Option[Long] =
+      raw.get(MAX_OF_POOL_MEMORY_BYTES).map(_.convertTo[Long])
+
+    def maxOfRequestMemory: Option[Long] =
+      raw.get(MAX_OF_REQUEST_MEMORY_BYTES).map(_.convertTo[Long])
   }
 
   implicit val UPDATING_FORMAT: JsonRefiner[Updating] =
@@ -217,6 +241,8 @@ object BrokerApi {
     def numberOfReplications4OffsetsTopic: Int = settings.numberOfReplications4OffsetsTopic
     def numberOfNetworkThreads: Int            = settings.numberOfNetworkThreads
     def numberOfIoThreads: Int                 = settings.numberOfIoThreads
+    def maxOfPoolMemory: Long                  = raw.maxOfPoolMemory
+    def maxOfRequestMemory: Long               = raw.maxOfRequestMemory
 
     override def raw: Map[String, JsValue] = BROKER_CLUSTER_INFO_FORMAT.write(this).asJsObject.fields
 
@@ -254,6 +280,14 @@ object BrokerApi {
 
     @Optional("default is no volume mounted on data folder so all data is in container")
     def logDirs(volumeKeys: Set[ObjectKey]): Request.this.type = volumes(LOG_DIRS_KEY, volumeKeys)
+
+    @Optional("default value is -1")
+    def maxOfPoolMemory(sizeInBytes: Long): Request.this.type =
+      setting(MAX_OF_POOL_MEMORY_BYTES, JsNumber(CommonUtils.requirePositiveLong(sizeInBytes)))
+
+    @Optional("default value is 100 * 1024 * 1024")
+    def maxOfRequestMemory(sizeInBytes: Long): Request.this.type =
+      setting(MAX_OF_REQUEST_MEMORY_BYTES, JsNumber(CommonUtils.requirePositiveLong(sizeInBytes)))
 
     /**
       * broker information creation.

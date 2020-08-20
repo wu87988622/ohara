@@ -572,12 +572,42 @@ class TestBrokerRoute extends OharaTest {
   @Test
   def testInitHeap(): Unit =
     result(
-      brokerApi.request.zookeeperClusterKey(zookeeperClusterInfo.key).nodeNames(nodeNames).initHeap(12345).create()
+      brokerApi.request
+        .zookeeperClusterKey(zookeeperClusterInfo.key)
+        .nodeNames(nodeNames)
+        .initHeap(12345)
+        .create()
     ).initHeap shouldBe 12345
 
   @Test
   def testMaxHeap(): Unit =
-    result(brokerApi.request.zookeeperClusterKey(zookeeperClusterInfo.key).nodeNames(nodeNames).maxHeap(12345).create()).maxHeap shouldBe 12345
+    result(
+      brokerApi.request
+        .zookeeperClusterKey(zookeeperClusterInfo.key)
+        .nodeNames(nodeNames)
+        .maxHeap(12345)
+        .create()
+    ).maxHeap shouldBe 12345
+
+  @Test
+  def testMaxPoolMemory(): Unit =
+    result(
+      brokerApi.request
+        .zookeeperClusterKey(zookeeperClusterInfo.key)
+        .nodeNames(nodeNames)
+        .maxOfPoolMemory(12345)
+        .create()
+    ).maxOfPoolMemory shouldBe 12345
+
+  @Test
+  def testMaxRequestMemory(): Unit =
+    result(
+      brokerApi.request
+        .zookeeperClusterKey(zookeeperClusterInfo.key)
+        .nodeNames(nodeNames)
+        .maxOfRequestMemory(12345)
+        .create()
+    ).maxOfRequestMemory shouldBe 12345
 
   @After
   def tearDown(): Unit = Releasable.close(configurator)
