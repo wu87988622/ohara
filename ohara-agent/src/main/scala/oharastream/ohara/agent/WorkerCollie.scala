@@ -146,6 +146,7 @@ trait WorkerCollie extends Collie {
                 .append(WorkerApi.STATUS_TOPIC_NAME_KEY, creation.statusTopicName)
                 .append(WorkerApi.STATUS_TOPIC_PARTITIONS_KEY, creation.statusTopicPartitions)
                 .append(WorkerApi.STATUS_TOPIC_REPLICATIONS_KEY, creation.statusTopicReplications)
+                .append(WorkerApi.COMPRESSION_TYPE_KEY, creation.compressionType.toString)
                 .append("rest.port", creation.clientPort)
                 .append("rest.advertised.host.name", newNode.hostname)
                 .append("rest.advertised.port", creation.clientPort)

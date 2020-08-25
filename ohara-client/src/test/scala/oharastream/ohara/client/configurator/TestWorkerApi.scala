@@ -21,11 +21,13 @@ import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.SettingDef.Permission
 import oharastream.ohara.common.setting.{ObjectKey, SettingDef}
 import oharastream.ohara.common.util.CommonUtils
+import org.apache.kafka.common.record.CompressionType
 import org.junit.Test
 import org.scalatest.matchers.should.Matchers._
 import spray.json.DefaultJsonProtocol._
 import spray.json.{DeserializationException, _}
 
+import scala.jdk.CollectionConverters._
 class TestWorkerApi extends OharaTest {
   private[this] final val accessApi =
     WorkerApi.access.hostname(CommonUtils.randomString(5)).port(CommonUtils.availablePort()).request
@@ -932,4 +934,12 @@ class TestWorkerApi extends OharaTest {
                                      |    "state": "RUNNING"
                                      |  }
       """.stripMargin.parseJson).raw.get("state") shouldBe None
+
+  @Test
+  def testCompressionType(): Unit =
+    WorkerApi.DEFINITIONS
+      .find(_.key() == WorkerApi.COMPRESSION_TYPE_KEY)
+      .get
+      .recommendedValues()
+      .asScala shouldBe CompressionType.values().map(_.name).toSet
 }

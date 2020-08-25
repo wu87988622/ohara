@@ -659,6 +659,18 @@ class TestWorkerRoute extends OharaTest {
     exceptions.count(e => e.getMessage.contains("is stopping") || e.getMessage.contains("is starting")) should not be 0
   }
 
+  @Test
+  def testCompressionType(): Unit =
+    WorkerApi.CompressionType.all.foreach { compressionType =>
+      result(
+        workerApi.request
+          .nodeNames(nodeNames)
+          .brokerClusterKey(brokerClusterKey)
+          .compressionType(compressionType)
+          .create()
+      ).compressionType shouldBe compressionType
+    }
+
   @After
   def tearDown(): Unit = Releasable.close(configurator)
 }
