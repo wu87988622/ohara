@@ -90,7 +90,7 @@ object RemoteFolderHandler {
     ): Future[Boolean] =
       agent(hostname) { agent =>
         if (!exist(agent, path)) {
-          agent.execute(s"mkdir $path")
+          agent.execute(s"mkdir -p $path")
           true
         } else false
       }
