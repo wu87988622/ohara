@@ -43,7 +43,7 @@ export default (action$) =>
     ofType(actions.stopVolume.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((values) => {
+    mergeMap(({ values, resolve, reject }) => {
       const volumeId = getId(values);
       return of(
         defer(() => volumeApi.stop(values)),
@@ -62,15 +62,17 @@ export default (action$) =>
         concatAll(),
         last(),
         map((res) => {
+          if (resolve) resolve(res);
           const normalizedData = merge(normalize(res.data, schema.volume), {
             volumeId,
           });
           return actions.stopVolume.success(normalizedData);
         }),
         startWith(actions.stopVolume.request({ volumeId })),
-        catchErrorWithEventLog((err) =>
-          actions.stopVolume.failure(merge(err, { volumeId })),
-        ),
+        catchErrorWithEventLog((err) => {
+          if (reject) reject(err);
+          return actions.stopVolume.failure(merge(err, { volumeId }));
+        }),
       );
     }),
   );

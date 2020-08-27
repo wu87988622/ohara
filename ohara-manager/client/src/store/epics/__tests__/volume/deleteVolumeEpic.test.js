@@ -44,7 +44,7 @@ it('should delete a volume', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = deleteVolumeEpic(action$);
@@ -77,12 +77,14 @@ it('should delete multiple volumes', () => {
     const input = '   ^-a---b           ';
     const expected = '--a---b 95ms v---y';
     const subs = '    ^-----------------';
-    const anotherVolumeEntity = { ...volumeEntity, name: 'volume2' };
+    const anotherVolumeEntity = {
+      values: { ...volumeEntity, name: 'volume2' },
+    };
 
     const action$ = hot(input, {
       a: {
         type: actions.deleteVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
       b: {
         type: actions.deleteVolume.TRIGGER,
@@ -107,13 +109,13 @@ it('should delete multiple volumes', () => {
       b: {
         type: actions.deleteVolume.REQUEST,
         payload: {
-          volumeId: getId(anotherVolumeEntity),
+          volumeId: getId(anotherVolumeEntity.values),
         },
       },
       y: {
         type: actions.deleteVolume.SUCCESS,
         payload: {
-          volumeId: getId(anotherVolumeEntity),
+          volumeId: getId(anotherVolumeEntity.values),
         },
       },
     });
@@ -135,7 +137,7 @@ it('delete same volume within period should be created once only', () => {
     const action$ = hot(input, {
       a: {
         type: actions.deleteVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = deleteVolumeEpic(action$);
@@ -181,7 +183,7 @@ it('throw exception of delete volume should also trigger event log action', () =
     const action$ = hot(input, {
       a: {
         type: actions.deleteVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = deleteVolumeEpic(action$);

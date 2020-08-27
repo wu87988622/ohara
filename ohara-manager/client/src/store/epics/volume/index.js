@@ -21,6 +21,7 @@ import fetchVolumesEpic from './fetchVolumesEpic';
 import startVolumeEpic from './startVolumeEpic';
 import stopVolumeEpic from './stopVolumeEpic';
 import updateVolumeEpic from './updateVolumeEpic';
+import validateVolumePath from './validateVolumePath';
 
 export default combineEpics(
   createVolumeEpic,
@@ -29,4 +30,5 @@ export default combineEpics(
   startVolumeEpic,
   stopVolumeEpic,
   updateVolumeEpic,
+  validateVolumePath,
 );

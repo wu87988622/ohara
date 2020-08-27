@@ -182,6 +182,58 @@ describe('Create Workspace', () => {
       cy.contains('p:visible', 'Click here to select nodes').click();
       cy.addNode(node);
 
+      // Step3: set volume
+      cy.findAllByText('NEXT').eq(1).filter(':visible').click();
+
+      // Submit the form
+      cy.findAllByText('SUBMIT').filter(':visible').click();
+
+      // The progress dialog should exist
+      cy.findByTestId('create-workspace-progress-dialog').should('be.visible');
+
+      // Check the option
+      cy.findByText('Close after finish').click();
+
+      // It should be closed when done
+      cy.findByTestId('create-workspace-progress-dialog').should(
+        'not.be.visible',
+      );
+    });
+
+    it('should be set volume in quick create', () => {
+      const workspaceName = generate.serviceName({ prefix: 'ws' });
+
+      cy.visit('/');
+
+      // Wait until the page is loaded
+      cy.wait(1000);
+
+      cy.closeIntroDialog();
+
+      // Create a new workspace
+      cy.findByTitle('Create a new workspace').click();
+      cy.findByText('QUICK CREATE').should('exist').click();
+
+      // Step1: workspace name
+      if (workspaceName) {
+        // type the workspaceName by parameter
+        cy.findByDisplayValue('workspace', { exact: false })
+          .clear()
+          .type(workspaceName);
+      }
+      cy.findAllByText('NEXT').filter(':visible').click();
+
+      // Step2: select nodes
+      cy.contains('p:visible', 'Click here to select nodes').click();
+      cy.addNode(node);
+
+      // Step3: set volume
+      cy.findAllByText('Enable volumes').click();
+      cy.findByPlaceholderText('/home/ohara/workspace1')
+        .type('/home/ohara/workspace1')
+        .blur();
+      cy.findAllByText('NEXT').filter(':visible').click();
+
       // Submit the form
       cy.findAllByText('SUBMIT').filter(':visible').click();
 

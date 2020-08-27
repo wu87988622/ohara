@@ -50,7 +50,7 @@ it('start topic should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.startVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = startVolumeEpic(action$);
@@ -117,7 +117,7 @@ it('start volume failed after reach retry limit', () => {
     const action$ = hot(input, {
       a: {
         type: actions.startVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = startVolumeEpic(action$);
@@ -166,7 +166,7 @@ it('start volume multiple times should be worked once', () => {
     const action$ = hot(input, {
       a: {
         type: actions.startVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = startVolumeEpic(action$);

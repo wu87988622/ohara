@@ -29,14 +29,18 @@ export default (action$) =>
     ofType(actions.deleteVolume.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((values) => {
+    mergeMap(({ values, resolve, reject }) => {
       const volumeId = getId(values);
       return defer(() => volumeApi.remove(values)).pipe(
-        map(() => actions.deleteVolume.success({ volumeId })),
+        map(() => {
+          if (resolve) resolve(volumeId);
+          return actions.deleteVolume.success({ volumeId });
+        }),
         startWith(actions.deleteVolume.request({ volumeId })),
-        catchErrorWithEventLog((err) =>
-          actions.deleteVolume.failure(merge(err, { volumeId })),
-        ),
+        catchErrorWithEventLog((err) => {
+          if (reject) reject(err);
+          return actions.deleteVolume.failure(merge(err, { volumeId }));
+        }),
       );
     }),
   );

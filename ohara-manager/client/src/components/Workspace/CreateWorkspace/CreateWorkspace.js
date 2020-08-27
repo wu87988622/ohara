@@ -15,7 +15,7 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { capitalize, isEmpty } from 'lodash';
+import { capitalize, isEmpty, compact, flatten } from 'lodash';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -35,15 +35,19 @@ export default () => {
   const createWorker = hooks.useCreateWorkerAction();
   const createBroker = hooks.useCreateBrokerAction();
   const createZookeeper = hooks.useCreateZookeeperAction();
+  const createVolume = hooks.useCreateVolumeAction();
   const startBroker = hooks.useStartBrokerAction();
   const startWorker = hooks.useStartWorkerAction();
   const startZookeeper = hooks.useStartZookeeperAction();
+  const startVolume = hooks.useStartVolumeAction();
   const stopBroker = hooks.useStopBrokerAction();
   const stopWorker = hooks.useStopWorkerAction();
   const stopZookeeper = hooks.useStopZookeeperAction();
+  const stopVolume = hooks.useStopVolumeAction();
   const deleteBroker = hooks.useDeleteBrokerAction();
   const deleteWorker = hooks.useDeleteWorkerAction();
   const deleteZookeeper = hooks.useDeleteZookeeperAction();
+  const deleteVolume = hooks.useDeleteVolumeAction();
   const deleteWorkspace = hooks.useDeleteWorkspaceAction();
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
   const switchWorkspace = hooks.useSwitchWorkspaceAction();
@@ -59,66 +63,100 @@ export default () => {
   const stepperRef = useRef(null);
 
   const handleSubmit = (values) => {
+    const volume = () => {
+      if (values.zkVolume && values.bkVolume) {
+        return [
+          {
+            name: 'create zookeeper volume',
+            action: () => createVolume(values?.zkVolume),
+            revertAction: () => deleteVolume(values?.zkVolume),
+          },
+          {
+            name: 'start zookeeper volume',
+            action: () => startVolume(values?.zkVolume),
+            revertAction: () => stopVolume(values?.zkVolume),
+          },
+          {
+            name: 'create broker volume',
+            action: () => createVolume(values?.bkVolume),
+            revertAction: () => deleteVolume(values?.bkVolume),
+          },
+          {
+            name: 'start broker volume',
+            action: () => startVolume(values?.bkVolume),
+            revertAction: () => stopVolume(values?.bkVolume),
+          },
+        ];
+      } else {
+        return null;
+      }
+    };
+
     setWorkspaceName(values?.name);
-    setSteps([
-      {
-        name: 'create workspace',
-        action: () =>
-          createWorkspace({ ...values, flag: WorkspaceFlag.CREATING }),
-        revertAction: () => deleteWorkspace(values?.name),
-      },
-      {
-        name: 'create zookeeper',
-        action: () => createZookeeper(values?.zookeeper),
-        revertAction: () => deleteZookeeper(values?.zookeeper?.name),
-      },
-      {
-        name: 'create broker',
-        action: () => createBroker(values?.broker),
-        revertAction: () => deleteBroker(values?.broker?.name),
-      },
-      {
-        name: 'create worker',
-        action: () => createWorker(values?.worker),
-        revertAction: () => deleteWorker(values?.worker?.name),
-      },
-      {
-        name: 'start zookeeper',
-        action: () => startZookeeper(values?.zookeeper?.name),
-        revertAction: () => stopZookeeper(values?.zookeeper?.name),
-      },
-      {
-        name: 'start broker',
-        action: () => startBroker(values?.broker?.name),
-        revertAction: () => stopBroker(values?.broker?.name),
-      },
-      {
-        name: 'start worker',
-        action: () => startWorker(values?.worker?.name),
-        revertAction: () => stopWorker(values?.worker?.name),
-      },
-      {
-        name: 'finalize',
-        action: async () => {
-          await updateWorkspace({
-            name: values.name,
-            flag: WorkspaceFlag.CREATED,
-          });
-          // Log a success message to Event Log
-          eventLog.info(`Successfully created workspace ${values?.name}.`);
-          // Clear form data
-          resetForm(Form.CREATE_WORKSPACE);
-          // Back to the first page of the form
-          switchFormStep(0);
-          // Close all dialogs
-          introDialog.close();
-          // Switch to the workspace you just created
-          switchWorkspace(values?.name);
-          // Refetch node list after creation successfully in order to get the runtime data
-          refreshNodes();
-        },
-      },
-    ]);
+    setSteps(
+      flatten(
+        compact([
+          {
+            name: 'create workspace',
+            action: () =>
+              createWorkspace({ ...values, flag: WorkspaceFlag.CREATING }),
+            revertAction: () => deleteWorkspace(values?.name),
+          },
+          volume(),
+          {
+            name: 'create zookeeper',
+            action: () => createZookeeper(values?.zookeeper),
+            revertAction: () => deleteZookeeper(values?.zookeeper?.name),
+          },
+          {
+            name: 'create broker',
+            action: () => createBroker(values?.broker),
+            revertAction: () => deleteBroker(values?.broker?.name),
+          },
+          {
+            name: 'create worker',
+            action: () => createWorker(values?.worker),
+            revertAction: () => deleteWorker(values?.worker?.name),
+          },
+          {
+            name: 'start zookeeper',
+            action: () => startZookeeper(values?.zookeeper?.name),
+            revertAction: () => stopZookeeper(values?.zookeeper?.name),
+          },
+          {
+            name: 'start broker',
+            action: () => startBroker(values?.broker?.name),
+            revertAction: () => stopBroker(values?.broker?.name),
+          },
+          {
+            name: 'start worker',
+            action: () => startWorker(values?.worker?.name),
+            revertAction: () => stopWorker(values?.worker?.name),
+          },
+          {
+            name: 'finalize',
+            action: async () => {
+              await updateWorkspace({
+                name: values.name,
+                flag: WorkspaceFlag.CREATED,
+              });
+              // Log a success message to Event Log
+              eventLog.info(`Successfully created workspace ${values?.name}.`);
+              // Clear form data
+              resetForm(Form.CREATE_WORKSPACE);
+              // Back to the first page of the form
+              switchFormStep(0);
+              // Close all dialogs
+              introDialog.close();
+              // Switch to the workspace you just created
+              switchWorkspace(values?.name);
+              // Refetch node list after creation successfully in order to get the runtime data
+              refreshNodes();
+            },
+          },
+        ]),
+      ),
+    );
     setSubmitting(true);
   };
 

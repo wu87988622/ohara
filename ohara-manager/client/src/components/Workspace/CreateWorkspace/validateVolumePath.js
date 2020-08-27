@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import createRoutine from './createRoutine';
+const validateVolumePath = (action, formValues) => (values) => {
+  const path = Object.keys(values)
+    .map((key) => Number(key))
+    .filter((key) => !isNaN(key))
+    .map((key) => values[key])
+    .join('');
+  action({
+    nodeNames: formValues.workspace.nodeNames,
+    path,
+  });
+};
 
-export const fetchVolumes = createRoutine('FETCH_VOLUMES');
-export const fetchVolume = createRoutine('FETCH_VOLUME');
-export const createVolume = createRoutine('CREATE_VOLUME');
-export const updateVolume = createRoutine('UPDATE_VOLUME');
-export const startVolume = createRoutine('START_VOLUME');
-export const stopVolume = createRoutine('STOP_VOLUME');
-export const deleteVolume = createRoutine('DELETE_VOLUME');
-export const inspectVolume = createRoutine('INSPECT_VOLUME');
-export const validateVolumePath = createRoutine('VALIDATE_VOLUME_PATH');
+export default validateVolumePath;
