@@ -1494,6 +1494,9 @@ describe('Delete workspace', () => {
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode(node);
 
+    // Set volume
+    cy.findAllByText('NEXT').eq(1).filter(':visible').click();
+
     // Submit the form and create the workspace
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
