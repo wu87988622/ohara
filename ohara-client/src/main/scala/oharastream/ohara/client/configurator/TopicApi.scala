@@ -33,13 +33,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 object TopicApi {
-  val KIND: String               = SettingDef.Reference.TOPIC.name().toLowerCase
-  val PREFIX: String             = "topics"
-  val BROKER_CLUSTER_KEY_KEY     = "brokerClusterKey"
-  val NUMBER_OF_PARTITIONS_KEY   = "numberOfPartitions"
-  val NUMBER_OF_REPLICATIONS_KEY = "numberOfReplications"
-  val SEGMENT_BYTES_KEY: String  = TopicConfig.SEGMENT_BYTES_CONFIG
-  val SEGMENT_MS_KEY: String     = TopicConfig.SEGMENT_MS_CONFIG
+  val KIND: String                          = SettingDef.Reference.TOPIC.name().toLowerCase
+  val PREFIX: String                        = "topics"
+  val BROKER_CLUSTER_KEY_KEY                = "brokerClusterKey"
+  val NUMBER_OF_PARTITIONS_KEY              = "numberOfPartitions"
+  val NUMBER_OF_REPLICATIONS_KEY            = "numberOfReplications"
+  val SEGMENT_BYTES_KEY: String             = TopicConfig.SEGMENT_BYTES_CONFIG
+  val SEGMENT_MS_KEY: String                = TopicConfig.SEGMENT_MS_CONFIG
+  val CLEANUP_POLICY_KEY: String            = TopicConfig.CLEANUP_POLICY_CONFIG
+  val MIN_CLEANABLE_DIRTY_RATIO_KEY: String = TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_CONFIG
 
   /**
     * the config with this group is mapped to kafka's custom config. Kafka divide configs into two parts.
@@ -50,6 +52,22 @@ object TopicApi {
     * in order to filter the custom from settings (see Creation).
     */
   private[this] val CONFIGS_GROUP = "configs"
+
+  sealed abstract class CleanupPolicy
+  object CleanupPolicy extends Enum[CleanupPolicy] {
+    case object DELETE extends CleanupPolicy {
+      override def toString: String = TopicConfig.CLEANUP_POLICY_DELETE
+    }
+
+    case object COMPACT extends CleanupPolicy {
+      override def toString: String = TopicConfig.CLEANUP_POLICY_COMPACT
+    }
+  }
+
+  implicit val CLEANUP_POLICY_FORMAT: RootJsonFormat[CleanupPolicy] = new RootJsonFormat[CleanupPolicy] {
+    override def read(json: JsValue): CleanupPolicy = CleanupPolicy.forName(json.convertTo[String])
+    override def write(obj: CleanupPolicy): JsValue = JsString(obj.toString)
+  }
 
   val DEFINITIONS: Seq[SettingDef] = DefinitionCollector()
     .addFollowupTo("core")
@@ -84,6 +102,16 @@ object TopicApi {
         .documentation(TopicConfig.SEGMENT_MS_DOC)
         .positiveNumber(7L * 24L * 60L * 60L * 1000L)
     )
+    .definition(
+      _.key(CLEANUP_POLICY_KEY)
+        .documentation(TopicConfig.CLEANUP_POLICY_DOC)
+        .optional(TopicConfig.CLEANUP_POLICY_DELETE)
+    )
+    .definition(
+      _.key(MIN_CLEANABLE_DIRTY_RATIO_KEY)
+        .documentation(TopicConfig.MIN_CLEANABLE_DIRTY_RATIO_DOC)
+        .optional(0.5d)
+    )
     .result
 
   final class Updating private[TopicApi] (val raw: Map[String, JsValue]) extends BasicUpdating {
@@ -97,6 +125,10 @@ object TopicApi {
     private[TopicApi] def group: Option[String] = raw.get(GROUP_KEY).map(_.convertTo[String])
 
     private[TopicApi] def name: Option[String] = raw.get(NAME_KEY).map(_.convertTo[String])
+
+    def cleanupPolicy: Option[CleanupPolicy] = raw.get(CLEANUP_POLICY_KEY).map(_.convertTo[CleanupPolicy])
+
+    def minCleanableDirtyRatio: Option[Double] = raw.get(MIN_CLEANABLE_DIRTY_RATIO_KEY).map(_.convertTo[Double])
   }
 
   implicit val UPDATING_FORMAT: RootJsonFormat[Updating] =
@@ -125,6 +157,10 @@ object TopicApi {
     override def name: String = raw.name.get
 
     override def tags: Map[String, JsValue] = raw.tags.get
+
+    def cleanupPolicy: CleanupPolicy = raw.cleanupPolicy.get
+
+    def minCleanableDirtyRatio: Double = raw.minCleanableDirtyRatio.get
   }
 
   implicit val CREATION_FORMAT: JsonRefiner[Creation] =
@@ -235,6 +271,10 @@ object TopicApi {
     }
 
     override def raw: Map[String, JsValue] = TOPIC_INFO_FORMAT.write(this).asJsObject.fields
+
+    def cleanupPolicy: CleanupPolicy = raw.cleanupPolicy
+
+    def minCleanableDirtyRatio: Double = raw.minCleanableDirtyRatio
   }
 
   implicit val TOPIC_INFO_FORMAT: RootJsonFormat[TopicInfo] = JsonRefiner(new RootJsonFormat[TopicInfo] {
@@ -281,6 +321,11 @@ object TopicApi {
     @Optional("default value is empty array")
     def tags(tags: Map[String, JsValue]): Request =
       setting(TAGS_KEY, JsObject(Objects.requireNonNull(tags)))
+
+    @Optional("default value is delete policy")
+    def cleanupPolicy(policy: CleanupPolicy): Request = setting(CLEANUP_POLICY_KEY, CLEANUP_POLICY_FORMAT.write(policy))
+
+    def minCleanableDirtyRatio(value: Double): Request = setting(MIN_CLEANABLE_DIRTY_RATIO_KEY, JsNumber(value))
 
     def setting(key: String, value: JsValue): Request = settings(Map(key -> value))
 

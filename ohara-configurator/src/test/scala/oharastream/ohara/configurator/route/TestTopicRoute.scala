@@ -17,7 +17,7 @@
 package oharastream.ohara.configurator.route
 
 import oharastream.ohara.client.configurator.BrokerApi.BrokerClusterInfo
-import oharastream.ohara.client.configurator.TopicApi.{Request, TopicInfo, TopicState}
+import oharastream.ohara.client.configurator.TopicApi.{CleanupPolicy, Request, TopicInfo, TopicState}
 import oharastream.ohara.client.configurator.{BrokerApi, TopicApi, ZookeeperApi}
 import oharastream.ohara.common.rule.OharaTest
 import oharastream.ohara.common.setting.{ObjectKey, TopicKey}
@@ -591,6 +591,22 @@ class TestTopicRoute extends OharaTest {
     result(topicApi.query.tags(tags1).execute()).size shouldBe 1
     result(topicApi.query.tags(tags2).execute()).size shouldBe 4
     result(topicApi.query.tags(tags2).name(topic.name).execute()).size shouldBe 1
+  }
+
+  @Test
+  def testCompactAndRatio(): Unit = {
+    val policy = CleanupPolicy.COMPACT
+    val ratio  = 0.3
+    val topicInfo = result(
+      topicApi.request
+        .cleanupPolicy(policy)
+        .minCleanableDirtyRatio(ratio)
+        .brokerClusterKey(brokerClusterInfo.key)
+        .create()
+    )
+
+    topicInfo.cleanupPolicy shouldBe policy
+    topicInfo.minCleanableDirtyRatio shouldBe ratio
   }
 
   @After
