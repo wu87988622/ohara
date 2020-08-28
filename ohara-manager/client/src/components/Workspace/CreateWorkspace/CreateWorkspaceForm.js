@@ -34,6 +34,7 @@ import SetupNodesForm from './SetupNodesForm';
 import SetupWorkerForm from './SetupWorkerForm';
 import SetupWorkspaceForm from './SetupWorkspaceForm';
 import SetupZookeeperForm from './SetupZookeeperForm';
+import SetupVolumeForm from './SetupVolumeForm';
 
 const { EXPERT, QUICK } = CreateWorkspaceMode;
 
@@ -47,16 +48,40 @@ const CreateWorkspaceForm = (props) => {
 
   const randomTake = (array, n) => take(shuffle(array), n);
 
+  const volumes = (values, nodeNames) => {
+    const volume = values?.volume;
+    if (volume) {
+      const { path } = volume;
+      return {
+        zkVolume: {
+          name: generate.serviceName(),
+          nodeNames,
+          path: path + '/zookeeper',
+        },
+        bkVolume: {
+          name: generate.serviceName(),
+          nodeNames,
+          path: path + '/broker',
+        },
+      };
+    }
+    return {};
+  };
+
   const applyQuickRules = (values) => {
     const { name, nodeNames } = values.workspace;
-    return merge(values, {
-      zookeeper: {
-        name,
-        nodeNames: randomTake(nodeNames, nodeNames > 3 ? 3 : 1),
+    return merge(
+      values,
+      {
+        zookeeper: {
+          name,
+          nodeNames: randomTake(nodeNames, nodeNames > 3 ? 3 : 1),
+        },
+        broker: { name, nodeNames },
+        worker: { name, nodeNames },
       },
-      broker: { name, nodeNames },
-      worker: { name, nodeNames },
-    });
+      volumes(values, nodeNames),
+    );
   };
 
   const applyGroup = (values) =>
@@ -82,8 +107,30 @@ const CreateWorkspaceForm = (props) => {
       },
     });
 
-    const { broker, worker, workspace, zookeeper } = finalValues;
-    onSubmit({ ...workspace, worker, broker, zookeeper });
+    if (finalValues.zkVolume && finalValues.bkVolume) {
+      const zkVolume = finalValues.zkVolume;
+      const bkVolume = finalValues.bkVolume;
+      finalValues.zookeeper.dataDir = {
+        name: zkVolume.name,
+        group: GROUP.VOLUME,
+      };
+      finalValues.broker['log.dirs'] = [
+        {
+          name: bkVolume.name,
+          group: GROUP.VOLUME,
+        },
+      ];
+    }
+
+    const {
+      broker,
+      worker,
+      workspace,
+      zookeeper,
+      zkVolume,
+      bkVolume,
+    } = finalValues;
+    onSubmit({ ...workspace, worker, broker, zookeeper, zkVolume, bkVolume });
   };
 
   return (
@@ -99,6 +146,12 @@ const CreateWorkspaceForm = (props) => {
           <StepLabel>Select nodes</StepLabel>
           <StepContent>
             <SetupNodesForm onSubmit={nextStep} previousStep={previousStep} />
+          </StepContent>
+        </Step>
+        <Step>
+          <StepLabel>Set volumes(Optional)</StepLabel>
+          <StepContent>
+            <SetupVolumeForm onSubmit={nextStep} previousStep={previousStep} />
           </StepContent>
         </Step>
         {mode === EXPERT && (

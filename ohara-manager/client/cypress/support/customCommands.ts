@@ -297,7 +297,10 @@ Cypress.Commands.add(
     cy.contains('p:visible', 'Click here to select nodes').click();
     cy.addNode(node);
 
-    // Step3: create workspace
+    // Step3: set volume
+    cy.findAllByText('NEXT').eq(1).filter(':visible').click();
+
+    // Step4: create workspace
     cy.findAllByText('SUBMIT').filter(':visible').click();
 
     cy.findByTestId('create-workspace-progress-dialog').should('be.visible');

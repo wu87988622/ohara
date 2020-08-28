@@ -50,7 +50,7 @@ it('stop volume should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.stopVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = stopVolumeEpic(action$);
@@ -116,7 +116,7 @@ it('stop topic failed after reach retry limit', () => {
     const action$ = hot(input, {
       a: {
         type: actions.stopVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = stopVolumeEpic(action$);
@@ -165,7 +165,7 @@ it('stop volume multiple times should be worked once', () => {
     const action$ = hot(input, {
       a: {
         type: actions.stopVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = stopVolumeEpic(action$);

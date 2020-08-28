@@ -26,17 +26,21 @@ import * as schema from 'store/schema';
 import { getId } from 'utils/object';
 import { catchErrorWithEventLog } from '../utils';
 
-const createVolumes$ = (values) => {
+const createVolumes$ = ({ values, resolve, reject }) => {
   const volumeId = getId(values);
   return defer(() => volumeApi.create(values)).pipe(
     map((res) => res.data),
-    map((data) => normalize(data, schema.volume)),
+    map((data) => {
+      if (resolve) resolve(data);
+      return normalize(data, schema.volume);
+    }),
     map((normalizedData) => merge(normalizedData, { volumeId })),
     map((normalizedData) => actions.createVolume.success(normalizedData)),
     startWith(actions.createVolume.request({ volumeId })),
-    catchErrorWithEventLog((err) =>
-      actions.createVolume.failure(merge(err, { volumeId })),
-    ),
+    catchErrorWithEventLog((err) => {
+      if (reject) reject(err);
+      return actions.createVolume.failure(merge(err, { volumeId }));
+    }),
   );
 };
 
@@ -45,5 +49,7 @@ export default (action$) =>
     ofType(actions.createVolume.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((value) => createVolumes$(value)),
+    mergeMap(({ values, resolve, reject }) =>
+      createVolumes$({ values, resolve, reject }),
+    ),
   );

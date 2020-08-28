@@ -16,7 +16,6 @@
 
 import _ from 'lodash';
 import { createSelector } from 'reselect';
-
 const getEntities = (state) => state?.entities?.volumes;
 
 const getGroupFromProps = (_, props) => props?.group;

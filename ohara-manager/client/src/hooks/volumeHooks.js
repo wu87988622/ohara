@@ -21,27 +21,33 @@ import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
 import * as hooks from 'hooks';
 
-import { RESOURCE } from 'api/utils/apiUtils';
+import { GROUP } from 'const';
 
 export const useVolumeGroup = () => {
-  return RESOURCE.VOLUME;
+  return GROUP.VOLUME;
 };
 
 export const useCreateVolumeAction = () => {
   const dispatch = useDispatch();
-  const group = useVolumeGroup();
-  return (values) =>
-    dispatch(
-      actions.createVolume.trigger({
-        ...values,
-        group,
-      }),
-    );
+  const group = hooks.useVolumeGroup();
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.createVolume.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, group],
+  );
 };
 
 export const useUpdateVolumeAction = () => {
   const dispatch = useDispatch();
-  const group = useVolumeGroup();
+  const group = hooks.useVolumeGroup();
   return (values) =>
     dispatch(
       actions.updateVolume.trigger({
@@ -53,43 +59,67 @@ export const useUpdateVolumeAction = () => {
 
 export const useStartVolumeAction = () => {
   const dispatch = useDispatch();
-  const group = useVolumeGroup();
-  return (values) =>
-    dispatch(
-      actions.startVolume.trigger({
-        ...values,
-        group,
-      }),
-    );
+  const group = hooks.useVolumeGroup();
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.startVolume.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, group],
+  );
 };
 
 export const useStopVolumeAction = () => {
   const dispatch = useDispatch();
-  const group = useVolumeGroup();
-  return (values) =>
-    dispatch(
-      actions.stopVolume.trigger({
-        ...values,
-        group,
-      }),
-    );
+  const group = hooks.useVolumeGroup();
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.stopVolume.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, group],
+  );
 };
 
 export const useDeleteVolumeAction = () => {
   const dispatch = useDispatch();
-  const group = useVolumeGroup();
-  return (values) =>
-    dispatch(
-      actions.deleteVolume.trigger({
-        ...values,
-        group,
-      }),
-    );
+  const group = hooks.useVolumeGroup();
+  return useCallback(
+    (values) =>
+      new Promise((resolve, reject) =>
+        dispatch(
+          actions.deleteVolume.trigger({
+            values: { ...values, group },
+            resolve,
+            reject,
+          }),
+        ),
+      ),
+    [dispatch, group],
+  );
 };
 
 export const useFetchVolumesAction = () => {
   const dispatch = useDispatch();
   return () => dispatch(actions.fetchVolumes.trigger());
+};
+
+export const useValidateVolumePathAction = () => {
+  const dispatch = useDispatch();
+  return (values) =>
+    dispatch(actions.validateVolumePath.trigger({ ...values }));
 };
 
 export const useIsVolumeLoaded = () => {
@@ -99,6 +129,14 @@ export const useIsVolumeLoaded = () => {
 
 export const useIsVolumeLoading = () => {
   const mapState = useCallback((state) => !!state.ui.volume?.loading, []);
+  return useSelector(mapState);
+};
+
+export const useValidateVolumePath = () => {
+  const mapState = useCallback(
+    (state) => state.ui.volume.tmp_volume?.validate,
+    [],
+  );
   return useSelector(mapState);
 };
 

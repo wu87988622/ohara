@@ -77,6 +77,7 @@ export enum GROUP {
   ZOOKEEPER = 'zookeeper',
   BROKER = 'broker',
   WORKER = 'worker',
+  VOLUME = 'volume',
 }
 
 export enum Form {

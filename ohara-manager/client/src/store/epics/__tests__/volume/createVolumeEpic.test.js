@@ -43,7 +43,7 @@ it('should create a volume', () => {
     const action$ = hot(input, {
       a: {
         type: actions.createVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = createVolumeEpic(action$);
@@ -82,12 +82,14 @@ it('should create multiple volumes', () => {
     const input = '   ^-ab          ';
     const expected = '--ab 98ms uv';
     const subs = '    ^-------------';
-    const anotherVolumeEntity = { ...volumeEntity, name: 'volume2' };
+    const anotherVolumeEntity = {
+      values: { ...volumeEntity, name: 'volume2' },
+    };
 
     const action$ = hot(input, {
       a: {
         type: actions.createVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
       b: {
         type: actions.createVolume.TRIGGER,
@@ -118,19 +120,19 @@ it('should create multiple volumes', () => {
       b: {
         type: actions.createVolume.REQUEST,
         payload: {
-          volumeId: getId(anotherVolumeEntity),
+          volumeId: getId(anotherVolumeEntity.values),
         },
       },
       v: {
         type: actions.createVolume.SUCCESS,
         payload: {
-          volumeId: getId(anotherVolumeEntity),
+          volumeId: getId(anotherVolumeEntity.values),
           entities: {
             volumes: {
-              [getId(anotherVolumeEntity)]: anotherVolumeEntity,
+              [getId(anotherVolumeEntity.values)]: anotherVolumeEntity.values,
             },
           },
-          result: getId(anotherVolumeEntity),
+          result: getId(anotherVolumeEntity.values),
         },
       },
     });
@@ -152,7 +154,7 @@ it('create same volume within period should be created once only', () => {
     const action$ = hot(input, {
       a: {
         type: actions.createVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = createVolumeEpic(action$);
@@ -204,7 +206,7 @@ it('throw exception of create volume should also trigger event log action', () =
     const action$ = hot(input, {
       a: {
         type: actions.createVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: volumeEntity },
       },
     });
     const output$ = createVolumeEpic(action$);

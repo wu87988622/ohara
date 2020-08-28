@@ -42,6 +42,28 @@ function volume(state = initialState, action) {
         loading: false,
         error: action.payload,
       };
+    case actions.validateVolumePath.REQUEST:
+      return {
+        validate: { validating: true },
+      };
+    case actions.validateVolumePath.SUCCESS:
+      return {
+        validate: {
+          validating: false,
+          path: state.path,
+          isValidate: true,
+        },
+      };
+    case actions.validateVolumePath.FAILURE:
+      return {
+        ...state,
+        validate: {
+          validating: false,
+          path: state.path,
+          isValidate: false,
+          ...action.payload,
+        },
+      };
     default:
       return state;
   }

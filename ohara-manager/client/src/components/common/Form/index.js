@@ -20,5 +20,14 @@ import InputField from './InputField';
 import Select from './Select';
 import Label from './Label';
 import Checkbox from './Checkbox';
+import ValidateInputField from './ValidateInputField';
 
-export { AutoComplete, Button, InputField, Select, Label, Checkbox };
+export {
+  AutoComplete,
+  Button,
+  InputField,
+  Select,
+  Label,
+  Checkbox,
+  ValidateInputField,
+};

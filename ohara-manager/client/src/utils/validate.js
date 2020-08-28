@@ -65,6 +65,18 @@ export const checkDuplicate = (validateList) => (value) => {
   );
 };
 
+export const checkVolumePath = (action, state, formValues) => (value) => {
+  action({
+    nodeNames: formValues.workspace.nodeNames,
+    path: value,
+  });
+  if (state.path === value && state.isValidate) {
+    return undefined;
+  } else {
+    return `The path ${value} is illegal.`;
+  }
+};
+
 export const composeValidators = (...validators) => (value, allValues, meta) =>
   validators.reduce(
     (error, validator) => error || validator(value, allValues, meta),
