@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import oharastream.ohara.common.rule.OharaTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,14 +27,6 @@ import org.junit.Test;
 public class TestStreamUtils extends OharaTest {
 
   private final List<String> names = Arrays.asList("a", "b", "c");
-
-  @Test
-  public void testIterate() {
-    Stream<String> stream = StreamUtils.iterate(names.iterator());
-    Assert.assertEquals("a,b,c", stream.collect(Collectors.joining(",")));
-    stream = StreamUtils.iterate(names.iterator());
-    Assert.assertEquals(3, stream.count());
-  }
 
   @Test
   public void testZipWithIndex() {
@@ -46,15 +37,5 @@ public class TestStreamUtils extends OharaTest {
     Assert.assertEquals("a", namesWithIndex.get(0));
     Assert.assertEquals("b", namesWithIndex.get(1));
     Assert.assertEquals("c", namesWithIndex.get(2));
-  }
-
-  @Test
-  public void testMapWithIndex() {
-    List<Map.Entry<Integer, String>> namesWithIndex =
-        StreamUtils.mapWithIndex(names.stream(), Map::entry)
-            .collect(Collectors.toUnmodifiableList());
-    Assert.assertEquals(Map.entry(0, "a"), namesWithIndex.get(0));
-    Assert.assertEquals(Map.entry(1, "b"), namesWithIndex.get(1));
-    Assert.assertEquals(Map.entry(2, "c"), namesWithIndex.get(2));
   }
 }

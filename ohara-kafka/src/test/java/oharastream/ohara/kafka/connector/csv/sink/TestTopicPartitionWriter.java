@@ -16,12 +16,11 @@
 
 package oharastream.ohara.kafka.connector.csv.sink;
 
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import oharastream.ohara.common.util.StreamUtils;
 import oharastream.ohara.kafka.connector.RowSinkRecord;
 import oharastream.ohara.kafka.connector.csv.CsvConnectorDefinitions;
 import oharastream.ohara.kafka.connector.csv.WithMockStorage;
@@ -139,9 +138,7 @@ public class TestTopicPartitionWriter extends WithMockStorage {
     String dir =
         topicsDir + "/" + TOPIC_PARTITION.topicKey().topicNameOnKafka() + "/" + encodedPartition;
 
-    List<String> actualFilenames =
-        StreamUtils.iterate(fs.listFileNames(dir)).collect(Collectors.toUnmodifiableList());
-
+    var actualFilenames = ImmutableList.copyOf(fs.listFileNames(dir));
     for (String filename : filenames) {
       Assert.assertTrue(actualFilenames.contains(filename));
     }
