@@ -84,5 +84,5 @@ export default (action$) =>
     ofType(actions.validateVolumePath.TRIGGER),
     map((action) => action.payload),
     distinctUntilChanged(),
-    mergeMap((value) => validateVolumePath$(value)),
+    mergeMap(({ values }) => validateVolumePath$(values)),
   );

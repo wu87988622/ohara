@@ -16,6 +16,7 @@
 
 import _ from 'lodash';
 import { createSelector } from 'reselect';
+import { KIND } from 'const';
 const getEntities = (state) => state?.entities?.volumes;
 
 const getGroupFromProps = (_, props) => props?.group;
@@ -29,4 +30,25 @@ export const getVolumeByWorkspaceName = createSelector(
       (volume) =>
         volume?.group === group && volume.tags.workspaceName === workspaceName,
     ),
+);
+
+export const getVolumesByUsedZookeeper = createSelector(
+  [getEntities, getGroupFromProps, getWorkspaceNameFromProps],
+  (entities, group) =>
+    _.values(entities).filter(
+      (volume) =>
+        volume?.group === group && volume.tags.usedBy === KIND.zookeeper,
+    ),
+);
+
+export const getVolumesByUsedBroker = createSelector(
+  [getEntities, getGroupFromProps, getWorkspaceNameFromProps],
+  (entities, group) =>
+    _.values(entities).filter(
+      (volume) => volume?.group === group && volume.tags.usedBy === KIND.broker,
+    ),
+);
+
+export const getAllVolume = createSelector([getEntities], (entities) =>
+  _.values(entities),
 );

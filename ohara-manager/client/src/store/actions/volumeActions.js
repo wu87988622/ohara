@@ -25,3 +25,4 @@ export const stopVolume = createRoutine('STOP_VOLUME');
 export const deleteVolume = createRoutine('DELETE_VOLUME');
 export const inspectVolume = createRoutine('INSPECT_VOLUME');
 export const validateVolumePath = createRoutine('VALIDATE_VOLUME_PATH');
+export const clearValidate = createRoutine('CLEAR_VALIDATE');

@@ -49,11 +49,14 @@ export const useUpdateVolumeAction = () => {
   const dispatch = useDispatch();
   const group = hooks.useVolumeGroup();
   return (values) =>
-    dispatch(
-      actions.updateVolume.trigger({
-        ...values,
-        group,
-      }),
+    new Promise((resolve, reject) =>
+      dispatch(
+        actions.updateVolume.trigger({
+          values: { ...values, group },
+          resolve,
+          reject,
+        }),
+      ),
     );
 };
 
@@ -116,10 +119,23 @@ export const useFetchVolumesAction = () => {
   return () => dispatch(actions.fetchVolumes.trigger());
 };
 
+export const useClearVolumesAction = () => {
+  const dispatch = useDispatch();
+  return () => dispatch(actions.clearValidate.request());
+};
+
 export const useValidateVolumePathAction = () => {
   const dispatch = useDispatch();
   return (values) =>
-    dispatch(actions.validateVolumePath.trigger({ ...values }));
+    new Promise((resolve, reject) =>
+      dispatch(
+        actions.validateVolumePath.trigger({
+          values: { ...values },
+          resolve,
+          reject,
+        }),
+      ),
+    );
 };
 
 export const useIsVolumeLoaded = () => {
@@ -133,10 +149,7 @@ export const useIsVolumeLoading = () => {
 };
 
 export const useValidateVolumePath = () => {
-  const mapState = useCallback(
-    (state) => state.ui.volume.tmp_volume?.validate,
-    [],
-  );
+  const mapState = useCallback((state) => state.ui.volume?.validate, []);
   return useSelector(mapState);
 };
 
@@ -155,5 +168,55 @@ export const useVolumes = () => {
 
   return useSelector((state) => {
     return selectors.getVolumeByWorkspaceName(state, { group, workspaceName });
+  });
+};
+
+export const useVolumesByUsedZookeeper = () => {
+  const isAppReady = hooks.useIsAppReady();
+  const group = useVolumeGroup();
+  const fetchVolumes = useFetchVolumesAction();
+  const isVolumeLoaded = useIsVolumeLoaded();
+  const isVolumeLoading = useIsVolumeLoading();
+
+  useEffect(() => {
+    if (isVolumeLoaded || isVolumeLoading || !isAppReady) return;
+    fetchVolumes();
+  }, [fetchVolumes, isAppReady, isVolumeLoaded, isVolumeLoading]);
+
+  return useSelector((state) => {
+    return selectors.getVolumesByUsedZookeeper(state, { group });
+  });
+};
+
+export const useVolumesByUsedBroker = () => {
+  const isAppReady = hooks.useIsAppReady();
+  const group = useVolumeGroup();
+  const fetchVolumes = useFetchVolumesAction();
+  const isVolumeLoaded = useIsVolumeLoaded();
+  const isVolumeLoading = useIsVolumeLoading();
+
+  useEffect(() => {
+    if (isVolumeLoaded || isVolumeLoading || !isAppReady) return;
+    fetchVolumes();
+  }, [fetchVolumes, isAppReady, isVolumeLoaded, isVolumeLoading]);
+
+  return useSelector((state) => {
+    return selectors.getVolumesByUsedBroker(state, { group });
+  });
+};
+
+export const useAllVolumes = () => {
+  const isAppReady = hooks.useIsAppReady();
+  const fetchVolumes = useFetchVolumesAction();
+  const isVolumeLoaded = useIsVolumeLoaded();
+  const isVolumeLoading = useIsVolumeLoading();
+
+  useEffect(() => {
+    if (isVolumeLoaded || isVolumeLoading || !isAppReady) return;
+    fetchVolumes();
+  }, [fetchVolumes, isAppReady, isVolumeLoaded, isVolumeLoading]);
+
+  return useSelector((state) => {
+    return selectors.getAllVolume(state);
   });
 };

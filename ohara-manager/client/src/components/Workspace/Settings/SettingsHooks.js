@@ -24,6 +24,7 @@ import WarningIcon from '@material-ui/icons/Warning';
 import StorageIcon from '@material-ui/icons/Storage';
 import SubjectIcon from '@material-ui/icons/Subject';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
+import FolderSpecialIcon from '@material-ui/icons/FolderSpecial';
 import UnarchiveIcon from '@material-ui/icons/Unarchive';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
@@ -33,6 +34,7 @@ import { SETTINGS_COMPONENT_TYPE, KIND } from 'const';
 import DeleteConfirmDialogContent from './DeleteConfirmDialogContent';
 import AutofillPage from './pages/AutofillPage';
 import BrokerNodesPage from './pages/BrokerNodesPage';
+import BrokerVolumesPage from './pages/BrokerVolumesPage';
 import StreamJarsPage from './pages/StreamJarsPage';
 import TopicPage from './pages/TopicPage';
 import WorkerNodesPage from './pages/WorkerNodesPage';
@@ -40,6 +42,7 @@ import WorkerPluginsPage from './pages/WorkerPluginsPage';
 import WorkspaceFilesPage from './pages/WorkspaceFilesPage';
 import WorkspaceNodesPage from './pages/WorkspaceNodesPage';
 import ZookeeperNodesPage from './pages/ZookeeperNodesPage';
+import ZookeeperVolumesPage from './pages/ZookeeperVolumesPage';
 
 /*
     Available props for component
@@ -188,6 +191,15 @@ export const useConfig = ({
             children: <ZookeeperNodesPage />,
           },
         },
+        {
+          icon: <FolderSpecialIcon />,
+          title: 'Zookeeper volumes',
+          subTitle: 'Used to store the zookeeper data',
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
+          componentProps: {
+            children: <ZookeeperVolumesPage />,
+          },
+        },
       ],
     },
     {
@@ -207,6 +219,15 @@ export const useConfig = ({
           type: SETTINGS_COMPONENT_TYPE.PAGE,
           componentProps: {
             children: <BrokerNodesPage />,
+          },
+        },
+        {
+          icon: <FolderSpecialIcon />,
+          title: 'Broker volumes',
+          subTitle: 'Used to store the broker data',
+          type: SETTINGS_COMPONENT_TYPE.PAGE,
+          componentProps: {
+            children: <BrokerVolumesPage />,
           },
         },
       ],

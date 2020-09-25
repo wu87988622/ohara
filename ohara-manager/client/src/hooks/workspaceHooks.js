@@ -16,9 +16,9 @@
 
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { map, size, xor } from 'lodash';
+import { map, size, xor, get } from 'lodash';
 
-import { GROUP } from 'const';
+import { GROUP, KIND } from 'const';
 import * as hooks from 'hooks';
 import * as actions from 'store/actions';
 import * as selectors from 'store/selectors';
@@ -137,8 +137,8 @@ export const useDiscardWorkspaceChangedSettingsAction = () => {
   const updateWorkspace = hooks.useUpdateWorkspaceAction();
 
   return useCallback(() => {
-    updateWorkspace({ ...workspace, broker, worker, zookeeper });
-  }, [broker, worker, workspace, zookeeper, updateWorkspace]);
+    updateWorkspace({ ...workspace, broker, worker, zookeeper, volumes: [] });
+  }, [updateWorkspace, workspace, broker, worker, zookeeper]);
 };
 
 export const useShouldBeRestartWorkspace = () => {
@@ -146,11 +146,29 @@ export const useShouldBeRestartWorkspace = () => {
   const worker = hooks.useWorker();
   const workspace = hooks.useWorkspace();
   const zookeeper = hooks.useZookeeper();
+  const volumesByUsedBroker = hooks.useVolumesByUsedBroker();
+  const volumesByUsedZookeeper = hooks.useVolumesByUsedZookeeper();
 
   const memoizedValue = useMemo(() => {
     const countOfChangedBrokerNodes = workspace?.broker?.nodeNames
       ? size(xor(broker?.nodeNames, workspace.broker.nodeNames))
       : 0;
+
+    const countOfChangedBrokerVolumes = () => {
+      const volumesUsedByBrokerInWorkspace = get(
+        workspace,
+        'volumes.tags',
+        [],
+      ).filter((v) => v.tags.usedBy === KIND.broker);
+      return volumesUsedByBrokerInWorkspace.length > 0
+        ? size(
+            xor(
+              volumesByUsedBroker.map((v) => v.name),
+              volumesUsedByBrokerInWorkspace.name,
+            ).map((v) => v.name),
+          )
+        : 0;
+    };
 
     const countOfChangedWorkerNodes = workspace?.worker?.nodeNames
       ? size(xor(worker?.nodeNames, workspace.worker.nodeNames))
@@ -178,12 +196,30 @@ export const useShouldBeRestartWorkspace = () => {
       ? size(xor(zookeeper?.nodeNames, workspace.zookeeper.nodeNames))
       : 0;
 
-    const shouldBeRestartBroker = countOfChangedBrokerNodes > 0;
+    const countOfChangedZookeeperVolumes = () => {
+      const volumesUsedByZookeeperInWorkspace = get(
+        workspace,
+        'volumes',
+        [],
+      ).filter((v) => v.tags.usedBy === KIND.zookeeper);
+      return volumesUsedByZookeeperInWorkspace.length > 0
+        ? size(
+            xor(
+              volumesByUsedZookeeper.map((v) => v.name),
+              volumesUsedByZookeeperInWorkspace.map((v) => v.name),
+            ),
+          )
+        : 0;
+    };
+
+    const shouldBeRestartBroker =
+      countOfChangedBrokerNodes > 0 || countOfChangedBrokerVolumes() > 0;
     const shouldBeRestartWorker =
       countOfChangedWorkerNodes > 0 ||
       countOfChangedWorkerPlugins > 0 ||
       countOfChangedWorkerSharedJars > 0;
-    const shouldBeRestartZookeeper = countOfChangedZookeeperNodes > 0;
+    const shouldBeRestartZookeeper =
+      countOfChangedZookeeperNodes > 0 || countOfChangedZookeeperVolumes() > 0;
     const shouldBeRestartWorkspace =
       shouldBeRestartBroker ||
       shouldBeRestartWorker ||
@@ -200,7 +236,16 @@ export const useShouldBeRestartWorkspace = () => {
       shouldBeRestartWorkspace,
       shouldBeRestartZookeeper,
     };
-  }, [broker, worker, workspace, zookeeper]);
+  }, [
+    broker.nodeNames,
+    volumesByUsedBroker,
+    volumesByUsedZookeeper,
+    worker.nodeNames,
+    worker.pluginKeys,
+    worker.sharedJarKeys,
+    workspace,
+    zookeeper.nodeNames,
+  ]);
 
   return memoizedValue;
 };

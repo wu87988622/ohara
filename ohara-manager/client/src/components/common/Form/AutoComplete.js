@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { forEach } from 'lodash';
+import { forEach, isEmpty } from 'lodash';
 import TextField from '@material-ui/core/TextField';
 import MuiAutoComplete from '@material-ui/lab/Autocomplete';
 import styled from 'styled-components';
@@ -36,6 +36,7 @@ const AutoComplete = (props) => {
     multiple,
     textFieldProps,
     getOptionValue,
+    initializeValue,
     ...rest
   } = props;
 
@@ -81,7 +82,7 @@ const AutoComplete = (props) => {
       }
     });
   }
-
+  const newValue = isEmpty(defaultValue) ? initializeValue : value;
   return (
     <Wrapper>
       <MuiAutoComplete
@@ -103,7 +104,7 @@ const AutoComplete = (props) => {
             {...restTextFieldProps}
           />
         )}
-        value={defaultValue}
+        value={newValue}
         {...lessRest}
       />
     </Wrapper>
@@ -133,6 +134,7 @@ AutoComplete.propTypes = {
   getOptionValue: PropTypes.func,
   options: PropTypes.array.isRequired,
   textFieldProps: PropTypes.object,
+  initializeValue: PropTypes.array,
 };
 
 AutoComplete.defaultProps = {

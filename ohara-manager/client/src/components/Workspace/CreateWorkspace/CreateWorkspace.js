@@ -56,6 +56,7 @@ export default () => {
   const introDialog = hooks.useIntroDialog();
   const switchFormStep = hooks.useSwitchCreateWorkspaceStepAction();
   const resetForm = hooks.useReduxFormResetAction();
+  const clearVolumes = hooks.useClearVolumesAction();
 
   const [submitting, setSubmitting] = useState(false);
   const [steps, setSteps] = useState([]);
@@ -142,6 +143,8 @@ export default () => {
               });
               // Log a success message to Event Log
               eventLog.info(`Successfully created workspace ${values?.name}.`);
+              // Clear volume
+              clearVolumes();
               // Clear form data
               resetForm(Form.CREATE_WORKSPACE);
               // Back to the first page of the form

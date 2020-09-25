@@ -30,7 +30,7 @@
     "test:api:open": "yarn --cwd client test:api:open",
     "test:api:run": "yarn --cwd client test:api:run",
     "test:api:ci": "node ./scripts/runTests.js --testMode api",
-    "test:it:open": "yarn --cwd client test:it:open",
+    "test:it:open": "cd .. && ./gradlew ohara-common:versionFile && cd ohara-manager && yarn --cwd client test:it:open",
     "test:it:run": "node ./scripts/runTests.js --testMode it --ci",
     "test:it:ci": "node ./scripts/runTests.js --testMode it --ci",
     "test:e2e:open": "yarn --cwd client test:e2e:open",

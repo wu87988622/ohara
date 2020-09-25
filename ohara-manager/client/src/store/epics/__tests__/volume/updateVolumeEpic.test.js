@@ -44,7 +44,7 @@ it('update volume should be worked correctly', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateVolume.TRIGGER,
-        payload: { ...volumeEntity, nodeNames: ['node01'] },
+        payload: { values: { ...volumeEntity, nodeNames: ['node01'] } },
       },
     });
     const output$ = updateVolumeEpic(action$);
@@ -87,15 +87,15 @@ it('update volume multiple times should got latest result', () => {
     const action$ = hot(input, {
       a: {
         type: actions.updateVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: { ...volumeEntity } },
       },
       b: {
         type: actions.updateVolume.TRIGGER,
-        payload: { ...volumeEntity, nodeNames: ['node01'] },
+        payload: { values: { ...volumeEntity, nodeNames: ['node01'] } },
       },
       c: {
         type: actions.updateVolume.TRIGGER,
-        payload: { ...volumeEntity, nodeNames: ['node02'] },
+        payload: { values: { ...volumeEntity, nodeNames: ['node02'] } },
       },
     });
     const output$ = updateVolumeEpic(action$);
@@ -189,7 +189,7 @@ it('throw exception of update volume should also trigger event log action', () =
     const action$ = hot(input, {
       a: {
         type: actions.updateVolume.TRIGGER,
-        payload: volumeEntity,
+        payload: { values: { ...volumeEntity } },
       },
     });
     const output$ = updateVolumeEpic(action$);

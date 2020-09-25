@@ -24,7 +24,7 @@ import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 
 import * as hooks from 'hooks';
-import { CreateWorkspaceMode, Form, GROUP } from 'const';
+import { CreateWorkspaceMode, Form, GROUP, KIND } from 'const';
 import * as generate from 'utils/generate';
 import { getKey } from 'utils/object';
 import { Wrapper } from './CreateWorkspaceFormStyles';
@@ -42,26 +42,41 @@ const CreateWorkspaceForm = (props) => {
   const { onCancel, onSubmit } = props;
   const mode = hooks.useCreateWorkspaceMode();
   const step = hooks.useCreateWorkspaceStep();
+  const volumesState = hooks.useAllVolumes();
   const switchStep = hooks.useSwitchCreateWorkspaceStepAction();
   const nextStep = () => switchStep(step + 1);
   const previousStep = () => switchStep(step - 1);
 
   const randomTake = (array, n) => take(shuffle(array), n);
 
-  const volumes = (values, nodeNames) => {
+  const volumes = (values, nodeNames, workspaceName) => {
     const volume = values?.volume;
+    const zkVolumeLength =
+      volumesState.filter((v) => v.tags.usedBy === KIND.zookeeper).length + 1;
+    const bkVolumeLength =
+      volumesState.filter((v) => v.tags.usedBy === KIND.broker).length + 1;
     if (volume) {
       const { path } = volume;
       return {
         zkVolume: {
           name: generate.serviceName(),
           nodeNames,
-          path: path + '/zookeeper',
+          path: `${path}/${KIND.zookeeper}`,
+          tags: {
+            usedBy: KIND.zookeeper,
+            displayName: `zkv${zkVolumeLength}`,
+            workspaceName,
+          },
         },
         bkVolume: {
           name: generate.serviceName(),
           nodeNames,
-          path: path + '/broker',
+          path: `${path}/${KIND.broker}`,
+          tags: {
+            usedBy: KIND.broker,
+            displayName: `bkv${bkVolumeLength}`,
+            workspaceName,
+          },
         },
       };
     }
@@ -80,7 +95,7 @@ const CreateWorkspaceForm = (props) => {
         broker: { name, nodeNames },
         worker: { name, nodeNames },
       },
-      volumes(values, nodeNames),
+      volumes(values, nodeNames, name),
     );
   };
 

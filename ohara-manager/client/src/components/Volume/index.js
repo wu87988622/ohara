@@ -14,24 +14,6 @@
  * limitations under the License.
  */
 
-import ArrayField from './ArrayField';
-import AutoComplete from './AutoComplete';
-import Button from './Button';
-import InputField from './InputField';
-import Select from './Select';
-import Label from './Label';
-import Checkbox from './Checkbox';
-import ValidateInputField from './ValidateInputField';
-import ValidateInputFinalFormField from './ValidateInputFinalFormField';
+import VolumeTable from './VolumeTable';
 
-export {
-  ArrayField,
-  AutoComplete,
-  Button,
-  InputField,
-  Select,
-  Label,
-  Checkbox,
-  ValidateInputField,
-  ValidateInputFinalFormField,
-};
+export { VolumeTable };

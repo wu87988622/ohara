@@ -15,10 +15,11 @@
  */
 
 import React from 'react';
-import { isEmpty } from 'lodash';
 import PropTypes from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 import styled from 'styled-components';
+import { InputAdornment } from '@material-ui/core';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 
 const InputWrap = styled.div`
   position: relative;
@@ -29,39 +30,45 @@ const StyledTextField = styled(TextField)`
   width: ${(props) => props.width};
 `;
 
-const InputField = (props) => {
+const ValidateInputFinalFormField = (props) => {
   const {
-    input: { name, onChange, value, ...restInput },
-    meta = {},
+    input: { name, onChange, onBlur, value, ...restInput },
     width = '100%',
     helperText,
-    defaultValue,
+    hasError,
+    disabled,
     ...rest
   } = props;
-
-  const hasError = meta.error && meta.touched;
-  const newValue = isEmpty(value) ? defaultValue : value;
 
   return (
     <InputWrap>
       <StyledTextField
         {...rest}
         error={hasError}
-        helperText={hasError ? meta.error : helperText}
-        InputProps={restInput}
+        helperText={helperText}
+        InputProps={{
+          ...restInput,
+          endAdornment: (
+            <InputAdornment position="end">
+              {!disabled && !hasError && <CheckCircleIcon color="primary" />}
+            </InputAdornment>
+          ),
+        }}
         name={name}
+        onBlur={onBlur}
         onChange={onChange}
-        value={newValue}
+        value={value}
         width={width}
       />
     </InputWrap>
   );
 };
 
-InputField.propTypes = {
+ValidateInputFinalFormField.propTypes = {
   input: PropTypes.shape({
     name: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
+    onBlur: PropTypes.func,
     value: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -76,7 +83,8 @@ InputField.propTypes = {
   width: PropTypes.string,
   helperText: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   errorMessage: PropTypes.string,
-  defaultValue: PropTypes.string,
+  hasError: PropTypes.bool,
+  disabled: PropTypes.bool,
 };
 
-export default InputField;
+export default ValidateInputFinalFormField;

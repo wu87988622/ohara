@@ -22,21 +22,21 @@ const initialState = {
   error: null,
 };
 
-function volume(state = initialState, action) {
+export default function volume(state = initialState, action) {
   switch (action.type) {
-    case actions.fetchVolume.REQUEST:
+    case actions.fetchVolumes.REQUEST:
       return {
         ...state,
         loading: true,
       };
-    case actions.fetchVolume.SUCCESS:
+    case actions.fetchVolumes.SUCCESS:
       return {
         ...state,
         name: action.payload.name,
         loading: false,
         lastUpdated: new Date(),
       };
-    case actions.fetchVolume.FAILURE:
+    case actions.fetchVolumes.FAILURE:
       return {
         ...state,
         loading: false,
@@ -44,10 +44,17 @@ function volume(state = initialState, action) {
       };
     case actions.validateVolumePath.REQUEST:
       return {
+        ...state,
         validate: { validating: true },
       };
+    case actions.clearValidate.REQUEST: {
+      return {
+        ...initialState,
+      };
+    }
     case actions.validateVolumePath.SUCCESS:
       return {
+        ...state,
         validate: {
           validating: false,
           path: state.path,
@@ -67,14 +74,4 @@ function volume(state = initialState, action) {
     default:
       return state;
   }
-}
-
-export default function reducer(state = {}, action) {
-  if (action.payload?.volumeId) {
-    return {
-      ...state,
-      [action.payload.volumeId]: volume(state[action.payload.volumeId], action),
-    };
-  }
-  return state;
 }
